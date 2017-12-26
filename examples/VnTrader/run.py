@@ -27,7 +27,7 @@ if system == 'Linux':
     from vnpy.trader.gateway import xtpGateway
 
 # 加载上层应用
-from vnpy.trader.app import (riskManager, ctaStrategy, spreadTrading)
+from vnpy.trader.app import (dataRecorder, riskManager, ctaStrategy, spreadTrading)
 
 
 #----------------------------------------------------------------------
@@ -58,6 +58,7 @@ def main():
         me.addGateway(xtpGateway)
         
     # 添加上层应用
+    me.addApp(dataRecorder)
     me.addApp(riskManager)
     me.addApp(ctaStrategy)
     me.addApp(spreadTrading)
