@@ -18,13 +18,21 @@ class SimpleStrategy(CtaTemplate):
     c = EMPTY_STRING
 
     # 参数列表，保存了参数的名称
-    paramList = ['a']
+    paramList = ['name',
+                 'className',
+                 'author',
+                 'vtSymbol',
+                 'a']
 
     # 变量列表，保存了变量的名称
-    varList = ['b']
+    varList = ['inited',
+               'trading',
+               'pos',
+               'b']
 
     # 同步列表，保存了需要保存到数据库的变量名称
-    syncList = ['c']
+    syncList = ['pos',
+                'c']
 
     # ----------------------------------------------------------------------
     def __init__(self, ctaEngine, setting):
@@ -34,7 +42,7 @@ class SimpleStrategy(CtaTemplate):
     # ----------------------------------------------------------------------
     def onInit(self):
         """初始化策略（必须由用户继承实现）"""
-        self.writeCtaLog(u'simple演示策略初始化')
+        self.writeCtaLog(u'%s演示策略初始化' % self.name)
         self.putEvent()
 
     # ----------------------------------------------------------------------

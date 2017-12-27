@@ -1,13 +1,13 @@
 [
     {
-        "name": "atr rsi",
-        "className": "AtrRsiStrategy",
+        "name": "simple",
+        "className": "SimpleStrategy",
         "vtSymbol": "rb1805"
     },
 
     {
-        "name": "simple",
-        "className": "SimpleStrategy",
+        "name": "atr rsi",
+        "className": "AtrRsiStrategy",
         "vtSymbol": "rb1805"
     },
 
