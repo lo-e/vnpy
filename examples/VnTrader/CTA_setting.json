@@ -6,6 +6,12 @@
     },
 
     {
+        "name": "simple",
+        "className": "SimpleStrategy",
+        "vtSymbol": "rb1805"
+    },
+
+    {
         "name": "king keltner",
         "className": "KkStrategy",
         "vtSymbol": "rb1805"
