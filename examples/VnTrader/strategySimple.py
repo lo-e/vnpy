@@ -1,5 +1,6 @@
 # coding: utf8
 
+from datetime import datetime
 from vnpy.trader.vtConstant import EMPTY_STRING, EMPTY_FLOAT, EMPTY_UNICODE
 from vnpy.trader.app.ctaStrategy.ctaTemplate import (CtaTemplate,
                                                      BarManager,
@@ -15,6 +16,7 @@ class SimpleStrategy(CtaTemplate):
     lossCount = 6 # 止损点数
     posCount = 1 # 仓位控制
     initDirection = u'多' # 初始头寸方向
+    initDays = 1
 
     # 策略变量
     lastDirection = EMPTY_UNICODE # 上次头寸方向
@@ -50,6 +52,12 @@ class SimpleStrategy(CtaTemplate):
     def onInit(self):
         """初始化策略（必须由用户继承实现）"""
         self.writeCtaLog(u'%s演示策略初始化' % self.name)
+
+        # 载入历史数据，并采用回放计算的方式初始化策略数值
+        initData = self.loadBar(self.initDays)
+        for bar in initData:
+            self.onBar(bar)
+
         self.putEvent()
 
     # ----------------------------------------------------------------------
@@ -126,6 +134,7 @@ class SimpleStrategy(CtaTemplate):
     def onBar(self, bar):
         """收到Bar推送（必须由用户继承实现）"""
         # 发出状态更新事件
+        self.writeCtaLog(u'barDatetime:%s close:%.2f' % (datetime.strftime(bar.datetime, '%Y-%m-%d %H-%M-%S.%f'), bar.close))
         self.putEvent()
 
     # ----------------------------------------------------------------------
