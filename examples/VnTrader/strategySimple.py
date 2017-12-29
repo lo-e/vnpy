@@ -120,7 +120,7 @@ class SimpleStrategy(CtaTemplate):
             if toDirection == u'多':
                 self.buy(tick.lastPrice + 6.0, self.posCount)
                 self.writeCtaLog(u'多头开仓委托%.2f' % tick.lastPrice)
-            elif self.toDirection == u'空':
+            elif toDirection == u'空':
                 self.short(tick.lastPrice - 6.0, self.posCount)
                 self.writeCtaLog(u'多头空仓委托%.2f' % tick.lastPrice)
             else:
