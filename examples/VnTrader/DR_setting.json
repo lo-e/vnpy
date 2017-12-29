@@ -1,21 +1,18 @@
 {
-    "working": false,
+    "working": true,
 
     "tick":
     [
-        ["rb1805", "CTP"],
-        ["IF1801", "CTP"]
+        ["rb1805", "CTP"]
     ],
 
     "bar":
     [
-        ["rb1805", "CTP"],
-        ["IF1801", "CTP"]
+        ["rb1805", "CTP"]
     ],
 
     "active":
     {
-        "rb.HOT": "rb1805",
-        "IF.HOT": "IF1801"
+        "rb.HOT": "rb1805"
     }
 }
