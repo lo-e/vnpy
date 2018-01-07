@@ -10,25 +10,27 @@ class SimpleStrategy(CtaTemplate):
     author = u'loe'
 
     # 策略参数
-    '''
-    tradeSize = 1  # 交易数量
-    startTime = time(22, 58, 26)  # 趋势判断开始时间
-    endTime = time(22, 59, 56)  # 趋势判断截至时间
-    expireTime = time(8, 56)  # 夜盘时间
-    outPercent = 0.1  # 移动止盈止损百分比
-    '''
+    tradeSize = 1 # 交易数量
+    startTime = time(22, 58, 26) # 趋势判断开始时间
+    endTime =  time(22, 59, 56) # 趋势判断截至时间
+    todayDate = None # 当前日期
+    todayEntry = False # 当天是否已经产生信号
+    outPercent = 0.1 # 移动止盈止损百分比
 
+    '''
     tradeSize = 1  # 交易数量
-    startTime = time(21, 2, 0)  # 趋势判断开始时间
-    endTime = time(21, 3, 0)  # 趋势判断截至时间
-    expireTime = time(8, 56)  # 信号过期时间
+    startTime = time(10, 45, 0)  # 趋势判断开始时间
+    endTime = time(10, 46, 0)  # 趋势判断截至时间
+    todayDate = None  # 当前日期
+    todayEntry = False  # 当天是否已经产生信号
     outPercent = 0.1  # 移动止盈止损百分比
+    '''
 
     # 策略变量
-    startPrice = EMPTY_FLOAT  # 趋势判断开始价格
-    endPrice = EMPTY_FLOAT  # 趋势判断截至价格
-    highPrice = EMPTY_FLOAT  # 持仓后的最高价，为了多头止盈止损的计算
-    lowPrice = EMPTY_FLOAT  # 持仓后的最低价， 为了空头止盈止损的计算
+    startPrice = EMPTY_FLOAT # 趋势判断开始价格
+    endPrice = EMPTY_FLOAT # 趋势判断截至价格
+    highPrice = EMPTY_FLOAT # 持仓后的最高价，为了多头止盈止损的计算
+    lowPrice = EMPTY_FLOAT # 持仓后的最低价， 为了空头止盈止损的计算
 
     # 参数列表，保存了参数的名称
     paramList = ['name',
@@ -44,11 +46,19 @@ class SimpleStrategy(CtaTemplate):
     varList = ['inited',
                'trading',
                'pos',
+               'todayDate',
+               'todayEntry',
+               'startPrice',
+               'endPrice',
                'highPrice',
                'lowPrice']
 
     # 同步列表
     syncList = ['pos',
+                'todayDate',
+                'todayEntry',
+                'startPrice',
+                'endPrice',
                 'highPrice',
                 'lowPrice']
 
@@ -84,8 +94,11 @@ class SimpleStrategy(CtaTemplate):
         # 撤销未成交的单
         self.cancelAll()
 
-        if (tick.datetime.time() >= self.expireTime) and (tick.datetime.time() < self.startTime):
+        if (not self.todayDate) or (self.todayDate != tick.datetime.date()):
+            # 早盘第一个tick收到后信号初始化
             # print tick.datetime, '='*16
+            self.todayDate = tick.datetime.date()
+            self.todayEntry = False
             self.startPrice = EMPTY_FLOAT
             self.endPrice = EMPTY_FLOAT
 
@@ -93,14 +106,13 @@ class SimpleStrategy(CtaTemplate):
             self.highPrice = EMPTY_FLOAT
             self.lowPrice = EMPTY_FLOAT
             # 当前仓位为空才会做新的开仓信号判断
-            if (self.startPrice == 0) and (tick.datetime.time() >= self.startTime) and (
-                tick.datetime.time() < self.endTime):
+            if (self.startPrice == 0) and (tick.datetime.time() >= self.startTime) and (tick.datetime.time() < self.endTime):
                 self.startPrice = tick.lastPrice
 
             if (self.endPrice == 0) and (tick.datetime.time() >= self.endTime):
                 self.endPrice = tick.lastPrice
 
-            if self.startPrice and self.endPrice:
+            if self.startPrice and self.endPrice and (not self.todayEntry):
                 sub = self.endPrice - self.startPrice
                 if sub > 0:
                     # 开仓多头
@@ -121,8 +133,12 @@ class SimpleStrategy(CtaTemplate):
                 # 止盈止损
                 self.cover(tick.lastPrice + 10, abs(self.pos))  # 限价单
 
-        self.highPrice = max(self.highPrice, tick.lastPrice)
-        self.lowPrice = min(self.lowPrice, tick.lastPrice)
+        if self.pos:
+            self.highPrice = max(self.highPrice, tick.lastPrice)
+            self.lowPrice = min(self.lowPrice, tick.lastPrice)
+
+        # 发出状态更新事件
+        self.putEvent()
 
     # ----------------------------------------------------------------------
     def onBar(self, bar):
@@ -137,9 +153,11 @@ class SimpleStrategy(CtaTemplate):
 
     # ----------------------------------------------------------------------
     def onTrade(self, trade):
+        """收到成交推送（必须由用户继承实现）"""
         # 发出状态更新事件
         self.putEvent()
         if trade.offset == u'开仓':
+            self.todayEntry = True
             self.highPrice = trade.price
             self.lowPrice = trade.price
         '''
