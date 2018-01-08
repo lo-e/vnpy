@@ -1,6 +1,6 @@
 # coding: utf8
 
-from datetime import time
+from datetime import datetime, time
 from vnpy.trader.vtConstant import EMPTY_STRING, EMPTY_FLOAT, EMPTY_UNICODE
 from vnpy.trader.app.ctaStrategy.ctaTemplate import (CtaTemplate)
 
@@ -13,18 +13,19 @@ class SimpleStrategy(CtaTemplate):
     tradeSize = 1 # 交易数量
     startTime = time(22, 58, 26) # 趋势判断开始时间
     endTime =  time(22, 59, 56) # 趋势判断截至时间
-    todayDate = None # 当前日期
+    todayDate = EMPTY_STRING # 当前日期
     todayEntry = False # 当天是否已经交易
     outPercent = 0.1 # 移动止盈止损百分比
 
     '''
     tradeSize = 1  # 交易数量
-    startTime = time(10, 45, 0)  # 趋势判断开始时间
-    endTime = time(10, 46, 0)  # 趋势判断截至时间
-    todayDate = None  # 当前日期
+    startTime = time(22, 39, 0)  # 趋势判断开始时间
+    endTime = time(22, 40, 0)  # 趋势判断截至时间
+    todayDate = EMPTY_STRING  # 当前日期
     todayEntry = False  # 当天是否已经产生信号
     outPercent = 0.1  # 移动止盈止损百分比
     '''
+
 
     # 策略变量
     startPrice = EMPTY_FLOAT # 趋势判断开始价格
@@ -94,10 +95,11 @@ class SimpleStrategy(CtaTemplate):
         # 撤销未成交的单
         self.cancelAll()
 
-        if (not self.todayDate) or (self.todayDate != tick.datetime.date()):
+        if (not self.todayDate) or (datetime.strptime(self.todayDate, '%Y-%m-%d').date() != tick.datetime.date()):
             # 早盘第一个tick收到后信号初始化
             # print tick.datetime, '='*16
-            self.todayDate = tick.datetime.date()
+
+            self.todayDate = tick.datetime.strftime('%Y-%m-%d')
             self.todayEntry = False
             self.startPrice = EMPTY_FLOAT
             self.endPrice = EMPTY_FLOAT

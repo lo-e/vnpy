@@ -36,8 +36,19 @@ class ctaSyncManager(object):
         f.close()
 
     def csvToDb(self):
-        pass
+        f = open(self.filePath)
+        dataList = json.load(f)
+        for collectionDic in dataList:
+            for collectionName in collectionDic:
+                syncList = collectionDic[collectionName]
+                for syncDic in syncList:
+                    collection = self.db[collectionName]
+                    flt = {'name':syncDic['name'], 'vtSymbol':syncDic['vtSymbol']}
+                    collection.update_many(flt, {'$set': syncDic}, upsert=True)
+        f.close()
+
 
 if __name__ == '__main__':
     manager = ctaSyncManager()
     manager.dbToCSV()
+    #manager.csvToDb()
