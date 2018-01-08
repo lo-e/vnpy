@@ -14,7 +14,7 @@ class SimpleStrategy(CtaTemplate):
     startTime = time(22, 58, 26) # 趋势判断开始时间
     endTime =  time(22, 59, 56) # 趋势判断截至时间
     todayDate = None # 当前日期
-    todayEntry = False # 当天是否已经产生信号
+    todayEntry = False # 当天是否已经交易
     outPercent = 0.1 # 移动止盈止损百分比
 
     '''
