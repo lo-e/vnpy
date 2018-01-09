@@ -51,7 +51,7 @@ class ctaSyncManager(object):
 if __name__ == '__main__':
     manager = ctaSyncManager()
     # 数据库同步到json
-    #manager.dbToJson()
+    manager.dbToJson()
 
     # json同步到数据库
-    manager.jsonToDb()
+    #manager.jsonToDb()
