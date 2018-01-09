@@ -33,6 +33,10 @@ class SimpleStrategy(CtaTemplate):
     highPrice = EMPTY_FLOAT # 持仓后的最高价，为了多头止盈止损的计算
     lowPrice = EMPTY_FLOAT # 持仓后的最低价， 为了空头止盈止损的计算
 
+    entryPrice = EMPTY_FLOAT # 开仓价
+    outPrice = EMPTY_FLOAT # 平仓价
+    offsetEarning = EMPTY_FLOAT # 开平仓盈亏
+
     # 参数列表，保存了参数的名称
     paramList = ['name',
                  'className',
@@ -61,7 +65,10 @@ class SimpleStrategy(CtaTemplate):
                 'startPrice',
                 'endPrice',
                 'highPrice',
-                'lowPrice']
+                'lowPrice',
+                'entryPrice',
+                'outPrice',
+                'offsetEarning']
 
     # ----------------------------------------------------------------------
     def __init__(self, ctaEngine, setting):
@@ -90,15 +97,11 @@ class SimpleStrategy(CtaTemplate):
     # ----------------------------------------------------------------------
     def onTick(self, tick):
         """收到行情TICK推送（必须由用户继承实现）"""
-        # print tick.datetime, ' '*2, tick.lastPrice
-
         # 撤销未成交的单
         self.cancelAll()
 
         if (not self.todayDate) or (datetime.strptime(self.todayDate, '%Y-%m-%d').date() != tick.datetime.date()):
             # 早盘第一个tick收到后信号初始化
-            # print tick.datetime, '='*16
-
             self.todayDate = tick.datetime.strftime('%Y-%m-%d')
             self.todayEntry = False
             self.startPrice = EMPTY_FLOAT
@@ -119,11 +122,9 @@ class SimpleStrategy(CtaTemplate):
                 if sub > 0:
                     # 开仓多头
                     self.buy(tick.lastPrice + 10, self.tradeSize)  # 限价单
-                    # print u'委托多头开仓', tick.datetime, '*'*2, tick.lastPrice
                 elif sub < 0:
                     # 开仓空头
                     self.short(tick.lastPrice - 10, self.tradeSize)  # 限价单
-                    # print u'委托空头开仓', tick.datetime, '*'*2, tick.lastPrice
         elif self.pos > 0:
             # 持有多头仓位
             if tick.lastPrice <= self.highPrice * (1 - self.outPercent / 100):
@@ -162,16 +163,22 @@ class SimpleStrategy(CtaTemplate):
             self.todayEntry = True
             self.highPrice = trade.price
             self.lowPrice = trade.price
-        '''
-        print '#'*20, 'T R A D E', '#'*20
-        print trade.tradeTime
-        print trade.direction
-        print trade.offset
-        print trade.price
-        print self.pos, '\n'
-        '''
+
+            self.entryPrice = trade.price
+            self.outPrice = EMPTY_FLOAT
+        elif trade.offset == u'平仓':
+            self.outPrice = trade.price
+            sub = self.outPrice - self.entryPrice
+
+            if trade.direction == u'多':
+                self.offsetEarning -= sub
+            else:
+                self.offsetEarning += sub
 
     # ----------------------------------------------------------------------
     def onStopOrder(self, so):
         """停止单推送"""
         pass
+
+    def saveDailyEarningToCSV(self):
+        fileName = ''clone\\abc.csv''
