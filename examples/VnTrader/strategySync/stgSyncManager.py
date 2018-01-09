@@ -15,7 +15,7 @@ class ctaSyncManager(object):
         # 调用server_info查询服务器状态，防止服务器异常并未连接成功
         self.dbClient.server_info()
 
-    def dbToCSV(self):
+    def dbToJson(self):
         dataList = []
         for collectionName in self.db.collection_names():
             collectionDic = {}
@@ -35,7 +35,7 @@ class ctaSyncManager(object):
         f.write(dataJson)
         f.close()
 
-    def csvToDb(self):
+    def jsonToDb(self):
         f = open(self.filePath)
         dataList = json.load(f)
         for collectionDic in dataList:
@@ -50,5 +50,8 @@ class ctaSyncManager(object):
 
 if __name__ == '__main__':
     manager = ctaSyncManager()
-    manager.dbToCSV()
-    #manager.csvToDb()
+    # 数据库同步到json
+    #manager.dbToJson()
+
+    # json同步到数据库
+    manager.jsonToDb()
