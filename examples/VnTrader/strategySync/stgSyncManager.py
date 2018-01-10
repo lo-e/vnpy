@@ -4,7 +4,6 @@ import json
 from pymongo import MongoClient
 from vnpy.trader.vtGlobal import globalSetting
 from vnpy.trader.app.ctaStrategy.ctaBase import *
-from datetime import datetime
 
 class ctaSyncManager(object):
     filePath = 'stgSync.json'
@@ -49,9 +48,10 @@ class ctaSyncManager(object):
 
 
 if __name__ == '__main__':
+
     manager = ctaSyncManager()
 
-    print u'1：Json -> DB \n2:DB -> Json'
+    print u'1: Json -> DB \n2: DB -> Json'
     type = int(raw_input('action:'))
     if type == 1:
         # json同步到数据库

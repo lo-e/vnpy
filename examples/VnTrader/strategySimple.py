@@ -1,8 +1,10 @@
 # coding: utf8
 
+from examples.VnTrader.strategyEarning.stgEarningManager import stgEarningManager
 from datetime import datetime, time
 from vnpy.trader.vtConstant import EMPTY_STRING, EMPTY_FLOAT, EMPTY_UNICODE
 from vnpy.trader.app.ctaStrategy.ctaTemplate import (CtaTemplate)
+import collections
 
 class SimpleStrategy(CtaTemplate):
     """根据夜盘收盘前的价格趋势开仓入场，移动百分比离场"""
@@ -19,11 +21,11 @@ class SimpleStrategy(CtaTemplate):
 
     '''
     tradeSize = 1  # 交易数量
-    startTime = time(22, 39, 0)  # 趋势判断开始时间
-    endTime = time(22, 40, 0)  # 趋势判断截至时间
+    startTime = time(14, 57, 0)  # 趋势判断开始时间
+    endTime = time(14, 58, 0)  # 趋势判断截至时间
     todayDate = EMPTY_STRING  # 当前日期
     todayEntry = False  # 当天是否已经产生信号
-    outPercent = 0.1  # 移动止盈止损百分比
+    outPercent = 0.01  # 移动止盈止损百分比
     '''
 
 
@@ -166,19 +168,37 @@ class SimpleStrategy(CtaTemplate):
 
             self.entryPrice = trade.price
             self.outPrice = EMPTY_FLOAT
-        elif trade.offset == u'平仓':
+        elif (trade.offset == u'平仓') or (trade.offset == u'平今') or (trade.offset == u'平昨'):
             self.outPrice = trade.price
             sub = self.outPrice - self.entryPrice
 
+            entryDirect = EMPTY_STRING
             if trade.direction == u'多':
-                self.offsetEarning -= sub
+                self.offsetEarning = -sub
+                entryDirect = '空'
             else:
-                self.offsetEarning += sub
+                self.offsetEarning = sub
+                entryDirect = '多'
+
+            # 每日盈亏记录
+            fileName = self.name + '_' + self.vtSymbol
+            earningManager = stgEarningManager()
+            hisData = earningManager.loadDailyEarning(fileName)
+            toltalEarning = EMPTY_FLOAT
+            if len(hisData):
+                toltalEarning = float(hisData[-1]['累计盈亏'])
+
+            toltalEarning += self.offsetEarning
+            content = collections.OrderedDict()
+            content['时间'] = self.todayDate + ' ' + trade.tradeTime
+            content['开仓价'] = self.entryPrice
+            content['头寸'] = entryDirect
+            content['平仓价'] = self.outPrice
+            content['盈亏'] = self.offsetEarning
+            content['累计盈亏'] = toltalEarning
+            earningManager.updateDailyEarning(fileName, content)
 
     # ----------------------------------------------------------------------
     def onStopOrder(self, so):
         """停止单推送"""
         pass
-
-    def saveDailyEarningToCSV(self):
-        fileName = 'clone\\abc.csv'
