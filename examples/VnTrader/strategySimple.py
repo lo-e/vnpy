@@ -58,7 +58,10 @@ class SimpleStrategy(CtaTemplate):
                'startPrice',
                'endPrice',
                'highPrice',
-               'lowPrice']
+               'lowPrice',
+               'entryPrice',
+               'outPrice',
+               'offsetEarning']
 
     # 同步列表
     syncList = ['pos',
@@ -168,11 +171,11 @@ class SimpleStrategy(CtaTemplate):
 
             self.entryPrice = trade.price
             self.outPrice = EMPTY_FLOAT
+            self.offsetEarning = EMPTY_FLOAT
         elif (trade.offset == u'平仓') or (trade.offset == u'平今') or (trade.offset == u'平昨'):
             self.outPrice = trade.price
             sub = self.outPrice - self.entryPrice
 
-            entryDirect = EMPTY_STRING
             if trade.direction == u'多':
                 self.offsetEarning = -sub
                 entryDirect = '空'
