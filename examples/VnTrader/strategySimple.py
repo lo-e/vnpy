@@ -181,4 +181,4 @@ class SimpleStrategy(CtaTemplate):
         pass
 
     def saveDailyEarningToCSV(self):
-        fileName = ''clone\\abc.csv''
+        fileName = 'clone\\abc.csv'

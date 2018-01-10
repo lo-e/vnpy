@@ -50,8 +50,12 @@ class ctaSyncManager(object):
 
 if __name__ == '__main__':
     manager = ctaSyncManager()
-    # 数据库同步到json
-    manager.dbToJson()
 
-    # json同步到数据库
-    #manager.jsonToDb()
+    print u'1：Json -> DB \n2:DB -> Json'
+    type = int(raw_input('action:'))
+    if type == 1:
+        # json同步到数据库
+        manager.jsonToDb()
+    elif type == 2:
+        # 数据库同步到json
+        manager.dbToJson()
