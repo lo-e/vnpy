@@ -12,17 +12,21 @@ class SimpleStrategy(CtaTemplate):
     author = u'loe'
 
     # 策略参数
+    #'''
+    test = False
     tradeSize = 1 # 交易数量
     startTime = time(22, 58, 26) # 趋势判断开始时间
     endTime =  time(22, 59, 56) # 趋势判断截至时间
     todayDate = EMPTY_STRING # 当前日期
     todayEntry = False # 当天是否已经交易
     outPercent = 0.1 # 移动止盈止损百分比
+    #'''
 
     '''
+    test = True
     tradeSize = 1  # 交易数量
-    startTime = time(14, 57, 0)  # 趋势判断开始时间
-    endTime = time(14, 58, 0)  # 趋势判断截至时间
+    startTime = time(14, 07, 0)  # 趋势判断开始时间
+    endTime = time(14, 07, 15)  # 趋势判断截至时间
     todayDate = EMPTY_STRING  # 当前日期
     todayEntry = False  # 当天是否已经产生信号
     outPercent = 0.01  # 移动止盈止损百分比
@@ -36,8 +40,6 @@ class SimpleStrategy(CtaTemplate):
     lowPrice = EMPTY_FLOAT # 持仓后的最低价， 为了空头止盈止损的计算
 
     entryPrice = EMPTY_FLOAT # 开仓价
-    outPrice = EMPTY_FLOAT # 平仓价
-    offsetEarning = EMPTY_FLOAT # 开平仓盈亏
 
     # 参数列表，保存了参数的名称
     paramList = ['name',
@@ -59,9 +61,7 @@ class SimpleStrategy(CtaTemplate):
                'endPrice',
                'highPrice',
                'lowPrice',
-               'entryPrice',
-               'outPrice',
-               'offsetEarning']
+               'entryPrice']
 
     # 同步列表
     syncList = ['pos',
@@ -71,9 +71,7 @@ class SimpleStrategy(CtaTemplate):
                 'endPrice',
                 'highPrice',
                 'lowPrice',
-                'entryPrice',
-                'outPrice',
-                'offsetEarning']
+                'entryPrice']
 
     # ----------------------------------------------------------------------
     def __init__(self, ctaEngine, setting):
@@ -85,19 +83,20 @@ class SimpleStrategy(CtaTemplate):
     def onInit(self):
         """初始化策略（必须由用户继承实现）"""
         self.writeCtaLog(u'%s策略初始化' % self.name)
+        # 发出状态更新事件
         self.putEvent()
 
     # ----------------------------------------------------------------------
     def onStart(self):
         """启动策略（必须由用户继承实现）"""
         self.writeCtaLog(u'%s策略启动' % self.name)
+        # 发出状态更新事件
         self.putEvent()
 
     # ----------------------------------------------------------------------
     def onStop(self):
         """停止策略（必须由用户继承实现）"""
         self.writeCtaLog(u'%s策略停止' % self.name)
-        self.putEvent()
 
     # ----------------------------------------------------------------------
     def onTick(self, tick):
@@ -115,6 +114,7 @@ class SimpleStrategy(CtaTemplate):
         if self.pos == 0:
             self.highPrice = EMPTY_FLOAT
             self.lowPrice = EMPTY_FLOAT
+            self.entryPrice = 0
             # 当前仓位为空才会做新的开仓信号判断
             if (self.startPrice == 0) and (tick.datetime.time() >= self.startTime) and (tick.datetime.time() < self.endTime):
                 self.startPrice = tick.lastPrice
@@ -151,8 +151,7 @@ class SimpleStrategy(CtaTemplate):
     # ----------------------------------------------------------------------
     def onBar(self, bar):
         """收到Bar推送（必须由用户继承实现）"""
-        # 发出状态更新事件
-        self.putEvent()
+        pass
 
     # ----------------------------------------------------------------------
     def onOrder(self, order):
@@ -162,44 +161,45 @@ class SimpleStrategy(CtaTemplate):
     # ----------------------------------------------------------------------
     def onTrade(self, trade):
         """收到成交推送（必须由用户继承实现）"""
-        # 发出状态更新事件
-        self.putEvent()
         if trade.offset == u'开仓':
             self.todayEntry = True
             self.highPrice = trade.price
             self.lowPrice = trade.price
 
             self.entryPrice = trade.price
-            self.outPrice = EMPTY_FLOAT
-            self.offsetEarning = EMPTY_FLOAT
         elif (trade.offset == u'平仓') or (trade.offset == u'平今') or (trade.offset == u'平昨'):
-            self.outPrice = trade.price
-            sub = self.outPrice - self.entryPrice
+            outPrice = trade.price
+            sub = outPrice - self.entryPrice
 
             if trade.direction == u'多':
-                self.offsetEarning = -sub
+                offsetEarning = -sub * trade.volume
                 entryDirect = '空'
             else:
-                self.offsetEarning = sub
+                offsetEarning = sub * trade.volume
                 entryDirect = '多'
 
             # 每日盈亏记录
-            fileName = self.name + '_' + self.vtSymbol
+            if self.test:
+                fileName = self.name + '_' + self.vtSymbol + '_test'
+            else:
+                fileName = self.name + '_' + self.vtSymbol
             earningManager = stgEarningManager()
             hisData = earningManager.loadDailyEarning(fileName)
             toltalEarning = EMPTY_FLOAT
             if len(hisData):
                 toltalEarning = float(hisData[-1]['累计盈亏'])
 
-            toltalEarning += self.offsetEarning
+            toltalEarning += offsetEarning
             content = collections.OrderedDict()
             content['时间'] = self.todayDate + ' ' + trade.tradeTime
             content['开仓价'] = self.entryPrice
             content['头寸'] = entryDirect
-            content['平仓价'] = self.outPrice
-            content['盈亏'] = self.offsetEarning
+            content['平仓价'] = outPrice
+            content['盈亏'] = offsetEarning
             content['累计盈亏'] = toltalEarning
             earningManager.updateDailyEarning(fileName, content)
+        # 发出状态更新事件
+        self.putEvent()
 
     # ----------------------------------------------------------------------
     def onStopOrder(self, so):
