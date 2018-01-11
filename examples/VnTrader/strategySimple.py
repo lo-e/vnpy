@@ -195,6 +195,7 @@ class SimpleStrategy(CtaTemplate):
             content['开仓价'] = self.entryPrice
             content['头寸'] = entryDirect
             content['平仓价'] = outPrice
+            content['成交量'] = trade.volume
             content['盈亏'] = offsetEarning
             content['累计盈亏'] = toltalEarning
             earningManager.updateDailyEarning(fileName, content)
