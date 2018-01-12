@@ -7,13 +7,18 @@ import collections
 class stgEarningManager(object):
     def __init__(self):
         super(stgEarningManager, self).__init__()
+        # 项目路径
+        # self.dirPath = os.path.dirname(os.path.realpath(__file__)) + '\\csv\\'
+        # icloud drive路径
+        self.dirPath = 'C:\\Users\\loe\\iCloudDrive\\com~apple~Numbers\\ctaStrategy\\stgEarningCSV\\'
 
     def loadDailyEarning(self, name = ''):
         result = []
         if not len(name):
             return result
 
-        filePath = os.path.dirname(os.path.realpath(__file__)) + '\\csv\\' + name + '.csv'
+        # 文件路径
+        filePath = self.dirPath + name + '.csv'
         if not os.path.exists(filePath):
             return result
 
@@ -32,9 +37,8 @@ class stgEarningManager(object):
         loadResult = self.loadDailyEarning(name)
 
         fieldNames = content.keys()
-        filePath = os.path.dirname(os.path.realpath(__file__)) + '\\csv\\' + name + '.csv'
-
-        # 防止写入中文出错
+        # 文件路径
+        filePath = self.dirPath + name + '.csv'
         with open(filePath, 'w') as f:
             writer = csv.DictWriter(f, fieldnames=fieldNames)
             writer.writeheader()
