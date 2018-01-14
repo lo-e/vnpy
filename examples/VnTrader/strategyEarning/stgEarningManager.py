@@ -15,7 +15,6 @@ class stgEarningManager(object):
         for root, subdirs, files in os.walk(walkingDic):
             for sub in subdirs:
                 if sub == 'stgEarningCSV':
-                    print root
                     self.dirPath = root + '\\stgEarningCSV\\'
         #self.dirPath = 'C:\\Users\\loe\\iCloudDrive\\com~apple~Numbers\\ctaStrategy\\stgEarningCSV\\'
 
