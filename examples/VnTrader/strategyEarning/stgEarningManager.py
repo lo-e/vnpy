@@ -10,11 +10,18 @@ class stgEarningManager(object):
         # 项目路径
         # self.dirPath = os.path.dirname(os.path.realpath(__file__)) + '\\csv\\'
         # icloud drive路径
-        self.dirPath = 'C:\\Users\\loe\\iCloudDrive\\com~apple~Numbers\\ctaStrategy\\stgEarningCSV\\'
+        self.dirPath = ''
+        walkingDic = 'C:\\Users'
+        for root, subdirs, files in os.walk(walkingDic):
+            for sub in subdirs:
+                if sub == 'stgEarningCSV':
+                    print root
+                    self.dirPath = root + '\\stgEarningCSV\\'
+        #self.dirPath = 'C:\\Users\\loe\\iCloudDrive\\com~apple~Numbers\\ctaStrategy\\stgEarningCSV\\'
 
     def loadDailyEarning(self, name = ''):
         result = []
-        if not len(name):
+        if (not len(name)) or ( not len(self.dirPath)):
             return result
 
         # 文件路径
@@ -30,7 +37,7 @@ class stgEarningManager(object):
         return  result
 
     def updateDailyEarning(self, name = '', content = {}):
-        if (not len(name)) or (not len(content)):
+        if (not len(name)) or (not len(content) or ( not len(self.dirPath))):
             return
 
         # 检查是否有文件记录
