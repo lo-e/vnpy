@@ -2,9 +2,10 @@
 
 from examples.VnTrader.strategyEarning.stgEarningManager import stgEarningManager
 from datetime import datetime, time
-from vnpy.trader.vtConstant import EMPTY_STRING, EMPTY_FLOAT, EMPTY_UNICODE
+from vnpy.trader.vtConstant import EMPTY_STRING, EMPTY_FLOAT, EMPTY_UNICODE, EMPTY_INT
 from vnpy.trader.app.ctaStrategy.ctaTemplate import (CtaTemplate)
 import collections
+import threading
 
 class SimpleStrategy(CtaTemplate):
     """根据夜盘收盘前的价格趋势开仓入场，移动百分比离场"""
@@ -25,12 +26,12 @@ class SimpleStrategy(CtaTemplate):
     '''
     test = True
     tradeSize = 1  # 交易数量
-    startTime = time(14, 07, 0)  # 趋势判断开始时间
-    endTime = time(14, 07, 15)  # 趋势判断截至时间
+    startTime = time(13, 50, 15)  # 趋势判断开始时间
+    endTime = time(13, 51, 20)  # 趋势判断截至时间
     todayDate = EMPTY_STRING  # 当前日期
     todayEntry = False  # 当天是否已经产生信号
-    outPercent = 0.01  # 移动止盈止损百分比
-    '''
+    outPercent = 0.1  # 移动止盈止损百分比
+   '''
 
 
     # 策略变量
@@ -172,13 +173,21 @@ class SimpleStrategy(CtaTemplate):
             sub = outPrice - self.entryPrice
 
             if trade.direction == u'多':
-                offsetEarning = -sub * trade.volume
+                if sub:
+                    offsetEarning = -sub * trade.volume
+                else:
+                    offsetEarning = EMPTY_FLOAT
                 entryDirect = '空'
             else:
-                offsetEarning = sub * trade.volume
+                if sub:
+                    offsetEarning = sub * trade.volume
+                else:
+                    offsetEarning = EMPTY_FLOAT
                 entryDirect = '多'
 
+
             # 每日盈亏记录
+            '''
             if self.test:
                 fileName = self.name + '_' + self.vtSymbol + '_test'
             else:
@@ -199,6 +208,13 @@ class SimpleStrategy(CtaTemplate):
             content['盈亏'] = offsetEarning
             content['累计盈亏'] = toltalEarning
             earningManager.updateDailyEarning(fileName, content)
+            '''
+
+            #另开线程进行盈亏记录操作
+            newThread = threading.Thread(target=self.saveEarning, args=(offsetEarning, (self.todayDate + ' ' + trade.tradeTime), self.entryPrice, entryDirect, outPrice, trade.volume))
+            #开启线程守护（当主线程挂起时，无论子线程有没有执行完都会随主线程挂起）
+            #newThread.setDaemon(True)
+            newThread.start()
         # 发出状态更新事件
         self.putEvent()
 
@@ -206,3 +222,26 @@ class SimpleStrategy(CtaTemplate):
     def onStopOrder(self, so):
         """停止单推送"""
         pass
+
+    def saveEarning(self, offsetEarning = EMPTY_FLOAT, offsetTime = EMPTY_STRING, entryPrice = EMPTY_FLOAT, entryDirect = EMPTY_STRING, offsetPrice = EMPTY_FLOAT, offsetVolume = EMPTY_INT):
+        # 每日盈亏记录
+        if self.test:
+            fileName = self.name + '_' + self.vtSymbol + '_test'
+        else:
+            fileName = self.name + '_' + self.vtSymbol
+        earningManager = stgEarningManager()
+        hisData = earningManager.loadDailyEarning(fileName)
+        toltalEarning = EMPTY_FLOAT
+        if len(hisData):
+            toltalEarning = float(hisData[-1]['累计盈亏'])
+
+        toltalEarning += offsetEarning
+        content = collections.OrderedDict()
+        content['时间'] = offsetTime
+        content['开仓价'] = entryPrice
+        content['头寸'] = entryDirect
+        content['平仓价'] = offsetPrice
+        content['成交量'] = offsetVolume
+        content['盈亏'] = offsetEarning
+        content['累计盈亏'] = toltalEarning
+        earningManager.updateDailyEarning(fileName, content)
