@@ -40,6 +40,8 @@ class SimpleStrategy(CtaTemplate):
     highPrice = EMPTY_FLOAT # 持仓后的最高价，为了多头止盈止损的计算
     lowPrice = EMPTY_FLOAT # 持仓后的最低价， 为了空头止盈止损的计算
 
+    entryOrderPrice = EMPTY_FLOAT # 开仓委托价
+    offsetOrderPrice = EMPTY_FLOAT  # 平仓委托价
     entryPrice = EMPTY_FLOAT # 开仓价
 
     # 参数列表，保存了参数的名称
@@ -104,6 +106,7 @@ class SimpleStrategy(CtaTemplate):
         """收到行情TICK推送（必须由用户继承实现）"""
         # 撤销未成交的单
         self.cancelAll()
+        self.offsetOrderPrice = EMPTY_FLOAT
 
         if (not self.todayDate) or (datetime.strptime(self.todayDate, '%Y-%m-%d').date() != tick.datetime.date()):
             # 早盘第一个tick收到后信号初始化
@@ -115,7 +118,8 @@ class SimpleStrategy(CtaTemplate):
         if self.pos == 0:
             self.highPrice = EMPTY_FLOAT
             self.lowPrice = EMPTY_FLOAT
-            self.entryPrice = 0
+            self.entryOrderPrice = EMPTY_FLOAT
+
             # 当前仓位为空才会做新的开仓信号判断
             if (self.startPrice == 0) and (tick.datetime.time() >= self.startTime) and (tick.datetime.time() < self.endTime):
                 self.startPrice = tick.lastPrice
@@ -128,19 +132,24 @@ class SimpleStrategy(CtaTemplate):
                 if sub > 0:
                     # 开仓多头
                     self.buy(tick.lastPrice + 10, self.tradeSize)  # 限价单
+                    self.entryOrderPrice = tick.lastPrice
                 elif sub < 0:
                     # 开仓空头
                     self.short(tick.lastPrice - 10, self.tradeSize)  # 限价单
+                    self.entryOrderPrice = tick.lastPrice
+
         elif self.pos > 0:
             # 持有多头仓位
             if tick.lastPrice <= self.highPrice * (1 - self.outPercent / 100):
                 # 止盈止损
                 self.sell(tick.lastPrice - 10, abs(self.pos))  # 限价单
+                self.offsetOrderPrice = tick.lastPrice
         elif self.pos < 0:
             # 持有空头仓位
             if tick.lastPrice >= self.lowPrice * (1 + self.outPercent / 100):
                 # 止盈止损
                 self.cover(tick.lastPrice + 10, abs(self.pos))  # 限价单
+                self.offsetOrderPrice = tick.lastPrice
 
         if self.pos:
             self.highPrice = max(self.highPrice, tick.lastPrice)
@@ -211,7 +220,7 @@ class SimpleStrategy(CtaTemplate):
             '''
 
             #另开线程进行盈亏记录操作
-            newThread = threading.Thread(target=self.saveEarning, args=(offsetEarning, (self.todayDate + ' ' + trade.tradeTime), self.entryPrice, entryDirect, outPrice, trade.volume))
+            newThread = threading.Thread(target=self.saveEarning, args=(offsetEarning, (self.todayDate + ' ' + trade.tradeTime), self.entryOrderPrice, self.entryPrice, entryDirect, self.offsetOrderPrice, outPrice, trade.volume))
             #开启线程守护（当主线程挂起时，无论子线程有没有执行完都会随主线程挂起）
             #newThread.setDaemon(True)
             newThread.start()
@@ -223,7 +232,7 @@ class SimpleStrategy(CtaTemplate):
         """停止单推送"""
         pass
 
-    def saveEarning(self, offsetEarning = EMPTY_FLOAT, offsetTime = EMPTY_STRING, entryPrice = EMPTY_FLOAT, entryDirect = EMPTY_STRING, offsetPrice = EMPTY_FLOAT, offsetVolume = EMPTY_INT):
+    def saveEarning(self, offsetEarning = EMPTY_FLOAT, offsetTime = EMPTY_STRING, entryOrderPrice = EMPTY_FLOAT, entryPrice = EMPTY_FLOAT, entryDirect = EMPTY_STRING, offsetOrderPrice = EMPTY_FLOAT, offsetPrice = EMPTY_FLOAT, offsetVolume = EMPTY_INT):
         # 每日盈亏记录
         if self.test:
             fileName = self.name + '_' + self.vtSymbol + '_test'
@@ -238,8 +247,10 @@ class SimpleStrategy(CtaTemplate):
         toltalEarning += offsetEarning
         content = collections.OrderedDict()
         content['时间'] = offsetTime
+        content['开仓委托价'] = entryOrderPrice
         content['开仓价'] = entryPrice
         content['头寸'] = entryDirect
+        content['平仓委托价'] = offsetOrderPrice
         content['平仓价'] = offsetPrice
         content['成交量'] = offsetVolume
         content['盈亏'] = offsetEarning
