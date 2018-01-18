@@ -89,6 +89,7 @@ if __name__ == '__main__':
 
         content = collections.OrderedDict()
         content['日期'] = '2018-01-09 06:06:06.666'
+        content['开仓委托价'] = 666
         content['开仓价'] = 3806
         content['头寸'] = '多'
         content['平仓价'] = 3808
