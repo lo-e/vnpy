@@ -13,21 +13,21 @@ class SimpleStrategy(CtaTemplate):
     author = u'loe'
 
     # 策略参数
-    '''
+    #'''
     test = False
     tradeSize = 1 # 交易数量
     startTime = time(22, 58, 26) # 趋势判断开始时间
     endTime =  time(22, 59, 56) # 趋势判断截至时间
     outPercent = 0.1 # 移动止盈止损百分比
-    '''
-
     #'''
+
+    '''
     test = True
     tradeSize = 1  # 交易数量
     startTime = time(0, 0, 0)  # 趋势判断开始时间
     endTime = time(0, 0, 0)  # 趋势判断截至时间
     outPercent = 0.1  # 移动止盈止损百分比
-    #'''
+    '''
 
 
     # 策略变量
