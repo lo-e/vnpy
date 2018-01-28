@@ -560,6 +560,7 @@ class CtaEngine(object):
         if name in self.strategyDict:
             strategy = self.strategyDict[name]
             self.saveSyncData(strategy)
+
         event = Event(EVENT_CTA_STRATEGY+name)
         self.eventEngine.put(event)
         

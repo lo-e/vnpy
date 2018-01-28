@@ -266,11 +266,18 @@ class BacktestingEngine(object):
     #----------------------------------------------------------------------
     def newTick(self, tick):
         """新的Tick"""
+        """ modify by loe """
+        if self.tick:
+            self.crossLimitOrder()
+            self.crossStopOrder()
+
         self.tick = tick
         self.dt = tick.datetime
-        
+
+        '''
         self.crossLimitOrder()
         self.crossStopOrder()
+        '''
         self.strategy.onTick(tick)
         
         self.updateDailyClose(tick.datetime, tick.lastPrice)
@@ -341,7 +348,10 @@ class BacktestingEngine(object):
                     self.strategy.pos -= order.totalVolume
                 
                 trade.volume = order.totalVolume
-                trade.tradeTime = self.dt.strftime('%H:%M:%S')
+
+                """ modify by loe """
+                trade.tradeTime = self.dt.strftime('%H:%M:%S.%f')
+
                 trade.dt = self.dt
                 self.strategy.onTrade(trade)
                 
@@ -404,7 +414,10 @@ class BacktestingEngine(object):
                 trade.direction = so.direction
                 trade.offset = so.offset
                 trade.volume = so.volume
-                trade.tradeTime = self.dt.strftime('%H:%M:%S')
+
+                """ modify by loe """
+                trade.tradeTime = self.dt.strftime('%H:%M:%S.%f')
+
                 trade.dt = self.dt
                 
                 self.tradeDict[tradeID] = trade
