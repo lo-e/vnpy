@@ -17,6 +17,9 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+""" modify by loe """
+from time import time
+
 # 如果安装了seaborn则设置为白色风格
 try:
     import seaborn as sns       
@@ -223,7 +226,10 @@ class BacktestingEngine(object):
         """运行回测"""
         # 载入历史数据
         self.loadHistoryData()
-        
+
+        """ modify by loe """
+        startTime = time()
+
         # 首先根据回测模式，确认要使用的数据类
         if self.mode == self.BAR_MODE:
             dataClass = VtBarData
@@ -247,10 +253,14 @@ class BacktestingEngine(object):
         for d in self.dbCursor:
             data = dataClass()
             data.__dict__ = d
-            func(data)     
-            
+            func(data)
+
         self.output(u'数据回放结束')
-        
+
+        """ modify by loe """
+        sub = time() - startTime
+        self.output(u'用时：%fs' % sub)
+
     #----------------------------------------------------------------------
     def newBar(self, bar):
         """新的K线"""
