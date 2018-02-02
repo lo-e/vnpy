@@ -95,4 +95,5 @@ if __name__ == '__main__':
         content['平仓价'] = 3808
         content['盈亏'] = offsetEarning
         content['累计盈亏'] = toltalEarning
+        content['备注'] =  ''
         manager.updateDailyEarning(fileName, content)

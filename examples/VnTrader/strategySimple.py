@@ -1,6 +1,6 @@
 # coding: utf8
 
-from examples.VnTrader.strategyEarning.stgEarningManager import stgEarningManager
+from strategyEarning.stgEarningManager import stgEarningManager
 from datetime import datetime, time
 from vnpy.trader.vtConstant import EMPTY_STRING, EMPTY_FLOAT, EMPTY_UNICODE, EMPTY_INT
 from vnpy.trader.app.ctaStrategy.ctaTemplate import (CtaTemplate)
@@ -109,7 +109,6 @@ class SimpleStrategy(CtaTemplate):
         """收到行情TICK推送（必须由用户继承实现）"""
         # 撤销未成交的单
         self.cancelAll()
-        self.offsetOrderPrice = EMPTY_FLOAT
 
         if (not self.todayDate) or (datetime.strptime(self.todayDate, '%Y-%m-%d').date() != tick.datetime.date()):
             # 早盘第一个tick收到后信号初始化
@@ -123,6 +122,7 @@ class SimpleStrategy(CtaTemplate):
             self.lowPrice = EMPTY_FLOAT
             self.entryPrice = EMPTY_FLOAT
             self.entryOrderPrice = EMPTY_FLOAT
+            self.offsetOrderPrice = EMPTY_FLOAT
 
             # 当前仓位为空才会做新的开仓信号判断
             if (self.startPrice == 0) and (tick.datetime.time() >= self.startTime) and (tick.datetime.time() < self.endTime):
@@ -240,6 +240,7 @@ class SimpleStrategy(CtaTemplate):
         content['成交量'] = offsetVolume
         content['盈亏'] = offsetEarning
         content['累计盈亏'] = toltalEarning
+        content['备注'] = ''
         earningManager.updateDailyEarning(fileName, content)
 
     def autoAgainForTest(self):
