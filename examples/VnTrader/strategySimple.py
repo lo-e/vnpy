@@ -6,11 +6,14 @@ from vnpy.trader.vtConstant import EMPTY_STRING, EMPTY_FLOAT, EMPTY_UNICODE, EMP
 from vnpy.trader.app.ctaStrategy.ctaTemplate import (CtaTemplate)
 import collections
 import threading
+from vnpy.trader.app.ctaStrategy.ctaBacktesting import BacktestingEngine, OptimizationSetting
+from vnpy.trader.app.ctaStrategy.ctaBase import TICK_DB_NAME
 
 class SimpleStrategy(CtaTemplate):
     """根据夜盘收盘前的价格趋势开仓入场，移动百分比离场"""
     className = 'SimpleStrategy'
     author = u'loe'
+    earningManager = None
 
     # 策略参数
     #'''
@@ -19,6 +22,7 @@ class SimpleStrategy(CtaTemplate):
     startTime = time(22, 58, 26) # 趋势判断开始时间
     endTime =  time(22, 59, 56) # 趋势判断截至时间
     outPercent = 0.1 # 移动止盈止损百分比
+    openLen = 1  # 开仓趋势过滤
     #'''
 
     '''
@@ -26,7 +30,8 @@ class SimpleStrategy(CtaTemplate):
     tradeSize = 1  # 交易数量
     startTime = time(0, 0, 0)  # 趋势判断开始时间
     endTime = time(0, 0, 0)  # 趋势判断截至时间
-    outPercent = 0.1  # 移动止盈止损百分比
+    outPercent = 0.05  # 移动止盈止损百分比
+    openLen = 1  # 开仓趋势过滤
     '''
 
 
@@ -37,6 +42,7 @@ class SimpleStrategy(CtaTemplate):
     lowPrice = EMPTY_FLOAT # 持仓后的最低价， 为了空头止盈止损的计算
     todayDate = EMPTY_STRING  # 当前日期
     todayEntry = False  # 当天是否已经交易
+    ordering = False  # 有未成交的委托
 
     entryOrderPrice = EMPTY_FLOAT # 开仓委托价
     offsetOrderPrice = EMPTY_FLOAT  # 平仓委托价
@@ -50,7 +56,8 @@ class SimpleStrategy(CtaTemplate):
                  'tradeSize',
                  'startTime',
                  'endTime',
-                 'outPercent']
+                 'outPercent',
+                 'openLen']
 
     # 变量列表，保存了变量的名称
     varList = ['inited',
@@ -64,7 +71,8 @@ class SimpleStrategy(CtaTemplate):
                'lowPrice',
                'entryPrice',
                'entryOrderPrice',
-               'offsetOrderPrice']
+               'offsetOrderPrice',
+               'ordering']
 
     # 同步列表
     syncList = ['pos',
@@ -75,7 +83,8 @@ class SimpleStrategy(CtaTemplate):
                 'highPrice',
                 'lowPrice',
                 'entryPrice',
-                'entryOrderPrice']
+                'entryOrderPrice',
+                'ordering']
 
     # ----------------------------------------------------------------------
     def __init__(self, ctaEngine, setting):
@@ -107,10 +116,10 @@ class SimpleStrategy(CtaTemplate):
     # ----------------------------------------------------------------------
     def onTick(self, tick):
         """收到行情TICK推送（必须由用户继承实现）"""
-        # 撤销未成交的单
-        self.cancelAll()
-
         if (not self.todayDate) or (datetime.strptime(self.todayDate, '%Y-%m-%d').date() != tick.datetime.date()):
+            # 撤销未成交的单
+            self.cancelAll()
+            self.ordering = False
             # 早盘第一个tick收到后信号初始化
             self.todayDate = tick.datetime.strftime('%Y-%m-%d')
             self.todayEntry = False
@@ -131,32 +140,38 @@ class SimpleStrategy(CtaTemplate):
             if (self.endPrice == 0) and (tick.datetime.time() >= self.endTime):
                 self.endPrice = tick.lastPrice
 
-            if self.startPrice and self.endPrice and (not self.todayEntry):
+            if self.startPrice and self.endPrice and (not self.ordering) and (not self.todayEntry):
                 sub = self.endPrice - self.startPrice
-                if sub > 0:
+                if sub >= self.openLen:
                     # 开仓多头
                     self.buy(tick.lastPrice + 10, self.tradeSize)  # 限价单
                     self.entryOrderPrice = tick.lastPrice
-                elif sub < 0:
+                    self.ordering = True
+                    self.writeCtaLog(u'开仓多头 %s' % tick.time)
+                elif sub <= -self.openLen:
                     # 开仓空头
                     self.short(tick.lastPrice - 10, self.tradeSize)  # 限价单
                     self.entryOrderPrice = tick.lastPrice
+                    self.ordering = True
+                    self.writeCtaLog(u'开仓空头 %s' % tick.time)
 
             if (self.startPrice != 0) and (self.endPrice != 0) and (self.startPrice == self.endPrice) and self.test:
                 self.autoAgainForTest()
 
         elif self.pos > 0:
             # 持有多头仓位
-            if tick.lastPrice <= self.highPrice * (1 - self.outPercent / 100):
+            if (tick.lastPrice <= self.highPrice * (1 - self.outPercent / 100)) and ( not self.ordering):
                 # 止盈止损
-                self.sell(tick.lastPrice - 10, abs(self.pos))  # 限价单
+                self.sell(tick.lastPrice - 20, abs(self.pos))  # 限价单
                 self.offsetOrderPrice = tick.lastPrice
+                self.ordering = True
         elif self.pos < 0:
             # 持有空头仓位
-            if tick.lastPrice >= self.lowPrice * (1 + self.outPercent / 100):
+            if (tick.lastPrice >= self.lowPrice * (1 + self.outPercent / 100)) and ( not self.ordering):
                 # 止盈止损
-                self.cover(tick.lastPrice + 10, abs(self.pos))  # 限价单
+                self.cover(tick.lastPrice + 20, abs(self.pos))  # 限价单
                 self.offsetOrderPrice = tick.lastPrice
+                self.ordering = True
 
         if self.pos:
             self.highPrice = max(self.highPrice, tick.lastPrice)
@@ -178,6 +193,7 @@ class SimpleStrategy(CtaTemplate):
     # ----------------------------------------------------------------------
     def onTrade(self, trade):
         """收到成交推送（必须由用户继承实现）"""
+        self.ordering = False
         if trade.offset == u'开仓':
             self.todayEntry = True
             self.highPrice = trade.price
@@ -219,12 +235,16 @@ class SimpleStrategy(CtaTemplate):
 
     def saveEarning(self, offsetEarning = EMPTY_FLOAT, offsetTime = EMPTY_STRING, entryOrderPrice = EMPTY_FLOAT, entryPrice = EMPTY_FLOAT, entryDirect = EMPTY_STRING, offsetOrderPrice = EMPTY_FLOAT, offsetPrice = EMPTY_FLOAT, offsetVolume = EMPTY_INT):
         # 每日盈亏记录
+        if not self.vtSymbol:
+            return
+
         if self.test:
             fileName = self.name + '_' + self.vtSymbol + '_test'
         else:
             fileName = self.name + '_' + self.vtSymbol
-        earningManager = stgEarningManager()
-        hisData = earningManager.loadDailyEarning(fileName)
+        if not self.earningManager:
+            self.earningManager = stgEarningManager()
+        hisData = self.earningManager.loadDailyEarning(fileName)
         toltalEarning = EMPTY_FLOAT
         if len(hisData):
             toltalEarning = float(hisData[-1]['累计盈亏'])
@@ -241,7 +261,7 @@ class SimpleStrategy(CtaTemplate):
         content['盈亏'] = offsetEarning
         content['累计盈亏'] = toltalEarning
         content['备注'] = ''
-        earningManager.updateDailyEarning(fileName, content)
+        self.earningManager.updateDailyEarning(fileName, content)
 
     def autoAgainForTest(self):
         nowTime = datetime.now().time()
@@ -261,4 +281,72 @@ class SimpleStrategy(CtaTemplate):
         self.startTime = nowTime.replace(hour=startHour, minute=startMinute)
         self.endTime = nowTime.replace(hour=endHour, minute=endMinute)
         self.todayDate = EMPTY_STRING
+
+
+#===================================回测==================================
+def GetEngin(settingDict, symbol,
+                   startDate, endDate, slippage,
+                   rate, size, priceTick, capital):
+    """运行单标的回测"""
+    # 创建回测引擎实例
+    engine = BacktestingEngine()
+
+    # 设置引擎的回测模式为Tick
+    engine.setBacktestingMode(engine.TICK_MODE)
+
+    # 设置使用的数据库
+    engine.setDatabase(TICK_DB_NAME, symbol)
+
+    # 设置回测的起始日期
+    engine.setStartDate(startDate, initDays=0)
+
+    # 设置回测的截至日期
+    engine.setEndDate(endDate)
+
+    # 滑点设置
+    engine.setSlippage(slippage)
+
+    # 合约交易手续费
+    engine.setRate(rate)
+
+    # 合约每手数量
+    engine.setSize(size)
+
+    # 合约最小价格变动
+    engine.setPriceTick(priceTick)
+
+    # 起始资金
+    engine.setCapital(capital)
+
+    # 引擎中创建策略对象
+    engine.initStrategy(SimpleStrategy, settingDict)
+
+    return  engine
+
+if __name__ == '__main__':
+    engine = GetEngin({'openLen': 0}, 'rb00.TB',
+                      '20160506', '20180206', 0,
+                      1.3 / 10000, 10, 1, 6000)
+
+    '''
+    # 参数优化
+    setting = OptimizationSetting()                             # 新建一个优化任务设置对象
+    setting.setOptimizeTarget('sharpeRatio')                    # 设置优化排序的目标是策略夏普比率
+    setting.addParameter('openLen', 0, 6, 1)                    # 优化参数openLen，起始0，结束1，步进1
+    #setting.addParameter('outPercent', 0.1, 0.1, 0.1)          # 增加优化参数
+    start = datetime.now()
+    engine.runParallelOptimization(SimpleStrategy, setting)
+    print datetime.now() - start
+    '''
+
+
+    #'''
+    # 回测
+    engine.strategy.name = 'Simple'
+    engine.strategy.vtSymbol = engine.symbol
+    engine.runBacktesting()
+    df = engine.calculateDailyResult()
+    df, result = engine.calculateDailyStatistics(df)
+    engine.showDailyResult(df, result)
+    #'''
 
