@@ -341,6 +341,17 @@ class BarManager(object):
         self.onXminBar = onXminBar  # X分钟K线的回调函数
         
         self.lastTick = None        # 上一TICK缓存对象
+
+    """ modify by loe """
+    def manualInit(self):
+        if self.bar:
+            self.onBar(self.bar)
+        if self.xminBar:
+            self.onXminBar(self.xminBar)
+
+        self.bar = None
+        self.xminBar = None
+        self.lastTick = None
         
     #----------------------------------------------------------------------
     def updateTick(self, tick):
