@@ -21,8 +21,9 @@ class SimpleStrategy(CtaTemplate):
     tradeSize = 1 # 交易数量
     startTime = time(22, 58, 26) # 趋势判断开始时间
     endTime =  time(22, 59, 56) # 趋势判断截至时间
-    outPercent = 0.1 # 移动止盈止损百分比
-    openLen = 1  # 开仓趋势过滤
+    openPercent = 0.14  # 开仓趋势过滤
+    outPercent = 0.14 # 移动止盈止损百分比
+    tickPrice = 1 # 合约价格最小波动
     #'''
 
     '''
@@ -30,8 +31,9 @@ class SimpleStrategy(CtaTemplate):
     tradeSize = 1  # 交易数量
     startTime = time(0, 0, 0)  # 趋势判断开始时间
     endTime = time(0, 0, 0)  # 趋势判断截至时间
-    outPercent = 0.05  # 移动止盈止损百分比
-    openLen = 1  # 开仓趋势过滤
+    openPercent = 0.14  # 开仓趋势过滤
+    outPercent = 0.14  # 移动止盈止损百分比
+    tickPrice = 1 # 合约价格最小波动
     '''
 
 
@@ -56,8 +58,9 @@ class SimpleStrategy(CtaTemplate):
                  'tradeSize',
                  'startTime',
                  'endTime',
+                 'openPercent',
                  'outPercent',
-                 'openLen']
+                 'tickPrice']
 
     # 变量列表，保存了变量的名称
     varList = ['inited',
@@ -137,20 +140,20 @@ class SimpleStrategy(CtaTemplate):
             if (self.startPrice == 0) and (tick.datetime.time() >= self.startTime) and (tick.datetime.time() < self.endTime):
                 self.startPrice = tick.lastPrice
 
-            if (self.endPrice == 0) and (tick.datetime.time() >= self.endTime):
+            if (self.endPrice == 0) and (tick.datetime.time() >= self.endTime) and (tick.datetime.time() < self.endTime.replace(second = self.endTime.second+2)):
                 self.endPrice = tick.lastPrice
 
             if self.startPrice and self.endPrice and (not self.ordering) and (not self.todayEntry):
                 sub = self.endPrice - self.startPrice
-                if sub >= self.openLen:
+                if (sub >= self.startPrice * self.openPercent / 100) and self.trading:
                     # 开仓多头
-                    self.buy(tick.lastPrice + 10, self.tradeSize)  # 限价单
+                    self.buy(tick.lastPrice + self.tickPrice*10, self.tradeSize)  # 限价单
                     self.entryOrderPrice = tick.lastPrice
                     self.ordering = True
                     self.writeCtaLog(u'开仓多头 %s' % tick.time)
-                elif sub <= -self.openLen:
+                elif (sub <= -self.startPrice * self.openPercent / 100) and self.trading:
                     # 开仓空头
-                    self.short(tick.lastPrice - 10, self.tradeSize)  # 限价单
+                    self.short(tick.lastPrice - self.tickPrice*10, self.tradeSize)  # 限价单
                     self.entryOrderPrice = tick.lastPrice
                     self.ordering = True
                     self.writeCtaLog(u'开仓空头 %s' % tick.time)
@@ -160,16 +163,16 @@ class SimpleStrategy(CtaTemplate):
 
         elif self.pos > 0:
             # 持有多头仓位
-            if (tick.lastPrice <= self.highPrice * (1 - self.outPercent / 100)) and ( not self.ordering):
+            if (tick.lastPrice <= self.highPrice * (1 - self.outPercent / 100)) and ( not self.ordering) and self.trading:
                 # 止盈止损
-                self.sell(tick.lastPrice - 20, abs(self.pos))  # 限价单
+                self.sell(tick.lastPrice - self.tickPrice*20, abs(self.pos))  # 限价单
                 self.offsetOrderPrice = tick.lastPrice
                 self.ordering = True
         elif self.pos < 0:
             # 持有空头仓位
-            if (tick.lastPrice >= self.lowPrice * (1 + self.outPercent / 100)) and ( not self.ordering):
+            if (tick.lastPrice >= self.lowPrice * (1 + self.outPercent / 100)) and ( not self.ordering) and self.trading:
                 # 止盈止损
-                self.cover(tick.lastPrice + 20, abs(self.pos))  # 限价单
+                self.cover(tick.lastPrice + self.tickPrice*20, abs(self.pos))  # 限价单
                 self.offsetOrderPrice = tick.lastPrice
                 self.ordering = True
 
@@ -324,16 +327,21 @@ def GetEngin(settingDict, symbol,
     return  engine
 
 if __name__ == '__main__':
-    engine = GetEngin({'openLen': 0}, 'rb00.TB',
+    tickPrice = 1
+    #setting = {'openLen': 4*tickPrice, 'tickPrice': tickPrice}
+    #setting = {'outPercent':0.14}
+    setting = {'openPercent': 0.14}
+    engine = GetEngin(setting, 'rb00.TB',
                       '20160506', '20180206', 0,
-                      1.3 / 10000, 10, 1, 6000)
+                      1.1 / 10000, 10, tickPrice, 6000)
 
     '''
-    # 参数优化
-    setting = OptimizationSetting()                             # 新建一个优化任务设置对象
-    setting.setOptimizeTarget('sharpeRatio')                    # 设置优化排序的目标是策略夏普比率
-    setting.addParameter('openLen', 0, 6, 1)                    # 优化参数openLen，起始0，结束1，步进1
-    #setting.addParameter('outPercent', 0.1, 0.1, 0.1)          # 增加优化参数
+    # 参数优化【总收益率totalReturn 总盈亏totalNetPnl 夏普比率sharpeRatio】
+    setting = OptimizationSetting()                                                     # 新建一个优化任务设置对象
+    setting.setOptimizeTarget('totalNetPnl')                                            # 设置优化排序的目标是策略夏普比率
+    #setting.addParameter('openLen', 1*tickPrice, 6*tickPrice, tickPrice)               # 优化参数openLen，起始0，结束1，步进1
+    #setting.addParameter('outPercent', 0.13, 0.15, 0.01)                               # 增加优化参数
+    setting.addParameter('openPercent', 0.11, 0.17, 0.01)
     start = datetime.now()
     engine.runParallelOptimization(SimpleStrategy, setting)
     print datetime.now() - start
@@ -342,7 +350,7 @@ if __name__ == '__main__':
 
     #'''
     # 回测
-    engine.strategy.name = 'Simple'
+    engine.strategy.name = 'simple'
     engine.strategy.vtSymbol = engine.symbol
     engine.runBacktesting()
     df = engine.calculateDailyResult()

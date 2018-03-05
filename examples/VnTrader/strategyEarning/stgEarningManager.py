@@ -75,7 +75,7 @@ if __name__ == '__main__':
     print u'1: load \n2: update'
     type = int(raw_input('action:'))
     if type == 1:
-        result = manager.loadDailyEarning(name = 'test')
+        result = manager.loadDailyEarning(name = 'simple_rb1805')
         print result
     elif type == 2:
         # 每日盈亏记录
