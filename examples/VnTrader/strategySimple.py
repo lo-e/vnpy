@@ -19,18 +19,20 @@ class SimpleStrategy(CtaTemplate):
     #'''
     test = False
     tradeSize = 1 # 交易数量
-    startTime = time(22, 58, 26) # 趋势判断开始时间
-    endTime =  time(22, 59, 56) # 趋势判断截至时间
+    startSecond = 23
+    startTime = None  # 趋势判断开始时间
+    endTime = None  # 趋势判断截至时间
     openPercent = 0.14  # 开仓趋势过滤
-    outPercent = 0.14 # 移动止盈止损百分比
+    outPercent = 0.16 # 移动止盈止损百分比
     tickPrice = 1 # 合约价格最小波动
     #'''
 
     '''
     test = True
     tradeSize = 1  # 交易数量
-    startTime = time(0, 0, 0)  # 趋势判断开始时间
-    endTime = time(0, 0, 0)  # 趋势判断截至时间
+    startSecond = 26
+    startTime = None  # 趋势判断开始时间
+    endTime = None  # 趋势判断截至时间
     openPercent = 0.14  # 开仓趋势过滤
     outPercent = 0.14  # 移动止盈止损百分比
     tickPrice = 1 # 合约价格最小波动
@@ -56,6 +58,7 @@ class SimpleStrategy(CtaTemplate):
                  'author',
                  'vtSymbol',
                  'tradeSize',
+                 'startSecond',
                  'startTime',
                  'endTime',
                  'openPercent',
@@ -93,6 +96,8 @@ class SimpleStrategy(CtaTemplate):
     def __init__(self, ctaEngine, setting):
         """Constructor"""
         super(SimpleStrategy, self).__init__(ctaEngine, setting)
+        self.startTime = time(22, 58, self.startSecond)  # 趋势判断开始时间
+        self.endTime = time(22, 59, 56)  # 趋势判断截至时间
         if self.test:
             self.autoAgainForTest()
 
@@ -119,6 +124,8 @@ class SimpleStrategy(CtaTemplate):
     # ----------------------------------------------------------------------
     def onTick(self, tick):
         """收到行情TICK推送（必须由用户继承实现）"""
+        self.vtSymbol = tick.vtSymbol
+
         if (not self.todayDate) or (datetime.strptime(self.todayDate, '%Y-%m-%d').date() != tick.datetime.date()):
             # 撤销未成交的单
             self.cancelAll()
@@ -238,13 +245,19 @@ class SimpleStrategy(CtaTemplate):
 
     def saveEarning(self, offsetEarning = EMPTY_FLOAT, offsetTime = EMPTY_STRING, entryOrderPrice = EMPTY_FLOAT, entryPrice = EMPTY_FLOAT, entryDirect = EMPTY_STRING, offsetOrderPrice = EMPTY_FLOAT, offsetPrice = EMPTY_FLOAT, offsetVolume = EMPTY_INT):
         # 每日盈亏记录
+        '''
+        优化参数用（不是优化参数注释）
+        '''
+        #return
+
         if not self.vtSymbol:
             return
 
         if self.test:
-            fileName = self.name + '_' + self.vtSymbol + '_test'
+            fileName = self.name + '_test'
         else:
-            fileName = self.name + '_' + self.vtSymbol
+            fileName = self.name
+
         if not self.earningManager:
             self.earningManager = stgEarningManager()
         hisData = self.earningManager.loadDailyEarning(fileName)
@@ -255,6 +268,7 @@ class SimpleStrategy(CtaTemplate):
         toltalEarning += offsetEarning
         content = collections.OrderedDict()
         content['时间'] = offsetTime
+        content['合约'] = self.vtSymbol
         content['开仓委托价'] = entryOrderPrice
         content['开仓价'] = entryPrice
         content['头寸'] = entryDirect
@@ -330,18 +344,20 @@ if __name__ == '__main__':
     tickPrice = 1
     #setting = {'openLen': 4*tickPrice, 'tickPrice': tickPrice}
     #setting = {'outPercent':0.14}
-    setting = {'openPercent': 0.14}
+    #setting = {'openPercent': 0.14}
+    setting = {'startSecond': 23}
     engine = GetEngin(setting, 'rb00.TB',
                       '20160506', '20180206', 0,
-                      1.1 / 10000, 10, tickPrice, 6000)
+                      1.07 / 10000, 10, tickPrice, 6000)
 
     '''
     # 参数优化【总收益率totalReturn 总盈亏totalNetPnl 夏普比率sharpeRatio】
     setting = OptimizationSetting()                                                     # 新建一个优化任务设置对象
     setting.setOptimizeTarget('totalNetPnl')                                            # 设置优化排序的目标是策略夏普比率
     #setting.addParameter('openLen', 1*tickPrice, 6*tickPrice, tickPrice)               # 优化参数openLen，起始0，结束1，步进1
-    #setting.addParameter('outPercent', 0.13, 0.15, 0.01)                               # 增加优化参数
-    setting.addParameter('openPercent', 0.11, 0.17, 0.01)
+    #setting.addParameter('outPercent', 0.15, 0.17, 0.01)                               # 增加优化参数
+    #setting.addParameter('openPercent', 0.15, 0.16, 0.01)
+    setting.addParameter('startSecond', 21, 26, 1)
     start = datetime.now()
     engine.runParallelOptimization(SimpleStrategy, setting)
     print datetime.now() - start
@@ -350,7 +366,7 @@ if __name__ == '__main__':
 
     #'''
     # 回测
-    engine.strategy.name = 'simple'
+    engine.strategy.name = 'simple_backtesting'
     engine.strategy.vtSymbol = engine.symbol
     engine.runBacktesting()
     df = engine.calculateDailyResult()

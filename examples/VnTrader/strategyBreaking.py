@@ -1,7 +1,7 @@
 # coding: utf8
 
 from strategyEarning.stgEarningManager import stgEarningManager
-#from datetime import datetime, time
+from datetime import datetime
 from vnpy.trader.vtConstant import EMPTY_STRING, EMPTY_FLOAT, EMPTY_UNICODE, EMPTY_INT
 from vnpy.trader.app.ctaStrategy.ctaTemplate import (CtaTemplate,
                                                      BarManager,
@@ -17,15 +17,14 @@ class BreakingStrategy(CtaTemplate):
     author = u'loe'
 
     # 策略参数
-    kLine = 15 #几分钟k线
-    bollWindow = 18  # 布林通道窗口数
-    bollDev = 3.4  # 布林通道的偏差
-    cciWindow = 10  # CCI窗口数
-    atrWindow = 30  # ATR窗口数
-    slMultiplier = 5.2  # 计算止损距离的乘数
+    kLine = 28 # 几分钟k线
+    window = 23 # 回望窗口数
+    bollDev = 2.0  # 布林通道的偏差
+    slMultiplier = 2.0  # 计算止损距离的乘数
     fixedSize = 1  # 每次交易的数量
 
     # 策略变量
+    currentSymbol = EMPTY_STRING
     bollUp = 0  # 布林通道上轨
     bollDown = 0  # 布林通道下轨
     cciValue = 0  # CCI指标数值
@@ -42,10 +41,8 @@ class BreakingStrategy(CtaTemplate):
                  'author',
                  'vtSymbol',
                  'kLine',
-                 'bollWindow',
+                 'window',
                  'bollDev',
-                 'cciWindow',
-                 'atrWindow',
                  'slMultiplier',
                  'fixedSize']
 
@@ -72,6 +69,10 @@ class BreakingStrategy(CtaTemplate):
         """Constructor"""
         super(BreakingStrategy, self).__init__(ctaEngine, setting)
 
+        self.bollWindow = self.window    # 布林通道窗口数
+        self.cciWindow = self.window     # CCI窗口数
+        self.atrWindow = self.window     # ATR窗口数
+
         self.bm = BarManager(self.onBar, self.kLine, self.onXminBar)  # 创建K线合成器对象
         self.am = ArrayManager()
 
@@ -82,8 +83,8 @@ class BreakingStrategy(CtaTemplate):
         self.writeCtaLog(u'%s策略初始化' % self.name)
         # 载入历史数据，并采用回放计算的方式初始化策略数值
         initData = self.loadTick(0)
-        for tick in initData:
-            self.onTick(tick)
+        for bar in initData:
+            self.onBar(bar)
 
         # 发出状态更新事件
         self.putEvent()
@@ -110,12 +111,16 @@ class BreakingStrategy(CtaTemplate):
     # ----------------------------------------------------------------------
     def onBar(self, bar):
         """收到Bar推送（必须由用户继承实现）"""
-        self.bm.updateBar(bar)
+        self.onXminBar(bar)
 
     def onXminBar(self, bar):
         """收到X分钟K线"""
         # 全撤之前发出的委托
         self.cancelAll()
+
+        if not self.currentSymbol or self.currentSymbol != bar.vtSymbol:
+            self.am = ArrayManager()
+            self.currentSymbol = bar.vtSymbol
 
         # 保存K线数据
         am = self.am
@@ -180,18 +185,19 @@ class BreakingStrategy(CtaTemplate):
         pass
 
 #===================================回测==================================
-def GetEngin(settingDict, symbol,
+def GetEngin(settingDict, symbol, kLine,
                    startDate, endDate, slippage,
                    rate, size, priceTick, capital):
     """运行单标的回测"""
     # 创建回测引擎实例
     engine = BacktestingEngine()
 
-    # 设置引擎的回测模式为Tick
-    engine.setBacktestingMode(engine.TICK_MODE)
+    # 设置引擎的回测模式为Bar
+    engine.setBacktestingMode(engine.BAR_MODE)
 
-    # 设置使用的数据库
-    engine.setDatabase(TICK_DB_NAME, symbol)
+    #设置回测数据来源数据库
+    barDbName = 'VnTrader_%ldMin_Db' % kLine
+    engine.setDatabase(barDbName, symbol)
 
     # 设置回测的起始日期
     engine.setStartDate(startDate, initDays=10)
@@ -220,37 +226,36 @@ def GetEngin(settingDict, symbol,
     return  engine
 
 if __name__ == '__main__':
-    tickPrice = 1
-    setting = {'kLine': 16,
-               'bollWindow': 20,
+    kLine = 28
+    window = 23
+    setting = {'kLine': kLine,
+               'window': window,
                'bollDev': 2,
-               'cciWindow': 20,
-               'atrWindow': 20,
                'slMultiplier': 2}
-    engine = GetEngin(setting, 'rb00.TB',
-                      '20171226', '20180206', 0,
-                      1.1 / 10000, 10, tickPrice, 6000)
-
-    '''
-    # 参数优化【总收益率totalReturn 总盈亏totalNetPnl 夏普比率sharpeRatio】
-    setting = OptimizationSetting()                                                     # 新建一个优化任务设置对象
-    setting.setOptimizeTarget('totalNetPnl')                                            # 设置优化排序的目标是策略夏普比率
-    #setting.addParameter('openLen', 1*tickPrice, 6*tickPrice, tickPrice)               # 优化参数openLen，起始0，结束1，步进1
-    #setting.addParameter('outPercent', 0.13, 0.15, 0.01)                               # 增加优化参数
-    setting.addParameter('openPercent', 0.11, 0.17, 0.01)
-    start = datetime.now()
-    engine.runParallelOptimization(SimpleStrategy, setting)
-    print datetime.now() - start
-    '''
-
+    engine = GetEngin(setting, 'rb00.TB', kLine,
+                      '20101102', '20180206', 0,
+                      1.1 / 10000, 10, 1, 6000)
 
     #'''
+    # 参数优化【总收益率totalReturn 总盈亏totalNetPnl 夏普比率sharpeRatio 最大回撤maxDrawdown】
+    setting = OptimizationSetting()                                                     # 新建一个优化任务设置对象
+    setting.setOptimizeTarget('maxDrawdown')                                            # 设置优化排序的目标是策略夏普比率
+    setting.addParameter('bollDev', 2.0, 3.0, 0.1)                                            # 优化参数openLen，起始0，结束1，步进1
+    setting.addParameter('slMultiplier', 2.0, 3.0, 0.1)                                       # 增加优化参数
+    #setting.addParameter('window', 20, 30, 1)
+    start = datetime.now()
+    engine.runParallelOptimization(BreakingStrategy, setting)
+    print datetime.now() - start
+    #'''
+
+
+    '''
     # 回测
-    engine.strategy.name = 'simple'
+    engine.strategy.name = 'breaking_backtesting'
     engine.strategy.vtSymbol = engine.symbol
     engine.runBacktesting()
     df = engine.calculateDailyResult()
     df, result = engine.calculateDailyStatistics(df)
     engine.showDailyResult(df, result)
-    #'''
+    '''
 

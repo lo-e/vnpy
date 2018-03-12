@@ -1094,8 +1094,14 @@ class BacktestingEngine(object):
         self.output(u'Sharpe Ratio：\t%s' % formatNumber(result['sharpeRatio']))
         
         # 绘图
-        fig = plt.figure(figsize=(10, 16))
-        
+        fig = plt.figure(figsize=(10, 6))
+
+        """ modify by loe """
+        pBalance = plt.subplot(1, 1, 1)
+        pBalance.set_title('earning')
+        df['balance'].plot(legend=True)
+
+        '''
         pBalance = plt.subplot(4, 1, 1)
         pBalance.set_title('Balance')
         df['balance'].plot(legend=True)
@@ -1111,7 +1117,8 @@ class BacktestingEngine(object):
         pKDE = plt.subplot(4, 1, 4)
         pKDE.set_title('Daily Pnl Distribution')
         df['netPnl'].hist(bins=50)
-        
+        '''
+
         plt.show()
        
         
