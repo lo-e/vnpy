@@ -17,6 +17,9 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+""" modify by loe """
+from time import time
+
 # 如果安装了seaborn则设置为白色风格
 try:
     import seaborn as sns       
@@ -223,6 +226,9 @@ class BacktestingEngine(object):
         """运行回测"""
         # 载入历史数据
         self.loadHistoryData()
+
+        """ modify by loe """
+        startTime = time()
         
         # 首先根据回测模式，确认要使用的数据类
         if self.mode == self.BAR_MODE:
@@ -250,6 +256,10 @@ class BacktestingEngine(object):
             func(data)     
             
         self.output(u'数据回放结束')
+
+        """ modify by loe """
+        sub = time() - startTime
+        self.output(u'用时：%fs' % sub)
         
     #----------------------------------------------------------------------
     def newBar(self, bar):
@@ -266,11 +276,18 @@ class BacktestingEngine(object):
     #----------------------------------------------------------------------
     def newTick(self, tick):
         """新的Tick"""
+        """ modify by loe """
+        if self.tick:
+            self.crossLimitOrder()
+            self.crossStopOrder()
+
         self.tick = tick
         self.dt = tick.datetime
-        
+
+        '''
         self.crossLimitOrder()
         self.crossStopOrder()
+        '''
         self.strategy.onTick(tick)
         
         self.updateDailyClose(tick.datetime, tick.lastPrice)
@@ -341,7 +358,10 @@ class BacktestingEngine(object):
                     self.strategy.pos -= order.totalVolume
                 
                 trade.volume = order.totalVolume
-                trade.tradeTime = self.dt.strftime('%H:%M:%S')
+
+                """ modify by loe """
+                trade.tradeTime = self.dt.strftime('%H:%M:%S.%f')
+
                 trade.dt = self.dt
                 self.strategy.onTrade(trade)
                 
@@ -404,7 +424,10 @@ class BacktestingEngine(object):
                 trade.direction = so.direction
                 trade.offset = so.offset
                 trade.volume = so.volume
-                trade.tradeTime = self.dt.strftime('%H:%M:%S')
+
+                """ modify by loe """
+                trade.tradeTime = self.dt.strftime('%H:%M:%S.%f')
+
                 trade.dt = self.dt
                 
                 self.tradeDict[tradeID] = trade
@@ -1072,7 +1095,13 @@ class BacktestingEngine(object):
         
         # 绘图
         fig = plt.figure(figsize=(10, 16))
-        
+
+        """ modify by loe """
+        pBalance = plt.subplot(1, 1, 1)
+        pBalance.set_title('earning')
+        df['balance'].plot(legend=True)
+
+        '''
         pBalance = plt.subplot(4, 1, 1)
         pBalance.set_title('Balance')
         df['balance'].plot(legend=True)
@@ -1088,6 +1117,7 @@ class BacktestingEngine(object):
         pKDE = plt.subplot(4, 1, 4)
         pKDE.set_title('Daily Pnl Distribution')
         df['netPnl'].hist(bins=50)
+        '''
         
         plt.show()
        

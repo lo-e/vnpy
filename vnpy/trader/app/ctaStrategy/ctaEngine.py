@@ -556,6 +556,11 @@ class CtaEngine(object):
     #----------------------------------------------------------------------
     def putStrategyEvent(self, name):
         """触发策略状态变化事件（通常用于通知GUI更新）"""
+        """ modify by loe """
+        if name in self.strategyDict:
+            strategy = self.strategyDict[name]
+            self.saveSyncData(strategy)
+
         event = Event(EVENT_CTA_STRATEGY+name)
         self.eventEngine.put(event)
         
