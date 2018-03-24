@@ -1,19 +1,14 @@
 {
     "name": "etf_portfolio", 
-    "model": "black",
+    "model": "bsCython",
     "underlying": [
         "510050"
     ],     
     "chain": [
         {
             "underlyingSymbol": "510050", 
-            "chainSymbol": "510050-1712", 
-            "r": 0.03
-        },
-        {
-            "underlyingSymbol": "510050", 
-            "chainSymbol": "510050-1801", 
-            "r": 0.03
+            "chainSymbol": "510050-1802", 
+            "r": 0.04
         },
         {
             "underlyingSymbol": "510050", 
@@ -23,6 +18,11 @@
         {
             "underlyingSymbol": "510050", 
             "chainSymbol": "510050-1806", 
+            "r": 0.03
+        },
+        {
+            "underlyingSymbol": "510050", 
+            "chainSymbol": "510050-1809", 
             "r": 0.03
         }
     ]

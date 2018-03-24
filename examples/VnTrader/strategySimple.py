@@ -1,6 +1,6 @@
 # coding: utf8
 
-from strategyEarning.stgEarningManager import stgEarningManager
+from vnpy.trader.app.ctaStrategy.stgEarningManager import stgEarningManager
 from datetime import datetime, time
 from vnpy.trader.vtConstant import EMPTY_STRING, EMPTY_FLOAT, EMPTY_UNICODE, EMPTY_INT
 from vnpy.trader.app.ctaStrategy.ctaTemplate import (CtaTemplate)
@@ -96,6 +96,7 @@ class SimpleStrategy(CtaTemplate):
     def __init__(self, ctaEngine, setting):
         """Constructor"""
         super(SimpleStrategy, self).__init__(ctaEngine, setting)
+        self.autoSaveStradeDetail = False
         self.startTime = time(22, 58, self.startSecond)  # 趋势判断开始时间
         self.endTime = time(22, 59, 56)  # 趋势判断截至时间
         if self.test:
@@ -124,8 +125,6 @@ class SimpleStrategy(CtaTemplate):
     # ----------------------------------------------------------------------
     def onTick(self, tick):
         """收到行情TICK推送（必须由用户继承实现）"""
-        self.vtSymbol = tick.vtSymbol
-
         if (not self.todayDate) or (datetime.strptime(self.todayDate, '%Y-%m-%d').date() != tick.datetime.date()):
             # 撤销未成交的单
             self.cancelAll()

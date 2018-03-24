@@ -2,18 +2,6 @@
 
 '''
 本文件中实现了CTA策略引擎，针对CTA类型的策略，抽象简化了部分底层接口的功能。
-
-关于平今和平昨规则：
-1. 普通的平仓OFFSET_CLOSET等于平昨OFFSET_CLOSEYESTERDAY
-2. 只有上期所的品种需要考虑平今和平昨的区别
-3. 当上期所的期货有今仓时，调用Sell和Cover会使用OFFSET_CLOSETODAY，否则
-   会使用OFFSET_CLOSE
-4. 以上设计意味着如果Sell和Cover的数量超过今日持仓量时，会导致出错（即用户
-   希望通过一个指令同时平今和平昨）
-5. 采用以上设计的原因是考虑到vn.trader的用户主要是对TB、MC和金字塔类的平台
-   感到功能不足的用户（即希望更高频的交易），交易策略不应该出现4中所述的情况
-6. 对于想要实现4中所述情况的用户，需要实现一个策略信号引擎和交易委托引擎分开
-   的定制化统结构（没错，得自己写）
 '''
 
 from __future__ import division
@@ -35,7 +23,9 @@ from vnpy.trader.vtFunction import todayDate, getJsonPath
 from .ctaBase import *
 from .strategy import STRATEGY_CLASS
 
-
+""" modify by loe """
+from vnpy.trader.app.ctaStrategy.stgEarningManager import stgEarningManager
+import threading
 
 
 ########################################################################
@@ -51,6 +41,9 @@ class CtaEngine(object):
         """Constructor"""
         self.mainEngine = mainEngine
         self.eventEngine = eventEngine
+
+        """ modify by loe """
+        self.earningManager = stgEarningManager()
         
         # 当前日期
         self.today = todayDate()
@@ -266,6 +259,9 @@ class CtaEngine(object):
     def processTickEvent(self, event):
         """处理行情推送"""
         tick = event.dict_['data']
+        
+        tick = copy(tick)
+        
         # 收到tick行情后，先处理本地停止单（检查是否要立即发出）
         self.processStopOrder(tick)
         
@@ -324,9 +320,93 @@ class CtaEngine(object):
                 strategy.pos -= trade.volume
             
             self.callStrategyFunc(strategy, strategy.onTrade, trade)
+
+            """ modify by loe """
+            self.saveTradeDetail(strategy, trade)
             
             # 保存策略持仓到数据库
-            self.saveSyncData(strategy)              
+            self.saveSyncData(strategy)
+
+    """ modify by loe """
+    def saveTradeDetail(self, strategy, trade):
+        # 成交记录
+        if not strategy.autoSaveStradeDetail:
+            return
+
+        if not strategy.name:
+            return
+
+        if not self.earningManager:
+            return
+
+        tradeTime = datetime.now().strftime('%Y-%m-%d') + ' ' + trade.tradeTime
+        symbol = strategy.vtSymbol
+        position = strategy.pos
+
+        # 头寸方向
+        if trade.direction == u'多':
+            direction = '多'
+        else:
+            direction = '空'
+
+        # 开平仓
+        offset = ''
+        if trade.offset == u'开仓':
+            offset = '开仓'
+        elif trade.offset == u'平仓':
+            offset = '平仓'
+        elif trade.offset == u'平今':
+            offset = '平今'
+        elif trade.offset == u'平昨':
+            offset = '平昨'
+
+        # 价格
+        price = trade.price
+
+        # 成交量
+        volume = trade.volume
+
+        # 另开线程进行盈亏记录操作
+        newThread = threading.Thread(target=self.saveTradeData, args=(strategy.name, tradeTime, symbol, direction, offset, price, volume, position))
+        # 开启线程守护（当主线程挂起时，无论子线程有没有执行完都会随主线程挂起）
+        # newThread.setDaemon(True)
+        newThread.start()
+
+    """ modify by loe """
+    def saveTradeData(self, strategyName, tradeTime, symbol, direction, offset, price, volume, position):
+        fileName = strategyName
+
+        # 计算累计盈亏
+        toltalEarning = EMPTY_FLOAT
+        # 没有仓位时计算累计盈亏
+        if position == 0:
+            hisData = self.earningManager.loadDailyEarning(fileName)
+            for data in hisData:
+                if data['方向'] == '多':
+                    toltalEarning -= float(data['价格']) * float(data['成交量'])
+                else:
+                    toltalEarning += float(data['价格']) * float(data['成交量'])
+
+            if direction == '多':
+                toltalEarning -= price * volume
+            else:
+                toltalEarning += price * volume
+
+        content = OrderedDict()
+        content['时间'] = tradeTime
+        content['合约'] = symbol
+        content['方向'] = direction
+        content['开平仓'] = offset
+        content['价格'] = price
+        content['成交量'] = volume
+        content['当前持仓'] = position
+        if not toltalEarning:
+            content['累计盈亏'] = ''
+        else:
+            content['累计盈亏'] = toltalEarning
+        content['备注'] = ''
+        self.earningManager.updateDailyEarning(fileName, content)
+
     
     #----------------------------------------------------------------------
     def registerEvent(self):
@@ -402,7 +482,12 @@ class CtaEngine(object):
             self.writeCtaLog(u'策略实例重名：%s' %name)
         else:
             # 创建策略实例
-            strategy = strategyClass(self, setting)  
+            strategy = strategyClass(self, setting)
+
+            """ modify by loe """
+            # 加载同步数据
+            self.loadSyncData(strategy)
+
             self.strategyDict[name] = strategy
             
             # 创建委托号列表
@@ -415,21 +500,28 @@ class CtaEngine(object):
                 l = []
                 self.tickStrategyDict[strategy.vtSymbol] = l
             l.append(strategy)
+
+            """ modify by loe """
+            # 订阅行情
+            self.subscribeMarketData(strategy)
             
-            # 订阅合约
-            contract = self.mainEngine.getContract(strategy.vtSymbol)
-            if contract:
-                req = VtSubscribeReq()
-                req.symbol = contract.symbol
-                req.exchange = contract.exchange
-                
-                # 对于IB接口订阅行情时所需的货币和产品类型，从策略属性中获取
-                req.currency = strategy.currency
-                req.productClass = strategy.productClass
-                
-                self.mainEngine.subscribe(req, contract.gatewayName)
-            else:
-                self.writeCtaLog(u'%s的交易合约%s无法找到' %(name, strategy.vtSymbol))
+    #----------------------------------------------------------------------
+    def subscribeMarketData(self, strategy):
+        """订阅行情"""
+        # 订阅合约
+        contract = self.mainEngine.getContract(strategy.vtSymbol)
+        if contract:
+            req = VtSubscribeReq()
+            req.symbol = contract.symbol
+            req.exchange = contract.exchange
+            
+            # 对于IB接口订阅行情时所需的货币和产品类型，从策略属性中获取
+            req.currency = strategy.currency
+            req.productClass = strategy.productClass
+            
+            self.mainEngine.subscribe(req, contract.gatewayName)
+        else:
+            self.writeCtaLog(u'%s的交易合约%s无法找到' %(strategy.name, strategy.vtSymbol))
 
     #----------------------------------------------------------------------
     def initStrategy(self, name):
@@ -438,8 +530,11 @@ class CtaEngine(object):
             strategy = self.strategyDict[name]
             
             if not strategy.inited:
+                """ modify by loe """
+                # 把加载同步数据和订阅行情放到loadStrategy方法里
+
                 strategy.inited = True
-                self.callStrategyFunc(strategy, strategy.onInit)
+                self.callStrategyFunc(strategy, strategy.onInit)    # 初始化
             else:
                 self.writeCtaLog(u'请勿重复初始化策略实例：%s' %name)
         else:
@@ -520,8 +615,6 @@ class CtaEngine(object):
             
             for setting in l:
                 self.loadStrategy(setting)
-                
-        self.loadSyncData()
     
     #----------------------------------------------------------------------
     def getStrategyVar(self, name):
@@ -552,17 +645,33 @@ class CtaEngine(object):
         else:
             self.writeCtaLog(u'策略实例不存在：' + name)    
             return None
+    
+    #----------------------------------------------------------------------
+    def getStrategyNames(self):
+        """查询所有策略名称"""
+        return self.strategyDict.keys()        
         
     #----------------------------------------------------------------------
     def putStrategyEvent(self, name):
         """触发策略状态变化事件（通常用于通知GUI更新）"""
+
         """ modify by loe """
         if name in self.strategyDict:
             strategy = self.strategyDict[name]
             self.saveSyncData(strategy)
 
+        strategy = self.strategyDict[name]
+        d = {k:strategy.__getattribute__(k) for k in strategy.varList}
+
         event = Event(EVENT_CTA_STRATEGY+name)
+        event.dict_['data'] = d
         self.eventEngine.put(event)
+        
+        d2 = {k:str(v) for k,v in d.items()}
+        d2['name'] = name
+        event2 = Event(EVENT_CTA_STRATEGY)
+        event2.dict_['data'] = d2
+        self.eventEngine.put(event2)        
         
     #----------------------------------------------------------------------
     def callStrategyFunc(self, strategy, func, params=None):
@@ -595,25 +704,24 @@ class CtaEngine(object):
         self.mainEngine.dbUpdate(POSITION_DB_NAME, strategy.className,
                                  d, flt, True)
         
-        content = '策略%s同步数据保存成功，当前持仓%s' %(strategy.name, strategy.pos)
+        content = u'策略%s同步数据保存成功，当前持仓%s' %(strategy.name, strategy.pos)
         self.writeCtaLog(content)
     
     #----------------------------------------------------------------------
-    def loadSyncData(self):
+    def loadSyncData(self, strategy):
         """从数据库载入策略的持仓情况"""
-        for strategy in self.strategyDict.values():
-            flt = {'name': strategy.name,
-                   'vtSymbol': strategy.vtSymbol}
-            syncData = self.mainEngine.dbQuery(POSITION_DB_NAME, strategy.className, flt)
-            
-            if not syncData:
-                continue
-            
-            d = syncData[0]
-            
-            for key in strategy.syncList:
-                if key in d:
-                    strategy.__setattr__(key, d[key])
+        flt = {'name': strategy.name,
+               'vtSymbol': strategy.vtSymbol}
+        syncData = self.mainEngine.dbQuery(POSITION_DB_NAME, strategy.className, flt)
+        
+        if not syncData:
+            return
+        
+        d = syncData[0]
+        
+        for key in strategy.syncList:
+            if key in d:
+                strategy.__setattr__(key, d[key])
                 
     #----------------------------------------------------------------------
     def roundToPriceTick(self, priceTick, price):

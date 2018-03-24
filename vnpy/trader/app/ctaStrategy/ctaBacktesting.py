@@ -19,6 +19,9 @@ import matplotlib.pyplot as plt
 
 """ modify by loe """
 from time import time
+from vnpy.trader.app.ctaStrategy.stgEarningManager import stgEarningManager
+import threading
+from vnpy.trader.app.ctaStrategy.ctaBase import TICK_DB_NAME
 
 # 如果安装了seaborn则设置为白色风格
 try:
@@ -94,6 +97,13 @@ class BacktestingEngine(object):
         # 当前最新数据，用于模拟成交用
         self.tick = None
         self.bar = None
+
+        """ modify by loe """
+        self.nextBar = None                     # 下下一个bar
+        self.earningManager = None              # 保存交易记录的管理器
+        self.tradeDetailList = []               # 交易记录容器
+        self.tickCross = False                  # bar回测时是否tick结算停止单
+
         self.dt = None      # 最新的时间
         
         # 日线回测结果计算用
@@ -231,9 +241,11 @@ class BacktestingEngine(object):
         startTime = time()
         
         # 首先根据回测模式，确认要使用的数据类
+        nextDataFunc = None
         if self.mode == self.BAR_MODE:
             dataClass = VtBarData
             func = self.newBar
+            nextDataFunc = self.newNextBar
         else:
             dataClass = VtTickData
             func = self.newTick
@@ -250,10 +262,27 @@ class BacktestingEngine(object):
         
         self.output(u'开始回放数据')
 
+        """ modify by loe """
+        dataList = []
+        listCount = 1
+        if nextDataFunc:
+            listCount = 3
         for d in self.dbCursor:
+            '''
             data = dataClass()
             data.__dict__ = d
-            func(data)     
+            func(data)
+            '''
+            data = dataClass()
+            data.__dict__ = d
+            if len(dataList) >= listCount:
+                del dataList[0]
+            dataList.append(data)
+
+            if len(dataList) >= listCount:
+                func(dataList[0])
+                if nextDataFunc:
+                    nextDataFunc(dataList[-1])
             
         self.output(u'数据回放结束')
 
@@ -269,9 +298,19 @@ class BacktestingEngine(object):
         
         self.crossLimitOrder()      # 先撮合限价单
         self.crossStopOrder()       # 再撮合停止单
+
+        """ modify by loe """
+        self.strategy.vtSymbol = bar.vtSymbol
+
         self.strategy.onBar(bar)    # 推送K线到策略中
         
         self.updateDailyClose(bar.datetime, bar.close)
+
+    """ modify by loe """
+    def newNextBar(self, bar):
+        '''下一条k线'''
+        self.nextBar = bar
+        self.strategy.onNextBar(bar)  # 推送K线到策略中
     
     #----------------------------------------------------------------------
     def newTick(self, tick):
@@ -288,6 +327,10 @@ class BacktestingEngine(object):
         self.crossLimitOrder()
         self.crossStopOrder()
         '''
+
+        """ modify by loe """
+        self.strategy.vtSymbol = tick.vtSymbol
+
         self.strategy.onTick(tick)
         
         self.updateDailyClose(tick.datetime, tick.lastPrice)
@@ -351,11 +394,35 @@ class BacktestingEngine(object):
                 # 2. 假设在上一根K线结束(也是当前K线开始)的时刻，策略发出的委托为限价105
                 # 3. 则在实际中的成交价会是100而不是105，因为委托发出时市场的最优价格是100
                 if buyCross:
-                    trade.price = min(order.price, buyBestCrossPrice)
                     self.strategy.pos += order.totalVolume
+
+                    """ modify by loe """
+                    if self.mode == self.BAR_MODE:
+                        if self.tickCross:
+                            bestPrice = self.bestTickPriceForLimitOrder(order)
+                            if not bestPrice:
+                                bestPrice = min(order.price, buyBestCrossPrice)
+                            trade.price = bestPrice
+                        else:
+                            trade.price = min(order.price, buyBestCrossPrice)
+                    else:
+                        trade.price = min(order.price, buyBestCrossPrice)
+
                 else:
                     trade.price = max(order.price, sellBestCrossPrice)
                     self.strategy.pos -= order.totalVolume
+
+                    """ modify by loe """
+                    if self.mode == self.BAR_MODE:
+                        if self.tickCross:
+                            bestPrice = self.bestTickPriceForLimitOrder(order)
+                            if not bestPrice:
+                                bestPrice = max(order.price, sellBestCrossPrice)
+                            trade.price = bestPrice
+                        else:
+                            trade.price = max(order.price, sellBestCrossPrice)
+                    else:
+                        trade.price = max(order.price, sellBestCrossPrice)
                 
                 trade.volume = order.totalVolume
 
@@ -364,6 +431,9 @@ class BacktestingEngine(object):
 
                 trade.dt = self.dt
                 self.strategy.onTrade(trade)
+
+                """ modify by loe """
+                self.saveTradeInfo(trade)
                 
                 self.tradeDict[tradeID] = trade
                 
@@ -385,9 +455,8 @@ class BacktestingEngine(object):
             sellCrossPrice = self.bar.low    # 若卖出方向限价单价格高于该价格，则会成交
             bestCrossPrice = self.bar.open   # 最优成交价，买入停止单不能低于，卖出停止单不能高于
         else:
-            buyCrossPrice = self.tick.lastPrice
-            sellCrossPrice = self.tick.lastPrice
-            bestCrossPrice = self.tick.lastPrice
+            buyCrossPrice = self.tick.askPrice1
+            sellCrossPrice = self.tick.bidPrice1
         
         # 遍历停止单字典中的所有停止单
         for stopOrderID, so in self.workingStopOrderDict.items():
@@ -412,10 +481,30 @@ class BacktestingEngine(object):
                 
                 if buyCross:
                     self.strategy.pos += so.volume
-                    trade.price = max(bestCrossPrice, so.price)
+                    """ modify by loe """
+                    if self.mode == self.BAR_MODE:
+                        if self.tickCross:
+                            bestPrice = self.bestTickPriceForStopOrder(so)
+                            if not bestPrice:
+                                bestPrice = max(bestCrossPrice, so.price)
+                            trade.price = bestPrice
+                        else:
+                            trade.price = max(bestCrossPrice, so.price)
+                    else:
+                        trade.price = buyCrossPrice
                 else:
                     self.strategy.pos -= so.volume
-                    trade.price = min(bestCrossPrice, so.price)                
+                    """ modify by loe """
+                    if self.mode == self.BAR_MODE:
+                        if self.tickCross:
+                            bestPrice = self.bestTickPriceForStopOrder(so)
+                            if not bestPrice:
+                                bestPrice = min(bestCrossPrice, so.price)
+                            trade.price = bestPrice
+                        else:
+                            trade.price = min(bestCrossPrice, so.price)
+                    else:
+                        trade.price = sellCrossPrice
                 
                 self.limitOrderCount += 1
                 orderID = str(self.limitOrderCount)
@@ -452,6 +541,140 @@ class BacktestingEngine(object):
                 self.strategy.onStopOrder(so)
                 self.strategy.onOrder(order)
                 self.strategy.onTrade(trade)
+
+                """ modify by loe """
+                self.saveTradeInfo(trade)
+
+    """ modify by loe """
+    def bestTickPriceForStopOrder(self, order):
+        collection = self.dbClient[TICK_DB_NAME][self.symbol]
+        flt = {'datetime': {'$gte': self.bar.datetime,
+                            '$lt': self.bar.endDatetime}}
+        cursor = collection.find(flt).sort('datetime')
+
+        bestPrice = EMPTY_FLOAT
+        for d in cursor:
+            tick = VtTickData()
+            tick.__dict__ = d
+            if order.direction == DIRECTION_LONG and tick.lastPrice >= order.price:
+                bestPrice = tick.askPrice1
+                break
+            elif order.direction == DIRECTION_SHORT and tick.lastPrice <= order.price:
+                bestPrice = tick.bidPrice1
+                break
+
+        return bestPrice
+
+    """ modify by loe """
+    def bestTickPriceForLimitOrder(self, order):
+        collection = self.dbClient[TICK_DB_NAME][self.symbol]
+        flt = {'datetime': {'$gte': self.bar.datetime,
+                            '$lt': self.bar.endDatetime}}
+        cursor = collection.find(flt).sort('datetime')
+
+        bestPrice = EMPTY_FLOAT
+        for d in cursor:
+            tick = VtTickData()
+            tick.__dict__ = d
+            if order.direction == DIRECTION_LONG and tick.askPrice1 <= order.price:
+                bestPrice = tick.askPrice1
+                break
+            elif order.direction == DIRECTION_SHORT and tick.bidPrice1 >= order.price:
+                bestPrice = tick.bidPrice1
+                break
+
+        return bestPrice
+
+    """ modify by loe """
+    def saveTradeInfo(self, trade):
+        tradeTime = self.dt.strftime('%Y-%m-%d') + ' ' + trade.tradeTime
+        symbol = self.strategy.vtSymbol
+        position = self.strategy.pos
+
+        # 头寸方向
+        if trade.direction == u'多':
+            direction = '多'
+        else:
+            direction = '空'
+
+        # 开平仓
+        offset = ''
+        if trade.offset == u'开仓':
+            offset = '开仓'
+        elif trade.offset == u'平仓':
+            offset = '平仓'
+        elif trade.offset == u'平今':
+            offset = '平今'
+        elif trade.offset == u'平昨':
+            offset = '平昨'
+
+        # 价格
+        price = trade.price
+
+        # 成交量
+        volume = trade.volume
+
+        data = [tradeTime, symbol, direction, offset, price, volume, position]
+        self.tradeDetailList.append(data)
+
+    """ modify by loe """
+    def ShowTradeDetail(self):
+        self.output(u'初始化交易记录管理器')
+        startTime = time()
+        if not self.earningManager:
+            self.earningManager = stgEarningManager()
+        sub = time() - startTime
+        self.output(u'用时：%fs' % sub)
+
+        self.output(u'开始保存交易记录')
+        startTime = time()
+        for data in self.tradeDetailList:
+            tradeTime, symbol, direction, offset, price, volume, position = data
+            self.saveEarning(tradeTime, symbol, direction, offset, price, volume, position)
+        sub = time() - startTime
+        self.output(u'用时：%fs' % sub)
+
+    """ modify by loe """
+    def saveEarning(self, tradeTime, symbol, direction, offset, price, volume, position):
+        # 每日盈亏记录
+        if not self.strategy.name:
+            return
+
+        if not self.earningManager:
+            return
+
+        fileName = self.strategy.name
+
+        # 计算累计盈亏
+        toltalEarning = EMPTY_FLOAT
+        # 没有仓位时计算累计盈亏
+        if position == 0:
+            hisData = self.earningManager.loadDailyEarning(fileName)
+            for data in hisData:
+                if data['方向'] == '多':
+                    toltalEarning -= float(data['价格']) * float(data['成交量'])
+                else:
+                    toltalEarning += float(data['价格']) * float(data['成交量'])
+
+            if direction == '多':
+                toltalEarning -= price * volume
+            else:
+                toltalEarning += price * volume
+
+        content = OrderedDict()
+        content['时间'] = tradeTime
+        content['合约'] = symbol
+        content['方向'] = direction
+        content['开平仓'] = offset
+        content['价格'] = price
+        content['成交量'] = volume
+        content['当前持仓'] = position
+        if not toltalEarning:
+            content['累计盈亏'] = ''
+        else:
+            content['累计盈亏'] = toltalEarning
+        content['备注'] = ''
+        self.earningManager.updateDailyEarning(fileName, content)
     
     #------------------------------------------------
     # 策略接口相关
@@ -802,6 +1025,7 @@ class BacktestingEngine(object):
         d['profitLossRatio'] = profitLossRatio
         d['posList'] = posList
         d['tradeTimeList'] = tradeTimeList
+        d['resultList'] = resultList
         
         return d
         
@@ -894,20 +1118,21 @@ class BacktestingEngine(object):
             self.output('setting: %s' %str(setting))
             self.initStrategy(strategyClass, setting)
             self.runBacktesting()
-            d = self.calculateBacktestingResult()
+            df = self.calculateDailyResult()
+            df, d = self.calculateDailyStatistics(df)            
             try:
                 targetValue = d[targetName]
             except KeyError:
                 targetValue = 0
-            resultList.append(([str(setting)], targetValue))
+            resultList.append(([str(setting)], targetValue, d))
         
         # 显示结果
         resultList.sort(reverse=True, key=lambda result:result[1])
         self.output('-' * 30)
         self.output(u'优化结果：')
         for result in resultList:
-            self.output(u'%s: %s' %(result[0], result[1]))
-        return result
+            self.output(u'参数：%s，目标：%s' %(result[0], result[1]))    
+        return resultList
             
     #----------------------------------------------------------------------
     def runParallelOptimization(self, strategyClass, optimizationSetting):
@@ -925,7 +1150,8 @@ class BacktestingEngine(object):
         l = []
 
         for setting in settingList:
-            l.append(pool.apply_async(optimize, (strategyClass, setting,
+            """ modify by loe """
+            l.append(pool.apply_async(optimize, (strategyClass, setting, self.capital,
                                                  targetName, self.mode, 
                                                  self.startDate, self.initDays, self.endDate,
                                                  self.slippage, self.rate, self.size, self.priceTick,
@@ -939,7 +1165,9 @@ class BacktestingEngine(object):
         self.output('-' * 30)
         self.output(u'优化结果：')
         for result in resultList:
-            self.output(u'%s: %s' %(result[0], result[1]))    
+            self.output(u'参数：%s，目标：%s' %(result[0], result[1]))    
+            
+        return resultList
 
     #----------------------------------------------------------------------
     def updateDailyClose(self, dt, price):
@@ -992,6 +1220,7 @@ class BacktestingEngine(object):
         df['return'] = (np.log(df['balance']) - np.log(df['balance'].shift(1))).fillna(0)
         df['highlevel'] = df['balance'].rolling(min_periods=1,window=len(df),center=False).max()
         df['drawdown'] = df['balance'] - df['highlevel']        
+        df['ddPercent'] = df['drawdown'] / df['highlevel'] * 100
         
         # 计算统计结果
         startDate = df.index[0]
@@ -1003,6 +1232,7 @@ class BacktestingEngine(object):
         
         endBalance = df['balance'].iloc[-1]
         maxDrawdown = df['drawdown'].min()
+        maxDdPercent = df['ddPercent'].min()
         
         totalNetPnl = df['netPnl'].sum()
         dailyNetPnl = totalNetPnl / totalDays
@@ -1020,6 +1250,7 @@ class BacktestingEngine(object):
         dailyTradeCount = totalTradeCount / totalDays
         
         totalReturn = (endBalance/self.capital - 1) * 100
+        annualizedReturn = totalReturn / totalDays * 240
         dailyReturn = df['return'].mean() * 100
         returnStd = df['return'].std() * 100
         
@@ -1037,6 +1268,7 @@ class BacktestingEngine(object):
             'lossDays': lossDays,
             'endBalance': endBalance,
             'maxDrawdown': maxDrawdown,
+            'maxDdPercent': maxDdPercent,
             'totalNetPnl': totalNetPnl,
             'dailyNetPnl': dailyNetPnl,
             'totalCommission': totalCommission,
@@ -1048,6 +1280,7 @@ class BacktestingEngine(object):
             'totalTradeCount': totalTradeCount,
             'dailyTradeCount': dailyTradeCount,
             'totalReturn': totalReturn,
+            'annualizedReturn': annualizedReturn,
             'dailyReturn': dailyReturn,
             'returnStd': returnStd,
             'sharpeRatio': sharpeRatio
@@ -1074,9 +1307,11 @@ class BacktestingEngine(object):
         self.output(u'起始资金：\t%s' % self.capital)
         self.output(u'结束资金：\t%s' % formatNumber(result['endBalance']))
     
-        self.output(u'总收益率：\t%s' % formatNumber(result['totalReturn']))
+        self.output(u'总收益率：\t%s%%' % formatNumber(result['totalReturn']))
+        self.output(u'年化收益：\t%s%%' % formatNumber(result['annualizedReturn']))
         self.output(u'总盈亏：\t%s' % formatNumber(result['totalNetPnl']))
-        self.output(u'最大回撤: \t%s' % formatNumber(result['maxDrawdown']))      
+        self.output(u'最大回撤: \t%s' % formatNumber(result['maxDrawdown']))   
+        self.output(u'百分比最大回撤: %s%%' % formatNumber(result['maxDdPercent']))   
         
         self.output(u'总手续费：\t%s' % formatNumber(result['totalCommission']))
         self.output(u'总滑点：\t%s' % formatNumber(result['totalSlippage']))
@@ -1120,7 +1355,6 @@ class BacktestingEngine(object):
         '''
         
         plt.show()
-       
         
 ########################################################################
 class TradingResult(object):
@@ -1276,12 +1510,16 @@ def formatNumber(n):
     
 
 #----------------------------------------------------------------------
-def optimize(strategyClass, setting, targetName,
+def optimize(strategyClass, setting, capital, targetName,
              mode, startDate, initDays, endDate,
              slippage, rate, size, priceTick,
              dbName, symbol):
     """多进程优化时跑在每个进程中运行的函数"""
     engine = BacktestingEngine()
+
+    """ modify by loe """
+    engine.setCapital(capital)
+
     engine.setBacktestingMode(mode)
     engine.setStartDate(startDate, initDays)
     engine.setEndDate(endDate)
@@ -1300,5 +1538,5 @@ def optimize(strategyClass, setting, targetName,
         targetValue = d[targetName]
     except KeyError:
         targetValue = 0            
-    return (str(setting), targetValue)    
+    return (str(setting), targetValue, d)    
     
