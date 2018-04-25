@@ -378,19 +378,51 @@ class CtaEngine(object):
 
         # 计算累计盈亏
         toltalEarning = EMPTY_FLOAT
+        topEarning = EMPTY_FLOAT
+        topDrawdown = EMPTY_FLOAT
         # 没有仓位时计算累计盈亏
         if position == 0:
             hisData = self.earningManager.loadDailyEarning(fileName)
-            for data in hisData:
-                if data['方向'] == '多':
-                    toltalEarning -= float(data['价格']) * float(data['成交量'])
-                else:
-                    toltalEarning += float(data['价格']) * float(data['成交量'])
+
+            if len(hisData):
+                index = -1
+                while  index >= -len(hisData):
+                    data = hisData[index]
+                    if data['累计盈亏']:
+                        toltalEarning += float(data['累计盈亏'])
+                        break
+                    else:
+                        if data['方向'] == '多':
+                            toltalEarning -= float(data['价格']) * float(data['成交量'])
+                        else:
+                            toltalEarning += float(data['价格']) * float(data['成交量'])
+                    index -= 1
 
             if direction == '多':
                 toltalEarning -= price * volume
             else:
                 toltalEarning += price * volume
+
+            # 计算最大回撤
+            if len(hisData):
+                index = -1
+                while index >= -len(hisData):
+                    data = hisData[index]
+                    if data['历史最高']:
+                        topEarning = float(data['历史最高'])
+                        break
+                    index -= 1
+
+                index = -1
+                while index >= -len(hisData):
+                    data = hisData[index]
+                    if data['最大回撤']:
+                        topDrawdown = float(data['最大回撤'])
+                        break
+                    index -= 1
+
+                topEarning = max(topEarning, toltalEarning)
+                topDrawdown = min(topDrawdown, toltalEarning - topEarning)
 
         content = OrderedDict()
         content['时间'] = tradeTime
@@ -404,6 +436,17 @@ class CtaEngine(object):
             content['累计盈亏'] = ''
         else:
             content['累计盈亏'] = toltalEarning
+
+        if not topEarning:
+            content['历史最高'] = ''
+        else:
+            content['历史最高'] = topEarning
+
+        if not topDrawdown:
+            content['最大回撤'] = ''
+        else:
+            content['最大回撤'] = topDrawdown
+
         content['备注'] = ''
         self.earningManager.updateDailyEarning(fileName, content)
 

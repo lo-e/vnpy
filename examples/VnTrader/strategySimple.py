@@ -16,28 +16,14 @@ class SimpleStrategy(CtaTemplate):
     earningManager = None
 
     # 策略参数
-    #'''
-    test = False
     tradeSize = 1 # 交易数量
     startSecond = 23
     startTime = None  # 趋势判断开始时间
     endTime = None  # 趋势判断截至时间
+    stopTime = time(22, 59, 59, 500000)  # 建仓截止时间
     openPercent = 0.14  # 开仓趋势过滤
     outPercent = 0.16 # 移动止盈止损百分比
     tickPrice = 1 # 合约价格最小波动
-    #'''
-
-    '''
-    test = True
-    tradeSize = 1  # 交易数量
-    startSecond = 26
-    startTime = None  # 趋势判断开始时间
-    endTime = None  # 趋势判断截至时间
-    openPercent = 0.14  # 开仓趋势过滤
-    outPercent = 0.14  # 移动止盈止损百分比
-    tickPrice = 1 # 合约价格最小波动
-    '''
-
 
     # 策略变量
     startPrice = EMPTY_FLOAT # 趋势判断开始价格
@@ -96,35 +82,35 @@ class SimpleStrategy(CtaTemplate):
     def __init__(self, ctaEngine, setting):
         """Constructor"""
         super(SimpleStrategy, self).__init__(ctaEngine, setting)
-        self.autoSaveStradeDetail = False
         self.startTime = time(22, 58, self.startSecond)  # 趋势判断开始时间
         self.endTime = time(22, 59, 56)  # 趋势判断截至时间
-        if self.test:
-            self.autoAgainForTest()
-
         # ----------------------------------------------------------------------
 
     def onInit(self):
         """初始化策略（必须由用户继承实现）"""
         self.writeCtaLog(u'%s策略初始化' % self.name)
-        # 发出状态更新事件
         self.putEvent()
 
     # ----------------------------------------------------------------------
     def onStart(self):
         """启动策略（必须由用户继承实现）"""
         self.writeCtaLog(u'%s策略启动' % self.name)
-        # 发出状态更新事件
         self.putEvent()
 
     # ----------------------------------------------------------------------
     def onStop(self):
         """停止策略（必须由用户继承实现）"""
         self.writeCtaLog(u'%s策略停止' % self.name)
+        self.putEvent()
 
     # ----------------------------------------------------------------------
     def onTick(self, tick):
         """收到行情TICK推送（必须由用户继承实现）"""
+        if tick.datetime.time() >= self.stopTime and not self.pos:
+            # 超过建仓截止时间，取消所有委托
+            self.cancelAll()
+            return
+
         if (not self.todayDate) or (datetime.strptime(self.todayDate, '%Y-%m-%d').date() != tick.datetime.date()):
             # 撤销未成交的单
             self.cancelAll()
@@ -146,7 +132,7 @@ class SimpleStrategy(CtaTemplate):
             if (self.startPrice == 0) and (tick.datetime.time() >= self.startTime) and (tick.datetime.time() < self.endTime):
                 self.startPrice = tick.lastPrice
 
-            if (self.endPrice == 0) and (tick.datetime.time() >= self.endTime) and (tick.datetime.time() < self.endTime.replace(second = self.endTime.second+2)):
+            if (self.endPrice == 0) and (tick.datetime.time() >= self.endTime) and (tick.datetime.time() < self.stopTime):
                 self.endPrice = tick.lastPrice
 
             if self.startPrice and self.endPrice and (not self.ordering) and (not self.todayEntry):
@@ -163,9 +149,6 @@ class SimpleStrategy(CtaTemplate):
                     self.entryOrderPrice = tick.lastPrice
                     self.ordering = True
                     self.writeCtaLog(u'开仓空头 %s' % tick.time)
-
-            if (self.startPrice != 0) and (self.endPrice != 0) and (self.startPrice == self.endPrice) and self.test:
-                self.autoAgainForTest()
 
         elif self.pos > 0:
             # 持有多头仓位
@@ -207,33 +190,8 @@ class SimpleStrategy(CtaTemplate):
             self.todayEntry = True
             self.highPrice = trade.price
             self.lowPrice = trade.price
-
             self.entryPrice = trade.price
-        elif (trade.offset == u'平仓') or (trade.offset == u'平今') or (trade.offset == u'平昨'):
-            outPrice = trade.price
-            sub = outPrice - self.entryPrice
 
-            if trade.direction == u'多':
-                if sub:
-                    offsetEarning = -sub * trade.volume
-                else:
-                    offsetEarning = EMPTY_FLOAT
-                entryDirect = '空'
-            else:
-                if sub:
-                    offsetEarning = sub * trade.volume
-                else:
-                    offsetEarning = EMPTY_FLOAT
-                entryDirect = '多'
-
-            #另开线程进行盈亏记录操作
-            newThread = threading.Thread(target=self.saveEarning, args=(offsetEarning, (self.todayDate + ' ' + trade.tradeTime), self.entryOrderPrice, self.entryPrice, entryDirect, self.offsetOrderPrice, outPrice, trade.volume))
-            #开启线程守护（当主线程挂起时，无论子线程有没有执行完都会随主线程挂起）
-            #newThread.setDaemon(True)
-            newThread.start()
-
-            if self.test:
-                self.autoAgainForTest()
         # 发出状态更新事件
         self.putEvent()
 
@@ -241,63 +199,6 @@ class SimpleStrategy(CtaTemplate):
     def onStopOrder(self, so):
         """停止单推送"""
         pass
-
-    def saveEarning(self, offsetEarning = EMPTY_FLOAT, offsetTime = EMPTY_STRING, entryOrderPrice = EMPTY_FLOAT, entryPrice = EMPTY_FLOAT, entryDirect = EMPTY_STRING, offsetOrderPrice = EMPTY_FLOAT, offsetPrice = EMPTY_FLOAT, offsetVolume = EMPTY_INT):
-        # 每日盈亏记录
-        '''
-        优化参数用（不是优化参数注释）
-        '''
-        #return
-
-        if not self.vtSymbol:
-            return
-
-        if self.test:
-            fileName = self.name + '_test'
-        else:
-            fileName = self.name
-
-        if not self.earningManager:
-            self.earningManager = stgEarningManager()
-        hisData = self.earningManager.loadDailyEarning(fileName)
-        toltalEarning = EMPTY_FLOAT
-        if len(hisData):
-            toltalEarning = float(hisData[-1]['累计盈亏'])
-
-        toltalEarning += offsetEarning
-        content = collections.OrderedDict()
-        content['时间'] = offsetTime
-        content['合约'] = self.vtSymbol
-        content['开仓委托价'] = entryOrderPrice
-        content['开仓价'] = entryPrice
-        content['头寸'] = entryDirect
-        content['平仓委托价'] = offsetOrderPrice
-        content['平仓价'] = offsetPrice
-        content['成交量'] = offsetVolume
-        content['盈亏'] = offsetEarning
-        content['累计盈亏'] = toltalEarning
-        content['备注'] = ''
-        self.earningManager.updateDailyEarning(fileName, content)
-
-    def autoAgainForTest(self):
-        nowTime = datetime.now().time()
-        startMinute = nowTime.minute
-        startHour = nowTime.hour
-        startMinute += 1
-        if startMinute >= 60:
-            startMinute = 0
-            startHour += 1
-
-        endMinute = startMinute + 1
-        endHour =  startHour
-        if endMinute >= 60:
-            endMinute = 0
-            endHour += 1
-
-        self.startTime = nowTime.replace(hour=startHour, minute=startMinute)
-        self.endTime = nowTime.replace(hour=endHour, minute=endMinute)
-        self.todayDate = EMPTY_STRING
-
 
 #===================================回测==================================
 def GetEngin(settingDict, symbol,
@@ -370,6 +271,7 @@ if __name__ == '__main__':
     engine.runBacktesting()
     df = engine.calculateDailyResult()
     df, result = engine.calculateDailyStatistics(df)
+    engine.ShowTradeDetail()
     engine.showDailyResult(df, result)
     #'''
 

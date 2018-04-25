@@ -280,9 +280,9 @@ class BacktestingEngine(object):
             dataList.append(data)
 
             if len(dataList) >= listCount:
-                func(dataList[0])
                 if nextDataFunc:
                     nextDataFunc(dataList[-1])
+                func(dataList[0])
             
         self.output(u'数据回放结束')
 
@@ -316,9 +316,11 @@ class BacktestingEngine(object):
     def newTick(self, tick):
         """新的Tick"""
         """ modify by loe """
+        #'''
         if self.tick:
             self.crossLimitOrder()
             self.crossStopOrder()
+        #'''
 
         self.tick = tick
         self.dt = tick.datetime
@@ -647,19 +649,51 @@ class BacktestingEngine(object):
 
         # 计算累计盈亏
         toltalEarning = EMPTY_FLOAT
+        topEarning = EMPTY_FLOAT
+        topDrawdown = EMPTY_FLOAT
         # 没有仓位时计算累计盈亏
         if position == 0:
             hisData = self.earningManager.loadDailyEarning(fileName)
-            for data in hisData:
-                if data['方向'] == '多':
-                    toltalEarning -= float(data['价格']) * float(data['成交量'])
-                else:
-                    toltalEarning += float(data['价格']) * float(data['成交量'])
+
+            if len(hisData):
+                index = -1
+                while  index >= -len(hisData):
+                    data = hisData[index]
+                    if data['累计盈亏']:
+                        toltalEarning += float(data['累计盈亏'])
+                        break
+                    else:
+                        if data['方向'] == '多':
+                            toltalEarning -= float(data['价格']) * float(data['成交量'])
+                        else:
+                            toltalEarning += float(data['价格']) * float(data['成交量'])
+                    index -= 1
 
             if direction == '多':
                 toltalEarning -= price * volume
             else:
                 toltalEarning += price * volume
+
+            # 计算最大回撤
+            if len(hisData):
+                index = -1
+                while index >= -len(hisData):
+                    data = hisData[index]
+                    if data['历史最高']:
+                        topEarning = float(data['历史最高'])
+                        break
+                    index -= 1
+
+                index = -1
+                while index >= -len(hisData):
+                    data = hisData[index]
+                    if data['最大回撤']:
+                        topDrawdown = float(data['最大回撤'])
+                        break
+                    index -= 1
+
+                topEarning = max(topEarning, toltalEarning)
+                topDrawdown = min(topDrawdown, toltalEarning-topEarning)
 
         content = OrderedDict()
         content['时间'] = tradeTime
@@ -673,6 +707,17 @@ class BacktestingEngine(object):
             content['累计盈亏'] = ''
         else:
             content['累计盈亏'] = toltalEarning
+
+        if not topEarning:
+            content['历史最高'] = ''
+        else:
+            content['历史最高'] = topEarning
+
+        if not topDrawdown:
+            content['最大回撤'] = ''
+        else:
+            content['最大回撤'] = topDrawdown
+
         content['备注'] = ''
         self.earningManager.updateDailyEarning(fileName, content)
     
@@ -1151,7 +1196,7 @@ class BacktestingEngine(object):
 
         for setting in settingList:
             """ modify by loe """
-            l.append(pool.apply_async(optimize, (strategyClass, setting, self.capital,
+            l.append(pool.apply_async(optimize, (strategyClass, setting, self.tickCross, self.capital,
                                                  targetName, self.mode, 
                                                  self.startDate, self.initDays, self.endDate,
                                                  self.slippage, self.rate, self.size, self.priceTick,
@@ -1329,7 +1374,7 @@ class BacktestingEngine(object):
         self.output(u'Sharpe Ratio：\t%s' % formatNumber(result['sharpeRatio']))
         
         # 绘图
-        fig = plt.figure(figsize=(10, 16))
+        fig = plt.figure(figsize=(26, 16))
 
         """ modify by loe """
         pBalance = plt.subplot(1, 1, 1)
@@ -1510,7 +1555,7 @@ def formatNumber(n):
     
 
 #----------------------------------------------------------------------
-def optimize(strategyClass, setting, capital, targetName,
+def optimize(strategyClass, setting, tickCross, capital, targetName,
              mode, startDate, initDays, endDate,
              slippage, rate, size, priceTick,
              dbName, symbol):
@@ -1518,6 +1563,7 @@ def optimize(strategyClass, setting, capital, targetName,
     engine = BacktestingEngine()
 
     """ modify by loe """
+    engine.tickCross = tickCross
     engine.setCapital(capital)
 
     engine.setBacktestingMode(mode)

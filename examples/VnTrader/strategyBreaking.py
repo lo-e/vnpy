@@ -24,7 +24,7 @@ class BreakingStrategy(CtaTemplate):
     # 策略变量
     currentBar = None
     currentSymbol = EMPTY_STRING
-    tradingLimit = False # 主力换月时限制交易
+    needCleanPositon = False # 主力换月时清仓
 
     bollUp = 0  # 布林通道上轨
     bollDown = 0  # 布林通道下轨
@@ -122,28 +122,28 @@ class BreakingStrategy(CtaTemplate):
     def onNextBar(self, bar):
         """收到下一条Bar推送（用于回测，判断下下个bar主力合约换月，平仓当前所有头寸）"""
         if self.currentSymbol and self.currentSymbol != bar.vtSymbol:
-            self.tradingLimit = True
+            self.needCleanPositon = True
+
+    def onXminBar(self, bar):
+        """收到X分钟K线"""
+        # 全撤之前发出的委托
+        self.cancelAll()
+
+        # 主力换月，重新初始化
+        if not self.currentSymbol or self.currentSymbol != bar.vtSymbol:
+            self.am = ArrayManager(size = self.amSize)
+            self.currentSymbol = bar.vtSymbol
+            self.needCleanPositon = False
+
+        if self.needCleanPositon:
+            # 主力合约换月，平仓当前头寸
             if self.pos > 0:
                 self.cancelAll()
                 self.sell(self.currentBar.close - 100, abs(self.pos))
             elif self.pos < 0:
                 self.cancelAll()
                 self.cover(self.currentBar.close + 100, abs(self.pos))
-
-    def onXminBar(self, bar):
-        """收到X分钟K线"""
-        # 主力换月，重新初始化
-        if not self.currentSymbol or self.currentSymbol != bar.vtSymbol:
-            self.am = ArrayManager(size = self.amSize)
-            self.currentSymbol = bar.vtSymbol
-            self.tradingLimit = False
-
-        # 主力换月时不做任何操作
-        if self.tradingLimit:
             return
-
-        # 全撤之前发出的委托
-        self.cancelAll()
 
         # 保存K线数据
         am = self.am
@@ -205,7 +205,7 @@ class BreakingStrategy(CtaTemplate):
         pass
 
 #===================================回测==================================
-def GetEngin(settingDict, symbol, kLine,
+def GetEngin(settingDict, symbol, tickCross, dataBase,
                    startDate, endDate, slippage,
                    rate, size, priceTick, capital):
     """运行单标的回测"""
@@ -215,9 +215,11 @@ def GetEngin(settingDict, symbol, kLine,
     # 设置引擎的回测模式为Bar
     engine.setBacktestingMode(engine.BAR_MODE)
 
+    # 是否ticks数据结算bar模式的订单
+    engine.tickCross = tickCross
+
     #设置回测数据来源数据库
-    barDbName = 'VnTrader_%ldMin_Db' % kLine
-    engine.setDatabase(barDbName, symbol)
+    engine.setDatabase(dataBase, symbol)
 
     # 设置回测的起始日期
     engine.setStartDate(startDate, initDays=10)
@@ -255,32 +257,34 @@ if __name__ == '__main__':
                'window': window,
                'bollDev': 2.1,
                'slMultiplier': 0.7}
-    engine = GetEngin(setting, 'au00.TB', kLine,
+
+    barDbName = 'VnTrader_%ldMin_Db' % kLine
+    engine = GetEngin(setting, 'au00.TB', False, barDbName,
                       '20170102', '20180206', 0,
                       0.35 / 10000, 1000, 0.05, 30000)
 
-    #'''
+    '''
     # 参数优化【总收益率totalReturn 总盈亏totalNetPnl 夏普比率sharpeRatio 最大回撤maxDrawdown】
     setting = OptimizationSetting()                                                         # 新建一个优化任务设置对象
     setting.setOptimizeTarget('sharpeRatio')                                                # 设置优化排序的目标是策略夏普比率
-    setting.addParameter('bollDev', 1.5, 3.0, 0.1)                                         # 优化参数openLen，起始0，结束1，步进1
-    setting.addParameter('slMultiplier', 0.5, 2.0, 0.1)                                    # 增加优化参数
-    setting.addParameter('window', 5, 30, 2)
-    setting.addParameter('amSize', 15, 50, 2)
+    setting.addParameter('bollDev', 2.1, 2.2, 0.1)                                         # 优化参数openLen，起始0，结束1，步进1
+    setting.addParameter('slMultiplier', 0.7, 0.7, 0.2)                                    # 增加优化参数
+    setting.addParameter('window', 23, 23, 1)
+    setting.addParameter('amSize', 30, 30, 15)
     start = datetime.now()
     engine.runParallelOptimization(BreakingStrategy, setting)
     print datetime.now() - start
-    #'''
+    '''
 
     #'''
     # 回测
     engine.strategy.name = 'breaking_backtesting'
     engine.strategy.vtSymbol = engine.symbol
-    #engine.tickCross = True
     engine.runBacktesting()
     df = engine.calculateDailyResult()
     df, result = engine.calculateDailyStatistics(df)
     #engine.ShowTradeDetail()
-    engine.showDailyResult(df, result)
+    #engine.showDailyResult(df, result)
+    engine.showBacktestingResult()
     #'''
 

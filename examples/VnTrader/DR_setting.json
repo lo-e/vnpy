@@ -3,16 +3,16 @@
 
     "tick":
     [
-        ["rb1805", "CTP"]
+        ["rb1810", "CTP"]
     ],
 
     "bar":
     [
-        ["rb1805", "CTP"]
+        ["rb1810", "CTP"]
     ],
 
     "active":
     {
-        "rb.HOT": "rb1805"
+        "rb.HOT": "rb1810"
     }
 }
