@@ -20,7 +20,7 @@ class stgEarningManager(object):
                     self.dirPath = root + '\\stgEarningCSV\\'
                     return
         '''
-        self.dirPath = 'C:\\Users\\Rachel\\iCloudDrive\\com~apple~Numbers\\ctaStrategy\\stgEarningCSV\\'
+        self.dirPath = 'C:\\Users\\loe\\iCloudDrive\\com~apple~Numbers\\ctaStrategy\\stgEarningCSV\\'
 
     def loadDailyEarning(self, name = ''):
         result = []
