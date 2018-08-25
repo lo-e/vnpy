@@ -1,4 +1,4 @@
-Metadata-Version: 1.1
+Metadata-Version: 2.1
 Name: vnpy
 Version: 1.8.0
 Summary: A framework for developing Quantitative Trading programmes
@@ -34,3 +34,4 @@ Classifier: Programming Language :: Python :: 2.7
 Classifier: Topic :: Office/Business :: Financial :: Investment
 Classifier: Programming Language :: Python :: Implementation :: CPython
 Classifier: License :: OSI Approved :: MIT License
+Provides-Extra: tq

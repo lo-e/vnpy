@@ -14,13 +14,16 @@ class stgEarningManager(object):
         # icloud drive路径
         self.dirPath = ''
         walkingDic = 'C:\\Users'
+        count = 0
         for root, subdirs, files in os.walk(walkingDic):
             for sub in subdirs:
                 if sub == 'stgEarningCSV':
                     self.dirPath = root + '\\stgEarningCSV\\'
-                    return
+                    count += 1
+                    if count == 2:
+                        return
         '''
-        self.dirPath = 'C:\\Users\\loe\\iCloudDrive\\com~apple~Numbers\\ctaStrategy\\stgEarningCSV\\'
+        self.dirPath = 'C:\\Users\\lo-e\\iCloudDrive\\com~apple~Numbers\\ctaStrategy\\stgEarningCSV\\'
 
     def loadDailyEarning(self, name = ''):
         result = []
