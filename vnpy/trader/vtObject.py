@@ -100,6 +100,8 @@ class VtBarData(VtBaseData):
 
         """ modify by loe """
         self.endDatetime = None                # bar结束datetime
+        self.buyInterestChange = EMPTY_STRING  # 多头持仓量增减
+        self.sellInterestChange = EMPTY_STRING # 空头持仓量增减
         
         self.volume = EMPTY_INT             # 成交量
         self.openInterest = EMPTY_INT       # 持仓量    

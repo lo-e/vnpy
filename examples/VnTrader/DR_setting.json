@@ -3,19 +3,16 @@
 
     "tick":
     [
-        ["rb1810", "CTP"],
-        ["cu1809", "CTP"]
+        ["rb1901", "CTP"]
     ],
 
     "bar":
     [
-        ["rb1810", "CTP"],
-        ["cu1809", "CTP"]
+        ["rb1901", "CTP"]
     ],
 
     "active":
     {
-        "rb.HOT": "rb1810",
-        "cu.HOT": "cu1809"
+        "rb.HOT": "rb1901"
     }
 }

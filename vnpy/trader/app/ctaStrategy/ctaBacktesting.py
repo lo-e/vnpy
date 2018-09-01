@@ -69,6 +69,7 @@ class BacktestingEngine(object):
         self.endDate = ''
 
         self.capital = 1000000      # 回测时的起始本金（默认100万）
+
         self.slippage = 0           # 回测时假设的滑点
         self.rate = 0               # 回测时假设的佣金比例（适用于百分比佣金）
         self.size = 1               # 合约大小，默认为1    
@@ -168,7 +169,7 @@ class BacktestingEngine(object):
     def setCapital(self, capital):
         """设置资本金"""
         self.capital = capital
-    
+
     #----------------------------------------------------------------------
     def setSlippage(self, slippage):
         """设置滑点点数"""

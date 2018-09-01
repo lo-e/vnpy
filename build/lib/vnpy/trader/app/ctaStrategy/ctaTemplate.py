@@ -30,6 +30,11 @@ class CtaTemplate(object):
     vtSymbol = EMPTY_STRING        # 交易的合约vt系统代码    
     productClass = EMPTY_STRING    # 产品类型（只有IB接口需要）
     currency = EMPTY_STRING        # 货币（只有IB接口需要）
+
+    """ modify by loe """
+    capital = 0               # 启动资金
+    lever = 1                 # 资金杠杆倍数（默认1倍）
+    perSize = 1               # 品种每手数量
     
     # 策略的基本变量，由引擎管理
     inited = False                 # 是否进行了初始化
@@ -38,12 +43,16 @@ class CtaTemplate(object):
 
     """ modify by loe """
     autoSaveStradeDetail = True    # 实盘时自动保存成交数据
-    
+
+    """ modify by loe """
     # 参数列表，保存了参数的名称
     paramList = ['name',
                  'className',
                  'author',
-                 'vtSymbol']
+                 'vtSymbol',
+                 'capital',
+                 'lever',
+                 'perSize']
     
     # 变量列表，保存了变量的名称
     varList = ['inited',
@@ -202,7 +211,12 @@ class CtaTemplate(object):
         """保存同步数据到数据库"""
         if self.trading:
             self.ctaEngine.saveSyncData(self)
-    
+
+    """ modify by loe """
+    def getMaxTradeVolumeWithLever(self, price):
+        """根据ctaEngine设置的起始资金和杠杆计算能交易的最大手数"""
+        return int((self.capital * self.lever) / (price * self.perSize))  # 开仓数量
+
 
 ########################################################################
 class TargetPosTemplate(CtaTemplate):

@@ -25,7 +25,7 @@ def loadStrategyModule(moduleName):
     except:
         print ('-' * 20)
         print ('Failed to import strategy file %s:' %moduleName)
-        traceback.print_exc()    
+        traceback.print_exc()
 
 
 # 遍历strategy目录下的文件
@@ -45,6 +45,8 @@ for root, subdirs, files in os.walk(workingPath):
     for name in files:
         # 只有文件名中包含strategy且非.pyc的文件，才是策略文件
         if 'strategy' in name and '.pyc' not in name:
+            """ modify by loe """
             # 模块名称无需前缀
-            moduleName = name.replace('.py', '')
+            # moduleName = name.replace('.py', '')
+            moduleName = 'strategyLab.' + name.replace('.py', '')
             loadStrategyModule(moduleName)
