@@ -1,6 +1,5 @@
 {
-    "apiKey": "请在链行官网申请",
-    "secretKey": "请在链行官网申请",
-    "interval": 1,
-    "debug": false
+    "apiKey": "",
+    "secretKey": "",
+    "symbols": ["eth_usdt", "sc_btc", "btc_usdt"]
 }

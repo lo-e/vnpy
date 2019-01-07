@@ -8,26 +8,23 @@ import collections
 import threading
 from vnpy.trader.app.ctaStrategy.ctaBacktesting import BacktestingEngine, OptimizationSetting
 from vnpy.trader.app.ctaStrategy.ctaBase import TICK_DB_NAME
+import numpy as np
 
 class VolumeStrategy(CtaTemplate):
     """根据每笔tick的一档订单量决定方向下单"""
     className = 'VolumeStrategy'
     author = u'loe'
 
-    # 多空订单量相差倍数
-    space = 200
-    # 交易方向挂单的最低量
-    minVolume = 20
-    # 止损百分比
-    stopPercent = 3.0 / 100
-    # 持仓价和持仓后的最高最低价
-    enterPrice = 0
-    highPrice = 0
-    lowPrice = 0
-    # 累计盈亏
-    totalEarning = 0
-    # 合约代码
-    lastSymbol = ''
+    # tick容器数量
+    listSize = 17
+    # 判断信号的买卖量相差倍数
+    upDegree = 5
+    # 开仓后考虑止盈点数，若判断信号仍然有效，继续持有
+    overSize = 3
+    # 开仓后停止单反向点数
+    stopSize = 2
+    # 交易数量
+    tradeSize = 1
 
     # 参数列表，保存了参数的名称
     paramList = ['name',
@@ -36,7 +33,9 @@ class VolumeStrategy(CtaTemplate):
                  'vtSymbol',
                  'capital',
                  'lever',
-                 'perSize'
+                 'perSize',
+                 'upDegree',
+                 'listSize'
                  ]
 
     # 变量列表，保存了变量的名称
@@ -53,6 +52,13 @@ class VolumeStrategy(CtaTemplate):
     def __init__(self, ctaEngine, setting):
         """Constructor"""
         super(VolumeStrategy, self).__init__(ctaEngine, setting)
+
+        self.listCount = 0
+        self.listInit = False
+        self.bidPrice = 0
+        self.askPrice = 0
+        self.bidVolumeList = np.zeros(self.listSize)
+        self.askVolumeList = np.zeros(self.listSize)
         # ----------------------------------------------------------------------
 
     def onInit(self):
@@ -75,77 +81,49 @@ class VolumeStrategy(CtaTemplate):
     # ----------------------------------------------------------------------
     def onTick(self, tick):
         """收到行情TICK推送（必须由用户继承实现）"""
-        self.cancelAll()
 
+        # 数据加载
+        self.bidVolumeList[0:self.listSize - 1] = self.bidVolumeList[1:self.listSize]
+        self.askVolumeList[0:self.listSize - 1] = self.askVolumeList[1:self.listSize]
+        self.bidVolumeList[-1] = tick.bidVolume1
+        self.askVolumeList[-1] = tick.askVolume1
 
+        self.listCount += 1
+        if not self.listInit and self.listCount >= self.listSize:
+            self.listInit = True
 
-        # if  (time(15, 20) > tick.datetime.time() > time(14, 59, 56)):
-        #     if self.pos > 0:
-        #         self.sell(tick.lastPrice - 100, abs(self.pos))
-        #     elif self.pos < 0:
-        #         self.cover(tick.lastPrice + 100, abs(self.pos))
-        #     return
+        # 信号分析
+        if self.listInit:
+            bidSum = self.bidVolumeList.sum()
+            askSum = self.askVolumeList.sum()
 
-        # if tick.datetime.time() > time(22, 59, 56):
-        #     if self.pos > 0:
-        #         self.sell(tick.lastPrice - 100, abs(self.pos))
-        #     elif self.pos < 0:
-        #         self.cover(tick.lastPrice + 100, abs(self.pos))
-        #     return
-
-        symbol = tick.vtSymbol
-        if not self.lastSymbol:
-            self.lastSymbol = symbol
-
-        if self.lastSymbol != symbol:
-            if self.pos > 0:
-                self.sell(tick.lastPrice - 100, abs(self.pos))
+            if self.pos == 0:
+                # 空仓中，多头列表之和大于空头列表之和，建仓多头；否则反之。
+                if bidSum > askSum * self.upDegree:
+                    self.cancelAll()
+                    self.buy(tick.lastPrice + 10, self.tradeSize)
+                elif bidSum < askSum * self.upDegree:
+                    self.cancelAll()
+                    self.short(tick.lastPrice - 10, self.tradeSize)
+            elif self.pos > 0:
+                # 多头持仓中，当前价格正向超出持仓价设置的固定点数，判断信号趋势，如果仍然符合，继续持仓，并且撤销之前的停止单，以最新价格开新的停止单，若不符合，清仓。
+                if tick.lastPrice >= self.bidPrice + self.overSize:
+                    if bidSum <= askSum * self.upDegree:
+                        self.cancelAll()
+                        self.sell(tick.lastPrice - 10, abs(self.pos))
+                    else:
+                        self.cancelAll()
+                        self.sell(tick.lastPrice - self.stopSize, abs(self.pos), True)
             elif self.pos < 0:
-                self.cover(tick.lastPrice + 100, abs(self.pos))
+                # 空头持仓中，同上。
+                if tick.lastPrice <= self.askPrice - self.overSize:
+                    if askSum <= bidSum * self.upDegree:
+                        self.cancelAll()
+                        self.cover(tick.lastPrice + 10, abs(self.pos))
+                    else:
+                        self.cancelAll()
+                        self.cover(tick.lastPrice + self.stopSize, abs(self.pos), True)
 
-            print u"###### 移仓换月 %s %s %s######" % (tick.datetime, self.lastSymbol, symbol)
-            self.lastSymbol = symbol
-            return
-
-        # 止损
-        self.highPrice = max(self.highPrice, tick.lastPrice)
-        self.lowPrice = min(self.lowPrice, tick.lastPrice)
-        if self.pos > 0 and tick.lastPrice <= self.highPrice * (1 - self.stopPercent):
-            self.sell(tick.lastPrice - 100, abs(self.pos))
-            datetime = tick.datetime.replace(microsecond = 0)
-            earning = (tick.lastPrice - self.enterPrice) * self.perSize
-            self.totalEarning += earning
-            print u"====== %s %s 止损 多 %s  %s 盈亏 %s====== %s" % (datetime, symbol, self.enterPrice, tick.lastPrice, earning, self.totalEarning)
-
-        if self.pos < 0 and tick.lastPrice >= self.lowPrice * (1 + self.stopPercent):
-            self.cover(tick.lastPrice + 100, abs(self.pos))
-            datetime = tick.datetime.replace(microsecond=0)
-            earning = (tick.lastPrice - self.enterPrice) * -1 * self.perSize
-            self.totalEarning += earning
-            print u"====== %s %s 止损 空 %s  %s 盈亏 %s====== %s" % (datetime, symbol, self.enterPrice, tick.lastPrice, earning, self.totalEarning)
-
-        bidVolume = tick.bidVolume1
-        askVolume = tick.askVolume1
-        if bidVolume > askVolume * self.space and askVolume >= self.minVolume:
-            if self.pos < 0:
-                self.cover(tick.lastPrice + 100, abs(self.pos))
-                datetime = tick.datetime.replace(microsecond=0)
-                earning = (tick.lastPrice - self.enterPrice) * -1 * self.perSize
-                self.totalEarning += earning
-                print u"====== %s %s 空 %s  %s 盈亏 %s====== %s" % (datetime, symbol, self.enterPrice, tick.lastPrice, earning, self.totalEarning)
-                self.buy(tick.lastPrice + 100, 1)
-            elif self.pos == 0:
-                self.buy(tick.lastPrice + 100, 1)
-        elif askVolume > bidVolume * self.space and bidVolume >= self.minVolume:
-            if self.pos > 0:
-                self.sell(tick.lastPrice - 100, abs(self.pos))
-                datetime = tick.datetime.replace(microsecond=0)
-                earning = (tick.lastPrice - self.enterPrice) * self.perSize
-                self.totalEarning += earning
-                print u"====== %s %s 多 %s  %s 盈亏 %s====== %s" % (datetime, symbol, self.enterPrice, tick.lastPrice, earning, self.totalEarning)
-                self.short(tick.lastPrice - 100, 1)
-            elif self.pos == 0:
-                self.short(tick.lastPrice - 100, 1)
 
         # 发出状态更新事件
         self.putEvent()
@@ -163,10 +141,19 @@ class VolumeStrategy(CtaTemplate):
     # ----------------------------------------------------------------------
     def onTrade(self, trade):
         """收到成交推送（必须由用户继承实现）"""
+        if abs(trade.volume) > 100:
+            print ''
         if trade.offset == u'开仓':
-            self.enterPrice = trade.price
-            self.highPrice = trade.price
-            self.lowPrice = trade.price
+            if trade.direction == u'多':
+                # 反向停止单
+                self.sell(trade.price - self.stopSize, trade.volume, True)
+                # 多头建仓价格
+                self.bidPrice = trade.price
+            elif trade.direction == u'空':
+                # 反向停止单
+                self.cover(trade.price + self.stopSize, trade.volume, True)
+                # 空头建仓价格
+                self.askPrice = trade.price
 
         # 发出状态更新事件
         self.putEvent()
@@ -223,11 +210,22 @@ if __name__ == '__main__':
                'perSize':10}
 
     engine = GetEngin(setting, 'rb00.TB',
-                      '20170101', '20180206', 0,
+                      '20180126', '20180206', 0,
                       0 / 10000, tickPrice)
 
+    '''
+    # 参数优化【总收益率totalReturn 总盈亏totalNetPnl 夏普比率sharpeRatio】
+    setting = OptimizationSetting()                                                     # 新建一个优化任务设置对象
+    setting.setOptimizeTarget('totalNetPnl')
+    # 设置优化排序的目标是策略夏普比率
+    setting.addParameter('upDegree', 2, 20, 1)               # 优化参数openLen，起始0，结束1，步进1
+    setting.addParameter('listSize', 10, 100, 1)                                  # 增加优化参数
+    start = datetime.now()
+    engine.runParallelOptimization(VolumeStrategy, setting)
+    print datetime.now() - start
+    '''
 
-    #'''
+    #"""
     # 回测
     engine.strategy.name = 'volume_backtesting'
     engine.strategy.vtSymbol = engine.symbol
@@ -236,5 +234,5 @@ if __name__ == '__main__':
     df, result = engine.calculateDailyStatistics(df)
     #engine.ShowTradeDetail()
     engine.showDailyResult(df, result)
-    #'''
+    #"""
 

@@ -149,12 +149,16 @@ class SimpleStrategy(CtaTemplate):
                     self.entryOrderPrice = tick.lastPrice
                     self.ordering = True
                     self.writeCtaLog(u'开仓多头 %s' % tick.time)
+
+                    # print u'开仓 多 %s bid:%s ask:%s' % (self.tradeSize, tick.bidVolume1, tick.askVolume1)
                 elif (sub <= -self.startPrice * self.openPercent / 100) and self.trading:
                     # 开仓空头
                     self.short(tick.lastPrice - self.tickPrice*10, self.tradeSize)  # 限价单
                     self.entryOrderPrice = tick.lastPrice
                     self.ordering = True
                     self.writeCtaLog(u'开仓空头 %s' % tick.time)
+
+                    # print u'开仓 空 %s bid:%s ask:%s' % (self.tradeSize, tick.bidVolume1, tick.askVolume1)
 
         elif self.pos > 0:
             # 持有多头仓位
@@ -163,6 +167,8 @@ class SimpleStrategy(CtaTemplate):
                 self.sell(tick.lastPrice - self.tickPrice*20, abs(self.pos))  # 限价单
                 self.offsetOrderPrice = tick.lastPrice
                 self.ordering = True
+
+                # print u'平仓 空 %s bid:%s ask:%s' % (self.tradeSize, tick.bidVolume1, tick.askVolume1)
         elif self.pos < 0:
             # 持有空头仓位
             if (tick.lastPrice >= self.lowPrice * (1 + self.outPercent / 100)) and ( not self.ordering) and self.trading:
@@ -170,6 +176,8 @@ class SimpleStrategy(CtaTemplate):
                 self.cover(tick.lastPrice + self.tickPrice*20, abs(self.pos))  # 限价单
                 self.offsetOrderPrice = tick.lastPrice
                 self.ordering = True
+
+                # print u'平仓 多 %s bid:%s ask:%s' % (self.tradeSize, tick.bidVolume1, tick.askVolume1)
 
         if self.pos:
             self.highPrice = max(self.highPrice, tick.lastPrice)
@@ -248,7 +256,7 @@ def GetEngin(settingDict, symbol,
 
 if __name__ == '__main__':
     tickPrice = 1
-    setting = {'capital':6000,
+    setting = {'capital':1000000,
                'lever':10,
                'perSize':10}
 
@@ -256,8 +264,8 @@ if __name__ == '__main__':
     #setting = {'outPercent':0.14}
     #setting = {'openPercent': 0.14}
     setting['startSecond'] = 23
-    engine = GetEngin(setting, 'rb1810.TS',
-                      '20180106', '20180906', 0,
+    engine = GetEngin(setting, 'rb00.TB',
+                      '20160506', '20180906', 0,
                       1.07 / 10000, tickPrice)
 
     '''

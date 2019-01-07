@@ -35,7 +35,7 @@ class CtaTemplate(object):
     capital = 0               # 启动资金
     lever = 1                 # 资金杠杆倍数（默认1倍）
     perSize = 1               # 品种每手数量
-    
+
     # 策略的基本变量，由引擎管理
     inited = False                 # 是否进行了初始化
     trading = False                # 是否启动交易，由引擎管理
@@ -216,6 +216,11 @@ class CtaTemplate(object):
     def getMaxTradeVolumeWithLever(self, price):
         """根据ctaEngine设置的起始资金和杠杆计算能交易的最大手数"""
         return int((self.capital * self.lever) / (price * self.perSize))  # 开仓数量
+    
+    #----------------------------------------------------------------------
+    def getPriceTick(self):
+        """查询最小价格变动"""
+        return self.ctaEngine.getPriceTick(self)
 
 
 ########################################################################
@@ -305,17 +310,20 @@ class TargetPosTemplate(CtaTemplate):
         if self.lastTick:
             if posChange > 0:
                 longPrice = self.lastTick.askPrice1 + self.tickAdd
-                if tick.upperLimit:
-                    longPrice = min(longPrice, tick.upperLimit)         # 涨停价检查
+                if self.lastTick.upperLimit:
+                    longPrice = min(longPrice, self.lastTick.upperLimit)         # 涨停价检查
             else:
                 shortPrice = self.lastTick.bidPrice1 - self.tickAdd
-                if tick.lowerLimit:
-                    shortPrice = max(shortPrice, tick.lowerLimit)       # 跌停价检查
-        else:
+                if self.lastTick.lowerLimit:
+                    shortPrice = max(shortPrice, self.lastTick.lowerLimit)       # 跌停价检查
+        elif self.lastBar:
+            """ modify by loe """
             if posChange > 0:
                 longPrice = self.lastBar.close + self.tickAdd
             else:
                 shortPrice = self.lastBar.close - self.tickAdd
+        else:
+            return
         
         # 回测模式下，采用合并平仓和反向开仓委托的方式
         if self.getEngineType() == ENGINETYPE_BACKTESTING:
@@ -441,7 +449,8 @@ class BarGenerator(object):
         self.bar.openInterest = tick.openInterest
    
         if self.lastTick:
-            self.bar.volume += (tick.volume - self.lastTick.volume) # 当前K线内的成交量
+            volumeChange = tick.volume - self.lastTick.volume   # 当前K线内的成交量
+            self.bar.volume += max(volumeChange, 0)             # 避免夜盘开盘lastTick.volume为昨日收盘数据，导致成交量变化为负的情况
             
         # 缓存Tick
         self.lastTick = tick
@@ -487,6 +496,13 @@ class BarGenerator(object):
             
             # 清空老K线缓存对象
             self.xminBar = None
+
+    #----------------------------------------------------------------------
+    def generate(self):
+        """手动强制立即完成K线合成"""
+        self.onBar(self.bar)
+        self.bar = None
+
 
 
 ########################################################################
@@ -654,6 +670,11 @@ class CtaSignal(object):
     """
     CTA策略信号，负责纯粹的信号生成（目标仓位），不参与具体交易管理
     """
+    """ modify by loe """
+    # 当前tick
+    lastTick = None
+    # 当前bar
+    lastBar = None
 
     #----------------------------------------------------------------------
     def __init__(self):
@@ -679,6 +700,7 @@ class CtaSignal(object):
     def getSignalPos(self):
         """获取信号仓位"""
         return self.signalPos
+
         
         
         
