@@ -116,9 +116,8 @@ class MainEngine(object):
         
         if gateway:
             gateway.connect()
-            
-            # 接口连接后自动执行数据库连接的任务
-            self.dbConnect()        
+        
+        self.dbConnect()
    
     #----------------------------------------------------------------------
     def subscribe(self, subscribeReq, gatewayName):
@@ -202,7 +201,7 @@ class MainEngine(object):
             # 读取MongoDB的设置
             try:
                 # 设置MongoDB操作的超时时间为0.5秒
-                self.dbClient = MongoClient(globalSetting['mongoHost'], globalSetting['mongoPort'], connectTimeoutMS=500)
+                self.dbClient = MongoClient(globalSetting['mongoHost'], globalSetting['mongoPort'], serverSelectionTimeoutMS=10)
                 
                 # 调用server_info查询服务器状态，防止服务器异常并未连接成功
                 self.dbClient.server_info()
@@ -214,6 +213,7 @@ class MainEngine(object):
                     self.eventEngine.register(EVENT_LOG, self.dbLogging)
                     
             except ConnectionFailure:
+                self.dbClient = None
                 self.writeLog(text.DATABASE_CONNECTING_FAILED)
     
     #----------------------------------------------------------------------
@@ -419,7 +419,7 @@ class DataEngine(object):
         self.workingOrderDict = {}  # 可撤销委托
         self.tradeDict = {}
         self.accountDict = {}
-        self.positionDict= {}
+        self.positionDict = {}
         self.logList = []
         self.errorList = []
         
@@ -721,7 +721,7 @@ class LogEngine(object):
             if not filename:
                 filename = 'vt_' + datetime.now().strftime('%Y%m%d') + '.log'
             filepath = getTempPath(filename)
-            self.fileHandler = logging.FileHandler(filepath)
+            self.fileHandler = logging.FileHandler(filepath, mode='w', encoding='utf-8')
             self.fileHandler.setLevel(self.level)
             self.fileHandler.setFormatter(self.formatter)
             self.logger.addHandler(self.fileHandler)

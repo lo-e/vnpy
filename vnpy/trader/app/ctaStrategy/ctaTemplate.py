@@ -4,11 +4,8 @@
 本文件包含了CTA引擎中的策略开发用模板，开发策略时需要继承CtaTemplate类。
 '''
 
-import numpy as np
-import talib
-
 from vnpy.trader.vtConstant import *
-from vnpy.trader.vtObject import VtBarData
+from vnpy.trader.vtUtility import BarGenerator, ArrayManager
 
 from .ctaBase import *
 
@@ -222,7 +219,6 @@ class CtaTemplate(object):
         """查询最小价格变动"""
         return self.ctaEngine.getPriceTick(self)
 
-
 ########################################################################
 class TargetPosTemplate(CtaTemplate):
     """
@@ -364,8 +360,10 @@ class TargetPosTemplate(CtaTemplate):
                     l = self.short(shortPrice, abs(posChange))
             self.orderList.extend(l)
     
-    
 ########################################################################
+""" modify by loe """
+#v1.9.2删除了BarGenerator、ArrayManager
+
 class BarGenerator(object):
     """
     K线合成器，支持：
@@ -663,7 +661,6 @@ class ArrayManager(object):
         if array:
             return up, down
         return up[-1], down[-1]
-    
 
 ########################################################################
 class CtaSignal(object):
@@ -700,10 +697,3 @@ class CtaSignal(object):
     def getSignalPos(self):
         """获取信号仓位"""
         return self.signalPos
-
-        
-        
-        
-        
-    
-    
