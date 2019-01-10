@@ -265,7 +265,7 @@ if __name__ == '__main__':
     #setting = {'openPercent': 0.14}
     setting['startSecond'] = 23
     engine = GetEngin(setting, 'rb00.TB',
-                      '20160506', '20180906', 0,
+                      '20160506', '20160516', 0,
                       1.07 / 10000, tickPrice)
 
     '''
@@ -288,7 +288,7 @@ if __name__ == '__main__':
     engine.strategy.vtSymbol = engine.symbol
     engine.runBacktesting()
     df = engine.calculateDailyResult()
-    df, result = engine.calculateDailyStatistics(df)
+    df, result = engine.calculateDailyStatistics()
     engine.ShowTradeDetail()
     engine.showDailyResult(df, result)
     #'''

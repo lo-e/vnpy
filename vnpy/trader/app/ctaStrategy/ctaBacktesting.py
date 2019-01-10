@@ -1428,7 +1428,8 @@ class BacktestingEngine(object):
         """ modify by loe """
         pBalance = plt.subplot(1, 1, 1)
         pBalance.set_title('earning')
-        df['balance'].plot(legend=True)
+        #d['balance'].plot(legend=True)
+        plt.plot(d['date'], d['balance'])
 
         '''
         pBalance = plt.subplot(4, 1, 1)
