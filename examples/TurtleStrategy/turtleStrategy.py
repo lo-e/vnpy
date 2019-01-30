@@ -108,8 +108,10 @@ class TurtleSignal(object):
             if bar.low <= longExit:
                 self.sell(longExit)
                 return
+
         elif self.unit < 0:
             shortExit = min(self.shortStop, self.exitUp)
+
             if bar.high >= shortExit:
                 self.cover(shortExit)
                 return
@@ -313,8 +315,11 @@ class TurtlePortfolio(object):
         if not unit:
             size = self.sizeDict[signal.vtSymbol]
             riskValue = self.portfolioValue * 0.01
-            multiplier = riskValue / (signal.atrVolatility * size)
-            multiplier = int(round(multiplier, 0))
+            """ modify by loe """
+            multiplier = 0
+            if signal.atrVolatility * size:
+                multiplier = riskValue / (signal.atrVolatility * size)
+                multiplier = int(round(multiplier, 0))
             self.multiplierDict[signal.vtSymbol] = multiplier
         else:
             multiplier = self.multiplierDict[signal.vtSymbol]

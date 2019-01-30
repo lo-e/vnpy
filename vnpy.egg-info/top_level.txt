@@ -1,1 +1,4 @@
+beta
+examples
+tests
 vnpy

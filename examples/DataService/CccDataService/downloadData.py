@@ -13,4 +13,5 @@ if __name__ == '__main__':
     #downloadMinuteBarBySymbol('BTC/USDT.BINANCE', '20181012')
     #downloadAllMinuteBar('20181012')
     
-    downloadDailyBarBySymbol('BTC/USDT.BINANCE')
+    #downloadDailyBarBySymbol('BTC/USDT.BINANCE')
+    downloadDailyBarBySymbol('BTC/USDT.HUOBIPRO')

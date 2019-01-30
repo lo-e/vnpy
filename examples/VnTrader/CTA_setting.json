@@ -1,19 +1,10 @@
 [
     {
-        "name": "simple",
-        "className": "SimpleStrategy",
-        "vtSymbol": "rb1901",
-        "capital":6000,
-        "lever":10,
-        "perSize":10
-    },
-
-    {
         "name": "Test",
         "className": "TestStrategy",
-        "vtSymbol": "rb1901",
+        "vtSymbol": "zn1903",
         "capital":6000,
         "lever":10,
-        "perSize":10
+        "perSize":5
     }
 ]

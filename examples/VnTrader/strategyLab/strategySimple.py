@@ -265,7 +265,7 @@ if __name__ == '__main__':
     #setting = {'openPercent': 0.14}
     setting['startSecond'] = 23
     engine = GetEngin(setting, 'rb00.TB',
-                      '20160506', '20160516', 0,
+                      '20180106', '20190116', 0,
                       1.07 / 10000, tickPrice)
 
     '''
@@ -287,9 +287,13 @@ if __name__ == '__main__':
     engine.strategy.name = 'simple_backtesting'
     engine.strategy.vtSymbol = engine.symbol
     engine.runBacktesting()
-    df = engine.calculateDailyResult()
-    df, result = engine.calculateDailyStatistics()
+    # 保存交易记录到iCloud
     engine.ShowTradeDetail()
+    # 图表展示交易指标
+    engine.calculateDailyResult()
+    df, result = engine.calculateDailyStatistics()
     engine.showDailyResult(df, result)
+
+    #engine.showBacktestingResult()
     #'''
 

@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: vnpy
-Version: 1.9.0
+Version: 1.9.2
 Summary: A framework for developing Quantitative Trading programmes
 Home-page: http://www.vnpy.org
 Author: Xiaoyou Chen
@@ -9,17 +9,17 @@ License: MIT
 Description: 
         vn.py - By Traders, For Traders.
         
-        The vn.py project is an open-source quantitative trading framework 
-        that is developed by traders, for traders. 
+        The vn.py project is an open-source quantitative trading framework
+        that is developed by traders, for traders.
         
-        The project is mainly written in Python and uses C++ for low-layer 
+        The project is mainly written in Python and uses C++ for low-layer
         and performance sensitive infrastructure.
         
-        Using the vn.py project, institutional investors and professional 
-        traders, such as hedge funds, prop trading firms and investment banks, 
-        can easily develop complex trading strategies with the Event Engine 
-        Strategy Module, and automatically route their orders to the most 
-        desired destinations, including equity, commodity, forex and many 
+        Using the vn.py project, institutional investors and professional
+        traders, such as hedge funds, prop trading firms and investment banks,
+        can easily develop complex trading strategies with the Event Engine
+        Strategy Module, and automatically route their orders to the most
+        desired destinations, including equity, commodity, forex and many
         other financial markets.
         
 Keywords: quant quantitative investment trading algotrading

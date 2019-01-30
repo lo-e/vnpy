@@ -54,6 +54,8 @@ for root, subdirs, files in os.walk(workingPath):
                 index = root.index(workingPath)
                 addPath = root[index + len(workingPath):]
                 if len(addPath) > 1:
+                    temp = addPath.split('\\')
+                    addPath = '.'.join(temp)
                     addPath = addPath[1:] + '.'
                 else:
                     addPath = ''

@@ -94,14 +94,16 @@ def generateVtTick(row, symbol):
     return tick
 
 #----------------------------------------------------------------------
-def downloadMinuteBarBySymbol(symbol):
+def downloadMinuteBarBySymbol(symbol, min=1):
     """下载某一合约的分钟线数据"""
     start = time()
 
+    """ modify by loe """
+    dbMinute = mc[MINUTE_DB_NAME.replace('1', str(min))]
     cl = dbMinute[symbol]
     cl.ensure_index([('datetime', ASCENDING)], unique=True)         # 添加索引
-    
-    df = rq.get_price(symbol, frequency='1m', fields=FIELDS)
+
+    df = rq.get_price(symbol, frequency=str(min) + 'm', fields=FIELDS, end_date=datetime.now().strftime('%Y%m%d'))
     
     for ix, row in df.iterrows():
         bar = generateVtBar(row, symbol)
