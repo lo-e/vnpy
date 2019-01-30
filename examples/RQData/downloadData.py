@@ -13,8 +13,8 @@ if __name__ == '__main__':
     downloadDailyBarBySymbol('RB99')
     downloadTickBySymbol('RB1905', '2018-12-21')
     """
-    downloadDailyBarBySymbol('TA99')
-    """
+
+    #"""
     filename = 'symbol_list.csv'
     count = 0
     with open(filename) as f:
@@ -24,4 +24,4 @@ if __name__ == '__main__':
             downloadDailyBarBySymbol(symbol)
             count += 1
     print  '合约数：%d' % count
-    """
+    #"""

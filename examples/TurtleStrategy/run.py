@@ -14,21 +14,24 @@ from collections import OrderedDict
 
 def one():
     engine = BacktestingEngine()
-    engine.setPeriod(datetime(2017, 10, 15), datetime(2018, 12, 31))
+    engine.setPeriod(datetime(2012, 10, 15), datetime(2018, 12, 31))
+    figSavedName = ''
+    if figSavedName:
+        figSavedName = 'figSaved\\%s' % figSavedName
     engine.initPortfolio('setting.csv', 10000000)
 
     engine.loadData()
     engine.runBacktesting()
-    engine.showResult()
+    engine.showResult(figSavedName)
 
-    #"""
+    """
     for symbol in engine.vtSymbolList:
         tradeList = engine.getTradeData(symbol)
         for trade in tradeList:
             print '%s\t\t%s %s\t\t%s\t\t%s@%s' % (trade.dt, trade.vtSymbol, trade.direction, trade.offset,
                                                   trade.volume, trade.price)
         print '\n\n'
-    #"""
+    """
 
 def two():
     filename = 'setting.csv'

@@ -160,7 +160,7 @@ class BacktestingEngine(object):
         
         for dt, barDict in self.dataDict.items():
             self.currentDt = dt
-            
+
             previousResult = self.result
             
             self.result = DailyResult(dt)
@@ -281,7 +281,8 @@ class BacktestingEngine(object):
         return timeseries, result
     
     #----------------------------------------------------------------------
-    def showResult(self):
+    """ modify by loe """
+    def showResult(self, figSavedPath=''):
         """显示回测结果"""
         timeseries, result = self.calculateResult()
         
@@ -334,6 +335,9 @@ class BacktestingEngine(object):
         pKDE = plt.subplot(4, 1, 4)
         pKDE.set_title('Daily Pnl Distribution')
         plt.hist(timeseries['netPnl'], bins=50)
+
+        if figSavedPath:
+            plt.savefig(figSavedPath)
         
         plt.show()        
     
@@ -449,15 +453,21 @@ class DailyResult(object):
                     side = 1
                 else:
                     side = -1
-                
+
+                """ modify by loe """
                 commissionCost = (trade.volume * fixedCommission + 
-                                  trade.volume * trade.price * variableCommission)
-                slippageCost = trade.volume * slippage
-                pnl = (close - trade.price) * trade.volume * side * size
-                
-                self.commission += commissionCost
-                self.slippage += slippageCost
-                self.tradingPnl += pnl
+                                  trade.volume * size * trade.price * variableCommission)
+                slippageCost = trade.volume * size * slippage
+
+                if close:
+                    pnl = (close - trade.price) * trade.volume * side * size
+                    self.commission += commissionCost
+                    self.slippage += slippageCost
+                    self.tradingPnl += pnl
+                else:
+                    print('*' * 20)
+                    print('%s\t%s volume：%s\t计算当日交易盈亏数据缺失' % (self.date, vtSymbol, trade.volume))
+                    print('*' * 20 + '\n')
     
     #----------------------------------------------------------------------
     def calculateHoldingPnl(self):
@@ -467,9 +477,16 @@ class DailyResult(object):
             close = self.closeDict.get(vtSymbol, 0)
             #close = self.closeDict[vtSymbol]
             size = SIZE_DICT[vtSymbol]
-            
-            pnl = (close - previousClose) * pos * size
-            self.holdingPnl += pnl
+
+            """ modify by loe """
+            if close:
+                if previousClose:
+                    pnl = (close - previousClose) * pos * size
+                    self.holdingPnl += pnl
+            elif pos:
+                print('*'*20)
+                print('%s\t%s pos：%s\t计算当日持仓盈亏数据缺失' % (self.date, vtSymbol, pos))
+                print('*'*20 + '\n')
 
     #----------------------------------------------------------------------
     def calculatePnl(self):

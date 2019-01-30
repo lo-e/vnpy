@@ -5,10 +5,18 @@ from collections import defaultdict
 from vnpy.trader.vtConstant import (DIRECTION_LONG, DIRECTION_SHORT,
                                     OFFSET_OPEN, OFFSET_CLOSE)
 from vnpy.trader.vtUtility import ArrayManager
+""" modify by loe """
+import re
 
-
+""" modify by loe """
 MAX_PRODUCT_POS = 4         # 单品种最大持仓
-MAX_DIRECTION_POS = 10      # 单方向最大持仓
+MAX_CATEGORY_POS = 6        # 高度关联最大持仓
+MAX_DIRECTION_POS = 12      # 单方向最大持仓
+
+CATEGORY_DICT = {'nonferrous_metal':['AL'],
+                 'ferrous_metal':['RB','I','HC','SM'],
+                 'coal':['JM','J','ZC'],
+                 'chemical_industry':['TA']}
 
 
 ########################################################################
@@ -274,6 +282,9 @@ class TurtlePortfolio(object):
         self.unitDict = {}          # 每个品种的持仓情况
         self.totalLong = 0          # 总的多头持仓
         self.totalShort = 0         # 总的空头持仓
+        """ modify by loe """
+        self.categoryLongUnitDict = defaultdict(int)      # 高度关联品种多头持仓情况
+        self.categoryShortUnitDict = defaultdict(int)     # 高度关联品种空头持仓情况
         
         self.tradingDict = {}       # 交易中的信号字典
         
@@ -341,6 +352,16 @@ class TurtlePortfolio(object):
                 # 单品种持仓不能超过上限
                 if self.unitDict[signal.vtSymbol] >= MAX_PRODUCT_POS:
                     return
+
+                """ modify by loe """
+                # 高度关联品种单方向持仓不能超过上限
+                startSymbol = re.sub("\d", "", signal.vtSymbol)
+                for key, value in CATEGORY_DICT.items():
+                    if startSymbol in value:
+                        if self.categoryLongUnitDict[key] >= MAX_CATEGORY_POS:
+                            return
+                        break
+
             # 卖出
             else:
                 if self.totalShort <= -MAX_DIRECTION_POS:
@@ -348,6 +369,15 @@ class TurtlePortfolio(object):
                 
                 if self.unitDict[signal.vtSymbol] <= -MAX_PRODUCT_POS:
                     return
+
+                """ modify by loe """
+                startSymbol = re.sub("\d", "", signal.vtSymbol)
+                for key, value in CATEGORY_DICT.items():
+                    if startSymbol in value:
+                        if self.categoryShortUnitDict[key] <= -MAX_CATEGORY_POS:
+                            return
+                        break
+
         # 平仓
         else:
             if direction == DIRECTION_LONG:
@@ -380,23 +410,39 @@ class TurtlePortfolio(object):
     #----------------------------------------------------------------------
     def sendOrder(self, vtSymbol, direction, offset, price, volume, multiplier):
         """"""
+
         # 计算合约持仓
         if direction == DIRECTION_LONG:
             self.unitDict[vtSymbol] += volume
             self.posDict[vtSymbol] += volume * multiplier
+
         else:
             self.unitDict[vtSymbol] -= volume
             self.posDict[vtSymbol] -= volume * multiplier
         
-        # 计算总持仓
+        # 计算总持仓、类别持仓
         self.totalLong = 0
         self.totalShort = 0
+        self.categoryLongUnitDict = defaultdict(int)
+        self.categoryShortUnitDict = defaultdict(int)
         
-        for unit in self.unitDict.values():
+        for symbol, unit in self.unitDict.items():
+            # 总持仓
             if unit > 0:
                 self.totalLong += unit
             elif unit < 0:
                 self.totalShort += unit
+
+            """ modify by loe """
+            # 类别持仓
+            startSymbol = re.sub("\d", "", symbol)
+            for key, value in CATEGORY_DICT.items():
+                if startSymbol in value:
+                    if unit > 0:
+                        self.categoryLongUnitDict[key] += unit
+                    elif unit < 0:
+                        self.categoryShortUnitDict[key] += unit
+                    break
         
         # 向回测引擎中发单记录
         self.engine.sendOrder(vtSymbol, direction, offset, price, volume*multiplier)
