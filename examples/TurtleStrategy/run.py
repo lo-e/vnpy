@@ -14,23 +14,93 @@ from collections import OrderedDict
 
 def one():
     engine = BacktestingEngine()
-    engine.setPeriod(datetime(2012, 10, 15), datetime(2018, 12, 31))
+    engine.setPeriod(datetime(2012, 10, 15), datetime(2018,12, 31))
+    #engine.tradingStart = datetime(2018, 1, 1)
     figSavedName = ''
     if figSavedName:
         figSavedName = 'figSaved\\%s' % figSavedName
-    engine.initPortfolio('setting.csv', 10000000)
-
+    engine.initPortfolio('setting.csv', 1000000)
     engine.loadData()
     engine.runBacktesting()
     engine.showResult(figSavedName)
+    #print "\n最大占用保证金：%s\t持仓单位：%s" % (engine.portfolio.maxBond[0], engine.portfolio.maxBond[1])
 
     """
-    for symbol in engine.vtSymbolList:
-        tradeList = engine.getTradeData(symbol)
-        for trade in tradeList:
-            print '%s\t\t%s %s\t\t%s\t\t%s@%s' % (trade.dt, trade.vtSymbol, trade.direction, trade.offset,
-                                                  trade.volume, trade.price)
-        print '\n\n'
+    resultList = []
+    totalPnl = 0
+    calculateDic = {}
+    #for symbol in engine.vtSymbolList:
+    tradeList = engine.getTradeData()
+    for trade in tradeList:
+        print '%s\t\t%s %s\t\t%s\t\t%s\t%s@%s' % (trade.dt, trade.vtSymbol, trade.direction, trade.offset,
+                                                  engine.sizeDict[trade.vtSymbol], trade.volume, trade.price)
+
+        symbolDic = calculateDic.get(trade.vtSymbol, {})
+
+        tOpen = False
+        offset = ''
+        if trade.offset == u'开仓':
+            offset = '开仓'
+            tOpen = True
+        elif trade.offset == u'平仓':
+            offset = '平仓'
+            tOpen = False
+
+        direction = ''
+        if trade.direction == u'多':
+            direction = '多'
+            if tOpen:
+                symbolDic['direction'] = 1
+        elif trade.direction == u'空':
+            direction = '空'
+            if tOpen:
+                symbolDic['direction'] = -1
+
+        pnl = 0
+        if tOpen:
+            symbolDic['size'] = engine.sizeDict[trade.vtSymbol]
+            vol = symbolDic.get('volume', 0)
+            pri = symbolDic.get('price', 0)
+            pri = vol*pri + trade.volume*trade.price
+
+            vol += trade.volume
+            symbolDic['volume'] = vol
+            pri = pri / vol
+            symbolDic['price'] = pri
+            calculateDic[trade.vtSymbol] = symbolDic
+        else:
+            if symbolDic['volume'] != trade.volume:
+                raise '平仓数量有误！'
+            pnl = symbolDic['direction'] * (trade.price - symbolDic['price']) * trade.volume * symbolDic['size']
+            totalPnl += pnl
+            calculateDic[trade.vtSymbol] = {}
+
+        dic = {'datetime':trade.dt,
+               'symbol':trade.vtSymbol,
+               'direction':direction,
+               'offset':offset,
+               'size':engine.sizeDict[trade.vtSymbol],
+               'volume':trade.volume,
+               'price':trade.price}
+        if pnl:
+            dic['pnl'] = str(pnl)
+            dic['totalPnl'] = str(totalPnl)
+        else:
+            dic['pnl'] = ''
+            dic['totalPnl'] = ''
+
+        resultList.append(dic)
+    print '\n\n'
+
+    if len(resultList):
+        fieldNames = ['datetime', 'symbol', 'direction', 'offset', 'size', 'volume', 'price', 'pnl', 'totalPnl']
+        # 文件路径
+        filePath = 'result.csv'
+        with open(filePath, 'w') as f:
+            writer = csv.DictWriter(f, fieldnames=fieldNames)
+            writer.writeheader()
+            # 写入csv文件
+            writer.writerows(resultList)
     """
 
 def two():
@@ -41,7 +111,7 @@ def two():
         r = DictReader(f)
         for d in r:
             engine = BacktestingEngine()
-            engine.setPeriod(datetime(2012, 10, 15), datetime(2019, 12, 31))
+            engine.setPeriod(datetime(2012, 10, 15), datetime(2018, 12, 31))
 
             engine.initSinglePortfolio(d, 10000000)
 

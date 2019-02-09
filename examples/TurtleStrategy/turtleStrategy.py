@@ -7,13 +7,15 @@ from vnpy.trader.vtConstant import (DIRECTION_LONG, DIRECTION_SHORT,
 from vnpy.trader.vtUtility import ArrayManager
 """ modify by loe """
 import re
+from datetime import  datetime
 
 """ modify by loe """
 MAX_PRODUCT_POS = 4         # 单品种最大持仓
 MAX_CATEGORY_POS = 6        # 高度关联最大持仓
 MAX_DIRECTION_POS = 12      # 单方向最大持仓
 
-CATEGORY_DICT = {'nonferrous_metal':['AL'],
+CATEGORY_DICT = {'finance':['IF','IC','IH'],
+                'nonferrous_metal':['AL'],
                  'ferrous_metal':['RB','I','HC','SM'],
                  'coal':['JM','J','ZC'],
                  'chemical_industry':['TA']}
@@ -64,12 +66,18 @@ class TurtleSignal(object):
         self.profitCheck = profitCheck  # 是否检查上一笔盈利
         
         self.am = ArrayManager(60)      # K线容器
+        """ modify by loe """
+        #self.atrAm = ArrayManager(self.atrWindow+1)     # K线容器
+        self.atrAm = ArrayManager(60)                   # K线容器
         
         self.atrVolatility = 0          # ATR波动率
         self.entryUp = 0                # 入场通道
         self.entryDown = 0
         self.exitUp = 0                 # 出场通道
         self.exitDown = 0
+        """ modify by loe """
+        self.priceHigh = 0
+        self.priceLow = 0
         
         self.longEntry1 = 0             # 多头入场位
         self.longEntry2 = 0
@@ -87,12 +95,16 @@ class TurtleSignal(object):
         self.result = None              # 当前的交易
         self.resultList = []            # 交易列表
         self.bar = None                 # 最新K线
-        
+        """ modify by loe """
+        self.filterOffset = False       # 是否过滤了无效开平交易
+
     #----------------------------------------------------------------------
     def onBar(self, bar):
         """"""
         self.bar = bar
         self.am.updateBar(bar)
+        """ modify by loe """
+        self.atrAm.updateBar(bar)
         if not self.am.inited:
             return
         
@@ -111,14 +123,16 @@ class TurtleSignal(object):
         
         # 优先检查平仓
         if self.unit > 0:
-            longExit = max(self.longStop, self.exitDown)
+            """ modify by loe """
+            longExit = max(self.longStop, self.exitDown, self.priceHigh - 100*self.atrVolatility)
             
             if bar.low <= longExit:
                 self.sell(longExit)
                 return
 
         elif self.unit < 0:
-            shortExit = min(self.shortStop, self.exitUp)
+            """ modify by loe """
+            shortExit = min(self.shortStop, self.exitUp, self.priceLow + 100*self.atrVolatility)
 
             if bar.high >= shortExit:
                 self.cover(shortExit)
@@ -166,10 +180,15 @@ class TurtleSignal(object):
         """计算技术指标"""
         self.entryUp, self.entryDown = self.am.donchian(self.entryWindow)
         self.exitUp, self.exitDown = self.am.donchian(self.exitWindow)
+        """ modify by loe """
+        self.priceHigh = max(self.bar.high, self.priceHigh)
+        self.priceLow = min(self.bar.low, self.priceLow)
         
         # 有持仓后，ATR波动率和入场位等都不再变化
         if not self.unit:
-            self.atrVolatility = self.am.atr(self.atrWindow)
+            #self.atrVolatility = self.am.atr(self.atrWindow)
+            """ modify by loe """
+            self.atrVolatility = self.atrAm.atr(self.atrWindow)
             
             self.longEntry1 = self.entryUp
             self.longEntry2 = self.entryUp + self.atrVolatility * 0.5
@@ -186,7 +205,17 @@ class TurtleSignal(object):
     #----------------------------------------------------------------------
     def newSignal(self, direction, offset, price, volume):
         """"""
-        self.portfolio.newSignal(self, direction, offset, price, volume)
+        """ modify by loe """
+        if self.portfolio.tradingStart:
+            # 如果开始正式交易的时候该信号有历史仓位，则忽略这笔开平交易
+            if self.bar.datetime >= self.portfolio.tradingStart:
+                if abs(self.unit) <= 1:
+                    self.filterOffset = True
+
+                if self.filterOffset:
+                    self.portfolio.newSignal(self, direction, offset, price, volume)
+        else:
+            self.portfolio.newSignal(self, direction, offset, price, volume)
     
     #----------------------------------------------------------------------
     def buy(self, price, volume):
@@ -198,6 +227,9 @@ class TurtleSignal(object):
         
         # 以最后一次加仓价格，加上两倍N计算止损
         self.longStop = price - self.atrVolatility * 2
+        """ modify by loe """
+        self.priceHigh = price
+        self.priceLow = price
     
     #----------------------------------------------------------------------
     def sell(self, price):
@@ -218,6 +250,9 @@ class TurtleSignal(object):
         
         # 以最后一次加仓价格，加上两倍N计算止损
         self.shortStop = price + self.atrVolatility * 2
+        """ modify by loe """
+        self.priceHigh = price
+        self.priceLow = price
     
     #----------------------------------------------------------------------
     def cover(self, price):
@@ -285,6 +320,8 @@ class TurtlePortfolio(object):
         """ modify by loe """
         self.categoryLongUnitDict = defaultdict(int)      # 高度关联品种多头持仓情况
         self.categoryShortUnitDict = defaultdict(int)     # 高度关联品种空头持仓情况
+        self.maxBond = []                                 # 历史占用保证金的最大值
+        self.tradingStart = None                          # 开始交易日期
         
         self.tradingDict = {}       # 交易中的信号字典
         
@@ -303,7 +340,7 @@ class TurtlePortfolio(object):
         for vtSymbol in vtSymbolList:
             signal1 = TurtleSignal(self, vtSymbol, 20, 10, 20, True)
             signal2 = TurtleSignal(self, vtSymbol, 55, 20, 20, False)
-            
+
             l = self.signalDict[vtSymbol]
             l.append(signal1)
             l.append(signal2)
@@ -397,7 +434,7 @@ class TurtlePortfolio(object):
         currentSignal = self.tradingDict.get(signal.vtSymbol, None)
         if currentSignal and currentSignal is not signal:
             return
-            
+
         # 开仓则缓存该信号的交易状态
         if offset == OFFSET_OPEN:
             self.tradingDict[signal.vtSymbol] = signal
@@ -406,6 +443,26 @@ class TurtlePortfolio(object):
             self.tradingDict.pop(signal.vtSymbol)
         
         self.sendOrder(signal.vtSymbol, direction, offset, price, volume, multiplier)
+
+        """ modify by loe """
+        # 计算持仓大概占用的保证金
+        bond = 0
+        totalUnit = 0
+        for tradingSignal in self.tradingDict.values():
+            tUnit = abs(self.unitDict[tradingSignal.vtSymbol])
+            tMultiplier = self.multiplierDict[tradingSignal.vtSymbol]
+            tSize = self.sizeDict[tradingSignal.vtSymbol]
+            tPrice = tradingSignal.result.entry
+
+            bond += abs(tUnit*tMultiplier*tSize*tPrice*0.1)
+            totalUnit += tUnit
+        if self.maxBond:
+            lastMax = self.maxBond[0]
+            if bond > lastMax:
+                self.maxBond = [bond, totalUnit]
+        else:
+            self.maxBond = [bond, totalUnit]
+
     
     #----------------------------------------------------------------------
     def sendOrder(self, vtSymbol, direction, offset, price, volume, multiplier):

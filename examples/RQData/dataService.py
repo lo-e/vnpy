@@ -104,12 +104,21 @@ def downloadMinuteBarBySymbol(symbol, min=1):
     cl.ensure_index([('datetime', ASCENDING)], unique=True)         # 添加索引
 
     df = rq.get_price(symbol, frequency=str(min) + 'm', fields=FIELDS, end_date=datetime.now().strftime('%Y%m%d'))
-    
+
+    """ modify by loe """
+    barList = ['', '']
+    count = 0
     for ix, row in df.iterrows():
         bar = generateVtBar(row, symbol)
-        d = bar.__dict__
-        flt = {'datetime': bar.datetime}
-        cl.replace_one(flt, d, True)            
+        barList[:-1] = barList[1:]
+        barList[-1] = bar
+        count += 1
+        if count >= 2:
+            the = barList[0]
+            the.endDatetime = bar.datetime
+            d = the.__dict__
+            flt = {'datetime': the.datetime}
+            cl.replace_one(flt, d, True)
 
     end = time()
     cost = (end - start) * 1000

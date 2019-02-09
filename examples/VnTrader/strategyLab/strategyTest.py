@@ -21,12 +21,24 @@ class TestStrategy(CtaTemplate):
     className = 'TestStrategy'
     author = u'loe'
 
+    # 参数
+    tickPrice = 0       # 合约每跳数值
     tradeSize = 10      # 头寸大小
     barMin = 5          # 5分钟行情
-    target = 2          # 目标盈利多少跳
+    percentValue = 95   # 达到下单条件的概率值
+    stopPercent = 100   # 止损百分比
+    tickValueLimit = 3  # 达到下单条件的tick数量
+    amWindow = 15       # 统计的bar数量
 
+    # 变量
     entryPrice = 0      # 开仓价格
     minBar = None       # 最近一分钟bar时间
+    tickValueHigh = 0   # 达到下单条件的预计多头盈利点
+    tickValueLow = 0    # 达到下单条件的预计空头赢利点
+
+    direction = 0
+    yesCount = 0
+    noCount = 0
 
     historyData = []  # 历史数据
     dailyResultList = defaultdict(list)     # 当日交易表，记录每笔开平仓的盈亏
@@ -39,16 +51,13 @@ class TestStrategy(CtaTemplate):
                  'capital',
                  'lever',
                  'perSize',
-                 'tradeSize',
-                 'barMin',
-                 'target']
+                 'tickPrice',
+                 'tradeSize']
 
     # 变量列表，保存了变量的名称
     varList = ['inited',
                'trading',
-               'pos',
-               'entryPrice',
-               'minBar']
+               'pos']
 
     # 同步列表
     syncList = ['pos']
@@ -58,6 +67,7 @@ class TestStrategy(CtaTemplate):
         """Constructor"""
         super(TestStrategy, self).__init__(ctaEngine, setting)
         self.bar = None
+        self.am = ArrayManager(self.amWindow)
         self.barGennerator = BarGenerator(self.onFakeBar, self.barMin, self.onBar)
 
         """
@@ -129,18 +139,48 @@ class TestStrategy(CtaTemplate):
     # ----------------------------------------------------------------------
     def onTick(self, tick):
         """收到行情TICK推送（必须由用户继承实现）"""
-        print '%s\t\t%s' % (datetime.now(), tick.datetime)
         self.cancelAll()
         if not self.trading:
             return
 
-        if self.pos > 0 and abs(tick.lastPrice - self.entryPrice) >= self.target * self.perSize:
-            self.sell(tick.lastPrice - self.perSize*10, abs(self.pos))
+        if self.pos > 0:
+            # 持有多头仓位
+            stop = False
+            if tick.lastPrice >= self.entryPrice + self.tickValueHigh:
+                # 止盈
+                stop = True
+                print '%s\tyes' % tick.datetime
+                self.yesCount += 1
+                print 'yes：%s' % self.yesCount
 
-        elif self.pos < 0 and abs(tick.lastPrice - self.entryPrice) >= self.target * self.perSize:
-            self.cover(tick.lastPrice + self.perSize*10, abs(self.pos))
+            elif tick.lastPrice <= self.entryPrice - self.stopPercent*self.tickValueHigh:
+                # 止损
+                stop = True
+                print '%s\tno' % tick.datetime
+                self.noCount += 1
+                print 'no：%s' % self.noCount
 
+            if stop:
+                self.fakeSell(tick.lastPrice - self.tickPrice * 10, abs(self.pos), False)
+        elif self.pos < 0:
+            # 持有空头仓位
+            stop = False
+            if tick.lastPrice <= self.entryPrice - self.tickValueLow:
+                # 止盈
+                stop = True
+                print '%s\tyes' % tick.datetime
+                self.yesCount += 1
+                print 'yes：%s' % self.yesCount
 
+            elif tick.lastPrice >= self.entryPrice + self.stopPercent * self.tickValueLow:
+                # 止损
+                stop = True
+                print '%s\tno' % tick.datetime
+                self.noCount += 1
+                print 'no：%s' % self.noCount
+
+            if stop:
+                self.fakeCover(tick.lastPrice + self.tickPrice * 10, abs(self.pos), False)
         self.barGennerator.updateTick(tick)
         # 发出状态更新事件
         self.putEvent()
@@ -155,16 +195,63 @@ class TestStrategy(CtaTemplate):
         """收到Bar推送（必须由用户继承实现）"""
         self.cancelAll()
         self.bar = bar
-        if not self.trading:
+        self.am.updateBar(bar)
+        if not self.am.inited or not self.trading:
             return
 
-        if self.pos == 0:
-            if bar.close > bar.open:
-                # 限价单开多
-                self.buy(bar.close + self.perSize*10, self.tradeSize)
-            elif bar.close < bar.open:
-                # 限价单开空
-                self.short(bar.close - self.perSize*10, self.tradeSize)
+        maxHigh = self.am.high / self.am.open
+        maxLow = self.am.low /self.am.open
+        pHigh = np.percentile(maxHigh, 100 - self.percentValue)
+        pLow = np.percentile(maxLow, self.percentValue)
+
+        self.tickValueHigh = abs(bar.open - bar.open * pHigh)
+        self.tickValueLow = abs(bar.open - bar.open * pLow)
+
+        self.direction = 0
+        if self.tickValueHigh >= self.tickValueLow and self.tickValueHigh > self.tickValueLimit * self.tickPrice:
+            self.direction = 1
+        elif self.tickValueLow > self.tickValueHigh and self.tickValueLow > self.tickValueLimit * self.tickPrice:
+            self.direction = -1
+
+        if self.direction > 0:
+            if self.pos > 0:
+                # 继续持有
+                if bar.close > self.entryPrice:
+                    print '%s\tyes' % bar.datetime
+                    self.yesCount += 1
+                    print 'yes：%s' % self.yesCount
+                else:
+                    print '%s\tno' % bar.datetime
+                    self.noCount += 1
+                    print 'no：%s' % self.noCount
+
+                self.entryPrice = bar.close
+            elif self.pos < 0:
+                self.fakeSell(bar.close - self.tickPrice*10, abs(self.pos), False)
+            else:
+                self.fakeBuy(bar.close + self.tickPrice*10, self.tradeSize, False)
+        elif self.direction < 0:
+            if self.pos < 0:
+                # 继续持有
+                if bar.close < self.entryPrice:
+                    print '%s\tyes' % bar.datetime
+                    self.yesCount += 1
+                    print 'yes：%s' % self.yesCount
+                else:
+                    print '%s\tno' % bar.datetime
+                    self.noCount += 1
+                    print 'no：%s' % self.noCount
+
+                self.entryPrice = bar.close
+            elif self.pos > 0:
+                self.fakeCover(bar.close + self.tickPrice * 10, abs(self.pos), False)
+            else:
+                self.fakeShort(bar.close - self.tickPrice*10, self.tradeSize, False)
+        else:
+            if self.pos > 0:
+                self.fakeSell(bar.close - self.tickPrice * 10, abs(self.pos), False)
+            elif self.pos < 0:
+                self.fakeCover(bar.close + self.tickPrice * 10, abs(self.pos), False)
 
     # ----------------------------------------------------------------------
     def onOrder(self, order):
@@ -189,6 +276,22 @@ class TestStrategy(CtaTemplate):
         """停止单推送"""
         pass
 
+    def fakeBuy(self, originPrice, volume, isStop):
+        #self.short(originPrice-self.tickPrice*20, volume, isStop)
+        self.buy(originPrice, volume, isStop)
+
+    def fakeShort(self, originPrice, volume, isStop):
+        #self.buy(originPrice+self.tickPrice*20, volume, isStop)
+        self.short(originPrice, volume, isStop)
+
+    def fakeSell(self, originPrice, volume, isStop):
+        #self.cover(originPrice+self.tickPrice*20, volume, isStop)
+        self.sell(originPrice, volume, isStop)
+
+    def fakeCover(self, originPrice, volume, isStop):
+        #self.sell(originPrice-self.tickPrice*20, volume, isStop)
+        self.cover(originPrice, volume, isStop)
+
 #===================================回测==================================
 def GetEngin(settingDict, symbol,
                    startDate, endDate, slippage,
@@ -198,10 +301,10 @@ def GetEngin(settingDict, symbol,
     engine = BacktestingEngine()
 
     # 设置引擎的回测模式为Tick
-    engine.setBacktestingMode(engine.BAR_MODE)
+    engine.setBacktestingMode(engine.TICK_MODE)
 
     # 设置使用的数据库
-    engine.setDatabase(MINUTE_DB_NAME.replace('1', '5'), symbol)
+    engine.setDatabase(TICK_DB_NAME, symbol)
 
     # 设置回测的起始日期
     engine.setStartDate(startDate, initDays=0)
@@ -230,14 +333,15 @@ def GetEngin(settingDict, symbol,
     return  engine
 
 if __name__ == '__main__':
-    tickPrice = 1
+    tickPrice = 5
     setting = {'capital':6000,
                'lever':5,
-               'perSize':10}
+               'perSize':5,
+               'tickPrice':tickPrice}
 
-    engine = GetEngin(setting, 'RB88',
-                      '20190101', '20190226', 0,
-                      1.07 / 10000, tickPrice)
+    engine = GetEngin(setting, 'ZN00',
+                      '20180101', '20190601', 0,
+                      0 / 10000, tickPrice)
 
 
     #'''
@@ -246,7 +350,7 @@ if __name__ == '__main__':
     engine.strategy.vtSymbol = engine.symbol
     engine.runBacktesting()
     # 保存交易记录到iCloud
-    #engine.ShowTradeDetail()
+    engine.ShowTradeDetail()
     # 图表展示交易指标
     engine.calculateDailyResult()
     df, result = engine.calculateDailyStatistics()

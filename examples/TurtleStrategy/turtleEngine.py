@@ -54,6 +54,9 @@ class BacktestingEngine(object):
         
         self.result = None
         self.resultList = []
+
+        """ modify by loe """
+        self.tradingStart = None
     
     #----------------------------------------------------------------------
     def setPeriod(self, startDt, endDt):
@@ -70,7 +73,9 @@ class BacktestingEngine(object):
             r = DictReader(f)
             for d in r:
                 self.vtSymbolList.append(d['vtSymbol'])
-                
+
+                """ modify by loe """
+                self.sizeDict[d['vtSymbol']] = int(d['size'])
                 SIZE_DICT[d['vtSymbol']] = int(d['size'])
                 PRICETICK_DICT[d['vtSymbol']] = float(d['priceTick'])
                 VARIABLE_COMMISSION_DICT[d['vtSymbol']] = float(d['variableCommission'])
@@ -79,6 +84,8 @@ class BacktestingEngine(object):
             
         self.portfolio = TurtlePortfolio(self)
         self.portfolio.init(portfolioValue, self.vtSymbolList, SIZE_DICT)
+        """ modify by loe """
+        self.portfolio.tradingStart = self.tradingStart
         
         self.output(u'投资组合的合约代码%s' %(self.vtSymbolList))
         self.output(u'投资组合的初始价值%s' %(portfolioValue))
@@ -244,6 +251,7 @@ class BacktestingEngine(object):
             sharpeRatio = 0
         
         # 返回结果
+        """ modify by loe dailyTradeCount计算修改"""
         result = {
             'startDate': startDate,
             'endDate': endDate,
@@ -260,7 +268,7 @@ class BacktestingEngine(object):
             'totalSlippage': totalSlippage,
             'dailySlippage': totalSlippage/totalDays,
             'totalTradeCount': totalTradeCount,
-            'dailyTradeCount': totalTradeCount/totalDays,
+            'dailyTradeCount': totalTradeCount*1.0/totalDays,
             'totalReturn': totalReturn,
             'annualizedReturn': annualizedReturn,
             'dailyReturn': dailyReturn,
