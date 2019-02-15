@@ -52,6 +52,7 @@ class TurtleStrategy(CtaTemplate):
     paramList = ['name',
                  'vtSymbol',
                  'perSize',
+                 'tickPrice',
                  'entryWindow',
                  'exitWindow',
                  'atrWindow']
@@ -79,7 +80,19 @@ class TurtleStrategy(CtaTemplate):
                'unit']
     
     # 同步列表，保存了需要保存到数据库的变量名称
-    syncList = ['pos']
+    syncList = ['pos',
+                'longEntry1',
+                'longEntry2',
+                'longEntry3',
+                'longEntry4',
+                'shortEntry1',
+                'shortEntry2',
+                'shortEntry3',
+                'shortEntry4',
+                'longStop',
+                'shortStop',
+                'virtualUnit',
+                'unit']
 
     #----------------------------------------------------------------------
     def __init__(self, ctaEngine, turtlePortfolio, setting):
@@ -119,25 +132,102 @@ class TurtleStrategy(CtaTemplate):
     #----------------------------------------------------------------------
     def onTick(self, tick):
         """收到行情TICK推送（必须由用户继承实现）"""
-        if self.pos == 0:
-            unitChange = 0
-            # 多头开仓
+        if not self.trading:
+            return
+
+        unitChange = 0
+        action = False
+        if self.virtualUnit >= 0:
+            # 多头开仓加仓
             if tick.lastPrice >= self.longEntry1 and self.virtualUnit < 1:
-                unitChange += 1
                 self.virtualUnit += 1
+                action = True
+                if self.portfolio.newSignal(self, DIRECTION_LONG, OFFSET_OPEN):
+                    unitChange += 1
 
             if tick.lastPrice >= self.longEntry2 and self.virtualUnit < 2:
-                unitChange += 1
                 self.virtualUnit += 1
+                action = True
+                if self.portfolio.newSignal(self, DIRECTION_LONG, OFFSET_OPEN):
+                    unitChange += 1
 
-            if tick.lastPrice >= self.longEntry2 and self.virtualUnit < 3:
-                unitChange += 1
+            if tick.lastPrice >= self.longEntry3 and self.virtualUnit < 3:
                 self.virtualUnit += 1
+                action = True
+                if self.portfolio.newSignal(self, DIRECTION_LONG, OFFSET_OPEN):
+                    unitChange += 1
 
+            if tick.lastPrice >= self.longEntry4 and self.virtualUnit < 4:
+                self.virtualUnit += 1
+                action = True
+                if self.portfolio.newSignal(self, DIRECTION_LONG, OFFSET_OPEN):
+                    unitChange += 1
 
+            if action:
+                if unitChange:
+                    self.unit += unitChange
+                    self.buy(tick.lastPrice+self.tickPrice*20, self.multiplier*abs(unitChange))
+                return
 
+            # 止损平仓
+            if self.virtualUnit > 0:
+                longExit = max(self.longStop, self.exitDown)
+                if tick.lastPrice <= longExit:
+                    self.virtualUnit = 0
+                    self.portfolio.newSignal(self, DIRECTION_SHORT, OFFSET_CLOSE)
+                    self.unit = 0
+                    if self.pos > 0:
+                        self.sell(tick.lastPrice-self.tickPrice*20, abs(self.pos))
+                    # 平仓后更新最新指标
+                    self.updateIndicator()
 
-        pass
+                return
+
+        if self.virtualUnit <= 0:
+            # 空头开仓加仓
+            if tick.lastPrice <= self.shortEntry1 and self.virtualUnit > -1:
+                self.virtualUnit -= 1
+                action = True
+                if self.portfolio.newSignal(self, DIRECTION_SHORT, OFFSET_OPEN):
+                    unitChange -= 1
+
+            if tick.lastPrice <= self.shortEntry2 and self.virtualUnit > -2:
+                self.virtualUnit -= 1
+                action = True
+                if self.portfolio.newSignal(self, DIRECTION_SHORT, OFFSET_OPEN):
+                    unitChange -= 1
+
+            if tick.lastPrice <= self.shortEntry3 and self.virtualUnit > -3:
+                self.virtualUnit -= 1
+                action = True
+                if self.portfolio.newSignal(self, DIRECTION_SHORT, OFFSET_OPEN):
+                    unitChange -= 1
+
+            if tick.lastPrice <= self.shortEntry4 and self.virtualUnit > -4:
+                self.virtualUnit -= 1
+                action = True
+                if self.portfolio.newSignal(self, DIRECTION_SHORT, OFFSET_OPEN):
+                    unitChange -= 1
+
+            if action:
+                if unitChange:
+                    self.unit += unitChange
+                    self.short(tick.lastPrice - self.tickPrice * 20, self.multiplier * abs(unitChange))
+                return
+
+            # 止损平仓
+            if self.virtualUnit < 0:
+                shortExit = min(self.shortStop, self.exitUp)
+                if tick.lastPrice >= shortExit:
+                    self.virtualUnit = 0
+                    self.portfolio.newSignal(self, DIRECTION_LONG, OFFSET_CLOSE)
+                    self.unit = 0
+                    if self.pos < 0:
+                        self.cover(tick.lastPrice + self.tickPrice * 20, abs(self.pos))
+                    # 平仓后更新最新指标
+                    self.updateIndicator()
+
+                return
 
     #----------------------------------------------------------------------
     def onBar(self, bar):
@@ -156,29 +246,7 @@ class TurtleStrategy(CtaTemplate):
         
         # 判断是否要进行交易
         if self.pos == 0:
-            # 计算atr
-            self.atrVolatility = self.am.atr(self.atrWindow)
-
-            self.longEntry1 = self.entryUp
-            self.longEntry2 = self.longEntry1 + 0.5*self.atrVolatility
-            self.longEntry3 = self.longEntry2 + 0.5*self.atrVolatility
-            self.longEntry4 = self.longEntry3 + 0.5*self.atrVolatility
-
-            self.shortEntry1 = self.entryDown
-            self.shortEntry2 = self.shortEntry1 - 0.5*self.atrVolatility
-            self.shortEntry3 = self.shortEntry1 - 0.5*self.atrVolatility
-            self.shortEntry4 = self.shortEntry1 - 0.5*self.atrVolatility
-            self.longStop = 0
-            self.shortStop = 0
-
-            size = self.sizeDict[signal.vtSymbol]
-            riskValue = self.portfolioValue * 0.01
-            """ modify by loe """
-            multiplier = 0
-            if signal.atrVolatility * size:
-                multiplier = riskValue / (signal.atrVolatility * size)
-                multiplier = int(round(multiplier, 0))
-            self.multiplierDict[signal.vtSymbol] = multiplier
+            self.updateIndicator()
         
         # 同步数据到数据库
         self.saveSyncData()        
@@ -194,12 +262,10 @@ class TurtleStrategy(CtaTemplate):
     #----------------------------------------------------------------------
     def onTrade(self, trade):
         """成交推送"""
-        if trade.direction == DIRECTION_LONG:
-            self.longEntry = trade.price
-            self.longStop = self.longEntry - self.atrVolatility * 2
-        else:
-            self.shortEntry = trade.price
-            self.shortStop = self.shortEntry + self.atrVolatility * 2
+        if trade.offset == OFFSET_OPEN:
+            # 计算止损价格
+            self.longStop = trade.price - 2*self.atrVolatility
+            self.shortStop = trade.price + 2*self.atrVolatility
         
         # 发出状态更新事件
         self.putEvent()
@@ -208,4 +274,33 @@ class TurtleStrategy(CtaTemplate):
     def onStopOrder(self, so):
         """停止单推送"""
         pass
-        
+
+    def updateMultiplier(self):
+        riskValue = self.portfolio.portfolioValue * 0.01
+        if riskValue == 0:
+            return
+
+        multiplier = 0
+        if self.atrVolatility * self.perSize:
+            multiplier = riskValue / (self.atrVolatility * self.perSize)
+            multiplier = int(round(multiplier, 0))
+        self.multiplier = multiplier
+
+    def updateIndicator(self):
+        # 计算atr
+        self.atrVolatility = self.am.atr(self.atrWindow)
+
+        self.updateMultiplier()
+
+        self.longEntry1 = self.entryUp
+        self.longEntry2 = self.longEntry1 + 0.5 * self.atrVolatility
+        self.longEntry3 = self.longEntry2 + 0.5 * self.atrVolatility
+        self.longEntry4 = self.longEntry3 + 0.5 * self.atrVolatility
+
+        self.shortEntry1 = self.entryDown
+        self.shortEntry2 = self.shortEntry1 - 0.5 * self.atrVolatility
+        self.shortEntry3 = self.shortEntry1 - 0.5 * self.atrVolatility
+        self.shortEntry4 = self.shortEntry1 - 0.5 * self.atrVolatility
+
+        self.longStop = 0
+        self.shortStop = 0

@@ -5,6 +5,7 @@
         "className": "TurtleStrategy",
         "vtSymbol": "IF1903",
         "perSize":300,
+        "tickPrice":0.2,
         "start": false
     },
 
@@ -13,6 +14,7 @@
         "className": "TurtleStrategy",
         "vtSymbol": "al1903",
         "perSize":5,
+        "tickPrice":5,
         "start": true
     },
 
@@ -21,6 +23,7 @@
         "className": "TurtleStrategy",
         "vtSymbol": "hc1905",
         "perSize":10,
+        "tickPrice":1,
         "start": false
     },
 
@@ -29,6 +32,7 @@
         "className": "TurtleStrategy",
         "vtSymbol": "SM905",
         "perSize":5,
+        "tickPrice":2,
         "start": true
     },
 
@@ -37,6 +41,7 @@
         "className": "TurtleStrategy",
         "vtSymbol": "j1905",
         "perSize":100,
+        "tickPrice":0.5,
         "start": true
     },
 
@@ -45,6 +50,7 @@
         "className": "TurtleStrategy",
         "vtSymbol": "TA905",
         "perSize":5,
+        "tickPrice":2,
         "start": false
     }
 ],

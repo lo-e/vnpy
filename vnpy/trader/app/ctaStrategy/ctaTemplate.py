@@ -31,7 +31,8 @@ class CtaTemplate(object):
     """ modify by loe """
     capital = 0               # 启动资金
     lever = 1                 # 资金杠杆倍数（默认1倍）
-    perSize = 1               # 品种每手数量
+    perSize = 0               # 品种每手数量
+    tickPrice = 0             # 品种没跳价差
 
     # 策略的基本变量，由引擎管理
     inited = False                 # 是否进行了初始化
@@ -49,7 +50,8 @@ class CtaTemplate(object):
                  'vtSymbol',
                  'capital',
                  'lever',
-                 'perSize']
+                 'perSize',
+                 'tickPrice']
     
     # 变量列表，保存了变量的名称
     varList = ['inited',
