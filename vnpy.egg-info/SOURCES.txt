@@ -16,6 +16,7 @@ examples/VnTrader/IB_connect.json
 examples/VnTrader/RM_setting.json
 examples/VnTrader/SEC_connect.json
 examples/VnTrader/ST_setting.json
+examples/VnTrader/TURTLE_setting.json
 examples/VnTrader/VT_setting.json
 examples/VnTrader/XSPEED_connect.json
 examples/VnTrader/XTP_connect.json
@@ -27,6 +28,9 @@ examples/VnTrader/App/testApp/__init__.py
 examples/VnTrader/App/testApp/dr.ico
 examples/VnTrader/App/testApp/testEngine.py
 examples/VnTrader/App/testApp/testWidget.py
+examples/VnTrader/App/testApp/turtleEngine.py
+examples/VnTrader/App/testApp/turtlePortfolio.py
+examples/VnTrader/App/testApp/turtleWidget.py
 examples/VnTrader/App/testApp/language/__init__.py
 examples/VnTrader/App/testApp/language/chinese/__init__.py
 examples/VnTrader/App/testApp/language/chinese/text.py
@@ -36,6 +40,7 @@ examples/VnTrader/strategyLab/__init__.py
 examples/VnTrader/strategyLab/strategyDualThrust.py
 examples/VnTrader/strategyLab/strategySimple.py
 examples/VnTrader/strategyLab/strategyTest.py
+examples/VnTrader/strategyLab/strategyTurtle.py
 examples/VnTrader/strategyLab/Fake/__init__.py
 examples/VnTrader/strategyLab/Fake/strategyBreaking.py
 examples/VnTrader/strategyLab/Fake/strategyGarden.py

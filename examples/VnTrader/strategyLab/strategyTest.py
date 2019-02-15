@@ -21,28 +21,6 @@ class TestStrategy(CtaTemplate):
     className = 'TestStrategy'
     author = u'loe'
 
-    # 参数
-    tickPrice = 0       # 合约每跳数值
-    tradeSize = 10      # 头寸大小
-    barMin = 5          # 5分钟行情
-    percentValue = 95   # 达到下单条件的概率值
-    stopPercent = 100   # 止损百分比
-    tickValueLimit = 3  # 达到下单条件的tick数量
-    amWindow = 15       # 统计的bar数量
-
-    # 变量
-    entryPrice = 0      # 开仓价格
-    minBar = None       # 最近一分钟bar时间
-    tickValueHigh = 0   # 达到下单条件的预计多头盈利点
-    tickValueLow = 0    # 达到下单条件的预计空头赢利点
-
-    direction = 0
-    yesCount = 0
-    noCount = 0
-
-    historyData = []  # 历史数据
-    dailyResultList = defaultdict(list)     # 当日交易表，记录每笔开平仓的盈亏
-
     # 参数列表，保存了参数的名称
     paramList = ['name',
                  'className',
@@ -50,9 +28,7 @@ class TestStrategy(CtaTemplate):
                  'vtSymbol',
                  'capital',
                  'lever',
-                 'perSize',
-                 'tickPrice',
-                 'tradeSize']
+                 'perSize']
 
     # 变量列表，保存了变量的名称
     varList = ['inited',
@@ -66,9 +42,6 @@ class TestStrategy(CtaTemplate):
     def __init__(self, ctaEngine, setting):
         """Constructor"""
         super(TestStrategy, self).__init__(ctaEngine, setting)
-        self.bar = None
-        self.am = ArrayManager(self.amWindow)
-        self.barGennerator = BarGenerator(self.onFakeBar, self.barMin, self.onBar)
 
         """
         # 实盘需要提前导入初始化数据
@@ -143,45 +116,7 @@ class TestStrategy(CtaTemplate):
         if not self.trading:
             return
 
-        if self.pos > 0:
-            # 持有多头仓位
-            stop = False
-            if tick.lastPrice >= self.entryPrice + self.tickValueHigh:
-                # 止盈
-                stop = True
-                print '%s\tyes' % tick.datetime
-                self.yesCount += 1
-                print 'yes：%s' % self.yesCount
-
-            elif tick.lastPrice <= self.entryPrice - self.stopPercent*self.tickValueHigh:
-                # 止损
-                stop = True
-                print '%s\tno' % tick.datetime
-                self.noCount += 1
-                print 'no：%s' % self.noCount
-
-            if stop:
-                self.fakeSell(tick.lastPrice - self.tickPrice * 10, abs(self.pos), False)
-        elif self.pos < 0:
-            # 持有空头仓位
-            stop = False
-            if tick.lastPrice <= self.entryPrice - self.tickValueLow:
-                # 止盈
-                stop = True
-                print '%s\tyes' % tick.datetime
-                self.yesCount += 1
-                print 'yes：%s' % self.yesCount
-
-            elif tick.lastPrice >= self.entryPrice + self.stopPercent * self.tickValueLow:
-                # 止损
-                stop = True
-                print '%s\tno' % tick.datetime
-                self.noCount += 1
-                print 'no：%s' % self.noCount
-
-            if stop:
-                self.fakeCover(tick.lastPrice + self.tickPrice * 10, abs(self.pos), False)
-        self.barGennerator.updateTick(tick)
+        self.sell(tick.lastPrice-20, 1)
         # 发出状态更新事件
         self.putEvent()
 
@@ -193,65 +128,7 @@ class TestStrategy(CtaTemplate):
 
     def onBar(self, bar):
         """收到Bar推送（必须由用户继承实现）"""
-        self.cancelAll()
-        self.bar = bar
-        self.am.updateBar(bar)
-        if not self.am.inited or not self.trading:
-            return
-
-        maxHigh = self.am.high / self.am.open
-        maxLow = self.am.low /self.am.open
-        pHigh = np.percentile(maxHigh, 100 - self.percentValue)
-        pLow = np.percentile(maxLow, self.percentValue)
-
-        self.tickValueHigh = abs(bar.open - bar.open * pHigh)
-        self.tickValueLow = abs(bar.open - bar.open * pLow)
-
-        self.direction = 0
-        if self.tickValueHigh >= self.tickValueLow and self.tickValueHigh > self.tickValueLimit * self.tickPrice:
-            self.direction = 1
-        elif self.tickValueLow > self.tickValueHigh and self.tickValueLow > self.tickValueLimit * self.tickPrice:
-            self.direction = -1
-
-        if self.direction > 0:
-            if self.pos > 0:
-                # 继续持有
-                if bar.close > self.entryPrice:
-                    print '%s\tyes' % bar.datetime
-                    self.yesCount += 1
-                    print 'yes：%s' % self.yesCount
-                else:
-                    print '%s\tno' % bar.datetime
-                    self.noCount += 1
-                    print 'no：%s' % self.noCount
-
-                self.entryPrice = bar.close
-            elif self.pos < 0:
-                self.fakeSell(bar.close - self.tickPrice*10, abs(self.pos), False)
-            else:
-                self.fakeBuy(bar.close + self.tickPrice*10, self.tradeSize, False)
-        elif self.direction < 0:
-            if self.pos < 0:
-                # 继续持有
-                if bar.close < self.entryPrice:
-                    print '%s\tyes' % bar.datetime
-                    self.yesCount += 1
-                    print 'yes：%s' % self.yesCount
-                else:
-                    print '%s\tno' % bar.datetime
-                    self.noCount += 1
-                    print 'no：%s' % self.noCount
-
-                self.entryPrice = bar.close
-            elif self.pos > 0:
-                self.fakeCover(bar.close + self.tickPrice * 10, abs(self.pos), False)
-            else:
-                self.fakeShort(bar.close - self.tickPrice*10, self.tradeSize, False)
-        else:
-            if self.pos > 0:
-                self.fakeSell(bar.close - self.tickPrice * 10, abs(self.pos), False)
-            elif self.pos < 0:
-                self.fakeCover(bar.close + self.tickPrice * 10, abs(self.pos), False)
+        pass
 
     # ----------------------------------------------------------------------
     def onOrder(self, order):
@@ -262,11 +139,6 @@ class TestStrategy(CtaTemplate):
     def onTrade(self, trade):
         """收到成交推送（必须由用户继承实现）"""
         self.cancelAll()
-        if trade.offset == u'开仓':
-            self.entryPrice = trade.price
-
-        else:
-            self.entryPrice = 0
 
         # 发出状态更新事件
         self.putEvent()
@@ -275,22 +147,6 @@ class TestStrategy(CtaTemplate):
     def onStopOrder(self, so):
         """停止单推送"""
         pass
-
-    def fakeBuy(self, originPrice, volume, isStop):
-        #self.short(originPrice-self.tickPrice*20, volume, isStop)
-        self.buy(originPrice, volume, isStop)
-
-    def fakeShort(self, originPrice, volume, isStop):
-        #self.buy(originPrice+self.tickPrice*20, volume, isStop)
-        self.short(originPrice, volume, isStop)
-
-    def fakeSell(self, originPrice, volume, isStop):
-        #self.cover(originPrice+self.tickPrice*20, volume, isStop)
-        self.sell(originPrice, volume, isStop)
-
-    def fakeCover(self, originPrice, volume, isStop):
-        #self.sell(originPrice-self.tickPrice*20, volume, isStop)
-        self.cover(originPrice, volume, isStop)
 
 #===================================回测==================================
 def GetEngin(settingDict, symbol,

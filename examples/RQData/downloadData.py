@@ -6,6 +6,7 @@
 
 from dataService import *
 from csv import DictReader
+import re
 
 if __name__ == '__main__':
     """
@@ -14,16 +15,17 @@ if __name__ == '__main__':
     downloadTickBySymbol('RB1905', '2018-12-21')
     """
 
-    downloadMinuteBarBySymbol('IF99', 5)
-
-    """
-    filename = 'symbol_list.csv'
-    count = 0
-    with open(filename) as f:
-        r = DictReader(f)
-        for d in r:
-            symbol = d['vtSymbol']
-            downloadDailyBarBySymbol(symbol)
-            count += 1
-    print  '合约数：%d' % count
-    """
+    #"""
+    input = raw_input(u'输入合约类型【88主力 888平滑主力 99指数】')
+    if input == '88' or input == '888' or input == '99':
+        filename = 'symbol_list.csv'
+        count = 0
+        with open(filename) as f:
+            r = DictReader(f)
+            for d in r:
+                startSymbol = re.sub("\d", "", d['vtSymbol'])
+                symbol = startSymbol + input
+                downloadDailyBarBySymbol(symbol)
+                count += 1
+        print  '合约数：%d' % count
+    #"""

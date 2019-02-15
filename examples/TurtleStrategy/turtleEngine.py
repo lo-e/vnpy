@@ -97,6 +97,7 @@ class BacktestingEngine(object):
         self.portfolioValue = portfolioValue
         self.vtSymbolList.append(d['vtSymbol'])
 
+        self.sizeDict[d['vtSymbol']] = int(d['size'])
         SIZE_DICT[d['vtSymbol']] = int(d['size'])
         PRICETICK_DICT[d['vtSymbol']] = float(d['priceTick'])
         VARIABLE_COMMISSION_DICT[d['vtSymbol']] = float(d['variableCommission'])
@@ -105,6 +106,9 @@ class BacktestingEngine(object):
 
         self.portfolio = TurtlePortfolio(self)
         self.portfolio.init(portfolioValue, self.vtSymbolList, SIZE_DICT)
+
+        """ modify by loe """
+        self.portfolio.tradingStart = self.tradingStart
 
         self.output(u'投资组合的合约代码%s' % (self.vtSymbolList))
         self.output(u'投资组合的初始价值%s' % (portfolioValue))
@@ -118,6 +122,7 @@ class BacktestingEngine(object):
         for d in l:
             self.vtSymbolList.append(d['vtSymbol'])
 
+            self.sizeDict[d['vtSymbol']] = int(d['size'])
             SIZE_DICT[d['vtSymbol']] = int(d['size'])
             PRICETICK_DICT[d['vtSymbol']] = float(d['priceTick'])
             VARIABLE_COMMISSION_DICT[d['vtSymbol']] = float(d['variableCommission'])
@@ -126,6 +131,9 @@ class BacktestingEngine(object):
 
         self.portfolio = TurtlePortfolio(self)
         self.portfolio.init(portfolioValue, self.vtSymbolList, SIZE_DICT)
+
+        """ modify by loe """
+        self.portfolio.tradingStart = self.tradingStart
 
         self.output(u'投资组合的合约代码%s' % (self.vtSymbolList))
         self.output(u'投资组合的初始价值%s' % (portfolioValue))

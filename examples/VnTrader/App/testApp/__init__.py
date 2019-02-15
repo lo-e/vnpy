@@ -1,10 +1,12 @@
 # encoding: UTF-8
 
 from testEngine import TestEngine
+from turtleEngine import TurtleEngine
 from testWidget import TestEngineManager
+from turtleWidget import TurtleEngineManager
 
-appName = 'TestApp'
-appDisplayName = u'测试App'
-appEngine = TestEngine
-appWidget = TestEngineManager
+appName = 'TurtleTrader'
+appDisplayName = u'海龟交易'
+appEngine = TurtleEngine
+appWidget = TurtleEngineManager
 appIco = 'dr.ico'

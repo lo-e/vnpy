@@ -40,7 +40,7 @@ class TurtleResult(object):
         cost += change * price          # 加上新仓位的成本
         self.unit += change              # 加上新仓位的数量
         self.entry = cost / self.unit    # 计算新的平均开仓成本
-    
+
     #----------------------------------------------------------------------
     def close(self, price):
         """平仓"""
@@ -67,8 +67,8 @@ class TurtleSignal(object):
         
         self.am = ArrayManager(60)      # K线容器
         """ modify by loe """
-        #self.atrAm = ArrayManager(self.atrWindow+1)     # K线容器
-        self.atrAm = ArrayManager(60)                   # K线容器
+        self.atrAm = ArrayManager(self.atrWindow+1)     # K线容器
+        #self.atrAm = ArrayManager(60)                    # K线容器
         
         self.atrVolatility = 0          # ATR波动率
         self.entryUp = 0                # 入场通道
@@ -137,7 +137,7 @@ class TurtleSignal(object):
             if bar.high >= shortExit:
                 self.cover(shortExit)
                 return
-        
+
         # 没有仓位或者持有多头仓位的时候，可以做多（加仓）
         if self.unit >= 0:
             trade = False
@@ -204,7 +204,6 @@ class TurtleSignal(object):
         
     #----------------------------------------------------------------------
     def newSignal(self, direction, offset, price, volume):
-        """"""
         """ modify by loe """
         if self.portfolio.tradingStart:
             # 如果开始正式交易的时候该信号有历史仓位，则忽略这笔开平交易
@@ -338,8 +337,8 @@ class TurtlePortfolio(object):
         self.sizeDict = sizeDict
         
         for vtSymbol in vtSymbolList:
-            signal1 = TurtleSignal(self, vtSymbol, 20, 10, 20, True)
-            signal2 = TurtleSignal(self, vtSymbol, 55, 20, 20, False)
+            signal1 = TurtleSignal(self, vtSymbol, 20, 10, 15, True)
+            signal2 = TurtleSignal(self, vtSymbol, 5500, 20, 20, False)
 
             l = self.signalDict[vtSymbol]
             l.append(signal1)
@@ -357,6 +356,7 @@ class TurtlePortfolio(object):
     #----------------------------------------------------------------------
     def newSignal(self, signal, direction, offset, price, volume):
         """对交易信号进行过滤，符合条件的才发单执行"""
+
         unit = self.unitDict[signal.vtSymbol]
         
         # 如果当前无仓位，则重新根据波动幅度计算委托量单位
@@ -371,7 +371,7 @@ class TurtlePortfolio(object):
             self.multiplierDict[signal.vtSymbol] = multiplier
         else:
             multiplier = self.multiplierDict[signal.vtSymbol]
-            
+
         # 开仓
         if offset == OFFSET_OPEN:
             # 检查上一次是否为盈利
@@ -441,11 +441,11 @@ class TurtlePortfolio(object):
         # 平仓则清除该信号
         else:
             self.tradingDict.pop(signal.vtSymbol)
-        
+
         self.sendOrder(signal.vtSymbol, direction, offset, price, volume, multiplier)
 
         """ modify by loe """
-        # 计算持仓大概占用的保证金
+        # 计算持仓预计占用的保证金
         bond = 0
         totalUnit = 0
         for tradingSignal in self.tradingDict.values():

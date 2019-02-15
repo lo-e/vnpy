@@ -25,6 +25,7 @@ STOPORDERPREFIX = 'CtaStopOrder.'
 # 数据库名称
 SETTING_DB_NAME = 'VnTrader_Setting_Db'
 POSITION_DB_NAME = 'VnTrader_Position_Db'
+TURTLE_PORTFOLIO_DB_NAME = 'VnTrader_Turtle_Portfolio_Db'
 
 TICK_DB_NAME = 'VnTrader_Tick_Db'
 DAILY_DB_NAME = 'VnTrader_Daily_Db'
@@ -35,8 +36,10 @@ ENGINETYPE_BACKTESTING = 'backtesting'  # 回测
 ENGINETYPE_TRADING = 'trading'          # 实盘
 
 # CTA模块事件
-EVENT_CTA_LOG = 'eCtaLog'               # CTA相关的日志事件
-EVENT_CTA_STRATEGY = 'eCtaStrategy.'    # CTA策略状态变化事件
+EVENT_CTA_LOG = 'eCtaLog'                       # CTA相关的日志事件
+EVENT_CTA_STRATEGY = 'eCtaStrategy.'            # CTA策略状态变化事件
+""" modify by loe """
+EVENT_TURTLE_PORTFOLIO = 'eTurtlePortfolio.'    # 海龟组合状态变化事件
 
 
 ########################################################################
