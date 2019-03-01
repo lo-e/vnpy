@@ -509,6 +509,7 @@ class DailyResult(object):
         """计算总盈亏"""
         self.calculateHoldingPnl()
         self.calculateTradingPnl()
+
         self.totalPnl = self.holdingPnl + self.tradingPnl
         self.netPnl = self.totalPnl - self.commission - self.slippage
 

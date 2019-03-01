@@ -9,6 +9,9 @@ from vnpy.trader.vtUtility import BarGenerator, ArrayManager
 
 from .ctaBase import *
 
+""" modify by loe """
+import  numpy as np
+
 
 ########################################################################
 class CtaTemplate(object):

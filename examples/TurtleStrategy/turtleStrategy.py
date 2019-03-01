@@ -8,6 +8,8 @@ from vnpy.trader.vtUtility import ArrayManager
 """ modify by loe """
 import re
 from datetime import  datetime
+from pymongo import MongoClient, ASCENDING
+from vnpy.trader.vtObject import VtBarData
 
 """ modify by loe """
 MAX_PRODUCT_POS = 4         # 单品种最大持仓
@@ -20,6 +22,10 @@ CATEGORY_DICT = {'finance':['IF','IC','IH'],
                  'coal':['JM','J','ZC'],
                  'chemical_industry':['TA']}
 
+DOMINANT_DB_NAME = 'Dominant_db'
+DAILY_DB_NAME = 'VnTrader_Daily_Db'
+
+ACTUAL_TRADE = True        # 实盘合约交易
 
 ########################################################################
 class TurtleResult(object):
@@ -64,11 +70,12 @@ class TurtleSignal(object):
         self.exitWindow = exitWindow    # 出场通道周期数
         self.atrWindow = atrWindow      # 计算ATR周期数
         self.profitCheck = profitCheck  # 是否检查上一笔盈利
-        
-        self.am = ArrayManager(60)      # K线容器
+
         """ modify by loe """
+        self.am = ArrayManager(self.entryWindow+1)      # K线容器
+        #self.am = ArrayManager(60)
         self.atrAm = ArrayManager(self.atrWindow+1)     # K线容器
-        #self.atrAm = ArrayManager(60)                    # K线容器
+        #self.atrAm = ArrayManager(60)
         
         self.atrVolatility = 0          # ATR波动率
         self.entryUp = 0                # 入场通道
@@ -98,19 +105,163 @@ class TurtleSignal(object):
         """ modify by loe """
         self.filterOffset = False       # 是否过滤了无效开平交易
 
+        self.client = None              # 数据库
+        self.symbolDominantData = []    # 主力合约代码列表
+        self.dominantDate = []          # 主力合约切换月前后日期
+        self.actualSymbol = ''          # 实盘交易合约
+        self.actualBarList = []         # 实盘交易合约bar数据
+        self.newDominantIniting = False # 主力换月初始化状态
+
     #----------------------------------------------------------------------
     def onBar(self, bar):
-        """"""
+        """ modify by loe """
+        actualBar = None
+        if ACTUAL_TRADE and not self.newDominantIniting:
+            # 获取数据库
+            if not self.client:
+                self.client = MongoClient('localhost', 27017)
+
+            # 获取主力合约列表
+            if not self.symbolDominantData:
+                startSymbol = re.sub("\d", "", self.vtSymbol)
+                db = self.client[DOMINANT_DB_NAME]
+                collection = db[startSymbol]
+                cursor = collection.find().sort('date')
+                for dic in cursor:
+                    self.symbolDominantData.append(dic)
+
+            exchange = False
+            # 主力换月，更新domiantDate
+            if not len(self.dominantDate) or bar.datetime < self.dominantDate[0] or bar.datetime >= self.dominantDate[-1]:
+                exchange = True
+                i = 0
+                while i < len(self.symbolDominantData):
+                    dominantDic = self.symbolDominantData[i]
+                    if dominantDic['date'] < bar.datetime:
+                        i += 1
+                        continue
+                    elif dominantDic['date'] == bar.datetime:
+                        break
+                    else:
+                        i -= 1
+                        break
+                self.symbolDominantData = self.symbolDominantData[i:]
+                startD = self.symbolDominantData[0]
+                if len(self.symbolDominantData) < 2:
+                    endD = {'date': datetime(6666, 1, 1)}
+                else:
+                    endD = self.symbolDominantData[1]
+
+                self.dominantDate = []
+                self.dominantDate.append(startD['date'])
+                self.dominantDate.append(endD['date'])
+                self.actualSymbol = startD['symbol']
+
+            if exchange:
+                # 旧主力合约以开盘价限价单平仓
+                if self.unit > 0:
+                    actualBar = self.getActualBar(bar.datetime)
+                    limitVolume = abs(self.unit)
+                    limitPrice = actualBar.open
+
+                    self.close(limitPrice)
+                    self.newSignal(DIRECTION_SHORT, OFFSET_CLOSE, limitPrice, limitVolume)
+
+                elif self.unit < 0:
+                    actualBar = self.getActualBar(bar.datetime)
+                    limitVolume = abs(self.unit)
+                    limitPrice = actualBar.open
+
+                    self.close(limitPrice)
+                    self.newSignal(DIRECTION_LONG, OFFSET_CLOSE, limitPrice, limitVolume)
+
+                # 获取新的主力合约bar数据列表
+                self.actualBarList = []
+                db = self.client[DAILY_DB_NAME]
+                collection = db[self.actualSymbol]
+                cursor = collection.find().sort('date')
+                for dic in cursor:
+                    b = VtBarData()
+                    b.__dict__ = dic
+                    self.actualBarList.append(b)
+
+                # 新主力合约模拟回测历史数据，获取入场状态
+                if self.unit:
+                    raise '前主力平仓出错！'
+                    exit()
+
+                self.newDominantIniting = True
+                self.am = ArrayManager(self.entryWindow + 1)  # K线容器
+                self.atrAm = ArrayManager(self.atrWindow + 1)  # K线容器
+                self.resultList = []
+
+                i = 0
+                while i < len(self.actualBarList):
+                    backBar = self.actualBarList[i]
+                    if backBar.datetime < bar.datetime:
+                        self.onBar(backBar)
+                        i += 1
+                    else:
+                        break
+
+                self.actualBarList = self.actualBarList[i:]
+
+                self.newDominantIniting = False
+
+            # 获取真实合约bar
+            actualBar = self.getActualBar(bar.datetime)
+
+            # 替换bar数据
+            bar.close = actualBar.close
+            bar = actualBar
+
+            # 新主力合约初始化建仓
+            if exchange:
+                i = 0
+                while i < abs(self.unit):
+                    if self.unit > 0:
+                        self.newSignal(DIRECTION_LONG, OFFSET_OPEN, actualBar.open, 1)
+
+                    elif self.unit < 0:
+                        self.newSignal(DIRECTION_SHORT, OFFSET_OPEN, actualBar.open, 1)
+
+                    i += 1
+
         self.bar = bar
         self.am.updateBar(bar)
         """ modify by loe """
         self.atrAm.updateBar(bar)
-        if not self.am.inited:
+        if not self.am.inited or not self.atrAm.inited:
             return
-        
+
         self.generateSignal(bar)
         self.calculateIndicator()
-        
+
+    # ----------------------------------------------------------------------
+    """ modify by loe """
+    def getActualBar(self, date):
+        i = 0
+        get = False
+        theBar = None
+
+        while i < len(self.actualBarList):
+            theBar = self.actualBarList[i]
+            if theBar.datetime < date:
+                i += 1
+                continue
+            elif theBar.datetime == date:
+                get = True
+                break
+            else:
+                raise '实盘合约bar数据出错！'
+                exit()
+        if not get:
+            raise '实盘合约bar数据出错！'
+            exit()
+
+        self.actualBarList = self.actualBarList[i + 1:]
+        return theBar
+
     #----------------------------------------------------------------------
     def generateSignal(self, bar):
         """
@@ -160,7 +311,7 @@ class TurtleSignal(object):
             
             if trade:
                 return
-            
+
         # 没有仓位或者持有空头仓位的时候，可以做空（加仓）
         if self.unit <= 0:
             if bar.low <= self.shortEntry1 and self.unit > -1:
@@ -205,6 +356,9 @@ class TurtleSignal(object):
     #----------------------------------------------------------------------
     def newSignal(self, direction, offset, price, volume):
         """ modify by loe """
+        if self.newDominantIniting:
+            return
+
         if self.portfolio.tradingStart:
             # 如果开始正式交易的时候该信号有历史仓位，则忽略这笔开平交易
             if self.bar.datetime >= self.portfolio.tradingStart:
@@ -338,11 +492,12 @@ class TurtlePortfolio(object):
         
         for vtSymbol in vtSymbolList:
             signal1 = TurtleSignal(self, vtSymbol, 20, 10, 15, True)
-            signal2 = TurtleSignal(self, vtSymbol, 5500, 20, 20, False)
+            """ modify by loe """
+            #signal2 = TurtleSignal(self, vtSymbol, 5500, 20, 20, False)
 
             l = self.signalDict[vtSymbol]
             l.append(signal1)
-            l.append(signal2)
+            #l.append(signal2)
             
             self.unitDict[vtSymbol] = 0
             self.posDict[vtSymbol] = 0
@@ -368,6 +523,7 @@ class TurtlePortfolio(object):
             if signal.atrVolatility * size:
                 multiplier = riskValue / (signal.atrVolatility * size)
                 multiplier = int(round(multiplier, 0))
+
             self.multiplierDict[signal.vtSymbol] = multiplier
         else:
             multiplier = self.multiplierDict[signal.vtSymbol]
@@ -379,6 +535,13 @@ class TurtlePortfolio(object):
                 pnl = signal.getLastPnl()
                 if pnl > 0:
                     return
+
+            """ modify by loe """
+            # 一个unit预计占用保证金不得超过初始资金的20%
+            size = self.sizeDict[signal.vtSymbol]
+            if price * multiplier * size * 0.1 > self.portfolioValue * 0.2:
+                print'%s\t%s预计保证金超限\tprice：%s\tatr：%s' % (signal.bar.datetime, signal.vtSymbol, price, signal.atrVolatility)
+                return
                 
             # 买入
             if direction == DIRECTION_LONG:
@@ -458,6 +621,7 @@ class TurtlePortfolio(object):
             totalUnit += tUnit
         if self.maxBond:
             lastMax = self.maxBond[0]
+
             if bond > lastMax:
                 self.maxBond = [bond, totalUnit]
         else:

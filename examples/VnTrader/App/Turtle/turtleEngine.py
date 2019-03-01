@@ -29,7 +29,9 @@ from vnpy.trader.app.ctaStrategy.strategy import STRATEGY_CLASS
 from vnpy.trader.app.ctaStrategy.stgEarningManager import stgEarningManager
 import threading
 from turtlePortfolio import TurtlePortfolio
+import re
 
+TRANSFORM_SYMBOL_LIST = ['SM', 'TA']
 
 ########################################################################
 class TurtleEngine(AppEngine):
@@ -500,6 +502,14 @@ class TurtleEngine(AppEngine):
         startDate = self.today - timedelta(days)
 
         d = {'datetime': {'$gte': startDate}}
+
+        """ modify by loe """
+        collectionName = collectionName.upper()
+        startSymbol = re.sub("\d", "", collectionName)
+        if startSymbol in TRANSFORM_SYMBOL_LIST:
+            endSymbol = re.sub("\D", "", collectionName)
+            collectionName = startSymbol + '1' + endSymbol
+
         barData = self.mainEngine.dbQuery(dbName, collectionName, d, 'datetime')
 
         l = []

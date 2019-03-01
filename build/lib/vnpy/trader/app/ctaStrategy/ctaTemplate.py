@@ -4,13 +4,13 @@
 本文件包含了CTA引擎中的策略开发用模板，开发策略时需要继承CtaTemplate类。
 '''
 
-import numpy as np
-import talib
-
 from vnpy.trader.vtConstant import *
-from vnpy.trader.vtObject import VtBarData
+from vnpy.trader.vtUtility import BarGenerator, ArrayManager
 
 from .ctaBase import *
+
+""" modify by loe """
+import  numpy as np
 
 
 ########################################################################
@@ -34,7 +34,8 @@ class CtaTemplate(object):
     """ modify by loe """
     capital = 0               # 启动资金
     lever = 1                 # 资金杠杆倍数（默认1倍）
-    perSize = 1               # 品种每手数量
+    perSize = 0               # 品种每手数量
+    tickPrice = 0             # 品种没跳价差
 
     # 策略的基本变量，由引擎管理
     inited = False                 # 是否进行了初始化
@@ -52,7 +53,8 @@ class CtaTemplate(object):
                  'vtSymbol',
                  'capital',
                  'lever',
-                 'perSize']
+                 'perSize',
+                 'tickPrice']
     
     # 变量列表，保存了变量的名称
     varList = ['inited',
@@ -222,7 +224,6 @@ class CtaTemplate(object):
         """查询最小价格变动"""
         return self.ctaEngine.getPriceTick(self)
 
-
 ########################################################################
 class TargetPosTemplate(CtaTemplate):
     """
@@ -364,8 +365,10 @@ class TargetPosTemplate(CtaTemplate):
                     l = self.short(shortPrice, abs(posChange))
             self.orderList.extend(l)
     
-    
 ########################################################################
+""" modify by loe """
+#v1.9.2删除了BarGenerator、ArrayManager
+
 class BarGenerator(object):
     """
     K线合成器，支持：
@@ -663,7 +666,6 @@ class ArrayManager(object):
         if array:
             return up, down
         return up[-1], down[-1]
-    
 
 ########################################################################
 class CtaSignal(object):
@@ -700,10 +702,3 @@ class CtaSignal(object):
     def getSignalPos(self):
         """获取信号仓位"""
         return self.signalPos
-
-        
-        
-        
-        
-    
-    

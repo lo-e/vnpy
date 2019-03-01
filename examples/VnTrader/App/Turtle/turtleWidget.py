@@ -81,7 +81,7 @@ class CtaStrategyManager(QtWidgets.QGroupBox):
         self.paramMonitor = CtaValueMonitor(self)
         self.varMonitor = CtaValueMonitor(self)
 
-        height = 65
+        height = 86
         self.paramMonitor.setFixedHeight(height)
         self.varMonitor.setFixedHeight(height)
 

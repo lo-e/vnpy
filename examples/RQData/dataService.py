@@ -15,6 +15,7 @@ from vnpy.trader.app.ctaStrategy.ctaBase import (MINUTE_DB_NAME,
                                                  TICK_DB_NAME)
 
 import rqdatac as rq
+from rqdatac import *
 
 # 加载配置
 config = open('config.json')
@@ -30,6 +31,8 @@ PASSWORD = setting['rqPassword']
 rq.init(USERNAME, PASSWORD)
 
 FIELDS = ['open', 'high', 'low', 'close', 'volume']
+
+DOMINANT_DB_NAME = 'Dominant_db'
 
 #----------------------------------------------------------------------
 def generateVtBar(row, symbol):
@@ -133,13 +136,13 @@ def downloadDailyBarBySymbol(symbol):
     cl = dbDaily[symbol]
     cl.ensure_index([('datetime', ASCENDING)], unique=True)         # 添加索引
     
-    df = rq.get_price(symbol, frequency='1d', fields=FIELDS, end_date=datetime.now().strftime('%Y%m%d'))
-    
+    df = rq.get_price(symbol, frequency='1d', fields=FIELDS, start_date='20000104', end_date=datetime.now().strftime('%Y%m%d'))
+
     for ix, row in df.iterrows():
         bar = generateVtBar(row, symbol)
         d = bar.__dict__
         flt = {'datetime': bar.datetime}
-        cl.replace_one(flt, d, True)            
+        cl.replace_one(flt, d, True)
 
     end = time()
     cost = (end - start) * 1000
@@ -169,3 +172,80 @@ def downloadTickBySymbol(symbol, date):
     cost = (end - start) * 1000
 
     print(u'合约%sTick数据下载完成%s - %s，耗时%s毫秒' %(symbol, df.index[0], df.index[-1], cost))
+
+""" modify by loe """
+# 获取主力合约列表并保存到数据库
+def dominantSymbolToDatabase(underlyingSymbol, startDate, endDate, toDatabase):
+        if toDatabase:
+            # 获取数据库
+            client = MongoClient('localhost', 27017)
+            db = client[DOMINANT_DB_NAME]
+            collection = db[underlyingSymbol]
+
+        dominantList = get_dominant_future(underlyingSymbol, start_date=startDate, end_date=endDate, rule=0)
+        if toDatabase:
+            i = 0
+            symbol = ''
+            print('*'*26 + underlyingSymbol + '*'*26)
+            while i < len(dominantList):
+                index = dominantList.index[i]
+                rqSymbol = dominantList[index]
+                if not symbol or symbol != rqSymbol:
+                    symbol = rqSymbol
+                    print('%s\t%s\n' % (index, rqSymbol))
+
+                    date = index.to_pydatetime()
+                    data = {'date':date,
+                            'symbol':rqSymbol}
+                    collection.update_many({'date': index}, {'$set': data}, upsert=True)
+                i += 1
+
+        return dominantList
+
+# 下载主力真实合约数据到数据库
+def downloadDominantSymbol(underlyingSymbol, startDate = None):
+    # 查询数据库
+    client = MongoClient('localhost', 27017)
+    db = client[DOMINANT_DB_NAME]
+    collection = db[underlyingSymbol]
+
+    if startDate:
+        flt = {'date': {'$gte': startDate}}
+        cursor = collection.find(flt).sort('date')
+    else:
+        cursor = collection.find().sort('date')
+    for dic in cursor:
+        date = dic['date']
+        symbol = dic['symbol']
+        print(date)
+        print(symbol)
+        downloadDailyBarBySymbol(symbol)
+        print('\n')
+
+# 获取今日主力合约
+def showDominantSymbol(underlyingSymbol):
+    dominantList = get_dominant_future(underlyingSymbol, start_date=datetime.now(), end_date=datetime.now(), rule=0)
+    if len(dominantList):
+        return dominantList[-1]
+
+    else:
+        return None
+
+
+# 获取一年内的主力合约
+def showYearDominantSymbol(underlyingSymbol):
+    nowYear = datetime.now().year
+    startDate = datetime.now().replace(year=nowYear-1)
+    dominantList = get_dominant_future(underlyingSymbol, start_date=startDate, end_date=datetime.now(), rule=0)
+
+    result = []
+    i = 0
+    symbol = ''
+    while i < len(dominantList):
+        index = dominantList.index[i]
+        theSymbol = dominantList[index]
+        if symbol != theSymbol:
+            symbol = theSymbol
+            result.append([index.to_pydatetime(), theSymbol])
+        i += 1
+    return result

@@ -79,7 +79,7 @@ class TurtlePortfolio(object):
                     return False
                 
                 # 单品种持仓不能超过上限
-                if self.unitDict[signal.vtSymbol] >= MAX_PRODUCT_POS:
+                if self.unitDict.get(signal.vtSymbol, 0) >= MAX_PRODUCT_POS:
                     return False
 
                 """ modify by loe """
@@ -87,7 +87,7 @@ class TurtlePortfolio(object):
                 startSymbol = re.sub("\d", "", signal.vtSymbol)
                 for key, value in CATEGORY_DICT.items():
                     if startSymbol in value:
-                        if self.categoryLongUnitDict[key] >= MAX_CATEGORY_POS:
+                        if self.categoryLongUnitDict.get(key, 0) >= MAX_CATEGORY_POS:
                             return False
                         break
 
@@ -96,14 +96,14 @@ class TurtlePortfolio(object):
                 if self.totalShort <= -MAX_DIRECTION_POS:
                     return False
                 
-                if self.unitDict[signal.vtSymbol] <= -MAX_PRODUCT_POS:
+                if self.unitDict.get(signal.vtSymbol, 0) <= -MAX_PRODUCT_POS:
                     return False
 
                 """ modify by loe """
                 startSymbol = re.sub("\d", "", signal.vtSymbol)
                 for key, value in CATEGORY_DICT.items():
                     if startSymbol in value:
-                        if self.categoryShortUnitDict[key] <= -MAX_CATEGORY_POS:
+                        if self.categoryLongUnitDict.get(key, 0) <= -MAX_CATEGORY_POS:
                             return False
                         break
         
@@ -118,10 +118,10 @@ class TurtlePortfolio(object):
         # 计算合约持仓
         if offset == OFFSET_OPEN:
             if direction == DIRECTION_LONG:
-                self.unitDict[vtSymbol] += 1
+                self.unitDict[vtSymbol] = self.unitDict.get(vtSymbol, 0) + 1
 
             else:
-                self.unitDict[vtSymbol] -= 1
+                self.unitDict[vtSymbol] = self.unitDict.get(vtSymbol, 0) - 1
         else:
             self.unitDict[vtSymbol] = 0
         

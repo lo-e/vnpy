@@ -15,8 +15,8 @@ import re
 
 def one():
     engine = BacktestingEngine()
-    engine.setPeriod(datetime(2013, 6, 15), datetime(2018,12, 31))
-    engine.tradingStart = datetime(2014, 1, 1)
+    engine.setPeriod(datetime(2009, 6, 15), datetime(2019,12, 31))
+    engine.tradingStart = datetime(2010, 1, 1)
     figSavedName = ''
     if figSavedName:
         figSavedName = 'figSaved\\%s' % figSavedName
@@ -26,11 +26,11 @@ def one():
     with open(filename) as f:
         r = DictReader(f)
         for d in r:
-            """
+            #"""
             startSymbol = re.sub("\d", "", d['vtSymbol'])
             symbol = startSymbol + '99'
             d['vtSymbol'] = symbol
-            """
+            #"""
             symbolList.append(d)
     if not symbolList:
         return
@@ -121,6 +121,19 @@ def one():
                 writer.writerows(resultList)
     """
 
+    #"""
+    folio = engine.portfolio
+    signalDic = folio.signalDict
+    for s, signalList in signalDic.items():
+        print '*' * 6 + s + '*' * 6
+        for signal in signalList:
+            print 'window\t%s' % signal.entryWindow
+            print 'datetime\t%s' % signal.bar.datetime
+            print 'unit\t%s' % signal.unit
+            print 'lastPnl\t%s' % signal.getLastPnl()
+            print '\n'
+    #"""
+
 def two():
     filename = 'setting.csv'
     count = 0
@@ -129,7 +142,7 @@ def two():
         r = DictReader(f)
         for d in r:
             engine = BacktestingEngine()
-            engine.setPeriod(datetime(2012, 10, 15), datetime(2018, 12, 31))
+            engine.setPeriod(datetime(2012, 10, 15), datetime(2019, 12, 31))
 
             engine.initSinglePortfolio(d, 10000000)
 
@@ -230,40 +243,6 @@ def four():
 
     print '='*20
     print '组合数：%s' % count
-
-def five():
-    engine = BacktestingEngine()
-    engine.setPeriod(datetime(2016, 6, 15), datetime(2019,12, 31))
-    engine.tradingStart = datetime(2017, 9, 1)
-    figSavedName = ''
-    if figSavedName:
-        figSavedName = 'figSaved\\%s' % figSavedName
-
-    filename = 'setting.csv'
-    symbolList = []
-    with open(filename) as f:
-        r = DictReader(f)
-        for d in r:
-            symbolList.append(d)
-
-    if not symbolList:
-        return
-    engine.initListPortfolio(symbolList, 500000)
-    engine.loadData()
-    engine.runBacktesting()
-    engine.showResult(figSavedName)
-
-    folio = engine.portfolio
-    signalDic = folio.signalDict
-    for s, signalList in signalDic.items():
-        print '*'*6 + s + '*'*6
-        for signal in signalList:
-            print 'window\t%s' % signal.entryWindow
-            print 'datetime\t%s' % signal.bar.datetime
-            print 'unit\t%s' % signal.unit
-            print 'lastPnl\t%s' % signal.getLastPnl()
-            print '\n'
-
 
 # 随机组合，l是数组，n是组合的元素数量
 def combine(l, n):

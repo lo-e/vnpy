@@ -4,6 +4,7 @@
         "name": "合约1",
         "className": "TurtleStrategy",
         "vtSymbol": "IF1903",
+        "exchangeSymbol":"",
         "perSize":300,
         "tickPrice":0.2,
         "start": false
@@ -12,7 +13,8 @@
     {
         "name": "合约2",
         "className": "TurtleStrategy",
-        "vtSymbol": "al1903",
+        "vtSymbol": "al1905",
+        "exchangeSymbol":"al1910",
         "perSize":5,
         "tickPrice":5,
         "start": true
@@ -22,15 +24,17 @@
         "name": "合约3",
         "className": "TurtleStrategy",
         "vtSymbol": "hc1905",
+        "exchangeSymbol":"",
         "perSize":10,
         "tickPrice":1,
-        "start": false
+        "start": true
     },
 
     {
         "name": "合约4",
         "className": "TurtleStrategy",
         "vtSymbol": "SM905",
+        "exchangeSymbol":"",
         "perSize":5,
         "tickPrice":2,
         "start": true
@@ -40,6 +44,7 @@
         "name": "合约5",
         "className": "TurtleStrategy",
         "vtSymbol": "j1905",
+        "exchangeSymbol":"",
         "perSize":100,
         "tickPrice":0.5,
         "start": true
@@ -49,9 +54,10 @@
         "name": "合约6",
         "className": "TurtleStrategy",
         "vtSymbol": "TA905",
+        "exchangeSymbol":"",
         "perSize":5,
         "tickPrice":2,
-        "start": false
+        "start": true
     }
 ],
     "portfolio": {"name": "turtle1",

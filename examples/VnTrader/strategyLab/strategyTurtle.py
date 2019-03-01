@@ -9,10 +9,10 @@ from __future__ import division
 from vnpy.trader.vtObject import VtBarData
 from vnpy.trader.vtConstant import (DIRECTION_LONG, DIRECTION_SHORT,
                                     OFFSET_OPEN, OFFSET_CLOSE)
-from vnpy.trader.app.ctaStrategy.ctaTemplate import (CtaTemplate, 
-                                                     BarGenerator, 
-                                                     ArrayManager)
+from vnpy.trader.app.ctaStrategy.ctaTemplate import (CtaTemplate)
+from vnpy.trader.vtUtility import BarGenerator, ArrayManager
 from vnpy.trader.app.ctaStrategy.ctaBase import *
+from datetime import datetime
 
 
 ########################################################################
@@ -22,6 +22,7 @@ class TurtleStrategy(CtaTemplate):
     author = u'loe'
 
     # 策略参数
+    exchangeSymbol = ''                 # 换月主力合约
     entryWindow = 20                    # 入场通道窗口
     exitWindow = 10                     # 出场通道窗口
     atrWindow = 15                      # 计算ATR波动率的窗口
@@ -51,6 +52,7 @@ class TurtleStrategy(CtaTemplate):
     # 参数列表，保存了参数的名称
     paramList = ['name',
                  'vtSymbol',
+                 'exchangeSymbol',
                  'perSize',
                  'tickPrice',
                  'entryWindow',
@@ -66,6 +68,7 @@ class TurtleStrategy(CtaTemplate):
                'entryDown',
                'exitUp',
                'exitDown',
+               'atrVolatility',
                'longEntry1',
                'longEntry2',
                'longEntry3',
@@ -76,11 +79,13 @@ class TurtleStrategy(CtaTemplate):
                'shortEntry4',
                'longStop',
                'shortStop',
+               'multiplier',
                'virtualUnit',
                'unit']
     
     # 同步列表，保存了需要保存到数据库的变量名称
     syncList = ['pos',
+                'atrVolatility',
                 'longEntry1',
                 'longEntry2',
                 'longEntry3',
@@ -91,6 +96,7 @@ class TurtleStrategy(CtaTemplate):
                 'shortEntry4',
                 'longStop',
                 'shortStop',
+                'multiplier',
                 'virtualUnit',
                 'unit']
 
@@ -100,10 +106,8 @@ class TurtleStrategy(CtaTemplate):
         super(TurtleStrategy, self).__init__(ctaEngine, setting)
 
         self.portfolio = turtlePortfolio
-        self.am = ArrayManager(60)
+        self.am = ArrayManager(self.entryWindow+1)
         self.atrAm = ArrayManager(self.atrWindow+1)
-
-        self.portfolio.newSignal(self, DIRECTION_LONG, OFFSET_OPEN)
         
     #----------------------------------------------------------------------
     def onInit(self):
@@ -137,6 +141,7 @@ class TurtleStrategy(CtaTemplate):
 
         unitChange = 0
         action = False
+
         if self.virtualUnit >= 0:
             # 多头开仓加仓
             if tick.lastPrice >= self.longEntry1 and self.virtualUnit < 1:
@@ -167,6 +172,8 @@ class TurtleStrategy(CtaTemplate):
                 if unitChange:
                     self.unit += unitChange
                     self.buy(tick.lastPrice+self.tickPrice*20, self.multiplier*abs(unitChange))
+
+                self.putEvent()
                 return
 
             # 止损平仓
@@ -181,6 +188,7 @@ class TurtleStrategy(CtaTemplate):
                     # 平仓后更新最新指标
                     self.updateIndicator()
 
+                self.putEvent()
                 return
 
         if self.virtualUnit <= 0:
@@ -213,6 +221,8 @@ class TurtleStrategy(CtaTemplate):
                 if unitChange:
                     self.unit += unitChange
                     self.short(tick.lastPrice - self.tickPrice * 20, self.multiplier * abs(unitChange))
+
+                self.putEvent()
                 return
 
             # 止损平仓
@@ -227,7 +237,10 @@ class TurtleStrategy(CtaTemplate):
                     # 平仓后更新最新指标
                     self.updateIndicator()
 
+                self.putEvent()
                 return
+
+        self.putEvent()
 
     #----------------------------------------------------------------------
     def onBar(self, bar):

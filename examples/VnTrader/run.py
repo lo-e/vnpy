@@ -38,7 +38,7 @@ from vnpy.trader.app import (riskManager, ctaStrategy,
                              spreadTrading, algoTrading,
                              tradeCopy)
 
-from App import testApp
+from App import Turtle
 
 
 #----------------------------------------------------------------------
@@ -71,7 +71,7 @@ def main():
     me.addApp(ctaStrategy)
     me.addApp(spreadTrading)
     me.addApp(algoTrading)
-    me.addApp(testApp)
+    me.addApp(Turtle)
     me.addApp(tradeCopy)
 
     # 创建主窗口

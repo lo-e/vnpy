@@ -1,49 +1,7 @@
 [
     {
-        "name": "合约1",
-        "className": "TurtleStrategy",
-        "vtSymbol": "IF1903",
-        "perSize":300,
-        "start",: false
-    },
-
-    {
-        "name": "合约2",
-        "className": "TurtleStrategy",
-        "vtSymbol": "al1903",
-        "perSize":5,
-        "start",: true
-    },
-
-    {
-        "name": "合约3",
-        "className": "TurtleStrategy",
-        "vtSymbol": "hc1905",
-        "perSize":10,
-        "start",: false
-    },
-
-    {
-        "name": "合约4",
-        "className": "TurtleStrategy",
-        "vtSymbol": "SM905",
-        "perSize":5,
-        "start",: true
-    },
-
-    {
-        "name": "合约5",
-        "className": "TurtleStrategy",
-        "vtSymbol": "j1905",
-        "perSize":100,
-        "start",: true
-    },
-
-    {
-        "name": "合约6",
-        "className": "TurtleStrategy",
-        "vtSymbol": "TA905",
-        "perSize":5,
-        "start",: false
+        "name": "螺纹钢测试",
+        "className": "TestStrategy",
+        "vtSymbol": "rb1905"
     }
 ]
