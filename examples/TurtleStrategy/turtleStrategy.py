@@ -193,6 +193,17 @@ class TurtleSignal(object):
                 self.newDominantIniting = True
                 self.am = ArrayManager(self.entryWindow + 1)  # K线容器
                 self.atrAm = ArrayManager(self.atrWindow + 1)  # K线容器
+                self.atrVolatility = 0
+                self.longEntry1 = 0
+                self.longEntry2 = 0
+                self.longEntry3 = 0
+                self.longEntry4 = 0
+                self.shortEntry1 = 0
+                self.shortEntry2 = 0
+                self.shortEntry3 = 0
+                self.shortEntry4 = 0
+                self.longStop = 0
+                self.shortStop = 0
                 self.resultList = []
 
                 i = 0
@@ -211,6 +222,10 @@ class TurtleSignal(object):
             # 获取真实合约bar
             actualBar = self.getActualBar(bar.datetime)
 
+            """ fake """
+            if actualBar.vtSymbol == 'IF1904':
+                a = 0
+
             # 替换bar数据
             bar.close = actualBar.close
             bar = actualBar
@@ -226,6 +241,10 @@ class TurtleSignal(object):
                         self.newSignal(DIRECTION_SHORT, OFFSET_OPEN, actualBar.open, 1)
 
                     i += 1
+
+        """ fake """
+        if bar.vtSymbol == 'IF1904' and bar.datetime >= datetime(2019, 3, 12):
+            a = 0
 
         self.bar = bar
         self.am.updateBar(bar)

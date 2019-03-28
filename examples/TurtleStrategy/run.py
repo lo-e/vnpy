@@ -40,7 +40,7 @@ def one():
     engine.showResult(figSavedName)
     print "\n最大占用保证金：%s\t持仓单位：%s" % (engine.portfolio.maxBond[0], engine.portfolio.maxBond[1])
 
-    """
+    #"""
     resultList = []
     totalPnl = 0
     calculateDic = {}
@@ -119,7 +119,7 @@ def one():
                 writer.writeheader()
                 # 写入csv文件
                 writer.writerows(resultList)
-    """
+    #"""
 
     #"""
     folio = engine.portfolio

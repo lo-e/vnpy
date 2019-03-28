@@ -34,7 +34,8 @@ class TurtlePortfolio(object):
     totalLong = 0  # 总的多头持仓
     totalShort = 0  # 总的空头持仓
     categoryLongUnitDict = defaultdict(int)  # 高度关联品种多头持仓情况
-    categoryShortUnitDict = defaultdict(int)  # 高度关联品种空头持仓情况
+    categoryShortUnitDict = defaultdict(int) # 高度关联品种空头持仓情况
+    overBondList = []                        # 保证金超限统计
 
 
     paramList = ['name',
@@ -47,7 +48,8 @@ class TurtlePortfolio(object):
                 'totalLong',
                 'totalShort',
                 'categoryLongUnitDict',
-                'categoryShortUnitDict']
+                'categoryShortUnitDict',
+                'overBondList']
 
     #----------------------------------------------------------------------
     def __init__(self, engine, setting):
@@ -67,7 +69,7 @@ class TurtlePortfolio(object):
             signal.onBar(bar)
     
     #----------------------------------------------------------------------
-    def newSignal(self, signal, direction, offset):
+    def newSignal(self, vtSymbol, direction, offset):
         """对交易信号进行过滤，符合条件的才发单执行"""
             
         # 开仓
@@ -79,12 +81,12 @@ class TurtlePortfolio(object):
                     return False
                 
                 # 单品种持仓不能超过上限
-                if self.unitDict.get(signal.vtSymbol, 0) >= MAX_PRODUCT_POS:
+                if self.unitDict.get(vtSymbol, 0) >= MAX_PRODUCT_POS:
                     return False
 
                 """ modify by loe """
                 # 高度关联品种单方向持仓不能超过上限
-                startSymbol = re.sub("\d", "", signal.vtSymbol)
+                startSymbol = re.sub("\d", "", vtSymbol)
                 for key, value in CATEGORY_DICT.items():
                     if startSymbol in value:
                         if self.categoryLongUnitDict.get(key, 0) >= MAX_CATEGORY_POS:
@@ -96,18 +98,18 @@ class TurtlePortfolio(object):
                 if self.totalShort <= -MAX_DIRECTION_POS:
                     return False
                 
-                if self.unitDict.get(signal.vtSymbol, 0) <= -MAX_PRODUCT_POS:
+                if self.unitDict.get(vtSymbol, 0) <= -MAX_PRODUCT_POS:
                     return False
 
                 """ modify by loe """
-                startSymbol = re.sub("\d", "", signal.vtSymbol)
+                startSymbol = re.sub("\d", "", vtSymbol)
                 for key, value in CATEGORY_DICT.items():
                     if startSymbol in value:
                         if self.categoryLongUnitDict.get(key, 0) <= -MAX_CATEGORY_POS:
                             return False
                         break
         
-        self.updateUnit(signal.vtSymbol, direction, offset)
+        self.updateUnit(vtSymbol, direction, offset)
         return True
 
     
@@ -123,7 +125,8 @@ class TurtlePortfolio(object):
             else:
                 self.unitDict[vtSymbol] = self.unitDict.get(vtSymbol, 0) - 1
         else:
-            self.unitDict[vtSymbol] = 0
+            if vtSymbol in self.unitDict.keys():
+                self.unitDict.pop(vtSymbol)
         
         # 计算总持仓、类别持仓
         self.totalLong = 0
@@ -151,4 +154,14 @@ class TurtlePortfolio(object):
 
         # 同步到数据库
         self.engine.savePortfolioSyncData()
-    
+
+    def addOverBond(self, symbol, price, perSize, multiplier, atrVolatility):
+        dic = {'symbol':symbol,
+               'price':price,
+               'perSize':perSize,
+               'multiplier':multiplier,
+               'atrVolatility':atrVolatility}
+        self.overBondList.append(dic)
+
+        # 同步到数据库
+        self.engine.savePortfolioSyncData()

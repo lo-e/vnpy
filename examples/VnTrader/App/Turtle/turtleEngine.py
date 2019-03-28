@@ -592,6 +592,15 @@ class TurtleEngine(AppEngine):
             l.append(strategy)
 
             """ modify by loe """
+            # 保存前主力Tick映射关系
+            if strategy.lastSymbol:
+                if strategy.lastSymbol in self.tickStrategyDict:
+                    l = self.tickStrategyDict[strategy.lastSymbol]
+                else:
+                    l = []
+                    self.tickStrategyDict[strategy.lastSymbol] = l
+                l.append(strategy)
+
             # 订阅行情
             self.subscribeMarketData(strategy)
 
@@ -612,6 +621,23 @@ class TurtleEngine(AppEngine):
             self.mainEngine.subscribe(req, contract.gatewayName)
         else:
             self.writeCtaLog(u'%s的交易合约%s无法找到' % (strategy.name, strategy.vtSymbol))
+
+        """ modify by loe """
+        # 订阅前主力合约
+        if strategy.lastSymbol:
+            contract = self.mainEngine.getContract(strategy.lastSymbol)
+            if contract:
+                req = VtSubscribeReq()
+                req.symbol = contract.symbol
+                req.exchange = contract.exchange
+
+                # 对于IB接口订阅行情时所需的货币和产品类型，从策略属性中获取
+                req.currency = strategy.currency
+                req.productClass = strategy.productClass
+
+                self.mainEngine.subscribe(req, contract.gatewayName)
+            else:
+                self.writeCtaLog(u'%s的前主力合约%s无法找到' % (strategy.name, strategy.lastSymbol))
 
     # ----------------------------------------------------------------------
     def initPortfolio(self):

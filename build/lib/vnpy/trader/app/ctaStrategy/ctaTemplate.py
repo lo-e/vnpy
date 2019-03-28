@@ -154,6 +154,21 @@ class CtaTemplate(object):
         else:
             # 交易停止时发单返回空字符串
             return []
+
+    """ modify by loe """
+    # ----------------------------------------------------------------------
+    def sendSymbolOrder(self, symbol, orderType, price, volume, stop=False):
+        """发送委托"""
+        if self.trading:
+            # 如果stop为True，则意味着发本地停止单
+            if stop:
+                vtOrderIDList = self.ctaEngine.sendStopOrder(symbol, orderType, price, volume, self)
+            else:
+                vtOrderIDList = self.ctaEngine.sendOrder(symbol, orderType, price, volume, self)
+            return vtOrderIDList
+        else:
+            # 交易停止时发单返回空字符串
+            return []
         
     #----------------------------------------------------------------------
     def cancelOrder(self, vtOrderID):

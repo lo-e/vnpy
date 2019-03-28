@@ -26,8 +26,6 @@ examples/VnTrader/run_simple.py
 examples/VnTrader/App/__init__.py
 examples/VnTrader/App/Turtle/__init__.py
 examples/VnTrader/App/Turtle/dr.ico
-examples/VnTrader/App/Turtle/testEngine.py
-examples/VnTrader/App/Turtle/testWidget.py
 examples/VnTrader/App/Turtle/turtleEngine.py
 examples/VnTrader/App/Turtle/turtlePortfolio.py
 examples/VnTrader/App/Turtle/turtleWidget.py

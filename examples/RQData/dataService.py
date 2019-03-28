@@ -186,13 +186,13 @@ def dominantSymbolToDatabase(underlyingSymbol, startDate, endDate, toDatabase):
         if toDatabase:
             i = 0
             symbol = ''
-            print('*'*26 + underlyingSymbol + '*'*26)
+            #print('*'*26 + underlyingSymbol + '*'*26)
             while i < len(dominantList):
                 index = dominantList.index[i]
                 rqSymbol = dominantList[index]
                 if not symbol or symbol != rqSymbol:
                     symbol = rqSymbol
-                    print('%s\t%s\n' % (index, rqSymbol))
+                    #print('%s\t%s\n' % (index, rqSymbol))
 
                     date = index.to_pydatetime()
                     data = {'date':date,

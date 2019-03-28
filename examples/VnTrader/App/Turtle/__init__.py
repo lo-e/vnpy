@@ -1,8 +1,6 @@
 # encoding: UTF-8
 
-from testEngine import TestEngine
 from turtleEngine import TurtleEngine
-from testWidget import TestEngineManager
 from turtleWidget import TurtleEngineManager
 
 appName = 'TurtleTrader'
