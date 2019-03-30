@@ -36,6 +36,7 @@ class TurtlePortfolio(object):
     categoryLongUnitDict = defaultdict(int)  # 高度关联品种多头持仓情况
     categoryShortUnitDict = defaultdict(int) # 高度关联品种空头持仓情况
     overBondList = []                        # 保证金超限统计
+    resultList = []                          # 交易盈亏记录
 
 
     paramList = ['name',
@@ -49,7 +50,8 @@ class TurtlePortfolio(object):
                 'totalShort',
                 'categoryLongUnitDict',
                 'categoryShortUnitDict',
-                'overBondList']
+                'overBondList',
+                'resultList']
 
     #----------------------------------------------------------------------
     def __init__(self, engine, setting):
@@ -71,7 +73,7 @@ class TurtlePortfolio(object):
     #----------------------------------------------------------------------
     def newSignal(self, vtSymbol, direction, offset):
         """对交易信号进行过滤，符合条件的才发单执行"""
-            
+
         # 开仓
         if offset == OFFSET_OPEN:
             # 买入

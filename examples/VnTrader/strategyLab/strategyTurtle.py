@@ -238,6 +238,9 @@ class TurtleStrategy(CtaTemplate):
                 self.virtualUnit += 1
                 action = True
 
+                # 先手动更新最大止损，如果有真实交易会在onTrade再次更新
+                self.longStop = tick.lastPrice - 2 *self.atrVolatility
+
                 # 检查是否保证金超限
                 if self.checkBondOver(tick.lastPrice):
                     return
@@ -250,6 +253,8 @@ class TurtleStrategy(CtaTemplate):
                 self.virtualUnit += 1
                 action = True
 
+                self.longStop = tick.lastPrice - 2 * self.atrVolatility
+
                 if self.checkBondOver(tick.lastPrice):
                     return
 
@@ -260,6 +265,8 @@ class TurtleStrategy(CtaTemplate):
                 self.virtualUnit += 1
                 action = True
 
+                self.longStop = tick.lastPrice - 2 * self.atrVolatility
+
                 if self.checkBondOver(tick.lastPrice):
                     return
 
@@ -269,6 +276,8 @@ class TurtleStrategy(CtaTemplate):
             if tick.lastPrice >= self.longEntry4 and self.virtualUnit < 4:
                 self.virtualUnit += 1
                 action = True
+
+                self.longStop = tick.lastPrice - 2 * self.atrVolatility
 
                 if self.checkBondOver(tick.lastPrice):
                     return
@@ -305,6 +314,8 @@ class TurtleStrategy(CtaTemplate):
                 self.virtualUnit -= 1
                 action = True
 
+                self.shortStop = tick.lastPrice + 2 * self.atrVolatility
+
                 if self.checkBondOver(tick.lastPrice):
                     return
 
@@ -314,6 +325,8 @@ class TurtleStrategy(CtaTemplate):
             if tick.lastPrice <= self.shortEntry2 and self.virtualUnit > -2:
                 self.virtualUnit -= 1
                 action = True
+
+                self.shortStop = tick.lastPrice + 2 * self.atrVolatility
 
                 if self.checkBondOver(tick.lastPrice):
                     return
@@ -325,6 +338,8 @@ class TurtleStrategy(CtaTemplate):
                 self.virtualUnit -= 1
                 action = True
 
+                self.shortStop = tick.lastPrice + 2 * self.atrVolatility
+
                 if self.checkBondOver(tick.lastPrice):
                     return
 
@@ -334,6 +349,8 @@ class TurtleStrategy(CtaTemplate):
             if tick.lastPrice <= self.shortEntry4 and self.virtualUnit > -4:
                 self.virtualUnit -= 1
                 action = True
+
+                self.shortStop = tick.lastPrice + 2 * self.atrVolatility
 
                 if self.checkBondOver(tick.lastPrice):
                     return

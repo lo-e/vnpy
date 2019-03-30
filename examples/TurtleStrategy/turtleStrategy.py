@@ -43,7 +43,7 @@ class TurtleResult(object):
     def open(self, price, change):
         """开仓或者加仓"""
         cost = self.unit * self.entry    # 计算之前的开仓成本
-        cost += change * price          # 加上新仓位的成本
+        cost += change * price           # 加上新仓位的成本
         self.unit += change              # 加上新仓位的数量
         self.entry = cost / self.unit    # 计算新的平均开仓成本
 
@@ -222,10 +222,6 @@ class TurtleSignal(object):
             # 获取真实合约bar
             actualBar = self.getActualBar(bar.datetime)
 
-            """ fake """
-            if actualBar.vtSymbol == 'IF1904':
-                a = 0
-
             # 替换bar数据
             bar.close = actualBar.close
             bar = actualBar
@@ -241,10 +237,6 @@ class TurtleSignal(object):
                         self.newSignal(DIRECTION_SHORT, OFFSET_OPEN, actualBar.open, 1)
 
                     i += 1
-
-        """ fake """
-        if bar.vtSymbol == 'IF1904' and bar.datetime >= datetime(2019, 3, 12):
-            a = 0
 
         self.bar = bar
         self.am.updateBar(bar)
@@ -375,6 +367,10 @@ class TurtleSignal(object):
     #----------------------------------------------------------------------
     def newSignal(self, direction, offset, price, volume):
         """ modify by loe """
+        """ fake """
+        if self.vtSymbol == 'HC99' and self.bar.datetime >= datetime(2019, 3, 1):
+            a = 2
+
         if self.newDominantIniting:
             return
 
