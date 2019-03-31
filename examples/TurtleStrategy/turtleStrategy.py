@@ -158,6 +158,10 @@ class TurtleSignal(object):
                 self.actualSymbol = startD['symbol']
 
             if exchange:
+                """ fake """
+                if self.vtSymbol == 'SM99' and bar.datetime >= datetime(2018, 4, 24):
+                    a = 2
+
                 # 旧主力合约以开盘价限价单平仓
                 if self.unit > 0:
                     actualBar = self.getActualBar(bar.datetime)
@@ -367,9 +371,6 @@ class TurtleSignal(object):
     #----------------------------------------------------------------------
     def newSignal(self, direction, offset, price, volume):
         """ modify by loe """
-        """ fake """
-        if self.vtSymbol == 'HC99' and self.bar.datetime >= datetime(2019, 3, 1):
-            a = 2
 
         if self.newDominantIniting:
             return
