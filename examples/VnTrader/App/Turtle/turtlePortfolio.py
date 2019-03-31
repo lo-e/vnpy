@@ -36,7 +36,7 @@ class TurtlePortfolio(object):
     categoryLongUnitDict = defaultdict(int)  # 高度关联品种多头持仓情况
     categoryShortUnitDict = defaultdict(int) # 高度关联品种空头持仓情况
     overBondList = []                        # 保证金超限统计
-    resultList = []                          # 交易盈亏记录
+    pnlDic = {}                           # 交易盈亏记录
 
 
     paramList = ['name',
@@ -51,7 +51,7 @@ class TurtlePortfolio(object):
                 'categoryLongUnitDict',
                 'categoryShortUnitDict',
                 'overBondList',
-                'resultList']
+                'pnlDic']
 
     #----------------------------------------------------------------------
     def __init__(self, engine, setting):
@@ -157,6 +157,7 @@ class TurtlePortfolio(object):
         # 同步到数据库
         self.engine.savePortfolioSyncData()
 
+    # 保证金超限
     def addOverBond(self, symbol, price, perSize, multiplier, atrVolatility):
         dic = {'symbol':symbol,
                'price':price,
@@ -165,5 +166,18 @@ class TurtlePortfolio(object):
                'atrVolatility':atrVolatility}
         self.overBondList.append(dic)
 
+        # 同步到数据库
+        self.engine.savePortfolioSyncData()
+
+    # 记录盈亏
+    def addPnl(self, symbol, pnl):
+        startSymbol = re.sub("\d", "", symbol)
+        dic = {'symbol':symbol,
+               'datetime':self.engine.today,
+               'pnl':pnl}
+
+        pnlList = self.pnlDic.get(startSymbol, [])
+        pnlList.append(dic)
+        self.pnlDic[startSymbol] = pnlList
         # 同步到数据库
         self.engine.savePortfolioSyncData()

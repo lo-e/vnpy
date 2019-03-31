@@ -84,6 +84,8 @@ class TurtleStrategy(CtaTemplate):
     multiplier = 0                      # unit大小
     virtualUnit = 0                     # 信号仓位
     unit = 0                            # 实际持有仓位
+    entry = 0                           # 当前持仓成本（不考虑滑点）
+    lastPnl = 0                         # 上一次盈利（不考虑滑点和手续费）
     
     # 参数列表，保存了参数的名称
     paramList = ['name',
@@ -118,7 +120,9 @@ class TurtleStrategy(CtaTemplate):
                'shortStop',
                'multiplier',
                'virtualUnit',
-               'unit']
+               'unit',
+               'entry',
+               'lastPnl']
     
     # 同步列表，保存了需要保存到数据库的变量名称
     syncList = ['pos',
@@ -135,7 +139,9 @@ class TurtleStrategy(CtaTemplate):
                 'shortStop',
                 'multiplier',
                 'virtualUnit',
-                'unit']
+                'unit',
+                'entry',
+                'lastPnl']
 
     #----------------------------------------------------------------------
     def __init__(self, ctaEngine, turtlePortfolio, setting):
@@ -155,7 +161,7 @@ class TurtleStrategy(CtaTemplate):
             # 需要清空前主力合约仓位
             if self.pos:
                 self.lastSymbolClearNeed = True
-                self.clearPos = self.pos
+                self.lastClearPos = self.pos
 
             # 需要建立新主力仓位，初始化新主力状态
             self.newDominantInitial()
@@ -235,14 +241,17 @@ class TurtleStrategy(CtaTemplate):
         if self.virtualUnit >= 0:
             # 多头开仓加仓
             if tick.lastPrice >= self.longEntry1 and self.virtualUnit < 1:
-                self.virtualUnit += 1
                 action = True
 
+                # 信号建仓
+                self.open(tick.lastPrice, 1)
+
                 # 先手动更新最大止损，如果有真实交易会在onTrade再次更新
-                self.longStop = tick.lastPrice - 2 *self.atrVolatility
+                self.longStop = tick.lastPrice - 2 * self.atrVolatility
 
                 # 检查是否保证金超限
                 if self.checkBondOver(tick.lastPrice):
+                    self.putEvent()
                     return
 
                 # 组合仓位管理
@@ -250,36 +259,42 @@ class TurtleStrategy(CtaTemplate):
                     unitChange += 1
 
             if tick.lastPrice >= self.longEntry2 and self.virtualUnit < 2:
-                self.virtualUnit += 1
                 action = True
+
+                self.open(tick.lastPrice, 1)
 
                 self.longStop = tick.lastPrice - 2 * self.atrVolatility
 
                 if self.checkBondOver(tick.lastPrice):
+                    self.putEvent()
                     return
 
                 if self.portfolio.newSignal(self.vtSymbol, DIRECTION_LONG, OFFSET_OPEN):
                     unitChange += 1
 
             if tick.lastPrice >= self.longEntry3 and self.virtualUnit < 3:
-                self.virtualUnit += 1
                 action = True
+
+                self.open(tick.lastPrice, 1)
 
                 self.longStop = tick.lastPrice - 2 * self.atrVolatility
 
                 if self.checkBondOver(tick.lastPrice):
+                    self.putEvent()
                     return
 
                 if self.portfolio.newSignal(self.vtSymbol, DIRECTION_LONG, OFFSET_OPEN):
                     unitChange += 1
 
             if tick.lastPrice >= self.longEntry4 and self.virtualUnit < 4:
-                self.virtualUnit += 1
                 action = True
+
+                self.open(tick.lastPrice, 1)
 
                 self.longStop = tick.lastPrice - 2 * self.atrVolatility
 
                 if self.checkBondOver(tick.lastPrice):
+                    self.putEvent()
                     return
 
                 if self.portfolio.newSignal(self.vtSymbol, DIRECTION_LONG, OFFSET_OPEN):
@@ -297,9 +312,8 @@ class TurtleStrategy(CtaTemplate):
             if self.virtualUnit > 0:
                 longExit = max(self.longStop, self.exitDown)
                 if tick.lastPrice <= longExit:
-                    self.virtualUnit = 0
+                    self.close(tick.lastPrice)
                     self.portfolio.newSignal(self.vtSymbol, DIRECTION_SHORT, OFFSET_CLOSE)
-                    self.unit = 0
                     if self.pos > 0:
                         self.sell(tick.lastPrice-self.tickPrice*20, abs(self.pos))
                     # 平仓后更新最新指标
@@ -311,48 +325,56 @@ class TurtleStrategy(CtaTemplate):
         if self.virtualUnit <= 0:
             # 空头开仓加仓
             if tick.lastPrice <= self.shortEntry1 and self.virtualUnit > -1:
-                self.virtualUnit -= 1
                 action = True
+
+                self.open(tick.lastPrice, -1)
 
                 self.shortStop = tick.lastPrice + 2 * self.atrVolatility
 
                 if self.checkBondOver(tick.lastPrice):
+                    self.putEvent()
                     return
 
                 if self.portfolio.newSignal(self.vtSymbol, DIRECTION_SHORT, OFFSET_OPEN):
                     unitChange -= 1
 
             if tick.lastPrice <= self.shortEntry2 and self.virtualUnit > -2:
-                self.virtualUnit -= 1
                 action = True
+
+                self.open(tick.lastPrice, -1)
 
                 self.shortStop = tick.lastPrice + 2 * self.atrVolatility
 
                 if self.checkBondOver(tick.lastPrice):
+                    self.putEvent()
                     return
 
                 if self.portfolio.newSignal(self.vtSymbol, DIRECTION_SHORT, OFFSET_OPEN):
                     unitChange -= 1
 
             if tick.lastPrice <= self.shortEntry3 and self.virtualUnit > -3:
-                self.virtualUnit -= 1
                 action = True
+
+                self.open(tick.lastPrice, -1)
 
                 self.shortStop = tick.lastPrice + 2 * self.atrVolatility
 
                 if self.checkBondOver(tick.lastPrice):
+                    self.putEvent()
                     return
 
                 if self.portfolio.newSignal(self.vtSymbol, DIRECTION_SHORT, OFFSET_OPEN):
                     unitChange -= 1
 
             if tick.lastPrice <= self.shortEntry4 and self.virtualUnit > -4:
-                self.virtualUnit -= 1
                 action = True
+
+                self.open(tick.lastPrice, -1)
 
                 self.shortStop = tick.lastPrice + 2 * self.atrVolatility
 
                 if self.checkBondOver(tick.lastPrice):
+                    self.putEvent()
                     return
 
                 if self.portfolio.newSignal(self.vtSymbol, DIRECTION_SHORT, OFFSET_OPEN):
@@ -370,9 +392,8 @@ class TurtleStrategy(CtaTemplate):
             if self.virtualUnit < 0:
                 shortExit = min(self.shortStop, self.exitUp)
                 if tick.lastPrice >= shortExit:
-                    self.virtualUnit = 0
+                    self.close(tick.lastPrice)
                     self.portfolio.newSignal(self.vtSymbol, DIRECTION_LONG, OFFSET_CLOSE)
-                    self.unit = 0
                     if self.pos < 0:
                         self.cover(tick.lastPrice + self.tickPrice * 20, abs(self.pos))
                     # 平仓后更新最新指标
@@ -470,6 +491,22 @@ class TurtleStrategy(CtaTemplate):
             return True
         else:
             return False
+
+    # 信号建仓
+    def open(self, price, change):
+        cost = self.virtualUnit * self.entry                 # 计算之前的开仓成本
+        cost += change * price                               # 加上新仓位的成本
+        self.virtualUnit += change                           # 更新信号持仓
+        self.entry = cost / self.virtualUnit                 # 计算新的平均开仓成本
+
+    # 信号平仓
+    def close(self, price):
+        self.lastPnl = (price - self.entry) * self.virtualUnit * self.multiplier * self.perSize
+        self.portfolio.addPnl(self.vtSymbol, self.lastPnl)
+
+        self.virtualUnit = 0
+        self.unit = 0
+        self.entry = 0
 
     # 主力换月，初始化交易状态
     def newDominantInitial(self):
