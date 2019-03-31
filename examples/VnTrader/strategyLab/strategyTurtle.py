@@ -249,6 +249,11 @@ class TurtleStrategy(CtaTemplate):
                 # 先手动更新最大止损，如果有真实交易会在onTrade再次更新
                 self.longStop = tick.lastPrice - 2 * self.atrVolatility
 
+                # 上次盈利过滤
+                if self.lastPnl > 0:
+                    self.putEvent()
+                    return
+
                 # 检查是否保证金超限
                 if self.checkBondOver(tick.lastPrice):
                     self.putEvent()
@@ -265,6 +270,10 @@ class TurtleStrategy(CtaTemplate):
 
                 self.longStop = tick.lastPrice - 2 * self.atrVolatility
 
+                if self.lastPnl > 0:
+                    self.putEvent()
+                    return
+
                 if self.checkBondOver(tick.lastPrice):
                     self.putEvent()
                     return
@@ -279,6 +288,10 @@ class TurtleStrategy(CtaTemplate):
 
                 self.longStop = tick.lastPrice - 2 * self.atrVolatility
 
+                if self.lastPnl > 0:
+                    self.putEvent()
+                    return
+
                 if self.checkBondOver(tick.lastPrice):
                     self.putEvent()
                     return
@@ -292,6 +305,10 @@ class TurtleStrategy(CtaTemplate):
                 self.open(tick.lastPrice, 1)
 
                 self.longStop = tick.lastPrice - 2 * self.atrVolatility
+
+                if self.lastPnl > 0:
+                    self.putEvent()
+                    return
 
                 if self.checkBondOver(tick.lastPrice):
                     self.putEvent()
@@ -331,6 +348,10 @@ class TurtleStrategy(CtaTemplate):
 
                 self.shortStop = tick.lastPrice + 2 * self.atrVolatility
 
+                if self.lastPnl > 0:
+                    self.putEvent()
+                    return
+
                 if self.checkBondOver(tick.lastPrice):
                     self.putEvent()
                     return
@@ -344,6 +365,10 @@ class TurtleStrategy(CtaTemplate):
                 self.open(tick.lastPrice, -1)
 
                 self.shortStop = tick.lastPrice + 2 * self.atrVolatility
+
+                if self.lastPnl > 0:
+                    self.putEvent()
+                    return
 
                 if self.checkBondOver(tick.lastPrice):
                     self.putEvent()
@@ -359,6 +384,10 @@ class TurtleStrategy(CtaTemplate):
 
                 self.shortStop = tick.lastPrice + 2 * self.atrVolatility
 
+                if self.lastPnl > 0:
+                    self.putEvent()
+                    return
+
                 if self.checkBondOver(tick.lastPrice):
                     self.putEvent()
                     return
@@ -372,6 +401,10 @@ class TurtleStrategy(CtaTemplate):
                 self.open(tick.lastPrice, -1)
 
                 self.shortStop = tick.lastPrice + 2 * self.atrVolatility
+
+                if self.lastPnl > 0:
+                    self.putEvent()
+                    return
 
                 if self.checkBondOver(tick.lastPrice):
                     self.putEvent()
