@@ -14,6 +14,7 @@ from vnpy.trader.vtUtility import BarGenerator, ArrayManager
 from vnpy.trader.app.ctaStrategy.ctaBase import *
 import datetime
 import re
+from strategyTurtleInitial import TurtleInitialManager
 
 #====== 交易时间 ======
 #商品期货
@@ -159,9 +160,27 @@ class TurtleStrategy(CtaTemplate):
         if self.lastSymbol:
             # 主力换月处理
             # 需要清空前主力合约仓位
-            if self.pos:
+            # 从数据库载入前主力的持仓情况
+            flt = {'name': self.name,
+                   'vtSymbol': self.lastSymbol}
+            syncData = self.ctaEngine.mainEngine.dbQuery(POSITION_DB_NAME, self.className, flt)
+
+            if not syncData:
+                return
+
+            d = syncData[0]
+            pos = d['pos']
+            unit = d['unit']
+            if pos:
                 self.lastSymbolClearNeed = True
                 self.lastClearPos = self.pos
+
+            # 组合状态管理
+            if unit > 0:
+                self.portfolio.newSignal(self.lastSymbol, DIRECTION_SHORT, OFFSET_CLOSE)
+
+            elif unit < 0:
+                self.portfolio.newSignal(self.lastSymbol, DIRECTION_LONG, OFFSET_CLOSE)
 
             # 需要建立新主力仓位，初始化新主力状态
             self.newDominantInitial()
@@ -208,12 +227,10 @@ class TurtleStrategy(CtaTemplate):
         if tick.vtSymbol == self.lastSymbol:
             if self.lastSymbolClearNeed:
                 if self.lastClearPos > 0:
-                    self.portfolio.newSignal(self.lastSymbol, DIRECTION_SHORT, OFFSET_CLOSE)
                     self.sendSymbolOrder(self.lastSymbol, CTAORDER_SELL, tick.lastPrice - self.tickPrice * 20,
                                          abs(self.lastClearPos))
 
                 elif self.lastClearPos < 0:
-                    self.portfolio.newSignal(self.lastSymbol, DIRECTION_LONG, OFFSET_CLOSE)
                     self.sendSymbolOrder(self.lastSymbol, CTAORDER_COVER, tick.lastPrice + self.tickPrice * 20,
                                          abs(self.lastClearPos))
 
@@ -222,11 +239,43 @@ class TurtleStrategy(CtaTemplate):
 
         # 新主力仓位初始化
         if self.posInitialNeed:
-            if self.unit > 0:
-                self.buy(tick.lastPrice + self.tickPrice * 20, self.multiplier * abs(self.unit))
+            preCheck = True
+            # 过滤虚假开仓
+            if self.multiplier == 0:
+                preCheck = False
 
-            elif self.unit < 0:
-                self.short(tick.lastPrice - self.tickPrice * 20, self.multiplier * abs(self.unit))
+            # 上次盈利过滤
+            if self.lastPnl > 0:
+                preCheck = False
+
+            # 检查是否保证金超限
+            if self.checkBondOver(tick.lastPrice):
+                preCheck = False
+
+            if preCheck:
+                if self.virtualUnit > 0:
+                    unitChange = 0
+                    i = 0
+                    while i < abs(self.virtualUnit):
+                        if self.portfolio.newSignal(self.vtSymbol, DIRECTION_LONG, OFFSET_OPEN):
+                            unitChange += 1
+                        i += 1
+
+                    if unitChange > 0:
+                        self.unit += unitChange
+                        self.buy(tick.lastPrice + self.tickPrice * 20, self.multiplier * abs(unitChange))
+
+                elif self.virtualUnit < 0:
+                    unitChange = 0
+                    i = 0
+                    while i < abs(self.virtualUnit):
+                        if self.portfolio.newSignal(self.vtSymbol, DIRECTION_SHORT, OFFSET_OPEN):
+                            unitChange -= 1
+                        i += 1
+
+                    if unitChange < 0:
+                        self.unit += unitChange
+                        self.short(tick.lastPrice - self.tickPrice * 20, self.multiplier * abs(unitChange))
 
             self.putEvent()
             self.posInitialNeed = False
@@ -249,6 +298,11 @@ class TurtleStrategy(CtaTemplate):
                 # 先手动更新最大止损，如果有真实交易会在onTrade再次更新
                 self.longStop = tick.lastPrice - 2 * self.atrVolatility
 
+                # 过滤虚假开仓
+                if self.multiplier == 0:
+                    self.putEvent()
+                    return
+
                 # 上次盈利过滤
                 if self.lastPnl > 0:
                     self.putEvent()
@@ -270,6 +324,10 @@ class TurtleStrategy(CtaTemplate):
 
                 self.longStop = tick.lastPrice - 2 * self.atrVolatility
 
+                if self.multiplier == 0:
+                    self.putEvent()
+                    return
+
                 if self.lastPnl > 0:
                     self.putEvent()
                     return
@@ -288,6 +346,10 @@ class TurtleStrategy(CtaTemplate):
 
                 self.longStop = tick.lastPrice - 2 * self.atrVolatility
 
+                if self.multiplier == 0:
+                    self.putEvent()
+                    return
+
                 if self.lastPnl > 0:
                     self.putEvent()
                     return
@@ -305,6 +367,10 @@ class TurtleStrategy(CtaTemplate):
                 self.open(tick.lastPrice, 1)
 
                 self.longStop = tick.lastPrice - 2 * self.atrVolatility
+
+                if self.multiplier == 0:
+                    self.putEvent()
+                    return
 
                 if self.lastPnl > 0:
                     self.putEvent()
@@ -348,6 +414,10 @@ class TurtleStrategy(CtaTemplate):
 
                 self.shortStop = tick.lastPrice + 2 * self.atrVolatility
 
+                if self.multiplier == 0:
+                    self.putEvent()
+                    return
+
                 if self.lastPnl > 0:
                     self.putEvent()
                     return
@@ -365,6 +435,10 @@ class TurtleStrategy(CtaTemplate):
                 self.open(tick.lastPrice, -1)
 
                 self.shortStop = tick.lastPrice + 2 * self.atrVolatility
+
+                if self.multiplier == 0:
+                    self.putEvent()
+                    return
 
                 if self.lastPnl > 0:
                     self.putEvent()
@@ -384,6 +458,10 @@ class TurtleStrategy(CtaTemplate):
 
                 self.shortStop = tick.lastPrice + 2 * self.atrVolatility
 
+                if self.multiplier == 0:
+                    self.putEvent()
+                    return
+
                 if self.lastPnl > 0:
                     self.putEvent()
                     return
@@ -401,6 +479,10 @@ class TurtleStrategy(CtaTemplate):
                 self.open(tick.lastPrice, -1)
 
                 self.shortStop = tick.lastPrice + 2 * self.atrVolatility
+
+                if self.multiplier == 0:
+                    self.putEvent()
+                    return
 
                 if self.lastPnl > 0:
                     self.putEvent()
@@ -471,11 +553,12 @@ class TurtleStrategy(CtaTemplate):
     #----------------------------------------------------------------------
     def onTrade(self, trade):
         """成交推送"""
+        """
         if trade.offset == OFFSET_OPEN:
             # 计算止损价格
             self.longStop = trade.price - 2*self.atrVolatility
             self.shortStop = trade.price + 2*self.atrVolatility
-        
+        """
         # 发出状态更新事件
         self.putEvent()
 
@@ -543,4 +626,9 @@ class TurtleStrategy(CtaTemplate):
 
     # 主力换月，初始化交易状态
     def newDominantInitial(self):
-        pass
+        if self.pos:
+            return
+
+        initialManager = TurtleInitialManager(self.vtSymbol, self.entryWindow, self.exitWindow, self.atrWindow)
+        initialManager.backtesting()
+        a = 2

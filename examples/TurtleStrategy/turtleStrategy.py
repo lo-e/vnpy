@@ -544,6 +544,11 @@ class TurtlePortfolio(object):
         else:
             multiplier = self.multiplierDict[signal.vtSymbol]
 
+        """ modify by loe """
+        # 过滤虚假开仓
+        if multiplier == 0:
+            return
+
         # 开仓
         if offset == OFFSET_OPEN:
             # 检查上一次是否为盈利

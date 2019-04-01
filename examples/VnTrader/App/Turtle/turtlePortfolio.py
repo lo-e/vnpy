@@ -160,6 +160,7 @@ class TurtlePortfolio(object):
     # 保证金超限
     def addOverBond(self, symbol, price, perSize, multiplier, atrVolatility):
         dic = {'symbol':symbol,
+               'datetime': self.engine.today,
                'price':price,
                'perSize':perSize,
                'multiplier':multiplier,
