@@ -20,6 +20,7 @@ from vnpy.trader.vtObject import VtTickData, VtBarData
 from vnpy.trader.vtGateway import VtSubscribeReq, VtOrderReq, VtCancelOrderReq, VtLogData
 from vnpy.trader.vtFunction import todayDate, getJsonPath
 from vnpy.trader.app import AppEngine
+from vnpy.trader.vtGlobal import globalSetting
 
 from .ctaBase import *
 from .strategy import STRATEGY_CLASS
@@ -33,7 +34,7 @@ import threading
 class CtaEngine(AppEngine):
     """CTA策略引擎"""
     settingFileName = 'CTA_setting.json'
-    settingfilePath = getJsonPath(settingFileName, __file__)
+    settingFilePath = getJsonPath(settingFileName, __file__)
     
     STATUS_FINISHED = set([STATUS_REJECTED, STATUS_CANCELLED, STATUS_ALLTRADED])
 
@@ -80,6 +81,15 @@ class CtaEngine(AppEngine):
         
         # 引擎类型为实盘
         self.engineType = ENGINETYPE_TRADING
+        
+        # RQData数据服务
+        self.rq = None
+        
+        # RQData能获取的合约代码列表
+        self.rqSymbolSet = set()
+        
+        # 初始化RQData服务
+        self.initRqData()
         
         # 注册日式事件类型
         self.mainEngine.registerLogEvent(EVENT_CTA_LOG)
@@ -236,10 +246,17 @@ class CtaEngine(AppEngine):
                     
                     if longTriggered or shortTriggered:
                         # 买入和卖出分别以涨停跌停价发单（模拟市价单）
+                        # 对于没有涨跌停价格的市场则使用5档报价
                         if so.direction==DIRECTION_LONG:
-                            price = tick.upperLimit
+                            if tick.upperLimit:
+                                price = tick.upperLimit
+                            else:
+                                price = tick.askPrice5
                         else:
-                            price = tick.lowerLimit
+                            if tick.lowerLimit:
+                                price = tick.lowerLimit
+                            else:
+                                price = tick.bidPrice5
                         
                         # 发出市价委托
                         vtOrderID = self.sendOrder(so.vtSymbol, so.orderType, 
@@ -263,7 +280,6 @@ class CtaEngine(AppEngine):
     def processTickEvent(self, event):
         """处理行情推送"""
         tick = event.dict_['data']
-        
         tick = copy(tick)
         
         # 收到tick行情后，先处理本地停止单（检查是否要立即发出）
@@ -283,7 +299,8 @@ class CtaEngine(AppEngine):
             # 逐个推送到策略实例中
             l = self.tickStrategyDict[tick.vtSymbol]
             for strategy in l:
-                self.callStrategyFunc(strategy, strategy.onTick, tick)
+                if strategy.inited:
+                    self.callStrategyFunc(strategy, strategy.onTick, tick)
     
     #----------------------------------------------------------------------
     def processOrderEvent(self, event):
@@ -470,6 +487,12 @@ class CtaEngine(AppEngine):
     #----------------------------------------------------------------------
     def loadBar(self, dbName, collectionName, days):
         """从数据库中读取Bar数据，startDate是datetime对象"""
+        # 优先尝试从RQData获取数据
+        if dbName == MINUTE_DB_NAME and collectionName.upper() in self.rqSymbolSet:
+            l = self.loadRqBar(collectionName, days)
+            return l
+        
+        # 如果没有则从数据库中读取数据
         startDate = self.today - timedelta(days)
         
         d = {'datetime':{'$gte':startDate}}
@@ -642,7 +665,7 @@ class CtaEngine(AppEngine):
     #----------------------------------------------------------------------
     def saveSetting(self):
         """保存策略配置"""
-        with open(self.settingfilePath, 'w') as f:
+        with open(self.settingFilePath, 'w') as f:
             l = []
             
             for strategy in self.strategyDict.values():
@@ -657,7 +680,7 @@ class CtaEngine(AppEngine):
     #----------------------------------------------------------------------
     def loadSetting(self):
         """读取策略配置"""
-        with open(self.settingfilePath) as f:
+        with open(self.settingFilePath) as f:
             l = json.load(f)
             
             for setting in l:
@@ -805,4 +828,60 @@ class CtaEngine(AppEngine):
             return contract.priceTick
         return 0
         
+    #----------------------------------------------------------------------
+    def initRqData(self):
+        """初始化RQData客户端"""
+        # 检查是否填写了RQData配置
+        username = globalSetting.get('rqUsername', None)
+        password = globalSetting.get('rqPassword', None)
+        if not username or not password:
+            return
         
+        # 加载RQData
+        try:
+            import rqdatac as rq
+        except ImportError:
+            return
+        
+        # 登录RQData
+        self.rq = rq
+        self.rq.init(username, password)
+        
+        # 获取本日可交易合约代码
+        try:
+            df = self.rq.all_instruments(type='Future', date=datetime.now())
+            for ix, row in df.iterrows():
+                self.rqSymbolSet.add(row['order_book_id'])
+        except RuntimeError:
+            pass
+    
+    #----------------------------------------------------------------------
+    def loadRqBar(self, symbol, days):
+        """从RQData加载K线数据"""
+        endDate = datetime.now()
+        startDate = endDate - timedelta(days)
+        
+        df = self.rq.get_price(symbol.upper(), 
+                               frequency='1m', 
+                               fields=['open', 'high', 'low', 'close', 'volume'],
+                               start_date=startDate,
+                               end_date=endDate)
+        
+        l = []
+        
+        for ix, row in df.iterrows():
+            bar = VtBarData()
+            bar.symbol = symbol
+            bar.vtSymbol = symbol
+            bar.open = row['open']
+            bar.high = row['high']
+            bar.low = row['low']
+            bar.close = row['close']
+            bar.volume = row['volume']
+            bar.datetime = row.name
+            bar.date = bar.datetime.strftime("%Y%m%d")
+            bar.time = bar.datetime.strftime("%H:%M:%S")
+            
+            l.append(bar)
+        
+        return l

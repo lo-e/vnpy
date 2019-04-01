@@ -631,4 +631,51 @@ class TurtleStrategy(CtaTemplate):
 
         initialManager = TurtleInitialManager(self.vtSymbol, self.entryWindow, self.exitWindow, self.atrWindow)
         initialManager.backtesting()
-        a = 2
+        """
+        # 策略变量
+    lastSymbolClearNeed = False         # 需要清空前主力合约仓位
+    lastClearPos = 0
+    posInitialNeed = False              # 需要初始化新主力合约仓位
+
+    entryUp = 0                         # 入场通道上轨
+    entryDown = 0                       # 入场通道下轨
+    exitUp = 0                          # 出场通道上轨
+    exitDown = 0                        # 出场通道下轨
+    atrVolatility = 0                   # ATR波动率
+    
+    longEntry1 = 0                      # 多头入场价格
+    longEntry2 = 0
+    longEntry3 = 0
+    longEntry4 = 0
+    shortEntry1 = 0                     # 空头入场价格
+    shortEntry2 = 0
+    shortEntry3 = 0
+    shortEntry4 = 0
+    longStop = 0                        # 多头止损价格
+    shortStop = 0                       # 空头止损价格
+
+    multiplier = 0                      # unit大小
+    virtualUnit = 0                     # 信号仓位
+    unit = 0                            # 实际持有仓位
+    entry = 0                           # 当前持仓成本（不考虑滑点）
+    lastPnl = 0                         # 上一次盈利（不考虑滑点和手续费）
+        """
+        self.atrVolatility = initialManager.atrVolatility
+        self.longEntry1 = initialManager.longEntry1
+        self.longEntry2 = initialManager.longEntry2
+        self.longEntry3 = initialManager.longEntry3
+        self.longEntry4 = initialManager.longEntry4
+        self.shortEntry1 = initialManager.shortEntry1
+        self.shortEntry2 = initialManager.shortEntry2
+        self.shortEntry3 = initialManager.shortEntry3
+        self.shortEntry4 = initialManager.shortEntry4
+        self.longStop = initialManager.longStop
+        self.shortStop = initialManager.shortStop
+
+        self.multiplier = self.updateMultiplier()
+        self.virtualUnit = initialManager.unit
+
+        if initialManager.result:
+            self.entry = initialManager.result.entry
+        self.lastPnl = initialManager.getLastPnl()
+
