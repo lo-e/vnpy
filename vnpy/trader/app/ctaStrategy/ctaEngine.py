@@ -845,7 +845,10 @@ class CtaEngine(AppEngine):
         
         # 登录RQData
         self.rq = rq
-        self.rq.init(username, password)
+        try:
+            self.rq.init(username, password)
+        except:
+            self.rq.init()
         
         # 获取本日可交易合约代码
         try:

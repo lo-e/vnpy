@@ -53,7 +53,10 @@ class TestStrategy(CtaTemplate):
 
     # ----------------------------------------------------------------------
     def loadHistoryData(self):
-        rq.init(userName, password)
+        try:
+            rq.init(userName, password)
+        except:
+            rq.init()
         minData = rq.get_price('RB1905',
                                frequency=str(self.barMin) + 'm',
                                start_date=(datetime.now() - timedelta(1)).strftime('%Y%m%d'),

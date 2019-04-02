@@ -28,7 +28,10 @@ dbTick = mc[TICK_DB_NAME]
 
 USERNAME = setting['rqUsername']
 PASSWORD = setting['rqPassword']
-rq.init(USERNAME, PASSWORD)
+try:
+    rq.init(USERNAME, PASSWORD)
+except:
+    rq.init()
 
 FIELDS = ['open', 'high', 'low', 'close', 'volume']
 
