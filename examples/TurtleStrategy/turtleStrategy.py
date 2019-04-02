@@ -376,7 +376,7 @@ class TurtleSignal(object):
         if self.portfolio.tradingStart:
             # 如果开始正式交易的时候该信号有历史仓位，则忽略这笔开平交易
             if self.bar.datetime >= self.portfolio.tradingStart:
-                if abs(self.unit) <= 1:
+                if abs(self.unit) == 1:
                     self.filterOffset = True
 
                 if self.filterOffset:
