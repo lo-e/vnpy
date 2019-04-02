@@ -39,6 +39,7 @@ examples/VnTrader/strategyLab/strategyDualThrust.py
 examples/VnTrader/strategyLab/strategySimple.py
 examples/VnTrader/strategyLab/strategyTest.py
 examples/VnTrader/strategyLab/strategyTurtle.py
+examples/VnTrader/strategyLab/strategyTurtleInitial.py
 examples/VnTrader/strategyLab/Fake/__init__.py
 examples/VnTrader/strategyLab/Fake/strategyBreaking.py
 examples/VnTrader/strategyLab/Fake/strategyGarden.py

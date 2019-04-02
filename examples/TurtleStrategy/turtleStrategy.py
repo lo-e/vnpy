@@ -1,17 +1,16 @@
 # encoding: UTF-8
 
 from collections import defaultdict
-
 from vnpy.trader.vtConstant import (DIRECTION_LONG, DIRECTION_SHORT,
                                     OFFSET_OPEN, OFFSET_CLOSE)
 from vnpy.trader.vtUtility import ArrayManager
-""" modify by loe """
-import re
 from datetime import  datetime
 from pymongo import MongoClient, ASCENDING
 from vnpy.trader.vtObject import VtBarData
 
 """ modify by loe """
+import re
+from vnpy.trader.app.ctaStrategy.ctaBase import DAILY_DB_NAME
 MAX_PRODUCT_POS = 4         # 单品种最大持仓
 MAX_CATEGORY_POS = 6        # 高度关联最大持仓
 MAX_DIRECTION_POS = 12      # 单方向最大持仓
@@ -23,7 +22,6 @@ CATEGORY_DICT = {'finance':['IF','IC','IH'],
                  'chemical_industry':['TA']}
 
 DOMINANT_DB_NAME = 'Dominant_db'
-DAILY_DB_NAME = 'VnTrader_Daily_Db'
 
 ACTUAL_TRADE = True        # 实盘合约交易
 

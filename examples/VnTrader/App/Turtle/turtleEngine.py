@@ -30,8 +30,7 @@ from vnpy.trader.app.ctaStrategy.stgEarningManager import stgEarningManager
 import threading
 from turtlePortfolio import TurtlePortfolio
 import re
-
-TRANSFORM_SYMBOL_LIST = ['SM', 'TA']
+from vnpy.trader.app.ctaStrategy.ctaBase import TRANSFORM_SYMBOL_LIST
 
 ########################################################################
 class TurtleEngine(AppEngine):
@@ -366,7 +365,8 @@ class TurtleEngine(AppEngine):
             return
 
         tradeTime = datetime.now().strftime('%Y-%m-%d') + ' ' + trade.tradeTime
-        symbol = strategy.vtSymbol
+
+        symbol = trade.symbol
         position = strategy.pos
 
         # 头寸方向

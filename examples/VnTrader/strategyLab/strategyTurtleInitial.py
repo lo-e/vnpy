@@ -10,9 +10,7 @@ import re
 from datetime import  datetime
 from pymongo import MongoClient, ASCENDING
 from vnpy.trader.vtObject import VtBarData
-
-DAILY_DB_NAME = 'VnTrader_Daily_Db'
-TRANSFORM_SYMBOL_LIST = ['SM', 'TA']
+from vnpy.trader.app.ctaStrategy.ctaBase import TRANSFORM_SYMBOL_LIST, DAILY_DB_NAME
 
 ########################################################################
 class TurtleResult(object):
