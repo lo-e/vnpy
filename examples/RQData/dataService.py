@@ -178,7 +178,7 @@ def downloadTickBySymbol(symbol, date):
 
 """ modify by loe """
 # 获取主力合约列表并保存到数据库
-def dominantSymbolToDatabase(underlyingSymbol, startDate, endDate, toDatabase):
+def dominantSymbolToDatabase(underlyingSymbol, toDatabase, startDate=None, endDate=None):
         if toDatabase:
             # 获取数据库
             client = MongoClient('localhost', 27017)
@@ -205,7 +205,7 @@ def dominantSymbolToDatabase(underlyingSymbol, startDate, endDate, toDatabase):
 
         return dominantList
 
-# 下载主力真实合约数据到数据库
+# 下载主力真实合约bar数据到数据库
 def downloadDominantSymbol(underlyingSymbol, startDate = None):
     # 查询数据库
     client = MongoClient('localhost', 27017)
@@ -227,9 +227,11 @@ def downloadDominantSymbol(underlyingSymbol, startDate = None):
 
 # 获取今日主力合约
 def showDominantSymbol(underlyingSymbol):
-    dominantList = get_dominant_future(underlyingSymbol, start_date=datetime.now(), end_date=datetime.now(), rule=0)
+    dominantList = get_dominant_future(underlyingSymbol, rule=0)
     if len(dominantList):
-        return dominantList[-1]
+        index = dominantList.index[len(dominantList)-1]
+        rqSymbol = dominantList[index]
+        return index, rqSymbol
 
     else:
         return None

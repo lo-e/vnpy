@@ -18,15 +18,17 @@ if __name__ == '__main__':
     downloadTickBySymbol('RB1905', '2018-12-21')
     """
 
-    """
-    # 下载真实主力合约bar数据到数据库
-    symbolList = ['IF', 'IC', 'IH', 'AL', 'RB', 'I', 'HC', 'SM', 'JM', 'J', 'ZC', 'TA']
-    for underlyingSymbol in symbolList:
-        startDate = None
-        #startDate = datetime.strptime('2010-1-1', '%Y-%m-%d')
-        downloadDominantSymbol(underlyingSymbol, startDate)
-    """
 
+    """
+        # 下载真实主力合约bar数据到数据库
+        symbolList = ['RB', 'CU', 'NI', 'ZN', 'RU', 'AL', 'HC', 'J', 'I', 'PP', 'AP', 'TA', 'A', 'AG', 'AU', 'B', 'BB', 'BU', 'C', 'CF', 'CS', 'CY', 'EG', 'FB', 'FG', 'FU', 'JD', 'JM', 'JR', 'L', 'LR', 'M', 'MA', 'OI', 'P', 'PB', 'PM', 'RI', 'RM', 'RS', 'SC', 'SF', 'SM', 'SN', 'SP', 'SR', 'V', 'WH', 'WR', 'Y', 'ZC', 'IF', 'IC', 'IH']
+        #symbolList = ['RB', 'M', 'C', 'MA', 'TA', 'I', 'BU', 'AG', 'Y', 'SR']
+        #symbolList = ['IF', 'IC', 'IH', 'AL', 'RB', 'I', 'HC', 'SM', 'JM', 'J', 'ZC', 'TA']
+        for underlyingSymbol in symbolList:
+            startDate = None
+            #startDate = datetime.strptime('2010-1-1', '%Y-%m-%d')
+            downloadDominantSymbol(underlyingSymbol, startDate)
+        """
     """
     # 显示近一年来主力合约
     underlyingSymbol = 'AL'
@@ -52,13 +54,17 @@ if __name__ == '__main__':
         print  '合约数：%d' % count
     """
 
+
+    """ ========================================================== """
+
     #"""
-    print u'下载真实主力合约到数据库'
+    print u'下载真实主力合约代码到数据库'
+    #symbolList = ['RB', 'CU', 'NI', 'ZN', 'RU', 'AL', 'HC', 'J', 'I', 'PP', 'AP', 'TA', 'A', 'AG', 'AU', 'B', 'BB', 'BU', 'C', 'CF', 'CS', 'CY', 'EG', 'FB', 'FG', 'FU', 'JD', 'JM', 'JR', 'L', 'LR', 'M', 'MA', 'OI', 'P', 'PB', 'PM', 'RI', 'RM', 'RS', 'SC', 'SF', 'SM', 'SN', 'SP', 'SR', 'V', 'WH', 'WR', 'Y', 'ZC', 'IF', 'IC', 'IH']
     symbolList = ['IF', 'IC', 'IH', 'AL', 'RB', 'I', 'HC', 'SM', 'JM', 'J', 'ZC', 'TA']
 
     toDatabase = True
     for underlyingSymbol in symbolList:
-        dominantList = dominantSymbolToDatabase(underlyingSymbol, startDate=datetime(1900, 01, 01), endDate=datetime.now(), toDatabase=toDatabase)
+        dominantList = dominantSymbolToDatabase(underlyingSymbol, toDatabase=toDatabase)
         # 查看历史数据最早的日期
         if not toDatabase:
             print('*' * 26 + underlyingSymbol + '*' * 26)
@@ -72,31 +78,30 @@ if __name__ == '__main__':
     """
 
     """
-    print u'【显示最新主力合约】'
+    print u'【显示最新主力合约代码】'
     #symbolList = ['IF', 'IC', 'IH', 'AL', 'RB', 'I', 'HC', 'SM', 'JM', 'J', 'ZC', 'TA']
-    symbolList = ['IF', 'AL', 'HC', 'SM', 'J', 'TA']
+    symbolList = ['RB', 'HC', 'SM', 'J', 'ZC', 'TA']
     for underlyingSymbol in symbolList:
-        symbol = showDominantSymbol(underlyingSymbol)
-        print symbol
+        date, symbol = showDominantSymbol(underlyingSymbol)
+        print symbol, '\t', date
     print '\n\n'
     """
 
     """
-    print u'【下载正在模拟实盘的海龟组合品种】'
-    filename = 'turtle_trader_list.csv'
-    count = 0
-    with open(filename) as f:
-        r = DictReader(f)
-        for d in r:
-            symbol = d['vtSymbol'].upper()
-            downloadDailyBarBySymbol(symbol)
-            count += 1
-    print  '合约数：%d\n\n' % count
+    print u'【下载近一年真实主力合约bar数据到数据库】'
+    #symbolList = ['IF', 'IC', 'IH', 'AL', 'RB', 'I', 'HC', 'SM', 'JM', 'J', 'ZC', 'TA']
+    symbolList = ['RB', 'HC', 'SM', 'J', 'ZC', 'TA']
+    startDate = datetime.now().replace(year=datetime.now().year - 1)
+    for underlyingSymbol in symbolList:
+        downloadDominantSymbol(underlyingSymbol, startDate)
+    print  '%s 完成\n\n' % symbolList
     """
 
     """
-    print u'【下载模拟实盘中的指数、主力合约】'
-    symbolList = ['IF', 'AL', 'HC', 'SM', 'J', 'TA']
+    print u'【下载指数、主力连续合约】'
+    #symbolList = ['RB', 'CU', 'NI', 'ZN', 'RU', 'AL', 'HC', 'J', 'I', 'PP', 'AP', 'TA', 'A', 'AG', 'AU', 'B', 'BB', 'BU', 'C', 'CF', 'CS', 'CY', 'EG', 'FB', 'FG', 'FU', 'JD', 'JM', 'JR', 'L', 'LR', 'M', 'MA', 'OI', 'P', 'PB', 'PM', 'RI', 'RM', 'RS', 'SC', 'SF', 'SM', 'SN', 'SP', 'SR', 'V', 'WH', 'WR', 'Y', 'ZC', 'IF', 'IC', 'IH']
+    #symbolList = ['IF', 'IC', 'IH', 'AL', 'RB', 'I', 'HC', 'SM', 'JM', 'J', 'ZC', 'TA']
+    symbolList = ['RB', 'HC', 'SM', 'J', 'ZC', 'TA']
     #input = raw_input(u'输入合约类型【88主力 888平滑主力 99指数】')
     input = '99'
     count = 0

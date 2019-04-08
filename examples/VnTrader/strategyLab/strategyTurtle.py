@@ -227,13 +227,13 @@ class TurtleStrategy(CtaTemplate):
         if tick.vtSymbol == self.lastSymbol:
             if self.lastSymbolClearNeed:
                 if self.lastClearPos > 0:
-                    orderList = self.sendSymbolOrder(self.lastSymbol, CTAORDER_SELL, tick.lastPrice - self.tickPrice * 20,
+                    orderList = self.sendSymbolOrder(self.lastSymbol, CTAORDER_SELL, self.bestOrderPrice(tick, DIRECTION_SHORT),
                                          abs(self.lastClearPos))
                     if len(orderList):
                         self.pos += self.lastClearPos
 
                 elif self.lastClearPos < 0:
-                    orderList = self.sendSymbolOrder(self.lastSymbol, CTAORDER_COVER, tick.lastPrice + self.tickPrice * 20,
+                    orderList = self.sendSymbolOrder(self.lastSymbol, CTAORDER_COVER, self.bestOrderPrice(tick, DIRECTION_LONG),
                                          abs(self.lastClearPos))
                     if len(orderList):
                         self.pos -= self.lastClearPos
@@ -267,7 +267,7 @@ class TurtleStrategy(CtaTemplate):
 
                     if unitChange > 0:
                         self.unit += unitChange
-                        self.buy(tick.lastPrice + self.tickPrice * 20, self.multiplier * abs(unitChange))
+                        self.buy(self.bestOrderPrice(tick, DIRECTION_LONG), self.multiplier * abs(unitChange))
 
                 elif self.virtualUnit < 0:
                     unitChange = 0
@@ -279,7 +279,7 @@ class TurtleStrategy(CtaTemplate):
 
                     if unitChange < 0:
                         self.unit += unitChange
-                        self.short(tick.lastPrice - self.tickPrice * 20, self.multiplier * abs(unitChange))
+                        self.short(self.bestOrderPrice(tick, DIRECTION_SHORT), self.multiplier * abs(unitChange))
 
             self.putEvent()
             self.posInitialNeed = False
@@ -390,7 +390,7 @@ class TurtleStrategy(CtaTemplate):
             if action:
                 if unitChange:
                     self.unit += unitChange
-                    self.buy(tick.lastPrice+self.tickPrice*20, self.multiplier*abs(unitChange))
+                    self.buy(self.bestOrderPrice(tick, DIRECTION_LONG), self.multiplier*abs(unitChange))
 
                 self.putEvent()
                 return
@@ -402,7 +402,7 @@ class TurtleStrategy(CtaTemplate):
                     self.close(tick.lastPrice)
                     self.portfolio.newSignal(self.vtSymbol, DIRECTION_SHORT, OFFSET_CLOSE)
                     if self.pos > 0:
-                        self.sell(tick.lastPrice-self.tickPrice*20, abs(self.pos))
+                        self.sell(self.bestOrderPrice(tick, DIRECTION_SHORT), abs(self.pos))
                     # 平仓后更新最新指标
                     self.updateIndicator()
 
@@ -502,7 +502,7 @@ class TurtleStrategy(CtaTemplate):
             if action:
                 if unitChange:
                     self.unit += unitChange
-                    self.short(tick.lastPrice - self.tickPrice * 20, self.multiplier * abs(unitChange))
+                    self.short(self.bestOrderPrice(tick, DIRECTION_SHORT), self.multiplier * abs(unitChange))
 
                 self.putEvent()
                 return
@@ -514,7 +514,7 @@ class TurtleStrategy(CtaTemplate):
                     self.close(tick.lastPrice)
                     self.portfolio.newSignal(self.vtSymbol, DIRECTION_LONG, OFFSET_CLOSE)
                     if self.pos < 0:
-                        self.cover(tick.lastPrice + self.tickPrice * 20, abs(self.pos))
+                        self.cover(self.bestOrderPrice(tick, DIRECTION_LONG), abs(self.pos))
                     # 平仓后更新最新指标
                     self.updateIndicator()
 
@@ -526,7 +526,6 @@ class TurtleStrategy(CtaTemplate):
     #----------------------------------------------------------------------
     def onBar(self, bar):
         """收到Bar推送（必须由用户继承实现）"""
-
         # 保存K线数据
         self.am.updateBar(bar)
         self.atrAm.updateBar(bar)
@@ -655,4 +654,23 @@ class TurtleStrategy(CtaTemplate):
         if initialManager.result:
             self.entry = initialManager.result.entry
         self.lastPnl = initialManager.getLastPnl()
+
+
+    # 计算最佳委托价格
+    def bestOrderPrice(self, tick, direction):
+        if direction == DIRECTION_LONG:
+            if tick.upperLimit:
+                price = min(tick.upperLimit, tick.lastPrice + self.tickPrice * 20)
+            else:
+                price = tick.lastPrice + self.tickPrice * 20
+            return price
+
+        if direction == DIRECTION_SHORT:
+            if tick.upperLimit:
+                price = max(tick.lowerLimit, tick.lastPrice - self.tickPrice * 20)
+            else:
+                price = tick.lastPrice - self.tickPrice * 20
+            return price
+
+        return 0
 

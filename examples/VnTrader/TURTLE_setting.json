@@ -1,47 +1,37 @@
 {
     "signal": [
     {
-        "name": "合约1",
+        "name": "TURTLE_RB",
         "className": "TurtleStrategy",
-        "vtSymbol": "IF1904",
+        "vtSymbol": "rb1910",
         "lastSymbol":"",
-        "perSize":300,
-        "tickPrice":0.2,
-        "start": true
+        "perSize":10,
+        "tickPrice":1,
+        "start": false
     },
 
     {
-        "name": "合约2",
-        "className": "TurtleStrategy",
-        "vtSymbol": "al1905",
-        "lastSymbol":"",
-        "perSize":5,
-        "tickPrice":5,
-        "start": true
-    },
-
-    {
-        "name": "合约3",
+        "name": "TURTLE_HC",
         "className": "TurtleStrategy",
         "vtSymbol": "hc1905",
         "lastSymbol":"",
         "perSize":10,
         "tickPrice":1,
-        "start": true
+        "start": false
     },
 
     {
-        "name": "合约4",
+        "name": "TURTLE_SM",
         "className": "TurtleStrategy",
         "vtSymbol": "SM905",
         "lastSymbol":"",
         "perSize":5,
         "tickPrice":2,
-        "start": true
+        "start": false
     },
 
     {
-        "name": "合约5",
+        "name": "TURTLE_J",
         "className": "TurtleStrategy",
         "vtSymbol": "j1905",
         "lastSymbol":"",
@@ -51,7 +41,17 @@
     },
 
     {
-        "name": "合约6",
+        "name": "TURTLE_ZC",
+        "className": "TurtleStrategy",
+        "vtSymbol": "ZC905",
+        "lastSymbol":"",
+        "perSize":100,
+        "tickPrice":0.2,
+        "start": false
+    },
+
+    {
+        "name": "TURTLE_TA",
         "className": "TurtleStrategy",
         "vtSymbol": "TA905",
         "lastSymbol":"",
@@ -60,6 +60,6 @@
         "start": true
     }
 ],
-    "portfolio": {"name": "turtle1",
-                  "portfolioValue": 500000}
+    "portfolio": {"name": "turtle_simulation[RB, HC, SM, J, ZC, TA]",
+                  "portfolioValue": 200000}
 }
