@@ -91,7 +91,7 @@ class TurtleEngine(AppEngine):
         self.rqSymbolSet = set()
 
         # 初始化RQData服务
-        self.initRqData()
+        #self.initRqData()
 
         # 注册日式事件类型
         self.mainEngine.registerLogEvent(EVENT_CTA_LOG)
