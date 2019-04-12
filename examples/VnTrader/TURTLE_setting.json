@@ -13,7 +13,7 @@
     {
         "name": "TURTLE_HC",
         "className": "TurtleStrategy",
-        "vtSymbol": "hc1905",
+        "vtSymbol": "hc1910",
         "lastSymbol":"",
         "perSize":10,
         "tickPrice":1,
@@ -27,13 +27,13 @@
         "lastSymbol":"",
         "perSize":5,
         "tickPrice":2,
-        "start": false
+        "start": true
     },
 
     {
         "name": "TURTLE_J",
         "className": "TurtleStrategy",
-        "vtSymbol": "j1905",
+        "vtSymbol": "j1909",
         "lastSymbol":"",
         "perSize":100,
         "tickPrice":0.5,
@@ -53,7 +53,7 @@
     {
         "name": "TURTLE_TA",
         "className": "TurtleStrategy",
-        "vtSymbol": "TA905",
+        "vtSymbol": "TA909",
         "lastSymbol":"",
         "perSize":5,
         "tickPrice":2,
