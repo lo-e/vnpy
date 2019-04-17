@@ -28,6 +28,7 @@ dbTick = mc[TICK_DB_NAME]
 
 USERNAME = setting['rqUsername']
 PASSWORD = setting['rqPassword']
+
 try:
     rq.init(USERNAME, PASSWORD)
 except:

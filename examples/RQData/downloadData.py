@@ -57,7 +57,7 @@ if __name__ == '__main__':
 
     """ ========================================================== """
 
-    """
+    #"""
     print u'下载真实主力合约代码到数据库'
     #symbolList = ['RB', 'CU', 'NI', 'ZN', 'RU', 'AL', 'HC', 'J', 'I', 'PP', 'AP', 'TA', 'A', 'AG', 'AU', 'B', 'BB', 'BU', 'C', 'CF', 'CS', 'CY', 'EG', 'FB', 'FG', 'FU', 'JD', 'JM', 'JR', 'L', 'LR', 'M', 'MA', 'OI', 'P', 'PB', 'PM', 'RI', 'RM', 'RS', 'SC', 'SF', 'SM', 'SN', 'SP', 'SR', 'V', 'WH', 'WR', 'Y', 'ZC', 'IF', 'IC', 'IH']
     symbolList = ['IF', 'IC', 'IH', 'AL', 'RB', 'I', 'HC', 'SM', 'JM', 'J', 'ZC', 'TA']
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     print '\n\n'
     """
 
-    #"""
+    """
     print u'【下载近一年真实主力合约bar数据到数据库】'
     #symbolList = ['IF', 'IC', 'IH', 'AL', 'RB', 'I', 'HC', 'SM', 'JM', 'J', 'ZC', 'TA']
     symbolList = ['RB', 'HC', 'SM', 'J', 'ZC', 'TA']
