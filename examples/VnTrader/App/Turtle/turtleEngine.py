@@ -404,6 +404,7 @@ class TurtleEngine(AppEngine):
     def saveTradeData(self, strategyName, tradeTime, symbol, direction, offset, price, volume, position):
         fileName = strategyName
 
+        """
         # 计算累计盈亏
         toltalEarning = EMPTY_FLOAT
         topEarning = EMPTY_FLOAT
@@ -451,6 +452,7 @@ class TurtleEngine(AppEngine):
 
                 topEarning = max(topEarning, toltalEarning)
                 topDrawdown = min(topDrawdown, toltalEarning - topEarning)
+        """
 
         content = OrderedDict()
         content['时间'] = tradeTime
@@ -460,6 +462,7 @@ class TurtleEngine(AppEngine):
         content['价格'] = price
         content['成交量'] = volume
         content['当前持仓'] = position
+        """
         if not toltalEarning:
             content['累计盈亏'] = ''
         else:
@@ -474,7 +477,7 @@ class TurtleEngine(AppEngine):
             content['最大回撤'] = ''
         else:
             content['最大回撤'] = topDrawdown
-
+        """
         content['备注'] = ''
         self.earningManager.updateDailyEarning(fileName, content)
 

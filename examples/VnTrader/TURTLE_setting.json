@@ -43,11 +43,11 @@
     {
         "name": "TURTLE_ZC",
         "className": "TurtleStrategy",
-        "vtSymbol": "ZC905",
+        "vtSymbol": "ZC909",
         "lastSymbol":"",
         "perSize":100,
         "tickPrice":0.2,
-        "start": false
+        "start": true
     },
 
     {
