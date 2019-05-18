@@ -103,6 +103,7 @@ class TurtleStrategy(CtaTemplate):
     varList = ['inited',
                'trading',
                'pos',
+               'posInitialNeed',
                'lastSymbolClearNeed',
                'entryUp',
                'entryDown',
@@ -236,7 +237,7 @@ class TurtleStrategy(CtaTemplate):
                     orderList = self.sendSymbolOrder(self.lastSymbol, CTAORDER_COVER, self.bestOrderPrice(tick, DIRECTION_LONG),
                                          abs(self.lastClearPos))
                     if len(orderList):
-                        self.pos -= self.lastClearPos
+                        self.pos += self.lastClearPos
 
                 self.lastSymbolClearNeed = False
             return

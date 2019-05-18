@@ -158,7 +158,7 @@ class TurtleSignal(object):
 
             if exchange:
                 """ fake """
-                if self.vtSymbol == 'J99' and bar.datetime >= datetime(2019, 4, 1):
+                if self.vtSymbol == 'HC99' and bar.datetime >= datetime(2019, 4, 1):
                     a = 2
 
                 # 旧主力合约以开盘价限价单平仓
@@ -372,6 +372,10 @@ class TurtleSignal(object):
         """ modify by loe """
         if self.newDominantIniting:
             return
+
+        """ fake """
+        if self.vtSymbol == 'SM99' and self.bar.datetime >= datetime(2019, 2, 1):
+            a = 2
 
         if self.portfolio.tradingStart:
             # 如果开始正式交易的时候该信号有历史仓位，则忽略这笔开平交易

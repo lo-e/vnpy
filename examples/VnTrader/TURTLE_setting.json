@@ -7,7 +7,7 @@
         "lastSymbol":"",
         "perSize":10,
         "tickPrice":1,
-        "start": false
+        "start": true
     },
 
     {
@@ -23,7 +23,7 @@
     {
         "name": "TURTLE_SM",
         "className": "TurtleStrategy",
-        "vtSymbol": "SM905",
+        "vtSymbol": "SM909",
         "lastSymbol":"",
         "perSize":5,
         "tickPrice":2,
