@@ -64,6 +64,7 @@ class TurtleStrategy(CtaTemplate):
     lastSymbolClearNeed = False         # 需要清空前主力合约仓位
     lastClearPos = 0
     posInitialNeed = False              # 需要初始化新主力合约仓位
+    hasClose = False                    # 当前交易日平仓tag，执行平仓的交易日不进行后续任何开平交易
 
     entryUp = 0                         # 入场通道上轨
     entryDown = 0                       # 入场通道下轨
@@ -105,6 +106,7 @@ class TurtleStrategy(CtaTemplate):
                'pos',
                'posInitialNeed',
                'lastSymbolClearNeed',
+               'hasClose',
                'entryUp',
                'entryDown',
                'exitUp',
@@ -210,6 +212,10 @@ class TurtleStrategy(CtaTemplate):
     def onTick(self, tick):
         """收到行情TICK推送（必须由用户继承实现）"""
         if not self.trading:
+            return
+
+        if self.hasClose:
+            # 当前交易日有过平仓交易，停止一切后续开平操作
             return
 
         # 过滤无效tick
@@ -406,6 +412,7 @@ class TurtleStrategy(CtaTemplate):
                         self.sell(self.bestOrderPrice(tick, DIRECTION_SHORT), abs(self.pos))
                     # 平仓后更新最新指标
                     self.updateIndicator()
+                    self.hasClose = True
 
                 self.putEvent()
                 return
@@ -518,6 +525,7 @@ class TurtleStrategy(CtaTemplate):
                         self.cover(self.bestOrderPrice(tick, DIRECTION_LONG), abs(self.pos))
                     # 平仓后更新最新指标
                     self.updateIndicator()
+                    self.hasClose = True
 
                 self.putEvent()
                 return
