@@ -34,6 +34,9 @@ try:
 except:
     rq.init()
 
+#====== vnpy_v1.9.2_LTS ======
+#rq.init(USERNAME, PASSWORD, ('rqdatad-pro.ricequant.com', 16011))
+
 FIELDS = ['open', 'high', 'low', 'close', 'volume']
 
 DOMINANT_DB_NAME = 'Dominant_db'

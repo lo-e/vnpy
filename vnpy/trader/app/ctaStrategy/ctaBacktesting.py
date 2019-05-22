@@ -898,7 +898,28 @@ class BacktestingEngine(object):
         # 检查成交记录
         if not self.tradeDict:
             self.output(u'成交记录为空，无法计算回测结果')
-            return {}
+            noResult = {}
+            noResult['capital'] = 0
+            noResult['maxCapital'] = 0
+            noResult['drawdown'] = 0
+            noResult['totalResult'] = 0
+            noResult['totalTurnover'] = 0
+            noResult['totalCommission'] = 0
+            noResult['totalSlippage'] = 0
+            noResult['timeList'] = 0
+            noResult['pnlList'] = 0
+            noResult['capitalList'] = 0
+            noResult['drawdownList'] = 0
+            noResult['winningRate'] = 0
+            noResult['averageWinning'] = 0
+            noResult['averageLosing'] = 0
+            noResult['profitLossRatio'] = 0
+            noResult['posList'] = 0
+            noResult['tradeTimeList'] = 0
+            noResult['resultList'] = 0
+            noResult['maxDrawdown'] = 0
+            return noResult            
+            
         
         # 首先基于回测后的成交记录，计算每笔交易的盈亏
         resultList = []             # 交易结果列表
@@ -1012,11 +1033,15 @@ class BacktestingEngine(object):
             result = TradingResult(trade.price, trade.dt, endPrice, self.dt, 
                                    trade.volume, self.rate, self.slippage, self.size)
             resultList.append(result)
+            posList.extend([1, 0])
+            tradeTimeList.extend([result.entryDt, result.exitDt])
             
         for trade in shortTrade:
             result = TradingResult(trade.price, trade.dt, endPrice, self.dt, 
                                    -trade.volume, self.rate, self.slippage, self.size)
-            resultList.append(result)            
+            resultList.append(result)
+            posList.extend([-1, 0])
+            tradeTimeList.extend([result.entryDt, result.exitDt])
         
         # 检查是否有交易
         if not resultList:
@@ -1041,12 +1066,14 @@ class BacktestingEngine(object):
         winningResult = 0       # 盈利次数
         losingResult = 0        # 亏损次数		
         totalWinning = 0        # 总盈利金额		
-        totalLosing = 0         # 总亏损金额        
+        totalLosing = 0         # 总亏损金额
+        maxDrawdown = 0         # 最大回撤              
         
         for result in resultList:
             capital += result.pnl
             maxCapital = max(capital, maxCapital)
             drawdown = capital - maxCapital
+            maxDrawdown = min(drawdown, maxDrawdown)
             
             pnlList.append(result.pnl)
             timeList.append(result.exitDt)      # 交易的时间戳使用平仓时间
@@ -1099,7 +1126,7 @@ class BacktestingEngine(object):
         d['posList'] = posList
         d['tradeTimeList'] = tradeTimeList
         d['resultList'] = resultList
-        
+        d['maxDrawdown']  = maxDrawdown    
         return d
         
     #----------------------------------------------------------------------
@@ -1114,7 +1141,7 @@ class BacktestingEngine(object):
         
         self.output(u'总交易次数：\t%s' % formatNumber(d['totalResult']))        
         self.output(u'总盈亏：\t%s' % formatNumber(d['capital']))
-        self.output(u'最大回撤: \t%s' % formatNumber(min(d['drawdownList'])))                
+        self.output(u'最大回撤: \t%s' % formatNumber(d['maxDrawdown']))                
         
         self.output(u'平均每笔盈利：\t%s' %formatNumber(d['capital']/d['totalResult']))
         self.output(u'平均每笔滑点：\t%s' %formatNumber(d['totalSlippage']/d['totalResult']))
@@ -1145,7 +1172,8 @@ class BacktestingEngine(object):
         if d['posList'][-1] == 0:
             del d['posList'][-1]
         tradeTimeIndex = [item.strftime("%m/%d %H:%M:%S") for item in d['tradeTimeList']]
-        xindex = np.arange(0, len(tradeTimeIndex), np.int(len(tradeTimeIndex)/10))
+        step = np.int(len(tradeTimeIndex) / 10)
+        xindex = np.arange(0, len(tradeTimeIndex), step if step > 0 else 1)
         tradeTimeIndex = list(map(lambda i: tradeTimeIndex[i], xindex))
         pPos.plot(d['posList'], color='k', drawstyle='steps-pre')
         pPos.set_ylim(-1.2, 1.2)

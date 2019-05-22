@@ -55,6 +55,7 @@ def main():
 
     # 添加交易接口
     me.addGateway(ctpGateway)
+    #me.addGateway(ctptestGateway)
     me.addGateway(ibGateway)
     me.addGateway(huobiGateway)
 

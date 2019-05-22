@@ -471,8 +471,7 @@ class DailyResult(object):
                     side = -1
 
                 """ modify by loe """
-                commissionCost = (trade.volume * fixedCommission + 
-                                  trade.volume * size * trade.price * variableCommission)
+                commissionCost = (trade.volume * fixedCommission + trade.volume * size * trade.price * variableCommission)
                 slippageCost = trade.volume * size * slippage
 
                 if close:
