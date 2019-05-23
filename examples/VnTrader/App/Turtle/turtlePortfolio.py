@@ -16,7 +16,7 @@ MAX_DIRECTION_POS = 12      # 单方向最大持仓
 
 CATEGORY_DICT = {'finance':['IF','IC','IH'],
                 'nonferrous_metal':['al'],
-                 'ferrous_metal':['RB','I','hc','SM'],
+                 'ferrous_metal':['rb','I','hc','SM'],
                  'coal':['JM','j','ZC'],
                  'chemical_industry':['TA']}
 
