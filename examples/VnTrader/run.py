@@ -27,6 +27,9 @@ from vnpy.trader.uiMainWindow import MainWindow
 # 加载底层接口
 from vnpy.trader.gateway import (ctpGateway, ibGateway, huobiGateway)
 
+""" modify by loe """
+from vnpy.trader.gateway import (ctptestGateway)
+
 if system == 'Linux':
     from vnpy.trader.gateway import xtpGateway
 elif system == 'Windows':
@@ -54,7 +57,9 @@ def main():
     me = MainEngine(ee)
 
     # 添加交易接口
-    me.addGateway(ctpGateway)
+    #me.addGateway(ctpGateway)
+    """ modify by loe """
+    me.addGateway(ctptestGateway)
     #me.addGateway(ctptestGateway)
     me.addGateway(ibGateway)
     me.addGateway(huobiGateway)
