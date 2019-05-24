@@ -25,7 +25,7 @@ from vnpy.trader.uiQt import createQApp
 from vnpy.trader.uiMainWindow import MainWindow
 
 # 加载底层接口
-from vnpy.trader.gateway import (ctpGateway, ibGateway, huobiGateway)
+from vnpy.trader.gateway import (ibGateway, huobiGateway)
 
 """ modify by loe """
 from vnpy.trader.gateway import (ctptestGateway)
