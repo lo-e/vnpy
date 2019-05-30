@@ -18,8 +18,8 @@ import pandas as pd
 
 def one():
     engine = BacktestingEngine()
-    engine.setPeriod(datetime(2019, 2, 15), datetime(2019,12,31))
-    engine.tradingStart = datetime(2019, 4, 9)
+    engine.setPeriod(datetime(2009, 6, 15), datetime(2019, 12, 31))
+    engine.tradingStart = datetime(2010, 1, 1)
     figSavedName = ''
     if figSavedName:
         figSavedName = 'figSaved\\%s' % figSavedName

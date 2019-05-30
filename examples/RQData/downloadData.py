@@ -56,12 +56,24 @@ if __name__ == '__main__':
 
 
     """ ========================================================== """
+    # Mode  'all'所有合约；'main'主要合约；'current'当前模拟/实盘合约
+    downloadMode = 'current'
+    allSymbolList = ['RB', 'CU', 'NI', 'ZN', 'RU', 'AL', 'HC', 'J', 'I', 'PP', 'AP', 'TA', 'A', 'AG', 'AU', 'B', 'BB', 'BU', 'C', 'CF', 'CS', 'CY', 'EG', 'FB', 'FG', 'FU', 'JD', 'JM', 'JR', 'L', 'LR', 'M', 'MA', 'OI', 'P', 'PB', 'PM', 'RI', 'RM', 'RS', 'SC', 'SF', 'SM', 'SN', 'SP', 'SR', 'V', 'WH', 'WR', 'Y', 'ZC', 'IF', 'IC', 'IH']
+    mainSymbolList = ['IF', 'IC', 'IH', 'AL', 'RB', 'I', 'HC', 'SM', 'JM', 'J', 'ZC', 'TA']
+    currentSymbolList = ['RB', 'HC', 'SM', 'J', 'ZC', 'TA']
+
+    if downloadMode == 'all':
+        symbolList = allSymbolList
+    elif downloadMode == 'main':
+        symbolList = mainSymbolList
+    elif downloadMode == 'current':
+        symbolList = currentSymbolList
+    else:
+        print '模式设置错误！'
+        exit(0)
 
     #"""
     print u'下载真实主力合约代码到数据库'
-    #symbolList = ['RB', 'CU', 'NI', 'ZN', 'RU', 'AL', 'HC', 'J', 'I', 'PP', 'AP', 'TA', 'A', 'AG', 'AU', 'B', 'BB', 'BU', 'C', 'CF', 'CS', 'CY', 'EG', 'FB', 'FG', 'FU', 'JD', 'JM', 'JR', 'L', 'LR', 'M', 'MA', 'OI', 'P', 'PB', 'PM', 'RI', 'RM', 'RS', 'SC', 'SF', 'SM', 'SN', 'SP', 'SR', 'V', 'WH', 'WR', 'Y', 'ZC', 'IF', 'IC', 'IH']
-    symbolList = ['IF', 'IC', 'IH', 'AL', 'RB', 'I', 'HC', 'SM', 'JM', 'J', 'ZC', 'TA']
-
     toDatabase = True
     for underlyingSymbol in symbolList:
         dominantList = dominantSymbolToDatabase(underlyingSymbol, toDatabase=toDatabase)
@@ -74,13 +86,10 @@ if __name__ == '__main__':
             endRqSymbol = dominantList[endIndex]
             print('%s\t%s -- %s\t%s\n' % (startIndex, startRqSymbol, endIndex, endRqSymbol))
     print '完成！\n'
-
     """
 
     """
     print u'【显示最新主力合约代码】'
-    #symbolList = ['IF', 'IC', 'IH', 'AL', 'RB', 'I', 'HC', 'SM', 'JM', 'J', 'ZC', 'TA']
-    symbolList = ['RB', 'HC', 'SM', 'J', 'ZC', 'TA']
     for underlyingSymbol in symbolList:
         date, symbol = showDominantSymbol(underlyingSymbol)
         print symbol, '\t', date
@@ -89,19 +98,18 @@ if __name__ == '__main__':
 
     """
     print u'【下载近一年真实主力合约bar数据到数据库】'
-    #symbolList = ['IF', 'IC', 'IH', 'AL', 'RB', 'I', 'HC', 'SM', 'JM', 'J', 'ZC', 'TA']
-    symbolList = ['RB', 'HC', 'SM', 'J', 'ZC', 'TA']
+    startDate = None;
     startDate = datetime.now().replace(year=datetime.now().year - 1)
     for underlyingSymbol in symbolList:
-        downloadDominantSymbol(underlyingSymbol, startDate)
+        if startDate:
+            downloadDominantSymbol(underlyingSymbol, startDate)
+        else:
+            downloadDominantSymbol(underlyingSymbol)
     print  '%s 完成\n\n' % symbolList
     """
 
     """
     print u'【下载指数、主力连续合约】'
-    #symbolList = ['RB', 'CU', 'NI', 'ZN', 'RU', 'AL', 'HC', 'J', 'I', 'PP', 'AP', 'TA', 'A', 'AG', 'AU', 'B', 'BB', 'BU', 'C', 'CF', 'CS', 'CY', 'EG', 'FB', 'FG', 'FU', 'JD', 'JM', 'JR', 'L', 'LR', 'M', 'MA', 'OI', 'P', 'PB', 'PM', 'RI', 'RM', 'RS', 'SC', 'SF', 'SM', 'SN', 'SP', 'SR', 'V', 'WH', 'WR', 'Y', 'ZC', 'IF', 'IC', 'IH']
-    #symbolList = ['IF', 'IC', 'IH', 'AL', 'RB', 'I', 'HC', 'SM', 'JM', 'J', 'ZC', 'TA']
-    symbolList = ['RB', 'HC', 'SM', 'J', 'ZC', 'TA']
     #input = raw_input(u'输入合约类型【88主力 888平滑主力 99指数】')
     input = '99'
     count = 0
