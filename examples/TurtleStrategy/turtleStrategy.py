@@ -158,7 +158,7 @@ class TurtleSignal(object):
 
             if exchange:
                 """ fake """
-                if self.vtSymbol == 'HC99' and bar.datetime >= datetime(2019, 4, 1):
+                if self.vtSymbol == 'SM99' and bar.datetime >= datetime(2015, 6, 15):
                     a = 2
 
                 # 旧主力合约以开盘价限价单平仓
