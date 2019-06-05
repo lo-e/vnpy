@@ -236,7 +236,6 @@ def showDominantSymbol(underlyingSymbol):
         index = dominantList.index[len(dominantList)-1]
         rqSymbol = dominantList[index]
         return index, rqSymbol
-
     else:
         return None
 

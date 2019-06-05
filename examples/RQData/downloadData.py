@@ -56,11 +56,12 @@ if __name__ == '__main__':
 
 
     """ ========================================================== """
-    # Mode  'all'所有合约；'main'主要合约；'current'当前模拟/实盘合约
+    # Mode  'all'所有合约；'main'主要合约；'current'当前模拟/实盘合约；'test'测试合约
     downloadMode = 'current'
     allSymbolList = ['RB', 'CU', 'NI', 'ZN', 'RU', 'AL', 'HC', 'J', 'I', 'PP', 'AP', 'TA', 'A', 'AG', 'AU', 'B', 'BB', 'BU', 'C', 'CF', 'CS', 'CY', 'EG', 'FB', 'FG', 'FU', 'JD', 'JM', 'JR', 'L', 'LR', 'M', 'MA', 'OI', 'P', 'PB', 'PM', 'RI', 'RM', 'RS', 'SC', 'SF', 'SM', 'SN', 'SP', 'SR', 'V', 'WH', 'WR', 'Y', 'ZC', 'IF', 'IC', 'IH']
     mainSymbolList = ['IF', 'IC', 'IH', 'AL', 'RB', 'I', 'HC', 'SM', 'JM', 'J', 'ZC', 'TA']
     currentSymbolList = ['RB', 'HC', 'I', 'SM', 'J', 'ZC', 'TA']
+    testSymbolList = ['SC', 'AP']
 
     if downloadMode == 'all':
         symbolList = allSymbolList
@@ -68,6 +69,8 @@ if __name__ == '__main__':
         symbolList = mainSymbolList
     elif downloadMode == 'current':
         symbolList = currentSymbolList
+    elif downloadMode == 'test':
+        symbolList = testSymbolList
     else:
         print '模式设置错误！'
         exit(0)
