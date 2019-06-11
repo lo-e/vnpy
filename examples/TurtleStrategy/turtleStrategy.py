@@ -101,7 +101,7 @@ class TurtleSignal(object):
         self.resultList = []            # 交易列表
         self.bar = None                 # 最新K线
         """ modify by loe """
-        self.filterOffset = False       # 是否过滤了无效开平交易
+        self.startTimeCross = False       # 是否过滤了无效开平交易
 
         self.client = None              # 数据库
         self.symbolDominantData = []    # 主力合约代码列表
@@ -109,6 +109,7 @@ class TurtleSignal(object):
         self.actualSymbol = ''          # 实盘交易合约
         self.actualBarList = []         # 实盘交易合约bar数据
         self.newDominantIniting = False # 主力换月初始化状态
+        self.newDominantOpen = True     # 主力换月后新主力开仓门槛【原则：原主力有实际同向持仓；门槛一直延续至下一轮信号】
 
     #----------------------------------------------------------------------
     def onBar(self, bar):
@@ -160,6 +161,9 @@ class TurtleSignal(object):
                 """ fake """
                 if self.vtSymbol == 'SM99' and bar.datetime >= datetime(2015, 6, 15):
                     a = 2
+
+                # 记录前主力实际持仓
+                oldUnit = self.portfolio.unitDict[self.vtSymbol]
 
                 # 旧主力合约以开盘价限价单平仓
                 if self.unit > 0:
@@ -231,15 +235,21 @@ class TurtleSignal(object):
 
             # 新主力合约初始化建仓
             if exchange:
-                i = 0
-                while i < abs(self.unit):
-                    if self.unit > 0:
-                        self.newSignal(DIRECTION_LONG, OFFSET_OPEN, actualBar.open, 1)
+                # 重置新主力开仓门槛
+                self.newDominantOpen = False
+                if (oldUnit > 0 and self.unit > 0) or (oldUnit < 0 and self.unit < 0) or self.unit == 0:
+                    self.newDominantOpen = True
 
-                    elif self.unit < 0:
-                        self.newSignal(DIRECTION_SHORT, OFFSET_OPEN, actualBar.open, 1)
+                if self.newDominantOpen:
+                    i = 0
+                    while i < abs(self.unit):
+                        if self.unit > 0:
+                            self.newSignal(DIRECTION_LONG, OFFSET_OPEN, actualBar.open, 1)
 
-                    i += 1
+                        elif self.unit < 0:
+                            self.newSignal(DIRECTION_SHORT, OFFSET_OPEN, actualBar.open, 1)
+
+                        i += 1
 
         self.bar = bar
         self.am.updateBar(bar)
@@ -373,13 +383,16 @@ class TurtleSignal(object):
         if self.newDominantIniting:
             return
 
+        if not self.newDominantOpen:
+            return
+
         if self.portfolio.tradingStart:
             # 如果开始正式交易的时候该信号有历史仓位，则忽略这笔开平交易
             if self.bar.datetime >= self.portfolio.tradingStart:
                 if abs(self.unit) == 1:
-                    self.filterOffset = True
+                    self.startTimeCross = True
 
-                if self.filterOffset:
+                if self.startTimeCross:
                     self.portfolio.newSignal(self, direction, offset, price, volume)
         else:
             self.portfolio.newSignal(self, direction, offset, price, volume)
@@ -447,6 +460,9 @@ class TurtleSignal(object):
         self.result.close(price)
         self.resultList.append(self.result)
         self.result = None
+
+        """ modify by loe """
+        self.newDominantOpen = True
 
     #----------------------------------------------------------------------
     def getLastPnl(self):
