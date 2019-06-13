@@ -172,7 +172,8 @@ class TurtleStrategy(CtaTemplate):
             syncData = self.ctaEngine.mainEngine.dbQuery(POSITION_DB_NAME, self.className, flt)
 
             if not syncData:
-                return
+                self.writeCtaLog(u'前主力合约数据库交易数据缺失，需要检查！\tlastSymbol：%s' % self.lastSymbol)
+                exit(0)
 
             d = syncData[0]
             pos = d['pos']
