@@ -1,0 +1,9 @@
+{
+    "brokerID": "8000",
+    "mdAddress": "tcp://101.231.179.196:53313",
+    "tdAddress": "tcp://101.231.179.196:53305",
+    "userID": "333759089",
+    "password": "970720699kq",
+    "appID": "client_loe_1.0.0",
+    "authCode": "HZSR30Z2PY323WF5"
+}

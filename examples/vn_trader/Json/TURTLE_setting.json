@@ -1,0 +1,65 @@
+{
+    "signal": [
+    {
+        "name": "TURTLE_RB",
+        "className": "TurtleStrategy",
+        "vtSymbol": "rb1910",
+        "lastSymbol":"",
+        "perSize":10,
+        "tickPrice":1,
+        "start": true
+    },
+
+    {
+        "name": "TURTLE_HC",
+        "className": "TurtleStrategy",
+        "vtSymbol": "hc1910",
+        "lastSymbol":"",
+        "perSize":10,
+        "tickPrice":1,
+        "start": true
+    },
+
+    {
+        "name": "TURTLE_SM",
+        "className": "TurtleStrategy",
+        "vtSymbol": "SM909",
+        "lastSymbol":"",
+        "perSize":5,
+        "tickPrice":2,
+        "start": true
+    },
+
+    {
+        "name": "TURTLE_J",
+        "className": "TurtleStrategy",
+        "vtSymbol": "j1909",
+        "lastSymbol":"",
+        "perSize":100,
+        "tickPrice":0.5,
+        "start": true
+    },
+
+    {
+        "name": "TURTLE_ZC",
+        "className": "TurtleStrategy",
+        "vtSymbol": "ZC909",
+        "lastSymbol":"",
+        "perSize":100,
+        "tickPrice":0.2,
+        "start": true
+    },
+
+    {
+        "name": "TURTLE_TA",
+        "className": "TurtleStrategy",
+        "vtSymbol": "TA909",
+        "lastSymbol":"",
+        "perSize":5,
+        "tickPrice":2,
+        "start": true
+    }
+],
+    "portfolio": {"name": "turtle_simulation[RB, HC, SM, J, ZC, TA]",
+                  "portfolioValue": 200000}
+}
