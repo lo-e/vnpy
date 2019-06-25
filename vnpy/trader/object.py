@@ -86,6 +86,9 @@ class BarData(BaseData):
     exchange: Exchange
     datetime: datetime
 
+    """ modify by loe """
+    endDatetime: datetime  # bar结束datetime
+
     interval: Interval = None
     volume: float = 0
     open_interest: float = 0

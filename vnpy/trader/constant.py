@@ -116,6 +116,10 @@ class Exchange(Enum):
     BITFINEX = "BITFINEX"
     BINANCE = "BINANCE"
 
+    """ modify by loe """
+    # Others 数据下载使用，并非真实有效的交易所名称
+    RQ = 'RQ'
+
 
 class Currency(Enum):
     """

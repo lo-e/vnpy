@@ -44,3 +44,13 @@ class StopOrder:
 EVENT_CTA_LOG = "eCtaLog"
 EVENT_CTA_STRATEGY = "eCtaStrategy"
 EVENT_CTA_STOPORDER = "eCtaStopOrder"
+
+""" modify by loe """
+# 数据库名称
+SETTING_DB_NAME = 'VnTrader_Setting_Db'
+POSITION_DB_NAME = 'VnTrader_Position_Db'
+TURTLE_PORTFOLIO_DB_NAME = 'VnTrader_Turtle_Portfolio_Db'
+
+TICK_DB_NAME = 'VnTrader_Tick_Db'
+DAILY_DB_NAME = 'VnTrader_Daily_Db'
+MINUTE_DB_NAME = 'VnTrader_1Min_Db'

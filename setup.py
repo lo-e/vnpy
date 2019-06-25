@@ -141,6 +141,10 @@ if not is_psycopg2_exists():
 if sys.version_info.minor < 7:
     install_requires.append("dataclasses")
 
+""" modify by loe """
+# 这行在下方setup中执行，为了避免重装vnpy的时候都会重装大量依赖库，导致耗时太长而且多余，被移除，
+#install_requires=install_requires,
+
 setup(
     name="vnpy",
     version=version,
@@ -160,7 +164,7 @@ setup(
         "*.so",
         "*.pyd",
     ]},
-    install_requires=install_requires,
+
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Operating System :: Microsoft :: Windows :: Windows 7",
