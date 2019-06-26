@@ -10,8 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pymongo import MongoClient
 
-from vnpy.trader.vtObject import VtBarData
-from vnpy.trader.vtConstant import DIRECTION_LONG, DIRECTION_SHORT
+from vnpy.trader.object import BarData
+from vnpy.trader.constant import Direction, Exchange
 
 from turtleStrategy import TurtlePortfolio
 
@@ -37,7 +37,7 @@ class BacktestingEngine(object):
         self.portfolio = None
         
         # 合约配置信息
-        self.vtSymbolList = []
+        self.symbolList = []
         self.sizeDict = {}                  # 合约大小字典
         self.priceTickDict = {}             # 最小价格变动字典
         self.variableCommissionDict = {}    # 变动手续费字典
@@ -72,22 +72,22 @@ class BacktestingEngine(object):
         with open(filename) as f:
             r = DictReader(f)
             for d in r:
-                self.vtSymbolList.append(d['vtSymbol'])
+                self.symbolList.append(d['symbol'])
 
                 """ modify by loe """
-                self.sizeDict[d['vtSymbol']] = int(d['size'])
-                SIZE_DICT[d['vtSymbol']] = int(d['size'])
-                PRICETICK_DICT[d['vtSymbol']] = float(d['priceTick'])
-                VARIABLE_COMMISSION_DICT[d['vtSymbol']] = float(d['variableCommission'])
-                FIXED_COMMISSION_DICT[d['vtSymbol']] = float(d['fixedCommission'])
-                SLIPPAGE_DICT[d['vtSymbol']] = float(d['slippage'])
+                self.sizeDict[d['symbol']] = int(d['size'])
+                SIZE_DICT[d['symbol']] = int(d['size'])
+                PRICETICK_DICT[d['symbol']] = float(d['priceTick'])
+                VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
+                FIXED_COMMISSION_DICT[d['symbol']] = float(d['fixedCommission'])
+                SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
             
         self.portfolio = TurtlePortfolio(self)
-        self.portfolio.init(portfolioValue, self.vtSymbolList, SIZE_DICT)
+        self.portfolio.init(portfolioValue, self.symbolList, SIZE_DICT)
         """ modify by loe """
         self.portfolio.tradingStart = self.tradingStart
         
-        self.output(u'投资组合的合约代码%s' %(self.vtSymbolList))
+        self.output(u'投资组合的合约代码%s' %(self.symbolList))
         self.output(u'投资组合的初始价值%s' %(portfolioValue))
 
     # ----------------------------------------------------------------------
@@ -95,22 +95,22 @@ class BacktestingEngine(object):
     def initSinglePortfolio(self, d, portfolioValue=10000000):
         """初始化投资组合"""
         self.portfolioValue = portfolioValue
-        self.vtSymbolList.append(d['vtSymbol'])
+        self.symbolList.append(d['symbol'])
 
-        self.sizeDict[d['vtSymbol']] = int(d['size'])
-        SIZE_DICT[d['vtSymbol']] = int(d['size'])
-        PRICETICK_DICT[d['vtSymbol']] = float(d['priceTick'])
-        VARIABLE_COMMISSION_DICT[d['vtSymbol']] = float(d['variableCommission'])
-        FIXED_COMMISSION_DICT[d['vtSymbol']] = float(d['fixedCommission'])
-        SLIPPAGE_DICT[d['vtSymbol']] = float(d['slippage'])
+        self.sizeDict[d['symbol']] = int(d['size'])
+        SIZE_DICT[d['symbol']] = int(d['size'])
+        PRICETICK_DICT[d['symbol']] = float(d['priceTick'])
+        VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
+        FIXED_COMMISSION_DICT[d['symbol']] = float(d['fixedCommission'])
+        SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
 
         self.portfolio = TurtlePortfolio(self)
-        self.portfolio.init(portfolioValue, self.vtSymbolList, SIZE_DICT)
+        self.portfolio.init(portfolioValue, self.symbolList, SIZE_DICT)
 
         """ modify by loe """
         self.portfolio.tradingStart = self.tradingStart
 
-        self.output(u'投资组合的合约代码%s' % (self.vtSymbolList))
+        self.output(u'投资组合的合约代码%s' % (self.symbolList))
         self.output(u'投资组合的初始价值%s' % (portfolioValue))
 
     # ----------------------------------------------------------------------
@@ -120,22 +120,22 @@ class BacktestingEngine(object):
         self.portfolioValue = portfolioValue
 
         for d in l:
-            self.vtSymbolList.append(d['vtSymbol'])
+            self.symbolList.append(d['symbol'])
 
-            self.sizeDict[d['vtSymbol']] = int(d['size'])
-            SIZE_DICT[d['vtSymbol']] = int(d['size'])
-            PRICETICK_DICT[d['vtSymbol']] = float(d['priceTick'])
-            VARIABLE_COMMISSION_DICT[d['vtSymbol']] = float(d['variableCommission'])
-            FIXED_COMMISSION_DICT[d['vtSymbol']] = float(d['fixedCommission'])
-            SLIPPAGE_DICT[d['vtSymbol']] = float(d['slippage'])
+            self.sizeDict[d['symbol']] = int(d['size'])
+            SIZE_DICT[d['symbol']] = int(d['size'])
+            PRICETICK_DICT[d['symbol']] = float(d['priceTick'])
+            VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
+            FIXED_COMMISSION_DICT[d['symbol']] = float(d['fixedCommission'])
+            SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
 
         self.portfolio = TurtlePortfolio(self)
-        self.portfolio.init(portfolioValue, self.vtSymbolList, SIZE_DICT)
+        self.portfolio.init(portfolioValue, self.symbolList, SIZE_DICT)
 
         """ modify by loe """
         self.portfolio.tradingStart = self.tradingStart
 
-        self.output(u'投资组合的合约代码%s' % (self.vtSymbolList))
+        self.output(u'投资组合的合约代码%s' % (self.symbolList))
         self.output(u'投资组合的初始价值%s' % (portfolioValue))
     
     #----------------------------------------------------------------------
@@ -146,21 +146,22 @@ class BacktestingEngine(object):
 
         """ modify by loe """
         dataDict = {}
-        for vtSymbol in self.vtSymbolList:
+        for symbol in self.symbolList:
             flt = {'datetime':{'$gte':self.startDt,
                                '$lte':self.endDt}} 
             
-            collection = db[vtSymbol]
+            collection = db[symbol]
             cursor = collection.find(flt).sort('datetime')
             
             for d in cursor:
-                bar = VtBarData()
+                exchange = Exchange.RQ
+                bar = BarData(gateway_name = '', symbol = '', exchange = exchange, datetime = None, endDatetime = None)
                 bar.__dict__ = d
                 
                 barDict = dataDict.setdefault(bar.datetime, OrderedDict())
-                barDict[bar.vtSymbol] = bar
+                barDict[bar.symbol] = bar
             
-            self.output(u'%s数据加载完成，总数据量：%s' %(vtSymbol, cursor.count()))
+            self.output(u'%s数据加载完成，总数据量：%s' %(symbol, cursor.count()))
 
         dateList = sorted(dataDict.keys())
         for datetime in dateList:
@@ -358,15 +359,15 @@ class BacktestingEngine(object):
         plt.show()        
     
     #----------------------------------------------------------------------
-    def sendOrder(self, vtSymbol, direction, offset, price, volume):
+    def sendOrder(self, symbol, direction, offset, price, volume):
         """记录交易数据（由portfolio调用）"""
         # 对价格四舍五入
-        priceTick = PRICETICK_DICT[vtSymbol]
+        priceTick = PRICETICK_DICT[symbol]
         price = int(round(price/priceTick, 0)) * priceTick
         
         # 记录成交数据
         """ modify by loe """
-        trade = TradeData(vtSymbol, self.currentDt, direction, offset, price, volume)
+        trade = TradeData(symbol, self.currentDt, direction, offset, price, volume)
         l = self.tradeDict.setdefault(self.currentDt, [])        
         l.append(trade)
         
@@ -378,15 +379,15 @@ class BacktestingEngine(object):
         print(content)
     
     #----------------------------------------------------------------------
-    def getTradeData(self, vtSymbol=''):
+    def getTradeData(self, symbol=''):
         """获取交易数据"""
         tradeList = []
         
         for l in self.tradeDict.values():
             for trade in l:
-                if not vtSymbol:
+                if not symbol:
                     tradeList.append(trade)
-                elif trade.vtSymbol == vtSymbol:
+                elif trade.symbol == symbol:
                     tradeList.append(trade)
         
         return tradeList
@@ -397,11 +398,11 @@ class TradeData(object):
     """"""
 
     #----------------------------------------------------------------------
-    def __init__(self, vtSymbol, dt, direction, offset, price, volume):
+    def __init__(self, symbol, dt, direction, offset, price, volume):
         """Constructor"""
         """ modify by loe """
         self.dt = dt
-        self.vtSymbol = vtSymbol
+        self.symbol = symbol
         self.direction = direction
         self.offset = offset
         self.price = price
@@ -434,7 +435,7 @@ class DailyResult(object):
     #----------------------------------------------------------------------
     def updateTrade(self, trade):
         """更新交易"""
-        l = self.tradeDict[trade.vtSymbol]
+        l = self.tradeDict[trade.symbol]
         l.append(trade)
         self.tradeCount += 1
         
@@ -446,7 +447,7 @@ class DailyResult(object):
     #----------------------------------------------------------------------
     def updateBar(self, bar):
         """更新K线"""
-        self.closeDict[bar.vtSymbol] = bar.close
+        self.closeDict[bar.symbol] = bar.close_price
     
     #----------------------------------------------------------------------
     def updatePreviousClose(self, d):
@@ -456,16 +457,16 @@ class DailyResult(object):
     #----------------------------------------------------------------------
     def calculateTradingPnl(self):
         """计算当日交易盈亏"""
-        for vtSymbol, l in self.tradeDict.items():
-            close = self.closeDict[vtSymbol]
-            size = SIZE_DICT[vtSymbol]
+        for symbol, l in self.tradeDict.items():
+            close = self.closeDict[symbol]
+            size = SIZE_DICT[symbol]
             
-            slippage = SLIPPAGE_DICT[vtSymbol]
-            variableCommission = VARIABLE_COMMISSION_DICT[vtSymbol]
-            fixedCommission = FIXED_COMMISSION_DICT[vtSymbol]
+            slippage = SLIPPAGE_DICT[symbol]
+            variableCommission = VARIABLE_COMMISSION_DICT[symbol]
+            fixedCommission = FIXED_COMMISSION_DICT[symbol]
             
             for trade in l:
-                if trade.direction == DIRECTION_LONG:
+                if trade.direction == Direction.LONG:
                     side = 1
                 else:
                     side = -1
@@ -481,17 +482,17 @@ class DailyResult(object):
                     self.tradingPnl += pnl
                 else:
                     print('*' * 20)
-                    print('%s\t%s volume：%s\t计算当日交易盈亏数据缺失' % (self.date, vtSymbol, trade.volume))
+                    print('%s\t%s volume：%s\t计算当日交易盈亏数据缺失' % (self.date, symbol, trade.volume))
                     print('*' * 20 + '\n')
     
     #----------------------------------------------------------------------
     def calculateHoldingPnl(self):
         """计算当日持仓盈亏"""
-        for vtSymbol, pos in self.posDict.items():
-            previousClose = self.previousCloseDict.get(vtSymbol, 0)
-            close = self.closeDict.get(vtSymbol, 0)
-            #close = self.closeDict[vtSymbol]
-            size = SIZE_DICT[vtSymbol]
+        for symbol, pos in self.posDict.items():
+            previousClose = self.previousCloseDict.get(symbol, 0)
+            close = self.closeDict.get(symbol, 0)
+            #close = self.closeDict[symbol]
+            size = SIZE_DICT[symbol]
 
             """ modify by loe """
             if close:
@@ -500,7 +501,7 @@ class DailyResult(object):
                     self.holdingPnl += pnl
             elif pos:
                 print('*'*20)
-                print('%s\t%s pos：%s\t计算当日持仓盈亏数据缺失' % (self.date, vtSymbol, pos))
+                print('%s\t%s pos：%s\t计算当日持仓盈亏数据缺失' % (self.date, symbol, pos))
                 print('*'*20 + '\n')
 
     #----------------------------------------------------------------------

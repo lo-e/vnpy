@@ -1,4 +1,4 @@
-vtSymbol,size,priceTick,variableCommission,fixedCommission,slippage,name,result
+symbol,size,priceTick,variableCommission,fixedCommission,slippage,name,result
 RB99,10,1,0.0001,0,1,螺纹钢,
 HC99,10,1,0.0001,0,1,热轧卷板,
 SM99,5,2,0,3,2,锰硅,

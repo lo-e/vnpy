@@ -13,8 +13,9 @@ import os
 from collections import OrderedDict
 import re
 from pymongo import MongoClient, ASCENDING
-from vnpy.trader.app.ctaStrategy.ctaBase import DAILY_DB_NAME
+from vnpy.app.cta_strategy.base import DAILY_DB_NAME
 import pandas as pd
+from vnpy.trader.constant import Direction, Offset
 
 def one():
     engine = BacktestingEngine()
@@ -26,13 +27,13 @@ def one():
 
     filename = 'setting.csv'
     symbolList = []
-    with open(filename) as f:
+    with open(filename, errors='ignore') as f:
         r = DictReader(f)
         for d in r:
             #"""
-            startSymbol = re.sub("\d", "", d['vtSymbol'])
+            startSymbol = re.sub("\d", "", d['symbol'])
             symbol = startSymbol + '99'
-            d['vtSymbol'] = symbol
+            d['symbol'] = symbol
             #"""
             symbolList.append(d)
     if not symbolList:
@@ -41,44 +42,44 @@ def one():
     engine.loadData()
     engine.runBacktesting()
     engine.showResult(figSavedName)
-    print "\n最大占用保证金：%s\t持仓单位：%s" % (engine.portfolio.maxBond[0], engine.portfolio.maxBond[1])
+    print(u"\n最大占用保证金：%s\t持仓单位：%s" % (engine.portfolio.maxBond[0], engine.portfolio.maxBond[1]))
 
     #"""
     resultList = []
     totalPnl = 0
     calculateDic = {}
-    for symbol in engine.vtSymbolList:
+    for symbol in engine.symbolList:
         tradeList = engine.getTradeData(symbol)
         for trade in tradeList:
-            print '%s\t\t%s %s\t\t%s\t\t%s\t%s@%s' % (trade.dt, trade.vtSymbol, trade.direction, trade.offset,
-                                                      engine.sizeDict[trade.vtSymbol], trade.volume, trade.price)
+            print('%s\t\t%s %s\t\t%s\t\t%s\t%s@%s' % (trade.dt, trade.symbol, trade.direction.value, trade.offset.value,
+                                                      engine.sizeDict[trade.symbol], trade.volume, trade.price))
 
             tOpen = False
             pnl = 0
             offset = ''
             direction = 0
 
-            symbolDic = calculateDic.get(trade.vtSymbol, {})
+            symbolDic = calculateDic.get(trade.symbol, {})
 
-            if trade.offset == u'开仓':
+            if trade.offset == Offset.OPEN:
                 offset = '开仓'
                 tOpen = True
-            elif trade.offset == u'平仓':
+            elif trade.offset == Offset.CLOSE:
                 offset = '平仓'
                 tOpen = False
 
-            if trade.direction == u'多':
+            if trade.direction == Direction.LONG:
                 direction = '多'
                 if tOpen:
                     symbolDic['direction'] = 1
-            elif trade.direction == u'空':
+            elif trade.direction == Direction.SHORT:
                 direction = '空'
                 if tOpen:
                     symbolDic['direction'] = -1
 
             if trade.volume:
                 if tOpen:
-                    symbolDic['size'] = engine.sizeDict[trade.vtSymbol]
+                    symbolDic['size'] = engine.sizeDict[trade.symbol]
                     vol = symbolDic.get('volume', 0)
                     pri = symbolDic.get('price', 0)
                     pri = vol*pri + trade.volume*trade.price
@@ -87,19 +88,19 @@ def one():
                     symbolDic['volume'] = vol
                     pri = pri / vol
                     symbolDic['price'] = pri
-                    calculateDic[trade.vtSymbol] = symbolDic
+                    calculateDic[trade.symbol] = symbolDic
                 else:
                     if symbolDic['volume'] != trade.volume:
-                        raise '平仓数量有误！'
+                        raise('平仓数量有误！')
                     pnl = symbolDic['direction'] * (trade.price - symbolDic['price']) * trade.volume * symbolDic['size']
                     totalPnl += pnl
-                    calculateDic[trade.vtSymbol] = {}
+                    calculateDic[trade.symbol] = {}
 
             dic = {'datetime':trade.dt,
-                   'symbol':trade.vtSymbol,
+                   'symbol':trade.symbol,
                    'direction':direction,
                    'offset':offset,
-                   'size':engine.sizeDict[trade.vtSymbol],
+                   'size':engine.sizeDict[trade.symbol],
                    'volume':trade.volume,
                    'price':trade.price}
             if pnl:
@@ -110,7 +111,7 @@ def one():
                 dic['totalPnl'] = ''
 
             resultList.append(dic)
-        print '\n\n'
+        print('\n\n')
     if len(resultList):
         fieldNames = ['datetime', 'symbol', 'direction', 'offset', 'size', 'volume', 'price', 'pnl', 'totalPnl']
         # 文件路径
@@ -124,15 +125,15 @@ def one():
     folio = engine.portfolio
     signalDic = folio.signalDict
     for s, signalList in signalDic.items():
-        print '*' * 6 + s + '*' * 6
+        print('*' * 6 + s + '*' * 6)
         for signal in signalList:
-            print 'window\t%s' % signal.entryWindow
-            print 'datetime\t%s' % signal.bar.datetime
-            print 'unit\t%s' % signal.unit
+            print('window\t%s' % signal.entryWindow)
+            print('datetime\t%s' % signal.bar.datetime)
+            print('unit\t%s' % signal.unit)
             if signal.result:
-                print 'entry\t%s' % signal.result.entry
-            print 'lastPnl\t%s' % signal.getLastPnl()
-            print '\n'
+                print('entry\t%s' % signal.result.entry)
+            print('lastPnl\t%s' % signal.getLastPnl())
+            print('\n')
     #"""
 
 def two():
@@ -153,16 +154,16 @@ def two():
                 continue
 
             timeseries, result = engine.calculateResult()
-            print u'Sharpe Ratio：\t%s' % result['sharpeRatio']
+            print(u'Sharpe Ratio：\t%s' % result['sharpeRatio'])
             count += 1
-            print u'count：\t%s\n' % count
+            print(u'count：\t%s\n' % count)
 
             temp = d.copy()
             temp['result'] = result['sharpeRatio']
             resultList.append(temp)
 
     if len(resultList):
-        fieldNames = ['vtSymbol', 'size', 'priceTick', 'variableCommission', 'fixedCommission', 'slippage', 'name', 'result']
+        fieldNames = ['symbol', 'size', 'priceTick', 'variableCommission', 'fixedCommission', 'slippage', 'name', 'result']
         # 文件路径
         filePath = 'result.csv'
         with open(filePath, 'w') as f:
@@ -180,7 +181,7 @@ def three():
             with open(filePath) as f:
                 r = DictReader(f)
                 for d in r:
-                    symbol = d['vtSymbol']
+                    symbol = d['symbol']
                     if not symbol in resultDic:
                         resultDic[symbol] = d
                     else:
@@ -189,7 +190,7 @@ def three():
 
     resultList = resultDic.values()
     if len(resultList):
-        fieldNames = ['vtSymbol', 'size', 'priceTick', 'variableCommission', 'fixedCommission', 'slippage', 'name', 'result']
+        fieldNames = ['symbol', 'size', 'priceTick', 'variableCommission', 'fixedCommission', 'slippage', 'name', 'result']
         # 文件路径
         filePath = 'resultList\\result_all.csv'
         with open(filePath, 'w') as f:
@@ -223,14 +224,14 @@ def four():
             continue
 
         timeseries, result = engine.calculateResult()
-        dic = {'symbolList':engine.vtSymbolList,
+        dic = {'symbolList':engine.symbolList,
                'sharpe':result['sharpeRatio'],
                'totalPnl':result['totalReturn'],
                'annualizedPnl':result['annualizedReturn']}
         resultList.append(dic)
 
         count += 1
-        print u'count：\t%s\n' % count
+        print(u'count：\t%s\n' % count)
 
     if len(resultList):
         fieldNames = ['symbolList', 'sharpe', 'totalPnl', 'annualizedPnl']
@@ -242,8 +243,8 @@ def four():
             # 写入csv文件
             writer.writerows(resultList)
 
-    print '='*20
-    print '组合数：%s' % count
+    print('='*20)
+    print('组合数：%s' % count)
 
 # 年度成交量排名
 def volumeSorted():
@@ -269,7 +270,7 @@ def volumeSorted():
         volumeDic[underlyingSymbol] = totalVolume
     resultDic = {'volume':volumeDic}
     df = pd.DataFrame(resultDic).sort_values('volume', ascending=False)
-    print df.head(10)
+    print(df.head(10))
 
 # 随机组合，l是数组，n是组合的元素数量
 def combine(l, n):
