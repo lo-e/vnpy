@@ -9,8 +9,6 @@ from csv import DictReader
 import re
 from datetime import datetime
 
-DOMINANT_DB_NAME = 'Dominant_db'
-
 if __name__ == '__main__':
     """
     downloadMinuteBarBySymbol('RB99', 5)

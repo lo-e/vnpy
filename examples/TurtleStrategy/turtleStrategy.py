@@ -9,7 +9,7 @@ from vnpy.trader.object import BarData
 
 """ modify by loe """
 import re
-from vnpy.app.cta_strategy.base import DAILY_DB_NAME
+from vnpy.app.cta_strategy.base import (DAILY_DB_NAME, DOMINANT_DB_NAME)
 
 MAX_PRODUCT_POS = 4         # 单品种最大持仓
 MAX_CATEGORY_POS = 6        # 高度关联最大持仓
@@ -20,8 +20,6 @@ CATEGORY_DICT = {'finance':['IF','IC','IH'],
                  'ferrous_metal':['RB','I','HC','SM'],
                  'coal':['JM','J','ZC'],
                  'chemical_industry':['TA']}
-
-DOMINANT_DB_NAME = 'Dominant_db'
 
 ACTUAL_TRADE = True        # 实盘合约交易
 

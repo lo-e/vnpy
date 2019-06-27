@@ -9,7 +9,7 @@ from vnpy.gateway.futu import FutuGateway
 from vnpy.gateway.ib import IbGateway
 """ modify by loe """
 # 去掉了ctptestGateway的导入又注释这行，需要CtptestGateway直接替换CtpGateway
-from vnpy.gateway.ctp import CtpGateway
+from vnpy.gateway.ctptest import CtptestGateway
 
 from vnpy.gateway.femas import FemasGateway
 from vnpy.gateway.tiger import TigerGateway
@@ -30,6 +30,10 @@ from vnpy.app.cta_backtester import CtaBacktesterApp
 from vnpy.app.data_recorder import DataRecorderApp
 from vnpy.app.risk_manager import RiskManagerApp
 
+""" modify by loe """
+# 导入了海归交易
+from App.Turtle import TurtleApp
+
 
 def main():
     """"""
@@ -41,7 +45,7 @@ def main():
 
     """ modify by loe """
     # 去掉了ctptestGateway注释这行，需要CtptestGateway直接替换CtpGateway
-    main_engine.add_gateway(CtpGateway)
+    main_engine.add_gateway(CtptestGateway)
 
     main_engine.add_gateway(BinanceGateway)
     main_engine.add_gateway(FemasGateway)
@@ -58,6 +62,10 @@ def main():
     main_engine.add_gateway(HbdmGateway)
     # main_engine.add_gateway(XtpGateway)
     # main_engine.add_gateway(TapGateway)
+
+    """ modify by loe """
+    # 添加了海归交易
+    main_engine.add_app(TurtleApp)
 
     main_engine.add_app(CtaStrategyApp)
     main_engine.add_app(CtaBacktesterApp)

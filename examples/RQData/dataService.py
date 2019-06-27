@@ -12,24 +12,24 @@ import pandas as pd
 from vnpy.trader.object import BarData, TickData
 from vnpy.app.cta_strategy.base import (MINUTE_DB_NAME,
                                         DAILY_DB_NAME,
-                                        TICK_DB_NAME)
+                                        TICK_DB_NAME,
+                                        DOMINANT_DB_NAME)
 from vnpy.trader.constant import Exchange
 
 import rqdatac as rq
 from rqdatac import *
 rq.init()
 
-mc = MongoClient()                  # Mongo连接
-dbMinute = mc[MINUTE_DB_NAME]       # 数据库
+mc = MongoClient('localhost', 27017, serverSelectionTimeoutMS = 600)       # Mongo连接
+dbMinute = mc[MINUTE_DB_NAME]                                              # 数据库
 dbDaily = mc[DAILY_DB_NAME]
 dbTick = mc[TICK_DB_NAME]
+dbDominant = mc[DOMINANT_DB_NAME]
 
 #====== vnpy_v1.9.2_LTS ======
 #rq.init(USERNAME, PASSWORD, ('rqdatad-pro.ricequant.com', 16011))
 
 FIELDS = ['open', 'high', 'low', 'close', 'volume']
-
-DOMINANT_DB_NAME = 'Dominant_db'
 
 #----------------------------------------------------------------------
 def generateVtBar(row, symbol):
@@ -177,9 +177,7 @@ def downloadTickBySymbol(symbol, date):
 def dominantSymbolToDatabase(underlyingSymbol, toDatabase, startDate=None, endDate=None):
         if toDatabase:
             # 获取数据库
-            client = MongoClient('localhost', 27017)
-            db = client[DOMINANT_DB_NAME]
-            collection = db[underlyingSymbol]
+            collection = dbDominant[underlyingSymbol]
 
         dominantList = get_dominant_future(underlyingSymbol, start_date=startDate, end_date=endDate, rule=0)
         if toDatabase:
@@ -204,9 +202,7 @@ def dominantSymbolToDatabase(underlyingSymbol, toDatabase, startDate=None, endDa
 # 下载主力真实合约bar数据到数据库
 def downloadDominantSymbol(underlyingSymbol, startDate = None):
     # 查询数据库
-    client = MongoClient('localhost', 27017)
-    db = client[DOMINANT_DB_NAME]
-    collection = db[underlyingSymbol]
+    collection = dbDominant[underlyingSymbol]
 
     if startDate:
         flt = {'date': {'$gte': startDate}}

@@ -32,6 +32,9 @@ from .object import (
 from .setting import SETTINGS
 from .utility import get_folder_path
 
+""" modify by loe """
+from pymongo import MongoClient, ASCENDING
+from vnpy.app.cta_strategy.base import LOG_DB_NAME
 
 class MainEngine:
     """
@@ -52,6 +55,11 @@ class MainEngine:
         self.exchanges = []
 
         self.init_engines()
+
+        """ modify by loe """
+        # 连接MongoDB数据库
+        self.dbClient = None
+        self.dbConnect()
 
     def add_engine(self, engine_class: Any):
         """
@@ -220,6 +228,63 @@ class MainEngine:
         for gateway in self.gateways.values():
             gateway.close()
 
+    """ modify by loe """
+
+    # ----------------------------------------------------------------------
+    def dbConnect(self):
+        """连接MongoDB数据库"""
+        if not self.dbClient:
+            try:
+                self.dbClient = MongoClient('localhost', 27017, serverSelectionTimeoutMS = 600)
+
+                # 调用server_info查询服务器状态，防止服务器异常并未连接成功
+                self.dbClient.server_info()
+
+                self.write_log('MongoDB连接成功')
+
+                # 如果启动日志记录，则注册日志事件监听函数
+                self.event_engine.register(EVENT_LOG, self.dbLogging)
+
+            except:
+                self.dbClient = None
+                self.write_log('MongoDB连接失败！！')
+
+    def dbQuery(self, dbName, collectionName, d, sortKey='', sortDirection=ASCENDING):
+        """从MongoDB中读取数据，d是查询要求，返回的是数据库查询的指针"""
+        if self.dbClient:
+            db = self.dbClient[dbName]
+            collection = db[collectionName]
+
+            if sortKey:
+                cursor = collection.find(d).sort(sortKey, sortDirection)  # 对查询出来的数据进行排序
+            else:
+                cursor = collection.find(d)
+
+            if cursor:
+                return list(cursor)
+            else:
+                return []
+        else:
+            self.write_log("数据库查询失败：MongoDB")
+            return []
+
+    def dbInsert(self, dbName, collectionName, d):
+        """向MongoDB中插入数据，d是具体数据"""
+        if self.dbClient:
+            db = self.dbClient[dbName]
+            collection = db[collectionName]
+            collection.insert_one(d)
+        else:
+            self.write_log(f"数据库数据保存失败：{dbName}")
+
+    def dbLogging(self, event):
+        """向MongoDB中插入日志"""
+        log = event.data
+        d = {
+            'content': log.msg,
+            'gateway': log.gateway_name
+        }
+        self.dbInsert(LOG_DB_NAME, self.todayDate, d)
 
 class BaseEngine(ABC):
     """
