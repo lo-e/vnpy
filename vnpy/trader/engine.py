@@ -34,7 +34,7 @@ from .utility import get_folder_path
 
 """ modify by loe """
 from pymongo import MongoClient, ASCENDING
-from vnpy.app.cta_strategy.base import LOG_DB_NAME
+from .constant import LOG_DB_NAME
 
 class MainEngine:
     """
@@ -43,6 +43,9 @@ class MainEngine:
 
     def __init__(self, event_engine: EventEngine = None):
         """"""
+        # 记录今日日期
+        self.todayDate = datetime.now().strftime('%Y%m%d')
+
         if event_engine:
             self.event_engine = event_engine
         else:
@@ -276,6 +279,15 @@ class MainEngine:
             collection.insert_one(d)
         else:
             self.write_log(f"数据库数据保存失败：{dbName}")
+
+    def dbUpdate(self, dbName, collectionName, d, flt, upsert=False):
+        """向MongoDB中更新数据，d是具体数据，flt是过滤条件，upsert代表若无是否要插入"""
+        if self.dbClient:
+            db = self.dbClient[dbName]
+            collection = db[collectionName]
+            collection.replace_one(flt, d, upsert)
+        else:
+            self.writeLog(f"数据库数据更新失败：{dbName}")
 
     def dbLogging(self, event):
         """向MongoDB中插入日志"""

@@ -2,9 +2,7 @@
 
 from collections import defaultdict
 
-from vnpy.trader.vtConstant import (DIRECTION_LONG, DIRECTION_SHORT,
-                                    OFFSET_OPEN, OFFSET_CLOSE)
-from vnpy.trader.vtUtility import ArrayManager
+from vnpy.trader.constant import (Direction, Offset)
 """ modify by loe """
 import re
 from datetime import  datetime
@@ -75,9 +73,9 @@ class TurtlePortfolio(object):
         """对交易信号进行过滤，符合条件的才发单执行"""
 
         # 开仓
-        if offset == OFFSET_OPEN:
+        if offset == Offset.OPEN:
             # 买入
-            if direction == DIRECTION_LONG:
+            if direction == Direction.LONG:
                 # 组合持仓不能超过上限
                 if self.totalLong >= MAX_DIRECTION_POS:
                     return False
@@ -120,8 +118,8 @@ class TurtlePortfolio(object):
         """"""
 
         # 计算合约持仓
-        if offset == OFFSET_OPEN:
-            if direction == DIRECTION_LONG:
+        if offset == Offset.OPEN:
+            if direction == Direction.LONG:
                 self.unitDict[vtSymbol] = self.unitDict.get(vtSymbol, 0) + 1
 
             else:

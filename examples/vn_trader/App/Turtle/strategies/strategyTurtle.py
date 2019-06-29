@@ -7,8 +7,7 @@
 from __future__ import division
 
 from vnpy.trader.vtObject import VtBarData
-from vnpy.trader.vtConstant import (DIRECTION_LONG, DIRECTION_SHORT,
-                                    OFFSET_OPEN, OFFSET_CLOSE)
+from vnpy.trader.constant import (Direction, Offset)
 from vnpy.app.cta_strategy.template import CtaTemplate
 from vnpy.trader.vtUtility import BarGenerator, ArrayManager
 from vnpy.trader.app.ctaStrategy.ctaBase import *
@@ -91,18 +90,18 @@ class TurtleStrategy(CtaTemplate):
     lastPnl = 0                         # 上一次盈利（不考虑滑点和手续费）
     
     # 参数列表，保存了参数的名称
-    paramList = ['name',
-                 'vtSymbol',
-                 'lastSymbol',
-                 'perSize',
-                 'tickPrice',
+    parameters = ['strategy_name',
+                 'vt_symbol',
+                 'last_symbol',
+                 'per_size',
+                 'tick_price',
                  'entryWindow',
                  'exitWindow',
                  'atrWindow']
 
 
     # 变量列表，保存了变量的名称
-    varList = ['inited',
+    variables = ['inited',
                'trading',
                'pos',
                'posInitialNeed',
@@ -131,7 +130,7 @@ class TurtleStrategy(CtaTemplate):
                'lastPnl']
     
     # 同步列表，保存了需要保存到数据库的变量名称
-    syncList = ['pos',
+    syncs =    ['pos',
                 'atrVolatility',
                 'longEntry1',
                 'longEntry2',
@@ -153,7 +152,7 @@ class TurtleStrategy(CtaTemplate):
     #----------------------------------------------------------------------
     def __init__(self, ctaEngine, turtlePortfolio, setting):
         """Constructor"""
-        super(TurtleStrategy, self).__init__(ctaEngine, setting)
+        super(TurtleStrategy, self).__init__(cta_engine=ctaEngine, strategy_name='', vt_symbol='', setting=setting)
 
         self.portfolio = turtlePortfolio
         self.am = ArrayManager(self.entryWindow+1)
@@ -162,17 +161,17 @@ class TurtleStrategy(CtaTemplate):
     #----------------------------------------------------------------------
     def onInit(self):
         """初始化策略（必须由用户继承实现）"""
-        self.writeCtaLog(u'%s策略初始化' %self.name)
-        if self.lastSymbol:
+        self.writeCtaLog(u'%s策略初始化' %self.strategy_name)
+        if self.last_symbol:
             # 主力换月处理
             # 需要清空前主力合约仓位
             # 从数据库载入前主力的持仓情况
-            flt = {'name': self.name,
-                   'vtSymbol': self.lastSymbol}
+            flt = {'name': self.strategy_name,
+                   'vtSymbol': self.last_symbol}
             syncData = self.ctaEngine.mainEngine.dbQuery(POSITION_DB_NAME, self.className, flt)
 
             if not syncData:
-                self.writeCtaLog(u'前主力合约数据库交易数据缺失，需要检查！\tlastSymbol：%s' % self.lastSymbol)
+                self.writeCtaLog(u'前主力合约数据库交易数据缺失，需要检查！\tlastSymbol：%s' % self.last_symbol)
                 exit(0)
 
             d = syncData[0]
@@ -184,10 +183,10 @@ class TurtleStrategy(CtaTemplate):
 
             # 组合状态管理
             if unit > 0:
-                self.portfolio.newSignal(self.lastSymbol, DIRECTION_SHORT, OFFSET_CLOSE)
+                self.portfolio.newSignal(self.last_symbol, Direction.SHORT, Offset.CLOSE)
 
             elif unit < 0:
-                self.portfolio.newSignal(self.lastSymbol, DIRECTION_LONG, OFFSET_CLOSE)
+                self.portfolio.newSignal(self.last_symbol, Direction.LONG, Offset.CLOSE)
 
             # 需要建立新主力仓位，初始化新主力状态
             self.newDominantInitial()
@@ -198,19 +197,19 @@ class TurtleStrategy(CtaTemplate):
         for bar in initData:
             self.onBar(bar)
 
-        self.putEvent()
+        self.put_event()
 
     #----------------------------------------------------------------------
     def onStart(self):
         """启动策略（必须由用户继承实现）"""
-        self.writeCtaLog(u'%s策略启动' %self.name)
-        self.putEvent()
+        self.writeCtaLog(u'%s策略启动' %self.strategy_name)
+        self.put_event()
 
     #----------------------------------------------------------------------
     def onStop(self):
         """停止策略（必须由用户继承实现）"""
-        self.writeCtaLog(u'%s策略停止' %self.name)
-        self.putEvent()
+        self.writeCtaLog(u'%s策略停止' %self.strategy_name)
+        self.put_event()
 
     #----------------------------------------------------------------------
     def onTick(self, tick):
@@ -231,16 +230,16 @@ class TurtleStrategy(CtaTemplate):
                 return
 
         # 主力换月时清空前主力仓位
-        if tick.vtSymbol == self.lastSymbol:
+        if tick.vtSymbol == self.last_symbol:
             if self.lastSymbolClearNeed:
                 if self.lastClearPos > 0:
-                    orderList = self.sendSymbolOrder(self.lastSymbol, CTAORDER_SELL, self.bestOrderPrice(tick, DIRECTION_SHORT),
+                    orderList = self.sendSymbolOrder(self.last_symbol, Direction.SHORT, Offset.CLOSE, self.bestOrderPrice(tick, Direction.SHORT),
                                          abs(self.lastClearPos))
                     if len(orderList):
                         self.pos += self.lastClearPos
 
                 elif self.lastClearPos < 0:
-                    orderList = self.sendSymbolOrder(self.lastSymbol, CTAORDER_COVER, self.bestOrderPrice(tick, DIRECTION_LONG),
+                    orderList = self.sendSymbolOrder(self.last_symbol, Direction.LONG, Offset.CLOSE, self.bestOrderPrice(tick, Direction.LONG),
                                          abs(self.lastClearPos))
                     if len(orderList):
                         self.pos += self.lastClearPos
@@ -269,25 +268,25 @@ class TurtleStrategy(CtaTemplate):
                         unitChange = 0
                         i = 0
                         while i < abs(self.virtualUnit):
-                            if self.portfolio.newSignal(self.vtSymbol, DIRECTION_LONG, OFFSET_OPEN):
+                            if self.portfolio.newSignal(self.vt_symbol, Direction.LONG, Offset.OPEN):
                                 unitChange += 1
                             i += 1
 
                         if unitChange > 0:
                             self.unit += unitChange
-                            self.buy(self.bestOrderPrice(tick, DIRECTION_LONG), self.multiplier * abs(unitChange))
+                            self.buy(self.bestOrderPrice(tick, Direction.LONG), self.multiplier * abs(unitChange))
 
                     elif self.virtualUnit < 0:
                         unitChange = 0
                         i = 0
                         while i < abs(self.virtualUnit):
-                            if self.portfolio.newSignal(self.vtSymbol, DIRECTION_SHORT, OFFSET_OPEN):
+                            if self.portfolio.newSignal(self.vt_symbol, Direction.SHORT, Offset.OPEN):
                                 unitChange -= 1
                             i += 1
 
                         if unitChange < 0:
                             self.unit += unitChange
-                            self.short(self.bestOrderPrice(tick, DIRECTION_SHORT), self.multiplier * abs(unitChange))
+                            self.short(self.bestOrderPrice(tick, Direction.SHORT), self.multiplier * abs(unitChange))
 
             self.posInitialNeed = False
 
@@ -332,7 +331,7 @@ class TurtleStrategy(CtaTemplate):
 
                 # 组合仓位管理
                 if preCheck:
-                    if self.portfolio.newSignal(self.vtSymbol, DIRECTION_LONG, OFFSET_OPEN):
+                    if self.portfolio.newSignal(self.vt_symbol, Direction.LONG, Offset.OPEN):
                         unitChange += 1
 
             if tick.lastPrice >= self.longEntry2 and self.virtualUnit < 2:
@@ -356,7 +355,7 @@ class TurtleStrategy(CtaTemplate):
                     preCheck = False
 
                 if preCheck:
-                    if self.portfolio.newSignal(self.vtSymbol, DIRECTION_LONG, OFFSET_OPEN):
+                    if self.portfolio.newSignal(self.vt_symbol, Direction.LONG, Offset.OPEN):
                         unitChange += 1
 
             if tick.lastPrice >= self.longEntry3 and self.virtualUnit < 3:
@@ -380,7 +379,7 @@ class TurtleStrategy(CtaTemplate):
                     preCheck = False
 
                 if preCheck:
-                    if self.portfolio.newSignal(self.vtSymbol, DIRECTION_LONG, OFFSET_OPEN):
+                    if self.portfolio.newSignal(self.vt_symbol, Direction.LONG, Offset.OPEN):
                         unitChange += 1
 
             if tick.lastPrice >= self.longEntry4 and self.virtualUnit < 4:
@@ -404,15 +403,15 @@ class TurtleStrategy(CtaTemplate):
                     preCheck = False
 
                 if preCheck:
-                    if self.portfolio.newSignal(self.vtSymbol, DIRECTION_LONG, OFFSET_OPEN):
+                    if self.portfolio.newSignal(self.vt_symbol, Direction.LONG, Offset.OPEN):
                         unitChange += 1
 
             if action:
                 if unitChange:
                     self.unit += unitChange
-                    self.buy(self.bestOrderPrice(tick, DIRECTION_LONG), self.multiplier*abs(unitChange))
+                    self.buy(self.bestOrderPrice(tick, Direction.LONG), self.multiplier*abs(unitChange))
 
-                self.putEvent()
+                self.put_event()
                 return
 
             # 止损平仓
@@ -420,14 +419,14 @@ class TurtleStrategy(CtaTemplate):
                 longExit = max(self.longStop, self.exitDown)
                 if tick.lastPrice <= longExit:
                     self.close(tick.lastPrice)
-                    self.portfolio.newSignal(self.vtSymbol, DIRECTION_SHORT, OFFSET_CLOSE)
+                    self.portfolio.newSignal(self.vt_symbol, Direction.SHORT, Offset.CLOSE)
                     if self.pos > 0:
-                        self.sell(self.bestOrderPrice(tick, DIRECTION_SHORT), abs(self.pos))
+                        self.sell(self.bestOrderPrice(tick, Direction.SHORT), abs(self.pos))
                     # 平仓后更新最新指标
                     self.updateIndicator()
                     self.hasClose = True
 
-                self.putEvent()
+                self.put_event()
                 return
 
         if self.virtualUnit <= 0:
@@ -453,7 +452,7 @@ class TurtleStrategy(CtaTemplate):
                     preCheck = False
 
                 if preCheck:
-                    if self.portfolio.newSignal(self.vtSymbol, DIRECTION_SHORT, OFFSET_OPEN):
+                    if self.portfolio.newSignal(self.vt_symbol, Direction.SHORT, Offset.OPEN):
                         unitChange -= 1
 
             if tick.lastPrice <= self.shortEntry2 and self.virtualUnit > -2:
@@ -477,7 +476,7 @@ class TurtleStrategy(CtaTemplate):
                     preCheck = False
 
                 if preCheck:
-                    if self.portfolio.newSignal(self.vtSymbol, DIRECTION_SHORT, OFFSET_OPEN):
+                    if self.portfolio.newSignal(self.vt_symbol, Direction.SHORT, Offset.OPEN):
                         unitChange -= 1
 
             if tick.lastPrice <= self.shortEntry3 and self.virtualUnit > -3:
@@ -501,7 +500,7 @@ class TurtleStrategy(CtaTemplate):
                     preCheck = False
 
                 if preCheck:
-                    if self.portfolio.newSignal(self.vtSymbol, DIRECTION_SHORT, OFFSET_OPEN):
+                    if self.portfolio.newSignal(self.vt_symbol, Direction.SHORT, Offset.OPEN):
                         unitChange -= 1
 
             if tick.lastPrice <= self.shortEntry4 and self.virtualUnit > -4:
@@ -525,15 +524,15 @@ class TurtleStrategy(CtaTemplate):
                     preCheck = False
 
                 if preCheck:
-                    if self.portfolio.newSignal(self.vtSymbol, DIRECTION_SHORT, OFFSET_OPEN):
+                    if self.portfolio.newSignal(self.vt_symbol, Direction.SHORT, Offset.OPEN):
                         unitChange -= 1
 
             if action:
                 if unitChange:
                     self.unit += unitChange
-                    self.short(self.bestOrderPrice(tick, DIRECTION_SHORT), self.multiplier * abs(unitChange))
+                    self.short(self.bestOrderPrice(tick, Direction.SHORT), self.multiplier * abs(unitChange))
 
-                self.putEvent()
+                self.put_event()
                 return
 
             # 止损平仓
@@ -541,17 +540,17 @@ class TurtleStrategy(CtaTemplate):
                 shortExit = min(self.shortStop, self.exitUp)
                 if tick.lastPrice >= shortExit:
                     self.close(tick.lastPrice)
-                    self.portfolio.newSignal(self.vtSymbol, DIRECTION_LONG, OFFSET_CLOSE)
+                    self.portfolio.newSignal(self.vt_symbol, Direction.LONG, Offset.CLOSE)
                     if self.pos < 0:
-                        self.cover(self.bestOrderPrice(tick, DIRECTION_LONG), abs(self.pos))
+                        self.cover(self.bestOrderPrice(tick, Direction.LONG), abs(self.pos))
                     # 平仓后更新最新指标
                     self.updateIndicator()
                     self.hasClose = True
 
-                self.putEvent()
+                self.put_event()
                 return
 
-        self.putEvent()
+        self.put_event()
 
     #----------------------------------------------------------------------
     def onBar(self, bar):
@@ -574,7 +573,7 @@ class TurtleStrategy(CtaTemplate):
         self.saveSyncData()        
     
         # 发出状态更新事件
-        self.putEvent()        
+        self.put_event()
 
     #----------------------------------------------------------------------
 
@@ -586,14 +585,8 @@ class TurtleStrategy(CtaTemplate):
     #----------------------------------------------------------------------
     def onTrade(self, trade):
         """成交推送"""
-        """
-        if trade.offset == OFFSET_OPEN:
-            # 计算止损价格
-            self.longStop = trade.price - 2*self.atrVolatility
-            self.shortStop = trade.price + 2*self.atrVolatility
-        """
         # 发出状态更新事件
-        self.putEvent()
+        self.put_event()
 
     #----------------------------------------------------------------------
     def onStopOrder(self, so):
@@ -607,8 +600,8 @@ class TurtleStrategy(CtaTemplate):
             return
 
         multiplier = 0
-        if self.atrVolatility * self.perSize:
-            multiplier = riskValue / (self.atrVolatility * self.perSize)
+        if self.atrVolatility * self.per_size:
+            multiplier = riskValue / (self.atrVolatility * self.per_size)
             multiplier = int(round(multiplier, 0))
         self.multiplier = multiplier
 
@@ -635,8 +628,8 @@ class TurtleStrategy(CtaTemplate):
     # 检查预计交易保证金是否超限
     def checkBondOver(self, price):
         # 一个unit预计占用保证金不得超过初始资金的20%
-        if price * self.multiplier * self.perSize * 0.1 > self.portfolio.portfolioValue * 0.2:
-            self.portfolio.addOverBond(self.vtSymbol, price, self.perSize, self.multiplier, self.atrVolatility)
+        if price * self.multiplier * self.per_size * 0.1 > self.portfolio.portfolioValue * 0.2:
+            self.portfolio.addOverBond(self.vt_symbol, price, self.per_size, self.multiplier, self.atrVolatility)
             return True
         else:
             return False
@@ -651,7 +644,7 @@ class TurtleStrategy(CtaTemplate):
     # 信号平仓
     def close(self, price):
         self.lastPnl = (price - self.entry) * self.virtualUnit
-        self.portfolio.addPnl(self.vtSymbol, self.lastPnl, self.multiplier, self.perSize, self.exitUp, self.exitDown, self.longStop, self.shortStop)
+        self.portfolio.addPnl(self.vt_symbol, self.lastPnl, self.multiplier, self.per_size, self.exitUp, self.exitDown, self.longStop, self.shortStop)
 
         self.virtualUnit = 0
         self.unit = 0
@@ -664,7 +657,7 @@ class TurtleStrategy(CtaTemplate):
             return
         self.posInitialNeed = True
 
-        initialManager = TurtleInitialManager(self.vtSymbol, self.entryWindow, self.exitWindow, self.atrWindow)
+        initialManager = TurtleInitialManager(self.vt_symbol, self.entryWindow, self.exitWindow, self.atrWindow)
         initialManager.backtesting()
 
         self.atrVolatility = initialManager.atrVolatility
@@ -694,18 +687,18 @@ class TurtleStrategy(CtaTemplate):
 
     # 计算最佳委托价格
     def bestOrderPrice(self, tick, direction):
-        if direction == DIRECTION_LONG:
+        if direction == Direction.LONG:
             if tick.upperLimit:
-                price = min(tick.upperLimit, tick.lastPrice + self.tickPrice * 20)
+                price = min(tick.upperLimit, tick.lastPrice + self.tick_price * 20)
             else:
-                price = tick.lastPrice + self.tickPrice * 20
+                price = tick.lastPrice + self.tick_price * 20
             return price
 
-        if direction == DIRECTION_SHORT:
+        if direction == Direction.SHORT:
             if tick.upperLimit:
-                price = max(tick.lowerLimit, tick.lastPrice - self.tickPrice * 20)
+                price = max(tick.lowerLimit, tick.lastPrice - self.tick_price * 20)
             else:
-                price = tick.lastPrice - self.tickPrice * 20
+                price = tick.lastPrice - self.tick_price * 20
             return price
 
         return 0

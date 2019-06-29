@@ -91,6 +91,20 @@ def load_json(filename: str):
         save_json(filename, {})
         return {}
 
+""" modify by loe """
+def load_json_path(filepath: str):
+    """
+    Load data from json file in temp path.
+    """
+
+    if filepath.exists():
+        with open(filepath, mode="r", encoding="UTF-8") as f:
+            data = json.load(f)
+        return data
+    else:
+        save_json(filename, {})
+        return {}
+
 
 def save_json(filename: str, data: dict):
     """

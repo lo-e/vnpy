@@ -138,3 +138,5 @@ class Interval(Enum):
     HOUR = "1h"
     DAILY = "d"
     WEEKLY = "w"
+
+LOG_DB_NAME = 'VnTrader_Log_Db'

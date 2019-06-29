@@ -1,801 +1,644 @@
-# encoding: UTF-8
+""""""
 
-'''
-本文件中实现了CTA策略引擎，针对CTA类型的策略，抽象简化了部分底层接口的功能。
-'''
-
-from __future__ import division
-
-import json
+import importlib
 import os
 import traceback
-from collections import OrderedDict
+from collections import defaultdict
+from pathlib import Path
+from typing import Any, Callable
 from datetime import datetime, timedelta
+from threading import Thread
+from queue import Queue
 from copy import copy
 
-from vnpy.event import Event
-from vnpy.trader.event import *
-from vnpy.trader.constant import *
-from vnpy.trader.object import TickData, BarData
-from vnpy.trader.gateway import SubscribeRequest, OrderRequest, CancelRequest, LogData
-from vnpy.trader.utility import load_json
-from vnpy.trader.engine import BaseEngine
+from vnpy.event import Event, EventEngine
+from vnpy.trader.engine import BaseEngine, MainEngine
+from vnpy.trader.object import (
+    OrderRequest,
+    SubscribeRequest,
+    HistoryRequest,
+    LogData,
+    TickData,
+    BarData,
+    ContractData
+)
+from vnpy.trader.event import (
+    EVENT_TICK, 
+    EVENT_ORDER, 
+    EVENT_TRADE,
+    EVENT_POSITION
+)
+from vnpy.trader.constant import (
+    Direction, 
+    OrderType, 
+    Interval, 
+    Exchange, 
+    Offset, 
+    Status
+)
+from vnpy.trader.utility import load_json, load_json_path, save_json, extract_vt_symbol, round_to
+from vnpy.trader.database import database_manager
 
-from vnpy.app.cta_strategy.base import *
-import threading
+from .base import APP_NAME
+from vnpy.app.cta_strategy.base import (
+    EVENT_CTA_LOG,
+    EVENT_CTA_STRATEGY,
+    EVENT_CTA_STOPORDER,
+    EngineType,
+    StopOrder,
+    StopOrderStatus,
+    STOPORDER_PREFIX,
+    POSITION_DB_NAME,
+    TURTLE_PORTFOLIO_DB_NAME
+)
+from vnpy.app.cta_strategy.template import CtaTemplate
+from vnpy.app.cta_strategy.converter import OffsetConverter
+
+""" modify by loe for Turtle """
 from .turtlePortfolio import TurtlePortfolio
 import re
 from .base import TRANSFORM_SYMBOL_LIST
-from pathlib import Path
-import importlib
-from vnpy.app.cta_strategy.template import CtaTemplate
+from collections import OrderedDict
 
-########################################################################
+from language import the
+#module = importlib.import_module('.language.the')
+
+STOP_STATUS_MAP = {
+    Status.SUBMITTING: StopOrderStatus.WAITING,
+    Status.NOTTRADED: StopOrderStatus.WAITING,
+    Status.PARTTRADED: StopOrderStatus.TRIGGERED,
+    Status.ALLTRADED: StopOrderStatus.TRIGGERED,
+    Status.CANCELLED: StopOrderStatus.CANCELLED,
+    Status.REJECTED: StopOrderStatus.CANCELLED
+}
+
+
 class TurtleEngine(BaseEngine):
-    """CTA策略引擎"""
-    settingFileName = 'TURTLE_setting.json'
+    """"""
 
-    STATUS_FINISHED = set([STATUS_REJECTED, STATUS_CANCELLED, STATUS_ALLTRADED])
+    engine_type = EngineType.LIVE  # live trading engine
 
-    # ----------------------------------------------------------------------
-    def __init__(self, mainEngine, eventEngine):
-        """Constructor"""
-        self.mainEngine = mainEngine
-        self.eventEngine = eventEngine
+    setting_filename = 'TURTLE_setting.json'
 
-        # 找到策略类
-        self.classes = {}               # class_name: stategy_class
-        self.load_strategy_class()
+    def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
+        """"""
+        super(TurtleEngine, self).__init__(
+            main_engine, event_engine, APP_NAME)
 
+        self.classes = {}           # class_name: stategy_class
+        self.strategies = {}        # strategy_name: strategy
+
+        self.symbol_strategy_map = defaultdict(
+            list)                   # vt_symbol: strategy list
+        self.orderid_strategy_map = {}  # vt_orderid: strategy
+        self.strategy_orderid_map = defaultdict(
+            set)                    # strategy_name: orderid list
+
+        self.stop_order_count = 0   # for generating stop_orderid
+        self.stop_orders = {}       # stop_orderid: stop_order
+
+        self.init_thread = None
+        self.init_queue = Queue()
+
+        self.vt_tradeids = set()    # for filtering duplicate trade
+
+        self.offset_converter = OffsetConverter(self.main_engine)
+
+        """ modify by loe for Turtle """
         # 当前日期
         self.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-
-        # 保存策略实例的字典
-        # key为策略名称，value为策略实例，注意策略名称不允许重复
-        self.strategyDict = {}
-
-        # 保存vtSymbol和策略实例映射的字典（用于推送tick数据）
-        # 由于可能多个strategy交易同一个vtSymbol，因此key为vtSymbol
-        # value为包含所有相关strategy对象的list
-        self.tickStrategyDict = {}
-
-        # 保存vtOrderID和strategy对象映射的字典（用于推送order和trade数据）
-        # key为vtOrderID，value为strategy对象
-        self.orderStrategyDict = {}
-
-        # 本地停止单编号计数
-        self.stopOrderCount = 0
-        # stopOrderID = STOPORDERPREFIX + str(stopOrderCount)
-
-        # 本地停止单字典
-        # key为stopOrderID，value为stopOrder对象
-        self.stopOrderDict = {}  # 停止单撤销后不会从本字典中删除
-        self.workingStopOrderDict = {}  # 停止单撤销后会从本字典中删除
-
-        # 保存策略名称和委托号列表的字典
-        # key为name，value为保存orderID（限价+本地停止）的集合
-        self.strategyOrderDict = {}
-
-        # 成交号集合，用来过滤已经收到过的成交推送
-        self.tradeSet = set()
-
-        # 引擎类型为实盘
-        self.engineType = ENGINETYPE_TRADING
-
-        # RQData数据服务
-        self.rq = None
-
-        # 注册日式事件类型
-        self.mainEngine.registerLogEvent(EVENT_CTA_LOG)
-
-        # 注册事件监听
-        self.registerEvent()
-
-    # ----------------------------------------------------------------------
-    def sendOrder(self, vtSymbol, orderType, price, volume, strategy):
-        """发单"""
-        contract = self.mainEngine.getContract(vtSymbol)
-
-        req = VtOrderReq()
-        req.symbol = contract.symbol
-        req.exchange = contract.exchange
-        req.vtSymbol = contract.vtSymbol
-        req.price = self.roundToPriceTick(contract.priceTick, price)
-        req.volume = volume
-
-        req.productClass = strategy.productClass
-        req.currency = strategy.currency
-
-        # 设计为CTA引擎发出的委托只允许使用限价单
-        req.priceType = PRICETYPE_LIMITPRICE
-
-        # CTA委托类型映射
-        if orderType == CTAORDER_BUY:
-            req.direction = DIRECTION_LONG
-            req.offset = OFFSET_OPEN
-
-        elif orderType == CTAORDER_SELL:
-            req.direction = DIRECTION_SHORT
-            req.offset = OFFSET_CLOSE
-
-        elif orderType == CTAORDER_SHORT:
-            req.direction = DIRECTION_SHORT
-            req.offset = OFFSET_OPEN
-
-        elif orderType == CTAORDER_COVER:
-            req.direction = DIRECTION_LONG
-            req.offset = OFFSET_CLOSE
-
-        # 委托转换
-        reqList = self.mainEngine.convertOrderReq(req)
-        vtOrderIDList = []
-
-        if not reqList:
-            return vtOrderIDList
-
-        for convertedReq in reqList:
-            vtOrderID = self.mainEngine.sendOrder(convertedReq, contract.gatewayName)  # 发单
-            self.orderStrategyDict[vtOrderID] = strategy  # 保存vtOrderID和策略的映射关系
-            self.strategyOrderDict[strategy.name].add(vtOrderID)  # 添加到策略委托号集合中
-            vtOrderIDList.append(vtOrderID)
-
-        self.write_log(u'策略%s发送委托，%s，%s，%s@%s'
-                         % (strategy.name, vtSymbol, req.direction, volume, price))
-
-        return vtOrderIDList
-
-    # ----------------------------------------------------------------------
-    def cancelOrder(self, vtOrderID):
-        """撤单"""
-        # 查询报单对象
-        order = self.mainEngine.getOrder(vtOrderID)
-
-        # 如果查询成功
-        if order:
-            # 检查是否报单还有效，只有有效时才发出撤单指令
-            orderFinished = (order.status == STATUS_ALLTRADED or order.status == STATUS_CANCELLED)
-            if not orderFinished:
-                req = VtCancelOrderReq()
-                req.symbol = order.symbol
-                req.exchange = order.exchange
-                req.frontID = order.frontID
-                req.sessionID = order.sessionID
-                req.orderID = order.orderID
-                self.mainEngine.cancelOrder(req, order.gatewayName)
-
-                # ----------------------------------------------------------------------
-
-    def sendStopOrder(self, vtSymbol, orderType, price, volume, strategy):
-        """发停止单（本地实现）"""
-        self.stopOrderCount += 1
-        stopOrderID = STOPORDERPREFIX + str(self.stopOrderCount)
-
-        so = StopOrder()
-        so.vtSymbol = vtSymbol
-        so.orderType = orderType
-        so.price = price
-        so.volume = volume
-        so.strategy = strategy
-        so.stopOrderID = stopOrderID
-        so.status = STOPORDER_WAITING
-
-        if orderType == CTAORDER_BUY:
-            so.direction = DIRECTION_LONG
-            so.offset = OFFSET_OPEN
-        elif orderType == CTAORDER_SELL:
-            so.direction = DIRECTION_SHORT
-            so.offset = OFFSET_CLOSE
-        elif orderType == CTAORDER_SHORT:
-            so.direction = DIRECTION_SHORT
-            so.offset = OFFSET_OPEN
-        elif orderType == CTAORDER_COVER:
-            so.direction = DIRECTION_LONG
-            so.offset = OFFSET_CLOSE
-
-            # 保存stopOrder对象到字典中
-        self.stopOrderDict[stopOrderID] = so
-        self.workingStopOrderDict[stopOrderID] = so
-
-        # 保存stopOrderID到策略委托号集合中
-        self.strategyOrderDict[strategy.name].add(stopOrderID)
-
-        # 推送停止单状态
-        strategy.onStopOrder(so)
-
-        return [stopOrderID]
-
-    # ----------------------------------------------------------------------
-    def cancelStopOrder(self, stopOrderID):
-        """撤销停止单"""
-        # 检查停止单是否存在
-        if stopOrderID in self.workingStopOrderDict:
-            so = self.workingStopOrderDict[stopOrderID]
-            strategy = so.strategy
-
-            # 更改停止单状态为已撤销
-            so.status = STOPORDER_CANCELLED
-
-            # 从活动停止单字典中移除
-            del self.workingStopOrderDict[stopOrderID]
-
-            # 从策略委托号集合中移除
-            s = self.strategyOrderDict[strategy.name]
-            if stopOrderID in s:
-                s.remove(stopOrderID)
-
-            # 通知策略
-            strategy.onStopOrder(so)
-
-    # ----------------------------------------------------------------------
-    def processStopOrder(self, tick):
-        """收到行情后处理本地停止单（检查是否要立即发出）"""
-        vtSymbol = tick.vtSymbol
-
-        # 首先检查是否有策略交易该合约
-        if vtSymbol in self.tickStrategyDict:
-            # 遍历等待中的停止单，检查是否会被触发
-            for so in self.workingStopOrderDict.values():
-                if so.vtSymbol == vtSymbol:
-                    longTriggered = so.direction == DIRECTION_LONG and tick.lastPrice >= so.price  # 多头停止单被触发
-                    shortTriggered = so.direction == DIRECTION_SHORT and tick.lastPrice <= so.price  # 空头停止单被触发
-
-                    if longTriggered or shortTriggered:
-                        # 买入和卖出分别以涨停跌停价发单（模拟市价单）
-                        # 对于没有涨跌停价格的市场则使用5档报价
-                        if so.direction == DIRECTION_LONG:
-                            if tick.upperLimit:
-                                price = tick.upperLimit
-                            else:
-                                price = tick.askPrice5
-                        else:
-                            if tick.lowerLimit:
-                                price = tick.lowerLimit
-                            else:
-                                price = tick.bidPrice5
-
-                        # 发出市价委托
-                        vtOrderID = self.sendOrder(so.vtSymbol, so.orderType,
-                                                   price, so.volume, so.strategy)
-
-                        # 检查因为风控流控等原因导致的委托失败（无委托号）
-                        if vtOrderID:
-                            # 从活动停止单字典中移除该停止单
-                            del self.workingStopOrderDict[so.stopOrderID]
-
-                            # 从策略委托号集合中移除
-                            s = self.strategyOrderDict[so.strategy.name]
-                            if so.stopOrderID in s:
-                                s.remove(so.stopOrderID)
-
-                            # 更新停止单状态，并通知策略
-                            so.status = STOPORDER_TRIGGERED
-                            so.strategy.onStopOrder(so)
-
-    # ----------------------------------------------------------------------
-    def processTickEvent(self, event):
-        """处理行情推送"""
-        tick = event.dict_['data']
-        tick = copy(tick)
-
-        # 收到tick行情后，先处理本地停止单（检查是否要立即发出）
-        self.processStopOrder(tick)
-
-        # 推送tick到对应的策略实例进行处理
-        if tick.vtSymbol in self.tickStrategyDict:
-            # tick时间可能出现异常数据，使用try...except实现捕捉和过滤
-            try:
-                # 添加datetime字段
-                if not tick.datetime:
-                    tick.datetime = datetime.strptime(' '.join([tick.date, tick.time]), '%Y%m%d %H:%M:%S.%f')
-            except ValueError:
-                self.write_log(traceback.format_exc())
-                return
-
-            # 逐个推送到策略实例中
-            l = self.tickStrategyDict[tick.vtSymbol]
-            for strategy in l:
-                if strategy.inited:
-                    self.callStrategyFunc(strategy, strategy.onTick, tick)
-
-    # ----------------------------------------------------------------------
-    def processOrderEvent(self, event):
-        """处理委托推送"""
-        order = event.dict_['data']
-
-        vtOrderID = order.vtOrderID
-
-        if vtOrderID in self.orderStrategyDict:
-            strategy = self.orderStrategyDict[vtOrderID]
-
-            # 如果委托已经完成（拒单、撤销、全成），则从活动委托集合中移除
-            if order.status in self.STATUS_FINISHED:
-                s = self.strategyOrderDict[strategy.name]
-                if vtOrderID in s:
-                    s.remove(vtOrderID)
-
-            self.callStrategyFunc(strategy, strategy.onOrder, order)
-
-    # ----------------------------------------------------------------------
-    def processTradeEvent(self, event):
-        """处理成交推送"""
-        trade = event.dict_['data']
-
-        # 过滤已经收到过的成交回报
-        if trade.vtTradeID in self.tradeSet:
-            return
-        self.tradeSet.add(trade.vtTradeID)
-
-        # 将成交推送到策略对象中
-        if trade.vtOrderID in self.orderStrategyDict:
-            strategy = self.orderStrategyDict[trade.vtOrderID]
-
-            # 计算策略持仓
-            if trade.direction == DIRECTION_LONG:
-                strategy.pos += trade.volume
-            else:
-                strategy.pos -= trade.volume
-
-            self.callStrategyFunc(strategy, strategy.onTrade, trade)
-
-            # 保存策略持仓到数据库
-            self.saveSyncData(strategy)
-
-    # ----------------------------------------------------------------------
-    def registerEvent(self):
-        """注册事件监听"""
-        self.eventEngine.register(EVENT_TICK, self.processTickEvent)
-        self.eventEngine.register(EVENT_ORDER, self.processOrderEvent)
-        self.eventEngine.register(EVENT_TRADE, self.processTradeEvent)
-
-    # ----------------------------------------------------------------------
-    def loadBar(self, dbName, collectionName, days):
-        # 如果没有则从数据库中读取数据
-        startDate = self.today - timedelta(days)
-
-        d = {'datetime': {'$gte': startDate}}
-
-        """ modify by loe """
-        collectionName = collectionName.upper()
-        startSymbol = re.sub("\d", "", collectionName)
-        if startSymbol in TRANSFORM_SYMBOL_LIST:
-            endSymbol = re.sub("\D", "", collectionName)
-            collectionName = startSymbol + '1' + endSymbol
-
-        barData = self.mainEngine.dbQuery(dbName, collectionName, d, 'datetime')
-
-        l = []
-        for d in barData:
-            bar = VtBarData()
-            bar.__dict__ = d
-            l.append(bar)
-        return l
-
-    # ----------------------------------------------------------------------
-    def loadTick(self, dbName, collectionName, days):
-        """从数据库中读取Tick数据，startDate是datetime对象"""
-        startDate = self.today - timedelta(days)
-
-        d = {'datetime': {'$gte': startDate}}
-        tickData = self.mainEngine.dbQuery(dbName, collectionName, d, 'datetime')
-
-        l = []
-        for d in tickData:
-            tick = VtTickData()
-            tick.__dict__ = d
-            l.append(tick)
-        return l
-
-        # ----------------------------------------------------------------------
-
-    def write_log(self, content):
-        """快速发出CTA模块日志事件"""
-        log = VtLogData()
-        log.logContent = content
-        log.gatewayName = 'CTA_STRATEGY'
-        event = Event(type_=EVENT_CTA_LOG)
-        event.dict_['data'] = log
-        self.eventEngine.put(event)
-
-        # ----------------------------------------------------------------------
-
-    def loadStrategy(self, setting):
-        """载入策略"""
-        try:
-            name = setting['name']
-            className = setting['className']
-            start = setting['start']
-        except Exception:
-            msg = traceback.format_exc()
-            self.write_log(u'载入策略出错：%s' % msg)
+        # 组合管理类
+        self.turtlePortfolio = None
+
+    def init_engine(self):
+        """
+        """
+        self.load_strategy_class()
+        self.load_strategy_setting()
+        self.register_event()
+        self.write_log("海归策略引擎初始化成功")
+
+    def close(self):
+        """"""
+        self.stop_all_strategies()
+
+    def register_event(self):
+        """"""
+        self.event_engine.register(EVENT_TICK, self.process_tick_event)
+        self.event_engine.register(EVENT_ORDER, self.process_order_event)
+        self.event_engine.register(EVENT_TRADE, self.process_trade_event)
+        self.event_engine.register(EVENT_POSITION, self.process_position_event)
+
+    def process_tick_event(self, event: Event):
+        """"""
+        tick = event.data
+
+        strategies = self.symbol_strategy_map[tick.vt_symbol]
+        if not strategies:
             return
 
-        if not start:
+        self.check_stop_order(tick)
+
+        for strategy in strategies:
+            if strategy.inited:
+                self.call_strategy_func(strategy, strategy.on_tick, tick)
+
+    def process_order_event(self, event: Event):
+        """"""
+        order = event.data
+        
+        self.offset_converter.update_order(order)
+
+        strategy = self.orderid_strategy_map.get(order.vt_orderid, None)
+        if not strategy:
             return
 
-        # 获取策略类
-        strategyClass = self.classes.get(className, None)
-        if not strategyClass:
-            self.write_log(u'找不到策略类：%s' % className)
+        # Remove vt_orderid if order is no longer active.
+        vt_orderids = self.strategy_orderid_map[strategy.strategy_name]
+        if order.vt_orderid in vt_orderids and not order.is_active():
+            vt_orderids.remove(order.vt_orderid)
+
+        # For server stop order, call strategy on_stop_order function
+        if order.type == OrderType.STOP:
+            so = StopOrder(
+                vt_symbol=order.vt_symbol,
+                direction=order.direction,
+                offset=order.offset,
+                price=order.price,
+                volume=order.volume,
+                stop_orderid=order.vt_orderid,
+                strategy_name=strategy.strategy_name,
+                status=STOP_STATUS_MAP[order.status],
+                vt_orderids=[order.vt_orderid],
+            )
+            self.call_strategy_func(strategy, strategy.on_stop_order, so)  
+
+        # Call strategy on_order function
+        self.call_strategy_func(strategy, strategy.on_order, order)
+
+    def process_trade_event(self, event: Event):
+        """"""
+        trade = event.data
+
+        # Filter duplicate trade push
+        if trade.vt_tradeid in self.vt_tradeids:
+            return
+        self.vt_tradeids.add(trade.vt_tradeid)
+
+        self.offset_converter.update_trade(trade)
+
+        strategy = self.orderid_strategy_map.get(trade.vt_orderid, None)
+        if not strategy:
             return
 
-        # 防止策略重名
-        if name in self.strategyDict:
-            self.write_log(u'策略实例重名：%s' % name)
+        if trade.direction == Direction.LONG:
+            strategy.pos += trade.volume
         else:
-            # 创建策略实例
-            strategy = strategyClass(self, self.turtlePortfolio, setting)
+            strategy.pos -= trade.volume
 
-            """ modify by loe """
-            # 加载同步数据
-            self.loadSyncData(strategy)
+        self.call_strategy_func(strategy, strategy.on_trade, trade)
+        self.put_strategy_event(strategy)
 
-            self.strategyDict[name] = strategy
+    def process_position_event(self, event: Event):
+        """"""
+        position = event.data
 
-            # 创建委托号列表
-            self.strategyOrderDict[name] = set()
+        self.offset_converter.update_position(position)
 
-            # 保存Tick映射关系
-            if strategy.vtSymbol in self.tickStrategyDict:
-                l = self.tickStrategyDict[strategy.vtSymbol]
-            else:
-                l = []
-                self.tickStrategyDict[strategy.vtSymbol] = l
-            l.append(strategy)
+    def check_stop_order(self, tick: TickData):
+        """"""
+        for stop_order in list(self.stop_orders.values()):
+            if stop_order.vt_symbol != tick.vt_symbol:
+                continue
 
-            """ modify by loe """
-            # 保存前主力Tick映射关系
-            if strategy.lastSymbol:
-                if strategy.lastSymbol in self.tickStrategyDict:
-                    l = self.tickStrategyDict[strategy.lastSymbol]
+            long_triggered = (
+                stop_order.direction == Direction.LONG and tick.last_price >= stop_order.price
+            )
+            short_triggered = (
+                stop_order.direction == Direction.SHORT and tick.last_price <= stop_order.price
+            )
+
+            if long_triggered or short_triggered:
+                strategy = self.strategies[stop_order.strategy_name]
+
+                # To get excuted immediately after stop order is
+                # triggered, use limit price if available, otherwise
+                # use ask_price_5 or bid_price_5
+                if stop_order.direction == Direction.LONG:
+                    if tick.limit_up:
+                        price = tick.limit_up
+                    else:
+                        price = tick.ask_price_5
                 else:
-                    l = []
-                    self.tickStrategyDict[strategy.lastSymbol] = l
-                l.append(strategy)
+                    if tick.limit_down:
+                        price = tick.limit_down
+                    else:
+                        price = tick.bid_price_5
+                
+                contract = self.main_engine.get_contract(stop_order.vt_symbol)
 
-            # 订阅行情
-            self.subscribeMarketData(strategy)
+                vt_orderids = self.send_limit_order(
+                    strategy, 
+                    contract,
+                    stop_order.direction, 
+                    stop_order.offset, 
+                    price, 
+                    stop_order.volume,
+                    stop_order.lock
+                )
 
-    # ----------------------------------------------------------------------
-    def subscribeMarketData(self, strategy):
-        """订阅行情"""
-        # 订阅合约
-        contract = self.mainEngine.getContract(strategy.vtSymbol)
-        if contract:
-            req = VtSubscribeReq()
-            req.symbol = contract.symbol
-            req.exchange = contract.exchange
+                # Update stop order status if placed successfully
+                if vt_orderids:
+                    # Remove from relation map.
+                    self.stop_orders.pop(stop_order.stop_orderid)
 
-            # 对于IB接口订阅行情时所需的货币和产品类型，从策略属性中获取
-            req.currency = strategy.currency
-            req.productClass = strategy.productClass
+                    strategy_vt_orderids = self.strategy_orderid_map[strategy.strategy_name]
+                    if stop_order.stop_orderid in strategy_vt_orderids:
+                        strategy_vt_orderids.remove(stop_order.stop_orderid)
 
-            self.mainEngine.subscribe(req, contract.gatewayName)
-        else:
-            self.write_log(u'%s的交易合约%s无法找到' % (strategy.name, strategy.vtSymbol))
+                    # Change stop order status to cancelled and update to strategy.
+                    stop_order.status = StopOrderStatus.TRIGGERED
+                    stop_order.vt_orderids = vt_orderids
 
-        """ modify by loe """
-        # 订阅前主力合约
-        if strategy.lastSymbol:
-            contract = self.mainEngine.getContract(strategy.lastSymbol)
-            if contract:
-                req = VtSubscribeReq()
-                req.symbol = contract.symbol
-                req.exchange = contract.exchange
+                    self.call_strategy_func(
+                        strategy, strategy.on_stop_order, stop_order
+                    )
+                    self.put_stop_order_event(stop_order)
 
-                # 对于IB接口订阅行情时所需的货币和产品类型，从策略属性中获取
-                req.currency = strategy.currency
-                req.productClass = strategy.productClass
-
-                self.mainEngine.subscribe(req, contract.gatewayName)
-            else:
-                self.write_log(u'%s的前主力合约%s无法找到' % (strategy.name, strategy.lastSymbol))
-
-    # ----------------------------------------------------------------------
-    def initPortfolio(self):
-        """ 初始化海龟组合 """
-        self.initAll()
-
-    # ----------------------------------------------------------------------
-    def startPortfolio(self):
-        """ 启动海龟组合 """
-        self.startAll()
-
-    # ----------------------------------------------------------------------
-    def stopPortfolio(self):
-        """ 停止海龟组合 """
-        self.stopAll()
-
-    # ----------------------------------------------------------------------
-    def initStrategy(self, name):
-        """初始化策略"""
-        if name in self.strategyDict:
-            strategy = self.strategyDict[name]
-
-            if not strategy.inited:
-                """ modify by loe """
-                # 把加载同步数据和订阅行情放到loadStrategy方法里
-
-                self.callStrategyFunc(strategy, strategy.onInit)  # 初始化
-                strategy.inited = True
-            else:
-                self.write_log(u'请勿重复初始化策略实例：%s' % name)
-        else:
-            self.write_log(u'策略实例不存在：%s' % name)
-
-            # ---------------------------------------------------------------------
-
-    def startStrategy(self, name):
-        """启动策略"""
-        if name in self.strategyDict:
-            strategy = self.strategyDict[name]
-
-            if strategy.inited and not strategy.trading:
-                strategy.trading = True
-                self.callStrategyFunc(strategy, strategy.onStart)
-        else:
-            self.write_log(u'策略实例不存在：%s' % name)
-
-    # ----------------------------------------------------------------------
-    def stopStrategy(self, name):
-        """停止策略"""
-        if name in self.strategyDict:
-            strategy = self.strategyDict[name]
-
-            if strategy.trading:
-                strategy.trading = False
-                self.callStrategyFunc(strategy, strategy.onStop)
-
-                # 对该策略发出的所有限价单进行撤单
-                for vtOrderID, s in self.orderStrategyDict.items():
-                    if s is strategy:
-                        self.cancelOrder(vtOrderID)
-
-                # 对该策略发出的所有本地停止单撤单
-                for stopOrderID, so in self.workingStopOrderDict.items():
-                    if so.strategy is strategy:
-                        self.cancelStopOrder(stopOrderID)
-        else:
-            self.write_log\
-                (u'策略实例不存在：%s' % name)
-
-            # ----------------------------------------------------------------------
-
-    def initAll(self):
-        """全部初始化"""
-        for name in self.strategyDict.keys():
-            self.initStrategy(name)
-
-            # ----------------------------------------------------------------------
-
-    def startAll(self):
-        """全部启动"""
-        for name in self.strategyDict.keys():
-            self.startStrategy(name)
-
-    # ----------------------------------------------------------------------
-    def stopAll(self):
-        """全部停止"""
-        for name in self.strategyDict.keys():
-            self.stopStrategy(name)
-
-            # ----------------------------------------------------------------------
-
-    # ----------------------------------------------------------------------
-    def loadSetting(self):
+    def send_server_order(
+        self,
+        strategy: CtaTemplate,
+        contract: ContractData,
+        direction: Direction,
+        offset: Offset,
+        price: float,
+        volume: float,
+        type: OrderType,
+        lock: bool
+    ):
         """
-        读取海归策略配置
+        Send a new order to server.
         """
-        l = load_json(self.settingFileName)
+        # Create request and send order.
+        original_req = OrderRequest(
+            symbol=contract.symbol,
+            exchange=contract.exchange,
+            direction=direction,
+            offset=offset,
+            type=type,
+            price=price,
+            volume=volume,
+        )
 
-        folioSetting = l.get('portfolio', None)
-        self.turtlePortfolio = TurtlePortfolio(self, folioSetting)
-        # 加载数据库组合数据
-        self.loadPortfolioSyncData()
+        # Convert with offset converter
+        req_list = self.offset_converter.convert_order_request(original_req, lock)
 
-        signalList = l['signal']
-        for setting in signalList:
-            self.loadStrategy(setting)
+        # Send Orders
+        vt_orderids = []
 
-    # ----------------------------------------------------------------------
-    def getStrategyVar(self, name):
-        """获取策略当前的变量字典"""
-        if name in self.strategyDict:
-            strategy = self.strategyDict[name]
-            varDict = OrderedDict()
+        for req in req_list:
+            vt_orderid = self.main_engine.send_order(
+                req, contract.gateway_name)
+            vt_orderids.append(vt_orderid)
 
-            for key in strategy.varList:
-                varDict[key] = strategy.__getattribute__(key)
+            self.offset_converter.update_order_request(req, vt_orderid)
+            
+            # Save relationship between orderid and strategy.
+            self.orderid_strategy_map[vt_orderid] = strategy
+            self.strategy_orderid_map[strategy.strategy_name].add(vt_orderid)
 
-            return varDict
+        return vt_orderids
+    
+    def send_limit_order(
+        self,
+        strategy: CtaTemplate,
+        contract: ContractData,
+        direction: Direction,
+        offset: Offset,
+        price: float,
+        volume: float,
+        lock: bool
+    ):
+        """
+        Send a limit order to server.
+        """
+        return self.send_server_order(
+            strategy,
+            contract,
+            direction,
+            offset,
+            price,
+            volume,
+            OrderType.LIMIT,
+            lock
+        )
+    
+    def send_server_stop_order(
+        self,
+        strategy: CtaTemplate,
+        contract: ContractData,
+        direction: Direction,
+        offset: Offset,
+        price: float,
+        volume: float,
+        lock: bool
+    ):
+        """
+        Send a stop order to server.
+        
+        Should only be used if stop order supported 
+        on the trading server.
+        """
+        return self.send_server_order(
+            strategy,
+            contract,
+            direction,
+            offset,
+            price,
+            volume,
+            OrderType.STOP,
+            lock
+        )
+
+    def send_local_stop_order(
+        self,
+        strategy: CtaTemplate,
+        direction: Direction,
+        offset: Offset,
+        price: float,
+        volume: float,
+        lock: bool
+    ):
+        """
+        Create a new local stop order.
+        """
+        self.stop_order_count += 1
+        stop_orderid = f"{STOPORDER_PREFIX}.{self.stop_order_count}"
+
+        stop_order = StopOrder(
+            vt_symbol=strategy.vt_symbol,
+            direction=direction,
+            offset=offset,
+            price=price,
+            volume=volume,
+            stop_orderid=stop_orderid,
+            strategy_name=strategy.strategy_name,
+            lock=lock
+        )
+
+        self.stop_orders[stop_orderid] = stop_order
+
+        vt_orderids = self.strategy_orderid_map[strategy.strategy_name]
+        vt_orderids.add(stop_orderid)
+
+        self.call_strategy_func(strategy, strategy.on_stop_order, stop_order)
+        self.put_stop_order_event(stop_order)
+
+        return stop_orderid
+
+    def cancel_server_order(self, strategy: CtaTemplate, vt_orderid: str):
+        """
+        Cancel existing order by vt_orderid.
+        """
+        order = self.main_engine.get_order(vt_orderid)
+        if not order:
+            self.write_log(f"撤单失败，找不到委托{vt_orderid}", strategy)
+            return
+
+        req = order.create_cancel_request()
+        self.main_engine.cancel_order(req, order.gateway_name)
+
+    def cancel_local_stop_order(self, strategy: CtaTemplate, stop_orderid: str):
+        """
+        Cancel a local stop order.
+        """
+        stop_order = self.stop_orders.get(stop_orderid, None)
+        if not stop_order:
+            return
+        strategy = self.strategies[stop_order.strategy_name]
+
+        # Remove from relation map.
+        self.stop_orders.pop(stop_orderid)
+
+        vt_orderids = self.strategy_orderid_map[strategy.strategy_name]
+        if stop_orderid in vt_orderids:
+            vt_orderids.remove(stop_orderid)
+
+        # Change stop order status to cancelled and update to strategy.
+        stop_order.status = StopOrderStatus.CANCELLED
+
+        self.call_strategy_func(strategy, strategy.on_stop_order, stop_order)
+        self.put_stop_order_event(stop_order)
+
+    def send_order(
+        self,
+        strategy: CtaTemplate,
+        direction: Direction,
+        offset: Offset,
+        price: float,
+        volume: float,
+        stop: bool,
+        lock: bool
+    ):
+        """
+        """
+        contract = self.main_engine.get_contract(strategy.vt_symbol)
+        if not contract:
+            self.write_log(f"委托失败，找不到合约：{strategy.vt_symbol}", strategy)
+            return ""
+        
+        # Round order price and volume to nearest incremental value
+        price = round_to(price, contract.pricetick)
+        volume = round_to(volume, contract.min_volume)
+        
+        if stop:
+            if contract.stop_supported:
+                return self.send_server_stop_order(strategy, contract, direction, offset, price, volume, lock)
+            else:
+                return self.send_local_stop_order(strategy, direction, offset, price, volume, lock)
         else:
-            self.write_log(u'策略实例不存在：' + name)
-            return None
+            return self.send_limit_order(strategy, contract, direction, offset, price, volume, lock)
 
-    # ----------------------------------------------------------------------
-    def getPortfolioVar(self):
-        varDict = OrderedDict()
+    def send_symbol_order(
+            self,
+            strategy: CtaTemplate,
+            vt_symbol:str,
+            direction: Direction,
+            offset: Offset,
+            price: float,
+            volume: float,
+            stop: bool,
+            lock: bool
+    ):
+        """
+        """
+        contract = self.main_engine.get_contract(vt_symbol)
+        if not contract:
+            self.write_log(f"委托失败，找不到合约：{vt_symbol}", strategy)
+            return ""
 
-        for key in self.turtlePortfolio.varList:
-            varDict[key] = self.turtlePortfolio.__getattribute__(key)
+        # Round order price and volume to nearest incremental value
+        price = round_to(price, contract.pricetick)
+        volume = round_to(volume, contract.min_volume)
 
-        return varDict
-
-    # ----------------------------------------------------------------------
-    def getStrategyParam(self, name):
-        """获取策略的参数字典"""
-        if name in self.strategyDict:
-            strategy = self.strategyDict[name]
-            paramDict = OrderedDict()
-
-            for key in strategy.paramList:
-                paramDict[key] = strategy.__getattribute__(key)
-
-            return paramDict
+        if stop:
+            if contract.stop_supported:
+                return self.send_server_stop_order(strategy, contract, direction, offset, price, volume, lock)
+            else:
+                return self.send_local_stop_order(strategy, direction, offset, price, volume, lock)
         else:
-            self.write_log(u'策略实例不存在：' + name)
-            return None
+            return self.send_limit_order(strategy, contract, direction, offset, price, volume, lock)
 
-    # ----------------------------------------------------------------------
-    def getPortfolioParam(self):
-        """获取策略的参数字典"""
-        paramDict = OrderedDict()
+    def cancel_order(self, strategy: CtaTemplate, vt_orderid: str):
+        """
+        """
+        if vt_orderid.startswith(STOPORDER_PREFIX):
+            self.cancel_local_stop_order(strategy, vt_orderid)
+        else:
+            self.cancel_server_order(strategy, vt_orderid)
 
-        for key in self.turtlePortfolio.paramList:
-            paramDict[key] = self.turtlePortfolio.__getattribute__(key)
+    def cancel_all(self, strategy: CtaTemplate):
+        """
+        Cancel all active orders of a strategy.
+        """
+        vt_orderids = self.strategy_orderid_map[strategy.strategy_name]
+        if not vt_orderids:
+            return
 
-        return paramDict
+        for vt_orderid in copy(vt_orderids):
+            self.cancel_order(strategy, vt_orderid)
 
-    # ----------------------------------------------------------------------
-    def getStrategyNames(self):
-        """查询所有策略名称"""
-        return self.strategyDict.keys()
+    def get_engine_type(self):
+        """"""
+        return self.engine_type
 
-        # ----------------------------------------------------------------------
+    def load_tick(
+        self, 
+        vt_symbol: str,
+        days: int,
+        callback: Callable[[TickData], None]
+    ):
+        """"""
+        symbol, exchange = extract_vt_symbol(vt_symbol)
+        end = datetime.now()
+        start = end - timedelta(days)
 
-    def putStrategyEvent(self, name):
-        """触发策略状态变化事件（通常用于通知GUI更新）"""
+        ticks = database_manager.load_tick_data(
+            symbol=symbol,
+            exchange=exchange,
+            start=start,
+            end=end,
+        )
 
-        """ modify by loe """
-        if name in self.strategyDict:
-            strategy = self.strategyDict[name]
-            self.saveSyncData(strategy)
+        for tick in ticks:
+            callback(tick)
 
-        strategy = self.strategyDict[name]
-        d = {k: strategy.__getattribute__(k) for k in strategy.varList}
-
-        event = Event(EVENT_CTA_STRATEGY + name)
-        event.dict_['data'] = d
-        self.eventEngine.put(event)
-
-        d2 = {k: str(v) for k, v in d.items()}
-        d2['name'] = name
-        event2 = Event(EVENT_CTA_STRATEGY)
-        event2.dict_['data'] = d2
-        self.eventEngine.put(event2)
-
-        # ----------------------------------------------------------------------
-
-    def callStrategyFunc(self, strategy, func, params=None):
-        """调用策略的函数，若触发异常则捕捉"""
+    def call_strategy_func(
+        self, strategy: CtaTemplate, func: Callable, params: Any = None
+    ):
+        """
+        Call function of a strategy and catch any exception raised.
+        """
         try:
             if params:
                 func(params)
             else:
                 func()
         except Exception:
-            # 停止策略，修改状态为未初始化
             strategy.trading = False
             strategy.inited = False
 
-            # 发出日志
-            content = '\n'.join([u'策略%s触发异常已停止' % strategy.name,
-                                 traceback.format_exc()])
-            self.write_log(content)
+            msg = f"触发异常已停止\n{traceback.format_exc()}"
+            self.write_log(msg, strategy)
 
-    # ----------------------------------------------------------------------
-    def saveSyncData(self, strategy):
-        """保存策略的持仓情况到数据库"""
-        flt = {'name': strategy.name,
-               'vtSymbol': strategy.vtSymbol}
+    def init_strategy(self, strategy_name: str):
+        """
+        Init a strategy.
+        """ 
+        self.init_queue.put(strategy_name)
 
-        d = copy(flt)
-        for key in strategy.syncList:
-            d[key] = strategy.__getattribute__(key)
+        if not self.init_thread:
+            self.init_thread = Thread(target=self._init_strategy)
+            self.init_thread.start()
 
-        self.mainEngine.dbUpdate(POSITION_DB_NAME, strategy.className,
-                                 d, flt, True)
+    def _init_strategy(self):
+        """
+        Init strategies in queue.
+        """
+        while not self.init_queue.empty():
+            strategy_name = self.init_queue.get()
+            strategy = self.strategies[strategy_name]
 
-        content = u'策略%s同步数据保存成功，当前持仓%s' % (strategy.name, strategy.pos)
-        self.write_log(content)
+            if strategy.inited:
+                self.write_log(f"{strategy_name}已经完成初始化，禁止重复操作")
+                continue
 
-    # ----------------------------------------------------------------------
-    def loadSyncData(self, strategy):
-        """从数据库载入策略的持仓情况"""
-        flt = {'name': strategy.name,
-               'vtSymbol': strategy.vtSymbol}
-        syncData = self.mainEngine.dbQuery(POSITION_DB_NAME, strategy.className, flt)
+            self.write_log(f"{strategy_name}开始执行初始化")
 
-        if not syncData:
-            return
+            # Call on_init function of strategy
+            self.call_strategy_func(strategy, strategy.on_init)
 
-        d = syncData[0]
-
-        for key in strategy.syncList:
-            if key in d:
-                strategy.__setattr__(key, d[key])
-
-    # ----------------------------------------------------------------------
-    def savePortfolioSyncData(self):
-        """保存组合变量到数据库"""
-        d = {}
-        for key in self.turtlePortfolio.syncList:
-            d[key] = self.turtlePortfolio.__getattribute__(key)
-
-        self.mainEngine.dbUpdate(TURTLE_PORTFOLIO_DB_NAME, self.turtlePortfolio.name,
-                                 d, {}, True)
-
-        content = u'海龟组合%s\t数据保存成功' % (self.turtlePortfolio.name)
-        self.write_log(content)
-
-        # ----------------------------------------------------------------------
-
-    def loadPortfolioSyncData(self):
-        """从数据库载入策略的持仓情况"""
-        syncData = self.mainEngine.dbQuery(TURTLE_PORTFOLIO_DB_NAME, self.turtlePortfolio.name, {})
-
-        if not syncData:
-            return
-
-        d = syncData[0]
-
-        for key in self.turtlePortfolio.syncList:
-            if key in d:
-                self.turtlePortfolio.__setattr__(key, d[key])
-
-    # ----------------------------------------------------------------------
-    def roundToPriceTick(self, priceTick, price):
-        """取整价格到合约最小价格变动"""
-        if not priceTick:
-            return price
-
-        newPrice = round(price / priceTick, 0) * priceTick
-        return newPrice
-
-        # ----------------------------------------------------------------------
-
-    def stop(self):
-        """停止"""
-        pass
-
-    # ----------------------------------------------------------------------
-    def cancelAll(self, name):
-        """全部撤单"""
-        s = self.strategyOrderDict[name]
-
-        # 遍历列表，全部撤单
-        # 这里不能直接遍历集合s，因为撤单时会修改s中的内容，导致出错
-        for orderID in list(s):
-            if STOPORDERPREFIX in orderID:
-                self.cancelStopOrder(orderID)
+            # Subscribe market data
+            contract = self.main_engine.get_contract(strategy.vt_symbol)
+            if contract:
+                req = SubscribeRequest(
+                    symbol=contract.symbol, exchange=contract.exchange)
+                self.main_engine.subscribe(req, contract.gateway_name)
             else:
-                self.cancelOrder(orderID)
+                self.write_log(f"行情订阅失败，找不到合约{strategy.vt_symbol}", strategy)
 
-    # ----------------------------------------------------------------------
-    def getPriceTick(self, strategy):
-        """获取最小价格变动"""
-        contract = self.mainEngine.getContract(strategy.vtSymbol)
-        if contract:
-            return contract.priceTick
-        return 0
+            # Put event to update init completed status.
+            strategy.inited = True
+            self.put_strategy_event(strategy)
+            self.write_log(f"{strategy_name}初始化完成")
+        
+        self.init_thread = None
 
-    # ======================================================================
+    def start_strategy(self, strategy_name: str):
+        """
+        Start a strategy.
+        """
+        strategy = self.strategies[strategy_name]
+        if not strategy.inited:
+            self.write_log(f"策略{strategy.strategy_name}启动失败，请先初始化")
+            return
+
+        if strategy.trading:
+            self.write_log(f"{strategy_name}已经启动，请勿重复操作")
+            return
+
+        self.call_strategy_func(strategy, strategy.on_start)
+        strategy.trading = True
+
+        self.put_strategy_event(strategy)
+
+    def stop_strategy(self, strategy_name: str):
+        """
+        Stop a strategy.
+        """
+        strategy = self.strategies[strategy_name]
+        if not strategy.trading:
+            return
+
+        # Call on_stop function of the strategy
+        self.call_strategy_func(strategy, strategy.on_stop)
+
+        # Change trading status of strategy to False
+        strategy.trading = False
+
+        # Cancel all orders of the strategy
+        self.cancel_all(strategy)
+
+        # Update GUI
+        self.put_strategy_event(strategy)
 
     def load_strategy_class(self):
         """
         Load strategy class from source code.
         """
-        dirPath = Path.cwd().joinpath("strategies")
-        self.load_strategy_class_from_folder(dirPath, "strategies")
+        path1 = Path(__file__).parent.joinpath("strategies")
+        self.load_strategy_class_from_folder(
+            path1, ".strategies")
 
     def load_strategy_class_from_folder(self, path: Path, module_name: str = ""):
         """
@@ -822,3 +665,292 @@ class TurtleEngine(BaseEngine):
         except:  # noqa
             msg = f"策略文件{module_name}加载失败，触发异常：\n{traceback.format_exc()}"
             self.write_log(msg)
+
+    def get_all_strategy_class_names(self):
+        """
+        Return names of strategy classes loaded.
+        """
+        return list(self.classes.keys())
+
+    def init_all_strategies(self):
+        """
+        """
+        for strategy_name in self.strategies.keys():
+            self.init_strategy(strategy_name)
+
+    def start_all_strategies(self):
+        """
+        """
+        for strategy_name in self.strategies.keys():
+            self.start_strategy(strategy_name)
+
+    def stop_all_strategies(self):
+        """
+        """
+        for strategy_name in self.strategies.keys():
+            self.stop_strategy(strategy_name)
+
+    def put_stop_order_event(self, stop_order: StopOrder):
+        """
+        Put an event to update stop order status.
+        """
+        event = Event(EVENT_CTA_STOPORDER, stop_order)
+        self.event_engine.put(event)
+
+    def put_strategy_event(self, strategy: CtaTemplate):
+        """
+        Put an event to update strategy status.
+        """
+        # 保存strategy数据到数据库
+        strategy_name = strategy.strategy_name
+        if strategy_name in self.strategies:
+            strategy = self.strategies[strategy_name]
+            self.saveSyncData(strategy)
+
+        data = strategy.get_data()
+        event1 = Event(EVENT_CTA_STRATEGY, data)
+        self.event_engine.put(event1)
+
+        event2 = Event(EVENT_CTA_STRATEGY + strategy_name, data)
+        self.event_engine.put(event2)
+
+    def write_log(self, msg: str, strategy: CtaTemplate = None):
+        """
+        Create cta engine log event.
+        """
+        if strategy:
+            msg = f"{strategy.strategy_name}: {msg}"
+
+        log = LogData(msg=msg, gateway_name="CtaStrategy")
+        event = Event(type=EVENT_CTA_LOG, data=log)
+        self.event_engine.put(event)
+
+    def send_email(self, msg: str, strategy: CtaTemplate = None):
+        """
+        Send email to default receiver.
+        """
+        if strategy:
+            subject = f"{strategy.strategy_name}"
+        else:
+            subject = "CTA策略引擎"
+
+        self.main_engine.send_email(subject, msg)
+
+    """ modify by loe for Turtle """
+    def load_bar(self, dbName, collectionName, days):
+        # 如果没有则从数据库中读取数据
+        startDate = self.today - timedelta(days)
+
+        d = {'datetime': {'$gte': startDate}}
+
+        """ modify by loe """
+        collectionName = collectionName.upper()
+        startSymbol = re.sub("\d", "", collectionName)
+        if startSymbol in TRANSFORM_SYMBOL_LIST:
+            endSymbol = re.sub("\D", "", collectionName)
+            collectionName = startSymbol + '1' + endSymbol
+
+        barData = self.main_engine.dbQuery(dbName, collectionName, d, 'datetime')
+
+        l = []
+        for d in barData:
+            gateway_name = d['gateway_name']
+            symbol = d['symbol']
+            exchange = Exchange.RQ
+            datetime = d['datetime']
+            endDatetime = None
+
+            bar = BarData(gateway_name=gateway_name, symbol=symbol, exchange=exchange, datetime=datetime,
+                          endDatetime=endDatetime)
+            bar.__dict__ = d
+            l.append(bar)
+        return l
+
+    def load_strategy_setting(self):
+        """
+        Load setting file.
+        """
+        cwd = Path.cwd()
+        file_path = cwd.joinpath('App', 'Turtle', self.setting_filename)
+        l = load_json_path(file_path)
+
+        folioSetting = l.get('portfolio', None)
+        self.turtlePortfolio = TurtlePortfolio(self, folioSetting)
+        # 加载数据库组合数据
+        self.loadPortfolioSyncData()
+
+        # 加载海归策略
+        signalList = l.get('signal', None)
+        for setting in signalList:
+            self.add_strategy(setting)
+
+    def add_strategy(self, setting):
+        """
+        Add a new strategy.
+        """
+        try:
+            name = setting['strategy_name']
+            class_name = setting['class_name']
+            start = setting['start']
+        except Exception:
+            msg = traceback.format_exc()
+            self.write_log(f'载入策略出错：{msg}')
+            return
+
+        if not start:
+            return
+
+        # 获取策略类
+        strategy_class = self.classes.get(class_name, None)
+        if not strategy_class:
+            self.write_log(f'找不到策略类：{class_name}')
+            return
+
+        # 防止策略重名
+        if name in self.strategies:
+            self.write_log(f'策略实例重名：{name}')
+            return
+
+        # 创建策略实例
+        strategy = strategy_class(self, self.turtlePortfolio, setting)
+        # 加载同步数据
+        self.loadSyncData(strategy)
+        self.strategies[name] = strategy
+
+        # Add vt_symbol to strategy map.
+        strategies = self.symbol_strategy_map[strategy.vt_symbol]
+        strategies.append(strategy)
+
+        # 保存前主力Tick映射关系
+        if strategy.last_symbol:
+            strategies = self.symbol_strategy_map[strategy.lastSymbol]
+            strategies.append(strategy)
+
+        self.put_strategy_event(strategy)
+
+    def loadSyncData(self, strategy):
+        """从数据库载入策略的持仓情况"""
+        flt = {'strategy_name': strategy.strategy_name,
+               'vt_symbol': strategy.vt_symbol}
+        syncData = self.main_engine.dbQuery(POSITION_DB_NAME, strategy.class_name, flt)
+
+        if not syncData:
+            return
+
+        d = syncData[0]
+
+        for key in strategy.syncs:
+            if key in d:
+                strategy.__setattr__(key, d[key])
+
+    def saveSyncData(self, strategy):
+        """保存策略的持仓情况到数据库"""
+        flt = {'strategy_name': strategy.name,
+               'vt_symbol': strategy.vt_symbol}
+
+        d = copy(flt)
+        for key in strategy.syncs:
+            d[key] = strategy.__getattribute__(key)
+
+        self.main_engine.dbUpdate(POSITION_DB_NAME, strategy.class_name,
+                                 d, flt, True)
+
+        content = f'策略{strategy.strategy_name}同步数据保存成功，当前持仓{strategy.pos}'
+        self.write_log(content)
+
+    def savePortfolioSyncData(self):
+        """保存组合变量到数据库"""
+        d = {}
+        for key in self.turtlePortfolio.syncList:
+            d[key] = self.turtlePortfolio.__getattribute__(key)
+
+        self.main_engine.dbUpdate(TURTLE_PORTFOLIO_DB_NAME, self.turtlePortfolio.name,
+                                 d, {}, True)
+
+        content = f'海龟组合{self.turtlePortfolio.name}\t数据保存成功'
+        self.write_log(content)
+
+        # ----------------------------------------------------------------------
+
+    def loadPortfolioSyncData(self):
+        """从数据库载入策略的持仓情况"""
+        syncData = self.main_engine.dbQuery(TURTLE_PORTFOLIO_DB_NAME, self.turtlePortfolio.name, {})
+
+        if not syncData:
+            return
+
+        d = syncData[0]
+
+        for key in self.turtlePortfolio.syncList:
+            if key in d:
+                self.turtlePortfolio.__setattr__(key, d[key])
+
+    def initPortfolio(self):
+        """ 初始化海龟组合 """
+        self.init_all_strategies()
+
+    def startPortfolio(self):
+        """ 启动海龟组合 """
+        self.start_all_strategies()
+
+    def stopPortfolio(self):
+        """ 停止海龟组合 """
+        self.stop_all_strategies()
+
+    def get_strategy_parameters(self, strategy_name):
+        """
+        Get parameters of a strategy.
+        """
+        if strategy_name in self.strategies:
+            strategy = self.strategies[strategy_name]
+            paramDict = OrderedDict()
+
+            for key in strategy.parameters:
+                paramDict[key] = strategy.__getattribute__(key)
+
+            return paramDict
+        else:
+            self.write_log(f'策略实例不存在：{strategy_name}')
+            return None
+
+    def get_strategy_variables(self, strategy_name):
+        """获取策略当前的变量字典"""
+        if strategy_name in self.strategies:
+            strategy = self.strategies[strategy_name]
+            varDict = OrderedDict()
+
+            for key in strategy.variables:
+                varDict[key] = strategy.__getattribute__(key)
+
+            return varDict
+        else:
+            self.write_log(f'策略实例不存在：{strategy_name}')
+            return None
+
+    def get_portfolio_variables(self):
+        varDict = OrderedDict()
+
+        for key in self.turtlePortfolio.varList:
+            varDict[key] = self.turtlePortfolio.__getattribute__(key)
+
+        return varDict
+
+    def get_portfolio_parameters(self):
+        """获取策略的参数字典"""
+        paramDict = OrderedDict()
+
+        for key in self.turtlePortfolio.paramList:
+            paramDict[key] = self.turtlePortfolio.__getattribute__(key)
+
+        return paramDict
+
+    def get_strategy_names(self):
+        """查询所有策略名称"""
+        return self.strategies.keys()
+
+    def getPriceTick(self, strategy):
+        """获取最小价格变动"""
+        contract = self.main_engine.getContract(strategy.vt_symbol)
+        if contract:
+            return contract.priceTick
+        return 0

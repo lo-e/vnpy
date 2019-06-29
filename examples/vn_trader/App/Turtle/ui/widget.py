@@ -46,7 +46,7 @@ class CtaValueMonitor(QtWidgets.QTableWidget):
 
             col = 0
             for k, v in data.items():
-                cell = QtWidgets.QTableWidgetItem(unicode(v))
+                cell = QtWidgets.QTableWidgetItem(v)
                 self.keyCellDict[k] = cell
                 self.setItem(0, col, cell)
                 col += 1
@@ -55,7 +55,7 @@ class CtaValueMonitor(QtWidgets.QTableWidget):
         else:
             for k, v in data.items():
                 cell = self.keyCellDict[k]
-                cell.setText(unicode(v))
+                cell.setText(v)
 
 
 ########################################################################
@@ -115,11 +115,11 @@ class CtaStrategyManager(QtWidgets.QGroupBox):
     # ----------------------------------------------------------------------
     def updateMonitor(self):
         """显示策略最新状态"""
-        paramDict = self.turtleEngine.getStrategyParam(self.name)
+        paramDict = self.turtleEngine.get_strategy_parameters(self.name)
         if paramDict:
             self.paramMonitor.updateData(paramDict)
 
-        varDict = self.turtleEngine.getStrategyVar(self.name)
+        varDict = self.turtleEngine.get_strategy_variables(self.name)
         if varDict:
             self.varMonitor.updateData(varDict)
 
@@ -128,7 +128,8 @@ class CtaStrategyManager(QtWidgets.QGroupBox):
     def updateVar(self, event):
         """更新组合变量"""
         data = event.data
-        self.varMonitor.updateData(data)
+        variables = data['variables']
+        self.varMonitor.updateData(variables)
 
     # ----------------------------------------------------------------------
     def registerEvent(self):
@@ -214,11 +215,11 @@ class TurtlePortfolioManager(QtWidgets.QGroupBox):
     # ----------------------------------------------------------------------
     def updateMonitor(self):
         """显示组合最新状态"""
-        paramDict = self.turtleEngine.getPortfolioParam()
+        paramDict = self.turtleEngine.get_portfolio_parameters()
         if paramDict:
             self.paramMonitor.updateData(paramDict)
 
-        varDict = self.turtleEngine.getPortfolioVar()
+        varDict = self.turtleEngine.get_portfolio_variables()
         if varDict:
             self.varMonitor.updateData(varDict)
 
@@ -239,7 +240,7 @@ class TurtlePortfolioManager(QtWidgets.QGroupBox):
     def load(self):
         """加载组合"""
         if not self.strategyLoaded:
-            self.turtleEngine.loadSetting()
+            self.turtleEngine.init_engine()
             # 加载组合
             self.updateMonitor()
             # 加载信号
@@ -314,7 +315,7 @@ class TurtleManager(QtWidgets.QWidget):
         w = QtWidgets.QWidget()
         vbox = QtWidgets.QVBoxLayout()
 
-        l = self.turtleEngine.getStrategyNames()
+        l = self.turtleEngine.get_strategy_names()
         for name in l:
             strategyManager = CtaStrategyManager(self.turtleEngine, self.eventEngine, name)
             vbox.addWidget(strategyManager)
