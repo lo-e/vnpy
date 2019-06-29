@@ -6,14 +6,13 @@
 
 from __future__ import division
 
-from vnpy.trader.vtObject import VtBarData
 from vnpy.trader.constant import (Direction, Offset)
 from vnpy.app.cta_strategy.template import CtaTemplate
-from vnpy.trader.vtUtility import BarGenerator, ArrayManager
-from vnpy.trader.app.ctaStrategy.ctaBase import *
+from vnpy.trader.utility import ArrayManager
+from vnpy.app.cta_strategy.base import *
 import datetime
 import re
-from strategyTurtleInitial import TurtleInitialManager
+from .strategyTurtleInitial import TurtleInitialManager
 
 #====== 交易时间 ======
 #商品期货

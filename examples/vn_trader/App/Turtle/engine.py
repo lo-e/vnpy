@@ -60,9 +60,6 @@ import re
 from .base import TRANSFORM_SYMBOL_LIST
 from collections import OrderedDict
 
-from language import the
-#module = importlib.import_module('.language.the')
-
 STOP_STATUS_MAP = {
     Status.SUBMITTING: StopOrderStatus.WAITING,
     Status.NOTTRADED: StopOrderStatus.WAITING,
@@ -638,7 +635,7 @@ class TurtleEngine(BaseEngine):
         """
         path1 = Path(__file__).parent.joinpath("strategies")
         self.load_strategy_class_from_folder(
-            path1, ".strategies")
+            path1, "App.Turtle.strategies")
 
     def load_strategy_class_from_folder(self, path: Path, module_name: str = ""):
         """
@@ -778,6 +775,7 @@ class TurtleEngine(BaseEngine):
         self.turtlePortfolio = TurtlePortfolio(self, folioSetting)
         # 加载数据库组合数据
         self.loadPortfolioSyncData()
+        self.savePortfolioSyncData()
 
         # 加载海归策略
         signalList = l.get('signal', None)
@@ -832,7 +830,7 @@ class TurtleEngine(BaseEngine):
         """从数据库载入策略的持仓情况"""
         flt = {'strategy_name': strategy.strategy_name,
                'vt_symbol': strategy.vt_symbol}
-        syncData = self.main_engine.dbQuery(POSITION_DB_NAME, strategy.class_name, flt)
+        syncData = self.main_engine.dbQuery(POSITION_DB_NAME, strategy.__class__.__name__, flt)
 
         if not syncData:
             return
@@ -845,14 +843,14 @@ class TurtleEngine(BaseEngine):
 
     def saveSyncData(self, strategy):
         """保存策略的持仓情况到数据库"""
-        flt = {'strategy_name': strategy.name,
+        flt = {'strategy_name': strategy.strategy_name,
                'vt_symbol': strategy.vt_symbol}
 
         d = copy(flt)
         for key in strategy.syncs:
             d[key] = strategy.__getattribute__(key)
 
-        self.main_engine.dbUpdate(POSITION_DB_NAME, strategy.class_name,
+        self.main_engine.dbUpdate(POSITION_DB_NAME, strategy.__class__.__name__,
                                  d, flt, True)
 
         content = f'策略{strategy.strategy_name}同步数据保存成功，当前持仓{strategy.pos}'

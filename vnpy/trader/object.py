@@ -73,7 +73,12 @@ class TickData(BaseData):
 
     def __post_init__(self):
         """"""
-        self.vt_symbol = f"{self.symbol}.{self.exchange.value}"
+        """ modify by loe """
+        # 增加了if判断
+        if self.exchange:
+            self.vt_symbol = f"{self.symbol}.{self.exchange.value}"
+        else:
+            self.vt_symbol = self.symbol
 
 
 @dataclass
@@ -99,7 +104,12 @@ class BarData(BaseData):
 
     def __post_init__(self):
         """"""
-        self.vt_symbol = f"{self.symbol}.{self.exchange.value}"
+        """ modify by loe """
+        # 增加了if判断
+        if self.exchange:
+            self.vt_symbol = f"{self.symbol}.{self.exchange.value}"
+        else:
+            self.vt_symbol = self.symbol
 
 
 @dataclass

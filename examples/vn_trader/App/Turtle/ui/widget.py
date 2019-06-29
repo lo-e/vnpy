@@ -46,7 +46,7 @@ class CtaValueMonitor(QtWidgets.QTableWidget):
 
             col = 0
             for k, v in data.items():
-                cell = QtWidgets.QTableWidgetItem(v)
+                cell = QtWidgets.QTableWidgetItem(str(v))
                 self.keyCellDict[k] = cell
                 self.setItem(0, col, cell)
                 col += 1
@@ -55,7 +55,10 @@ class CtaValueMonitor(QtWidgets.QTableWidget):
         else:
             for k, v in data.items():
                 cell = self.keyCellDict[k]
-                cell.setText(v)
+                cell.setText(str(v))
+
+        # 自动调节宽度
+        self.resizeColumnsToContents()
 
 
 ########################################################################
@@ -82,9 +85,12 @@ class CtaStrategyManager(QtWidgets.QGroupBox):
         self.paramMonitor = CtaValueMonitor(self)
         self.varMonitor = CtaValueMonitor(self)
 
-        height = 86
+        height = 120
+        width = 5000
         self.paramMonitor.setFixedHeight(height)
+        self.paramMonitor.setFixedWidth(width)
         self.varMonitor.setFixedHeight(height)
+        self.varMonitor.setFixedWidth(width)
 
         buttonInit = QtWidgets.QPushButton(text.INIT)
         buttonStart = QtWidgets.QPushButton(text.START)
@@ -179,11 +185,11 @@ class TurtlePortfolioManager(QtWidgets.QGroupBox):
         self.paramMonitor = CtaValueMonitor(self)
         self.varMonitor = CtaValueMonitor(self)
 
-        height = 65
+        height = 100
         self.paramMonitor.setFixedHeight(height)
         self.varMonitor.setFixedHeight(height)
 
-        buttonLoad = QtWidgets.QPushButton(u'加载组合')
+        buttonLoad = QtWidgets.QPushButton('加载组合')
         buttonInit = QtWidgets.QPushButton(text.INIT)
         buttonStart = QtWidgets.QPushButton(text.START)
         buttonStop = QtWidgets.QPushButton(text.STOP)
@@ -291,11 +297,11 @@ class TurtleManager(QtWidgets.QWidget):
 
         # 海龟组合
         portfolioManager = TurtlePortfolioManager(self.turtleEngine, self.eventEngine, self)
-        portfolioManager.setMaximumHeight(200)
+        portfolioManager.setMaximumHeight(600)
 
         # 滚动区域，放置所有的CtaStrategyManager
         self.scrollArea = QtWidgets.QScrollArea()
-        self.scrollArea.setWidgetResizable(True)
+        #self.scrollArea.setWidgetResizable(True)
 
         # CTA组件的日志监控
         self.ctaLogMonitor = QtWidgets.QTextEdit()

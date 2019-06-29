@@ -2,15 +2,14 @@
 
 from collections import defaultdict
 
-from vnpy.trader.vtConstant import (DIRECTION_LONG, DIRECTION_SHORT,
-                                    OFFSET_OPEN, OFFSET_CLOSE)
-from vnpy.trader.vtUtility import ArrayManager
+from vnpy.trader.constant import Direction
+from vnpy.trader.utility import ArrayManager
 
 import re
-from datetime import  datetime
 from pymongo import MongoClient, ASCENDING
-from vnpy.trader.vtObject import VtBarData
-from vnpy.trader.app.ctaStrategy.ctaBase import TRANSFORM_SYMBOL_LIST, DAILY_DB_NAME
+from vnpy.trader.object import BarData
+from vnpy.app.cta_strategy.base import DAILY_DB_NAME
+from App.Turtle.base import TRANSFORM_SYMBOL_LIST
 
 ########################################################################
 class TurtleResult(object):
@@ -83,7 +82,9 @@ class TurtleInitialManager(object):
 
     def backtesting(self):
         # 获取数据库bar数据
-        self.client = MongoClient('localhost', 27017)
+        self.client = MongoClient('localhost', 27017, serverSelectionTimeoutMS=600)
+        self.dbClient.server_info()
+
         db = self.client[DAILY_DB_NAME]
 
         collectionName = self.vtSymbol.upper()
@@ -95,7 +96,7 @@ class TurtleInitialManager(object):
         collection = db[collectionName]
         cursor = collection.find().sort('date')
         for dic in cursor:
-            b = VtBarData()
+            b = BarData(gateway_name='', symbol='', exchange=None, datetime=None, endDatetime=None)
             b.__dict__ = dic
             self.barList.append(b)
 
@@ -202,7 +203,7 @@ class TurtleInitialManager(object):
     #----------------------------------------------------------------------
     def buy(self, price, volume):
         """买入开仓"""
-        price = self.calculateTradePrice(DIRECTION_LONG, price)
+        price = self.calculateTradePrice(Direction.LONG, price)
         self.open(price, volume)
         
         # 以最后一次加仓价格，加上两倍N计算止损
@@ -211,13 +212,13 @@ class TurtleInitialManager(object):
     #----------------------------------------------------------------------
     def sell(self, price):
         """卖出平仓"""
-        price = self.calculateTradePrice(DIRECTION_SHORT, price)
+        price = self.calculateTradePrice(Direction.SHORT, price)
         self.close(price)
     
     #----------------------------------------------------------------------
     def short(self, price, volume):
         """卖出开仓"""
-        price = self.calculateTradePrice(DIRECTION_SHORT, price)
+        price = self.calculateTradePrice(Direction.SHORT, price)
         self.open(price, -volume)
         
         # 以最后一次加仓价格，加上两倍N计算止损
@@ -226,7 +227,7 @@ class TurtleInitialManager(object):
     #----------------------------------------------------------------------
     def cover(self, price):
         """买入平仓"""
-        price = self.calculateTradePrice(DIRECTION_LONG, price)
+        price = self.calculateTradePrice(Direction.LONG, price)
         self.close(price)
 
     #----------------------------------------------------------------------
@@ -260,7 +261,7 @@ class TurtleInitialManager(object):
     def calculateTradePrice(self, direction, price):
         """计算成交价格"""
         # 买入时，停止单成交的最优价格不能低于当前K线开盘价
-        if direction == DIRECTION_LONG:
+        if direction == Direction.LONG:
             tradePrice = max(self.bar.open, price)
         # 卖出时，停止单成交的最优价格不能高于当前K线开盘价
         else:
