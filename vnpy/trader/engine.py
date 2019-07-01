@@ -60,9 +60,7 @@ class MainEngine:
         self.init_engines()
 
         """ modify by loe """
-        # 连接MongoDB数据库
         self.dbClient = None
-        self.dbConnect()
 
     def add_engine(self, engine_class: Any):
         """

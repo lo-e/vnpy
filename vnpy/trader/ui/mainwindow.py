@@ -46,6 +46,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.init_ui()
 
+        """ modify by loe """
+        # main_engine连接MongoDB数据库
+        self.main_engine.dbConnect()
+
     def init_ui(self):
         """"""
         self.setWindowTitle(self.window_title)

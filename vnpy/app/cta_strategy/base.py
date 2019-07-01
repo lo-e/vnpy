@@ -5,7 +5,7 @@ Defines constants and objects used in CtaStrategy App.
 from dataclasses import dataclass, field
 from enum import Enum
 
-from vnpy.trader.constant import Direction, Offset
+from vnpy.trader.constant import Direction, Offset, Exchange
 
 APP_NAME = "CtaStrategy"
 STOPORDER_PREFIX = "STOP"
@@ -54,3 +54,8 @@ POSITION_DB_NAME = 'VnTrader_Position_Db'
 SETTING_DB_NAME = 'VnTrader_Setting_Db'
 TURTLE_PORTFOLIO_DB_NAME = 'VnTrader_Turtle_Portfolio_Db'
 DOMINANT_DB_NAME = 'Dominant_db'
+
+EXCHANGE_SYMBOL_DICT = {Exchange.CFFEX:['IF', 'IC', 'IH'],
+                        Exchange.SHFE:['AL', 'RB', 'HC'],
+                        Exchange.CZCE:['SM', 'ZC', 'TA'],
+                        Exchange.DCE:['I', 'JM', 'J']}

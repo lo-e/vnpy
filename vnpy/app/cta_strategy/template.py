@@ -6,7 +6,10 @@ from vnpy.trader.constant import Interval, Direction, Offset
 from vnpy.trader.object import BarData, TickData, OrderData, TradeData
 from vnpy.trader.utility import virtual
 
-from .base import StopOrder, EngineType
+from .base import StopOrder, EngineType, EXCHANGE_SYMBOL_DICT
+
+""" modify by loe """
+import re
 
 
 class CtaTemplate(ABC):
@@ -39,6 +42,18 @@ class CtaTemplate(ABC):
         self.variables.insert(2, "pos")
 
         self.update_setting(setting)
+        """ modify by loe """
+        self.check_vt_symbol()
+
+    """ modify by loe """
+    def check_vt_symbol(self):
+        sepList = self.vt_symbol.split('.')
+        symbol = sepList[0]
+        startSymbol = re.sub("\d", "", symbol).upper()
+        for key, value in EXCHANGE_SYMBOL_DICT.items():
+            if startSymbol in value:
+                self.vt_symbol = '.'.join([symbol, key.value])
+                break
 
     def update_setting(self, setting: dict):
         """

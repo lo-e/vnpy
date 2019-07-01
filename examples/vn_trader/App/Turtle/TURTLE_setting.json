@@ -4,7 +4,7 @@
         "strategy_name": "TURTLE_RB",
         "class_name": "TurtleStrategy",
         "vt_symbol": "rb1910",
-        "last_symbol":"",
+        "last_symbol":"rb1909",
         "per_size":10,
         "tick_price":1,
         "start": true

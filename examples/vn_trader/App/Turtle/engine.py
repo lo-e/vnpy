@@ -584,6 +584,17 @@ class TurtleEngine(BaseEngine):
             else:
                 self.write_log(f"行情订阅失败，找不到合约{strategy.vt_symbol}", strategy)
 
+            """ modify by loe """
+            # 订阅last_symbol行情
+            if strategy.last_symbol:
+                contract = self.main_engine.get_contract(strategy.last_symbol)
+                if contract:
+                    req = SubscribeRequest(
+                        symbol=contract.symbol, exchange=contract.exchange)
+                    self.main_engine.subscribe(req, contract.gateway_name)
+                else:
+                    self.write_log(f"行情订阅失败，找不到合约{strategy.last_symbol}", strategy)
+
             # Put event to update init completed status.
             strategy.inited = True
             self.put_strategy_event(strategy)
@@ -821,7 +832,7 @@ class TurtleEngine(BaseEngine):
 
         # 保存前主力Tick映射关系
         if strategy.last_symbol:
-            strategies = self.symbol_strategy_map[strategy.lastSymbol]
+            strategies = self.symbol_strategy_map[strategy.last_symbol]
             strategies.append(strategy)
 
         self.put_strategy_event(strategy)
