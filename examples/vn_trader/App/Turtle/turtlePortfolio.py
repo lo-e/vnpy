@@ -87,6 +87,7 @@ class TurtlePortfolio(object):
                 """ modify by loe """
                 # 高度关联品种单方向持仓不能超过上限
                 startSymbol = re.sub("\d", "", vtSymbol).upper()
+                startSymbol = startSymbol.split('.')[0]
                 for key, value in CATEGORY_DICT.items():
                     if startSymbol in value:
                         if self.categoryLongUnitDict.get(key, 0) >= MAX_CATEGORY_POS:
@@ -103,6 +104,7 @@ class TurtlePortfolio(object):
 
                 """ modify by loe """
                 startSymbol = re.sub("\d", "", vtSymbol).upper()
+                startSymbol = startSymbol.split('.')[0]
                 for key, value in CATEGORY_DICT.items():
                     if startSymbol in value:
                         if self.categoryLongUnitDict.get(key, 0) <= -MAX_CATEGORY_POS:
@@ -144,6 +146,7 @@ class TurtlePortfolio(object):
             """ modify by loe """
             # 类别持仓
             startSymbol = re.sub("\d", "", symbol).upper()
+            startSymbol = startSymbol.split('.')[0]
             for key, value in CATEGORY_DICT.items():
                 if startSymbol in value:
                     if unit > 0:

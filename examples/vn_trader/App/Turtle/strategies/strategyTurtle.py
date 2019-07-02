@@ -13,6 +13,7 @@ from vnpy.app.cta_strategy.base import *
 import datetime
 import re
 from .strategyTurtleInitial import TurtleInitialManager
+from vnpy.trader.constant import Interval
 
 #====== 交易时间 ======
 #商品期货
@@ -166,7 +167,7 @@ class TurtleStrategy(CtaTemplate):
             # 从数据库载入前主力的持仓情况
             flt = {'strategy_name': self.strategy_name,
                    'vt_symbol': self.last_symbol}
-            syncData = self.ctaEngine.mainEngine.dbQuery(POSITION_DB_NAME, self.className, flt)
+            syncData = self.cta_engine.main_engine.dbQuery(POSITION_DB_NAME, self.__class__.__name__, flt)
 
             if not syncData:
                 self.write_log(f'前主力合约数据库交易数据缺失，需要检查！\tlastSymbol：{self.last_symbol}')
@@ -191,23 +192,19 @@ class TurtleStrategy(CtaTemplate):
 
         self.barDbName = DAILY_DB_NAME
         # 载入历史数据，并采用回放计算的方式初始化策略数值
-        initData = self.load_bar(300)
+        initData = self.load_bar(300, interval=Interval.DAILY)
         for bar in initData:
             self.on_bar(bar)
-
-        self.put_event()
 
     #----------------------------------------------------------------------
     def on_start(self):
         """启动策略（必须由用户继承实现）"""
         self.write_log(f'{self.strategy_name}\t策略启动')
-        self.put_event()
 
     #----------------------------------------------------------------------
     def on_stop(self):
         """停止策略（必须由用户继承实现）"""
         self.write_log(f'{self.strategy_name}\t策略停止')
-        self.put_event()
 
     #----------------------------------------------------------------------
     def on_tick(self, tick):
@@ -229,8 +226,8 @@ class TurtleStrategy(CtaTemplate):
 
         # 主力换月时清空前主力仓位
         if tick.vt_symbol == self.last_symbol:
-            if self.lastSymbolClearNeed::
-                if self.lastClearPos > 0
+            if self.lastSymbolClearNeed:
+                if self.lastClearPos > 0:
                     orderList = self.sendSymbolOrder(self.last_symbol, Direction.SHORT, Offset.CLOSE, self.bestOrderPrice(tick, Direction.SHORT),
                                          abs(self.lastClearPos))
                     if len(orderList):
@@ -566,9 +563,6 @@ class TurtleStrategy(CtaTemplate):
         # 判断是否要更新交易信号
         if self.virtualUnit == 0:
             self.updateIndicator()
-        
-        # 同步数据到数据库
-        self.saveSyncData()        
     
         # 发出状态更新事件
         self.put_event()
@@ -583,8 +577,7 @@ class TurtleStrategy(CtaTemplate):
     #----------------------------------------------------------------------
     def on_trade(self, trade):
         """成交推送"""
-        # 发出状态更新事件
-        self.put_event()
+        pass
 
     #----------------------------------------------------------------------
     def on_stop_order(self, so):
@@ -686,15 +679,15 @@ class TurtleStrategy(CtaTemplate):
     # 计算最佳委托价格
     def bestOrderPrice(self, tick, direction):
         if direction == Direction.LONG:
-            if tick.upperLimit:
-                price = min(tick.upperLimit, tick.last_price + self.tick_price * 20)
+            if tick.limit_up:
+                price = min(tick.limit_up, tick.last_price + self.tick_price * 20)
             else:
                 price = tick.last_price + self.tick_price * 20
             return price
 
         if direction == Direction.SHORT:
-            if tick.upperLimit:
-                price = max(tick.lowerLimit, tick.last_price - self.tick_price * 20)
+            if tick.limit_down:
+                price = max(tick.limit_down, tick.last_price - self.tick_price * 20)
             else:
                 price = tick.last_price - self.tick_price * 20
             return price

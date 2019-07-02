@@ -9,7 +9,7 @@ from vnpy.gateway.futu import FutuGateway
 from vnpy.gateway.ib import IbGateway
 """ modify by loe """
 # 去掉了ctptestGateway的导入又注释这行，需要CtptestGateway直接替换CtpGateway
-from vnpy.gateway.ctptest import CtptestGateway
+from vnpy.gateway.ctp import CtpGateway
 
 from vnpy.gateway.femas import FemasGateway
 from vnpy.gateway.tiger import TigerGateway
@@ -45,7 +45,7 @@ def main():
 
     """ modify by loe """
     # 去掉了ctptestGateway注释这行，需要CtptestGateway直接替换CtpGateway
-    main_engine.add_gateway(CtptestGateway)
+    main_engine.add_gateway(CtpGateway)
 
     main_engine.add_gateway(BinanceGateway)
     main_engine.add_gateway(FemasGateway)

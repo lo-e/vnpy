@@ -47,6 +47,7 @@ class TurtleInitialManager(object):
                  entryWindow, exitWindow, atrWindow):
         
         self.vtSymbol = vtSymbol        # 合约代码
+        self.vtSymbol = self.vtSymbol.split('.')[0]
         self.entryWindow = entryWindow  # 入场通道周期数
         self.exitWindow = exitWindow    # 出场通道周期数
         self.atrWindow = atrWindow      # 计算ATR周期数
@@ -83,7 +84,7 @@ class TurtleInitialManager(object):
     def backtesting(self):
         # 获取数据库bar数据
         self.client = MongoClient('localhost', 27017, serverSelectionTimeoutMS=600)
-        self.dbClient.server_info()
+        self.client.server_info()
 
         db = self.client[DAILY_DB_NAME]
 
@@ -108,8 +109,8 @@ class TurtleInitialManager(object):
     #----------------------------------------------------------------------
     def onBar(self, bar):
         self.bar = bar
-        self.am.updateBar(bar)
-        self.atrAm.updateBar(bar)
+        self.am.update_bar(bar)
+        self.atrAm.update_bar(bar)
         if not self.am.inited or not self.atrAm.inited:
             return
 
@@ -130,14 +131,14 @@ class TurtleInitialManager(object):
         if self.unit > 0:
             longExit = max(self.longStop, self.exitDown)
             
-            if bar.low <= longExit:
+            if bar.low_price <= longExit:
                 self.sell(longExit)
                 return
 
         elif self.unit < 0:
             shortExit = min(self.shortStop, self.exitUp)
 
-            if bar.high >= shortExit:
+            if bar.high_price >= shortExit:
                 self.cover(shortExit)
                 return
 
@@ -145,19 +146,19 @@ class TurtleInitialManager(object):
         if self.unit >= 0:
             trade = False
             
-            if bar.high >= self.longEntry1 and self.unit < 1:
+            if bar.high_price >= self.longEntry1 and self.unit < 1:
                 self.buy(self.longEntry1, 1)
                 trade = True
             
-            if bar.high >= self.longEntry2 and self.unit < 2:
+            if bar.high_price >= self.longEntry2 and self.unit < 2:
                 self.buy(self.longEntry2, 1)
                 trade = True
             
-            if bar.high >= self.longEntry3 and self.unit < 3:
+            if bar.high_price >= self.longEntry3 and self.unit < 3:
                 self.buy(self.longEntry3, 1)
                 trade = True
             
-            if bar.high >= self.longEntry4 and self.unit < 4:
+            if bar.high_price >= self.longEntry4 and self.unit < 4:
                 self.buy(self.longEntry4, 1)
                 trade = True
             
@@ -166,16 +167,16 @@ class TurtleInitialManager(object):
 
         # 没有仓位或者持有空头仓位的时候，可以做空（加仓）
         if self.unit <= 0:
-            if bar.low <= self.shortEntry1 and self.unit > -1:
+            if bar.low_price <= self.shortEntry1 and self.unit > -1:
                 self.short(self.shortEntry1, 1)
             
-            if bar.low <= self.shortEntry2 and self.unit > -2:
+            if bar.low_price <= self.shortEntry2 and self.unit > -2:
                 self.short(self.shortEntry2, 1)
             
-            if bar.low <= self.shortEntry3 and self.unit > -3:
+            if bar.low_price <= self.shortEntry3 and self.unit > -3:
                 self.short(self.shortEntry3, 1)
             
-            if bar.low <= self.shortEntry4 and self.unit > -4:
+            if bar.low_price <= self.shortEntry4 and self.unit > -4:
                 self.short(self.shortEntry4, 1)
             
     #----------------------------------------------------------------------
@@ -262,10 +263,10 @@ class TurtleInitialManager(object):
         """计算成交价格"""
         # 买入时，停止单成交的最优价格不能低于当前K线开盘价
         if direction == Direction.LONG:
-            tradePrice = max(self.bar.open, price)
+            tradePrice = max(self.bar.open_price, price)
         # 卖出时，停止单成交的最优价格不能高于当前K线开盘价
         else:
-            tradePrice = min(self.bar.open, price)
+            tradePrice = min(self.bar.open_price, price)
         
         return tradePrice
     

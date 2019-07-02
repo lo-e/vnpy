@@ -69,6 +69,10 @@ STOP_STATUS_MAP = {
     Status.REJECTED: StopOrderStatus.CANCELLED
 }
 
+from vnpy.app.cta_strategy.base import (TICK_DB_NAME,
+                                        DAILY_DB_NAME,
+                                        MINUTE_DB_NAME)
+
 
 class TurtleEngine(BaseEngine):
     """"""
@@ -733,6 +737,10 @@ class TurtleEngine(BaseEngine):
         event = Event(type=EVENT_CTA_LOG, data=log)
         self.event_engine.put(event)
 
+        # 输出日志内容
+        print(f'{log.time}\t{log.gateway_name}\t{log.msg}')
+
+
     def send_email(self, msg: str, strategy: CtaTemplate = None):
         """
         Send email to default receiver.
@@ -745,14 +753,20 @@ class TurtleEngine(BaseEngine):
         self.main_engine.send_email(subject, msg)
 
     """ modify by loe for Turtle """
-    def load_bar(self, dbName, collectionName, days):
-        # 如果没有则从数据库中读取数据
-        startDate = self.today - timedelta(days)
+    def load_bar(self, vt_symbol, days, interval, callback):
+        if interval == Interval.DAILY:
+            dbName = DAILY_DB_NAME
+        elif interval == Interval.MINUTE:
+            dbName = MINUTE_DB_NAME
+        else:
+            dbName = TICK_DB_NAME
 
+        startDate = self.today - timedelta(days)
         d = {'datetime': {'$gte': startDate}}
 
         """ modify by loe """
-        collectionName = collectionName.upper()
+        collectionName = vt_symbol.upper()
+        collectionName = collectionName.split('.')[0]
         startSymbol = re.sub("\d", "", collectionName)
         if startSymbol in TRANSFORM_SYMBOL_LIST:
             endSymbol = re.sub("\D", "", collectionName)

@@ -243,7 +243,7 @@ class CtaTemplate(ABC):
         if not callback:
             callback = self.on_bar
 
-        self.cta_engine.load_bar(self.vt_symbol, days, interval, callback)
+        return self.cta_engine.load_bar(self.vt_symbol, days, interval, callback)
 
     def load_tick(self, days: int):
         """
@@ -271,6 +271,17 @@ class CtaTemplate(ABC):
         """
         if self.trading:
             self.cta_engine.sync_strategy_data(self)
+
+    """ modify by loe """
+    def sendSymbolOrder(self, symbol, direction, offset, price, volume, stop=False):
+        """发送委托"""
+        if self.trading:
+            vt_orderids = self.cta_engine.send_symbol_order(
+                self, symbol, direction, offset, price, volume, stop, False)
+            return vt_orderids
+        else:
+            # 交易停止时发单返回空字符串
+            return []
 
 
 class CtaSignal(ABC):
@@ -406,16 +417,3 @@ class TargetPosTemplate(CtaTemplate):
                 else:
                     vt_orderids = self.short(short_price, abs(pos_change))
             self.vt_orderids.extend(vt_orderids)
-
-    """ modify by loe """
-
-    # ----------------------------------------------------------------------
-    def sendSymbolOrder(self, symbol, direction, offset, price, volume, stop=False):
-        """发送委托"""
-        if self.trading:
-            vt_orderids = self.cta_engine.send_symbol_order(
-                self, symbol, direction, offset, price, volume, stop, False)
-            return vt_orderids
-        else:
-            # 交易停止时发单返回空字符串
-            return []

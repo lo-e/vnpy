@@ -230,8 +230,6 @@ class MainEngine:
             gateway.close()
 
     """ modify by loe """
-
-    # ----------------------------------------------------------------------
     def dbConnect(self):
         """连接MongoDB数据库"""
         if not self.dbClient:
@@ -295,6 +293,12 @@ class MainEngine:
             'gateway': log.gateway_name
         }
         self.dbInsert(LOG_DB_NAME, self.todayDate, d)
+
+        """ modify by loe """
+        if log.gateway_name:
+            print(f'{log.time}\t{log.gateway_name}\t{log.msg}')
+        else:
+            print(f'{log.time}\t{log.msg}')
 
 class BaseEngine(ABC):
     """
