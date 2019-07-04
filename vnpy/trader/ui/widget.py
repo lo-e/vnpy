@@ -158,9 +158,14 @@ class TimeCell(BaseCell):
         """
         timestamp = content.strftime("%H:%M:%S")
 
+        """ modify by loe """
+        # 修改了毫秒的显示算法
         millisecond = int(content.microsecond / 1000)
-        if millisecond:
-            timestamp = f"{timestamp}.{millisecond}"
+        millisecondStr = str(millisecond)
+        sub = 3 - len(millisecondStr)
+        if sub > 0:
+            millisecondStr = millisecondStr + '0' * sub
+        timestamp = f"{timestamp}.{millisecondStr}"
 
         self.setText(timestamp)
         self._data = data
