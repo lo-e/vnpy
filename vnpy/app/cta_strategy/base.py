@@ -10,6 +10,8 @@ from vnpy.trader.constant import Direction, Offset, Exchange
 APP_NAME = "CtaStrategy"
 STOPORDER_PREFIX = "STOP"
 
+""" modify by loe """
+import re
 
 class StopOrderStatus(Enum):
     WAITING = "等待中"
@@ -54,6 +56,10 @@ POSITION_DB_NAME = 'VnTrader_Position_Db'
 SETTING_DB_NAME = 'VnTrader_Setting_Db'
 TURTLE_PORTFOLIO_DB_NAME = 'VnTrader_Turtle_Portfolio_Db'
 DOMINANT_DB_NAME = 'Dominant_db'
+
+def MinuteDataBaseName(duration:int):
+    return re.sub("\d", f'{duration}', MINUTE_DB_NAME)
+
 
 EXCHANGE_SYMBOL_DICT = {Exchange.CFFEX:['IF', 'IC', 'IH'],
                         Exchange.SHFE:['AL', 'RB', 'HC'],
