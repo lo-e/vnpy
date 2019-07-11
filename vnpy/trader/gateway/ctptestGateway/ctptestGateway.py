@@ -1458,6 +1458,7 @@ class CtpTdApi(TdApi):
         req = {}
         
         req['InstrumentID'] = orderReq.symbol
+        req['ExchangeID'] = orderReq.exchange
         req['LimitPrice'] = orderReq.price
         req['VolumeTotalOriginal'] = int(orderReq.volume)
         

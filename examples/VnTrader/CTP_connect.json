@@ -1,9 +1,9 @@
 {
-    "brokerID": "9999",
-    "mdAddress": "tcp://180.168.146.187:10111",
-    "tdAddress": "tcp://180.168.146.187:10101",
-    "userID": "106908",
-    "password": "970720699",
-    "appID": "simnow_client_test",
-    "authCode": "0000000000000000"
+    "brokerID": "8070",
+    "mdAddress": "tcp://101.226.253.243:21213",
+    "tdAddress": "tcp://101.226.253.243:21205",
+    "userID": "759089",
+    "password": "970720699kq",
+    "appID": "client_loe_1.0.0",
+    "authCode": "HZSR30Z2PY323WF5"
 }
