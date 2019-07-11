@@ -1,0 +1,2 @@
+symbol,size,priceTick,variableCommission,fixedCommission,slippage,name,result
+huobif/eos.usd.q,10,0.001,0.0003,0,0.001,火币合约/EOS季度,

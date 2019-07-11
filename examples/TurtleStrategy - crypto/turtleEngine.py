@@ -45,6 +45,7 @@ class BacktestingEngine(object):
         self.slippageDict = {}              # 滑点成本字典
         
         self.portfolioValue = 0
+        self.cryptoValue = 33333
         self.startDt = None
         self.endDt = None
         self.currentDt = None
@@ -209,8 +210,8 @@ class BacktestingEngine(object):
         
         profitDays = 0
         lossDays = 0
-        endBalance = self.portfolioValue
-        highlevel = self.portfolioValue
+        endBalance = self.cryptoValue
+        highlevel = self.cryptoValue
         totalNetPnl = 0
         totalCommission = 0
         totalSlippage = 0
@@ -249,7 +250,7 @@ class BacktestingEngine(object):
 
         maxDrawdown = min(drawdownList)
         maxDdPercent = min(ddPercentList)
-        totalReturn = (endBalance / self.portfolioValue - 1) * 100
+        totalReturn = (endBalance / self.cryptoValue - 1) * 100
         dailyReturn = np.mean(returnList) * 100
         annualizedReturn = dailyReturn * annualDays
         returnStd = np.std(returnList) * 100
@@ -312,7 +313,7 @@ class BacktestingEngine(object):
         self.output(u'盈利交易日\t%s' % result['profitDays'])
         self.output(u'亏损交易日：\t%s' % result['lossDays'])
         
-        self.output(u'起始资金：\t%s' % self.portfolioValue)
+        self.output(u'起始资金：\t%s' % self.cryptoValue)
         self.output(u'结束资金：\t%s' % formatNumber(result['endBalance']))
     
         self.output(u'总收益率：\t%s%%' % formatNumber(result['totalReturn']))
@@ -472,13 +473,14 @@ class DailyResult(object):
                     side = -1
 
                 """ modify by loe """
-                commissionCost = (trade.volume * fixedCommission + trade.volume * size * trade.price * variableCommission)
-                slippageCost = trade.volume * size * slippage
+                openCryptoAmount = (size / trade.price) * trade.volume
+                commissionCost = openCryptoAmount * variableCommission
+                #slippageCost = trade.volume * size * slippage
 
                 if close:
-                    pnl = (close - trade.price) * trade.volume * side * size
+                    pnl = (size / trade.price - size / close) * trade.volume * side
                     self.commission += commissionCost
-                    self.slippage += slippageCost
+                    #self.slippage += slippageCost
                     self.tradingPnl += pnl
                 else:
                     print('*' * 20)
@@ -497,7 +499,7 @@ class DailyResult(object):
             """ modify by loe """
             if close:
                 if previousClose:
-                    pnl = (close - previousClose) * pos * size
+                    pnl = (size / previousClose - size / close) * pos
                     self.holdingPnl += pnl
             elif pos:
                 print('*'*20)

@@ -779,10 +779,10 @@ class TurtleEngine(BaseEngine):
             gateway_name = d['gateway_name']
             symbol = d['symbol']
             exchange = Exchange.RQ
-            datetime = d['datetime']
+            theDatetime = d['datetime']
             endDatetime = None
 
-            bar = BarData(gateway_name=gateway_name, symbol=symbol, exchange=exchange, datetime=datetime,
+            bar = BarData(gateway_name=gateway_name, symbol=symbol, exchange=exchange, datetime=theDatetime,
                           endDatetime=endDatetime)
             bar.__dict__ = d
             l.append(bar)

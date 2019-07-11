@@ -145,6 +145,14 @@ class CtaTemplate(ABC):
         """
         Callback of new trade data update.
         """
+
+        """ modify by loe """
+        try:
+            # 邮件提醒
+            self.send_email(f'====== 成交 ======\n\n合约：{trade.symbol}\n开平：{trade.offset}\n方向：{trade.direction} \n价格：{trade.price}\n数量：{trade.volume}')
+        except:
+            pass
+
         pass
 
     @virtual
@@ -201,6 +209,14 @@ class CtaTemplate(ABC):
             vt_orderids = self.cta_engine.send_order(
                 self, direction, offset, price, volume, stop, lock
             )
+
+            """ modify by loe """
+            try:
+                # 邮件提醒
+                self.send_email(f'====== 委托 ======\n\n合约：{self.vt_symbol}\n开平：{offset}\n方向：{direction} \n价格：{price}\n数量：{volume}')
+            except:
+                pass
+
             return vt_orderids
         else:
             return []
@@ -278,6 +294,14 @@ class CtaTemplate(ABC):
         if self.trading:
             vt_orderids = self.cta_engine.send_symbol_order(
                 self, symbol, direction, offset, price, volume, stop, False)
+
+            """ modify by loe """
+            try:
+                # 邮件提醒
+                self.send_email(f'====== 委托 ======\n\n合约：{symbol}\n开平：{offset}\n方向：{direction} \n价格：{price}\n数量：{volume}')
+            except:
+                pass
+
             return vt_orderids
         else:
             # 交易停止时发单返回空字符串
