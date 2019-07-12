@@ -577,7 +577,8 @@ class TurtleStrategy(CtaTemplate):
     #----------------------------------------------------------------------
     def on_trade(self, trade):
         """成交推送"""
-        pass
+        # 邮件提醒
+        super(TurtleStrategy, self).on_trade(trade)
 
     #----------------------------------------------------------------------
     def on_stop_order(self, so):
