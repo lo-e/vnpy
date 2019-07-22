@@ -380,10 +380,6 @@ class TurtleSignal(object):
         if not self.newDominantOpen:
             return
 
-        """ fake """
-        if self.symbol == 'SM99' and self.bar.datetime >= datetime(2019, 4, 16):
-            a = 2
-
         if self.portfolio.tradingStart:
             # 如果开始正式交易的时候该信号有历史仓位，则忽略这笔开平交易
             if self.bar.datetime >= self.portfolio.tradingStart:
@@ -500,9 +496,9 @@ class TurtlePortfolio(object):
         
         self.tradingDict = {}       # 交易中的信号字典
         
-        self.sizeDict = {}          # 合约大小字典
-        self.multiplierDict = {}    # 按照波动幅度计算的委托量单位字典
-        self.posDict = {}           # 真实持仓量字典
+        self.sizeDict = {}                          # 合约大小字典
+        self.multiplierDict = defaultdict(list)     # 按照波动幅度计算的委托量单位字典
+        self.posDict = {}                           # 真实持仓量字典
         
         self.portfolioValue = 0     # 组合市值
     
@@ -536,19 +532,24 @@ class TurtlePortfolio(object):
 
         unit = self.unitDict[signal.symbol]
         
-        # 如果当前无仓位，则重新根据波动幅度计算委托量单位
-        if not unit:
+        # 根据波动幅度计算委托量单位
+        multiplier = 0
+        if offset == Offset.OPEN:
             size = self.sizeDict[signal.symbol]
             riskValue = self.portfolioValue * 0.01
-            """ modify by loe """
-            multiplier = 0
             if signal.atrVolatility * size:
-                multiplier = riskValue / (signal.atrVolatility * size)
-                multiplier = int(round(multiplier, 0))
+                if direction == Direction.LONG:
+                    multiplier = riskValue * (price * (price - 2*signal.atrVolatility)) / (size * signal.atrVolatility)
+                elif direction == Direction.SHORT:
+                    multiplier = riskValue * (price * (price + 2 * signal.atrVolatility)) / (size * signal.atrVolatility)
 
-            self.multiplierDict[signal.symbol] = multiplier
+                multiplier = int(round(multiplier, 0))
+        elif offset == Offset.CLOSE and abs(unit):
+            multiplierList = self.multiplierDict[signal.symbol]
+            multiplier = sum(multiplierList) / min(volume, abs(unit))
+
         else:
-            multiplier = self.multiplierDict[signal.symbol]
+            return
 
         """ modify by loe """
         # 过滤虚假开仓
@@ -566,7 +567,7 @@ class TurtlePortfolio(object):
             """ modify by loe """
             # 一个unit预计占用保证金不得超过初始资金的20%
             size = self.sizeDict[signal.symbol]
-            if price * multiplier * size * 0.1 > self.portfolioValue * 0.2:
+            if multiplier * size / 20.0 / price > self.portfolioValue * 0.2:
                 print('%s\t%s预计保证金超限\tprice：%s\tatr：%s' % (signal.bar.datetime, signal.symbol, price, signal.atrVolatility))
                 return
                 
@@ -634,17 +635,27 @@ class TurtlePortfolio(object):
 
         self.sendOrder(signal.symbol, direction, offset, price, volume, multiplier)
 
+        # 记录开仓的数量
+        if offset == Offset.OPEN:
+            if not unit:
+                multiplierList = []
+                multiplierList.append(multiplier)
+                self.multiplierDict[signal.symbol] = multiplierList
+            else:
+                multiplierList = self.multiplierDict[signal.symbol]
+                multiplierList.append(multiplier)
+
         """ modify by loe """
         # 计算持仓预计占用的保证金
         bond = 0
         totalUnit = 0
         for tradingSignal in self.tradingDict.values():
             tUnit = abs(self.unitDict[tradingSignal.symbol])
-            tMultiplier = self.multiplierDict[tradingSignal.symbol]
+            tMultiplierList = self.multiplierDict[tradingSignal.symbol]
+            multiplierSum = sum(tMultiplierList)
             tSize = self.sizeDict[tradingSignal.symbol]
-            tPrice = tradingSignal.result.entry
 
-            bond += abs(tUnit*tMultiplier*tSize*tPrice*0.1)
+            bond += multiplierSum*tSize / 20 / price
             totalUnit += tUnit
         if self.maxBond:
             lastMax = self.maxBond[0]

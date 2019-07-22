@@ -12,6 +12,7 @@ from pymongo import MongoClient
 
 from vnpy.trader.object import BarData
 from vnpy.trader.constant import Direction, Exchange
+from constant import Currency
 
 from turtleStrategy import TurtlePortfolio
 
@@ -45,7 +46,7 @@ class BacktestingEngine(object):
         self.slippageDict = {}              # 滑点成本字典
         
         self.portfolioValue = 0
-        self.cryptoValue = 33333
+        self.portfolioCurrency = Currency.CNY   # 默认人民币作为资产货币
         self.startDt = None
         self.endDt = None
         self.currentDt = None
@@ -66,9 +67,10 @@ class BacktestingEngine(object):
         self.endDt = endDt
     
     #----------------------------------------------------------------------
-    def initPortfolio(self, filename, portfolioValue=10000000):
+    def initPortfolio(self, filename, portfolioValue=10000000, currency = Currency.CNY):
         """初始化投资组合"""
         self.portfolioValue = portfolioValue
+        self.portfolioCurrency = currency
         
         with open(filename) as f:
             r = DictReader(f)
@@ -84,7 +86,7 @@ class BacktestingEngine(object):
                 SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
             
         self.portfolio = TurtlePortfolio(self)
-        self.portfolio.init(portfolioValue, self.symbolList, SIZE_DICT)
+        self.portfolio.init(self.portfolioValue, self.symbolList, SIZE_DICT)
         """ modify by loe """
         self.portfolio.tradingStart = self.tradingStart
         
@@ -93,9 +95,10 @@ class BacktestingEngine(object):
 
     # ----------------------------------------------------------------------
     """ modify by loe """
-    def initSinglePortfolio(self, d, portfolioValue=10000000):
+    def initSinglePortfolio(self, d, portfolioValue=10000000, currency = Currency.CNY):
         """初始化投资组合"""
         self.portfolioValue = portfolioValue
+        self.portfolioCurrency = currency
         self.symbolList.append(d['symbol'])
 
         self.sizeDict[d['symbol']] = int(d['size'])
@@ -106,7 +109,7 @@ class BacktestingEngine(object):
         SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
 
         self.portfolio = TurtlePortfolio(self)
-        self.portfolio.init(portfolioValue, self.symbolList, SIZE_DICT)
+        self.portfolio.init(self.portfolioValue, self.symbolList, SIZE_DICT)
 
         """ modify by loe """
         self.portfolio.tradingStart = self.tradingStart
@@ -116,9 +119,10 @@ class BacktestingEngine(object):
 
     # ----------------------------------------------------------------------
     """ modify by loe """
-    def initListPortfolio(self, l, portfolioValue=10000000):
+    def initListPortfolio(self, l, portfolioValue=10000000, currency = Currency.CNY):
         """初始化投资组合"""
         self.portfolioValue = portfolioValue
+        self.portfolioCurrency = currency
 
         for d in l:
             self.symbolList.append(d['symbol'])
@@ -131,7 +135,7 @@ class BacktestingEngine(object):
             SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
 
         self.portfolio = TurtlePortfolio(self)
-        self.portfolio.init(portfolioValue, self.symbolList, SIZE_DICT)
+        self.portfolio.init(self.portfolioValue, self.symbolList, SIZE_DICT)
 
         """ modify by loe """
         self.portfolio.tradingStart = self.tradingStart
@@ -155,8 +159,7 @@ class BacktestingEngine(object):
             cursor = collection.find(flt).sort('datetime')
             
             for d in cursor:
-                exchange = Exchange.RQ
-                bar = BarData(gateway_name = '', symbol = '', exchange = exchange, datetime = None, endDatetime = None)
+                bar = BarData(gateway_name = '', symbol = '', exchange = None, datetime = None, endDatetime = None)
                 bar.__dict__ = d
                 
                 barDict = dataDict.setdefault(bar.datetime, OrderedDict())
@@ -210,8 +213,8 @@ class BacktestingEngine(object):
         
         profitDays = 0
         lossDays = 0
-        endBalance = self.cryptoValue
-        highlevel = self.cryptoValue
+        endBalance = self.portfolioValue
+        highlevel = self.portfolioValue
         totalNetPnl = 0
         totalCommission = 0
         totalSlippage = 0
@@ -250,7 +253,7 @@ class BacktestingEngine(object):
 
         maxDrawdown = min(drawdownList)
         maxDdPercent = min(ddPercentList)
-        totalReturn = (endBalance / self.cryptoValue - 1) * 100
+        totalReturn = (endBalance / self.portfolioValue - 1) * 100
         dailyReturn = np.mean(returnList) * 100
         annualizedReturn = dailyReturn * annualDays
         returnStd = np.std(returnList) * 100
@@ -313,17 +316,17 @@ class BacktestingEngine(object):
         self.output(u'盈利交易日\t%s' % result['profitDays'])
         self.output(u'亏损交易日：\t%s' % result['lossDays'])
         
-        self.output(u'起始资金：\t%s' % self.cryptoValue)
-        self.output(u'结束资金：\t%s' % formatNumber(result['endBalance']))
+        self.output(u'起始资金：\t%s %s' % (self.portfolioValue, self.portfolioCurrency.value))
+        self.output(u'结束资金：\t%s %s' % (formatNumber(result['endBalance']), self.portfolioCurrency.value))
     
         self.output(u'总收益率：\t%s%%' % formatNumber(result['totalReturn']))
         self.output(u'年化收益：\t%s%%' % formatNumber(result['annualizedReturn']))
-        self.output(u'总盈亏：\t%s' % formatNumber(result['totalNetPnl']))
-        self.output(u'最大回撤: \t%s' % formatNumber(result['maxDrawdown']))   
+        self.output(u'总盈亏：\t%s %s' % (formatNumber(result['totalNetPnl']), self.portfolioCurrency.value))
+        self.output(u'最大回撤: \t%s %s' % (formatNumber(result['maxDrawdown']), self.portfolioCurrency.value))
         self.output(u'百分比最大回撤: %s%%' % formatNumber(result['maxDdPercent']))   
         
-        self.output(u'总手续费：\t%s' % formatNumber(result['totalCommission']))
-        self.output(u'总滑点：\t%s' % formatNumber(result['totalSlippage']))
+        self.output(u'总手续费：\t%s %s' % (formatNumber(result['totalCommission']), self.portfolioCurrency.value))
+        self.output(u'总滑点：\t%s %s' % (formatNumber(result['totalSlippage']), self.portfolioCurrency.value))
         self.output(u'总成交笔数：\t%s' % formatNumber(result['totalTradeCount']))
         
         self.output(u'日均盈亏：\t%s' % formatNumber(result['dailyNetPnl']))

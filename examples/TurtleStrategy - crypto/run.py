@@ -1,10 +1,8 @@
 # encoding: UTF-8
 
 from datetime import datetime
-
-import numpy as np
-import matplotlib.pyplot as plt
 import copy
+from constant import Currency
 
 from turtleEngine import BacktestingEngine
 from csv import DictReader
@@ -19,8 +17,8 @@ from vnpy.trader.constant import Direction, Offset
 
 def one():
     engine = BacktestingEngine()
-    engine.setPeriod(datetime(2019, 1, 15), datetime(2019, 12, 31))
-    engine.tradingStart = datetime(2019, 4, 9)
+    engine.setPeriod(datetime(2017, 12, 1), datetime(2019, 12, 31))
+    engine.tradingStart = datetime(2018, 3, 2)
     figSavedName = ''
     if figSavedName:
         figSavedName = 'figSaved\\%s' % figSavedName
@@ -33,21 +31,24 @@ def one():
             symbolList.append(d)
     if not symbolList:
         return
-    engine.initListPortfolio(symbolList, 200000)
+    engine.initListPortfolio(symbolList, portfolioValue=1000, currency=Currency.ETH)
     engine.loadData()
     engine.runBacktesting()
     engine.showResult(figSavedName)
-    print(u"\n最大占用保证金：%s\t持仓单位：%s" % (engine.portfolio.maxBond[0], engine.portfolio.maxBond[1]))
+    print(f"\n最大占用保证金：{engine.portfolio.maxBond[0]} {engine.portfolioCurrency.value}\t持仓单位：{engine.portfolio.maxBond[1]}")
 
     #"""
     resultList = []
     totalPnl = 0
     calculateDic = {}
     for symbol in engine.symbolList:
+        print('*'*6 + symbol + '*'*6)
         tradeList = engine.getTradeData(symbol)
         for trade in tradeList:
             print('%s\t\t%s %s\t\t%s\t\t%s\t%s@%s' % (trade.dt, trade.symbol, trade.direction.value, trade.offset.value,
                                                       engine.sizeDict[trade.symbol], trade.volume, trade.price))
+            if trade.offset == Offset.CLOSE:
+                print('............')
 
             tOpen = False
             pnl = 0
