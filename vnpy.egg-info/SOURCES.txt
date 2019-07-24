@@ -17,7 +17,6 @@ vnpy/api/ctp/libthostmduserapi_se.so
 vnpy/api/ctp/libthosttraderapi_se.so
 vnpy/api/ctp/thostmduserapi_se.dll
 vnpy/api/ctp/thosttraderapi_se.dll
-vnpy/api/ctp/vnctpmd.pyd
 vnpy/api/ctp/vnctptd.pyd
 vnpy/api/ctp/generator/ctp_md_header_define.h
 vnpy/api/ctp/generator/ctp_md_header_function.h

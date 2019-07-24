@@ -386,10 +386,6 @@ class TurtleSignal(object):
         if not self.newDominantOpen:
             return
 
-        """ fake """
-        if self.symbol == 'SM99' and self.bar.datetime >= datetime(2019, 4, 16):
-            a = 2
-
         if self.portfolio.tradingStart:
             # 如果开始正式交易的时候该信号有历史仓位，则忽略这笔开平交易
             if self.bar.datetime >= self.portfolio.tradingStart:

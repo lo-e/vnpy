@@ -52,6 +52,7 @@ EVENT_CTA_STOPORDER = "eCtaStopOrder"
 TICK_DB_NAME = 'VnTrader_Tick_Db'
 DAILY_DB_NAME = 'VnTrader_Daily_Db'
 MINUTE_DB_NAME = 'VnTrader_1Min_Db'
+HOUR_DB_NAME = 'VnTrader_1Hour_Db'
 POSITION_DB_NAME = 'VnTrader_Position_Db'
 SETTING_DB_NAME = 'VnTrader_Setting_Db'
 TURTLE_PORTFOLIO_DB_NAME = 'VnTrader_Turtle_Portfolio_Db'
@@ -59,6 +60,9 @@ DOMINANT_DB_NAME = 'Dominant_db'
 
 def MinuteDataBaseName(duration:int):
     return re.sub("\d", f'{duration}', MINUTE_DB_NAME)
+
+def HourDataBaseName(duration:int):
+    return re.sub("\d", f'{duration}', HOUR_DB_NAME)
 
 
 EXCHANGE_SYMBOL_DICT = {Exchange.CFFEX:['IF', 'IC', 'IH'],
