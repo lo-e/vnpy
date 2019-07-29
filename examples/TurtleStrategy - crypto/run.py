@@ -17,8 +17,8 @@ from vnpy.trader.constant import Direction, Offset
 
 def one():
     engine = BacktestingEngine()
-    engine.setPeriod(datetime(2017, 12, 1), datetime(2019, 12, 31))
-    engine.tradingStart = datetime(2018, 3, 2)
+    engine.setPeriod(datetime(2018, 8, 8), datetime(2019, 12, 31))
+    engine.tradingStart = datetime(2019, 1, 1)
     figSavedName = ''
     if figSavedName:
         figSavedName = 'figSaved\\%s' % figSavedName

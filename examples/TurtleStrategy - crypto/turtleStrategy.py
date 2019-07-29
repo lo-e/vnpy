@@ -529,6 +529,9 @@ class TurtlePortfolio(object):
     #----------------------------------------------------------------------
     def newSignal(self, signal, direction, offset, price, volume):
         """对交易信号进行过滤，符合条件的才发单执行"""
+        """ fake """
+        if signal.bar.datetime >= datetime(2019, 6, 2):
+            a = 2
 
         unit = self.unitDict[signal.symbol]
         

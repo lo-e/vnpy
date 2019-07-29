@@ -16,9 +16,7 @@ from constant import Currency
 
 from turtleStrategy import TurtlePortfolio
 
-
-DAILY_DB_NAME = 'VnTrader_Daily_Db'
-
+from vnpy.app.cta_strategy.base import DAILY_DB_NAME, HourDataBaseName
 
 SIZE_DICT = {}
 PRICETICK_DICT = {}
@@ -147,7 +145,10 @@ class BacktestingEngine(object):
     def loadData(self):
         """加载数据"""
         mc = MongoClient()
+        # 日K数据库
         db = mc[DAILY_DB_NAME]
+        # 小时K数据库
+        #db = mc[HourDataBaseName(12)]
 
         """ modify by loe """
         dataDict = {}
