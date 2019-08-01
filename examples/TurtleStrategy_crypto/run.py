@@ -16,120 +16,122 @@ import pandas as pd
 from vnpy.trader.constant import Direction, Offset
 
 def one():
-    engine = BacktestingEngine()
-    engine.setPeriod(datetime(2018, 8, 8), datetime(2019, 12, 31))
-    engine.tradingStart = datetime(2019, 1, 1)
-    figSavedName = ''
-    if figSavedName:
-        figSavedName = 'figSaved\\%s' % figSavedName
-
+    pnlList = []
     filename = 'setting.csv'
-    symbolList = []
     with open(filename, errors='ignore') as f:
         r = DictReader(f)
         for d in r:
-            symbolList.append(d)
-    if not symbolList:
-        return
-    engine.initListPortfolio(symbolList, portfolioValue=1000, currency=Currency.ETH)
-    engine.loadData()
-    engine.runBacktesting()
-    engine.showResult(figSavedName)
-    print(f"\n最大占用保证金：{engine.portfolio.maxBond[0]} {engine.portfolioCurrency.value}\t持仓单位：{engine.portfolio.maxBond[1]}")
+            print('='*60)
+            engine = BacktestingEngine()
+            engine.setPeriod(datetime(2017, 12, 1), datetime(2019, 12, 31))
+            engine.tradingStart = datetime(2018, 2, 1)
+            figSavedName = ''
+            if figSavedName:
+                figSavedName = 'figSaved\\%s' % figSavedName
 
-    #"""
-    resultList = []
-    totalPnl = 0
-    calculateDic = {}
-    for symbol in engine.symbolList:
-        print('*'*6 + symbol + '*'*6)
-        tradeList = engine.getTradeData(symbol)
-        for trade in tradeList:
-            print('%s\t\t%s %s\t\t%s\t\t%s\t%s@%s' % (trade.dt, trade.symbol, trade.direction.value, trade.offset.value,
-                                                      engine.sizeDict[trade.symbol], trade.volume, trade.price))
-            if trade.offset == Offset.CLOSE:
-                print('............')
+            engine.initSinglePortfolio(d)
+            engine.loadData()
+            engine.runBacktesting()
+            print('='*60)
 
-            tOpen = False
-            pnl = 0
-            offset = ''
-            direction = 0
+            result = engine.showResult(figSavedName)
+            pnl = result['totalNetPnl']
+            pnlList.append(f'{pnl}{engine.portfolioCurrency}')
 
-            symbolDic = calculateDic.get(trade.symbol, {})
+            #"""
+            resultList = []
+            totalPnl = 0
+            calculateDic = {}
+            for symbol in engine.symbolList:
+                tradeList = engine.getTradeData(symbol)
+                for trade in tradeList:
+                    print('%s\t\t%s %s\t\t%s\t\t%s\t%s@%s' % (trade.dt, trade.symbol, trade.direction.value, trade.offset.value,
+                                                              engine.sizeDict[trade.symbol], trade.volume, trade.price))
+                    if trade.offset == Offset.CLOSE:
+                        print('.'*2)
 
-            if trade.offset == Offset.OPEN:
-                offset = '开仓'
-                tOpen = True
-            elif trade.offset == Offset.CLOSE:
-                offset = '平仓'
-                tOpen = False
+                    tOpen = False
+                    pnl = 0
+                    offset = ''
+                    direction = 0
 
-            if trade.direction == Direction.LONG:
-                direction = '多'
-                if tOpen:
-                    symbolDic['direction'] = 1
-            elif trade.direction == Direction.SHORT:
-                direction = '空'
-                if tOpen:
-                    symbolDic['direction'] = -1
+                    symbolDic = calculateDic.get(trade.symbol, {})
 
-            if trade.volume:
-                if tOpen:
-                    symbolDic['size'] = engine.sizeDict[trade.symbol]
-                    vol = symbolDic.get('volume', 0)
-                    pri = symbolDic.get('price', 0)
-                    pri = vol*pri + trade.volume*trade.price
+                    if trade.offset == Offset.OPEN:
+                        offset = '开仓'
+                        tOpen = True
+                    elif trade.offset == Offset.CLOSE:
+                        offset = '平仓'
+                        tOpen = False
 
-                    vol += trade.volume
-                    symbolDic['volume'] = vol
-                    pri = pri / vol
-                    symbolDic['price'] = pri
-                    calculateDic[trade.symbol] = symbolDic
-                else:
-                    if symbolDic['volume'] != trade.volume:
-                        raise('平仓数量有误！')
-                    pnl = symbolDic['direction'] * (trade.price - symbolDic['price']) * trade.volume * symbolDic['size']
-                    totalPnl += pnl
-                    calculateDic[trade.symbol] = {}
+                    if trade.direction == Direction.LONG:
+                        direction = '多'
+                        if tOpen:
+                            symbolDic['direction'] = 1
+                    elif trade.direction == Direction.SHORT:
+                        direction = '空'
+                        if tOpen:
+                            symbolDic['direction'] = -1
 
-            dic = {'datetime':trade.dt,
-                   'symbol':trade.symbol,
-                   'direction':direction,
-                   'offset':offset,
-                   'size':engine.sizeDict[trade.symbol],
-                   'volume':trade.volume,
-                   'price':trade.price}
-            if pnl:
-                dic['pnl'] = str(pnl)
-                dic['totalPnl'] = str(totalPnl)
-            else:
-                dic['pnl'] = ''
-                dic['totalPnl'] = ''
+                    if trade.volume:
+                        if tOpen:
+                            symbolDic['size'] = engine.sizeDict[trade.symbol]
+                            vol = symbolDic.get('volume', 0)
+                            pri = symbolDic.get('price', 0)
+                            pri = vol*pri + trade.volume*trade.price
 
-            resultList.append(dic)
-        print('\n\n')
-    if len(resultList):
-        fieldNames = ['datetime', 'symbol', 'direction', 'offset', 'size', 'volume', 'price', 'pnl', 'totalPnl']
-        # 文件路径
-        filePath = 'result.csv'
-        with open(filePath, 'w') as f:
-            writer = csv.DictWriter(f, fieldnames=fieldNames)
-            writer.writeheader()
-            # 写入csv文件
-            writer.writerows(resultList)
+                            vol += trade.volume
+                            symbolDic['volume'] = vol
+                            pri = pri / vol
+                            symbolDic['price'] = pri
+                            calculateDic[trade.symbol] = symbolDic
+                        else:
+                            if symbolDic['volume'] != trade.volume:
+                                raise('平仓数量有误！')
+                            pnl = symbolDic['direction'] * (trade.price - symbolDic['price']) * trade.volume * symbolDic['size']
+                            totalPnl += pnl
+                            calculateDic[trade.symbol] = {}
 
-    folio = engine.portfolio
-    signalDic = folio.signalDict
-    for s, signalList in signalDic.items():
-        print('*' * 6 + s + '*' * 6)
-        for signal in signalList:
-            print('window\t%s' % signal.entryWindow)
-            print('datetime\t%s' % signal.bar.datetime)
-            print('unit\t%s' % signal.unit)
-            if signal.result:
-                print('entry\t%s' % signal.result.entry)
-            print('lastPnl\t%s' % signal.getLastPnl())
-            print('\n')
+                    dic = {'datetime':trade.dt,
+                           'symbol':trade.symbol,
+                           'direction':direction,
+                           'offset':offset,
+                           'size':engine.sizeDict[trade.symbol],
+                           'volume':trade.volume,
+                           'price':trade.price}
+                    if pnl:
+                        dic['pnl'] = str(pnl)
+                        dic['totalPnl'] = str(totalPnl)
+                    else:
+                        dic['pnl'] = ''
+                        dic['totalPnl'] = ''
+
+                    resultList.append(dic)
+            if len(resultList):
+                fieldNames = ['datetime', 'symbol', 'direction', 'offset', 'size', 'volume', 'price', 'pnl', 'totalPnl']
+                # 文件路径
+                filePath = 'result.csv'
+                with open(filePath, 'w') as f:
+                    writer = csv.DictWriter(f, fieldnames=fieldNames)
+                    writer.writeheader()
+                    # 写入csv文件
+                    writer.writerows(resultList)
+
+            folio = engine.portfolio
+            signalDic = folio.signalDict
+            for s, signalList in signalDic.items():
+                for signal in signalList:
+                    print('.' * 2)
+                    print('window\t%s' % signal.entryWindow)
+                    print('datetime\t%s' % signal.bar.datetime)
+                    print('unit\t%s' % signal.unit)
+                    if signal.result:
+                        print('entry\t%s' % signal.result.entry)
+                    print('lastPnl\t%s' % signal.getLastPnl())
+            print('\n\n')
+
+    portfolioPnl = '\t'.join(pnlList)
+    print(f'组合总盈亏：{portfolioPnl}')
     #"""
 
 def two():

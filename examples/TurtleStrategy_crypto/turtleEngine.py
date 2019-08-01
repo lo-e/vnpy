@@ -65,11 +65,8 @@ class BacktestingEngine(object):
         self.endDt = endDt
     
     #----------------------------------------------------------------------
-    def initPortfolio(self, filename, portfolioValue=10000000, currency = Currency.CNY):
+    def initPortfolio(self, filename):
         """初始化投资组合"""
-        self.portfolioValue = portfolioValue
-        self.portfolioCurrency = currency
-        
         with open(filename) as f:
             r = DictReader(f)
             for d in r:
@@ -82,6 +79,8 @@ class BacktestingEngine(object):
                 VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
                 FIXED_COMMISSION_DICT[d['symbol']] = float(d['fixedCommission'])
                 SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
+                self.portfolioValue = float(d['capital'])
+                self.portfolioCurrency = CurrencyWithSymbol(d['symbol'])
             
         self.portfolio = TurtlePortfolio(self)
         self.portfolio.init(self.portfolioValue, self.symbolList, SIZE_DICT)
@@ -93,10 +92,8 @@ class BacktestingEngine(object):
 
     # ----------------------------------------------------------------------
     """ modify by loe """
-    def initSinglePortfolio(self, d, portfolioValue=10000000, currency = Currency.CNY):
+    def initSinglePortfolio(self, d):
         """初始化投资组合"""
-        self.portfolioValue = portfolioValue
-        self.portfolioCurrency = currency
         self.symbolList.append(d['symbol'])
 
         self.sizeDict[d['symbol']] = int(d['size'])
@@ -105,6 +102,8 @@ class BacktestingEngine(object):
         VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
         FIXED_COMMISSION_DICT[d['symbol']] = float(d['fixedCommission'])
         SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
+        self.portfolioValue = float(d['capital'])
+        self.portfolioCurrency = CurrencyWithSymbol(d['symbol'])
 
         self.portfolio = TurtlePortfolio(self)
         self.portfolio.init(self.portfolioValue, self.symbolList, SIZE_DICT)
@@ -112,16 +111,13 @@ class BacktestingEngine(object):
         """ modify by loe """
         self.portfolio.tradingStart = self.tradingStart
 
-        self.output(u'投资组合的合约代码%s' % (self.symbolList))
-        self.output(u'投资组合的初始价值%s' % (portfolioValue))
+        self.output(f'代码：{self.symbolList} ')
+        self.output(f'{self.portfolioCurrency}：\t{self.portfolioValue}')
 
     # ----------------------------------------------------------------------
     """ modify by loe """
-    def initListPortfolio(self, l, portfolioValue=10000000, currency = Currency.CNY):
+    def initListPortfolio(self, l):
         """初始化投资组合"""
-        self.portfolioValue = portfolioValue
-        self.portfolioCurrency = currency
-
         for d in l:
             self.symbolList.append(d['symbol'])
 
@@ -131,6 +127,8 @@ class BacktestingEngine(object):
             VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
             FIXED_COMMISSION_DICT[d['symbol']] = float(d['fixedCommission'])
             SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
+            self.portfolioValue = float(d['capital'])
+            self.portfolioCurrency = CurrencyWithSymbol(d['symbol'])
 
         self.portfolio = TurtlePortfolio(self)
         self.portfolio.init(self.portfolioValue, self.symbolList, SIZE_DICT)
@@ -139,7 +137,7 @@ class BacktestingEngine(object):
         self.portfolio.tradingStart = self.tradingStart
 
         self.output(u'投资组合的合约代码%s' % (self.symbolList))
-        self.output(u'投资组合的初始价值%s' % (portfolioValue))
+        self.output(u'投资组合的初始价值%s' % (self.portfolioValue))
     
     #----------------------------------------------------------------------
     def loadData(self):
@@ -166,19 +164,15 @@ class BacktestingEngine(object):
                 barDict = dataDict.setdefault(bar.datetime, OrderedDict())
                 barDict[bar.symbol] = bar
             
-            self.output(u'%s数据加载完成，总数据量：%s' %(symbol, cursor.count()))
+            self.output(f'数据量：{cursor.count()}')
 
         dateList = sorted(dataDict.keys())
         for theDatetime in dateList:
             self.dataDict[theDatetime] = dataDict[theDatetime]
-        
-        self.output(u'全部数据加载完成')
     
     #----------------------------------------------------------------------
     def runBacktesting(self):
         """运行回测"""
-        self.output(u'开始回放K线数据')
-        
         for dt, barDict in self.dataDict.items():
             self.currentDt = dt
 
@@ -194,13 +188,10 @@ class BacktestingEngine(object):
             for bar in barDict.values():
                 self.portfolio.onBar(bar)
                 self.result.updateBar(bar)
-        
-        self.output(u'K线数据回放结束')
     
     #----------------------------------------------------------------------
     def calculateResult(self, annualDays=240):
         """计算结果"""
-        self.output(u'开始统计回测结果')
         
         for result in self.resultList:
             result.calculatePnl()
@@ -309,7 +300,6 @@ class BacktestingEngine(object):
         timeseries, result = self.calculateResult()
         
         # 输出统计结果
-        self.output('-' * 30)
         self.output(u'首个交易日：\t%s' % result['startDate'])
         self.output(u'最后交易日：\t%s' % result['endDate'])
         
@@ -317,35 +307,32 @@ class BacktestingEngine(object):
         self.output(u'盈利交易日\t%s' % result['profitDays'])
         self.output(u'亏损交易日：\t%s' % result['lossDays'])
         
-        self.output(u'起始资金：\t%s %s' % (self.portfolioValue, self.portfolioCurrency.value))
-        self.output(u'结束资金：\t%s %s' % (formatNumber(result['endBalance']), self.portfolioCurrency.value))
+        self.output(u'起始资金：\t%s %s' % (self.portfolioValue, self.portfolioCurrency))
+        self.output(u'结束资金：\t%s %s' % (formatNumber(result['endBalance']), self.portfolioCurrency))
     
         self.output(u'总收益率：\t%s%%' % formatNumber(result['totalReturn']))
         self.output(u'年化收益：\t%s%%' % formatNumber(result['annualizedReturn']))
-        self.output(u'总盈亏：\t%s %s' % (formatNumber(result['totalNetPnl']), self.portfolioCurrency.value))
-        self.output(u'最大回撤: \t%s %s' % (formatNumber(result['maxDrawdown']), self.portfolioCurrency.value))
+        self.output(u'总盈亏：\t%s %s' % (formatNumber(result['totalNetPnl']), self.portfolioCurrency))
+        self.output(u'最大回撤: \t%s %s' % (formatNumber(result['maxDrawdown']), self.portfolioCurrency))
         self.output(u'百分比最大回撤: %s%%' % formatNumber(result['maxDdPercent']))   
         
-        self.output(u'总手续费：\t%s %s' % (formatNumber(result['totalCommission']), self.portfolioCurrency.value))
-        self.output(u'总滑点：\t%s %s' % (formatNumber(result['totalSlippage']), self.portfolioCurrency.value))
+        self.output(u'总手续费：\t%s %s' % (formatNumber(result['totalCommission']), self.portfolioCurrency))
+        self.output(u'总滑点：\t%s %s' % (formatNumber(result['totalSlippage']), self.portfolioCurrency))
         self.output(u'总成交笔数：\t%s' % formatNumber(result['totalTradeCount']))
-        
-        self.output(u'日均盈亏：\t%s' % formatNumber(result['dailyNetPnl']))
-        self.output(u'日均手续费：\t%s' % formatNumber(result['dailyCommission']))
-        self.output(u'日均滑点：\t%s' % formatNumber(result['dailySlippage']))
+
         self.output(u'日均成交笔数：\t%s' % formatNumber(result['dailyTradeCount']))
-        
-        self.output(u'日均收益率：\t%s%%' % formatNumber(result['dailyReturn']))
-        self.output(u'收益标准差：\t%s%%' % formatNumber(result['returnStd']))
+
         self.output(u'Sharpe Ratio：\t%s' % formatNumber(result['sharpeRatio']))
-        
+
+        self.output(f"最大占用保证金：{self.portfolio.maxBond[0]} {self.portfolioCurrency}\t持仓单位：{self.portfolio.maxBond[1]}\n")
         # 绘图
         fig = plt.figure(figsize=(10, 16))
         
         pBalance = plt.subplot(4, 1, 1)
         pBalance.set_title('Balance')
         plt.plot(timeseries['date'], timeseries['balance'])
-        
+
+        """
         pDrawdown = plt.subplot(4, 1, 2)
         pDrawdown.set_title('Drawdown')
         pDrawdown.fill_between(range(len(timeseries['drawdown'])), timeseries['drawdown'])
@@ -360,8 +347,9 @@ class BacktestingEngine(object):
 
         if figSavedPath:
             plt.savefig(figSavedPath)
-        
-        plt.show()        
+        """
+        plt.show()
+        return result
     
     #----------------------------------------------------------------------
     def sendOrder(self, symbol, direction, offset, price, volume):
@@ -525,3 +513,12 @@ def formatNumber(n):
     """格式化数字到字符串"""
     rn = round(n, 2)        # 保留两位小数
     return format(rn, ',')  # 加上千分符
+
+def CurrencyWithSymbol(symbol=''):
+    if not symbol:
+        return ''
+
+    cPair = symbol.split('/')[-1]
+    return cPair.split('.')[0]
+
+
