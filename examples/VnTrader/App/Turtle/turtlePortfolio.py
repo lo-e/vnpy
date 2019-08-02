@@ -107,7 +107,7 @@ class TurtlePortfolio(object):
                 startSymbol = re.sub("\d", "", vtSymbol)
                 for key, value in CATEGORY_DICT.items():
                     if startSymbol in value:
-                        if self.categoryLongUnitDict.get(key, 0) <= -MAX_CATEGORY_POS:
+                        if self.categoryShortUnitDict.get(key, 0) <= -MAX_CATEGORY_POS:
                             return False
                         break
         
