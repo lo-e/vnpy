@@ -33,7 +33,7 @@
     {
         "name": "TURTLE_J",
         "className": "TurtleStrategy",
-        "vtSymbol": "j1909",
+        "vtSymbol": "j2001",
         "lastSymbol":"",
         "perSize":100,
         "tickPrice":0.5,
