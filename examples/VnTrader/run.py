@@ -69,11 +69,11 @@ def main():
         me.addGateway(xtpGateway)
 
     # 添加上层应用
+    me.addApp(Turtle)
     me.addApp(riskManager)
     me.addApp(ctaStrategy)
     me.addApp(spreadTrading)
     me.addApp(algoTrading)
-    me.addApp(Turtle)
     me.addApp(tradeCopy)
 
     # 创建主窗口
