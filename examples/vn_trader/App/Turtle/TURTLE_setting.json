@@ -33,7 +33,7 @@
     {
         "strategy_name": "TURTLE_J",
         "class_name": "TurtleStrategy",
-        "vt_symbol": "j1909",
+        "vt_symbol": "j2001",
         "last_symbol":"",
         "per_size":100,
         "tick_price":0.5,

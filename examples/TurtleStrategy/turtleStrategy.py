@@ -541,7 +541,6 @@ class TurtlePortfolio(object):
     #----------------------------------------------------------------------
     def newSignal(self, signal, direction, offset, price, volume):
         """对交易信号进行过滤，符合条件的才发单执行"""
-
         unit = self.unitDict[signal.symbol]
         
         # 如果当前无仓位，则重新根据波动幅度计算委托量单位
