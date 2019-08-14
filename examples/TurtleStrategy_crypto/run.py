@@ -17,13 +17,14 @@ from vnpy.trader.constant import Direction, Offset
 
 def one():
     pnlList = []
+    returnList = []
     filename = 'setting.csv'
     with open(filename, errors='ignore') as f:
         r = DictReader(f)
         for d in r:
             print('='*60)
             engine = BacktestingEngine()
-            engine.setPeriod(datetime(2017, 12, 1), datetime(2019, 12, 31))
+            engine.setPeriod(datetime(2019, 1, 1), datetime(2019, 12, 31))
             engine.tradingStart = datetime(2018, 2, 1)
             figSavedName = ''
             if figSavedName:
@@ -36,7 +37,9 @@ def one():
 
             result = engine.showResult(figSavedName)
             pnl = result['totalNetPnl']
+            theReturn = result['totalReturn']
             pnlList.append(f'{pnl}{engine.portfolioCurrency}')
+            returnList.append(theReturn)
 
             #"""
             resultList = []
@@ -130,8 +133,14 @@ def one():
                     print('lastPnl\t%s' % signal.getLastPnl())
             print('\n\n')
 
-    portfolioPnl = '\t'.join(pnlList)
-    print(f'组合总盈亏：{portfolioPnl}')
+    portfolioPnl = '\n'.join(pnlList)
+    portfolioReturn = ''
+    for r in returnList:
+        portfolioReturn += str(r) + '\n'
+    portfolioTotalReturn = sum(returnList)
+    print(f'组合盈亏：\n{portfolioPnl}\n')
+    print(f'组合收益率：\n{portfolioReturn}')
+    print(f'总收益率：\n{portfolioTotalReturn}')
     #"""
 
 def two():

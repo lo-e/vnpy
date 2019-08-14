@@ -90,9 +90,10 @@ class TurtleInitialManager(object):
 
         collectionName = self.vtSymbol.upper()
         startSymbol = re.sub("\d", "", collectionName)
-        if startSymbol in TRANSFORM_SYMBOL_LIST:
+        if startSymbol in TRANSFORM_SYMBOL_LIST.keys():
             endSymbol = re.sub("\D", "", collectionName)
-            collectionName = startSymbol + '1' + endSymbol
+            replace = TRANSFORM_SYMBOL_LIST[startSymbol]
+            collectionName = startSymbol + replace + endSymbol
 
         collection = db[collectionName]
         cursor = collection.find().sort('date')

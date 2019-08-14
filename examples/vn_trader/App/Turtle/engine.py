@@ -768,9 +768,10 @@ class TurtleEngine(BaseEngine):
         collectionName = vt_symbol.upper()
         collectionName = collectionName.split('.')[0]
         startSymbol = re.sub("\d", "", collectionName)
-        if startSymbol in TRANSFORM_SYMBOL_LIST:
+        if startSymbol in TRANSFORM_SYMBOL_LIST.keys():
             endSymbol = re.sub("\D", "", collectionName)
-            collectionName = startSymbol + '1' + endSymbol
+            replace = TRANSFORM_SYMBOL_LIST[startSymbol]
+            collectionName = startSymbol + replace + endSymbol
 
         barData = self.main_engine.dbQuery(dbName, collectionName, d, 'datetime')
 
