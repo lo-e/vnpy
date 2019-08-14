@@ -129,6 +129,7 @@ def one():
             print 'currentSymbol\t%s' % signal.bar.vtSymbol
             print 'window\t%s' % signal.entryWindow
             print 'datetime\t%s' % signal.bar.datetime
+            print 'ATR\t%s' % signal.atrVolatility
             print 'virtualUnit\t%s' % signal.unit
             print 'unit\t%s' % engine.portfolio.unitDict[signal.vtSymbol]
             if signal.result:
