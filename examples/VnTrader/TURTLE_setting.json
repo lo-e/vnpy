@@ -54,7 +54,7 @@
         "name": "TURTLE_TA",
         "className": "TurtleStrategy",
         "vtSymbol": "TA001",
-        "lastSymbol":"TA909",
+        "lastSymbol":"",
         "perSize":5,
         "tickPrice":2,
         "start": true

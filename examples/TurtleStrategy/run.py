@@ -126,9 +126,11 @@ def one():
     for s, signalList in signalDic.items():
         print '*' * 6 + s + '*' * 6
         for signal in signalList:
+            print 'currentSymbol\t%s' % signal.bar.vtSymbol
             print 'window\t%s' % signal.entryWindow
             print 'datetime\t%s' % signal.bar.datetime
-            print 'unit\t%s' % signal.unit
+            print 'virtualUnit\t%s' % signal.unit
+            print 'unit\t%s' % engine.portfolio.unitDict[signal.vtSymbol]
             if signal.result:
                 print 'entry\t%s' % signal.result.entry
             print 'lastPnl\t%s' % signal.getLastPnl()
