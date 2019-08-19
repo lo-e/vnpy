@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-    <img src ="https://img.shields.io/badge/version-2.0.4-blueviolet.svg"/>
+    <img src ="https://img.shields.io/badge/version-2.0.6-blueviolet.svg"/>
     <img src ="https://img.shields.io/badge/platform-windows|linux|macos-yellow.svg"/>
     <img src ="https://img.shields.io/badge/python-3.7-blue.svg" />
     <img src ="https://img.shields.io/travis/com/vnpy/vnpy/master.svg"/>
@@ -14,7 +14,9 @@
 
 vn.py是一套基于Python的开源量化交易系统开发框架，于2015年1月正式发布，在开源社区5年持续不断的贡献下一步步成长为全功能量化交易平台，目前国内外金融机构用户已经超过300家，包括：私募基金、证券自营和资管、期货资管和子公司、高校研究机构、自营交易公司、交易所、Token Fund等。
 
-使用vn.py的过程中有任何疑问，请前往[**官方社区论坛**](https://www.vnpy.com/forum/)的【提问求助】板块寻求帮助，也欢迎在【经验分享】板块分享你的使用心得！
+使用过程中有任何疑问，请查看[**vn.py项目文档**](https://www.vnpy.com/docs/cn/index.html)，如果无法解决请前往[**官方社区论坛**](https://www.vnpy.com/forum/)的【提问求助】板块寻求帮助，也欢迎在【经验分享】板块分享你的使用心得！
+
+官方微信公众号：**vnpy-community**，接下来将在公众号中陆续上线各种关于vn.py的使用教程，欢迎关注。
 
 2.0版本基于Python 3.7全新重构开发，如需Python 2上的版本请点击：[长期支持版本v1.9.2 LTS](https://github.com/vnpy/vnpy/tree/v1.9.2-LTS)。
 
@@ -24,37 +26,51 @@ vn.py是一套基于Python的开源量化交易系统开发框架，于2015年1�
 
 2. 覆盖国内外所有交易品种的交易接口（vnpy.gateway）：
 
-    * CTP(ctp)：国内期货、期权
+    * 国内市场
 
-    * 飞马(femas)：国内期货
+        * CTP(ctp)：国内期货、期权
 
-    * 宽睿(oes)：国内证券（A股）
+        * CTP Mini(mini)：国内期货、期权
 
-    * 中泰XTP(xtp)：国内证券（A股）
+        * 飞马(femas)：国内期货
 
-    * 富途证券(futu)：港股、美股
+        * 宽睿(oes)：国内证券（A股）
 
-    * 老虎证券(tiger)：全球证券、期货、期权、外汇等
+        * 中泰XTP(xtp)：国内证券（A股）
 
-    * Interactive Brokers(ib)：全球证券、期货、期权、外汇等
+        * 华鑫奇点(tora)：国内证券（A股）
 
-    * 易盛9.0外盘(tap)：全球期货
+    * 海外市场
+     
+        * 富途证券(futu)：港股、美股
 
-    * BitMEX(bitmex)：数字货币期货、期权、永续合约
+        * 老虎证券(tiger)：全球证券、期货、期权、外汇等
 
-    * OKEX合约(okexf)：数字货币期货
+        * Interactive Brokers(ib)：全球证券、期货、期权、外汇等
 
-    * 火币合约(hbdm)：数字货币期货
+        * 易盛9.0外盘(tap)：全球期货
 
-    * 币安(binance)：数字货币现货
+    * 数字货币
 
-    * OKEX(okex)：数字货币现货
+        * BitMEX(bitmex)：数字货币期货、期权、永续合约
 
-    * 火币(huobi)：数字货币现货
+        * OKEX合约(okexf)：数字货币期货
 
-    * Bitfinex(bitfinex)：数字货币现货
+        * 火币合约(hbdm)：数字货币期货
 
-    * 1Token(onetoken)：数字货币券商（现货、期货）
+        * 币安(binance)：数字货币现货
+
+        * OKEX(okex)：数字货币现货
+
+        * 火币(huobi)：数字货币现货
+
+        * Bitfinex(bitfinex)：数字货币现货
+
+        * 1Token(onetoken)：数字货币券商（现货、期货）
+
+    * 特殊应用
+    
+        * RPC服务(rpc)：跨进程通讯接口，用于分布式架构
 
 3. 开箱即用的各类量化策略交易应用（vnpy.app）：
 
@@ -63,6 +79,10 @@ vn.py是一套基于Python的开源量化交易系统开发框架，于2015年1�
     * cta_backtester：CTA策略回测模块，无需使用Jupyter Notebook，直接使用图形界面直接进行策略回测分析、参数优化等相关工作
 
     * algo_trading：算法交易模块，提供多种常用的智能交易算法：TWAP、Sniper、Iceberg、BestLimit等等，支持常用算法配置保存
+
+    * script_trader：脚本策略模块，针对多标的组合类交易策略设计，同时也可以直接在命令行中实现REPL指令形式的交易，不支持回测功能
+
+    * rpc_service：RPC服务模块，允许将某一VN Trader进程启动为服务端，作为统一的行情和交易路由通道，允许多客户端同时连接，实现多进程分布式系统
 
     * csv_loader：CSV历史数据加载器，用于加载CSV格式文件中的历史数据到平台数据库中，用于策略的回测研究以及实盘初始化等功能，支持自定义数据表头格式
 
@@ -76,13 +96,15 @@ vn.py是一套基于Python的开源量化交易系统开发框架，于2015年1�
 
 6. 跨进程通讯标准组件（vnpy.rpc），用于实现分布式部署的复杂交易系统。
 
-7. [社区论坛](http://www.vnpy.com)和[知乎专栏](http://zhuanlan.zhihu.com/vn-py)，内容包括vn.py项目的开发教程和Python在量化交易领域的应用研究等内容。
+7. Python高性能K线图表（vnpy.chart），支持大数据量图表显示以及实时数据更新功能。
 
-8. 官方交流群262656087（QQ），管理严格（定期清除长期潜水的成员），入群费将捐赠给vn.py社区基金。
+8. [社区论坛](http://www.vnpy.com)和[知乎专栏](http://zhuanlan.zhihu.com/vn-py)，内容包括vn.py项目的开发教程和Python在量化交易领域的应用研究等内容。
+
+9.  官方交流群262656087（QQ），管理严格（定期清除长期潜水的成员），入群费将捐赠给vn.py社区基金。
 
 ## 环境准备
 
-* 推荐使用vn.py团队为量化交易专门打造的Python发行版[VNStudio-2.0.3](https://download.vnpy.com/vnstudio-2.0.3.exe)，内置了最新版的vn.py框架以及VN Station量化管理平台，无需手动安装
+* 推荐使用vn.py团队为量化交易专门打造的Python发行版[VNStudio-2.0.4](https://download.vnpy.com/vnstudio-2.0.4-r.exe)，内置了最新版的vn.py框架以及VN Station量化管理平台，无需手动安装
 * 支持的系统版本：Windows 7以上/Windows Server 2008以上/Ubuntu 18.04 LTS
 * 支持的Python版本：Python 3.7 64位（**注意必须是Python 3.7 64位版本**）
 

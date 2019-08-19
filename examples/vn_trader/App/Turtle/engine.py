@@ -793,8 +793,9 @@ class TurtleEngine(BaseEngine):
         """
         Load setting file.
         """
-        cwd = Path.cwd()
-        file_path = cwd.joinpath('App', 'Turtle', self.setting_filename)
+        dir = os.path.dirname(os.path.realpath(__file__))
+        file_path = Path(dir)
+        file_path = file_path.joinpath(self.setting_filename)
         l = load_json_path(file_path)
 
         folioSetting = l.get('portfolio', None)

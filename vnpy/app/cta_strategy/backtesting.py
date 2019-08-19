@@ -229,6 +229,8 @@ class BacktestingEngine:
         progress = 0
 
         while start < self.end:
+            end = min(end, self.end)  # Make sure end time stays within set range
+            
             if self.mode == BacktestingMode.BAR:
                 data = load_bar_data(
                     self.symbol,
@@ -951,7 +953,7 @@ class BacktestingEngine:
             offset=offset,
             price=price,
             volume=volume,
-            status=Status.NOTTRADED,
+            status=Status.SUBMITTING,
             gateway_name=self.gateway_name,
         )
         order.datetime = self.datetime
@@ -1010,6 +1012,12 @@ class BacktestingEngine:
     def send_email(self, msg: str, strategy: CtaTemplate = None):
         """
         Send email to default receiver.
+        """
+        pass
+    
+    def sync_strategy_data(self, strategy: CtaTemplate):
+        """
+        Sync strategy data into json file.
         """
         pass
 
@@ -1189,7 +1197,7 @@ def ga_optimize(parameter_values: list):
     return _ga_optimize(tuple(parameter_values))
 
 
-@lru_cache(maxsize=10)
+@lru_cache(maxsize=999)
 def load_bar_data(
     symbol: str,
     exchange: Exchange,
@@ -1203,7 +1211,7 @@ def load_bar_data(
     )
 
 
-@lru_cache(maxsize=10)
+@lru_cache(maxsize=999)
 def load_tick_data(
     symbol: str,
     exchange: Exchange,
