@@ -23,8 +23,8 @@
     {
         "name": "TURTLE_SM",
         "className": "TurtleStrategy",
-        "vtSymbol": "SM909",
-        "lastSymbol":"",
+        "vtSymbol": "SM001",
+        "lastSymbol":"SM909",
         "perSize":5,
         "tickPrice":2,
         "start": true
