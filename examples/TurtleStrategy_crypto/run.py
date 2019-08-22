@@ -18,14 +18,15 @@ from vnpy.trader.constant import Direction, Offset
 def one():
     pnlList = []
     returnList = []
+    maxBondList = []
     filename = 'setting.csv'
     with open(filename, errors='ignore') as f:
         r = DictReader(f)
         for d in r:
             print('='*60)
             engine = BacktestingEngine()
-            engine.setPeriod(datetime(2019, 1, 1), datetime(2019, 12, 31))
-            engine.tradingStart = datetime(2018, 2, 1)
+            engine.setPeriod(datetime(2015, 9, 1), datetime(2018, 12, 31))
+            engine.tradingStart = datetime(2016, 1, 1)
             figSavedName = ''
             if figSavedName:
                 figSavedName = 'figSaved\\%s' % figSavedName
@@ -40,6 +41,9 @@ def one():
             theReturn = result['totalReturn']
             pnlList.append(f'{pnl}{engine.portfolioCurrency}')
             returnList.append(theReturn)
+            maxBondStr = f'{engine.portfolio.maxBond[0]} {engine.portfolioCurrency}'
+            maxBondRate = 100 * engine.portfolio.maxBond[0] / engine.portfolioValue
+            maxBondList.append([maxBondStr, maxBondRate])
 
             #"""
             resultList = []
@@ -136,11 +140,18 @@ def one():
     portfolioPnl = '\n'.join(pnlList)
     portfolioReturn = ''
     for r in returnList:
-        portfolioReturn += str(r) + '\n'
-    portfolioTotalReturn = sum(returnList)
+        portfolioReturn += f'{r} %' + '\n'
+    totalReturn = sum(returnList)
+    portfolioMaxBondStr = ''
+    totalMaxBond = 0
+    for maxBond in maxBondList:
+        portfolioMaxBondStr += maxBond[0] + '\t' + f'{maxBond[1]} %' + '\n'
+        totalMaxBond += maxBond[1]
     print(f'组合盈亏：\n{portfolioPnl}\n')
     print(f'组合收益率：\n{portfolioReturn}')
-    print(f'总收益率：\n{portfolioTotalReturn}')
+    print(f'总收益率：\n{totalReturn}\n')
+    print(f'组合占用最大保证金：\n{portfolioMaxBondStr}')
+    print(f'总占用最大保证金：\n{totalMaxBond} %')
     #"""
 
 def two():
