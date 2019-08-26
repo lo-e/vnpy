@@ -120,6 +120,12 @@ class Exchange(Enum):
     # Others 数据下载使用，并非真实有效的交易所名称
     RQ = 'RQ'
 
+    # 1Token 交易所命名规则
+    HUOBIP = 'HUOBIP'       # 火币币币交易
+    HUOBIF = 'HUOBIF'       # 火币合约
+    OKEF = 'OKEF'           # OK交割合约
+    OKSWAP = 'OKSWAP'       # OK永续合约
+
 
 class Currency(Enum):
     """
