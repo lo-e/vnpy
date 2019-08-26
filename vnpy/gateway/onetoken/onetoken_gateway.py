@@ -48,9 +48,13 @@ DIRECTION_VT2ONETOKEN = {Direction.LONG: "b", Direction.SHORT: "s"}
 DIRECTION_ONETOKEN2VT = {v: k for k, v in DIRECTION_VT2ONETOKEN.items()}
 
 
+""" modify by loe """
 EXCHANGE_VT2ONETOKEN = {
     Exchange.OKEX: "okex",
-    Exchange.HUOBI: "huobi"
+    Exchange.OKEF: "okef",
+    Exchange.OKSWAP: "okswap",
+    Exchange.HUOBIP: "huobip",
+    Exchange.HUOBIF: "huobif"
 }
 EXCHANGE_ONETOKEN2VT = {v: k for k, v in EXCHANGE_VT2ONETOKEN.items()}
 
@@ -60,10 +64,12 @@ class OnetokenGateway(BaseGateway):
     VN Trader Gateway for 1Token connection
     """
 
+    """ modify by loe """
+    # 对支持的交易所进行了增减
     default_setting = {
         "OT Key": "",
         "OT Secret": "",
-        "交易所": ["BINANCE", "BITMEX", "OKEX", "OKEF", "HUOBIP", "HUOBIF"],
+        "交易所": ["OKEX", "OKEF", "OKSWAP", "HUOBIP", "HUOBIF"],
         "账户": "",
         "会话数": 3,
         "代理地址": "127.0.0.1",

@@ -5,7 +5,7 @@ from vnpy.trader.engine import MainEngine
 from vnpy.trader.ui import MainWindow, create_qapp
 
 # from vnpy.gateway.binance import BinanceGateway
-from vnpy.gateway.bitmex import BitmexGateway
+# from vnpy.gateway.bitmex import BitmexGateway
 # from vnpy.gateway.futu import FutuGateway
 # from vnpy.gateway.ib import IbGateway
 
@@ -13,7 +13,7 @@ from vnpy.gateway.bitmex import BitmexGateway
 # 去掉了ctptestGateway的导入又注释这行，需要CtptestGateway直接替换CtpGateway
 from vnpy.gateway.ctp import CtpGateway
 
-from vnpy.gateway.mini import MiniGateway
+# from vnpy.gateway.mini import MiniGateway
 # from vnpy.gateway.minitest import MinitestGateway
 # from vnpy.gateway.femas import FemasGateway
 # from vnpy.gateway.tiger import TigerGateway
@@ -56,12 +56,12 @@ def main():
     main_engine.add_gateway(CtpGateway)
 
     # main_engine.add_gateway(BinanceGateway)
-    main_engine.add_gateway(MiniGateway)
+    # main_engine.add_gateway(MiniGateway)
     # main_engine.add_gateway(MinitestGateway)
     # main_engine.add_gateway(FemasGateway)
     # main_engine.add_gateway(IbGateway)
     # main_engine.add_gateway(FutuGateway)
-    main_engine.add_gateway(BitmexGateway)
+    # main_engine.add_gateway(BitmexGateway)
     # main_engine.add_gateway(TigerGateway)
     # main_engine.add_gateway(OesGateway)
     main_engine.add_gateway(OkexGateway)
