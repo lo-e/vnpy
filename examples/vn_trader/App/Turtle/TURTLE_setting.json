@@ -14,7 +14,7 @@
         "strategy_name": "TURTLE_HC",
         "class_name": "TurtleStrategy",
         "vt_symbol": "hc2001",
-        "last_symbol":"hc1910",
+        "last_symbol":"",
         "per_size":10,
         "tick_price":1,
         "start": true
