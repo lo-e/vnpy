@@ -11,6 +11,9 @@ from vnpy.trader.object import BarData
 from vnpy.app.cta_strategy.base import DAILY_DB_NAME
 from App.Turtle.base import TRANSFORM_SYMBOL_LIST
 
+"""" fake """
+from datetime import datetime
+
 ########################################################################
 class TurtleResult(object):
     """一次完整的开平交易"""
@@ -235,6 +238,10 @@ class TurtleInitialManager(object):
     #----------------------------------------------------------------------
     def open(self, price, change):
         """开仓"""
+        """" fake """
+        if self.bar.datetime >= datetime(2019, 6, 2):
+            a = 2
+
         self.unit += change 
         
         if not self.result:
@@ -244,6 +251,10 @@ class TurtleInitialManager(object):
     #----------------------------------------------------------------------
     def close(self, price):
         """平仓"""
+        """" fake """
+        if self.bar.datetime >= datetime(2019, 6, 2):
+            a = 2
+
         self.unit = 0
         
         self.result.close(price)
