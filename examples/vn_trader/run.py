@@ -41,6 +41,7 @@ from vnpy.app.rpc_service import RpcServiceApp
 """ modify by loe """
 # 导入了海归交易
 from App.Turtle import TurtleApp
+from App.Turtle_crypto import TurtleCryptoApp
 
 
 def main():
@@ -78,6 +79,7 @@ def main():
     """ modify by loe """
     # 添加了海归交易
     main_engine.add_app(TurtleApp)
+    main_engine.add_app(TurtleCryptoApp)
 
     main_engine.add_app(CtaStrategyApp)
     main_engine.add_app(CtaBacktesterApp)
