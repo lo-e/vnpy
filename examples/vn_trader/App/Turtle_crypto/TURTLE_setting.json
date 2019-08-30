@@ -6,6 +6,7 @@
         "vt_symbol": "btc.usd.q.OKEF",
         "per_size":100,
         "tick_price":1,
+        "bit_value":10000,
         "start": true
     },
 
@@ -15,6 +16,7 @@
         "vt_symbol": "eth.usd.q.OKEF",
         "per_size":10,
         "tick_price":1,
+        "bit_value":200,
         "start": true
     },
 
@@ -24,6 +26,7 @@
         "vt_symbol": "eos.usd.q.OKEF",
         "per_size":10,
         "tick_price":1,
+        "bit_value":6,
         "start": true
     }
 ],

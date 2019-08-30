@@ -22,7 +22,8 @@ class TurtleStrategy(CtaTemplate):
     author = u'loe'
 
     # 策略参数
-    last_symbol = ''                     # 换月主力合约
+    last_symbol = ''                    # 换月主力合约
+    bit_value = 0                       # 数字货币设定价
     entryWindow = 20                    # 入场通道窗口
     exitWindow = 10                     # 出场通道窗口
     atrWindow = 15                      # 计算ATR波动率的窗口
@@ -52,6 +53,7 @@ class TurtleStrategy(CtaTemplate):
     shortStop = 0                       # 空头止损价格
 
     multiplier = 0                      # unit大小
+    multiplierList = []                 # 每次开仓的unit大小集合
     virtualUnit = 0                     # 信号仓位
     unit = 0                            # 实际持有仓位
     entry = 0                           # 当前持仓成本（不考虑滑点）
@@ -61,6 +63,7 @@ class TurtleStrategy(CtaTemplate):
     parameters = ['strategy_name',
                  'vt_symbol',
                  'last_symbol',
+                 'bit_value',
                  'per_size',
                  'tick_price',
                  'entryWindow',
@@ -89,6 +92,7 @@ class TurtleStrategy(CtaTemplate):
                'longStop',
                'shortStop',
                'multiplier',
+               'multiplierList',
                'virtualUnit',
                'unit',
                'entry',
@@ -108,6 +112,7 @@ class TurtleStrategy(CtaTemplate):
                 'longStop',
                 'shortStop',
                 'multiplier',
+                'multiplierList',
                 'virtualUnit',
                 'unit',
                 'entry',
@@ -203,7 +208,7 @@ class TurtleStrategy(CtaTemplate):
             if self.newDominantOpen:
                 preCheck = True
                 # 过滤虚假开仓
-                if self.multiplier == 0:
+                if self.multiplier <= 0:
                     preCheck = False
 
                 # 上次盈利过滤
@@ -256,6 +261,7 @@ class TurtleStrategy(CtaTemplate):
             # 多头开仓加仓
             if tick.last_price >= self.longEntry1 and self.virtualUnit < 1:
                 action = True
+                current_multiplier = self.calMultiplier(tick.last_price, direction=Direction.LONG)
 
                 # 信号建仓
                 self.open(tick.last_price, 1)
@@ -265,7 +271,7 @@ class TurtleStrategy(CtaTemplate):
 
                 preCheck = True
                 # 过滤虚假开仓
-                if self.multiplier == 0:
+                if current_multiplier <= 0:
                     preCheck = False
 
                 # 上次盈利过滤
@@ -287,13 +293,14 @@ class TurtleStrategy(CtaTemplate):
 
             if tick.last_price >= self.longEntry2 and self.virtualUnit < 2:
                 action = True
+                current_multiplier = self.calMultiplier(tick.last_price, direction=Direction.LONG)
 
                 self.open(tick.last_price, 1)
 
                 self.longStop = tick.last_price - 2 * self.atrVolatility
 
                 preCheck = True
-                if self.multiplier == 0:
+                if current_multiplier <= 0:
                     preCheck = False
 
                 if self.lastPnl > 0:
@@ -311,13 +318,14 @@ class TurtleStrategy(CtaTemplate):
 
             if tick.last_price >= self.longEntry3 and self.virtualUnit < 3:
                 action = True
+                current_multiplier = self.calMultiplier(tick.last_price, direction=Direction.LONG)
 
                 self.open(tick.last_price, 1)
 
                 self.longStop = tick.last_price - 2 * self.atrVolatility
 
                 preCheck = True
-                if self.multiplier == 0:
+                if current_multiplier <= 0:
                     preCheck = False
 
                 if self.lastPnl > 0:
@@ -335,13 +343,14 @@ class TurtleStrategy(CtaTemplate):
 
             if tick.last_price >= self.longEntry4 and self.virtualUnit < 4:
                 action = True
+                current_multiplier = self.calMultiplier(tick.last_price, direction=Direction.LONG)
 
                 self.open(tick.last_price, 1)
 
                 self.longStop = tick.last_price - 2 * self.atrVolatility
 
                 preCheck = True
-                if self.multiplier == 0:
+                if current_multiplier <= 0:
                     preCheck = False
 
                 if self.lastPnl > 0:
@@ -360,7 +369,7 @@ class TurtleStrategy(CtaTemplate):
             if action:
                 if unitChange:
                     self.unit += unitChange
-                    self.buy(self.bestOrderPrice(tick, Direction.LONG), self.multiplier*abs(unitChange))
+                    self.buy(self.bestOrderPrice(tick, Direction.LONG), current_multiplier*abs(unitChange))
 
                 self.put_event()
                 return
@@ -384,13 +393,14 @@ class TurtleStrategy(CtaTemplate):
             # 空头开仓加仓
             if tick.last_price <= self.shortEntry1 and self.virtualUnit > -1:
                 action = True
+                current_multiplier = self.calMultiplier(tick.last_price, direction=Direction.SHORT)
 
                 self.open(tick.last_price, -1)
 
                 self.shortStop = tick.last_price + 2 * self.atrVolatility
 
                 preCheck = True
-                if self.multiplier == 0:
+                if current_multiplier <= 0:
                     preCheck = False
 
                 if self.lastPnl > 0:
@@ -408,13 +418,14 @@ class TurtleStrategy(CtaTemplate):
 
             if tick.last_price <= self.shortEntry2 and self.virtualUnit > -2:
                 action = True
+                current_multiplier = self.calMultiplier(tick.last_price, direction=Direction.SHORT)
 
                 self.open(tick.last_price, -1)
 
                 self.shortStop = tick.last_price + 2 * self.atrVolatility
 
                 preCheck = True
-                if self.multiplier == 0:
+                if current_multiplier <= 0:
                     preCheck = False
 
                 if self.lastPnl > 0:
@@ -432,13 +443,14 @@ class TurtleStrategy(CtaTemplate):
 
             if tick.last_price <= self.shortEntry3 and self.virtualUnit > -3:
                 action = True
+                current_multiplier = self.calMultiplier(tick.last_price, direction=Direction.SHORT)
 
                 self.open(tick.last_price, -1)
 
                 self.shortStop = tick.last_price + 2 * self.atrVolatility
 
                 preCheck = True
-                if self.multiplier == 0:
+                if current_multiplier <= 0:
                     preCheck = False
 
                 if self.lastPnl > 0:
@@ -456,13 +468,14 @@ class TurtleStrategy(CtaTemplate):
 
             if tick.last_price <= self.shortEntry4 and self.virtualUnit > -4:
                 action = True
+                current_multiplier = self.calMultiplier(tick.last_price, direction=Direction.SHORT)
 
                 self.open(tick.last_price, -1)
 
                 self.shortStop = tick.last_price + 2 * self.atrVolatility
 
                 preCheck = True
-                if self.multiplier == 0:
+                if current_multiplier <= 0:
                     preCheck = False
 
                 if self.lastPnl > 0:
@@ -481,7 +494,7 @@ class TurtleStrategy(CtaTemplate):
             if action:
                 if unitChange:
                     self.unit += unitChange
-                    self.short(self.bestOrderPrice(tick, Direction.SHORT), self.multiplier * abs(unitChange))
+                    self.short(self.bestOrderPrice(tick, Direction.SHORT), current_multiplier * abs(unitChange))
 
                 self.put_event()
                 return
@@ -542,15 +555,24 @@ class TurtleStrategy(CtaTemplate):
         pass
 
     # 计算交易单位N
-    def updateMultiplier(self):
-        self.multiplier = 0
+    def calMultiplier(self, price, direction:Direction):
+        multiplier = 0
+        size = self.per_size
+        riskValue = self.portfolio.portfolioValue * 0.01 / self.bit_value
+        if self.atrVolatility * size:
+            if direction == Direction.LONG:
+                multiplier = riskValue * (price * (price - 2 * self.atrVolatility)) / (size * self.atrVolatility)
+            elif direction == Direction.SHORT:
+                multiplier = riskValue * (price * (price + 2 * self.atrVolatility)) / (size * self.atrVolatility)
+
+            multiplier = int(round(multiplier, 0))
+        self.multiplierList.append(multiplier)
+        return  multiplier
 
     # 计算入场信号指标
     def updateIndicator(self):
         # 计算atr
         self.atrVolatility = self.atrAm.atr(self.atrWindow)
-
-        self.updateMultiplier()
 
         self.longEntry1 = self.entryUp
         self.longEntry2 = self.longEntry1 + 0.5 * self.atrVolatility
@@ -590,6 +612,7 @@ class TurtleStrategy(CtaTemplate):
         self.unit = 0
         self.entry = 0
         self.newDominantOpen = True
+        self.multiplierList = []
 
     # 主力换月，初始化交易状态
     def newDominantInitial(self):
@@ -612,7 +635,6 @@ class TurtleStrategy(CtaTemplate):
         self.longStop = initialManager.longStop
         self.shortStop = initialManager.shortStop
 
-        self.updateMultiplier()
         self.virtualUnit = initialManager.unit
 
         if initialManager.result:
