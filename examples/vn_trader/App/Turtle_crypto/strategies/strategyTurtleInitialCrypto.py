@@ -41,7 +41,7 @@ class TurtleResult(object):
     
 
 ########################################################################
-class TurtleInitialManager(object):
+class TurtleInitialCryptoManager(object):
     """海龟策略初始化工具"""
 
     #----------------------------------------------------------------------
@@ -274,4 +274,3 @@ class TurtleInitialManager(object):
             tradePrice = min(self.bar.open_price, price)
         
         return tradePrice
-    

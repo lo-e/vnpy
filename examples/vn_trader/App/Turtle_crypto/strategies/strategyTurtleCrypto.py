@@ -12,13 +12,13 @@ from vnpy.trader.utility import ArrayManager
 from vnpy.app.cta_strategy.base import *
 import datetime
 import re
-from .strategyTurtleInitial import TurtleInitialManager
+from .strategyTurtleInitialCrypto import TurtleInitialCryptoManager
 from vnpy.trader.constant import Interval
 
 ########################################################################
-class TurtleStrategy(CtaTemplate):
+class TurtleStrategyCrypto(CtaTemplate):
     """海龟交易策略"""
-    className = 'TurtleStrategy'
+    className = 'TurtleStrategyCrypto'
     author = u'loe'
 
     # 策略参数
@@ -122,7 +122,7 @@ class TurtleStrategy(CtaTemplate):
     #----------------------------------------------------------------------
     def __init__(self, ctaEngine, turtlePortfolio, setting):
         """Constructor"""
-        super(TurtleStrategy, self).__init__(cta_engine=ctaEngine, strategy_name='', vt_symbol='', setting=setting)
+        super(TurtleStrategyCrypto, self).__init__(cta_engine=ctaEngine, strategy_name='', vt_symbol='', setting=setting)
 
         # last_symbol需要转换成带交易所后缀
         self.check_last_symbol()
@@ -547,7 +547,7 @@ class TurtleStrategy(CtaTemplate):
     def on_trade(self, trade):
         """成交推送"""
         # 邮件提醒
-        super(TurtleStrategy, self).on_trade(trade)
+        super(TurtleStrategyCrypto, self).on_trade(trade)
 
     #----------------------------------------------------------------------
     def on_stop_order(self, so):
@@ -620,7 +620,7 @@ class TurtleStrategy(CtaTemplate):
             return
         self.posInitialNeed = True
 
-        initialManager = TurtleInitialManager(self.vt_symbol, self.entryWindow, self.exitWindow, self.atrWindow)
+        initialManager = TurtleInitialCryptoManager(self.vt_symbol, self.entryWindow, self.exitWindow, self.atrWindow)
         initialManager.backtesting()
 
         self.atrVolatility = initialManager.atrVolatility
