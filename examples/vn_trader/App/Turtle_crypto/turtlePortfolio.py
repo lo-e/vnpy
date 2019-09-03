@@ -128,12 +128,12 @@ class TurtlePortfolio(object):
         self.engine.savePortfolioSyncData()
 
     # 记录盈亏
-    def addPnl(self, symbol, pnl, multiplier, size, exitUp, exitDown, longStop, shortStop):
+    def addPnl(self, symbol, pnl, multiplierList, size, exitUp, exitDown, longStop, shortStop):
         startSymbol = re.sub("\d", "", symbol)
         dic = {'symbol':symbol,
                'datetime':self.engine.today,
                'pnl':pnl,
-               'multiplier':multiplier,
+               'multiplierList':multiplierList,
                'size':size,
                'exitUp':exitUp,
                'exitDown':exitDown,

@@ -605,7 +605,7 @@ class TurtleStrategyCrypto(CtaTemplate):
     # 信号平仓
     def close(self, price):
         self.lastPnl = (price - self.entry) * self.virtualUnit
-        self.portfolio.addPnl(self.vt_symbol, self.lastPnl, self.multiplier, self.per_size, self.exitUp, self.exitDown, self.longStop, self.shortStop)
+        self.portfolio.addPnl(self.vt_symbol, self.lastPnl, self.multiplierList, self.per_size, self.exitUp, self.exitDown, self.longStop, self.shortStop)
 
         self.virtualUnit = 0
         self.unit = 0

@@ -1,3 +1,2 @@
-symbol,size,priceTick,variableCommission,fixedCommission,slippage,name,capital
-Poloniex/BTC.USDT,100,0.01,0.0003,0,0.01,OKEX现货/BTC.USDT币对,20
-Poloniex/ETH.USDT,10,0.001,0.0003,0,0.001,OKEX现货/ETH.USDT币对,1000
+symbol,size,priceTick,variableCommission,slippage,name,capital
+ETH.USD.Q.OKEF,10,0.001,0.0003,0.001,OKEX期货/ETH季度合约,1000

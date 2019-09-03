@@ -40,7 +40,6 @@ class BacktestingEngine(object):
         self.sizeDict = {}                  # 合约大小字典
         self.priceTickDict = {}             # 最小价格变动字典
         self.variableCommissionDict = {}    # 变动手续费字典
-        self.fixedCommissionDict = {}       # 固定手续费字典
         self.slippageDict = {}              # 滑点成本字典
         
         self.portfolioValue = 0
@@ -77,7 +76,6 @@ class BacktestingEngine(object):
                 SIZE_DICT[d['symbol']] = int(d['size'])
                 PRICETICK_DICT[d['symbol']] = float(d['priceTick'])
                 VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
-                FIXED_COMMISSION_DICT[d['symbol']] = float(d['fixedCommission'])
                 SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
                 self.portfolioValue = float(d['capital'])
                 self.portfolioCurrency = CurrencyWithSymbol(d['symbol'])
@@ -100,7 +98,6 @@ class BacktestingEngine(object):
         SIZE_DICT[d['symbol']] = int(d['size'])
         PRICETICK_DICT[d['symbol']] = float(d['priceTick'])
         VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
-        FIXED_COMMISSION_DICT[d['symbol']] = float(d['fixedCommission'])
         SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
         self.portfolioValue = float(d['capital'])
         self.portfolioCurrency = CurrencyWithSymbol(d['symbol'])
@@ -125,7 +122,6 @@ class BacktestingEngine(object):
             SIZE_DICT[d['symbol']] = int(d['size'])
             PRICETICK_DICT[d['symbol']] = float(d['priceTick'])
             VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
-            FIXED_COMMISSION_DICT[d['symbol']] = float(d['fixedCommission'])
             SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
             self.portfolioValue = float(d['capital'])
             self.portfolioCurrency = CurrencyWithSymbol(d['symbol'])
@@ -456,7 +452,6 @@ class DailyResult(object):
             
             slippage = SLIPPAGE_DICT[symbol]
             variableCommission = VARIABLE_COMMISSION_DICT[symbol]
-            fixedCommission = FIXED_COMMISSION_DICT[symbol]
             
             for trade in l:
                 if trade.direction == Direction.LONG:
