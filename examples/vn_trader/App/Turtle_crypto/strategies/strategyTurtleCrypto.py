@@ -10,7 +10,7 @@ from vnpy.trader.constant import (Direction, Offset)
 from vnpy.app.cta_strategy.template import CtaTemplate
 from vnpy.trader.utility import ArrayManager
 from vnpy.app.cta_strategy.base import *
-import datetime
+from datetime import datetime
 import re
 from .strategyTurtleInitialCrypto import TurtleInitialCryptoManager
 from vnpy.trader.constant import Interval
@@ -552,7 +552,6 @@ class TurtleStrategyCrypto(CtaTemplate):
     #----------------------------------------------------------------------
     def on_stop_order(self, so):
         """停止单推送"""
-        pass
 
     # 计算交易单位N
     def calMultiplier(self, price, direction:Direction):

@@ -460,8 +460,8 @@ class DailyResult(object):
         for symbol, l in self.tradeDict.items():
             close = self.closeDict[symbol]
             size = SIZE_DICT[symbol]
-            
-            slippage = SLIPPAGE_DICT[symbol]
+
+            slippage = SLIPPAGE_DICT[symbol] * PRICETICK_DICT[symbol]
             variableCommission = VARIABLE_COMMISSION_DICT[symbol]
             fixedCommission = FIXED_COMMISSION_DICT[symbol]
             
