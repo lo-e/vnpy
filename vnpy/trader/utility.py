@@ -105,7 +105,6 @@ def load_json_path(filepath: str):
             data = json.load(f)
         return data
     else:
-        save_json(filename, {})
         return {}
 
 
