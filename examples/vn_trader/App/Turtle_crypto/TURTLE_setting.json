@@ -3,7 +3,7 @@
     {
         "strategy_name": "TURTLE_BTC",
         "class_name": "TurtleStrategyCrypto",
-        "vt_symbol": "btc.usd.td.OKSWAP",
+        "vt_symbol": "btc.usd.q.OKEF",
         "per_size":100,
         "tick_price":1,
         "bit_value":10000,
@@ -13,7 +13,7 @@
     {
         "strategy_name": "TURTLE_ETH",
         "class_name": "TurtleStrategyCrypto",
-        "vt_symbol": "eth.usd.td.OKSWAP",
+        "vt_symbol": "eth.usd.q.OKEF",
         "per_size":10,
         "tick_price":1,
         "bit_value":200,
@@ -23,7 +23,7 @@
     {
         "strategy_name": "TURTLE_EOS",
         "class_name": "TurtleStrategyCrypto",
-        "vt_symbol": "eos.usd.td.OKSWAP",
+        "vt_symbol": "eos.usd.q.OKEF",
         "per_size":10,
         "tick_price":1,
         "bit_value":6,
