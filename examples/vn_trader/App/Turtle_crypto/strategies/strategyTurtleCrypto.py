@@ -216,7 +216,7 @@ class TurtleStrategyCrypto(CtaTemplate):
                     preCheck = False
 
                 # 检查是否保证金超限
-                if self.checkBondOver(tick.last_price):
+                if self.checkBondOver(tick.last_price, 0):
                     preCheck = False
 
                 if preCheck:
@@ -279,7 +279,7 @@ class TurtleStrategyCrypto(CtaTemplate):
                     preCheck = False
 
                 # 检查是否保证金超限
-                if self.checkBondOver(tick.last_price):
+                if self.checkBondOver(tick.last_price, current_multiplier):
                     preCheck = False
 
                 # 检查新主力合约是否允许开仓
@@ -306,7 +306,7 @@ class TurtleStrategyCrypto(CtaTemplate):
                 if self.lastPnl > 0:
                     preCheck = False
 
-                if self.checkBondOver(tick.last_price):
+                if self.checkBondOver(tick.last_price, current_multiplier):
                     preCheck = False
 
                 if not self.newDominantOpen:
@@ -331,7 +331,7 @@ class TurtleStrategyCrypto(CtaTemplate):
                 if self.lastPnl > 0:
                     preCheck = False
 
-                if self.checkBondOver(tick.last_price):
+                if self.checkBondOver(tick.last_price, current_multiplier):
                     preCheck = False
 
                 if not self.newDominantOpen:
@@ -356,7 +356,7 @@ class TurtleStrategyCrypto(CtaTemplate):
                 if self.lastPnl > 0:
                     preCheck = False
 
-                if self.checkBondOver(tick.last_price):
+                if self.checkBondOver(tick.last_price, current_multiplier):
                     preCheck = False
 
                 if not self.newDominantOpen:
@@ -406,7 +406,7 @@ class TurtleStrategyCrypto(CtaTemplate):
                 if self.lastPnl > 0:
                     preCheck = False
 
-                if self.checkBondOver(tick.last_price):
+                if self.checkBondOver(tick.last_price, current_multiplier):
                     preCheck = False
 
                 if not self.newDominantOpen:
@@ -431,7 +431,7 @@ class TurtleStrategyCrypto(CtaTemplate):
                 if self.lastPnl > 0:
                     preCheck = False
 
-                if self.checkBondOver(tick.last_price):
+                if self.checkBondOver(tick.last_price, current_multiplier):
                     preCheck = False
 
                 if not self.newDominantOpen:
@@ -456,7 +456,7 @@ class TurtleStrategyCrypto(CtaTemplate):
                 if self.lastPnl > 0:
                     preCheck = False
 
-                if self.checkBondOver(tick.last_price):
+                if self.checkBondOver(tick.last_price, current_multiplier):
                     preCheck = False
 
                 if not self.newDominantOpen:
@@ -481,7 +481,7 @@ class TurtleStrategyCrypto(CtaTemplate):
                 if self.lastPnl > 0:
                     preCheck = False
 
-                if self.checkBondOver(tick.last_price):
+                if self.checkBondOver(tick.last_price, current_multiplier):
                     preCheck = False
 
                 if not self.newDominantOpen:
@@ -587,10 +587,10 @@ class TurtleStrategyCrypto(CtaTemplate):
         self.shortStop = 0
 
     # 检查预计交易保证金是否超限
-    def checkBondOver(self, price):
+    def checkBondOver(self, price, multiplier):
         # 一个unit预计占用保证金不得超过初始资金的20%
-        if price * self.multiplier * self.per_size * 0.1 > self.portfolio.portfolioValue * 0.2:
-            self.portfolio.addOverBond(self.vt_symbol, price, self.per_size, self.multiplier, self.atrVolatility)
+        if self.per_size * multiplier / (price * 20) > self.portfolio.portfolioValue * 0.2 / self.bit_value:
+            self.portfolio.addOverBond(self.vt_symbol, price, self.per_size, multiplier, self.atrVolatility)
             return True
         else:
             return False

@@ -618,6 +618,11 @@ class OnetokenTradeWebsocketApi(WebsocketClient):
                     frozen=float(account_data["frozen"]),
                     gateway_name=self.gateway_name
                 )
+                """ modify by loe """
+                # 增添了一些属性
+                account.available = account_data['available']
+                account.close_profit = account_data['realized_profit']
+                account.position_profit = account_data['unrealized_profit']
                 self.gateway.on_account(account)
 
             # Futures
