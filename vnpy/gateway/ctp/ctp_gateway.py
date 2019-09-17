@@ -531,6 +531,9 @@ class CtpTdApi(TdApi):
         if "AccountID" not in data:
             return
 
+        """ modify by loe """
+        # 账户初始化修改，注释部分是vnpy原版
+        """
         account = AccountData(
             accountid=data["AccountID"],
             balance=data["Balance"],
@@ -538,6 +541,18 @@ class CtpTdApi(TdApi):
             gateway_name=self.gateway_name
         )
         account.available = data["Available"]
+        """
+        account = AccountData(
+            accountid=data["AccountID"],
+            balance=data["Balance"],
+            frozen=data['CurrMargin'],
+            gateway_name=self.gateway_name
+        )
+        account.available = data["Available"]
+        account.pre_balance = data['PreBalance']
+        account.trade_commission = data['Commission']
+        account.close_profit = data['CloseProfit']
+        account.position_profit = data['PositionProfit']
         
         self.gateway.on_account(account)
     
