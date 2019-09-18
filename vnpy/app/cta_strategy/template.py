@@ -11,7 +11,9 @@ from .base import StopOrder, EngineType, EXCHANGE_SYMBOL_DICT
 
 """ modify by loe """
 import re
-
+from pymongo import MongoClient
+from vnpy.app.cta_strategy.base import TICK_DB_NAME
+from copy import copy
 
 class CtaTemplate(ABC):
     """"""
@@ -311,6 +313,17 @@ class CtaTemplate(ABC):
             # 交易停止时发单返回空字符串
             return []
 
+    """ modify by loe """
+    # 保存tick到数据库
+    def saveTick(self, tick:TickData):
+        # 交易所枚举类型无法保存数据库，先转换成字符串
+        temp = copy(tick)
+        temp.exchange = temp.exchange.value
+        client = MongoClient('localhost', 27017, serverSelectionTimeoutMS=600)
+        tick_db = client[TICK_DB_NAME]
+        collection = tick_db[temp.symbol]
+        collection.create_index('datetime')
+        collection.update_many({'datetime': temp.datetime}, {'$set': temp.__dict__}, upsert=True)
 
 class CtaSignal(ABC):
     """"""
