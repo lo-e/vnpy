@@ -325,7 +325,7 @@ class BacktestingEngine(object):
         fig = plt.figure(figsize=(10, 16))
         
         pBalance = plt.subplot(4, 1, 1)
-        pBalance.set_title('Balance')
+        pBalance.set_title(f'Balance\t{self.symbolList[0]}')
         plt.plot(timeseries['date'], timeseries['balance'])
 
         """
