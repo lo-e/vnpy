@@ -122,9 +122,9 @@ def downloadMinuteBarBySymbol(symbol, min=1):
             cl.replace_one(flt, d, True)
 
     end = time()
-    cost = (end - start) * 1000
+    cost = end - start
 
-    print(u'合约%s的分钟K线数据下载完成%s - %s，耗时%s毫秒' %(symbol, df.index[0], df.index[-1], cost))
+    print(u'合约%s的分钟K线数据下载完成%s - %s，耗时%s秒' %(symbol, df.index[0], df.index[-1], cost))
 
 #----------------------------------------------------------------------
 def downloadDailyBarBySymbol(symbol):
@@ -143,9 +143,11 @@ def downloadDailyBarBySymbol(symbol):
         cl.replace_one(flt, d, True)
 
     end = time()
-    cost = (end - start) * 1000
+    cost = end - start
 
-    print(u'合约%s的日K线数据下载完成%s - %s，耗时%s毫秒' %(symbol, df.index[0], df.index[-1], cost))
+    return_msg = f'合约{symbol}的日K线数据下载完成{df.index[0]} - {df.index[-1]}，耗时{cost}秒\n'
+    print(return_msg)
+    return return_msg
 
 #----------------------------------------------------------------------
 def downloadTickBySymbol(symbol, date):
@@ -168,9 +170,9 @@ def downloadTickBySymbol(symbol, date):
         cl.replace_one(flt, d, True)
 
     end = time()
-    cost = (end - start) * 1000
+    cost = end - start
 
-    print(u'合约%sTick数据下载完成%s - %s，耗时%s毫秒' %(symbol, df.index[0], df.index[-1], cost))
+    print(u'合约%sTick数据下载完成%s - %s，耗时%s秒' %(symbol, df.index[0], df.index[-1], cost))
 
 """ modify by loe """
 # 获取主力合约列表并保存到数据库
@@ -204,6 +206,7 @@ def downloadDominantSymbol(underlyingSymbol, startDate = None):
     # 查询数据库
     collection = dbDominant[underlyingSymbol]
 
+    return_msg = ''
     if startDate:
         flt = {'date': {'$gte': startDate}}
         cursor = collection.find(flt).sort('date')
@@ -212,10 +215,10 @@ def downloadDominantSymbol(underlyingSymbol, startDate = None):
     for dic in cursor:
         date = dic['date']
         symbol = dic['symbol']
-        print(date)
-        print(symbol)
-        downloadDailyBarBySymbol(symbol)
-        print('\n')
+        print(f'{symbol}\n{date}')
+        msg = downloadDailyBarBySymbol(symbol)
+        return_msg += msg + '\n'
+    return return_msg
 
 # 获取今日主力合约
 def showDominantSymbol(underlyingSymbol):

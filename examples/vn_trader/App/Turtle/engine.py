@@ -59,6 +59,8 @@ from .turtlePortfolio import TurtlePortfolio
 import re
 from .base import TRANSFORM_SYMBOL_LIST
 from collections import OrderedDict
+from time import sleep
+from .dataservice import TurtleDataDownloading
 
 STOP_STATUS_MAP = {
     Status.SUBMITTING: StopOrderStatus.WAITING,
@@ -110,6 +112,8 @@ class TurtleEngine(BaseEngine):
         self.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         # 组合管理类
         self.turtlePortfolio = None
+        # 数据引擎
+        self.dataEngine = TurtleDataEngine(main_engine=self.main_engine, download_time='18:00', check_interval=10*60, reload_time=6)
 
     def init_engine(self):
         """
@@ -117,6 +121,11 @@ class TurtleEngine(BaseEngine):
         self.load_strategy_class()
         self.load_strategy_setting()
         self.register_event()
+
+        """ modify by loe for Turtle """
+        # 数据引擎启动
+        self.dataEngine.start()
+
         self.write_log("海归策略引擎初始化成功")
 
     def close(self):
@@ -979,3 +988,49 @@ class TurtleEngine(BaseEngine):
         if contract:
             return contract.priceTick
         return 0
+
+""" modify by loe """
+# 数据下载引擎，每天固定时间从RQData下载策略回测及实盘必要的数据
+class TurtleDataEngine(object):
+
+    def __init__(self, main_engine:MainEngine, download_time:str, check_interval:int, reload_time:int):
+        # download_time:'18:00', check_interval:10*60, reload_time:2
+        super(TurtleDataEngine, self).__init__()
+
+        self.main_engine = main_engine
+        self.download_time = download_time
+        self.check_interval = check_interval
+        self.reload_time = reload_time
+        self.downloading = False
+        self.downloaded = False
+        self.timer = Thread(target=self.on_timer)
+
+    def start(self):
+        self.timer.start()
+
+    def on_timer(self):
+        while True:
+            try:
+                self.checkAndDownload()
+            except:
+                self.main_engine.send_email(subject='TURTLE_RQData 数据下载', content=f'【未知错误】\n\n{traceback.format_exc()}')
+            sleep(self.check_interval)
+
+    def checkAndDownload(self):
+        now = datetime.now()
+        start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {self.download_time}', '%Y-%m-%d %H:%M')
+        end_time = start_time + timedelta(seconds=self.check_interval * self.reload_time)
+        if now >= start_time and now <= end_time:
+            if not self.downloading and not self.downloaded:
+                turtleDataD = TurtleDataDownloading()
+                self.downloading = True
+                result = False
+                result, msg = turtleDataD.download()
+                self.downloading = False
+                self.downloaded = result
+                self.main_engine.send_email(subject='TURTLE_RQData 数据下载',
+                                                content=msg)
+        else:
+            self.downloaded = False
+
+
