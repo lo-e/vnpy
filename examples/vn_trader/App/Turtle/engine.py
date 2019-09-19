@@ -1013,7 +1013,10 @@ class TurtleDataEngine(object):
             try:
                 self.checkAndDownload()
             except:
-                self.main_engine.send_email(subject='TURTLE_RQData 数据下载', content=f'【未知错误】\n\n{traceback.format_exc()}')
+                try:
+                    self.main_engine.send_email(subject='TURTLE_RQData 数据下载', content=f'【未知错误】\n\n{traceback.format_exc()}')
+                except:
+                    pass
             sleep(self.check_interval)
 
     def checkAndDownload(self):
@@ -1024,7 +1027,6 @@ class TurtleDataEngine(object):
             if not self.downloading and not self.downloaded:
                 turtleDataD = TurtleDataDownloading()
                 self.downloading = True
-                result = False
                 result, msg = turtleDataD.download()
                 self.downloading = False
                 self.downloaded = result

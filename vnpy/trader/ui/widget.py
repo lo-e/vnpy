@@ -383,6 +383,20 @@ class LogMonitor(BaseMonitor):
         "gateway_name": {"display": "接口", "cell": BaseCell, "update": False},
     }
 
+    """ modify by loe """
+    # 邮件通知日志内容
+    def process_event(self, event):
+        super(LogMonitor, self).process_event(event)
+        try:
+            content_dic = event.data.__dict__
+            content = ''
+            for key, value in content_dic.items():
+                content += f'{key}：{value}\n'
+            self.main_engine.send_email(subject='日志',
+                                        content=content)
+        except:
+            pass
+
 
 class TradeMonitor(BaseMonitor):
     """
