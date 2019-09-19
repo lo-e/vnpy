@@ -388,12 +388,20 @@ class LogMonitor(BaseMonitor):
     def process_event(self, event):
         super(LogMonitor, self).process_event(event)
         try:
+            key_word_list = ['断开', '异常', '错误', '出错', '触发', '失败', '状态码', 'Error', 'error', 'ERROR', 'Bad', 'bad', 'BAD']
             content_dic = event.data.__dict__
-            content = ''
-            for key, value in content_dic.items():
-                content += f'{key}：{value}\n'
-            self.main_engine.send_email(subject='日志',
-                                        content=content)
+            msg = content_dic['msg']
+            enable = False
+            for key in key_word_list:
+                if key in msg:
+                    enable = True
+                    break
+            if enable:
+                content = ''
+                for key, value in content_dic.items():
+                    content += f'{key}：{value}\n'
+                self.main_engine.send_email(subject='日志',
+                                            content=content)
         except:
             pass
 
