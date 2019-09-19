@@ -146,17 +146,17 @@ class CtaStrategyManager(QtWidgets.QGroupBox):
     # ----------------------------------------------------------------------
     def init(self):
         """初始化策略"""
-        self.turtleEngine.initStrategy(self.name)
+        self.turtleEngine.init_strategy(self.name)
 
     # ----------------------------------------------------------------------
     def start(self):
         """启动策略"""
-        self.turtleEngine.startStrategy(self.name)
+        self.turtleEngine.start_strategy(self.name)
 
     # ----------------------------------------------------------------------
     def stop(self):
         """停止策略"""
-        self.turtleEngine.stopStrategy(self.name)
+        self.turtleEngine.stop_strategy(self.name)
 
 
 class TurtlePortfolioManager(QtWidgets.QGroupBox):

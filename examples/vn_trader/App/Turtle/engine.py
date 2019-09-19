@@ -994,7 +994,7 @@ class TurtleEngine(BaseEngine):
 class TurtleDataEngine(object):
 
     def __init__(self, main_engine:MainEngine, download_time:str, check_interval:int, reload_time:int):
-        # download_time:'18:00', check_interval:10*60, reload_time:2
+        # download_time:'18:00', check_interval:10*60, reload_time:6
         super(TurtleDataEngine, self).__init__()
 
         self.main_engine = main_engine

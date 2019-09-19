@@ -58,6 +58,8 @@ from vnpy.app.cta_strategy.converter import OffsetConverter
 from .turtlePortfolio import TurtlePortfolio
 import re
 from collections import OrderedDict
+from time import sleep
+from .dataservice import TurtleCryptoDataDownloading
 
 STOP_STATUS_MAP = {
     Status.SUBMITTING: StopOrderStatus.WAITING,
@@ -109,6 +111,8 @@ class TurtleEngine(BaseEngine):
         self.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         # 组合管理类
         self.turtlePortfolio = None
+        # 数据引擎
+        self.dataEngine = TurtleCryptoDataEngine(main_engine=self.main_engine, turtle_engine=self, download_time='7:20', check_interval=5 * 60, reload_time=6, generate_time='8:00')
 
     def init_engine(self):
         """
@@ -116,6 +120,11 @@ class TurtleEngine(BaseEngine):
         self.load_strategy_class()
         self.load_strategy_setting()
         self.register_event()
+
+        """ modify by loe """
+        # 数据引擎启动
+        self.dataEngine.start()
+
         self.write_log("海归策略引擎初始化成功")
 
     def close(self):
@@ -969,3 +978,90 @@ class TurtleEngine(BaseEngine):
         if contract:
             return contract.priceTick
         return 0
+
+    """ modify by loe """
+    # 新的DailyBar更新后需要自动重新初始化策略
+    def reload_strategies(self):
+        for strategy_name in self.strategies.keys():
+            strategy = self.strategies[strategy_name]
+            if strategy.inited:
+                strategy.trading = False
+                self.call_strategy_func(strategy, strategy.on_init)
+                strategy.trading = True
+                self.put_strategy_event(strategy)
+                self.write_log(f"{strategy_name}重载数据完成")
+
+""" modify by loe """
+# 数据下载引擎，每天固定时间从1Token下载策略回测及实盘必要的数据，并结合订阅下载的数据合成DailyBar
+class TurtleCryptoDataEngine(object):
+
+    def __init__(self, main_engine:MainEngine, turtle_engine:TurtleEngine, download_time:str, check_interval:int, reload_time:int, generate_time:str):
+        # download_time:'7:20', check_interval:5*60, reload_time:6, generate_time:'8:00'
+        super(TurtleCryptoDataEngine, self).__init__()
+
+        self.main_engine = main_engine
+        self.turtle_engine = turtle_engine
+        self.download_time = download_time
+        self.check_interval = check_interval
+        self.reload_time = reload_time
+        self.generate_time = generate_time
+        self.downloading = False
+        self.generating = False
+        self.generated = True
+        self.download_timer = Thread(target=self.on_download_timer)
+        self.generate_timer = Thread(target=self.on_generate_timer)
+
+    def start(self):
+        self.download_timer.start()
+        self.generate_timer.start()
+
+    def on_download_timer(self):
+        while True:
+            try:
+                self.checkAndDownload()
+            except:
+                try:
+                    self.main_engine.send_email(subject='TURTLE_Crypto_1Token 数据下载', content=f'【未知错误】\n\n{traceback.format_exc()}')
+                except:
+                    pass
+            sleep(self.check_interval)
+
+    def on_generate_timer(self):
+        while True:
+            try:
+                self.checkAndGenerate()
+            except:
+                try:
+                    self.main_engine.send_email(subject='TURTLE_Crypto DailyBar合成', content=f'【未知错误】\n\n{traceback.format_exc()}')
+                except:
+                    pass
+
+    def checkAndDownload(self):
+        now = datetime.now()
+        start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {self.download_time}', '%Y-%m-%d %H:%M')
+        end_time = start_time + timedelta(seconds=self.check_interval * self.reload_time)
+        if now >= start_time and now <= end_time:
+            if not self.downloading:
+                turtleCryptoDataD = TurtleCryptoDataDownloading()
+                self.downloading = True
+                turtleCryptoDataD.download()
+                self.downloading = False
+
+    def checkAndGenerate(self):
+        now = datetime.now()
+        start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {self.generate_time}', '%Y-%m-%d %H:%M')
+        end_time = start_time + timedelta(seconds=12 * 60 * 60)
+        if now >= start_time and now <= end_time:
+            if not self.generating:
+                self.generating = True
+                turtleCryptoDataD = TurtleCryptoDataDownloading()
+                result, msg = turtleCryptoDataD.generate()
+                try:
+                    self.main_engine.send_email(subject='TURTLE_Crypto DailyBar合成', content=msg)
+                except:
+                    pass
+                if result:
+                    # 海龟引擎重新加载、初始化、启动
+                    self.turtle_engine.reload_strategies()
+        else:
+            self.generating = False
