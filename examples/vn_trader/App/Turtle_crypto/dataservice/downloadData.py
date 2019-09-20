@@ -4,17 +4,24 @@
 立即下载数据到数据库中，用于手动执行更新操作。
 """
 
-from .OneTokenDataService import get_bar_data
+from .OneTokenDataService import get_bar_data, get_csv_path
 from .CSVsToLocal import CSVs1TokenBarLocalEngine
 from .BarToLocal import BarLocalEngine
 from datetime import datetime, timedelta
+import shutil
+import os
 
 class TurtleCryptoDataDownloading(object):
     def __init__(self):
         pass
 
     def download(self):
-        # """
+        #"""
+        # 先删除原有文件夹，包括其中所有内容
+        csv_path = get_csv_path()
+        if os.path.exists(csv_path):
+            shutil.rmtree(csv_path)
+
         # 获取bar数据
         contractList = ['okef/btc.usd.q', 'okef/eth.usd.q', 'okef/eos.usd.q', 'okswap/btc.usd.td', 'okswap/eth.usd.td',
                         'okswap/eos.usd.td']
@@ -31,6 +38,7 @@ class TurtleCryptoDataDownloading(object):
                 get_bar_data(contract=contract, since=datetime.strftime(since, '%Y-%m-%d'),
                              until=datetime.strftime(since + timedelta(1), '%Y-%m-%d'), duration=duration)
             since += timedelta(1)
+        #"""
 
         # 1m数据入数据库
         print('\n====== 1m数据入数据库 ======')
@@ -46,7 +54,6 @@ class TurtleCryptoDataDownloading(object):
             elements = contract.split('/')
             symbol = '.'.join([elements[-1], elements[0]]).upper()
             engine.Crypto_1Min_Daily(symbol=symbol, start_date=start_date, end_date=end_date)
-        # """
 
     def generate(self):
         return_msg = 'abcxyz'

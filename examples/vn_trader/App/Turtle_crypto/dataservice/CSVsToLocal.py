@@ -16,7 +16,7 @@ class CSVs1TokenBarLocalEngine(object):
         # 周期
         self.duration = duration
         # 项目路径
-        self.walkingDir = 'CSVs'
+        self.walkingDir = 'dataservice\\CSVs'
         # 获取数据库
         self.client = pymongo.MongoClient('localhost', 27017)
 

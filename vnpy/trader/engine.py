@@ -597,7 +597,7 @@ class EmailEngine(BaseEngine):
 
         msg = EmailMessage()
         msg["From"] = SETTINGS["email.sender"]
-        msg["To"] = SETTINGS["email.receiver"]
+        msg["To"] = receiver
         msg["Subject"] = subject
         msg.set_content(content)
 
@@ -616,7 +616,7 @@ class EmailEngine(BaseEngine):
                         SETTINGS["email.username"], SETTINGS["email.password"]
                     )
                     smtp.send_message(msg)
-            except Empty:
+            except:
                 pass
 
     def start(self):

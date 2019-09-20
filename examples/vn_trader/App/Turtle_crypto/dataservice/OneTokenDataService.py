@@ -76,11 +76,11 @@ def get_bar_data(contract:str, since:str, until:str, duration:str):
 
     # 写入csv
     contract = contract.replace('/', '.')
-    path = os.getcwd() + f'\\CSVs\\1Token\\{contract}\\{duration}\\'
-    if not os.path.exists(path):
-        # 文件夹不存在自动创建文件夹
-        os.makedirs(path)
-    file_path = path + f'{since}__{until}.csv'
+    csv_path = get_csv_path()
+    dir_path = csv_path + f'{contract}\\{duration}\\'
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+    file_path = dir_path + f'{since}__{until}.csv'
     field_names = ['datetime', 'symbol', 'open', 'high', 'low', 'close', 'volume']
     with open(file_path, 'w') as f:
         writer = csv.DictWriter(f, fieldnames=field_names)
@@ -111,6 +111,12 @@ def get_contract_since(contract:str, duration:str):
     timestamp = data['since']
     date = datetime.fromtimestamp(timestamp)
     print(date)
+
+def get_csv_path():
+    path = os.path.abspath(__file__)
+    file_name = path.split('\\')[-1]
+    csv_path = path.rstrip(file_name) + f'\\CSVs\\'
+    return csv_path
 
 if __name__ == '__main__':
     """
