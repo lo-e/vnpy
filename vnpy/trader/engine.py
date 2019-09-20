@@ -36,6 +36,8 @@ from .utility import get_folder_path, TRADER_DIR
 """ modify by loe """
 from pymongo import MongoClient, ASCENDING
 from .constant import LOG_DB_NAME
+from dingtalkchatbot.chatbot import DingtalkChatbot
+from time import sleep
 
 class MainEngine:
     """
@@ -103,6 +105,8 @@ class MainEngine:
         self.add_engine(LogEngine)
         self.add_engine(OmsEngine)
         self.add_engine(EmailEngine)
+        """ modify by loe """
+        self.add_engine(DingTalkEngine)
 
     def write_log(self, msg: str, source: str = ""):
         """
@@ -618,6 +622,76 @@ class EmailEngine(BaseEngine):
                     smtp.send_message(msg)
             except:
                 pass
+            sleep(2)
+
+    def start(self):
+        """"""
+        self.active = True
+        self.thread.start()
+
+    def close(self):
+        """"""
+        if not self.active:
+            return
+
+        self.active = False
+        self.thread.join()
+
+""" modify by loe """
+class DingTalkEngine(BaseEngine):
+    # 发送钉钉机器人消息
+    def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
+        """"""
+        super(DingTalkEngine, self).__init__(main_engine, event_engine, "ding")
+
+        self.thread = Thread(target=self.run)
+        self.queue = Queue()
+        self.active = False
+
+        self.register_event()
+
+    def register_event(self):
+        self.event_engine.register(EVENT_LOG, self.ding_talk)
+
+    def ding_talk(self, event):
+        """"""
+        if not isinstance(event, Event):
+            return
+
+        key_word_list = ['断开', '异常', '错误', '出错', '触发', '失败', '状态码', 'Error', 'error', 'ERROR', 'Bad', 'bad', 'BAD']
+        content_dic = event.data.__dict__
+        msg = content_dic['msg']
+        enable = False
+        for key in key_word_list:
+            if key in msg:
+                enable = True
+                break
+        if enable:
+            content = ''
+            for key, value in content_dic.items():
+                content += f'{key}：{value}\n'
+
+            # 开启线程
+            if not self.active:
+                self.start()
+
+            # 消息推入队列，做流控处理
+            if self.queue.qsize() < 10:
+                self.queue.put(content)
+
+    def run(self):
+        """"""
+        while self.active:
+            try:
+                content = self.queue.get(block=True, timeout=1)
+
+                # 发送消息
+                webhook = 'https://oapi.dingtalk.com/robot/send?access_token=c7829ba703a3e0a28fb43f40a65f68313ec3ab43324e5bad30bd2bb660f791e4'
+                ding = DingtalkChatbot(webhook)
+                ding.send_text(msg=content, is_at_all=True)
+            except:
+                pass
+            sleep(2)
 
     def start(self):
         """"""
