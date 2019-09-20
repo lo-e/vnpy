@@ -31,5 +31,9 @@ _build
 _static
 _templates
 
+# File
+examples/TurtleStrategy/result.csv'
+examples/TurtleStrategy_crypto/result.csv
+
 # Folder
 examples/vn_trader/App/Turtle_crypto/dataservice/CSVs/
