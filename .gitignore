@@ -30,3 +30,6 @@ dist
 _build
 _static
 _templates
+
+# Folder
+*/CSVs
