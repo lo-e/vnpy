@@ -998,7 +998,7 @@ class TurtleCryptoDataEngine(object):
     def __init__(self, main_engine:MainEngine, turtle_engine:TurtleEngine, download_time:str, check_interval:int, reload_time:int, generate_time:str):
         # download_time:'7:20', check_interval:5*60, reload_time:6, generate_time:'8:00'
         super(TurtleCryptoDataEngine, self).__init__()
-
+        self.contract_list = ['okef/btc.usd.q', 'okef/eth.usd.q', 'okef/eos.usd.q']
         self.main_engine = main_engine
         self.turtle_engine = turtle_engine
         self.download_time = download_time
@@ -1044,7 +1044,7 @@ class TurtleCryptoDataEngine(object):
             if not self.downloading:
                 turtleCryptoDataD = TurtleCryptoDataDownloading()
                 self.downloading = True
-                turtleCryptoDataD.download()
+                turtleCryptoDataD.download(contract_list=self.contract_list)
                 self.downloading = False
 
     def checkAndGenerate(self):
@@ -1055,9 +1055,11 @@ class TurtleCryptoDataEngine(object):
             if not self.generating:
                 self.generating = True
                 turtleCryptoDataD = TurtleCryptoDataDownloading()
-                result, msg = turtleCryptoDataD.generate()
+                result, complete_msg, back_msg, lost_msg = turtleCryptoDataD.generate(contract_list=self.contract_list)
+                email_msg = complete_msg + '\n\n' + lost_msg + back_msg
+                print('\n\n' + lost_msg + back_msg)
                 try:
-                    self.main_engine.send_email(subject='TURTLE_Crypto DailyBar合成', content=msg)
+                    self.main_engine.send_email(subject='TURTLE_Crypto DailyBar合成', content=email_msg)
                 except:
                     pass
                 if result:

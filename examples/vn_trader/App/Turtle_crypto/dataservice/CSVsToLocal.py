@@ -9,6 +9,7 @@ import csv
 from time import time
 from sys import exit
 import re
+from .OneTokenDataService import get_csv_path
 
 class CSVs1TokenBarLocalEngine(object):
     def __init__(self, duration:str):
@@ -16,7 +17,7 @@ class CSVs1TokenBarLocalEngine(object):
         # 周期
         self.duration = duration
         # 项目路径
-        self.walkingDir = 'dataservice\\CSVs'
+        self.walkingDir = get_csv_path()
         # 获取数据库
         self.client = pymongo.MongoClient('localhost', 27017)
 

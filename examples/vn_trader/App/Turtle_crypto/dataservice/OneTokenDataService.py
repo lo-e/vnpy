@@ -115,7 +115,7 @@ def get_contract_since(contract:str, duration:str):
 def get_csv_path():
     path = os.path.abspath(__file__)
     file_name = path.split('\\')[-1]
-    csv_path = path.rstrip(file_name) + f'\\CSVs\\'
+    csv_path = path.rstrip(file_name) + f'CSVs\\'
     return csv_path
 
 if __name__ == '__main__':
