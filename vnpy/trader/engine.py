@@ -172,7 +172,7 @@ class MainEngine:
             gateway.connect(setting)
 
     """" modify by loe """
-    def checkAndReconnect(self, gateway_name:str):
+    def reconnect(self, gateway_name:str):
         gateway = self.get_gateway(gateway_name)
         setting = self.gateway_setting.get(gateway_name, None)
         if not setting:

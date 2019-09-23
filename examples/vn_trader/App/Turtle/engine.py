@@ -113,7 +113,7 @@ class TurtleEngine(BaseEngine):
         # 组合管理类
         self.turtlePortfolio = None
         # 数据引擎
-        self.autoEngine = TurtleAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='18:00', restart_time='13:30', check_interval=10*60, reload_time=6)
+        self.autoEngine = TurtleAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='18:00', reconnect_time='20:00', check_interval=10*60, reload_time=6)
 
     def init_engine(self):
         """
@@ -1009,14 +1009,14 @@ class TurtleEngine(BaseEngine):
 # 数据自动化引擎，每天固定时间从RQData下载策略回测及实盘必要的数据，自动重连CTP和重新初始化策略
 class TurtleAutoEngine(object):
 
-    def __init__(self, main_engine:MainEngine, turtle_engine:TurtleEngine, download_time:str, restart_time:str, check_interval:int, reload_time:int):
+    def __init__(self, main_engine:MainEngine, turtle_engine:TurtleEngine, download_time:str, reconnect_time:str, check_interval:int, reload_time:int):
         # download_time:'18:00', check_interval:10*60, reload_time:6
         super(TurtleAutoEngine, self).__init__()
 
         self.main_engine = main_engine
         self.turtle_engine = turtle_engine
         self.download_time = download_time
-        self.restart_time = restart_time
+        self.reconnect_time = reconnect_time
         self.check_interval = check_interval
         self.reload_time = reload_time
         self.downloading = False
@@ -1024,11 +1024,11 @@ class TurtleAutoEngine(object):
         self.restarting = False
         self.restarted = False
         self.download_timer = Thread(target=self.on_download_timer)
-        self.restart_timer = Thread(target=self.on_restart_timer)
+        self.reconnect_timer = Thread(target=self.on_reconnect_timer)
 
     def start(self):
         self.download_timer.start()
-        self.restart_timer.start()
+        self.reconnect_timer.start()
 
     def on_download_timer(self):
         while True:
@@ -1060,10 +1060,10 @@ class TurtleAutoEngine(object):
         else:
             self.downloaded = False
 
-    def on_restart_timer(self):
+    def on_reconnect_timer(self):
         while True:
             try:
-                self.checkAndRestart()
+                self.checkAndReconnect()
             except:
                 try:
                     self.main_engine.send_email(subject='TURTLE 服务器重连、策略重启', content=f'【未知错误】\n\n{traceback.format_exc()}')
@@ -1071,14 +1071,14 @@ class TurtleAutoEngine(object):
                     pass
             sleep(self.check_interval)
 
-    def checkAndRestart(self):
+    def checkAndReconnect(self):
         now = datetime.now()
-        start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {self.restart_time}', '%Y-%m-%d %H:%M')
+        start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {self.reconnect_time}', '%Y-%m-%d %H:%M')
         end_time = start_time + timedelta(seconds=self.check_interval * self.reload_time)
         if now >= start_time and now <= end_time:
             if not self.restarting and not self.restarted:
                 self.restarting = True
-                result, return_msg = self.main_engine.checkAndReconnect('CTP')
+                result, return_msg = self.main_engine.reconnect(gateway_name='CTP')
                 self.restarting = False
                 self.restarted = result
                 try:
