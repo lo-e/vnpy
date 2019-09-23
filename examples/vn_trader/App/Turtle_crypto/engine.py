@@ -112,7 +112,7 @@ class TurtleEngine(BaseEngine):
         # 组合管理类
         self.turtlePortfolio = None
         # 数据引擎
-        self.dataEngine = TurtleCryptoDataEngine(main_engine=self.main_engine, turtle_engine=self, download_time='7:20', check_interval=5 * 60, reload_time=6, generate_time='8:00')
+        self.autoEngine = TurtleCryptoAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='7:20', check_interval=5 * 60, reload_time=6, generate_time='8:00')
 
     def init_engine(self):
         """
@@ -123,7 +123,7 @@ class TurtleEngine(BaseEngine):
 
         """ modify by loe """
         # 数据引擎启动
-        self.dataEngine.start()
+        self.autoEngine.start()
 
         self.write_log("海归策略引擎初始化成功")
 
@@ -981,7 +981,7 @@ class TurtleEngine(BaseEngine):
 
     """ modify by loe """
     # 新的DailyBar更新后需要自动重新初始化策略
-    def reload_strategies(self):
+    def reinit_strategies(self):
         for strategy_name in self.strategies.keys():
             strategy = self.strategies[strategy_name]
             if strategy.inited:
@@ -989,15 +989,15 @@ class TurtleEngine(BaseEngine):
                 self.call_strategy_func(strategy, strategy.on_init)
                 strategy.trading = True
                 self.put_strategy_event(strategy)
-                self.write_log(f"{strategy_name}重载数据完成")
+                self.write_log(f"{strategy_name} 重新初始化完成")
 
 """ modify by loe """
-# 数据下载引擎，每天固定时间从1Token下载策略回测及实盘必要的数据，并结合订阅下载的数据合成DailyBar
-class TurtleCryptoDataEngine(object):
+# 数据下载引擎，每天固定时间从1Token自动下载策略回测及实盘必要的数据，并自动结合订阅下载的数据合成DailyBar，策略自动重新初始化
+class TurtleCryptoAutoEngine(object):
 
     def __init__(self, main_engine:MainEngine, turtle_engine:TurtleEngine, download_time:str, check_interval:int, reload_time:int, generate_time:str):
         # download_time:'7:20', check_interval:5*60, reload_time:6, generate_time:'8:00'
-        super(TurtleCryptoDataEngine, self).__init__()
+        super(TurtleCryptoAutoEngine, self).__init__()
         self.contract_list = ['okef/btc.usd.q', 'okef/eth.usd.q', 'okef/eos.usd.q']
         self.main_engine = main_engine
         self.turtle_engine = turtle_engine
@@ -1007,7 +1007,6 @@ class TurtleCryptoDataEngine(object):
         self.generate_time = generate_time
         self.downloading = False
         self.generating = False
-        self.generated = True
         self.download_timer = Thread(target=self.on_download_timer)
         self.generate_timer = Thread(target=self.on_generate_timer)
 
@@ -1021,7 +1020,7 @@ class TurtleCryptoDataEngine(object):
                 self.checkAndDownload()
             except:
                 try:
-                    self.main_engine.send_email(subject='TURTLE_Crypto_1Token 数据下载', content=f'【未知错误】\n\n{traceback.format_exc()}')
+                    self.main_engine.send_email(subject='TURTLE_Crypto 数据下载', content=f'【未知错误】\n\n{traceback.format_exc()}')
                 except:
                     pass
             sleep(self.check_interval)
@@ -1032,7 +1031,7 @@ class TurtleCryptoDataEngine(object):
                 self.checkAndGenerate()
             except:
                 try:
-                    self.main_engine.send_email(subject='TURTLE_Crypto DailyBar合成', content=f'【未知错误】\n\n{traceback.format_exc()}')
+                    self.main_engine.send_email(subject='TURTLE_Crypto 数据更新', content=f'【未知错误】\n\n{traceback.format_exc()}')
                 except:
                     pass
 
@@ -1059,11 +1058,11 @@ class TurtleCryptoDataEngine(object):
                 email_msg = complete_msg + '\n\n' + lost_msg + back_msg
                 print('\n\n' + lost_msg + back_msg)
                 try:
-                    self.main_engine.send_email(subject='TURTLE_Crypto DailyBar合成', content=email_msg)
+                    self.main_engine.send_email(subject='TURTLE_Crypto 数据更新', content=email_msg)
                 except:
                     pass
                 if result:
-                    # 海龟引擎重新加载、初始化、启动
-                    self.turtle_engine.reload_strategies()
+                    # 海龟策略重新初始化
+                    self.turtle_engine.reinit_strategies()
         else:
             self.generating = False

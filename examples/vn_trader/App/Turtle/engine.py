@@ -113,7 +113,7 @@ class TurtleEngine(BaseEngine):
         # 组合管理类
         self.turtlePortfolio = None
         # 数据引擎
-        self.dataEngine = TurtleDataEngine(main_engine=self.main_engine, download_time='18:00', check_interval=10*60, reload_time=6)
+        self.autoEngine = TurtleAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='18:00', restart_time='13:30', check_interval=10*60, reload_time=6)
 
     def init_engine(self):
         """
@@ -124,7 +124,7 @@ class TurtleEngine(BaseEngine):
 
         """ modify by loe for Turtle """
         # 数据引擎启动
-        self.dataEngine.start()
+        self.autoEngine.start()
 
         self.write_log("海归策略引擎初始化成功")
 
@@ -588,25 +588,7 @@ class TurtleEngine(BaseEngine):
             # Call on_init function of strategy
             self.call_strategy_func(strategy, strategy.on_init)
 
-            # Subscribe market data
-            contract = self.main_engine.get_contract(strategy.vt_symbol)
-            if contract:
-                req = SubscribeRequest(
-                    symbol=contract.symbol, exchange=contract.exchange)
-                self.main_engine.subscribe(req, contract.gateway_name)
-            else:
-                self.write_log(f"行情订阅失败，找不到合约{strategy.vt_symbol}", strategy)
-
-            """ modify by loe """
-            # 订阅last_symbol行情
-            if strategy.last_symbol:
-                contract = self.main_engine.get_contract(strategy.last_symbol)
-                if contract:
-                    req = SubscribeRequest(
-                        symbol=contract.symbol, exchange=contract.exchange)
-                    self.main_engine.subscribe(req, contract.gateway_name)
-                else:
-                    self.write_log(f"行情订阅失败，找不到合约{strategy.last_symbol}", strategy)
+            self.subscribe_strategy(strategy)
 
             # Put event to update init completed status.
             strategy.inited = True
@@ -989,26 +971,66 @@ class TurtleEngine(BaseEngine):
             return contract.priceTick
         return 0
 
-""" modify by loe """
-# 数据下载引擎，每天固定时间从RQData下载策略回测及实盘必要的数据
-class TurtleDataEngine(object):
+    """ modify by loe """
+    # 订阅行情
+    def subscribe_strategy(self, strategy):
+        # Subscribe market data
+        contract = self.main_engine.get_contract(strategy.vt_symbol)
+        if contract:
+            req = SubscribeRequest(
+                symbol=contract.symbol, exchange=contract.exchange)
+            self.main_engine.subscribe(req, contract.gateway_name)
+        else:
+            self.write_log(f"行情订阅失败，找不到合约{strategy.vt_symbol}", strategy)
 
-    def __init__(self, main_engine:MainEngine, download_time:str, check_interval:int, reload_time:int):
+        """ modify by loe """
+        # 订阅last_symbol行情
+        if strategy.last_symbol:
+            contract = self.main_engine.get_contract(strategy.last_symbol)
+            if contract:
+                req = SubscribeRequest(
+                    symbol=contract.symbol, exchange=contract.exchange)
+                self.main_engine.subscribe(req, contract.gateway_name)
+            else:
+                self.write_log(f"行情订阅失败，找不到合约{strategy.last_symbol}", strategy)
+
+    # 新的DailyBar更新后需要自动重新初始化策略
+    def reinit_strategies(self):
+        for strategy_name in self.strategies.keys():
+            strategy = self.strategies[strategy_name]
+            if strategy.inited:
+                strategy.trading = False
+                self.call_strategy_func(strategy, strategy.on_init)
+                strategy.trading = True
+                self.put_strategy_event(strategy)
+                self.write_log(f"{strategy_name} 重新初始化完成")
+
+""" modify by loe """
+# 数据自动化引擎，每天固定时间从RQData下载策略回测及实盘必要的数据，自动重连CTP和重新初始化策略
+class TurtleAutoEngine(object):
+
+    def __init__(self, main_engine:MainEngine, turtle_engine:TurtleEngine, download_time:str, restart_time:str, check_interval:int, reload_time:int):
         # download_time:'18:00', check_interval:10*60, reload_time:6
-        super(TurtleDataEngine, self).__init__()
+        super(TurtleAutoEngine, self).__init__()
 
         self.main_engine = main_engine
+        self.turtle_engine = turtle_engine
         self.download_time = download_time
+        self.restart_time = restart_time
         self.check_interval = check_interval
         self.reload_time = reload_time
         self.downloading = False
         self.downloaded = False
-        self.timer = Thread(target=self.on_timer)
+        self.restarting = False
+        self.restarted = False
+        self.download_timer = Thread(target=self.on_download_timer)
+        self.restart_timer = Thread(target=self.on_restart_timer)
 
     def start(self):
-        self.timer.start()
+        self.download_timer.start()
+        self.restart_timer.start()
 
-    def on_timer(self):
+    def on_download_timer(self):
         while True:
             try:
                 self.checkAndDownload()
@@ -1030,9 +1052,40 @@ class TurtleDataEngine(object):
                 result, msg = turtleDataD.download()
                 self.downloading = False
                 self.downloaded = result
-                self.main_engine.send_email(subject='TURTLE_RQData 数据下载',
+                self.main_engine.send_email(subject='TURTLE_RQData 数据更新',
                                                 content=msg)
+                if result:
+                    # 海龟策略重新初始化
+                    self.turtle_engine.reinit_strategies()
         else:
             self.downloaded = False
+
+    def on_restart_timer(self):
+        while True:
+            try:
+                self.checkAndRestart()
+            except:
+                try:
+                    self.main_engine.send_email(subject='TURTLE 服务器重连、策略重启', content=f'【未知错误】\n\n{traceback.format_exc()}')
+                except:
+                    pass
+            sleep(self.check_interval)
+
+    def checkAndRestart(self):
+        now = datetime.now()
+        start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {self.restart_time}', '%Y-%m-%d %H:%M')
+        end_time = start_time + timedelta(seconds=self.check_interval * self.reload_time)
+        if now >= start_time and now <= end_time:
+            if not self.restarting and not self.restarted:
+                self.restarting = True
+                result, return_msg = self.main_engine.checkAndReconnect('CTP')
+                self.restarting = False
+                self.restarted = result
+                try:
+                    self.main_engine.send_email(subject='TURTLE 服务器重连', content=return_msg)
+                except:
+                    pass
+        else:
+            self.restarted = False
 
 

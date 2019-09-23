@@ -65,6 +65,7 @@ class MainEngine:
 
         """ modify by loe """
         self.dbClient = None
+        self.gateway_setting = {}
 
     def add_engine(self, engine_class: Any):
         """
@@ -166,8 +167,22 @@ class MainEngine:
         Start connection of a specific gateway.
         """
         gateway = self.get_gateway(gateway_name)
+        self.gateway_setting[gateway_name] = setting
         if gateway:
             gateway.connect(setting)
+
+    """" modify by loe """
+    def checkAndReconnect(self, gateway_name:str):
+        gateway = self.get_gateway(gateway_name)
+        setting = self.gateway_setting.get(gateway_name, None)
+        if not setting:
+            return False, f'gateway setting 连接参数缺失【{gateway_name}】'
+        self.connect(setting, gateway_name)
+        sleep(20)
+        if gateway.md_api.login_status and gateway.td_api.login_status and gateway.td_api.auth_staus:
+            return True, f'gateway 重新连接成功【{gateway_name}】'
+        else:
+            return False, f'gateway 重新连接失败【{gateway_name}】'
 
     def subscribe(self, req: SubscribeRequest, gateway_name: str):
         """
