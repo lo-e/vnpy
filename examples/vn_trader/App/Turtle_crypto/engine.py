@@ -112,7 +112,7 @@ class TurtleEngine(BaseEngine):
         # 组合管理类
         self.turtlePortfolio = None
         # 数据引擎
-        self.autoEngine = TurtleCryptoAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='7:20', check_interval=5 * 60, reload_time=6, generate_time='8:00')
+        self.autoEngine = TurtleCryptoAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='7:20', check_interval=5 * 60, reload_time=6, generate_time='8:00:01')
 
     def init_engine(self):
         """
@@ -996,7 +996,7 @@ class TurtleEngine(BaseEngine):
 class TurtleCryptoAutoEngine(object):
 
     def __init__(self, main_engine:MainEngine, turtle_engine:TurtleEngine, download_time:str, check_interval:int, reload_time:int, generate_time:str):
-        # download_time:'7:20', check_interval:5*60, reload_time:6, generate_time:'8:00'
+        # download_time:'7:20', check_interval:5*60, reload_time:6, generate_time:'8:00:01'
         super(TurtleCryptoAutoEngine, self).__init__()
         self.contract_list = ['okef/btc.usd.q', 'okef/eth.usd.q', 'okef/eos.usd.q']
         self.main_engine = main_engine
@@ -1048,7 +1048,7 @@ class TurtleCryptoAutoEngine(object):
 
     def checkAndGenerate(self):
         now = datetime.now()
-        start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {self.generate_time}', '%Y-%m-%d %H:%M')
+        start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {self.generate_time}', '%Y-%m-%d %H:%M:%S')
         end_time = start_time + timedelta(seconds=10)
         if now >= start_time and now <= end_time:
             if not self.generating:
