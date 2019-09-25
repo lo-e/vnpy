@@ -1036,6 +1036,7 @@ class TurtleAutoEngine(object):
                 self.checkAndDownload()
             except:
                 try:
+                    self.downloading = False
                     self.main_engine.send_email(subject='TURTLE_RQData 数据下载', content=f'【未知错误】\n\n{traceback.format_exc()}')
                 except:
                     pass
