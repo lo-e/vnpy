@@ -25,7 +25,7 @@
         "class_name": "TurtleStrategyCrypto",
         "vt_symbol": "eos.usd.q.OKEF",
         "per_size":10,
-        "tick_price":1,
+        "tick_price":0.01,
         "bit_value":6,
         "start": true
     }
