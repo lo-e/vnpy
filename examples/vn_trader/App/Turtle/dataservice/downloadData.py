@@ -115,7 +115,7 @@ class TurtleDataDownloading(object):
         # """
 
         if not result:
-            return_msg = f'====== 数据未更新 ======\n\n' + return_msg
+            return_msg = f'======\n数据未更新\n======\n\n' + return_msg
         return result, return_msg
 
 if __name__ == '__main__':
