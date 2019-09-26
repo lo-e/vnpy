@@ -999,9 +999,10 @@ class TurtleEngine(BaseEngine):
         for strategy_name in self.strategies.keys():
             strategy = self.strategies[strategy_name]
             if strategy.inited:
+                temp = strategy.trading
                 strategy.trading = False
                 self.call_strategy_func(strategy, strategy.on_init)
-                strategy.trading = True
+                strategy.trading = temp
                 self.put_strategy_event(strategy)
                 self.write_log(f"{strategy_name} 重新初始化完成")
 
@@ -1053,11 +1054,12 @@ class TurtleAutoEngine(object):
                 result, msg = turtleDataD.download()
                 self.downloading = False
                 self.downloaded = result
-                self.main_engine.send_email(subject='TURTLE_RQData 数据更新',
-                                                content=msg)
                 if result:
                     # 海龟策略重新初始化
                     self.turtle_engine.reinit_strategies()
+                    msg = '====== 数据更新成功 策略重新初始化成功 ======' + '\n' + msg
+                self.main_engine.send_email(subject='TURTLE_RQData 数据更新',
+                                                content=msg)
         else:
             self.downloaded = False
 

@@ -160,7 +160,7 @@ class TurtleStrategy(CtaTemplate):
     #----------------------------------------------------------------------
     def on_init(self):
         """初始化策略（必须由用户继承实现）"""
-        self.write_log(f'{self.strategy_name}\t策略初始化')
+        self.hasClose = False
         if self.last_symbol:
             # 主力换月处理
             # 需要清空前主力合约仓位
@@ -195,6 +195,7 @@ class TurtleStrategy(CtaTemplate):
         initData = self.load_bar(300, interval=Interval.DAILY)
         for bar in initData:
             self.on_bar(bar)
+        self.write_log(f'{self.strategy_name}\t策略初始化')
 
     #----------------------------------------------------------------------
     def on_start(self):
