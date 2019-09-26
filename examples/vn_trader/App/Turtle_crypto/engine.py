@@ -985,9 +985,10 @@ class TurtleEngine(BaseEngine):
         for strategy_name in self.strategies.keys():
             strategy = self.strategies[strategy_name]
             if strategy.inited:
+                temp = strategy.trading
                 strategy.trading = False
                 self.call_strategy_func(strategy, strategy.on_init)
-                strategy.trading = True
+                strategy.trading = temp
                 self.put_strategy_event(strategy)
                 self.write_log(f"{strategy_name} 重新初始化完成")
 
