@@ -36,6 +36,9 @@ from vnpy.trader.object import (
 )
 from vnpy.trader.event import EVENT_TIMER
 
+""" modify by loe """
+from vnpy.event import Event
+from vnpy.trader.event import EVENT_ClEAR_POSITION
 
 REST_HOST = "https://1token.trade/api"
 # DATA_WEBSOCKET_HOST = "wss://1token.trade/api/v1/ws/tick"
@@ -607,6 +610,10 @@ class OnetokenTradeWebsocketApi(WebsocketClient):
 
     def on_info(self, data: dict):
         """"""
+        """ modify by loe """
+        event = Event(EVENT_ClEAR_POSITION)
+        self.gateway.event_engine.put(event)
+
         for account_data in data["position"]:
             _type = account_data["type"]
 

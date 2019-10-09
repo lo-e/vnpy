@@ -24,6 +24,8 @@ from ..object import OrderRequest, SubscribeRequest
 from ..utility import load_json, save_json
 from ..setting import SETTING_FILENAME, SETTINGS
 
+""" modify by loe """
+from vnpy.trader.event import EVENT_ClEAR_POSITION
 
 COLOR_LONG = QtGui.QColor("red")
 COLOR_SHORT = QtGui.QColor("green")
@@ -458,6 +460,9 @@ class PositionMonitor(BaseMonitor):
     data_key = "vt_positionid"
     sorting = True
 
+    """ modify by loe """
+    clear_signal = QtCore.pyqtSignal(Event)
+
     headers = {
         "symbol": {"display": "代码", "cell": BaseCell, "update": False},
         "exchange": {"display": "交易所", "cell": EnumCell, "update": False},
@@ -470,6 +475,21 @@ class PositionMonitor(BaseMonitor):
         "gateway_name": {"display": "接口", "cell": BaseCell, "update": False},
     }
 
+    """ modify by loe """
+    # 新增事件监听
+    def register_event(self):
+        super(PositionMonitor, self).register_event()
+
+        self.clear_signal.connect(self.on_clear_position)
+        self.event_engine.register(EVENT_ClEAR_POSITION, self.clear_signal.emit)
+
+    def on_clear_position(self):
+        cell_len = len(self.cells)
+        i = 0
+        while i < cell_len:
+            self.removeRow(0)
+            i += 1
+        self.cells = {}
 
 class AccountMonitor(BaseMonitor):
     """
