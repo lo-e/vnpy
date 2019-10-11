@@ -290,4 +290,4 @@ def combine(l, n):
     return answers
 
 if __name__ == '__main__':
-    four()
+    one()
