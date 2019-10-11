@@ -205,7 +205,7 @@ def three():
 def four():
     filename = 'setting.csv'
     symbolList = []
-    with open(filename) as f:
+    with open(filename, errors='ignore') as f:
         r = DictReader(f)
         for d in r:
             symbolList.append(d)
@@ -283,11 +283,11 @@ def combine(l, n):
         if ni == n:
             answers.append(copy.copy(one))
             return
-        for lj in xrange(li, len(l)):
+        for lj in range(li, len(l)):
             one[ni] = l[lj]
             next_c(lj + 1, ni + 1)
     next_c()
     return answers
 
 if __name__ == '__main__':
-    one()
+    four()
