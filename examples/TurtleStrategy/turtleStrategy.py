@@ -19,7 +19,9 @@ CATEGORY_DICT = {'finance':['IF','IC','IH'],
                 'nonferrous_metal':['AL'],
                  'ferrous_metal':['RB','I','HC','SM'],
                  'coal':['JM','J','ZC'],
-                 'chemical_industry':['TA']}
+                 'chemical_industry':['TA', 'RU', 'PP', 'L'],
+                 'soft_commodity':['CF', 'SR'],
+                 'Oils_fats':['M', 'P']}
 
 ACTUAL_TRADE = True        # 实盘合约交易
 
