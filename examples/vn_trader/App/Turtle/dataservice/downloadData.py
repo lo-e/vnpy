@@ -21,7 +21,7 @@ class TurtleDataDownloading(object):
                          'MA', 'OI', 'P', 'PB', 'PM', 'RI', 'RM', 'RS', 'SC', 'SF', 'SM', 'SN', 'SP', 'SR', 'V', 'WH',
                          'WR', 'Y', 'ZC', 'IF', 'IC', 'IH']
         mainSymbolList = ['IF', 'IC', 'IH', 'AL', 'RB', 'I', 'HC', 'SM', 'JM', 'J', 'ZC', 'TA']
-        currentSymbolList = ['RB', 'HC', 'I', 'SM', 'J', 'ZC', 'TA']
+        currentSymbolList = ['RB', 'HC', 'I', 'SM', 'J', 'ZC', 'TA', 'RU', 'M']
         testSymbolList = ['AL']
 
         if downloadMode == 'all':
