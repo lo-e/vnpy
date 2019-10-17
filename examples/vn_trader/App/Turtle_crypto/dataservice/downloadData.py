@@ -15,7 +15,7 @@ class TurtleCryptoDataDownloading(object):
     def __init__(self):
         pass
 
-    def download(self, contract_list):
+    def download(self, contract_list, days=1):
         #"""
         # 先删除原有文件夹，包括其中所有内容
         csv_path = get_csv_path()
@@ -24,7 +24,7 @@ class TurtleCryptoDataDownloading(object):
 
         # 获取bar数据
         duration = '1m'
-        start = datetime.now() - timedelta(1)
+        start = datetime.now() - timedelta(days=days)
         start = datetime(start.year, start.month, start.day)
         until = datetime.now() - timedelta(1)
         until = datetime(until.year, until.month, until.day)
@@ -43,7 +43,7 @@ class TurtleCryptoDataDownloading(object):
         engine = CSVs1TokenBarLocalEngine(duration='1m')
         engine.startWork()
 
-    def generate(self, contract_list):
+    def generate(self, contract_list, days=1):
         result = True
         complete_msg = ''
         back_msg = ''
@@ -56,7 +56,7 @@ class TurtleCryptoDataDownloading(object):
         print('\n====== 1m数据合成Daily数据 ======')
         engine = BarLocalEngine(duration='1m')
 
-        from_day = datetime.now() - timedelta(days=1)
+        from_day = datetime.now() - timedelta(days=days)
         to_day = datetime.now()
         start_date = datetime.strptime(f'{from_day.year}-{from_day.month}-{from_day.day} 08:00:00', '%Y-%m-%d %H:%M:%S')
         end_date = datetime.strptime(f'{to_day.year}-{to_day.month}-{to_day.day} 07:59:00', '%Y-%m-%d %H:%M:%S')
