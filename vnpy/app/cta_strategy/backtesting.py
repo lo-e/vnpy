@@ -28,6 +28,10 @@ from .base import (
 )
 from .template import CtaTemplate
 
+""" modify by loe """
+from vnpy.app.cta_strategy.base import TICK_DB_NAME, DAILY_DB_NAME, MinuteDataBaseName, HourDataBaseName
+from pymongo import MongoClient
+
 sns.set_style("whitegrid")
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 creator.create("Individual", list, fitness=creator.FitnessMax)
@@ -188,8 +192,13 @@ class BacktestingEngine:
         self.pricetick = pricetick
         self.start = start
 
-        self.symbol, exchange_str = self.vt_symbol.split(".")
-        self.exchange = Exchange(exchange_str)
+        """ modify by loe """
+        if '.' in self.vt_symbol:
+            self.symbol, exchange_str = self.vt_symbol.split(".")
+            self.exchange = Exchange(exchange_str)
+        else:
+            self.symbol = self.vt_symbol
+            self.exchange = Exchange('RQ')
 
         if capital:
             self.capital = capital
@@ -1205,11 +1214,33 @@ def load_bar_data(
     start: datetime,
     end: datetime
 ):
-    """"""
+    """ modify by loe """
+    # 修改了数据来源
+    """
     return database_manager.load_bar_data(
         symbol, exchange, interval, start, end
     )
+    """
 
+    mc = MongoClient()
+    db_name = ''
+    if interval == Interval.MINUTE:
+        db_name = MinuteDataBaseName(1)
+    elif interval == Interval.HOUR:
+        db_name = HourDataBaseName(1)
+    elif interval == Interval.DAILY:
+        db_name = DAILY_DB_NAME
+    db = mc[db_name]
+    collection = db[symbol]
+    flt = {'datetime': {'$gte': start,
+                        '$lte': end}}
+    cursor = collection.find(flt).sort('datetime')
+    bar_list = []
+    for d in cursor:
+        bar = BarData(gateway_name='', symbol='', exchange=None, datetime=None, endDatetime=None)
+        bar.__dict__ = d
+        bar_list.append(bar)
+    return bar_list
 
 @lru_cache(maxsize=999)
 def load_tick_data(

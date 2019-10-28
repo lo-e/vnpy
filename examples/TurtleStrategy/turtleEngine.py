@@ -15,8 +15,7 @@ from vnpy.trader.constant import Direction, Exchange
 
 from turtleStrategy import TurtlePortfolio
 
-
-DAILY_DB_NAME = 'VnTrader_Daily_Db'
+from vnpy.app.cta_strategy.base import DAILY_DB_NAME
 
 
 SIZE_DICT = {}
