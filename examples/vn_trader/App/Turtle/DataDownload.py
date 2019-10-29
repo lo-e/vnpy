@@ -24,8 +24,8 @@ if __name__ == '__main__':
     """
 
     """
-    symbol = 'IF88'
-    start = '2019-10-27'
-    end = '2019-10-29'
+    symbol = 'RB88'
+    start = '2010-01-01'
+    end = '2019-12-31'
     downloadMinuteBarBySymbol(symbol, start=start, end=end)
     """

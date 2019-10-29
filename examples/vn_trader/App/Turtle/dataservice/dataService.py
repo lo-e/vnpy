@@ -119,12 +119,15 @@ def downloadMinuteBarBySymbol(symbol, start:str='', end:str='', min:int=1):
     df = rq.get_price(symbol, frequency=str(min) + 'm', fields=FIELDS, start_date=start_date, end_date=end_date)
 
     """ modify by loe """
+    current_year = 0
     for ix, row in df.iterrows():
         bar = generateVtBar(row, symbol)
         d = bar.__dict__
         flt = {'datetime': bar.datetime}
         cl.replace_one(flt, d, True)
-
+        if current_year != bar.datetime.year:
+            current_year = bar.datetime.year
+            print(f'====== {current_year} ======')
     end = time()
     cost = end - begin
 
