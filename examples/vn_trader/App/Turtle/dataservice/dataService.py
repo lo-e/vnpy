@@ -3,7 +3,7 @@
 from __future__ import print_function
 import sys
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from time import time, sleep
 
 from pymongo import MongoClient, ASCENDING
@@ -11,6 +11,7 @@ import pandas as pd
 
 from vnpy.trader.object import BarData, TickData
 from vnpy.app.cta_strategy.base import (MINUTE_DB_NAME,
+                                        MinuteDataBaseName,
                                         DAILY_DB_NAME,
                                         TICK_DB_NAME,
                                         DOMINANT_DB_NAME)
@@ -95,34 +96,37 @@ def generateVtTick(row, symbol):
     return tick
 
 #----------------------------------------------------------------------
-def downloadMinuteBarBySymbol(symbol, min=1):
+# start = '2019-06-06'   end = '2019-08-08'     min = 6
+def downloadMinuteBarBySymbol(symbol, start:str='', end:str='', min:int=1):
     """下载某一合约的分钟线数据"""
-    start = time()
+    begin = time()
 
     """ modify by loe """
-    dbMinute = mc[MINUTE_DB_NAME.replace('1', str(min))]
+    dbMinute = mc[MinuteDataBaseName(min)]
     cl = dbMinute[symbol]
     cl.ensure_index([('datetime', ASCENDING)], unique=True)         # 添加索引
 
-    df = rq.get_price(symbol, frequency=str(min) + 'm', fields=FIELDS, end_date=datetime.now().strftime('%Y%m%d'))
+    start_date = ''
+    end_date = ''
+    if not start or not end:
+        now = datetime.now()
+        start_date = (now - timedelta(days=1)).strftime('%Y%m%d')
+        end_date = now.strftime('%Y%m%d')
+    else:
+        start_date = start.replace('-', '')
+        end_date = end.replace('-', '')
+
+    df = rq.get_price(symbol, frequency=str(min) + 'm', fields=FIELDS, start_date=start_date, end_date=end_date)
 
     """ modify by loe """
-    barList = ['', '']
-    count = 0
     for ix, row in df.iterrows():
         bar = generateVtBar(row, symbol)
-        barList[:-1] = barList[1:]
-        barList[-1] = bar
-        count += 1
-        if count >= 2:
-            the = barList[0]
-            the.endDatetime = bar.datetime
-            d = the.__dict__
-            flt = {'datetime': the.datetime}
-            cl.replace_one(flt, d, True)
+        d = bar.__dict__
+        flt = {'datetime': bar.datetime}
+        cl.replace_one(flt, d, True)
 
     end = time()
-    cost = end - start
+    cost = end - begin
 
     print(u'合约%s的分钟K线数据下载完成%s - %s，耗时%s秒' %(symbol, df.index[0], df.index[-1], cost))
 
