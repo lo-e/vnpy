@@ -42,6 +42,10 @@ class RBreakerStrategy(CtaTemplate):
     tend_high = 0
     tend_low = 0
 
+    """ modify by loe """
+    today_setup_long = False
+    today_setup_short = False
+
     exit_time = time(hour=14, minute=55)
 
     parameters = ["setup_coef", "break_coef", "enter_coef_1", "enter_coef_2", "fixed_size", "donchian_window"]
@@ -100,6 +104,15 @@ class RBreakerStrategy(CtaTemplate):
 
         # New Day
         if last_bar.datetime.date() != bar.datetime.date():
+            """ fake """
+            if self.pos:
+                a = 2
+                exit(0)
+
+            """ modify by loe """
+            self.today_setup_long = False
+            self.today_setup_short = False
+
             if self.day_open:
                 self.buy_setup = self.day_low - self.setup_coef * (self.day_high - self.day_close)  # 观察买入价
                 self.sell_setup = self.day_high + self.setup_coef * (self.day_close - self.day_low)  # 观察卖出价
@@ -134,6 +147,7 @@ class RBreakerStrategy(CtaTemplate):
                 self.intra_trade_low = bar.low_price
                 self.intra_trade_high = bar.high_price
 
+                #"""
                 if self.tend_high > self.sell_setup:
                     long_entry = max(self.buy_break, self.day_high)
                     self.buy(long_entry, self.fixed_size, stop=True)
@@ -145,13 +159,42 @@ class RBreakerStrategy(CtaTemplate):
                     self.short(short_entry, self.fixed_size, stop=True)
 
                     self.buy(self.buy_enter, self.multiplier * self.fixed_size, stop=True)
+                #"""
 
+                """ modify by loe """
+                """
+                if bar.high_price > self.sell_setup:
+                    self.today_setup_long = True
+
+                if bar.low_price < self.buy_setup:
+                    self.today_setup_short = True
+
+                if self.today_setup_long:
+                    long_entry = max(self.buy_break, self.day_high)
+                    self.buy(long_entry, self.fixed_size, stop=True)
+
+                    self.short(self.sell_enter, self.multiplier * self.fixed_size, stop=True)
+
+                if self.today_setup_short:
+                    short_entry = min(self.sell_break, self.day_low)
+                    self.short(short_entry, self.fixed_size, stop=True)
+
+                    self.buy(self.buy_enter, self.multiplier * self.fixed_size, stop=True)
+                """
             elif self.pos > 0:
+                """ modify by loe """
+                self.today_setup_long = False
+                self.today_setup_short = False
+
                 self.intra_trade_high = max(self.intra_trade_high, bar.high_price)
                 long_stop = self.intra_trade_high * (1 - self.trailing_long / 100)
                 self.sell(long_stop, abs(self.pos), stop=True)
 
             elif self.pos < 0:
+                """ modify by loe """
+                self.today_setup_long = False
+                self.today_setup_short = False
+
                 self.intra_trade_low = min(self.intra_trade_low, bar.low_price)
                 short_stop = self.intra_trade_low * (1 + self.trailing_short / 100)
                 self.cover(short_stop, abs(self.pos), stop=True)
