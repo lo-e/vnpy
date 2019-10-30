@@ -102,12 +102,15 @@ class RBreakerStrategy(CtaTemplate):
             self.bars.pop(0)
         last_bar = self.bars[-2]
 
+        """ fake """
+        if not (self.pos == 0 or abs(self.pos) == self.fixed_size or abs(self.pos) == self.fixed_size * self.multiplier):
+            raise(0)
+
         # New Day
         if last_bar.datetime.date() != bar.datetime.date():
             """ fake """
             if self.pos:
-                a = 2
-                exit(0)
+                raise(0)
 
             """ modify by loe """
             self.today_setup_long = False
@@ -218,6 +221,14 @@ class RBreakerStrategy(CtaTemplate):
         """
         Callback of new trade data update.
         """
+        """ modify by loe """
+        current_bond = trade.price * self.cta_engine.size * self.pos * 0.1
+        max_bond = self.max_bond_dic['bond']
+        if current_bond > max_bond:
+            self.max_bond_dic['date'] = self.cta_engine.datetime.date()
+            self.max_bond_dic['pos'] = self.pos
+            self.max_bond_dic['bond'] = current_bond
+
         self.put_event()
 
     def on_stop_order(self, stop_order: StopOrder):

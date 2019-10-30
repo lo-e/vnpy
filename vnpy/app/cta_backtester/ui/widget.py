@@ -401,6 +401,8 @@ class BacktesterManager(QtWidgets.QWidget):
 
 class StatisticsMonitor(QtWidgets.QTableWidget):
     """"""
+    """ modify by loe"""
+    # 添加了占用最大保证金
     KEY_NAME_MAP = {
         "start_date": "首个交易日",
         "end_date": "最后交易日",
@@ -432,7 +434,9 @@ class StatisticsMonitor(QtWidgets.QTableWidget):
         "daily_return": "日均收益率",
         "return_std": "收益标准差",
         "sharpe_ratio": "夏普比率",
-        "return_drawdown_ratio": "收益回撤比"
+        "return_drawdown_ratio": "收益回撤比",
+
+        "max_bond":"占用最大保证金"
     }
 
     def __init__(self):
@@ -485,6 +489,9 @@ class StatisticsMonitor(QtWidgets.QTableWidget):
         data["return_std"] = f"{data['return_std']:,.2f}%"
         data["sharpe_ratio"] = f"{data['sharpe_ratio']:,.2f}"
         data["return_drawdown_ratio"] = f"{data['return_drawdown_ratio']:,.2f}"
+
+        """ modify by loe """
+        data["max_bond"] = data['max_bond']
 
         for key, cell in self.cells.items():
             value = data.get(key, "")

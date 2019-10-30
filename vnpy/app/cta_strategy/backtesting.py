@@ -461,6 +461,10 @@ class BacktestingEngine:
             self.output(f"Sharpe Ratio：\t{sharpe_ratio:,.2f}")
             self.output(f"收益回撤比：\t{return_drawdown_ratio:,.2f}")
 
+        """ modify by loe """
+        max_bond_date = self.strategy.max_bond_dic['date']
+        max_bond_pos = self.strategy.max_bond_dic['pos']
+        max_bond = self.strategy.max_bond_dic['bond']
         statistics = {
             "start_date": start_date,
             "end_date": end_date,
@@ -487,6 +491,7 @@ class BacktestingEngine:
             "return_std": return_std,
             "sharpe_ratio": sharpe_ratio,
             "return_drawdown_ratio": return_drawdown_ratio,
+            "max_bond" : f'{max_bond} {max_bond_pos} {max_bond_date}'
         }
 
         return statistics

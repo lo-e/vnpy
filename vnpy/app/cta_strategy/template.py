@@ -15,6 +15,9 @@ from pymongo import MongoClient
 from vnpy.app.cta_strategy.base import TICK_DB_NAME
 from copy import copy
 
+""" modify by loe """
+from collections import defaultdict
+
 class CtaTemplate(ABC):
     """"""
 
@@ -23,6 +26,7 @@ class CtaTemplate(ABC):
     variables = []
     """ modify by loe """
     syncs = []
+    max_bond_dic = defaultdict(int) #{'date':date, 'pos':pos, 'bond':bond}
 
     def __init__(
         self,
