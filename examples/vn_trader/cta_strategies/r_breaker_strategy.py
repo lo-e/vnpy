@@ -48,7 +48,7 @@ class RBreakerStrategy(CtaTemplate):
 
     exit_time = time(hour=14, minute=55)
 
-    parameters = ["setup_coef", "break_coef", "enter_coef_1", "enter_coef_2", "fixed_size", "donchian_window"]
+    parameters = ["setup_coef", "break_coef", "enter_coef_1", "enter_coef_2", "fixed_size", "multiplier", "donchian_window"]
     variables = ["buy_break", "sell_setup", "sell_enter", "buy_enter", "buy_setup", "sell_break"]
 
     def __init__(self, cta_engine, strategy_name, vt_symbol, setting):
