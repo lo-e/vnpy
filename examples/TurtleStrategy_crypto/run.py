@@ -133,6 +133,8 @@ def one():
                     print('.' * 2)
                     print('window\t%s' % signal.entryWindow)
                     print('datetime\t%s' % signal.bar.datetime)
+                    print('ATR\t%s' % signal.atrVolatility)
+                    print('virtualUnit\t%s' % signal.unit)
                     print('unit\t%s' % signal.unit)
                     if signal.result:
                         print('entry\t%s' % signal.result.entry)
