@@ -298,8 +298,16 @@ class BacktesterManager(QtWidgets.QWidget):
         class_name = self.class_combo.currentText()
         vt_symbol = self.symbol_line.text()
         interval = self.interval_combo.currentText()
+
+        """ modify by loe """
+        # datetime.date 转换 datetime，因为Mongodb不接受datetime.date类型
         start = self.start_date_edit.date().toPyDate()
+        start_str = str(start)
+        start = datetime.strptime(start_str, '%Y-%m-%d')
         end = self.end_date_edit.date().toPyDate()
+        end_str = str(end)
+        end = datetime.strptime(end_str, '%Y-%m-%d')
+
         rate = float(self.rate_line.text())
         slippage = float(self.slippage_line.text())
         size = float(self.size_line.text())

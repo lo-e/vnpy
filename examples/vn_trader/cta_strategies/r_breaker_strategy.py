@@ -125,8 +125,16 @@ class RBreakerStrategy(CtaTemplate):
                 self.sell_enter = (self.enter_coef_1 / 2) * (
                             self.day_high + self.day_low) - self.enter_coef_2 * self.day_low  # 反转卖出价
 
+                """ modify by loe """
+                #"""
                 self.buy_break = self.buy_setup + self.break_coef * (self.sell_setup - self.buy_setup)  # 突破买入价
                 self.sell_break = self.sell_setup - self.break_coef * (self.sell_setup - self.buy_setup)  # 突破卖出价
+                #"""
+
+                """
+                self.buy_break = self.sell_setup + self.break_coef * (self.sell_setup - self.buy_setup)  # 突破买入价
+                self.sell_break = self.buy_setup - self.break_coef * (self.sell_setup - self.buy_setup)  # 突破卖出价
+                """
 
             self.day_open = bar.open_price
             self.day_high = bar.high_price
