@@ -16,6 +16,9 @@ from vnpy.trader.ui.widget import BaseMonitor, BaseCell, DirectionCell, EnumCell
 from vnpy.event import Event, EventEngine
 from vnpy.chart import ChartWidget, CandleItem, VolumeItem
 
+""" modify by loe """
+from vnpy.trader.utility import TEMP_DIR, load_json_path
+import json
 
 class BacktesterManager(QtWidgets.QWidget):
     """"""
@@ -27,6 +30,8 @@ class BacktesterManager(QtWidgets.QWidget):
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
         """"""
         super().__init__()
+        """ modify by loe """
+        self.load_backtesting_parameters()
 
         self.main_engine = main_engine
         self.event_engine = event_engine
@@ -42,6 +47,26 @@ class BacktesterManager(QtWidgets.QWidget):
         self.register_event()
         self.backtester_engine.init_engine()
 
+    """ modify by loe """
+    # 回测参数使用缓存json文件内容
+    def load_backtesting_parameters(self):
+        self.load_file_path = TEMP_DIR.joinpath('cta_backtesting.json')
+        dic = load_json_path(self.load_file_path)
+        self.backtesting_symbol = dic.get('symbol', 'IF88.CFFEX')
+        self.backtesting_interval = dic.get('interval', '1m')
+
+        end_dt = datetime.now()
+        start_dt = end_dt - timedelta(days=3 * 365)
+        self.backtesting_start = dic.get('start', datetime.strftime(start_dt, '%Y-%m-%d'))
+        self.backtesting_end = dic.get('end', datetime.strftime(end_dt, '%Y-%m-%d'))
+
+        self.backtesting_rate = dic.get('rate', '0.000025')
+        self.backtesting_slippage = dic.get('slippage', '0.2')
+        self.backtesting_size = dic.get('size', '300')
+        self.backtesting_pricetick = dic.get('pricetick', '0.2')
+        self.backtesting_capital = dic.get('capital', '1000000')
+
+
     def init_strategy_settings(self):
         """"""
         self.class_names = self.backtester_engine.get_strategy_class_names()
@@ -51,6 +76,9 @@ class BacktesterManager(QtWidgets.QWidget):
             self.settings[class_name] = setting
 
     def init_ui(self):
+        """ modify by loe """
+        # 回测参数使用缓存json文件内容
+
         """"""
         self.setWindowTitle("CTA回测")
 
@@ -58,15 +86,16 @@ class BacktesterManager(QtWidgets.QWidget):
         self.class_combo = QtWidgets.QComboBox()
         self.class_combo.addItems(self.class_names)
 
-        self.symbol_line = QtWidgets.QLineEdit("IF88.CFFEX")
+        self.symbol_line = QtWidgets.QLineEdit(self.backtesting_symbol)
 
         self.interval_combo = QtWidgets.QComboBox()
+        self.interval_combo.addItem(self.backtesting_interval)
         for inteval in Interval:
+            if inteval == Interval(self.backtesting_interval):
+                continue
             self.interval_combo.addItem(inteval.value)
 
-        end_dt = datetime.now()
-        start_dt = end_dt - timedelta(days=3 * 365)
-
+        start_dt = datetime.strptime(self.backtesting_start, '%Y-%m-%d')
         self.start_date_edit = QtWidgets.QDateEdit(
             QtCore.QDate(
                 start_dt.year,
@@ -74,15 +103,22 @@ class BacktesterManager(QtWidgets.QWidget):
                 start_dt.day
             )
         )
+
+        # QtCore.QDate.currentDate()
+        end_dt = datetime.strptime(self.backtesting_end, '%Y-%m-%d')
         self.end_date_edit = QtWidgets.QDateEdit(
-            QtCore.QDate.currentDate()
+            QtCore.QDate(
+                end_dt.year,
+                end_dt.month,
+                end_dt.day
+            )
         )
 
-        self.rate_line = QtWidgets.QLineEdit("0.000025")
-        self.slippage_line = QtWidgets.QLineEdit("0.2")
-        self.size_line = QtWidgets.QLineEdit("300")
-        self.pricetick_line = QtWidgets.QLineEdit("0.2")
-        self.capital_line = QtWidgets.QLineEdit("1000000")
+        self.rate_line = QtWidgets.QLineEdit(self.backtesting_rate)
+        self.slippage_line = QtWidgets.QLineEdit(self.backtesting_slippage)
+        self.size_line = QtWidgets.QLineEdit(self.backtesting_size)
+        self.pricetick_line = QtWidgets.QLineEdit(self.backtesting_pricetick)
+        self.capital_line = QtWidgets.QLineEdit(self.backtesting_capital)
 
         backtesting_button = QtWidgets.QPushButton("开始回测")
         backtesting_button.clicked.connect(self.start_backtesting)
@@ -256,6 +292,23 @@ class BacktesterManager(QtWidgets.QWidget):
         pricetick = float(self.pricetick_line.text())
         capital = float(self.capital_line.text())
 
+        """ modify by loe """
+        # 缓存回测参数到json文件
+        json_dic = {}
+        json_dic['symbol'] = vt_symbol
+        json_dic['interval'] = interval
+        json_dic['start'] = datetime.strftime(start, '%Y-%m-%d')
+        json_dic['end'] = datetime.strftime(end, '%Y-%m-%d')
+        json_dic['rate'] = self.rate_line.text()
+        json_dic['slippage'] = self.slippage_line.text()
+        json_dic['size'] = self.size_line.text()
+        json_dic['pricetick'] = self.pricetick_line.text()
+        json_dic['capital'] = self.capital_line.text()
+
+        file_path = TEMP_DIR.joinpath(self.load_file_path)
+        with open(file_path, "w") as f:
+            json.dump(json_dic, f)
+
         old_setting = self.settings[class_name]
         dialog = BacktestingSettingEditor(class_name, old_setting)
         i = dialog.exec()
@@ -313,6 +366,23 @@ class BacktesterManager(QtWidgets.QWidget):
         size = float(self.size_line.text())
         pricetick = float(self.pricetick_line.text())
         capital = float(self.capital_line.text())
+
+        """ modify by loe """
+        # 缓存回测参数到json文件
+        json_dic = {}
+        json_dic['symbol'] = vt_symbol
+        json_dic['interval'] = interval
+        json_dic['start'] = datetime.strftime(start, '%Y-%m-%d')
+        json_dic['end'] = datetime.strftime(end, '%Y-%m-%d')
+        json_dic['rate'] = self.rate_line.text()
+        json_dic['slippage'] = self.slippage_line.text()
+        json_dic['size'] = self.size_line.text()
+        json_dic['pricetick'] = self.pricetick_line.text()
+        json_dic['capital'] = self.capital_line.text()
+
+        file_path = TEMP_DIR.joinpath(self.load_file_path)
+        with open(file_path, "w") as f:
+            json.dump(json_dic, f)
 
         parameters = self.settings[class_name]
         dialog = OptimizationSettingEditor(class_name, parameters)
