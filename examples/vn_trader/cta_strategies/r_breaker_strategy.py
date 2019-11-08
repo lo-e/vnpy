@@ -126,15 +126,15 @@ class RBreakerStrategy(CtaTemplate):
                             self.day_high + self.day_low) - self.enter_coef_2 * self.day_low  # 反转卖出价
 
                 """ modify by loe """
-                #"""
+                """
                 self.buy_break = self.buy_setup + self.break_coef * (self.sell_setup - self.buy_setup)  # 突破买入价
                 self.sell_break = self.sell_setup - self.break_coef * (self.sell_setup - self.buy_setup)  # 突破卖出价
-                #"""
-
                 """
+
+                #"""
                 self.buy_break = self.sell_setup + self.break_coef * (self.sell_setup - self.buy_setup)  # 突破买入价
                 self.sell_break = self.buy_setup - self.break_coef * (self.sell_setup - self.buy_setup)  # 突破卖出价
-                """
+                #"""
 
             self.day_open = bar.open_price
             self.day_high = bar.high_price
@@ -158,7 +158,8 @@ class RBreakerStrategy(CtaTemplate):
                 self.intra_trade_low = bar.low_price
                 self.intra_trade_high = bar.high_price
 
-                #"""
+                """ modify by loe """
+                """
                 if self.tend_high > self.sell_setup:
                     long_entry = max(self.buy_break, self.day_high)
                     self.buy(long_entry, self.fixed_size, stop=True)
@@ -170,10 +171,9 @@ class RBreakerStrategy(CtaTemplate):
                     self.short(short_entry, self.fixed_size, stop=True)
 
                     self.buy(self.buy_enter, self.multiplier * self.fixed_size, stop=True)
-                #"""
-
-                """ modify by loe """
                 """
+
+                #"""
                 if bar.high_price > self.sell_setup:
                     self.today_setup_long = True
 
@@ -191,7 +191,7 @@ class RBreakerStrategy(CtaTemplate):
                     self.short(short_entry, self.fixed_size, stop=True)
 
                     self.buy(self.buy_enter, self.multiplier * self.fixed_size, stop=True)
-                """
+                #"""
             elif self.pos > 0:
                 """ modify by loe """
                 self.today_setup_long = False
