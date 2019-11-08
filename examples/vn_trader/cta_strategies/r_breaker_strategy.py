@@ -23,7 +23,7 @@ class RBreakerStrategy(CtaTemplate):
 
     trailing_long = 0.4
     trailing_short = 0.4
-    multiplier = 3
+    multiplier = 1
 
     buy_break = 0  # 突破买入价
     sell_setup = 0  # 观察卖出价
