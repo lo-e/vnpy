@@ -61,6 +61,7 @@ from .base import TRANSFORM_SYMBOL_LIST
 from collections import OrderedDict
 from time import sleep
 from .dataservice import TurtleDataDownloading
+from .base import EVENT_TURTLE_PORTFOLIO
 
 STOP_STATUS_MAP = {
     Status.SUBMITTING: StopOrderStatus.WAITING,
@@ -886,6 +887,10 @@ class TurtleEngine(BaseEngine):
 
         self.main_engine.dbUpdate(TURTLE_PORTFOLIO_DB_NAME, self.turtlePortfolio.name,
                                  d, {}, True)
+
+        # 刷新Portfolio组件UI
+        event = Event(type=EVENT_TURTLE_PORTFOLIO, data=self.get_portfolio_variables())
+        self.event_engine.put(event)
 
         content = f'海龟组合{self.turtlePortfolio.name}\t数据保存成功'
         self.write_log(content)
