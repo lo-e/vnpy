@@ -40,6 +40,8 @@ from vnpy.trader.utility import load_json, save_json, extract_vt_symbol, round_t
 from vnpy.trader.database import database_manager
 from vnpy.trader.rqdata import rqdata_client
 
+""" modify by loe """
+# 增加了 POSITION_DB_NAME
 from .base import (
     APP_NAME,
     EVENT_CTA_LOG,
@@ -48,7 +50,8 @@ from .base import (
     EngineType,
     StopOrder,
     StopOrderStatus,
-    STOPORDER_PREFIX
+    STOPORDER_PREFIX,
+    POSITION_DB_NAME
 )
 from .template import CtaTemplate
 from .converter import OffsetConverter
@@ -70,7 +73,6 @@ class CtaEngine(BaseEngine):
     engine_type = EngineType.LIVE  # live trading engine
 
     setting_filename = "cta_strategy_setting.json"
-    data_filename = "cta_strategy_data.json"
 
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
         """"""
@@ -78,7 +80,6 @@ class CtaEngine(BaseEngine):
             main_engine, event_engine, APP_NAME)
 
         self.strategy_setting = {}  # strategy_name: dict
-        self.strategy_data = {}     # strategy_name: dict
 
         self.classes = {}           # class_name: stategy_class
         self.strategies = {}        # strategy_name: strategy
@@ -108,7 +109,6 @@ class CtaEngine(BaseEngine):
         self.init_rqdata()
         self.load_strategy_class()
         self.load_strategy_setting()
-        self.load_strategy_data()
         self.register_event()
         self.write_log("CTA策略引擎初始化成功")
 
@@ -216,9 +216,6 @@ class CtaEngine(BaseEngine):
             strategy.pos -= trade.volume
 
         self.call_strategy_func(strategy, strategy.on_trade, trade)
-
-        # Sync strategy variables to data file
-        self.sync_strategy_data(strategy)
 
         # Update GUI
         self.put_strategy_event(strategy)
@@ -587,16 +584,53 @@ class CtaEngine(BaseEngine):
             return
 
         strategy = strategy_class(self, strategy_name, vt_symbol, setting)
+
+        """ modify by loe """
+        # 加载同步数据
+        self.loadSyncData(strategy)
+
         self.strategies[strategy_name] = strategy
 
         # Add vt_symbol to strategy map.
-        strategies = self.symbol_strategy_map[vt_symbol]
+        strategies = self.symbol_strategy_map[strategy.vt_symbol]
         strategies.append(strategy)
 
         # Update to setting file.
         self.update_strategy_setting(strategy_name, setting)
 
         self.put_strategy_event(strategy)
+
+    """ modify by loe """
+    def loadSyncData(self, strategy):
+        """从数据库载入策略的持仓情况"""
+        flt = {'strategy_name': strategy.strategy_name,
+               'vt_symbol': strategy.vt_symbol}
+        syncData = self.main_engine.dbQuery(POSITION_DB_NAME, strategy.__class__.__name__, flt)
+
+        if not syncData:
+            return
+
+        d = syncData[0]
+
+        for key in strategy.syncs:
+            if key in d:
+                strategy.__setattr__(key, d[key])
+
+    """ modify by loe """
+    def saveSyncData(self, strategy):
+        """保存策略的持仓情况到数据库"""
+        flt = {'strategy_name': strategy.strategy_name,
+               'vt_symbol': strategy.vt_symbol}
+
+        d = copy(flt)
+        for key in strategy.syncs:
+            d[key] = strategy.__getattribute__(key)
+
+        self.main_engine.dbUpdate(POSITION_DB_NAME, strategy.__class__.__name__,
+                                 d, flt, True)
+
+        content = f'策略{strategy.strategy_name}同步数据保存成功，当前持仓{strategy.pos}'
+        self.write_log(content)
 
     def init_strategy(self, strategy_name: str):
         """
@@ -624,14 +658,6 @@ class CtaEngine(BaseEngine):
 
             # Call on_init function of strategy
             self.call_strategy_func(strategy, strategy.on_init)
-
-            # Restore strategy data(variables)
-            data = self.strategy_data.get(strategy_name, None)
-            if data:
-                for name in strategy.variables:
-                    value = data.get(name, None)
-                    if value:
-                        setattr(strategy, name, value)
 
             # Subscribe market data
             contract = self.main_engine.get_contract(strategy.vt_symbol)
@@ -684,9 +710,6 @@ class CtaEngine(BaseEngine):
         # Cancel all orders of the strategy
         self.cancel_all(strategy)
 
-        # Sync strategy variables to data file
-        self.sync_strategy_data(strategy)
-
         # Update GUI
         self.put_strategy_event(strategy)
 
@@ -714,7 +737,8 @@ class CtaEngine(BaseEngine):
 
         # Remove from symbol strategy map
         strategies = self.symbol_strategy_map[strategy.vt_symbol]
-        strategies.remove(strategy)
+        if strategy in strategies:
+            strategies.remove(strategy)
 
         # Remove from active orderid map
         if strategy_name in self.strategy_orderid_map:
@@ -741,6 +765,10 @@ class CtaEngine(BaseEngine):
         path2 = Path.cwd().joinpath("strategies")
         self.load_strategy_class_from_folder(path2, "strategies")
 
+        """ modify by loe """
+        path3 = Path.cwd().joinpath("Quant\\vnpy\\examples\\vn_trader\\cta_strategies")
+        self.load_strategy_class_from_folder(path3, "cta_strategies")
+
     def load_strategy_class_from_folder(self, path: Path, module_name: str = ""):
         """
         Load strategy class from certain folder.
@@ -766,23 +794,6 @@ class CtaEngine(BaseEngine):
         except:  # noqa
             msg = f"策略文件{module_name}加载失败，触发异常：\n{traceback.format_exc()}"
             self.write_log(msg)
-
-    def load_strategy_data(self):
-        """
-        Load strategy data from json file.
-        """
-        self.strategy_data = load_json(self.data_filename)
-
-    def sync_strategy_data(self, strategy: CtaTemplate):
-        """
-        Sync strategy data into json file.
-        """
-        data = strategy.get_variables()
-        data.pop("inited")      # Strategy status (inited, trading) should not be synced.
-        data.pop("trading")
-
-        self.strategy_data[strategy.strategy_name] = data
-        save_json(self.data_filename, self.strategy_data)
 
     def get_all_strategy_class_names(self):
         """
@@ -871,10 +882,18 @@ class CtaEngine(BaseEngine):
         event = Event(EVENT_CTA_STOPORDER, stop_order)
         self.event_engine.put(event)
 
+    """ modify by loe """
+    # 增加了同步策略数据到数据库
     def put_strategy_event(self, strategy: CtaTemplate):
         """
         Put an event to update strategy status.
         """
+        # 保存strategy数据到数据库
+        strategy_name = strategy.strategy_name
+        if strategy_name in self.strategies:
+            strategy = self.strategies[strategy_name]
+            self.saveSyncData(strategy)
+
         data = strategy.get_data()
         event = Event(EVENT_CTA_STRATEGY, data)
         self.event_engine.put(event)

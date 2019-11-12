@@ -427,8 +427,11 @@ class SettingEditor(QtWidgets.QDialog):
         """"""
         setting = {}
 
+        """ modify by loe """
+        """
         if self.class_name:
             setting["class_name"] = self.class_name
+        """
 
         for name, tp in self.edits.items():
             edit, type_ = tp
