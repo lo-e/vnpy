@@ -108,8 +108,12 @@ class TurtleEngine(BaseEngine):
         self.offset_converter = OffsetConverter(self.main_engine)
 
         """ modify by loe for Turtle """
-        # 当前日期
-        self.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        # 当前日期【指的是市场交易日期，不是日历日期】
+        now_hour = datetime.now().hour
+        if now_hour >= 15:
+            self.today = (datetime.now() + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            self.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         # 组合管理类
         self.turtlePortfolio = None
         # 数据引擎
@@ -1080,6 +1084,7 @@ class TurtleAutoEngine(object):
         end_time = start_time + timedelta(seconds=self.check_interval * self.reload_time)
         if now >= start_time and now <= end_time:
             if not self.restarting and not self.restarted:
+                self.today = (datetime.now() + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
                 self.restarting = True
                 result, return_msg = self.main_engine.reconnect(gateway_name='CTP')
                 self.restarting = False
