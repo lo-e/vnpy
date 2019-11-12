@@ -73,6 +73,7 @@ STOP_STATUS_MAP = {
 from vnpy.app.cta_strategy.base import (TICK_DB_NAME,
                                         DAILY_DB_NAME,
                                         MINUTE_DB_NAME)
+from .base import EVENT_TURTLE_PORTFOLIO
 
 
 class TurtleEngine(BaseEngine):
@@ -894,6 +895,10 @@ class TurtleEngine(BaseEngine):
 
         self.main_engine.dbUpdate(TURTLE_PORTFOLIO_DB_NAME, self.turtlePortfolio.name,
                                  d, {}, True)
+
+        # 刷新Portfolio组件UI
+        event = Event(type=EVENT_TURTLE_PORTFOLIO, data=self.get_portfolio_variables())
+        self.event_engine.put(event)
 
         content = f'海龟组合{self.turtlePortfolio.name}\t数据保存成功'
         self.write_log(content)

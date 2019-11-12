@@ -233,7 +233,7 @@ class TurtlePortfolioManager(QtWidgets.QGroupBox):
 
     def updateVar(self, event):
         """更新策略变量"""
-        data = event.dict_['data']
+        data = event.data
         self.varMonitor.updateData(data)
 
     # ----------------------------------------------------------------------
