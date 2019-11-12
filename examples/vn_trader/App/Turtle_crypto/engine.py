@@ -107,8 +107,12 @@ class TurtleEngine(BaseEngine):
         self.offset_converter = OffsetConverter(self.main_engine)
 
         """ modify by loe for Turtle """
-        # 当前日期
-        self.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        # 当前日期【指的是市场交易日期，不是日历日期】
+        now_hour = datetime.now().hour
+        if now_hour >= 8:
+            self.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            self.today = (datetime.now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
         # 组合管理类
         self.turtlePortfolio = None
         # 数据引擎
@@ -1053,6 +1057,7 @@ class TurtleCryptoAutoEngine(object):
         end_time = start_time + timedelta(seconds=10)
         if now >= start_time and now <= end_time:
             if not self.generating:
+                self.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
                 self.generating = True
                 turtleCryptoDataD = TurtleCryptoDataDownloading()
                 result, complete_msg, back_msg, lost_msg = turtleCryptoDataD.generate(contract_list=self.contract_list)
