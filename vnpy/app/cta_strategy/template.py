@@ -36,7 +36,7 @@ class CtaTemplate(ABC):
     syncs = []
     max_bond_dic = defaultdict(int) #{'date':date, 'pos':pos, 'bond':bond}
     trade_mode = None
-    tick_price = 0
+    tick_price:float = 1.0
 
     def __init__(
         self,
@@ -61,10 +61,6 @@ class CtaTemplate(ABC):
         self.pos = 0
 
         """ modify by loe """
-        self.parameters = copy(self.parameters)
-        if 'tick_price' not in self.parameters:
-            self.parameters.insert(0, "tick_price")
-
         self.variables = copy(self.variables)
         if 'inited' not in self.variables:
             self.variables.insert(0, "inited")

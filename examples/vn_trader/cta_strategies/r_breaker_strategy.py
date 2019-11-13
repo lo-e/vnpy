@@ -49,12 +49,13 @@ class RBreakerStrategy(CtaTemplate):
     """ modify by loe """
     today_setup_long = False
     today_setup_short = False
-    self.virtual_pos = 0
+    virtual_pos = 0
 
     exit_time = time(hour=14, minute=55)
 
     """ modify by loe """
-    parameters = ["setup_coef",
+    parameters = ["tick_price",
+                  "setup_coef",
                   "break_coef",
                   "enter_coef_1",
                   "enter_coef_2",
