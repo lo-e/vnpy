@@ -92,7 +92,7 @@ class BarData(BaseData):
     datetime: datetime
 
     """ modify by loe """
-    endDatetime: datetime  # bar结束datetime
+    endDatetime: datetime = None  # bar结束datetime
 
     interval: Interval = None
     volume: float = 0
