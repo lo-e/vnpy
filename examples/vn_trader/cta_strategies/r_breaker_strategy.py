@@ -13,6 +13,7 @@ from vnpy.app.cta_strategy import (
 """ modify by loe """
 from vnpy.app.cta_strategy.template import TradeMode
 from vnpy.trader.constant import Interval, Direction
+from datetime import datetime, timedelta
 
 class RBreakerStrategy(CtaTemplate):
     """"""
@@ -50,6 +51,7 @@ class RBreakerStrategy(CtaTemplate):
     today_setup_long = False
     today_setup_short = False
     virtual_pos = 0
+    trade_date:datetime = None
 
     exit_time = time(hour=14, minute=55)
 
@@ -63,14 +65,29 @@ class RBreakerStrategy(CtaTemplate):
                   "trailing_long",
                   "trailing_short"]
 
-    variables = ["buy_break",
+    variables = ["virtual_pos",
+                 "buy_break",
                  "sell_setup",
                  "sell_enter",
                  "buy_enter",
                  "buy_setup",
-                 "sell_break"]
+                 "sell_break",
+                 "today_setup_long",
+                 "today_setup_short",
+                 "trade_date",
+                 "intra_trade_high",
+                 "intra_trade_low",
+                 "day_high",
+                 "day_low"]
 
-    syncs = []
+    syncs = ["today_setup_long",
+             "today_setup_short",
+             "virtual_pos",
+             "trade_date",
+             "intra_trade_high",
+             "intra_trade_low",
+             "day_high",
+             "day_low"]
 
     def __init__(self, cta_engine, strategy_name, vt_symbol, setting):
         """"""
@@ -84,6 +101,18 @@ class RBreakerStrategy(CtaTemplate):
         """
         Callback when strategy is inited.
         """
+        trade_date = self.get_trade_date()
+        if not self.trade_date or self.trade_date != trade_date:
+            # 新的一天
+            self.trade_date = trade_date
+            self.today_setup_long = False
+            self.today_setup_short = False
+            self.virtual_pos = 0
+            self.intra_trade_high = 0
+            self.intra_trade_low = 0
+            self.day_high = 0
+            self.day_low = 0
+
         # 载入历史数据，并采用回放计算的方式初始化策略数值
         if self.trade_mode == TradeMode.ACTUAL:
             self.load_bar(days=20, interval=Interval.DAILY, callback = self.calculate_indicator)
@@ -94,6 +123,7 @@ class RBreakerStrategy(CtaTemplate):
             raise(0)
 
         self.write_log("策略完成初始化")
+        self.put_event()
 
     def calculate_indicator(self, bar:BarData):
         self.buy_setup = bar.low_price - self.setup_coef * (bar.high_price - bar.close_price)  # 观察买入价
@@ -124,11 +154,21 @@ class RBreakerStrategy(CtaTemplate):
         Callback of new tick data update.
         """
         # 记录当天最高最低价
-        self.day_high = max(self.day_high, tick.last_price)
-        self.day_low = min(self.day_low, tick.last_price)
+        if not self.day_high:
+            self.day_high = tick.last_price
+        else:
+            self.day_high = max(self.day_high, tick.last_price)
+
+        if not self.day_low:
+            self.day_low = tick.last_price
+        else:
+            self.day_low = min(self.day_low, tick.last_price)
 
         if tick.datetime.time() < self.exit_time:
             if self.virtual_pos == 0:
+                self.intra_trade_high = 0
+                self.intra_trade_low = 0
+
                 if tick.last_price > self.sell_setup:
                     self.today_setup_long = True
 
@@ -138,25 +178,49 @@ class RBreakerStrategy(CtaTemplate):
                 if self.today_setup_long:
                     long_entry = max(self.buy_break, self.day_high)
                     if tick.last_price >= long_entry:
+                        if self.pos:
+                            self.send_email(f'R-Breaker策略出错！！\n多头突破开仓时Pos={self.pos}\n已终止策略')
+                            raise (0)
+
                         self.buy(self.bestOrderPrice(tick, Direction.LONG), abs(self.fixed_size))
                         self.virtual_pos = abs(self.fixed_size)
+                        self.intra_trade_high = tick.last_price
+                        self.intra_trade_low = tick.last_price
                         return
 
                     if tick.last_price <= self.sell_enter:
+                        if self.pos:
+                            self.send_email(f'R-Breaker策略出错！！\n空头反转开仓时Pos={self.pos}\n已终止策略')
+                            raise (0)
+
                         self.short(self.bestOrderPrice(tick, Direction.SHORT), abs(self.fixed_size))
                         self.virtual_pos = abs(self.fixed_size) * -1
+                        self.intra_trade_high = tick.last_price
+                        self.intra_trade_low = tick.last_price
                         return
 
                 if self.today_setup_short:
                     short_entry = min(self.sell_break, self.day_low)
                     if tick.last_price <= short_entry:
+                        if self.pos:
+                            self.send_email(f'R-Breaker策略出错！！\n空头突破开仓时Pos={self.pos}\n已终止策略')
+                            raise (0)
+
                         self.short(self.bestOrderPrice(tick, Direction.SHORT), abs(self.fixed_size))
                         self.virtual_pos = abs(self.fixed_size) * -1
+                        self.intra_trade_high = tick.last_price
+                        self.intra_trade_low = tick.last_price
                         return
 
                     if tick.last_price >= self.buy_enter:
+                        if self.pos:
+                            self.send_email(f'R-Breaker策略出错！！\n多头反转开仓时Pos={self.pos}\n已终止策略')
+                            raise (0)
+
                         self.buy(self.bestOrderPrice(tick, Direction.LONG), abs(self.fixed_size))
                         self.virtual_pos = abs(self.fixed_size)
+                        self.intra_trade_high = tick.last_price
+                        self.intra_trade_low = tick.last_price
                         return
 
             elif self.virtual_pos > 0:
@@ -357,4 +421,13 @@ class RBreakerStrategy(CtaTemplate):
         Callback of stop order update.
         """
         pass
+
+    """ modify by loe """
+    def get_trade_date(self):
+        now = datetime.now()
+        hour = now.hour
+        if hour >= 15:
+            return (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        else:
+            return now.replace(hour=0, minute=0, second=0, microsecond=0)
 

@@ -563,6 +563,7 @@ class CtaEngine(BaseEngine):
 
             bar = BarData(gateway_name=gateway_name, symbol=symbol, exchange=exchange, datetime=theDatetime,
                           endDatetime=endDatetime)
+            bar.__dict__ = d
             if callback:
                 callback(bar)
 
