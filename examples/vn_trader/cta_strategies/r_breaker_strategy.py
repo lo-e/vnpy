@@ -12,7 +12,7 @@ from vnpy.app.cta_strategy import (
 
 """ modify by loe """
 from vnpy.app.cta_strategy.template import TradeMode
-from vnpy.trader.constant import Interval
+from vnpy.trader.constant import Interval, Direction
 
 class RBreakerStrategy(CtaTemplate):
     """"""
@@ -49,6 +49,7 @@ class RBreakerStrategy(CtaTemplate):
     """ modify by loe """
     today_setup_long = False
     today_setup_short = False
+    self.virtual_pos = 0
 
     exit_time = time(hour=14, minute=55)
 
@@ -58,7 +59,9 @@ class RBreakerStrategy(CtaTemplate):
                   "enter_coef_1",
                   "enter_coef_2",
                   "fixed_size",
-                  "multiplier"]
+                  "multiplier",
+                  "trailing_long",
+                  "trailing_short"]
 
     variables = ["buy_break",
                  "sell_setup",
@@ -67,7 +70,7 @@ class RBreakerStrategy(CtaTemplate):
                  "buy_setup",
                  "sell_break"]
 
-    syncs = ['pos']
+    syncs = []
 
     def __init__(self, cta_engine, strategy_name, vt_symbol, setting):
         """"""
@@ -93,7 +96,16 @@ class RBreakerStrategy(CtaTemplate):
         self.write_log("策略完成初始化")
 
     def calculate_indicator(self, bar:BarData):
-        a = 2
+        self.buy_setup = bar.low_price - self.setup_coef * (bar.high_price - bar.close_price)  # 观察买入价
+        self.sell_setup = bar.high_price + self.setup_coef * (bar.close_price - bar.low_price)  # 观察卖出价
+
+        self.buy_enter = (self.enter_coef_1 / 2) * (
+                bar.high_price + bar.low_price) - self.enter_coef_2 * bar.high_price  # 反转买入价
+        self.sell_enter = (self.enter_coef_1 / 2) * (
+                bar.high_price + bar.low_price) - self.enter_coef_2 * bar.low_price  # 反转卖出价
+
+        self.buy_break = self.sell_setup + self.break_coef * (self.sell_setup - self.buy_setup)  # 突破买入价
+        self.sell_break = self.buy_setup - self.break_coef * (self.sell_setup - self.buy_setup)  # 突破卖出价
 
     def on_start(self):
         """
@@ -111,7 +123,79 @@ class RBreakerStrategy(CtaTemplate):
         """
         Callback of new tick data update.
         """
-        self.bg.update_tick(tick)
+        # 记录当天最高最低价
+        self.day_high = max(self.day_high, tick.last_price)
+        self.day_low = min(self.day_low, tick.last_price)
+
+        if tick.datetime.time() < self.exit_time:
+            if self.virtual_pos == 0:
+                if tick.last_price > self.sell_setup:
+                    self.today_setup_long = True
+
+                if tick.last_price < self.buy_setup:
+                    self.today_setup_short = True
+
+                if self.today_setup_long:
+                    long_entry = max(self.buy_break, self.day_high)
+                    if tick.last_price >= long_entry:
+                        self.buy(self.bestOrderPrice(tick, Direction.LONG), abs(self.fixed_size))
+                        self.virtual_pos = abs(self.fixed_size)
+                        return
+
+                    if tick.last_price <= self.sell_enter:
+                        self.short(self.bestOrderPrice(tick, Direction.SHORT), abs(self.fixed_size))
+                        self.virtual_pos = abs(self.fixed_size) * -1
+                        return
+
+                if self.today_setup_short:
+                    short_entry = min(self.sell_break, self.day_low)
+                    if tick.last_price <= short_entry:
+                        self.short(self.bestOrderPrice(tick, Direction.SHORT), abs(self.fixed_size))
+                        self.virtual_pos = abs(self.fixed_size) * -1
+                        return
+
+                    if tick.last_price >= self.buy_enter:
+                        self.buy(self.bestOrderPrice(tick, Direction.LONG), abs(self.fixed_size))
+                        self.virtual_pos = abs(self.fixed_size)
+                        return
+
+            elif self.virtual_pos > 0:
+                self.today_setup_long = False
+                self.today_setup_short = False
+
+                self.intra_trade_high = max(self.intra_trade_high, tick.last_price)
+                long_stop = self.intra_trade_high * (1 - self.trailing_long / 100)
+                if tick.last_price <= long_stop:
+                    if self.pos > 0:
+                        self.sell(self.bestOrderPrice(tick, Direction.SHORT), abs(self.pos))
+                    self.virtual_pos = 0
+                    return
+
+            elif self.virtual_pos < 0:
+                self.today_setup_long = False
+                self.today_setup_short = False
+
+                self.intra_trade_low = min(self.intra_trade_low, tick.last_price)
+                short_stop = self.intra_trade_low * (1 + self.trailing_short / 100)
+                if tick.last_price >= short_stop:
+                    if self.pos < 0:
+                        self.cover(self.bestOrderPrice(tick, Direction.LONG), abs(self.pos))
+                    self.virtual_pos = 0
+                    return
+
+        # Close existing position
+        else:
+            if self.virtual_pos > 0:
+                if self.pos > 0:
+                    self.sell(self.bestOrderPrice(tick, Direction.SHORT), abs(self.pos))
+
+            elif self.virtual_pos < 0:
+                if self.pos < 0:
+                    self.cover(self.bestOrderPrice(tick, Direction.LONG), abs(self.pos))
+
+            self.virtual_pos = 0
+
+        self.put_event()
 
     def on_bar(self, bar: BarData):
         """

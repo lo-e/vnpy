@@ -36,6 +36,7 @@ class CtaTemplate(ABC):
     syncs = []
     max_bond_dic = defaultdict(int) #{'date':date, 'pos':pos, 'bond':bond}
     trade_mode = None
+    tick_price = 0
 
     def __init__(
         self,
@@ -59,12 +60,22 @@ class CtaTemplate(ABC):
         self.trading = False
         self.pos = 0
 
-        # Copy a new variables list here to avoid duplicate insert when multiple 
-        # strategy instances are created with the same strategy class.
+        """ modify by loe """
+        self.parameters = copy(self.parameters)
+        if 'tick_price' not in self.parameters:
+            self.parameters.insert(0, "tick_price")
+
         self.variables = copy(self.variables)
-        self.variables.insert(0, "inited")
-        self.variables.insert(1, "trading")
-        self.variables.insert(2, "pos")
+        if 'inited' not in self.variables:
+            self.variables.insert(0, "inited")
+        if 'trading' not in self.variables:
+            self.variables.insert(1, "trading")
+        if 'pos' not in self.variables:
+            self.variables.insert(2, "pos")
+
+        self.syncs = copy(self.syncs)
+        if 'pos' not in self.syncs:
+            self.syncs.insert(0, "pos")
 
         self.update_setting(setting)
         """ modify by loe """
@@ -343,6 +354,24 @@ class CtaTemplate(ABC):
         collection = tick_db[temp.symbol]
         collection.create_index('datetime')
         collection.update_many({'datetime': temp.datetime}, {'$set': temp.__dict__}, upsert=True)
+
+    # 计算最佳委托价格
+    def bestOrderPrice(self, tick, direction):
+        if direction == Direction.LONG:
+            if tick.limit_up:
+                price = min(tick.limit_up, tick.last_price + self.tick_price * 20)
+            else:
+                price = tick.last_price + self.tick_price * 20
+            return price
+
+        if direction == Direction.SHORT:
+            if tick.limit_down:
+                price = max(tick.limit_down, tick.last_price - self.tick_price * 20)
+            else:
+                price = tick.last_price - self.tick_price * 20
+            return price
+
+        return 0
 
 class CtaSignal(ABC):
     """"""
