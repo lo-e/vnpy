@@ -57,7 +57,7 @@ from vnpy.app.cta_strategy.converter import OffsetConverter
 """ modify by loe for Turtle """
 from .turtlePortfolio import TurtlePortfolio
 import re
-from .base import TRANSFORM_SYMBOL_LIST
+from vnpy.app.cta_strategy.base import TRANSFORM_SYMBOL_LIST
 from collections import OrderedDict
 from time import sleep
 from .dataservice import TurtleDataDownloading

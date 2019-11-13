@@ -56,6 +56,12 @@ from .base import (
 from .template import CtaTemplate
 from .converter import OffsetConverter
 
+""" modify by loe """
+import re
+from vnpy.app.cta_strategy.base import TRANSFORM_SYMBOL_LIST
+from vnpy.app.cta_strategy.base import (TICK_DB_NAME,
+                                        DAILY_DB_NAME,
+                                        MINUTE_DB_NAME)
 
 STOP_STATUS_MAP = {
     Status.SUBMITTING: StopOrderStatus.WAITING,
@@ -516,6 +522,7 @@ class CtaEngine(BaseEngine):
         start = end - timedelta(days)
 
         # Query bars from RQData by default, if not found, load from database.
+        """
         bars = self.query_bar_from_rq(symbol, exchange, interval, start, end)
         if not bars:
             bars = database_manager.load_bar_data(
@@ -528,6 +535,36 @@ class CtaEngine(BaseEngine):
 
         for bar in bars:
             callback(bar)
+        """
+
+        """ modify by loe """
+        flt = {'datetime': {'$gte': start}}
+        if interval == Interval.DAILY:
+            dbName = DAILY_DB_NAME
+        elif interval == Interval.MINUTE:
+            dbName = MINUTE_DB_NAME
+        else:
+            dbName = TICK_DB_NAME
+        collectionName = symbol.upper()
+        startSymbol = re.sub("\d", "", collectionName)
+        if startSymbol in TRANSFORM_SYMBOL_LIST.keys():
+            endSymbol = re.sub("\D", "", collectionName)
+            replace = TRANSFORM_SYMBOL_LIST[startSymbol]
+            collectionName = startSymbol + replace + endSymbol
+
+        barData = self.main_engine.dbQuery(dbName, collectionName, flt, 'datetime')
+
+        for d in barData:
+            gateway_name = d['gateway_name']
+            symbol = d['symbol']
+            exchange = Exchange.RQ
+            theDatetime = d['datetime']
+            endDatetime = None
+
+            bar = BarData(gateway_name=gateway_name, symbol=symbol, exchange=exchange, datetime=theDatetime,
+                          endDatetime=endDatetime)
+            if callback:
+                callback(bar)
 
     def load_tick(
         self, 

@@ -17,6 +17,14 @@ from copy import copy
 
 """ modify by loe """
 from collections import defaultdict
+from enum import Enum
+
+class TradeMode(Enum):
+    """
+    Interval of bar data.
+    """
+    BACKTESTING = "backtesting"     # 回测
+    ACTUAL = "actual"               # 实盘
 
 class CtaTemplate(ABC):
     """"""
@@ -27,6 +35,7 @@ class CtaTemplate(ABC):
     """ modify by loe """
     syncs = []
     max_bond_dic = defaultdict(int) #{'date':date, 'pos':pos, 'bond':bond}
+    trade_mode = None
 
     def __init__(
         self,
@@ -36,6 +45,12 @@ class CtaTemplate(ABC):
         setting: dict,
     ):
         """"""
+        """ modify by loe """
+        if 'testing' in cta_engine.__class__.__name__:
+            self.trade_mode = TradeMode.BACKTESTING
+        else:
+            self.trade_mode = TradeMode.ACTUAL
+
         self.cta_engine = cta_engine
         self.strategy_name = strategy_name
         self.vt_symbol = vt_symbol

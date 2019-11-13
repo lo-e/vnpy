@@ -9,7 +9,7 @@ import re
 from pymongo import MongoClient, ASCENDING
 from vnpy.trader.object import BarData
 from vnpy.app.cta_strategy.base import DAILY_DB_NAME
-from App.Turtle.base import TRANSFORM_SYMBOL_LIST
+from vnpy.app.cta_strategy.base import TRANSFORM_SYMBOL_LIST
 
 """" fake """
 from datetime import datetime

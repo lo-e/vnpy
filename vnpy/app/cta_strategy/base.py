@@ -58,6 +58,8 @@ SETTING_DB_NAME = 'VnTrader_Setting_Db'
 TURTLE_PORTFOLIO_DB_NAME = 'VnTrader_Turtle_Portfolio_Db'
 DOMINANT_DB_NAME = 'Dominant_db'
 
+TRANSFORM_SYMBOL_LIST = {'SM':'2', 'TA':'2', 'ZC':'2'}      # 交易合约和RQData合约需要转换，TA905 -> TA1905
+
 def MinuteDataBaseName(duration:int):
     return re.sub("\d", f'{duration}', MINUTE_DB_NAME)
 

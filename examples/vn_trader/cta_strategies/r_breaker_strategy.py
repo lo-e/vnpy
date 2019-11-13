@@ -10,6 +10,10 @@ from vnpy.app.cta_strategy import (
     ArrayManager,
 )
 
+""" modify by loe """
+from vnpy.app.cta_strategy.template import TradeMode
+from vnpy.trader.constant import Interval
+
 class RBreakerStrategy(CtaTemplate):
     """"""
     author = "loe"
@@ -77,8 +81,19 @@ class RBreakerStrategy(CtaTemplate):
         """
         Callback when strategy is inited.
         """
-        self.write_log("策略初始化")
-        self.load_bar(10)
+        # 载入历史数据，并采用回放计算的方式初始化策略数值
+        if self.trade_mode == TradeMode.ACTUAL:
+            self.load_bar(days=20, interval=Interval.DAILY, callback = self.calculate_indicator)
+
+        elif self.trade_mode == TradeMode.BACKTESTING:
+            self.load_bar(days=10)
+        else:
+            raise(0)
+
+        self.write_log("策略完成初始化")
+
+    def calculate_indicator(self, bar:BarData):
+        a = 2
 
     def on_start(self):
         """
