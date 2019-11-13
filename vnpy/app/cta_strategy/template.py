@@ -61,6 +61,10 @@ class CtaTemplate(ABC):
         self.pos = 0
 
         """ modify by loe """
+        self.parameters = copy(self.parameters)
+        if 'tick_price' not in self.parameters:
+            self.parameters.insert(0, "tick_price")
+
         self.variables = copy(self.variables)
         if 'inited' not in self.variables:
             self.variables.insert(0, "inited")

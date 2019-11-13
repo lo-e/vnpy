@@ -54,8 +54,7 @@ class RBreakerStrategy(CtaTemplate):
     exit_time = time(hour=14, minute=55)
 
     """ modify by loe """
-    parameters = ["tick_price",
-                  "setup_coef",
+    parameters = ["setup_coef",
                   "break_coef",
                   "enter_coef_1",
                   "enter_coef_2",
