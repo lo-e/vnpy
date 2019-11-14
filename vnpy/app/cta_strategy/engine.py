@@ -968,6 +968,18 @@ class CtaEngine(BaseEngine):
 
         self.main_engine.send_email(subject, msg)
 
+    # 新的DailyBar更新后需要自动重新初始化策略
+    def reinit_strategies(self):
+        for strategy_name in self.strategies.keys():
+            strategy = self.strategies[strategy_name]
+            if strategy.inited:
+                temp = strategy.trading
+                strategy.trading = False
+                self.call_strategy_func(strategy, strategy.on_init)
+                strategy.trading = temp
+                self.put_strategy_event(strategy)
+                self.write_log(f"{strategy_name} 重新初始化完成")
+
 # 数据自动化引擎，每天固定时间从RQData下载策略回测及实盘必要的数据，自动重连CTP和重新初始化策略
 class CTAAutoEngine(object):
 
@@ -1022,7 +1034,7 @@ class CTAAutoEngine(object):
             if not self.downloading and not self.downloaded:
                 turtleDataD = self.download_class()
                 self.downloading = True
-                result, msg = turtleDataD.download()
+                result, msg = turtleDataD.download(symbol_list=['IF'])
                 self.downloading = False
                 self.downloaded = result
                 if result:

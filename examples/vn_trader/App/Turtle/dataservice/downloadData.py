@@ -13,28 +13,32 @@ class TurtleDataDownloading(object):
     def __init__(self):
         pass
 
-    def download(self):
-        # Mode  'all'所有合约；'main'主要合约；'current'当前模拟/实盘合约；'test'测试合约
-        downloadMode = 'current'
-        allSymbolList = ['RB', 'CU', 'NI', 'ZN', 'RU', 'AL', 'HC', 'J', 'I', 'PP', 'AP', 'TA', 'A', 'AG', 'AU', 'B',
-                         'BB', 'BU', 'C', 'CF', 'CS', 'CY', 'EG', 'FB', 'FG', 'FU', 'JD', 'JM', 'JR', 'L', 'LR', 'M',
-                         'MA', 'OI', 'P', 'PB', 'PM', 'RI', 'RM', 'RS', 'SC', 'SF', 'SM', 'SN', 'SP', 'SR', 'V', 'WH',
-                         'WR', 'Y', 'ZC', 'IF', 'IC', 'IH']
-        mainSymbolList = ['IF', 'IC', 'IH', 'AL', 'RB', 'I', 'HC', 'SM', 'JM', 'J', 'ZC', 'TA']
-        currentSymbolList = ['RB', 'HC', 'SM', 'J', 'ZC', 'TA', 'I', 'RU', 'IF']
-        testSymbolList = ['AL']
-
-        if downloadMode == 'all':
-            symbolList = allSymbolList
-        elif downloadMode == 'main':
-            symbolList = mainSymbolList
-        elif downloadMode == 'current':
-            symbolList = currentSymbolList
-        elif downloadMode == 'test':
-            symbolList = testSymbolList
+    def download(self, symbol_list:list=None):
+        symbolList = None
+        if symbol_list:
+            symbolList = symbol_list
         else:
-            print(u'模式设置错误！')
-            exit(0)
+            # Mode  'all'所有合约；'main'主要合约；'current'当前模拟/实盘合约；'test'测试合约
+            downloadMode = 'current'
+            allSymbolList = ['RB', 'CU', 'NI', 'ZN', 'RU', 'AL', 'HC', 'J', 'I', 'PP', 'AP', 'TA', 'A', 'AG', 'AU', 'B',
+                             'BB', 'BU', 'C', 'CF', 'CS', 'CY', 'EG', 'FB', 'FG', 'FU', 'JD', 'JM', 'JR', 'L', 'LR', 'M',
+                             'MA', 'OI', 'P', 'PB', 'PM', 'RI', 'RM', 'RS', 'SC', 'SF', 'SM', 'SN', 'SP', 'SR', 'V', 'WH',
+                             'WR', 'Y', 'ZC', 'IF', 'IC', 'IH']
+            mainSymbolList = ['IF', 'IC', 'IH', 'AL', 'RB', 'I', 'HC', 'SM', 'JM', 'J', 'ZC', 'TA']
+            currentSymbolList = ['RB', 'HC', 'SM', 'J', 'ZC', 'TA', 'I', 'RU', 'IF']
+            testSymbolList = ['AL']
+
+            if downloadMode == 'all':
+                symbolList = allSymbolList
+            elif downloadMode == 'main':
+                symbolList = mainSymbolList
+            elif downloadMode == 'current':
+                symbolList = currentSymbolList
+            elif downloadMode == 'test':
+                symbolList = testSymbolList
+            else:
+                print(u'模式设置错误！')
+                exit(0)
 
         result = True
         return_msg = ''
