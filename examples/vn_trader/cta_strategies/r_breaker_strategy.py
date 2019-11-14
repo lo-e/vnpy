@@ -141,15 +141,7 @@ class RBreakerStrategy(CtaTemplate):
         if not self.trade_date or self.trade_date != trade_date:
             # 新的一天
             self.trade_date = trade_date
-            self.today_setup_long = False
-            self.today_setup_short = False
-            self.virtual_pos = 0
-            self.intra_trade_high = 0
-            self.long_stop = 0
-            self.intra_trade_low = 0
-            self.short_stop = 0
-            self.day_high = 0
-            self.day_low = 0
+            self.clear_variables()
 
         # 载入历史数据，并采用回放计算的方式初始化策略数值
         if self.trade_mode == TradeMode.ACTUAL:
@@ -173,6 +165,17 @@ class RBreakerStrategy(CtaTemplate):
 
         self.buy_break = self.sell_setup + self.break_coef * (self.sell_setup - self.buy_setup)  # 突破买入价
         self.sell_break = self.buy_setup - self.break_coef * (self.sell_setup - self.buy_setup)  # 突破卖出价
+
+    def clear_variables(self):
+        self.today_setup_long = False
+        self.today_setup_short = False
+        self.virtual_pos = 0
+        self.intra_trade_high = 0
+        self.long_stop = 0
+        self.intra_trade_low = 0
+        self.short_stop = 0
+        self.day_high = 0
+        self.day_low = 0
 
     def on_start(self):
         """
@@ -311,7 +314,7 @@ class RBreakerStrategy(CtaTemplate):
                 if self.pos < 0:
                     self.cover(self.bestOrderPrice(tick, Direction.LONG), abs(self.pos))
 
-            self.virtual_pos = 0
+            self.clear_variables()
 
         self.put_event()
 
