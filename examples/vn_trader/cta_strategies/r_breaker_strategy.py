@@ -13,7 +13,39 @@ from vnpy.app.cta_strategy import (
 """ modify by loe """
 from vnpy.app.cta_strategy.template import TradeMode
 from vnpy.trader.constant import Interval, Direction
-from datetime import datetime, timedelta
+import datetime
+from datetime import timedelta
+import re
+
+#====== 交易时间 ======
+#商品期货
+MORNING_START_CF = datetime.time(9, 0)
+MORNING_REST_CF = datetime.time(10, 15)
+MORNING_RESTART_CF = datetime.time(10, 30)
+MORNING_END_CF = datetime.time(11, 30)
+AFTERNOON_START_CF = datetime.time(13, 30)
+AFTERNOON_END_CF = datetime.time(15, 0)
+
+# 商品期货夜盘时间
+NIGHT_START_CF = datetime.time(21, 0)
+NIGHT_END_CF_N = datetime.time(23, 0) # 到夜间收盘
+NIGHT_END_CF_NM = datetime.time(1, 0) # 到凌晨收盘
+NIGHT_END_CF_M = datetime.time(2, 30) # 到凌晨收盘
+
+#股指期货
+MORNING_PRE_START_SF = datetime.time(6, 0)
+MORNING_START_SF = datetime.time(9, 30)
+MORNING_END_SF = datetime.time(11, 30)
+AFTERNOON_START_SF = datetime.time(13, 0)
+AFTERNOON_END_SF = datetime.time(15, 0)
+
+def isFinanceSymbol(symbol):
+    financeSymbols = ['IF', 'IC', 'IH']
+    startSymbol = re.sub("\d", "", symbol)
+    if startSymbol in financeSymbols:
+        return True
+    else:
+        return False
 
 class RBreakerStrategy(CtaTemplate):
     """"""
@@ -48,12 +80,12 @@ class RBreakerStrategy(CtaTemplate):
     tend_low = 0
 
     """ modify by loe """
-    today_setup_long = False        # 是否突破多头观察
-    today_setup_short = False       # 是否突破空头观察
-    virtual_pos = 0                 # 虚拟仓位
-    trade_date:datetime = None      # 当前交易日日期
-    long_stop = 0                   # 多头止盈止损价
-    short_stop = 0                  # 空头止盈止损价
+    today_setup_long = False                    # 是否突破多头观察
+    today_setup_short = False                   # 是否突破空头观察
+    virtual_pos = 0                             # 虚拟仓位
+    trade_date = None                           # 当前交易日日期
+    long_stop = 0                               # 多头止盈止损价
+    short_stop = 0                              # 空头止盈止损价
 
     exit_time = time(hour=14, minute=55)
 
@@ -160,6 +192,18 @@ class RBreakerStrategy(CtaTemplate):
         """
         if not self.trading:
             return
+
+        # 过滤无效tick
+        t = tick.datetime.time()
+        isFinance = isFinanceSymbol(tick.symbol)
+        if not isFinance:
+            if NIGHT_END_CF_M <= t < MORNING_START_CF or MORNING_REST_CF <= t < MORNING_RESTART_CF or MORNING_END_CF <= t < AFTERNOON_START_CF or AFTERNOON_END_CF <= t < NIGHT_START_CF or NIGHT_END_CF_M <= t < MORNING_START_CF:
+                self.write_log(f'====== 过滤无效tick：{tick.vt_symbol}\t{tick.datetime} ======')
+                return
+        else:
+            if t < MORNING_START_SF or MORNING_END_SF <= t < AFTERNOON_START_SF or AFTERNOON_END_SF <= t:
+                self.write_log(f'====== 过滤无效tick：{tick.vt_symbol}\t{tick.datetime} ======')
+                return
 
         # 记录当天最高最低价
         if not self.day_high:
@@ -435,7 +479,7 @@ class RBreakerStrategy(CtaTemplate):
 
     """ modify by loe """
     def get_trade_date(self):
-        now = datetime.now()
+        now = datetime.datetime.now()
         hour = now.hour
         if hour >= 15:
             return (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)

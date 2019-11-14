@@ -220,7 +220,7 @@ class TurtleStrategy(CtaTemplate):
                 self.write_log(f'====== 过滤无效tick：{tick.vt_symbol}\t{tick.datetime} ======')
                 return
         else:
-            if MORNING_PRE_START_SF <= t < MORNING_START_SF or MORNING_END_SF <= t < AFTERNOON_START_SF or AFTERNOON_END_SF <= t:
+            if t < MORNING_START_SF or MORNING_END_SF <= t < AFTERNOON_START_SF or AFTERNOON_END_SF <= t:
                 self.write_log(f'====== 过滤无效tick：{tick.vt_symbol}\t{tick.datetime} ======')
                 return
 
