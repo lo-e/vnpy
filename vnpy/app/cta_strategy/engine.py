@@ -62,6 +62,7 @@ from vnpy.app.cta_strategy.base import TRANSFORM_SYMBOL_LIST
 from vnpy.app.cta_strategy.base import (TICK_DB_NAME,
                                         DAILY_DB_NAME,
                                         MINUTE_DB_NAME)
+from time import sleep
 
 STOP_STATUS_MAP = {
     Status.SUBMITTING: StopOrderStatus.WAITING,
@@ -109,6 +110,10 @@ class CtaEngine(BaseEngine):
 
         self.offset_converter = OffsetConverter(self.main_engine)
 
+        """ modify by loe """
+        # 数据引擎
+        self.autoEngine = CTAAutoEngine(main_engine=self.main_engine, cta_engine=self, download_time='19:00', reconnect_time='20:10', check_interval=10 * 60, reload_time=6)
+
     def init_engine(self):
         """
         """
@@ -116,6 +121,11 @@ class CtaEngine(BaseEngine):
         self.load_strategy_class()
         self.load_strategy_setting()
         self.register_event()
+
+        """ modify by loe for Turtle """
+        # 数据引擎启动
+        self.autoEngine.start()
+
         self.write_log("CTA策略引擎初始化成功")
 
     def close(self):
@@ -957,3 +967,98 @@ class CtaEngine(BaseEngine):
             subject = "CTA策略引擎"
 
         self.main_engine.send_email(subject, msg)
+
+# 数据自动化引擎，每天固定时间从RQData下载策略回测及实盘必要的数据，自动重连CTP和重新初始化策略
+class CTAAutoEngine(object):
+
+    def __init__(self, main_engine:MainEngine, cta_engine:CtaEngine, download_time:str, reconnect_time:str, check_interval:int, reload_time:int):
+        # download_time:'18:00', check_interval:10*60, reload_time:6
+        super(CTAAutoEngine, self).__init__()
+
+        self.main_engine = main_engine
+        self.turtle_engine = cta_engine
+        self.download_time = download_time
+        self.reconnect_time = reconnect_time
+        self.check_interval = check_interval
+        self.reload_time = reload_time
+        self.downloading = False
+        self.downloaded = False
+        self.restarting = False
+        self.restarted = False
+        self.download_timer = Thread(target=self.on_download_timer)
+        self.reconnect_timer = Thread(target=self.on_reconnect_timer)
+
+        # 下载数据的类
+        self.download_class = None
+        module_name = 'App.Turtle.dataservice.downloadData'
+        module = importlib.import_module(module_name)
+        for name in dir(module):
+            value = getattr(module, name)
+            if isinstance(value, type) and name == 'TurtleDataDownloading':
+                self.download_class = value
+                break
+
+    def start(self):
+        self.download_timer.start()
+        self.reconnect_timer.start()
+
+    def on_download_timer(self):
+        while True:
+            try:
+                self.checkAndDownload()
+            except:
+                try:
+                    self.downloading = False
+                    self.main_engine.send_email(subject='TURTLE_RQData 数据下载', content=f'【未知错误】\n\n{traceback.format_exc()}')
+                except:
+                    pass
+            sleep(self.check_interval)
+
+    def checkAndDownload(self):
+        now = datetime.now()
+        start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {self.download_time}', '%Y-%m-%d %H:%M')
+        end_time = start_time + timedelta(seconds=self.check_interval * self.reload_time)
+        if now >= start_time and now <= end_time:
+            if not self.downloading and not self.downloaded:
+                turtleDataD = self.download_class()
+                self.downloading = True
+                result, msg = turtleDataD.download()
+                self.downloading = False
+                self.downloaded = result
+                if result:
+                    msg = '======\n数据更新成功\n======\n\n' + msg
+                self.main_engine.send_email(subject='CTA_RQData 数据更新', content=msg)
+        else:
+            self.downloaded = False
+
+    def on_reconnect_timer(self):
+        while True:
+            try:
+                self.checkAndReconnect()
+            except:
+                try:
+                    self.main_engine.send_email(subject='CTA 服务器重连、策略重新初始化', content=f'【未知错误】\n\n{traceback.format_exc()}')
+                except:
+                    pass
+            sleep(self.check_interval)
+
+    def checkAndReconnect(self):
+        now = datetime.now()
+        start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {self.reconnect_time}', '%Y-%m-%d %H:%M')
+        end_time = start_time + timedelta(seconds=self.check_interval * self.reload_time)
+        if now >= start_time and now <= end_time:
+            if not self.restarting and not self.restarted:
+                self.today = (datetime.now() + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+                self.restarting = True
+                result, return_msg = self.main_engine.reconnect(gateway_name='CTP')
+                self.restarting = False
+                self.restarted = result
+                # 海龟策略重新初始化
+                self.turtle_engine.reinit_strategies()
+                return_msg = f'{return_msg}\n\n策略重新初始化成功'
+                try:
+                    self.main_engine.send_email(subject='CTA 服务器重连、策略重新初始化', content=return_msg)
+                except:
+                    pass
+        else:
+            self.restarted = False
