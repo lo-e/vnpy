@@ -52,7 +52,8 @@ class RBreakerStrategy(CtaTemplate):
     today_setup_short = False       # 是否突破空头观察
     virtual_pos = 0                 # 虚拟仓位
     trade_date:datetime = None      # 当前交易日日期
-    symbol_size = 0                 # 合约每手大小
+    long_stop = 0                   # 多头止盈止损价
+    short_stop = 0                  # 空头止盈止损价
 
     exit_time = time(hour=14, minute=55)
 
@@ -77,7 +78,9 @@ class RBreakerStrategy(CtaTemplate):
                  "today_setup_short",
                  "trade_date",
                  "intra_trade_high",
+                 "long_stop",
                  "intra_trade_low",
+                 "short_stop",
                  "day_high",
                  "day_low"]
 
@@ -110,7 +113,9 @@ class RBreakerStrategy(CtaTemplate):
             self.today_setup_short = False
             self.virtual_pos = 0
             self.intra_trade_high = 0
+            self.long_stop = 0
             self.intra_trade_low = 0
+            self.short_stop = 0
             self.day_high = 0
             self.day_low = 0
 
@@ -170,7 +175,9 @@ class RBreakerStrategy(CtaTemplate):
         if tick.datetime.time() < self.exit_time:
             if self.virtual_pos == 0:
                 self.intra_trade_high = 0
+                self.long_stop = 0
                 self.intra_trade_low = 0
+                self.short_stop = 0
 
                 if tick.last_price > self.sell_setup:
                     self.today_setup_long = True
@@ -231,8 +238,8 @@ class RBreakerStrategy(CtaTemplate):
                 self.today_setup_short = False
 
                 self.intra_trade_high = max(self.intra_trade_high, tick.last_price)
-                long_stop = self.intra_trade_high * (1 - self.trailing_long / 100)
-                if tick.last_price <= long_stop:
+                self.long_stop = self.intra_trade_high * (1 - self.trailing_long / 100)
+                if tick.last_price <= self.long_stop:
                     if self.pos > 0:
                         self.sell(self.bestOrderPrice(tick, Direction.SHORT), abs(self.pos))
                     self.virtual_pos = 0
@@ -243,8 +250,8 @@ class RBreakerStrategy(CtaTemplate):
                 self.today_setup_short = False
 
                 self.intra_trade_low = min(self.intra_trade_low, tick.last_price)
-                short_stop = self.intra_trade_low * (1 + self.trailing_short / 100)
-                if tick.last_price >= short_stop:
+                self.short_stop = self.intra_trade_low * (1 + self.trailing_short / 100)
+                if tick.last_price >= self.short_stop:
                     if self.pos < 0:
                         self.cover(self.bestOrderPrice(tick, Direction.LONG), abs(self.pos))
                     self.virtual_pos = 0
