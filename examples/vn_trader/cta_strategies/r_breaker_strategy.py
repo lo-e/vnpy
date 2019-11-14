@@ -48,10 +48,11 @@ class RBreakerStrategy(CtaTemplate):
     tend_low = 0
 
     """ modify by loe """
-    today_setup_long = False
-    today_setup_short = False
-    virtual_pos = 0
-    trade_date:datetime = None
+    today_setup_long = False        # 是否突破多头观察
+    today_setup_short = False       # 是否突破空头观察
+    virtual_pos = 0                 # 虚拟仓位
+    trade_date:datetime = None      # 当前交易日日期
+    symbol_size = 0                 # 合约每手大小
 
     exit_time = time(hour=14, minute=55)
 
@@ -123,7 +124,6 @@ class RBreakerStrategy(CtaTemplate):
             raise(0)
 
         self.write_log("策略完成初始化")
-        self.put_event()
 
     def calculate_indicator(self, bar:BarData):
         self.buy_setup = bar.low_price - self.setup_coef * (bar.high_price - bar.close_price)  # 观察买入价
@@ -153,6 +153,9 @@ class RBreakerStrategy(CtaTemplate):
         """
         Callback of new tick data update.
         """
+        if not self.trading:
+            return
+
         # 记录当天最高最低价
         if not self.day_high:
             self.day_high = tick.last_price
@@ -407,12 +410,13 @@ class RBreakerStrategy(CtaTemplate):
         Callback of new trade data update.
         """
         """ modify by loe """
-        current_bond = trade.price * self.cta_engine.size * self.pos * 0.1
-        max_bond = self.max_bond_dic['bond']
-        if current_bond > max_bond:
-            self.max_bond_dic['date'] = self.cta_engine.datetime.date()
-            self.max_bond_dic['pos'] = self.pos
-            self.max_bond_dic['bond'] = current_bond
+        if self.trade_mode == TradeMode.BACKTESTING:
+            current_bond = trade.price * self.cta_engine.size * self.pos * 0.1
+            max_bond = self.max_bond_dic['bond']
+            if current_bond > max_bond:
+                self.max_bond_dic['date'] = self.cta_engine.datetime.date()
+                self.max_bond_dic['pos'] = self.pos
+                self.max_bond_dic['bond'] = current_bond
 
         self.put_event()
 

@@ -21,7 +21,7 @@ from enum import Enum
 
 class TradeMode(Enum):
     """
-    Interval of bar data.
+    TradeMode of the trade.
     """
     BACKTESTING = "backtesting"     # 回测
     ACTUAL = "actual"               # 实盘
