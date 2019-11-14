@@ -1094,6 +1094,9 @@ class TurtleAutoEngine(object):
                 result, return_msg = self.main_engine.reconnect(gateway_name='CTP')
                 self.restarting = False
                 self.restarted = result
+                # 海龟策略重新初始化
+                self.turtle_engine.reinit_strategies()
+                return_msg = f'{return_msg}\n\n策略重新初始化成功'
                 try:
                     self.main_engine.send_email(subject='TURTLE 服务器重连', content=return_msg)
                 except:
