@@ -471,8 +471,8 @@ class RBreakerStrategy(CtaTemplate):
                 self.max_bond_dic['date'] = self.cta_engine.datetime.date()
                 self.max_bond_dic['pos'] = self.pos
                 self.max_bond_dic['bond'] = current_bond
-
-        self.put_event()
+        # 邮件提醒
+        super(RBreakerStrategy, self).on_trade(trade)
 
     def on_stop_order(self, stop_order: StopOrder):
         """
