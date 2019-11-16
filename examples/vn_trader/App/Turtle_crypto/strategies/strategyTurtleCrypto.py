@@ -649,25 +649,6 @@ class TurtleStrategyCrypto(CtaTemplate):
         else:
             self.newDominantOpen = False
 
-
-    # 计算最佳委托价格
-    def bestOrderPrice(self, tick, direction):
-        if direction == Direction.LONG:
-            if tick.limit_up:
-                price = min(tick.limit_up, tick.last_price + self.tick_price * 20)
-            else:
-                price = tick.last_price + self.tick_price * 20
-            return price
-
-        if direction == Direction.SHORT:
-            if tick.limit_down:
-                price = max(tick.limit_down, tick.last_price - self.tick_price * 20)
-            else:
-                price = tick.last_price - self.tick_price * 20
-            return price
-
-        return 0
-
     def check_last_symbol(self):
         sepList = self.last_symbol.split('.')
         symbol = sepList[0]
