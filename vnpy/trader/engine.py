@@ -38,6 +38,7 @@ from pymongo import MongoClient, ASCENDING
 from .constant import LOG_DB_NAME
 from dingtalkchatbot.chatbot import DingtalkChatbot
 from time import sleep
+import socket
 
 class MainEngine:
     """
@@ -667,13 +668,14 @@ class DingTalkEngine(BaseEngine):
 
     def register_event(self):
         self.event_engine.register(EVENT_LOG, self.ding_talk)
+        self.event_engine.register('eCtaLog', self.ding_talk)
 
     def ding_talk(self, event):
         """"""
         if not isinstance(event, Event):
             return
 
-        key_word_list = ['断开', '异常', '错误', '出错', '触发', '失败', '状态码', 'Error', 'error', 'ERROR', 'Bad', 'bad', 'BAD']
+        key_word_list = ['断开', '异常', '错误', '出错', '触发', '失败', '状态码', 'Error', 'error', 'ERROR', 'Bad', 'bad', 'BAD', 'Traceback']
         content_dic = event.data.__dict__
         msg = content_dic['msg']
         enable = False
@@ -682,7 +684,8 @@ class DingTalkEngine(BaseEngine):
                 enable = True
                 break
         if enable:
-            content = ''
+            client = socket.gethostname()
+            content = f'【{client}】\n'
             for key, value in content_dic.items():
                 content += f'{key}：{value}\n'
 
