@@ -511,6 +511,9 @@ class OnetokenTradeWebsocketApi(WebsocketClient):
             "order": self.on_order
         }
 
+        """ modify by loe """
+        self.traded_orderid_list = []
+
     def connect(
         self,
         key: str,
@@ -694,6 +697,10 @@ class OnetokenTradeWebsocketApi(WebsocketClient):
             if not order_data["last_dealt_amount"]:
                 return
 
+            """ modify by loe """
+            if orderid in self.traded_orderid_list:
+                return
+
             trade_timestamp = order_data["last_update"][11:19]
             self.trade_count += 1
             if order_data["dealt_amount"]:
@@ -709,6 +716,10 @@ class OnetokenTradeWebsocketApi(WebsocketClient):
                     gateway_name=self.gateway_name,
                     time=trade_timestamp)
                 self.gateway.on_trade(trade)
+
+                """ modify by loe """
+                if order.status == Status.ALLTRADED:
+                    self.traded_orderid_list.append(orderid)
 
     def ping(self):
         """"""
