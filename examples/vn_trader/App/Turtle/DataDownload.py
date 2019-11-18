@@ -28,8 +28,8 @@ if __name__ == '__main__':
 
     """
     # 下载分钟数据
-    symbol = 'RB88'
-    start = '2010-01-01'
+    symbol = 'IF88'
+    start = '2019-11-01'
     end = '2019-12-31'
     downloadMinuteBarBySymbol(symbol, start=start, end=end)
     """
