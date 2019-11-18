@@ -51,8 +51,11 @@ class RBreakerStrategy(CtaTemplate):
     """"""
     author = "loe"
 
-    setup_coef = 0.25
-    break_coef = 0.2
+    # 原版参数
+    #setup_coef = 0.25
+    #break_coef = 0.2
+    setup_coef = 0.1
+    break_coef = 0.1
     enter_coef_1 = 1.07
     enter_coef_2 = 0.07
     fixed_size = 1
