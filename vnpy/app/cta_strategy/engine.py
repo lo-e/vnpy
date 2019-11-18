@@ -62,6 +62,8 @@ from vnpy.app.cta_strategy.base import (TICK_DB_NAME,
                                         DAILY_DB_NAME,
                                         MINUTE_DB_NAME)
 from time import sleep
+from threading import Thread
+from queue import Queue
 
 STOP_STATUS_MAP = {
     Status.SUBMITTING: StopOrderStatus.WAITING,

@@ -52,7 +52,7 @@ from vnpy.app.cta_strategy.base import (
     TURTLE_PORTFOLIO_DB_NAME
 )
 from vnpy.app.cta_strategy.template import CtaTemplate
-from vnpy.app.cta_strategy.converter import OffsetConverter
+from vnpy.trader.converter import OffsetConverter
 
 """ modify by loe for Turtle """
 from .turtlePortfolio import TurtlePortfolio
