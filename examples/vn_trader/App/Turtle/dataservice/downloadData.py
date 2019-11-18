@@ -5,8 +5,6 @@
 """
 
 from .dataService import *
-from csv import DictReader
-import re
 from datetime import datetime
 
 class TurtleDataDownloading(object):
@@ -121,46 +119,3 @@ class TurtleDataDownloading(object):
         if not result:
             return_msg = f'======\n数据未更新\n======\n\n' + return_msg
         return result, return_msg
-
-if __name__ == '__main__':
-    """
-    # 下载真实主力合约bar数据到数据库
-    symbolList = ['RB', 'CU', 'NI', 'ZN', 'RU', 'AL', 'HC', 'J', 'I', 'PP', 'AP', 'TA', 'A', 'AG', 'AU', 'B', 'BB', 'BU', 'C', 'CF', 'CS', 'CY', 'EG', 'FB', 'FG', 'FU', 'JD', 'JM', 'JR', 'L', 'LR', 'M', 'MA', 'OI', 'P', 'PB', 'PM', 'RI', 'RM', 'RS', 'SC', 'SF', 'SM', 'SN', 'SP', 'SR', 'V', 'WH', 'WR', 'Y', 'ZC', 'IF', 'IC', 'IH']
-    #symbolList = ['RB', 'M', 'C', 'MA', 'TA', 'I', 'BU', 'AG', 'Y', 'SR']
-    #symbolList = ['IF', 'IC', 'IH', 'AL', 'RB', 'I', 'HC', 'SM', 'JM', 'J', 'ZC', 'TA']
-    for underlyingSymbol in symbolList:
-        startDate = None
-        #startDate = datetime.strptime('2010-1-1', '%Y-%m-%d')
-        downloadDominantSymbol(underlyingSymbol, startDate)
-    """
-
-    """
-    # 显示近一年来主力合约
-    underlyingSymbol = 'AL'
-    dominantList = showYearDominantSymbol(underlyingSymbol)
-    for value in dominantList:
-        print '%s\t%s' % (value[0], value[1])
-    """
-
-    """
-    # 下载测试中的指数、主力合约
-    input = raw_input(u'输入合约类型【88主力 888平滑主力 99指数】')
-    if input == '88' or input == '888' or input == '99':
-        filename = 'symbol_list.csv'
-        count = 0
-        with open(filename) as f:
-            r = DictReader(f)
-            for d in r:
-                startSymbol = re.sub("\d", "", d['vtSymbol'])
-                symbol = startSymbol + input
-                downloadDailyBarBySymbol(symbol)
-                count += 1
-                print '\n'
-        print  '合约数：%d' % count
-    """
-
-    """ ========================================================== """
-    #"""
-    turtleD = TurtleDataDownloading()
-    turtleD.download()
-    #"""
