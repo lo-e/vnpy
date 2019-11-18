@@ -4,8 +4,9 @@ Defines constants and objects used in CtaStrategy App.
 
 from dataclasses import dataclass, field
 from enum import Enum
+from datetime import timedelta
 
-from vnpy.trader.constant import Direction, Offset, Exchange
+from vnpy.trader.constant import Direction, Offset, Exchange, Interval
 
 APP_NAME = "CtaStrategy"
 STOPORDER_PREFIX = "STOP"
@@ -71,3 +72,9 @@ EXCHANGE_SYMBOL_DICT = {Exchange.CFFEX:['IF', 'IC', 'IH'],
                         Exchange.SHFE:['AL', 'RB', 'HC'],
                         Exchange.CZCE:['SM', 'ZC', 'TA'],
                         Exchange.DCE:['I', 'JM', 'J']}
+
+INTERVAL_DELTA_MAP = {
+    Interval.MINUTE: timedelta(minutes=1),
+    Interval.HOUR: timedelta(hours=1),
+    Interval.DAILY: timedelta(days=1),
+}

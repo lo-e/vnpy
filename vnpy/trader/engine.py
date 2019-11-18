@@ -392,7 +392,7 @@ class LogEngine(BaseEngine):
 
     def add_file_handler(self):
         """
-        Add file output of log. 
+        Add file output of log.
         """
         today_date = datetime.now().strftime("%Y%m%d")
         filename = f"vt_{today_date}.log"

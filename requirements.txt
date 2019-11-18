@@ -17,3 +17,5 @@ ibapi
 deap
 pyzmq
 DingtalkChatbot
+wmi
+QScintilla
