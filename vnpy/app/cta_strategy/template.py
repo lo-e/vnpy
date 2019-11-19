@@ -346,14 +346,17 @@ class CtaTemplate(ABC):
     """ modify by loe """
     # 保存tick到数据库
     def saveTick(self, tick:TickData):
-        # 交易所枚举类型无法保存数据库，先转换成字符串
-        temp = copy(tick)
-        temp.exchange = temp.exchange.value
-        client = MongoClient('localhost', 27017, serverSelectionTimeoutMS=600)
-        tick_db = client[TICK_DB_NAME]
-        collection = tick_db[temp.symbol]
-        collection.create_index('datetime')
-        collection.update_many({'datetime': temp.datetime}, {'$set': temp.__dict__}, upsert=True)
+        try:
+            # 交易所枚举类型无法保存数据库，先转换成字符串
+            temp = copy(tick)
+            temp.exchange = temp.exchange.value
+            client = MongoClient('localhost', 27017, serverSelectionTimeoutMS=600)
+            tick_db = client[TICK_DB_NAME]
+            collection = tick_db[temp.symbol]
+            collection.create_index('datetime')
+            collection.update_many({'datetime': temp.datetime}, {'$set': temp.__dict__}, upsert=True)
+        except:
+            pass
 
     # 计算最佳委托价格
     def bestOrderPrice(self, tick, direction):
