@@ -665,6 +665,7 @@ class DingTalkEngine(BaseEngine):
         self.active = False
 
         self.register_event()
+        self.main_engine.send_ding_talk = self.send_ding_talk
 
     def register_event(self):
         self.event_engine.register(EVENT_LOG, self.ding_talk)
@@ -689,13 +690,16 @@ class DingTalkEngine(BaseEngine):
             for key, value in content_dic.items():
                 content += f'{key}：{value}\n'
 
-            # 开启线程
-            if not self.active:
-                self.start()
+            self.send_ding_talk(content=content)
 
-            # 消息推入队列，做流控处理
-            if self.queue.qsize() < 10:
-                self.queue.put(content)
+    def send_ding_talk(self, content):
+        # 开启线程
+        if not self.active:
+            self.start()
+
+        # 消息推入队列，做流控处理
+        if self.queue.qsize() < 10:
+            self.queue.put(content)
 
     def run(self):
         """"""
