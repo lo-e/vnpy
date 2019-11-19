@@ -499,7 +499,18 @@ class OmsEngine(BaseEngine):
     def process_contract_event(self, event: Event):
         """"""
         contract = event.data
+
+        """ modify by loe """
+        contract = self.check_update_contract(contract)
+
         self.contracts[contract.vt_symbol] = contract
+
+    """ modify by loe """
+    # 针对部分交易所合约tickprice做的修改
+    def check_update_contract(self, contract):
+        if '1TOKEN' in contract.gateway_name and ('eos' in contract.vt_symbol or 'EOS' in contract.vt_symbol):
+            contract.pricetick = 0.01
+        return contract
 
     def get_tick(self, vt_symbol):
         """
