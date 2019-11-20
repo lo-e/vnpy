@@ -1050,7 +1050,7 @@ class CTAAutoEngine(object):
             if not self.downloading and not self.downloaded:
                 turtleDataD = self.download_class()
                 self.downloading = True
-                result, msg = turtleDataD.download(symbol_list=['IF'])
+                result, msg = turtleDataD.download()
                 self.downloading = False
                 self.downloaded = result
                 if result:

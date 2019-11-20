@@ -357,6 +357,10 @@ class OnetokenRestApi(RestClient):
         if not issubclass(exception_type, ConnectionError):
             self.on_error(exception_type, exception_value, tb, request)
 
+        """ modify by loe """
+        msg = f"委托失败，信息：{request.response.text}"
+        self.gateway.write_log(msg)
+
     def on_cancel_order(self, data, request):
         """Websocket will push a new order status"""
         pass

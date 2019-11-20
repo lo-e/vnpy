@@ -312,7 +312,8 @@ class MainEngine:
         log = event.data
         d = {
             'content': log.msg,
-            'gateway': log.gateway_name
+            'gateway': log.gateway_name,
+            'time': log.time
         }
         self.dbInsert(LOG_DB_NAME, self.todayDate, d)
 
