@@ -431,16 +431,30 @@ class BybitRestApi(RestClient):
                 direction=Direction.NET,
                 volume=volume,
                 price=d["entry_price"],
+                pnl=d["unrealised_pnl"],
+                frozen=d["position_margin"],
                 gateway_name=self.gateway_name
             )
             self.gateway.on_position(position)
 
+            frozen = d["position_margin"]
+            position_pnl = d['unrealised_pnl']
+            if position_pnl > 0:
+                balance = d["wallet_balance"] + position_pnl
+            else:
+                balance = d["wallet_balance"]
             account = AccountData(
                 accountid=d["symbol"].replace("USD", ""),
-                balance=d["wallet_balance"],
-                frozen=d["order_margin"],
+                balance=balance,
+                frozen=frozen,
                 gateway_name=self.gateway_name,
             )
+            """ modify by loe """
+            # 增添了一些属性
+            account.available = d["wallet_balance"] - frozen
+            account.trade_commission = d['occ_closing_fee']
+            account.close_profit = d['realised_pnl']
+            account.position_profit = position_pnl
             self.gateway.on_account(account)
 
     def query_order(self, page: int = 1):
