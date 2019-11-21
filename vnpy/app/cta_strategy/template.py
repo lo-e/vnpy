@@ -18,6 +18,7 @@ from copy import copy
 """ modify by loe """
 from collections import defaultdict
 from enum import Enum
+from concurrent.futures import ThreadPoolExecutor
 
 class TradeMode(Enum):
     """
@@ -55,6 +56,7 @@ class CtaTemplate(ABC):
         self.cta_engine = cta_engine
         self.strategy_name = strategy_name
         self.vt_symbol = vt_symbol
+        self.thread_executor = ThreadPoolExecutor(max_workers=1)
 
         self.inited = False
         self.trading = False
@@ -344,8 +346,11 @@ class CtaTemplate(ABC):
             return []
 
     """ modify by loe """
-    # 保存tick到数据库
     def saveTick(self, tick:TickData):
+        self.thread_executor.submit(self.do_save_tick, tick)
+
+    # 保存tick到数据库
+    def do_save_tick(self, tick:TickData):
         try:
             # 交易所枚举类型无法保存数据库，先转换成字符串
             temp = copy(tick)
