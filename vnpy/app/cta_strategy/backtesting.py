@@ -785,6 +785,10 @@ class BacktestingEngine:
             if not long_cross and not short_cross:
                 continue
 
+            """ modify by loe """
+            # 成交价格处理从send_order转移到这里
+            order.price = round_to(order.price, self.pricetick)
+
             # Push order udpate with status "all traded" (filled).
             order.traded = order.volume
             order.status = Status.ALLTRADED
@@ -850,6 +854,10 @@ class BacktestingEngine:
 
             if not long_cross and not short_cross:
                 continue
+
+            """ modify by loe """
+            # 成交价格处理从send_order转移到这里
+            stop_order.price = round_to(stop_order.price, self.pricetick)
 
             # Create order data.
             self.limit_order_count += 1
@@ -931,7 +939,6 @@ class BacktestingEngine:
         lock: bool
     ):
         """"""
-        price = round_to(price, self.pricetick)
         if stop:
             vt_orderid = self.send_stop_order(direction, offset, price, volume)
         else:
