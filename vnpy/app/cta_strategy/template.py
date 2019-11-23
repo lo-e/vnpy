@@ -367,18 +367,20 @@ class CtaTemplate(ABC):
     def bestLimitOrderPrice(self, tick, direction):
         if direction == Direction.LONG:
             if tick.limit_up:
-                #price = min(tick.limit_up, tick.last_price + self.tick_price * 20)
-                price = min(tick.limit_up, tick.last_price * 1.06)
+                price = min(tick.limit_up, tick.last_price + self.tick_price * 20)
+                #price = min(tick.limit_up, tick.last_price * 1.06)
             else:
                 price = tick.last_price + self.tick_price * 20
+                #price = tick.last_price * 1.06
             return price
 
         if direction == Direction.SHORT:
             if tick.limit_down:
-                #price = max(tick.limit_down, tick.last_price - self.tick_price * 20)
-                price = max(tick.limit_down, tick.last_price * 0.94)
+                price = max(tick.limit_down, tick.last_price - self.tick_price * 20)
+                #price = max(tick.limit_down, tick.last_price * 0.94)
             else:
                 price = tick.last_price - self.tick_price * 20
+                #price = tick.last_price * 0.94
             return price
 
         return 0
