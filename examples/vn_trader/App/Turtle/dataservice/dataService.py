@@ -106,8 +106,6 @@ def downloadMinuteBarBySymbol(symbol, start:str='', end:str='', min:int=1):
     cl = dbMinute[symbol]
     cl.ensure_index([('datetime', ASCENDING)], unique=True)         # 添加索引
 
-    start_date = ''
-    end_date = ''
     if not start or not end:
         now = datetime.now()
         start_date = (now - timedelta(days=1)).strftime('%Y%m%d')
@@ -120,11 +118,22 @@ def downloadMinuteBarBySymbol(symbol, start:str='', end:str='', min:int=1):
 
     """ modify by loe """
     current_year = 0
+    current_day = None
+    day_count = 0
     for ix, row in df.iterrows():
         bar = generateVtBar(row, symbol)
         d = bar.__dict__
         flt = {'datetime': bar.datetime}
         cl.replace_one(flt, d, True)
+
+        if current_day and current_day.day != bar.datetime.day:
+            if day_count != 240 and day_count != 270:
+                print(f'{current_day}\t数据缺失\t{day_count}')
+            day_count = 0
+
+        current_day = bar.datetime
+        day_count += 1
+
         if current_year != bar.datetime.year:
             current_year = bar.datetime.year
             print(f'====== {current_year} ======')
