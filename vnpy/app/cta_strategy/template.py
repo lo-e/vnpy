@@ -364,17 +364,19 @@ class CtaTemplate(ABC):
             pass
 
     # 计算最佳委托价格
-    def bestOrderPrice(self, tick, direction):
+    def bestLimitOrderPrice(self, tick, direction):
         if direction == Direction.LONG:
             if tick.limit_up:
-                price = min(tick.limit_up, tick.last_price + self.tick_price * 20)
+                #price = min(tick.limit_up, tick.last_price + self.tick_price * 20)
+                price = min(tick.limit_up, tick.last_price * 1.06)
             else:
                 price = tick.last_price + self.tick_price * 20
             return price
 
         if direction == Direction.SHORT:
             if tick.limit_down:
-                price = max(tick.limit_down, tick.last_price - self.tick_price * 20)
+                #price = max(tick.limit_down, tick.last_price - self.tick_price * 20)
+                price = max(tick.limit_down, tick.last_price * 0.94)
             else:
                 price = tick.last_price - self.tick_price * 20
             return price

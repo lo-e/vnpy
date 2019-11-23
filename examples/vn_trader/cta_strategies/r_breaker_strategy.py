@@ -245,7 +245,7 @@ class RBreakerStrategy(CtaTemplate):
                             self.send_email(f'R-Breaker策略出错！！\n多头突破开仓时Pos={self.pos}\n已终止策略')
                             raise (0)
 
-                        self.buy(self.bestOrderPrice(tick, Direction.LONG), abs(self.fixed_size))
+                        self.buy(self.bestLimitOrderPrice(tick, Direction.LONG), abs(self.fixed_size))
                         self.virtual_pos = abs(self.fixed_size)
                         self.intra_trade_high = tick.last_price
                         self.intra_trade_low = tick.last_price
@@ -256,7 +256,7 @@ class RBreakerStrategy(CtaTemplate):
                             self.send_email(f'R-Breaker策略出错！！\n空头反转开仓时Pos={self.pos}\n已终止策略')
                             raise (0)
 
-                        self.short(self.bestOrderPrice(tick, Direction.SHORT), abs(self.fixed_size))
+                        self.short(self.bestLimitOrderPrice(tick, Direction.SHORT), abs(self.fixed_size))
                         self.virtual_pos = abs(self.fixed_size) * -1
                         self.intra_trade_high = tick.last_price
                         self.intra_trade_low = tick.last_price
@@ -269,7 +269,7 @@ class RBreakerStrategy(CtaTemplate):
                             self.send_email(f'R-Breaker策略出错！！\n空头突破开仓时Pos={self.pos}\n已终止策略')
                             raise (0)
 
-                        self.short(self.bestOrderPrice(tick, Direction.SHORT), abs(self.fixed_size))
+                        self.short(self.bestLimitOrderPrice(tick, Direction.SHORT), abs(self.fixed_size))
                         self.virtual_pos = abs(self.fixed_size) * -1
                         self.intra_trade_high = tick.last_price
                         self.intra_trade_low = tick.last_price
@@ -280,7 +280,7 @@ class RBreakerStrategy(CtaTemplate):
                             self.send_email(f'R-Breaker策略出错！！\n多头反转开仓时Pos={self.pos}\n已终止策略')
                             raise (0)
 
-                        self.buy(self.bestOrderPrice(tick, Direction.LONG), abs(self.fixed_size))
+                        self.buy(self.bestLimitOrderPrice(tick, Direction.LONG), abs(self.fixed_size))
                         self.virtual_pos = abs(self.fixed_size)
                         self.intra_trade_high = tick.last_price
                         self.intra_trade_low = tick.last_price
@@ -294,7 +294,7 @@ class RBreakerStrategy(CtaTemplate):
                 self.long_stop = self.intra_trade_high * (1 - self.trailing_long / 100)
                 if tick.last_price <= self.long_stop:
                     if self.pos > 0:
-                        self.sell(self.bestOrderPrice(tick, Direction.SHORT), abs(self.pos))
+                        self.sell(self.bestLimitOrderPrice(tick, Direction.SHORT), abs(self.pos))
                     self.virtual_pos = 0
                     return
 
@@ -306,7 +306,7 @@ class RBreakerStrategy(CtaTemplate):
                 self.short_stop = self.intra_trade_low * (1 + self.trailing_short / 100)
                 if tick.last_price >= self.short_stop:
                     if self.pos < 0:
-                        self.cover(self.bestOrderPrice(tick, Direction.LONG), abs(self.pos))
+                        self.cover(self.bestLimitOrderPrice(tick, Direction.LONG), abs(self.pos))
                     self.virtual_pos = 0
                     return
 
@@ -314,11 +314,11 @@ class RBreakerStrategy(CtaTemplate):
         else:
             if self.virtual_pos > 0:
                 if self.pos > 0:
-                    self.sell(self.bestOrderPrice(tick, Direction.SHORT), abs(self.pos))
+                    self.sell(self.bestLimitOrderPrice(tick, Direction.SHORT), abs(self.pos))
 
             elif self.virtual_pos < 0:
                 if self.pos < 0:
-                    self.cover(self.bestOrderPrice(tick, Direction.LONG), abs(self.pos))
+                    self.cover(self.bestLimitOrderPrice(tick, Direction.LONG), abs(self.pos))
 
             self.clear_variables()
 
