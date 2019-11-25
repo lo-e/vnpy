@@ -40,7 +40,7 @@ def get_contracts_list(date:str):
 
     # 写入csv
     path = os.getcwd()
-    file_path = path + '\\CSVs\\1Token\\' + 'contracts.csv'
+    file_path = path + '\\' + 'contracts.csv'
     field_names = ['exchange', 'symbol']
     with open(file_path, 'w') as f:
         writer = csv.DictWriter(f, fieldnames=field_names)
@@ -121,7 +121,9 @@ def get_csv_path():
 if __name__ == '__main__':
     """
     # 获取支持的合约列表
-    date = '2019-09-02'
+    yesterday = datetime.today() - timedelta(days=1)
+    date = f'{yesterday.year}-{yesterday.month}-{yesterday.day}'
+    #date = '2019-11-20'
     get_contracts_list(date)
     """
 
