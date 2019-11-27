@@ -1,4 +1,4 @@
 symbol,size,priceTick,variableCommission,slippage,name,capital
-EOS.USD.Q.OKEF,10,0.001,0.0003,0.001,OKEX期货/EOS季度合约,33333
 BTC.USD.Q.OKEF,100,0.01,0.0003,0.01,OKEX期货/BTC季度合约,20
 ETH.USD.Q.OKEF,10,0.001,0.0003,0.001,OKEX期货/ETH季度合约,1000
+EOS.USD.Q.OKEF,10,0.001,0.0003,0.001,OKEX期货/EOS季度合约,33333
