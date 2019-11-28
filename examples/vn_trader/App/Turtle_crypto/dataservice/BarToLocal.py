@@ -168,7 +168,7 @@ class BarLocalEngine(object):
 
         elements = symbol.split('.')
         exchange = '.' + elements[-1]
-        tick_symbol = symbol.rstrip(exchange).lower()
+        tick_symbol = symbol.rstrip(exchange)
         Tick_db = self.client[TICK_DB_NAME]
         Tick_collection = Tick_db[tick_symbol]
 
