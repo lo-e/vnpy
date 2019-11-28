@@ -13,7 +13,7 @@ main_url = 'https://api.bybit.com'
 # interval：'1', '3', '5', '15', '30', '60', '120', '240', '360', '720', 'D', 'M', 'W', 'Y'
 # from：'%Y-%m-%d %H:%M:%S'
 # limit：<= 200
-def get_bar_data(symbol:str, interval:str, from_time:str, limit:int=200):
+def bybit_get_bar_data(symbol:str, interval:str, from_time:str, limit:int=200):
     timeArray = time.strptime(from_time, "%Y-%m-%d %H:%M:%S")
     timeStamp = int(time.mktime(timeArray))
     url = f'{main_url}/v2/public/kline/list?symbol={symbol}&interval={interval}&from={timeStamp}&limit={limit}'
@@ -27,11 +27,11 @@ def get_bar_data(symbol:str, interval:str, from_time:str, limit:int=200):
     until = ''
     for dic in bar_data:
         # 转换时间戳
-        timestamp = dic['open_time']
-        datetime_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
+        the_timestamp = dic['open_time']
+        datetime_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(the_timestamp))
         if not since:
-            since = time.strftime("%Y-%m-%d-%H%M%S", time.localtime(timestamp))
-        until = time.strftime("%Y-%m-%d-%H%M%S", time.localtime(timestamp))
+            since = time.strftime("%Y-%m-%d-%H%M%S", time.localtime(the_timestamp))
+        until = time.strftime("%Y-%m-%d-%H%M%S", time.localtime(the_timestamp))
 
         dic.pop('open_time')
         dic.pop('interval')
@@ -40,7 +40,7 @@ def get_bar_data(symbol:str, interval:str, from_time:str, limit:int=200):
         result_list.append(dic)
 
     if not len(result_list):
-        return
+        return None
 
     # 写入csv
     contract = f'BYBIT.{symbol}'
@@ -56,6 +56,8 @@ def get_bar_data(symbol:str, interval:str, from_time:str, limit:int=200):
         # 写入csv文件
         writer.writerows(result_list)
 
+    return datetime.strptime(until, "%Y-%m-%d-%H%M%S")
+
 def get_csv_path():
     path = os.path.abspath(__file__)
     file_name = path.split('\\')[-1]
@@ -65,6 +67,6 @@ def get_csv_path():
 if __name__ == '__main__':
     symbol = 'BTCUSD'
     interval = '1'
-    from_time = (datetime.now() - timedelta(days=16)).strftime("%Y-%m-%d %H:%M:%S")
-    get_bar_data(symbol=symbol, interval=interval, from_time=from_time)
+    from_time = (datetime.now() - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
+    bybit_get_bar_data(symbol=symbol, interval=interval, from_time=from_time)
     print('completed！')

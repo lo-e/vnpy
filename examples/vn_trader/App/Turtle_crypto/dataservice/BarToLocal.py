@@ -6,7 +6,7 @@ from vnpy.trader.object import BarData
 from vnpy.app.cta_strategy.base import TICK_DB_NAME, DAILY_DB_NAME, MinuteDataBaseName, HourDataBaseName
 
 class BarLocalEngine(object):
-    def __init__(self, duration:str):
+    def __init__(self):
         super(BarLocalEngine, self).__init__()
         self.client = MongoClient('localhost', 27017, serverSelectionTimeoutMS = 600)
 

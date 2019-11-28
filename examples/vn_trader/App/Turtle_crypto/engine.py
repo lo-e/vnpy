@@ -1053,7 +1053,7 @@ class TurtleCryptoAutoEngine(object):
             if not self.downloading:
                 turtleCryptoDataD = TurtleCryptoDataDownloading()
                 self.downloading = True
-                turtleCryptoDataD.download(contract_list=self.contract_list)
+                turtleCryptoDataD.download_from_onetoken(contract_list=self.contract_list)
                 self.downloading = False
 
     def checkAndGenerate(self):
@@ -1065,7 +1065,7 @@ class TurtleCryptoAutoEngine(object):
                 self.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
                 self.generating = True
                 turtleCryptoDataD = TurtleCryptoDataDownloading()
-                result, complete_msg, back_msg, lost_msg = turtleCryptoDataD.generate(contract_list=self.contract_list)
+                result, complete_msg, back_msg, lost_msg = turtleCryptoDataD.generate_for_onetoken(contract_list=self.contract_list)
                 email_msg = complete_msg + '\n\n' + lost_msg + back_msg
                 print('\n\n' + lost_msg + back_msg)
                 try:
