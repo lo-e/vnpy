@@ -197,7 +197,7 @@ class RBreakerStrategy(CtaTemplate):
         Callback of new tick data update.
         """
         # 保存tick数据到数据库
-        self.saveTick(tick)
+        #self.saveTick(tick)
 
         if not self.trading:
             return

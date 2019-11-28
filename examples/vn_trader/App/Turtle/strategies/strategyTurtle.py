@@ -210,7 +210,7 @@ class TurtleStrategy(CtaTemplate):
     def on_tick(self, tick):
         """收到行情TICK推送（必须由用户继承实现）"""
         # 保存tick数据到数据库
-        self.saveTick(tick)
+        #self.saveTick(tick)
 
         if not self.trading:
             return
