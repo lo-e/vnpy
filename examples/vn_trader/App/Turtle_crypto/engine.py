@@ -117,7 +117,7 @@ class TurtleEngine(BaseEngine):
         # 组合管理类
         self.turtlePortfolio = None
         # 数据引擎
-        self.autoEngine = TurtleCryptoAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='7:45', check_interval=5 * 60, reload_time=2, generate_time='8:00:01')
+        self.autoEngine = TurtleCryptoAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='7:40', check_interval=10 * 60, reload_time=3, generate_time='8:00:01')
 
     def init_engine(self):
         """
