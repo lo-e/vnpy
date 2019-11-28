@@ -19,6 +19,8 @@ from copy import copy
 from collections import defaultdict
 from enum import Enum
 from concurrent.futures import ThreadPoolExecutor
+from vnpy.trader.constant import Exchange
+from datetime import timedelta
 
 class TradeMode(Enum):
     """
@@ -354,6 +356,9 @@ class CtaTemplate(ABC):
         try:
             # 交易所枚举类型无法保存数据库，先转换成字符串
             temp = copy(tick)
+            if temp.exchange == Exchange.BYBIT:
+                # Bybit交易所的时间需要调整为北京时间
+                temp.datetime = temp.datetime + timedelta(hours=8)
             temp.exchange = temp.exchange.value
             client = MongoClient('localhost', 27017, serverSelectionTimeoutMS=600)
             tick_db = client[TICK_DB_NAME]

@@ -3,33 +3,33 @@
     {
         "strategy_name": "TURTLE_BTC",
         "class_name": "TurtleStrategyCrypto",
-        "vt_symbol": "btc.usd.q.OKEF",
-        "per_size":100,
-        "tick_price":1,
-        "bit_value":10000,
+        "vt_symbol": "BTCUSD.BYBIT",
+        "per_size":1,
+        "tick_price":0.5,
+        "bit_value":0.01,
         "start": true
     },
 
     {
         "strategy_name": "TURTLE_ETH",
         "class_name": "TurtleStrategyCrypto",
-        "vt_symbol": "eth.usd.q.OKEF",
-        "per_size":10,
-        "tick_price":1,
-        "bit_value":200,
+        "vt_symbol": "ETHUSD.BYBIT",
+        "per_size":1,
+        "tick_price":0.05,
+        "bit_value":0.5,
         "start": true
     },
 
     {
         "strategy_name": "TURTLE_EOS",
         "class_name": "TurtleStrategyCrypto",
-        "vt_symbol": "eos.usd.q.OKEF",
-        "per_size":10,
-        "tick_price":0.01,
-        "bit_value":6,
+        "vt_symbol": "EOSUSD.BYBIT",
+        "per_size":1,
+        "tick_price":0.001,
+        "bit_value":16.66,
         "start": true
     }
 ],
     "portfolio": {"name": "turtle_crypto_simulation[BTC, ETH, EOS]",
-                  "portfolioValue": 200000}
+                  "portfolioValue": 100}
 }
