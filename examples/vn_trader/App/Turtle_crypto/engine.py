@@ -117,7 +117,7 @@ class TurtleEngine(BaseEngine):
         # 组合管理类
         self.turtlePortfolio = None
         # 数据引擎
-        self.autoEngine = TurtleCryptoAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='7:20', check_interval=5 * 60, reload_time=6, generate_time='8:00:01')
+        self.autoEngine = TurtleCryptoAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='7:45', check_interval=5 * 60, reload_time=2, generate_time='8:00:01')
 
     def init_engine(self):
         """
@@ -1008,7 +1008,8 @@ class TurtleCryptoAutoEngine(object):
     def __init__(self, main_engine:MainEngine, turtle_engine:TurtleEngine, download_time:str, check_interval:int, reload_time:int, generate_time:str):
         # download_time:'7:20', check_interval:5*60, reload_time:6, generate_time:'8:00:01'
         super(TurtleCryptoAutoEngine, self).__init__()
-        self.contract_list = ['okef/btc.usd.q', 'okef/eth.usd.q', 'okef/eos.usd.q']
+        #self.contract_list = ['okef/btc.usd.q', 'okef/eth.usd.q', 'okef/eos.usd.q']
+        self.contract_list = ['BTCUSD', 'ETHUSD', 'EOSUSD']
         self.main_engine = main_engine
         self.turtle_engine = turtle_engine
         self.download_time = download_time
@@ -1053,7 +1054,7 @@ class TurtleCryptoAutoEngine(object):
             if not self.downloading:
                 turtleCryptoDataD = TurtleCryptoDataDownloading()
                 self.downloading = True
-                turtleCryptoDataD.download_from_onetoken(contract_list=self.contract_list)
+                turtleCryptoDataD.download_from_bybit(contract_list=self.contract_list)
                 self.downloading = False
 
     def checkAndGenerate(self):
@@ -1065,7 +1066,7 @@ class TurtleCryptoAutoEngine(object):
                 self.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
                 self.generating = True
                 turtleCryptoDataD = TurtleCryptoDataDownloading()
-                result, complete_msg, back_msg, lost_msg = turtleCryptoDataD.generate_for_onetoken(contract_list=self.contract_list)
+                result, complete_msg, back_msg, lost_msg = turtleCryptoDataD.generate_for_bybit(contract_list=self.contract_list)
                 email_msg = complete_msg + '\n\n' + lost_msg + back_msg
                 print('\n\n' + lost_msg + back_msg)
                 try:
