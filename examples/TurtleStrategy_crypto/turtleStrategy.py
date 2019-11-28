@@ -529,10 +529,6 @@ class TurtlePortfolio(object):
     #----------------------------------------------------------------------
     def newSignal(self, signal, direction, offset, price, volume):
         """对交易信号进行过滤，符合条件的才发单执行"""
-        """ fake """
-        if signal.bar.datetime >= datetime(2019, 6, 2):
-            a = 2
-
         unit = self.unitDict[signal.symbol]
         
         # 根据波动幅度计算委托量单位
@@ -557,6 +553,7 @@ class TurtlePortfolio(object):
         """ modify by loe """
         # 过滤虚假开仓
         if multiplier == 0:
+            print(f'开仓0\t{signal.symbol}\t{signal.bar.datetime}')
             return
 
         # 开仓
