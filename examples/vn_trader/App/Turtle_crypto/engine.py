@@ -1069,12 +1069,16 @@ class TurtleCryptoAutoEngine(object):
                 result, complete_msg, back_msg, lost_msg = turtleCryptoDataD.generate_for_bybit(contract_list=self.contract_list)
                 email_msg = complete_msg + '\n\n' + lost_msg + back_msg
                 print('\n\n' + lost_msg + back_msg)
+                if result:
+                    # 海龟策略重新初始化
+                    self.turtle_engine.reinit_strategies()
+                    email_msg = f'====== 策略重新初始化成功 ======\n\n{email_msg}'
+                else:
+                    email_msg = f'!!!!!! 策略未完成重新初始化 !!!!!!\n\n{email_msg}'
+
                 try:
                     self.main_engine.send_email(subject='TURTLE_Crypto 数据更新', content=email_msg)
                 except:
                     pass
-                if result:
-                    # 海龟策略重新初始化
-                    self.turtle_engine.reinit_strategies()
         else:
             self.generating = False
