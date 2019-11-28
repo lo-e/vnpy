@@ -360,6 +360,7 @@ class CtaTemplate(ABC):
                 # Bybit交易所的时间需要调整为北京时间
                 temp.datetime = temp.datetime + timedelta(hours=8)
             temp.exchange = temp.exchange.value
+            temp.symbol = temp.symbol.upper()
             client = MongoClient('localhost', 27017, serverSelectionTimeoutMS=600)
             tick_db = client[TICK_DB_NAME]
             collection = tick_db[temp.symbol]
