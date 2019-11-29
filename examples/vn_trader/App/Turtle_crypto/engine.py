@@ -1055,6 +1055,7 @@ class TurtleCryptoAutoEngine(object):
                 turtleCryptoDataD = TurtleCryptoDataDownloading()
                 self.downloading = True
                 turtleCryptoDataD.download_from_bybit(contract_list=self.contract_list)
+                turtleCryptoDataD.generate_for_bybit(contract_list=self.contract_list)
                 self.downloading = False
 
     def checkAndGenerate(self):
