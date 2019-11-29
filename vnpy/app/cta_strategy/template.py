@@ -58,7 +58,7 @@ class CtaTemplate(ABC):
         self.cta_engine = cta_engine
         self.strategy_name = strategy_name
         self.vt_symbol = vt_symbol
-        self.thread_executor = ThreadPoolExecutor(max_workers=1)
+        self.thread_executor = ThreadPoolExecutor(max_workers=10)
 
         self.inited = False
         self.trading = False
