@@ -131,11 +131,12 @@ def one():
             for s, signalList in signalDic.items():
                 for signal in signalList:
                     print('.' * 2)
-                    print('window\t%s' % signal.entryWindow)
                     print('datetime\t%s' % signal.bar.datetime)
                     print('ATR\t%s' % signal.atrVolatility)
                     print('virtualUnit\t%s' % signal.unit)
                     print('unit\t%s' % signal.unit)
+                    print('longStop\t%s' % signal.longStop)
+                    print('shortStop\t%s' % signal.shortStop)
                     if signal.result:
                         print('entry\t%s' % signal.result.entry)
                     print('lastPnl\t%s' % signal.getLastPnl())
