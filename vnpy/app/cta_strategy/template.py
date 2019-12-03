@@ -20,7 +20,7 @@ from collections import defaultdict
 from enum import Enum
 from concurrent.futures import ThreadPoolExecutor
 from vnpy.trader.constant import Exchange
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 class TradeMode(Enum):
     """
@@ -261,12 +261,17 @@ class CtaTemplate(ABC):
 
 
             """ modify by loe """
+            the_order = OrderData(gateway_name='', symbol=self.vt_symbol, exchange=Exchange.RQ, orderid='', price=price, volume=volume,
+                                  direction=direction, offset=offset)
+            self.saveOrderToDb(the_order)
+            """
             try:
                 # 保存委托数据到数据库
                 the_order = OrderData(symbol=self.vt_symbol, exchange=Exchange.RQ, orderid='', price=price, volume=volume, direction=direction, offset=offset)
                 self.saveOrderToDb(the_order)
             except:
                 pass
+            """
 
             return vt_orderids
         else:
@@ -417,12 +422,13 @@ class CtaTemplate(ABC):
             order.exchange = ''
             order.direction = order.direction.value
             order.offset = order.offset.value
-            d = {'order_data':order.__dict__,
+            d = {'datetime':datetime.now(),
+                 'order_data':order.__dict__,
                  'variables':strategy_variables}
             client = self.getMongoClient()
-            tick_db = client[ORDER_DB_NAME]
-            collection = tick_db[self.strategy_name]
-            collection.insert_one(d)
+            order_db = client[ORDER_DB_NAME]
+            collection = order_db[self.strategy_name]
+            collection.update_many({'datetime': d['datetime']}, {'$set': d}, upsert=True)
         except:
             pass
 
