@@ -12,7 +12,7 @@ from .base import StopOrder, EngineType, EXCHANGE_SYMBOL_DICT
 """ modify by loe """
 import re
 from pymongo import MongoClient
-from vnpy.app.cta_strategy.base import TICK_DB_NAME, ORDER_DB_NAME
+from vnpy.app.cta_strategy.base import TICK_DB_NAME, ORDER_DB_NAME, TRADE_DB_NAME
 from copy import copy
 
 """ modify by loe """
@@ -195,6 +195,14 @@ class CtaTemplate(ABC):
         except:
             pass
 
+        """ modify by loe """
+        try:
+            # 保存成交数据到数据库
+            trade_dic = {'symbol':trade.symbol, 'price': trade.price, 'volume': trade.volume, 'direction': trade.direction.value, 'offset': trade.offset.value}
+            self.saveTradeToDb(trade_dic)
+        except:
+            pass
+
         pass
 
     @virtual
@@ -263,7 +271,7 @@ class CtaTemplate(ABC):
             """ modify by loe """
             try:
                 # 保存委托数据到数据库
-                order_dic = {'price': price, 'volume': volume, 'direction': direction.value, 'offset': offset.value}
+                order_dic = {'symbol':self.vt_symbol, 'price': price, 'volume': volume, 'direction': direction.value, 'offset': offset.value}
                 self.saveOrderToDb(order_dic)
             except:
                 pass
@@ -353,6 +361,15 @@ class CtaTemplate(ABC):
             except:
                 pass
 
+            """ modify by loe """
+            try:
+                # 保存委托数据到数据库
+                order_dic = {'symbol': symbol, 'price': price, 'volume': volume, 'direction': direction.value,
+                             'offset': offset.value}
+                self.saveOrderToDb(order_dic)
+            except:
+                pass
+
             return vt_orderids
         else:
             # 交易停止时发单返回空字符串
@@ -420,6 +437,23 @@ class CtaTemplate(ABC):
             client = self.getMongoClient()
             order_db = client[ORDER_DB_NAME]
             collection = order_db[self.strategy_name]
+            collection.insert_one(d)
+        except:
+            pass
+
+    # 保存成交数据到数据库
+    def saveTradeToDb(self, trade_dic:dict):
+        self.thread_executor.submit(self.do_save_trade, trade_dic)
+
+    def do_save_trade(self, trade_dic:dict):
+        try:
+            strategy_variables = self.get_variables()
+            d = {'datetime':datetime.now(),
+                 'trade_data':trade_dic,
+                 'variables':strategy_variables}
+            client = self.getMongoClient()
+            trade_db = client[TRADE_DB_NAME]
+            collection = trade_db[self.strategy_name]
             collection.insert_one(d)
         except:
             pass
