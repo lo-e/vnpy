@@ -630,6 +630,8 @@ class EmailEngine(BaseEngine):
         msg = EmailMessage()
         msg["From"] = SETTINGS["email.sender"]
         msg["To"] = receiver
+        client = socket.gethostname()
+        subject = f'{subject}【{client}】'
         msg["Subject"] = subject
         msg.set_content(content)
 
