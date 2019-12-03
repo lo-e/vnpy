@@ -12,7 +12,7 @@ from .base import StopOrder, EngineType, EXCHANGE_SYMBOL_DICT
 """ modify by loe """
 import re
 from pymongo import MongoClient
-from vnpy.app.cta_strategy.base import TICK_DB_NAME
+from vnpy.app.cta_strategy.base import TICK_DB_NAME, ORDER_DB_NAME
 from copy import copy
 
 """ modify by loe """
@@ -40,6 +40,8 @@ class CtaTemplate(ABC):
     max_bond_dic = defaultdict(int) #{'date':date, 'pos':pos, 'bond':bond}
     trade_mode = None
     tick_price:float = 1.0
+
+    mongoClient = None
 
     def __init__(
         self,
@@ -257,6 +259,15 @@ class CtaTemplate(ABC):
             except:
                 pass
 
+
+            """ modify by loe """
+            try:
+                # 保存委托数据到数据库
+                the_order = OrderData(symbol=self.vt_symbol, exchange=Exchange.RQ, orderid='', price=price, volume=volume, direction=direction, offset=offset)
+                self.saveOrderToDb(the_order)
+            except:
+                pass
+
             return vt_orderids
         else:
             return []
@@ -348,10 +359,15 @@ class CtaTemplate(ABC):
             return []
 
     """ modify by loe """
+    def getMongoClient(self):
+        if not self.mongoClient:
+            self.mongoClient = MongoClient('localhost', 27017, serverSelectionTimeoutMS=600)
+        return self.mongoClient
+
+    # 保存tick到数据库
     def saveTick(self, tick:TickData):
         self.thread_executor.submit(self.do_save_tick, tick)
 
-    # 保存tick到数据库
     def do_save_tick(self, tick:TickData):
         try:
             # 交易所枚举类型无法保存数据库，先转换成字符串
@@ -361,7 +377,7 @@ class CtaTemplate(ABC):
                 temp.datetime = temp.datetime + timedelta(hours=8)
             temp.exchange = temp.exchange.value
             temp.symbol = temp.symbol.upper()
-            client = MongoClient('localhost', 27017, serverSelectionTimeoutMS=600)
+            client = self.getMongoClient()
             tick_db = client[TICK_DB_NAME]
             collection = tick_db[temp.symbol]
             collection.create_index('datetime')
@@ -390,6 +406,25 @@ class CtaTemplate(ABC):
             return price
 
         return 0
+
+    # 保存委托数据到数据库
+    def saveOrderToDb(self, order:OrderData):
+        self.thread_executor.submit(self.do_save_order, order)
+
+    def do_save_order(self, order:OrderData):
+        try:
+            strategy_variables = self.get_variables()
+            order.exchange = ''
+            order.direction = order.direction.value
+            order.offset = order.offset.value
+            d = {'order_data':order.__dict__,
+                 'variables':strategy_variables}
+            client = self.getMongoClient()
+            tick_db = client[ORDER_DB_NAME]
+            collection = tick_db[self.strategy_name]
+            collection.insert_one(d)
+        except:
+            pass
 
 class CtaSignal(ABC):
     """"""

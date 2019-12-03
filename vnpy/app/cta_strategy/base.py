@@ -58,6 +58,7 @@ POSITION_DB_NAME = 'VnTrader_Position_Db'
 SETTING_DB_NAME = 'VnTrader_Setting_Db'
 TURTLE_PORTFOLIO_DB_NAME = 'VnTrader_Turtle_Portfolio_Db'
 DOMINANT_DB_NAME = 'Dominant_db'
+ORDER_DB_NAME = 'VnTrader_Order_Db'
 
 TRANSFORM_SYMBOL_LIST = {'SM':'2', 'TA':'2', 'ZC':'2'}      # 交易合约和RQData合约需要转换，TA905 -> TA1905
 
