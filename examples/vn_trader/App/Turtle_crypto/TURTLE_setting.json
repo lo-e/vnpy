@@ -6,7 +6,7 @@
         "vt_symbol": "BTCUSD.BYBIT",
         "per_size":1,
         "tick_price":0.5,
-        "bit_value":0.01,
+        "bit_value":8000,
         "start": true
     },
 
@@ -16,7 +16,7 @@
         "vt_symbol": "ETHUSD.BYBIT",
         "per_size":1,
         "tick_price":0.05,
-        "bit_value":0.5,
+        "bit_value":200,
         "start": true
     },
 
@@ -26,7 +26,7 @@
         "vt_symbol": "EOSUSD.BYBIT",
         "per_size":1,
         "tick_price":0.001,
-        "bit_value":16.66,
+        "bit_value":3,
         "start": true
     }
 ],

@@ -261,17 +261,12 @@ class CtaTemplate(ABC):
 
 
             """ modify by loe """
-            the_order = OrderData(gateway_name='', symbol=self.vt_symbol, exchange=Exchange.RQ, orderid='', price=price, volume=volume,
-                                  direction=direction, offset=offset)
-            self.saveOrderToDb(the_order)
-            """
             try:
                 # 保存委托数据到数据库
-                the_order = OrderData(symbol=self.vt_symbol, exchange=Exchange.RQ, orderid='', price=price, volume=volume, direction=direction, offset=offset)
-                self.saveOrderToDb(the_order)
+                order_dic = {'price': price, 'volume': volume, 'direction': direction.value, 'offset': offset.value}
+                self.saveOrderToDb(order_dic)
             except:
                 pass
-            """
 
             return vt_orderids
         else:
@@ -413,22 +408,19 @@ class CtaTemplate(ABC):
         return 0
 
     # 保存委托数据到数据库
-    def saveOrderToDb(self, order:OrderData):
-        self.thread_executor.submit(self.do_save_order, order)
+    def saveOrderToDb(self, order_dict:dict):
+        self.thread_executor.submit(self.do_save_order, order_dict)
 
-    def do_save_order(self, order:OrderData):
+    def do_save_order(self, order_dict:dict):
         try:
             strategy_variables = self.get_variables()
-            order.exchange = ''
-            order.direction = order.direction.value
-            order.offset = order.offset.value
             d = {'datetime':datetime.now(),
-                 'order_data':order.__dict__,
+                 'order_data':order_dict,
                  'variables':strategy_variables}
             client = self.getMongoClient()
             order_db = client[ORDER_DB_NAME]
             collection = order_db[self.strategy_name]
-            collection.update_many({'datetime': d['datetime']}, {'$set': d}, upsert=True)
+            collection.insert_one(d)
         except:
             pass
 
