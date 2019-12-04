@@ -229,6 +229,17 @@ class SpreadData:
                     self.min_volume
                 )
             else:
+                """ modify by loe """
+                adjusted_bid_volume = floor_to(
+                    leg_ask_volume / abs(trading_multiplier),
+                    self.min_volume
+                )
+                adjusted_ask_volume = floor_to(
+                    leg_bid_volume / abs(trading_multiplier),
+                    self.min_volume
+                )
+                """
+                # 原版
                 adjusted_bid_volume = floor_to(
                     leg_bid_volume / abs(trading_multiplier),
                     self.min_volume
@@ -237,6 +248,7 @@ class SpreadData:
                     leg_ask_volume / abs(trading_multiplier),
                     self.min_volume
                 )
+                """
 
             # For the first leg, just initialize
             if not n:
@@ -287,7 +299,10 @@ class SpreadData:
         if long_pos > 0:
             self.net_pos = long_pos
         else:
-            self.net_pos = short_pos
+            """ modify by loe """
+            self.net_pos = -short_pos
+            # 原版
+            #self.net_pos = short_pos
 
     def clear_price(self):
         """"""
