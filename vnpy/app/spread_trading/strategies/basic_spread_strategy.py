@@ -85,8 +85,22 @@ class BasicSpreadStrategy(SpreadStrategyTemplate):
         """
         self.spread_pos = self.get_spread_pos()
 
+        """ modify by loe """
+        # 不用spread_pos判断当前价差仓位
+        is_closing = True
+        if not self.sell_algoid and not self.cover_algoid:
+            is_closing = False
+
+        is_buying = True
+        if not self.buy_algoid:
+            is_buying = False
+
+        is_shorting = True
+        if not self.short_algoid:
+            is_shorting = False
+
         # No position
-        if not self.spread_pos:
+        if not self.spread_pos and not is_closing:
             self.stop_close_algos()
 
             # Start open algos
@@ -101,7 +115,7 @@ class BasicSpreadStrategy(SpreadStrategyTemplate):
                 )
 
         # Long position
-        elif self.spread_pos > 0:
+        elif self.spread_pos > 0 and not is_buying:
             self.stop_open_algos()
 
             # Start sell close algo
@@ -111,7 +125,7 @@ class BasicSpreadStrategy(SpreadStrategyTemplate):
                 )
 
         # Short position
-        elif self.spread_pos < 0:
+        elif self.spread_pos < 0 and not is_shorting:
             self.stop_open_algos()
 
             # Start cover close algo
