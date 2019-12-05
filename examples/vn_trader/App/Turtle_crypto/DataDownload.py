@@ -13,7 +13,7 @@ if __name__ == '__main__':
 
     #"""
     contract_list = ['BTCUSD', 'ETHUSD', 'EOSUSD']
-    days = 10
+    days = 1
     dataDownload = TurtleCryptoDataDownloading()
     dataDownload.download_from_bybit(contract_list=contract_list, days=days)
     result, complete_msg, back_msg, lost_msg = dataDownload.generate_for_bybit(contract_list=contract_list, days=days)
