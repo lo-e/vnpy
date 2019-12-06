@@ -753,8 +753,13 @@ class StrategyDataMonitor(QtWidgets.QTableWidget):
         for column, name in enumerate(self._data.keys()):
             value = self._data[name]
 
-            cell = QtWidgets.QTableWidgetItem(str(value))
-            cell.setTextAlignment(QtCore.Qt.AlignCenter)
+            """ modify by loe """
+            # 持仓字段，颜色标记显示
+            if name == 'spread_pos':
+                cell = PnlCell(value, None)
+            else:
+                cell = QtWidgets.QTableWidgetItem(str(value))
+                cell.setTextAlignment(QtCore.Qt.AlignCenter)
 
             self.setItem(0, column, cell)
             self.cells[name] = cell
@@ -763,7 +768,11 @@ class StrategyDataMonitor(QtWidgets.QTableWidget):
         """"""
         for name, value in data.items():
             cell = self.cells[name]
-            cell.setText(str(value))
+            """ modify by loe """
+            if isinstance(cell, PnlCell):
+                cell.set_content(value, None)
+            else:
+                cell.setText(str(value))
 
 
 class SettingEditor(QtWidgets.QDialog):

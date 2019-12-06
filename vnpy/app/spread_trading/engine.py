@@ -30,6 +30,7 @@ from .base import (
     EVENT_SPREAD_STRATEGY,
     load_bar_data, load_tick_data
 )
+
 from .template import SpreadAlgoTemplate, SpreadStrategyTemplate
 from .algo import SpreadTakerAlgo
 
@@ -492,6 +493,15 @@ class SpreadAlgoEngine:
         """"""
         event = Event(EVENT_SPREAD_ALGO, algo)
         self.event_engine.put(event)
+
+    """ modify by loe """
+    def on_traded_changed(self, algo: SpreadAlgoTemplate, changed=0) -> None:
+        """"""
+        strategy_engine = self.spread_engine.strategy_engine
+        strategy = strategy_engine.algo_strategy_map.get(algo.algoid, None)
+        if strategy:
+            strategy.spread_pos += changed
+        strategy.put_event()
 
     def write_algo_log(self, algo: SpreadAlgoTemplate, msg: str) -> None:
         """"""

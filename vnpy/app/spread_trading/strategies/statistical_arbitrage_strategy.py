@@ -21,7 +21,6 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     payup = 10
     interval = 5
 
-    spread_pos = 0.0
     boll_up = 0.0
     boll_down = 0.0
     boll_mid = 0.0
@@ -34,7 +33,6 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         "interval"
     ]
     variables = [
-        "spread_pos",
         "boll_up",
         "boll_down",
         "boll_mid"
@@ -140,8 +138,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         """
         Callback when spread position is updated.
         """
-        self.spread_pos = self.get_spread_pos()
-        self.put_event()
+        pass
 
     def on_spread_algo(self, algo: SpreadAlgoTemplate):
         """

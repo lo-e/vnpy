@@ -11,7 +11,6 @@ from vnpy.trader.utility import virtual, floor_to, ceil_to, round_to
 
 from .base import SpreadData, calculate_inverse_volume
 
-
 class SpreadAlgoTemplate:
     """
     Template for implementing spread trading algos.
@@ -240,6 +239,10 @@ class SpreadAlgoTemplate:
 
     def calculate_traded(self):
         """"""
+        """ modify by loe """
+        # 将traded变化推送给策略
+        last_traded = self.traded
+
         self.traded = 0
 
         for n, leg in enumerate(self.spread.legs.values()):
@@ -277,6 +280,10 @@ class SpreadAlgoTemplate:
         else:
             self.status = Status.PARTTRADED
 
+        """ modify by loe """
+        changed = self.traded - last_traded
+        self.on_traded_changed(changed)
+
     def get_tick(self, vt_symbol: str) -> TickData:
         """"""
         return self.algo_engine.get_tick(vt_symbol)
@@ -305,6 +312,10 @@ class SpreadAlgoTemplate:
         """"""
         pass
 
+    """ modify by loe """
+    def on_traded_changed(self, changed=0):
+        self.algo_engine.on_traded_changed(self, changed=changed)
+
 
 class SpreadStrategyTemplate:
     """
@@ -314,6 +325,9 @@ class SpreadStrategyTemplate:
     author: str = ""
     parameters: List[str] = []
     variables: List[str] = []
+
+    """ modify by loe """
+    spread_pos = 0.0
 
     def __init__(
         self,
@@ -334,6 +348,7 @@ class SpreadStrategyTemplate:
         self.variables = copy(self.variables)
         self.variables.insert(0, "inited")
         self.variables.insert(1, "trading")
+        self.variables.insert(1, "spread_pos")
 
         self.vt_orderids: Set[str] = set()
         self.algoids: Set[str] = set()
@@ -617,10 +632,6 @@ class SpreadStrategyTemplate:
     def get_spread_tick(self) -> TickData:
         """"""
         return self.spread.to_tick()
-
-    def get_spread_pos(self) -> float:
-        """"""
-        return self.spread.net_pos
 
     def get_leg_tick(self, vt_symbol: str) -> TickData:
         """"""

@@ -17,7 +17,6 @@ EVENT_SPREAD_LOG = "eSpreadLog"
 EVENT_SPREAD_ALGO = "eSpreadAlgo"
 EVENT_SPREAD_STRATEGY = "eSpreadStrategy"
 
-
 class LegData:
     """"""
 

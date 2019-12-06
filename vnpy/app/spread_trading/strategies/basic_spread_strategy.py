@@ -20,7 +20,6 @@ class BasicSpreadStrategy(SpreadStrategyTemplate):
     payup = 10
     interval = 5
 
-    spread_pos = 0.0
     buy_algoid = ""
     sell_algoid = ""
     short_algoid = ""
@@ -36,7 +35,6 @@ class BasicSpreadStrategy(SpreadStrategyTemplate):
         "interval"
     ]
     variables = [
-        "spread_pos",
         "buy_algoid",
         "sell_algoid",
         "short_algoid",
@@ -83,8 +81,6 @@ class BasicSpreadStrategy(SpreadStrategyTemplate):
         """
         Callback when spread price is updated.
         """
-        self.spread_pos = self.get_spread_pos()
-
         """ modify by loe """
         # 不用spread_pos判断当前价差仓位
         is_closing = True
@@ -100,7 +96,7 @@ class BasicSpreadStrategy(SpreadStrategyTemplate):
             is_shorting = False
 
         # No position
-        if not self.spread_pos and not is_closing:
+        if not self.spread_pos:
             self.stop_close_algos()
 
             # Start open algos
@@ -115,7 +111,7 @@ class BasicSpreadStrategy(SpreadStrategyTemplate):
                 )
 
         # Long position
-        elif self.spread_pos > 0 and not is_buying:
+        elif self.spread_pos > 0:
             self.stop_open_algos()
 
             # Start sell close algo
@@ -125,7 +121,7 @@ class BasicSpreadStrategy(SpreadStrategyTemplate):
                 )
 
         # Short position
-        elif self.spread_pos < 0 and not is_shorting:
+        elif self.spread_pos < 0:
             self.stop_open_algos()
 
             # Start cover close algo
@@ -141,8 +137,7 @@ class BasicSpreadStrategy(SpreadStrategyTemplate):
         """
         Callback when spread position is updated.
         """
-        self.spread_pos = self.get_spread_pos()
-        self.put_event()
+        pass
 
     def on_spread_algo(self, algo: SpreadAlgoTemplate):
         """
