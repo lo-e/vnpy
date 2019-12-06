@@ -105,6 +105,13 @@ class SpreadAlgoTemplate:
 
         return finished
 
+    """ modify by loe """
+    def check_leg_traded(self):
+        for value in self.leg_traded.values():
+            if value:
+                return True
+        return False
+
     def stop(self):
         """"""
         if self.is_active():
@@ -689,3 +696,11 @@ class SpreadStrategyTemplate:
         Load historical tick data for initializing strategy.
         """
         self.strategy_engine.load_tick(self.spread, days, self.on_spread_tick)
+
+    """ modify by loe """
+    def check_and_stop_other_algo(self, algo: SpreadAlgoTemplate):
+        # 只要算法的一条腿有任何成交，立刻停止其他算法
+        if algo.check_leg_traded():
+            for algoid in self.algoids:
+                if algoid != algo.algoid:
+                    self.stop_algo(algoid)

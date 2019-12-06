@@ -139,6 +139,9 @@ class BasicSpreadStrategy(SpreadStrategyTemplate):
             else:
                 self.cover_algoid = ""
 
+        """ modify by loe """
+        self.check_and_stop_other_algo(algo)
+
         self.put_event()
 
     def on_order(self, order: OrderData):
