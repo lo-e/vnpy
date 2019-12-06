@@ -328,6 +328,7 @@ class SpreadStrategyTemplate:
 
     """ modify by loe """
     spread_pos = 0.0
+    syncs = []
 
     def __init__(
         self,
@@ -348,7 +349,13 @@ class SpreadStrategyTemplate:
         self.variables = copy(self.variables)
         self.variables.insert(0, "inited")
         self.variables.insert(1, "trading")
-        self.variables.insert(1, "spread_pos")
+        """ modify by loe """
+        self.variables.insert(2, "spread_pos")
+
+        """ modify by loe """
+        self.syncs = copy(self.syncs)
+        if 'spread_pos' not in self.syncs:
+            self.syncs.insert(0, "spread_pos")
 
         self.vt_orderids: Set[str] = set()
         self.algoids: Set[str] = set()

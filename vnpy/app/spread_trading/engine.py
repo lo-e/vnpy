@@ -33,7 +33,7 @@ from .base import (
 
 from .template import SpreadAlgoTemplate, SpreadStrategyTemplate
 from .algo import SpreadTakerAlgo
-
+from vnpy.app.cta_strategy.base import POSITION_DB_NAME
 
 APP_NAME = "SpreadTrading"
 
@@ -537,6 +537,11 @@ class SpreadAlgoEngine:
             volume = available
             offset = Offset.CLOSE
 
+        """ modify by loe """
+        # 1Token接口的合约持仓信息bug，导致开平仓判断错误，这里强制1Token接口的开平操作统一做开仓。
+        if contract.gateway_name == '1TOKEN':
+            offset = Offset.OPEN
+
         original_req = OrderRequest(
             symbol=contract.symbol,
             exchange=contract.exchange,
@@ -801,6 +806,9 @@ class SpreadStrategyEngine:
             return
 
         strategy = strategy_class(self, strategy_name, spread, setting)
+        """ modify by loe """
+        # 加载同步数据
+        self.loadSyncData(strategy)
         self.strategies[strategy_name] = strategy
 
         # Add vt_symbol to strategy map.
@@ -1021,6 +1029,13 @@ class SpreadStrategyEngine:
 
     def put_strategy_event(self, strategy: SpreadStrategyTemplate):
         """"""
+        """ modify by loe """
+        # 保存strategy数据到数据库
+        strategy_name = strategy.strategy_name
+        if strategy_name in self.strategies:
+            strategy = self.strategies[strategy_name]
+            self.saveSyncData(strategy)
+
         data = strategy.get_data()
         event = Event(EVENT_SPREAD_STRATEGY, data)
         self.event_engine.put(event)
@@ -1060,3 +1075,34 @@ class SpreadStrategyEngine:
 
         for tick in ticks:
             callback(tick)
+
+    """ modify by loe """
+    def saveSyncData(self, strategy):
+        """保存策略的持仓情况到数据库"""
+        flt = {'strategy_name': strategy.strategy_name,
+               'spread_name': strategy.spread_name}
+
+        d = copy(flt)
+        for key in strategy.syncs:
+            d[key] = strategy.__getattribute__(key)
+
+        self.main_engine.dbUpdate(POSITION_DB_NAME, strategy.__class__.__name__,
+                                  d, flt, True)
+
+        content = f'策略{strategy.strategy_name}同步数据保存成功，当前持仓{strategy.spread_pos}'
+        self.write_log(content)
+
+    def loadSyncData(self, strategy):
+        """从数据库载入策略的持仓情况"""
+        flt = {'strategy_name': strategy.strategy_name,
+               'spread_name': strategy.spread_name}
+        syncData = self.main_engine.dbQuery(POSITION_DB_NAME, strategy.__class__.__name__, flt)
+
+        if not syncData:
+            return
+
+        d = syncData[0]
+
+        for key in strategy.syncs:
+            if key in d:
+                strategy.__setattr__(key, d[key])

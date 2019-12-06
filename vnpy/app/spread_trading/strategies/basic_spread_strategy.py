@@ -10,7 +10,7 @@ from vnpy.app.spread_trading import (
 class BasicSpreadStrategy(SpreadStrategyTemplate):
     """"""
 
-    author = "用Python的交易员"
+    author = "loe"
 
     buy_price = 0.0
     sell_price = 0.0
@@ -81,20 +81,6 @@ class BasicSpreadStrategy(SpreadStrategyTemplate):
         """
         Callback when spread price is updated.
         """
-        """ modify by loe """
-        # 不用spread_pos判断当前价差仓位
-        is_closing = True
-        if not self.sell_algoid and not self.cover_algoid:
-            is_closing = False
-
-        is_buying = True
-        if not self.buy_algoid:
-            is_buying = False
-
-        is_shorting = True
-        if not self.short_algoid:
-            is_shorting = False
-
         # No position
         if not self.spread_pos:
             self.stop_close_algos()
@@ -111,7 +97,7 @@ class BasicSpreadStrategy(SpreadStrategyTemplate):
                 )
 
         # Long position
-        elif self.spread_pos > 0:
+        elif self.spread_pos > 0 and abs(self.spread_pos) == self.max_pos:
             self.stop_open_algos()
 
             # Start sell close algo
@@ -121,7 +107,7 @@ class BasicSpreadStrategy(SpreadStrategyTemplate):
                 )
 
         # Short position
-        elif self.spread_pos < 0:
+        elif self.spread_pos < 0 and abs(self.spread_pos) == self.max_pos:
             self.stop_open_algos()
 
             # Start cover close algo
