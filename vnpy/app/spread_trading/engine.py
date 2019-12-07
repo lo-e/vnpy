@@ -526,21 +526,21 @@ class SpreadAlgoEngine:
         else:
             available = holding.long_pos - holding.long_pos_frozen
 
-        # If no position to close, just open new
-        if not available:
-            offset = Offset.OPEN
-        # If enougth position to close, just close old
-        elif volume < available:
-            offset = Offset.CLOSE
-        # Otherwise, just close existing position
-        else:
-            volume = available
-            offset = Offset.CLOSE
-
         """ modify by loe """
         # 1Token接口的合约持仓信息bug，导致开平仓判断错误，这里强制1Token接口的开平操作统一做开仓。
         if contract.gateway_name == '1TOKEN':
             offset = Offset.OPEN
+        else:
+            # If no position to close, just open new
+            if not available:
+                offset = Offset.OPEN
+            # If enougth position to close, just close old
+            elif volume < available:
+                offset = Offset.CLOSE
+            # Otherwise, just close existing position
+            else:
+                volume = available
+                offset = Offset.CLOSE
 
         original_req = OrderRequest(
             symbol=contract.symbol,
