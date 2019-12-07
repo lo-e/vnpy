@@ -1100,8 +1100,12 @@ class SpreadStrategyEngine:
                 else:
                     content = f'策略{strategy_name}同步数据保存失败！！'
                 self.write_log(content)
+            else:
+                content = f'价差交易策略同步数据保存失败！！'
+                self.write_log(content)
         except:
-            pass
+            content = f'价差交易策略同步数据保存失败！！'
+            self.write_log(content)
 
     def loadSyncData(self, strategy):
         """从数据库载入策略的持仓情况"""

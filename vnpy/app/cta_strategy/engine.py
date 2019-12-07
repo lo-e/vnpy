@@ -707,8 +707,12 @@ class CtaEngine(BaseEngine):
                 else:
                     content = f'策略{strategy_name}同步数据保存失败！！'
                 self.write_log(content)
+            else:
+                content = f'CTA策略同步数据保存失败！！'
+                self.write_log(content)
         except:
-            pass
+            content = f'CTA策略同步数据保存失败！！'
+            self.write_log(content)
 
     def init_strategy(self, strategy_name: str):
         """

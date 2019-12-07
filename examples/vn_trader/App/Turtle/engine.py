@@ -886,8 +886,12 @@ class TurtleEngine(BaseEngine):
                 else:
                     content = f'策略{strategy_name}同步数据保存失败！！'
                 self.write_log(content)
+            else:
+                content = f'TURTLE策略同步数据保存失败！！'
+                self.write_log(content)
         except:
-            pass
+            content = f'TURTLE策略同步数据保存失败！！'
+            self.write_log(content)
 
     def savePortfolioSyncData(self):
         """保存组合变量到数据库"""
@@ -916,8 +920,12 @@ class TurtleEngine(BaseEngine):
                 else:
                     content = f'海龟组合{self.turtlePortfolio.name}\t数据保存失败'
                 self.write_log(content)
+            else:
+                content = f'海龟组合{self.turtlePortfolio.name}\t数据保存失败'
+                self.write_log(content)
         except:
-            pass
+            content = f'海龟组合{self.turtlePortfolio.name}\t数据保存失败'
+            self.write_log(content)
 
     def loadPortfolioSyncData(self):
         """从数据库载入策略的持仓情况"""
