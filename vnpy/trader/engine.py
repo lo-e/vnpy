@@ -39,6 +39,7 @@ from .constant import LOG_DB_NAME
 from dingtalkchatbot.chatbot import DingtalkChatbot
 from time import sleep
 import socket
+from concurrent.futures import ThreadPoolExecutor
 
 class MainEngine:
     """
@@ -67,6 +68,7 @@ class MainEngine:
         """ modify by loe """
         self.dbClient = None
         self.gateway_setting = {}
+        self.thread_executor = ThreadPoolExecutor(max_workers=10)
 
     def add_engine(self, engine_class: Any):
         """
@@ -300,12 +302,16 @@ class MainEngine:
 
     def dbUpdate(self, dbName, collectionName, d, flt, upsert=False):
         """向MongoDB中更新数据，d是具体数据，flt是过滤条件，upsert代表若无是否要插入"""
-        if self.dbClient:
-            db = self.dbClient[dbName]
-            collection = db[collectionName]
-            collection.replace_one(flt, d, upsert)
-        else:
-            self.writeLog(f"数据库数据更新失败：{dbName}")
+        """ modify by loe """
+        try:
+            data = {'dbName':dbName,
+                    'collectionName':collectionName,
+                    'flt':flt,
+                    'd':d,
+                    'upsert':upsert}
+            self.thread_executor.submit(self.do_dbupdate, data)
+        except:
+            self.write_log(f"数据库数据更新失败：{dbName}")
 
     def dbLogging(self, event):
         """向MongoDB中插入日志"""
@@ -322,6 +328,17 @@ class MainEngine:
             print(f'{log.time}\t{log.gateway_name}\t{log.msg}')
         else:
             print(f'{log.time}\t{log.msg}')
+
+    """ modify by loe """
+    def do_dbupdate(self, data:dict):
+        dbName = data['dbName']
+        collectionName = data['collectionName']
+        flt = data['flt']
+        d = data['d']
+        upsert = data['upsert']
+        db = self.dbClient[dbName]
+        collection = db[collectionName]
+        collection.replace_one(flt, d, upsert)
 
 class BaseEngine(ABC):
     """
