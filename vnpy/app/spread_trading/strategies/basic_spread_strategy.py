@@ -6,6 +6,9 @@ from vnpy.app.spread_trading import (
     TradeData
 )
 
+""" modify by loe """
+from vnpy.trader.constant import Offset
+
 
 class BasicSpreadStrategy(SpreadStrategyTemplate):
     """"""
@@ -86,35 +89,34 @@ class BasicSpreadStrategy(SpreadStrategyTemplate):
             self.stop_close_algos()
 
             # Start open algos
-            if not self.buy_algoid:
+            if not self.buy_algoid and not self.short_algoid:
                 self.buy_algoid = self.start_long_algo(
-                    self.buy_price, self.max_pos, self.payup, self.interval
+                    self.buy_price, self.max_pos, self.payup, self.interval, offset=Offset.OPEN
                 )
 
-            if not self.short_algoid:
                 self.short_algoid = self.start_short_algo(
-                    self.short_price, self.max_pos, self.payup, self.interval
+                    self.short_price, self.max_pos, self.payup, self.interval, offset=Offset.OPEN
                 )
 
         # Long position
-        elif self.spread_pos > 0 and abs(self.spread_pos) == self.max_pos:
+        elif self.spread_pos > 0:
             self.stop_open_algos()
 
             # Start sell close algo
             if not self.sell_algoid:
                 self.sell_algoid = self.start_short_algo(
-                    self.sell_price, self.spread_pos, self.payup, self.interval
+                    self.sell_price, self.spread_pos, self.payup, self.interval, offset=Offset.CLOSE
                 )
 
         # Short position
-        elif self.spread_pos < 0 and abs(self.spread_pos) == self.max_pos:
+        elif self.spread_pos < 0:
             self.stop_open_algos()
 
             # Start cover close algo
             if not self.cover_algoid:
                 self.cover_algoid = self.start_long_algo(
                     self.cover_price, abs(
-                        self.spread_pos), self.payup, self.interval
+                        self.spread_pos), self.payup, self.interval, offset=Offset.CLOSE
                 )
 
         self.put_event()
@@ -139,7 +141,7 @@ class BasicSpreadStrategy(SpreadStrategyTemplate):
             else:
                 self.cover_algoid = ""
 
-        """ modify by loe """
+         """ modify by loe """
         self.check_and_stop_other_algo(algo)
 
         self.put_event()

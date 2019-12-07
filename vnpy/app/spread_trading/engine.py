@@ -1106,3 +1106,10 @@ class SpreadStrategyEngine:
         for key in strategy.syncs:
             if key in d:
                 strategy.__setattr__(key, d[key])
+
+    def getAlgo(self, algoid):
+        if not algoid:
+            return None
+
+        algo_engine = self.spread_engine.algo_engine
+        return algo_engine.algos.get(algoid, None)
