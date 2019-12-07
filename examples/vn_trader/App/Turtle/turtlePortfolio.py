@@ -6,6 +6,7 @@ from vnpy.trader.constant import (Direction, Offset)
 """ modify by loe """
 import re
 from datetime import  datetime
+from copy import copy
 
 """ modify by loe """
 MAX_PRODUCT_POS = 4         # 单品种最大持仓
@@ -34,18 +35,21 @@ class TurtlePortfolio(object):
     categoryLongUnitDict = defaultdict(int)  # 高度关联品种多头持仓情况
     categoryShortUnitDict = defaultdict(int) # 高度关联品种空头持仓情况
     overBondList = []                        # 保证金超限统计
-    pnlDic = {}                           # 交易盈亏记录
+    pnlDic = {}                              # 交易盈亏记录
+    today = None
 
 
     paramList = ['name',
                  'portfolioValue']
 
-    varList = ['totalLong',
+    varList = ['today',
+                'totalLong',
                 'totalShort']
 
     syncList = ['unitDict',
                 'totalLong',
                 'totalShort',
+                'today',
                 'categoryLongUnitDict',
                 'categoryShortUnitDict',
                 'overBondList',
@@ -55,6 +59,8 @@ class TurtlePortfolio(object):
     def __init__(self, engine, setting):
         """Constructor"""
         self.engine = engine
+        self.on_update_today()
+
         # 设置参数
         if setting:
             d = self.__dict__
@@ -175,7 +181,7 @@ class TurtlePortfolio(object):
     def addPnl(self, symbol, pnl, multiplier, size, exitUp, exitDown, longStop, shortStop):
         startSymbol = re.sub("\d", "", symbol)
         dic = {'symbol':symbol,
-               'datetime':self.engine.today,
+               'datetime':self.today,
                'pnl':pnl,
                'multiplier':multiplier,
                'size':size,
@@ -187,5 +193,10 @@ class TurtlePortfolio(object):
         pnlList = self.pnlDic.get(startSymbol, [])
         pnlList.append(dic)
         self.pnlDic[startSymbol] = pnlList
+        # 同步到数据库
+        self.engine.savePortfolioSyncData()
+
+    def on_update_today(self):
+        self.today = copy(self.engine.today)
         # 同步到数据库
         self.engine.savePortfolioSyncData()

@@ -40,6 +40,7 @@ from dingtalkchatbot.chatbot import DingtalkChatbot
 from time import sleep
 import socket
 from concurrent.futures import ThreadPoolExecutor
+from copy import copy
 
 class MainEngine:
     """
@@ -300,18 +301,23 @@ class MainEngine:
         else:
             self.write_log(f"数据库数据保存失败：{dbName}")
 
-    def dbUpdate(self, dbName, collectionName, d, flt, upsert=False):
+    def dbUpdate(self, dbName, collectionName, d, flt, upsert=False, callback=None):
         """向MongoDB中更新数据，d是具体数据，flt是过滤条件，upsert代表若无是否要插入"""
         """ modify by loe """
+        # callback会把原始数据d加上True or False的result返回
         try:
             data = {'dbName':dbName,
                     'collectionName':collectionName,
                     'flt':flt,
                     'd':d,
-                    'upsert':upsert}
+                    'upsert':upsert,
+                    'callback':callback}
             self.thread_executor.submit(self.do_dbupdate, data)
         except:
-            self.write_log(f"数据库数据更新失败：{dbName}")
+            if callback:
+                back_data = copy(d)
+                back_data['result'] = False
+                callback(back_data)
 
     def dbLogging(self, event):
         """向MongoDB中插入日志"""
@@ -331,14 +337,24 @@ class MainEngine:
 
     """ modify by loe """
     def do_dbupdate(self, data:dict):
-        dbName = data['dbName']
-        collectionName = data['collectionName']
-        flt = data['flt']
-        d = data['d']
-        upsert = data['upsert']
-        db = self.dbClient[dbName]
-        collection = db[collectionName]
-        collection.replace_one(flt, d, upsert)
+        dbName = data.get('dbName', '')
+        d = data.get('d', {})
+        callback = data.get('callback', None)
+        back_data = copy(d)
+        try:
+            collectionName = data['collectionName']
+            flt = data['flt']
+            upsert = data['upsert']
+            db = self.dbClient[dbName]
+            collection = db[collectionName]
+            collection.replace_one(flt, d, upsert)
+            if callback:
+                back_data['result'] = True
+                callback(back_data)
+        except:
+            if callback:
+                back_data['result'] = False
+                callback(back_data)
 
 class BaseEngine(ABC):
     """
@@ -701,6 +717,7 @@ class DingTalkEngine(BaseEngine):
     def register_event(self):
         self.event_engine.register(EVENT_LOG, self.ding_talk)
         self.event_engine.register('eCtaLog', self.ding_talk)
+        self.event_engine.register('eSpreadLog', self.ding_talk)
 
     def ding_talk(self, event):
         """"""

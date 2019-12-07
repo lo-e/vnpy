@@ -1087,10 +1087,21 @@ class SpreadStrategyEngine:
             d[key] = strategy.__getattribute__(key)
 
         self.main_engine.dbUpdate(POSITION_DB_NAME, strategy.__class__.__name__,
-                                  d, flt, True)
+                                  d, flt, True, callback=self.dbUpdateCallback)
 
-        content = f'策略{strategy.strategy_name}同步数据保存成功，当前持仓{strategy.spread_pos}'
-        self.write_log(content)
+
+    def dbUpdateCallback(self, back_data=None):
+        try:
+            if isinstance(back_data, dict):
+                result = back_data.get('result', False)
+                strategy_name = back_data.get('strategy_name', '')
+                if result:
+                    content = f'策略{strategy_name}同步数据保存成功。'
+                else:
+                    content = f'策略{strategy_name}同步数据保存失败！！'
+                self.write_log(content)
+        except:
+            pass
 
     def loadSyncData(self, strategy):
         """从数据库载入策略的持仓情况"""

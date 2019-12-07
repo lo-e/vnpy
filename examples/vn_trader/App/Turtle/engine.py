@@ -874,28 +874,50 @@ class TurtleEngine(BaseEngine):
             d[key] = strategy.__getattribute__(key)
 
         self.main_engine.dbUpdate(POSITION_DB_NAME, strategy.__class__.__name__,
-                                 d, flt, True)
+                                 d, flt, True, callback=self.strategyDbUpdateCallback)
 
-        content = f'策略{strategy.strategy_name}同步数据保存成功，当前持仓{strategy.pos}'
-        self.write_log(content)
+    def strategyDbUpdateCallback(self, back_data=None):
+        try:
+            if isinstance(back_data, dict):
+                result = back_data.get('result', False)
+                strategy_name = back_data.get('strategy_name', '')
+                if result:
+                    content = f'策略{strategy_name}同步数据保存成功。'
+                else:
+                    content = f'策略{strategy_name}同步数据保存失败！！'
+                self.write_log(content)
+        except:
+            pass
 
     def savePortfolioSyncData(self):
         """保存组合变量到数据库"""
+        if not self.turtlePortfolio:
+            return
+
         d = {}
         for key in self.turtlePortfolio.syncList:
             d[key] = self.turtlePortfolio.__getattribute__(key)
 
         self.main_engine.dbUpdate(TURTLE_PORTFOLIO_DB_NAME, self.turtlePortfolio.name,
-                                 d, {}, True)
+                                 d, {}, True, callback=self.portfolioDbUpdateCallback)
 
         # 刷新Portfolio组件UI
         event = Event(type=EVENT_TURTLE_PORTFOLIO, data=self.get_portfolio_variables())
         self.event_engine.put(event)
 
-        content = f'海龟组合{self.turtlePortfolio.name}\t数据保存成功'
-        self.write_log(content)
-
         # ----------------------------------------------------------------------
+
+    def portfolioDbUpdateCallback(self, back_data=None):
+        try:
+            if isinstance(back_data, dict):
+                result = back_data.get('result', False)
+                if result:
+                    content = f'海龟组合{self.turtlePortfolio.name}\t数据保存成功'
+                else:
+                    content = f'海龟组合{self.turtlePortfolio.name}\t数据保存失败'
+                self.write_log(content)
+        except:
+            pass
 
     def loadPortfolioSyncData(self):
         """从数据库载入策略的持仓情况"""
@@ -1088,6 +1110,7 @@ class TurtleAutoEngine(object):
         if now >= start_time and now <= end_time:
             if not self.restarting and not self.restarted:
                 self.today = (datetime.now() + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+                self.turtlePortfolio.on_update_today()
                 self.restarting = True
                 result, return_msg = self.main_engine.reconnect(gateway_name='CTP')
                 self.restarting = False
