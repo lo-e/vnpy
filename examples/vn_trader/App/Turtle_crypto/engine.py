@@ -1094,8 +1094,8 @@ class TurtleCryptoAutoEngine(object):
         end_time = start_time + timedelta(seconds=10)
         if now >= start_time and now <= end_time:
             if not self.generating:
-                self.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-                self.turtlePortfolio.on_update_today()
+                self.turtle_engine.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+                self.turtle_engine.turtlePortfolio.on_update_today()
                 self.generating = True
                 turtleCryptoDataD = TurtleCryptoDataDownloading()
                 result, complete_msg, back_msg, lost_msg = turtleCryptoDataD.generate_for_bybit(contract_list=self.contract_list)

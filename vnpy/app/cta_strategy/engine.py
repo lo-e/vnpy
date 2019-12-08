@@ -1090,7 +1090,6 @@ class CTAAutoEngine(object):
         end_time = start_time + timedelta(seconds=self.check_interval * self.reload_time)
         if now >= start_time and now <= end_time:
             if not self.restarting and not self.restarted:
-                self.today = (datetime.now() + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
                 self.restarting = True
                 result, return_msg = self.main_engine.reconnect(gateway_name='CTP')
                 self.restarting = False
