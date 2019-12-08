@@ -798,7 +798,7 @@ class TurtleEngine(BaseEngine):
         self.turtlePortfolio = TurtlePortfolio(self, folioSetting)
         # 加载数据库组合数据
         self.loadPortfolioSyncData()
-        self.savePortfolioSyncData()
+        self.turtlePortfolio.on_update_today()
 
         # 加载海归策略
         signalList = l.get('signal', None)
