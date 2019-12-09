@@ -137,6 +137,7 @@ def one():
             if signal.result:
                 print('entry\t%s' % signal.result.entry)
             print('lastPnl\t%s' % signal.getLastPnl())
+            print('newDominantOpen\t%s' % signal.newDominantOpen)
             print('\n')
     #"""
 
