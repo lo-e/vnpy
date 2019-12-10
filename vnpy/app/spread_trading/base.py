@@ -444,6 +444,7 @@ def load_bar_data(
 
     # Calculate spread bar data
     spread_bars: List[BarData] = []
+    datetime_list = sorted(list(datetime_list))
     for dt in datetime_list:
         spread_price = 0
         spread_available = True
