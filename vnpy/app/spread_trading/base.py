@@ -7,7 +7,7 @@ from vnpy.trader.object import (
     TickData, PositionData, TradeData, ContractData, BarData
 )
 from vnpy.trader.constant import Direction, Offset, Exchange, Interval
-from vnpy.trader.utility import floor_to, ceil_to, round_to, extract_vt_symbol
+from vnpy.trader.utility import floor_to, ceil_to, round_to, extract_vt_symbol, is_crypto_symbol
 from vnpy.trader.database import database_manager
 
 
@@ -16,6 +16,15 @@ EVENT_SPREAD_POS = "eSpreadPos"
 EVENT_SPREAD_LOG = "eSpreadLog"
 EVENT_SPREAD_ALGO = "eSpreadAlgo"
 EVENT_SPREAD_STRATEGY = "eSpreadStrategy"
+
+""" modify by loe """
+from vnpy.app.cta_strategy.base import (TICK_DB_NAME,
+                                        DAILY_DB_NAME,
+                                        MINUTE_DB_NAME)
+
+import re
+from vnpy.app.cta_strategy.base import TRANSFORM_SYMBOL_LIST
+from pymongo import MongoClient
 
 class LegData:
     """"""
@@ -384,21 +393,58 @@ def load_bar_data(
     """"""
     # Load bar data of each spread leg
     leg_bars: Dict[str, Dict] = {}
-
+    datetime_list = set()
     for vt_symbol in spread.legs.keys():
         symbol, exchange = extract_vt_symbol(vt_symbol)
 
+        """ modify by loe """
+        """
         bar_data: List[BarData] = database_manager.load_bar_data(
             symbol, exchange, interval, start, end
         )
+        """
+        # ============
+        flt = {'datetime': {'$gte': start,
+                            '$lte': end}}
+        if interval == Interval.DAILY:
+            dbName = DAILY_DB_NAME
+        elif interval == Interval.MINUTE:
+            dbName = MINUTE_DB_NAME
+        else:
+            dbName = TICK_DB_NAME
+        # 数字货币代码数据带交易所代码，商品代码不带交易所
+        if is_crypto_symbol(vt_symbol):
+            collectionName = vt_symbol.upper()
+        else:
+            collectionName = symbol.upper()
 
+        # 部分商品代码需要转换
+        startSymbol = re.sub("\d", "", collectionName)
+        if startSymbol in TRANSFORM_SYMBOL_LIST.keys():
+            endSymbol = re.sub("\D", "", collectionName)
+            replace = TRANSFORM_SYMBOL_LIST[startSymbol]
+            collectionName = startSymbol + replace + endSymbol
+
+        # 数据库查询数据
+        dbClient = MongoClient('localhost', 27017, serverSelectionTimeoutMS=600)
+        # 调用server_info查询服务器状态，防止服务器异常并未连接成功
+        dbClient.server_info()
+        db = dbClient[dbName]
+        collection = db[collectionName]
+        cursor = collection.find(flt).sort('datetime')
+        bar_data = []
+        for d in cursor:
+            bar = BarData(gateway_name='', symbol='', exchange=None, datetime=None, endDatetime=None)
+            bar.__dict__ = d
+            bar_data.append(bar)
+            datetime_list.add(bar.datetime)
+        # ============
         bars: Dict[datetime, BarData] = {bar.datetime: bar for bar in bar_data}
         leg_bars[vt_symbol] = bars
 
     # Calculate spread bar data
     spread_bars: List[BarData] = []
-
-    for dt in bars.keys():
+    for dt in datetime_list:
         spread_price = 0
         spread_available = True
 
@@ -417,7 +463,7 @@ def load_bar_data(
 
             spread_bar = BarData(
                 symbol=spread.name,
-                exchange=exchange.LOCAL,
+                exchange=Exchange.LOCAL,
                 datetime=dt,
                 interval=interval,
                 open_price=spread_price,
