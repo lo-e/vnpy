@@ -644,6 +644,10 @@ class SpreadStrategyEngine:
         path2 = Path.cwd().joinpath("strategies")
         self.load_strategy_class_from_folder(path2, "strategies")
 
+        """ modify by loe """
+        path3 = Path.cwd().joinpath("Quant\\vnpy\\examples\\vn_trader\\spread_strategies")
+        self.load_strategy_class_from_folder(path3, "spread_strategies")
+
     def load_strategy_class_from_folder(self, path: Path, module_name: str = ""):
         """
         Load strategy class from certain folder.

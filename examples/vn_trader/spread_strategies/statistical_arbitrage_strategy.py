@@ -13,7 +13,7 @@ from vnpy.app.spread_trading import (
 class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     """"""
 
-    author = "用Python的交易员"
+    author = "loe"
 
     boll_window = 20
     boll_dev = 2
@@ -79,6 +79,8 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         """
         Callback when spread price is updated.
         """
+        if not self.inited:
+            a = 2
         tick = self.get_spread_tick()
         self.on_spread_tick(tick)
 
@@ -87,6 +89,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         Callback when new spread tick data is generated.
         """
         self.bg.update_tick(tick)
+        self.put_event()
 
     def on_spread_bar(self, bar: BarData):
         """
