@@ -106,36 +106,36 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
             self.boll_window, self.boll_dev)
 
         if not self.spread_pos:
-            if bar.close_price >= self.boll_up:
-                self.start_short_algo(
-                    bar.close_price - 10,
-                    self.max_pos,
-                    payup=self.payup,
-                    interval=self.interval
-                )
-            elif bar.close_price <= self.boll_down:
-                self.start_long_algo(
-                    bar.close_price + 10,
-                    self.max_pos,
-                    payup=self.payup,
-                    interval=self.interval
-                )
+            self.start_short_algo(
+                self.boll_up,
+                self.max_pos,
+                payup=self.payup,
+                interval=self.interval
+            )
+
+            self.start_long_algo(
+                self.boll_down,
+                self.max_pos,
+                payup=self.payup,
+                interval=self.interval
+            )
         elif self.spread_pos < 0:
-            if bar.close_price <= self.boll_mid:
-                self.start_long_algo(
-                    bar.close_price + 10,
-                    abs(self.spread_pos),
-                    payup=self.payup,
-                    interval=self.interval
-                )
+            self.start_long_algo(
+                self.boll_mid,
+                abs(self.spread_pos),
+                payup=self.payup,
+                interval=self.interval
+            )
         else:
-            if bar.close_price >= self.boll_mid:
-                self.start_short_algo(
-                    bar.close_price - 10,
-                    abs(self.spread_pos),
-                    payup=self.payup,
-                    interval=self.interval
-                )
+            self.start_short_algo(
+                self.boll_mid,
+                abs(self.spread_pos),
+                payup=self.payup,
+                interval=self.interval
+            )
+
+        if self.inited and self.trading:
+            self.put_event()
 
     def on_spread_pos(self):
         """
@@ -147,6 +147,9 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         """
         Callback when algo status is updated.
         """
+        # 一旦有算法出现成交，立即停止其他正在运行的算法
+        self.check_and_stop_other_algo(algo)
+        self.put_event()
         pass
 
     def on_order(self, order: OrderData):
