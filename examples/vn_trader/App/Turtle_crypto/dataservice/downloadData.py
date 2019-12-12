@@ -27,7 +27,7 @@ class TurtleCryptoDataDownloading(object):
         duration = '1m'
         start = datetime.now() - timedelta(days=days)
         start = datetime(start.year, start.month, start.day)
-        until = datetime.now() - timedelta(1)
+        until = datetime.now() - timedelta(0)
         until = datetime(until.year, until.month, until.day)
 
         since = start

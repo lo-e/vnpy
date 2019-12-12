@@ -375,7 +375,7 @@ class TurtleStrategyCrypto(CtaTemplate):
                     self.unit += unitChange
                     self.buy(self.bestLimitOrderPrice(tick, Direction.LONG), current_multiplier*abs(unitChange))
 
-                self.put_event()
+                self.put_timer_event()
                 return
 
             # 止损平仓
@@ -390,7 +390,7 @@ class TurtleStrategyCrypto(CtaTemplate):
                     self.updateIndicator()
                     self.hasClose = True
 
-                self.put_event()
+                self.put_timer_event()
                 return
 
         if self.virtualUnit <= 0:
@@ -500,7 +500,7 @@ class TurtleStrategyCrypto(CtaTemplate):
                     self.unit += unitChange
                     self.short(self.bestLimitOrderPrice(tick, Direction.SHORT), current_multiplier * abs(unitChange))
 
-                self.put_event()
+                self.put_timer_event()
                 return
 
             # 止损平仓
@@ -515,10 +515,10 @@ class TurtleStrategyCrypto(CtaTemplate):
                     self.updateIndicator()
                     self.hasClose = True
 
-                self.put_event()
+                self.put_timer_event()
                 return
 
-        self.put_event()
+        self.put_timer_event()
 
     #----------------------------------------------------------------------
     def on_bar(self, bar):
@@ -538,7 +538,7 @@ class TurtleStrategyCrypto(CtaTemplate):
             self.updateIndicator()
     
         # 发出状态更新事件
-        self.put_event()
+        self.put_timer_event()
 
     #----------------------------------------------------------------------
 

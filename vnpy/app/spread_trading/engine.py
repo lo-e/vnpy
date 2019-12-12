@@ -644,6 +644,10 @@ class SpreadStrategyEngine:
         path2 = Path.cwd().joinpath("strategies")
         self.load_strategy_class_from_folder(path2, "strategies")
 
+        """ modify by loe """
+        path3 = Path.cwd().joinpath("Quant\\vnpy\\examples\\vn_trader\\spread_strategies")
+        self.load_strategy_class_from_folder(path3, "spread_strategies")
+
     def load_strategy_class_from_folder(self, path: Path, module_name: str = ""):
         """
         Load strategy class from certain folder.
@@ -723,6 +727,13 @@ class SpreadStrategyEngine:
         ee.register(EVENT_SPREAD_DATA, self.process_spread_data_event)
         ee.register(EVENT_SPREAD_POS, self.process_spread_pos_event)
         ee.register(EVENT_SPREAD_ALGO, self.process_spread_algo_event)
+        """ modify by loe """
+        ee.register(EVENT_TIMER, self.process_timer_event)
+
+    def process_timer_event(self, event:Event):
+        for strategy in self.strategies.values():
+            if strategy.inited:
+                self.call_strategy_func(strategy, strategy.on_timer)
 
     def process_spread_data_event(self, event: Event):
         """"""

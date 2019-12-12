@@ -8,12 +8,13 @@ from vnpy.app.spread_trading import (
     TickData,
     BarData
 )
+from vnpy.trader.constant import Offset
 
 
 class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     """"""
 
-    author = "用Python的交易员"
+    author = "loe"
 
     boll_window = 20
     boll_dev = 2
@@ -51,7 +52,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         )
 
         self.bg = BarGenerator(self.on_spread_bar)
-        self.am = ArrayManager()
+        self.am = ArrayManager(size=self.boll_window + 1)
 
     def on_init(self):
         """
@@ -72,8 +73,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         Callback when strategy is stopped.
         """
         self.write_log("策略停止")
-
-        self.put_event()
+        self.put_timer_event()
 
     def on_spread_data(self):
         """
@@ -87,6 +87,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         Callback when new spread tick data is generated.
         """
         self.bg.update_tick(tick)
+        self.put_timer_event()
 
     def on_spread_bar(self, bar: BarData):
         """
@@ -103,36 +104,39 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
             self.boll_window, self.boll_dev)
 
         if not self.spread_pos:
-            if bar.close_price >= self.boll_up:
-                self.start_short_algo(
-                    bar.close_price - 10,
-                    self.max_pos,
-                    payup=self.payup,
-                    interval=self.interval
-                )
-            elif bar.close_price <= self.boll_down:
-                self.start_long_algo(
-                    bar.close_price + 10,
-                    self.max_pos,
-                    payup=self.payup,
-                    interval=self.interval
-                )
+            self.start_short_algo(
+                self.boll_up,
+                self.max_pos,
+                payup=self.payup,
+                interval=self.interval,
+                offset=Offset.OPEN
+            )
+
+            self.start_long_algo(
+                self.boll_down,
+                self.max_pos,
+                payup=self.payup,
+                interval=self.interval,
+                offset=Offset.OPEN
+            )
         elif self.spread_pos < 0:
-            if bar.close_price <= self.boll_mid:
-                self.start_long_algo(
-                    bar.close_price + 10,
-                    abs(self.spread_pos),
-                    payup=self.payup,
-                    interval=self.interval
-                )
+            self.start_long_algo(
+                self.boll_mid,
+                abs(self.spread_pos),
+                payup=self.payup,
+                interval=self.interval,
+                offset=Offset.CLOSE
+            )
         else:
-            if bar.close_price >= self.boll_mid:
-                self.start_short_algo(
-                    bar.close_price - 10,
-                    abs(self.spread_pos),
-                    payup=self.payup,
-                    interval=self.interval
-                )
+            self.start_short_algo(
+                self.boll_mid,
+                abs(self.spread_pos),
+                payup=self.payup,
+                interval=self.interval,
+                offset = Offset.OPEN
+            )
+
+        self.put_timer_event()
 
     def on_spread_pos(self):
         """
@@ -144,6 +148,8 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         """
         Callback when algo status is updated.
         """
+        # 一旦有算法出现成交，立即停止其他正在运行的算法
+        self.check_and_stop_other_algo(algo)
         pass
 
     def on_order(self, order: OrderData):

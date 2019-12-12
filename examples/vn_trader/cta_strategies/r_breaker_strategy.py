@@ -322,7 +322,7 @@ class RBreakerStrategy(CtaTemplate):
 
             self.clear_variables()
 
-        self.put_event()
+        self.put_timer_event()
 
     def on_bar(self, bar: BarData):
         """
@@ -457,7 +457,7 @@ class RBreakerStrategy(CtaTemplate):
             elif self.pos < 0:
                 self.cover(bar.close_price * 1.01, abs(self.pos))
 
-        self.put_event()
+        self.put_timer_event()
 
     def on_order(self, order: OrderData):
         """

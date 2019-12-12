@@ -24,8 +24,14 @@ def extract_vt_symbol(vt_symbol: str):
     """
     :return: (symbol, exchange)
     """
-    symbol, exchange_str = vt_symbol.split(".")
-    return symbol, Exchange(exchange_str)
+    symbol_list = vt_symbol.split(".")
+    exchange = None
+    symbol = vt_symbol
+    if len(symbol_list) >= 2:
+        e = symbol_list[-1]
+        exchange = Exchange(e)
+        symbol = vt_symbol.strip(f'.{e}')
+    return symbol, exchange
 
 
 def generate_vt_symbol(symbol: str, exchange: Exchange):
@@ -551,3 +557,14 @@ def get_file_logger(filename: str):
     handler.setFormatter(log_formatter)
     logger.addHandler(handler)  # each handler will be added only once.
     return logger
+
+""" modify by loe """
+def is_crypto_symbol(symbol:str):
+    crypto_symbol_list = ['btc', 'eth', 'eos']
+    for crypto_symbol in crypto_symbol_list:
+        if crypto_symbol in symbol:
+            return True
+        crypto_symbol_upper = crypto_symbol.upper()
+        if crypto_symbol_upper in symbol:
+            return True
+    return False
