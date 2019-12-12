@@ -42,6 +42,7 @@ class CtaTemplate(ABC):
     tick_price:float = 1.0
 
     mongoClient = None
+    timer_event_cross = False
 
     def __init__(
         self,
@@ -457,6 +458,15 @@ class CtaTemplate(ABC):
             collection.insert_one(d)
         except:
             pass
+
+    """ modify by loe """
+    def put_timer_event(self):
+        self.timer_event_cross = True
+
+    def on_timer(self):
+        if self.timer_event_cross:
+            self.put_event()
+            self.timer_event_cross = False
 
 class CtaSignal(ABC):
     """"""

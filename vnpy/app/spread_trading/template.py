@@ -336,6 +336,7 @@ class SpreadStrategyTemplate:
     """ modify by loe """
     spread_pos = 0.0
     syncs = []
+    timer_event_cross = False
 
     def __init__(
         self,
@@ -704,3 +705,11 @@ class SpreadStrategyTemplate:
             for algoid in self.algoids:
                 if algoid != algo.algoid:
                     self.stop_algo(algoid)
+
+    def put_timer_event(self):
+        self.timer_event_cross = True
+
+    def on_timer(self):
+        if self.timer_event_cross:
+            self.put_event()
+            self.timer_event_cross = False

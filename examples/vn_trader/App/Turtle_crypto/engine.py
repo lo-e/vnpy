@@ -26,7 +26,8 @@ from vnpy.trader.event import (
     EVENT_TICK, 
     EVENT_ORDER, 
     EVENT_TRADE,
-    EVENT_POSITION
+    EVENT_POSITION,
+    EVENT_TIMER
 )
 from vnpy.trader.constant import (
     Direction, 
@@ -142,6 +143,13 @@ class TurtleEngine(BaseEngine):
         self.event_engine.register(EVENT_ORDER, self.process_order_event)
         self.event_engine.register(EVENT_TRADE, self.process_trade_event)
         self.event_engine.register(EVENT_POSITION, self.process_position_event)
+        """ modify by loe """
+        self.event_engine.register(EVENT_TIMER, self.process_timer_event)
+
+    def process_timer_event(self, event:Event):
+        for strategy in self.strategies.values():
+            if strategy.inited:
+                self.call_strategy_func(strategy, strategy.on_timer)
 
     def process_tick_event(self, event: Event):
         """"""
