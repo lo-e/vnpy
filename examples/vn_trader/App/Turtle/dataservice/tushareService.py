@@ -291,6 +291,9 @@ def get_and_save_dominant_symbol_from(symbol:str, from_date:datetime):
             if new_dominant:
                 # 有新的主力产生
                 msg = f'{msg}\t新主力'
+                # 下载新主力的历史数据
+                bar_list, download_msg = downloadDailyData(ts_code=trasform_tscode(new_dominant), start='', end='', to_database=True)
+                msg = f'{msg}\n{download_msg}'
             print(msg)
             return_msg += msg
             target_date += timedelta(days=1)
@@ -301,6 +304,7 @@ def get_and_save_dominant_symbol_from(symbol:str, from_date:datetime):
                 sleep(60)
             else:
                 return_msg += msg
+                target_date += timedelta(days=1)
 
     return return_msg
 
