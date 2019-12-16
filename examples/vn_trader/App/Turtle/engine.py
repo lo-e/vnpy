@@ -1104,7 +1104,7 @@ class TurtleAutoEngine(object):
                 self.downloaded = result
                 if result:
                     msg = '======\n数据更新成功\n======\n\n' + msg
-                self.main_engine.send_email(subject='TURTLE_RQData 数据更新',
+                self.main_engine.send_email(subject='TURTLE 数据更新',
                                                 content=msg)
         else:
             self.downloaded = False
