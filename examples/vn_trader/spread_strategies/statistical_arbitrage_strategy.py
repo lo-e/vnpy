@@ -9,7 +9,7 @@ from vnpy.app.spread_trading import (
     BarData
 )
 from vnpy.trader.constant import Offset
-
+import numpy as np
 
 class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     """"""
@@ -18,6 +18,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
 
     boll_window = 20
     boll_dev = 2
+    open_value = 4
     max_pos = 10
     payup = 10
     interval = 5
@@ -29,6 +30,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     parameters = [
         "boll_window",
         "boll_dev",
+        "open_value",
         "max_pos",
         "payup",
         "interval"
@@ -99,26 +101,32 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         if not self.am.inited:
             return
 
-        self.boll_mid = self.am.sma(self.boll_window)
-        self.boll_up, self.boll_down = self.am.boll(
-            self.boll_window, self.boll_dev)
+        if not self.spread_pos:
+            self.boll_mid = self.am.sma(self.boll_window)
+            self.boll_up, self.boll_down = self.am.boll(self.boll_window, self.boll_dev)
+
+        """ fake """
+        if np.isnan(self.boll_up) or np.isnan(self.boll_down) or np.isnan(self.boll_mid):
+            a = 2
 
         if not self.spread_pos:
-            self.start_short_algo(
-                self.boll_up,
-                self.max_pos,
-                payup=self.payup,
-                interval=self.interval,
-                offset=Offset.OPEN
-            )
+            # 设置一个开仓阈值
+            if self.boll_up - self.boll_mid >= self.open_value:
+                self.start_short_algo(
+                    self.boll_up,
+                    self.max_pos,
+                    payup=self.payup,
+                    interval=self.interval,
+                    offset=Offset.OPEN
+                )
 
-            self.start_long_algo(
-                self.boll_down,
-                self.max_pos,
-                payup=self.payup,
-                interval=self.interval,
-                offset=Offset.OPEN
-            )
+                self.start_long_algo(
+                    self.boll_down,
+                    self.max_pos,
+                    payup=self.payup,
+                    interval=self.interval,
+                    offset=Offset.OPEN
+                )
         elif self.spread_pos < 0:
             self.start_long_algo(
                 self.boll_mid,
