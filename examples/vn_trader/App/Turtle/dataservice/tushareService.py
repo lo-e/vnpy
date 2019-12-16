@@ -290,10 +290,8 @@ def get_and_save_dominant_symbol_from(symbol:str, from_date:datetime):
             new_dominant, msg = get_and_save_dominant_symbol(symbol=symbol, target_date=target_date)
             if new_dominant:
                 # 有新的主力产生
-                print(f'{msg}\t新主力')
-            else:
-                # 没有新主力产生
-                print(msg)
+                msg = f'{msg}\t新主力'
+            print(msg)
             return_msg += msg
             target_date += timedelta(days=1)
         except:

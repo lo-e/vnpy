@@ -122,7 +122,7 @@ class TurtleDataDownloading(object):
         return result, return_msg
 
     def download_tushare(self, symbol_list: list = None):
-        """
+        #"""
         underlying_list = ['RB', 'HC', 'SM', 'J', 'ZC', 'TA']
         days = 0
         today = datetime.strptime(datetime.now().strftime('%Y%m%d'), '%Y%m%d')
@@ -203,7 +203,7 @@ class TurtleDataDownloading(object):
         if not result:
             return_msg = f'======\n数据未更新\n======\n\n' + return_msg
         return result, return_msg
-        """
+        #"""
 
         """
         # 下载Daily_Bar数据
