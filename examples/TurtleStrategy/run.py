@@ -130,6 +130,7 @@ def one():
             print('currentSymbol\t%s' % signal.bar.vt_symbol)
             print('datetime\t%s' % signal.bar.datetime)
             print('ATR\t%s' % signal.atrVolatility)
+            print('multiplier\t%s' % engine.portfolio.multiplierDict[signal.symbol])
             print('virtualUnit\t%s' % signal.unit)
             print('unit\t%s' % engine.portfolio.unitDict[signal.symbol])
             print('longStop\t%s' % signal.longStop)
