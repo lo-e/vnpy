@@ -1098,7 +1098,8 @@ class TurtleAutoEngine(object):
             if not self.downloading and not self.downloaded:
                 turtleDataD = TurtleDataDownloading()
                 self.downloading = True
-                result, msg = turtleDataD.download()
+                #result, msg = turtleDataD.download()
+                result, msg = turtleDataD.download_tushare()
                 self.downloading = False
                 self.downloaded = result
                 if result:
