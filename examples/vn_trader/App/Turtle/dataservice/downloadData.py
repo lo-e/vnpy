@@ -122,13 +122,14 @@ class TurtleDataDownloading(object):
         return result, return_msg
 
     def download_tushare(self, symbol_list: list = None):
+        """
         underlying_list = ['RB', 'HC', 'SM', 'J', 'ZC', 'TA']
         days = 0
         today = datetime.strptime(datetime.now().strftime('%Y%m%d'), '%Y%m%d')
 
         result = True
         return_msg = ''
-        # """
+
         # 获取主力合约代码并存入数据库
         dominant_start_msg = '====== 获取主力合约代码并存入数据库 ======'
         print(dominant_start_msg)
@@ -140,9 +141,8 @@ class TurtleDataDownloading(object):
             dominant_msg = get_and_save_dominant_symbol_from(symbol=target_symbol, from_date=from_date)
             return_msg += dominant_msg + '\n\n'
             print('\n')
-        # """
 
-        # """
+
         # 下载最近两个主力合约的日线数据
         download_daily_msg = '====== 下载最近两个主力合约的日线数据 ======'
         print(download_daily_msg)
@@ -173,9 +173,7 @@ class TurtleDataDownloading(object):
                 return_msg += msg + '\n'
             print('\n')
             return_msg += '\n'
-        # """
 
-        # """
         # 添加指数日线数据到数据库【RB99】
         index_daily_msg = '====== 添加指数日线数据到数据库 ======'
         print(index_daily_msg)
@@ -205,3 +203,29 @@ class TurtleDataDownloading(object):
         if not result:
             return_msg = f'======\n数据未更新\n======\n\n' + return_msg
         return result, return_msg
+        """
+
+        """
+        # 下载Daily_Bar数据
+        bar_list, msg = downloadDailyData(ts_code='RBL.SHF', start='', end='')
+        print(msg)
+        """
+
+        """
+        # 添加空的Daily_Bar数据到数据库
+        symbol = 'A0000'
+        the_datetime = datetime.strptime('2019-12-13', '%Y-%m-%d')
+        bar = BarData(gateway_name='', symbol=symbol, exchange='', datetime=the_datetime, endDatetime=None)
+        collection = dbDaily[bar.symbol]
+        collection.insert_one(bar.__dict__)
+        """
+
+        """
+        # 添加空的Dominant数据到数据库
+        underline = 'HC'
+        symbol = 'HC2005'
+        date = datetime.strptime('2019-12-13', '%Y-%m-%d')
+        collection = dbDominant[underline]
+        collection.insert_one({'symbol':symbol,
+                               'date':date})
+        """
