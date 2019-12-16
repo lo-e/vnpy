@@ -99,7 +99,7 @@ class TurtleInitialManager(object):
             collectionName = startSymbol + replace + endSymbol
 
         collection = db[collectionName]
-        cursor = collection.find().sort('date')
+        cursor = collection.find().sort('datetime')
         for dic in cursor:
             b = BarData(gateway_name='', symbol='', exchange=None, datetime=None, endDatetime=None)
             b.__dict__ = dic
