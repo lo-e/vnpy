@@ -141,7 +141,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
                 abs(self.spread_pos),
                 payup=self.payup,
                 interval=self.interval,
-                offset = Offset.OPEN
+                offset = Offset.CLOSE
             )
 
         self.put_timer_event()
