@@ -10,7 +10,9 @@ from vnpy.app.spread_trading import (
 )
 from vnpy.trader.constant import Offset
 import numpy as np
+from datetime import datetime
 
+CLOSE_TIME = '14:55'
 class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     """"""
 
@@ -41,6 +43,12 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         "boll_mid"
     ]
 
+    syncs = [
+        "boll_up",
+        "boll_down",
+        "boll_mid"
+    ]
+
     def __init__(
         self,
         strategy_engine,
@@ -61,6 +69,13 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         Callback when strategy is inited.
         """
         self.write_log("策略初始化")
+
+        if not self.spread_pos:
+            self.boll_up = 0
+            self.boll_mid = 0
+            self.boll_down = 0
+        now = datetime.now()
+        self.close_datetime = datetime.strptime(f'{now.year}-{now.month}-{now.day} {CLOSE_TIME}', '%Y-%m-%d %H:%M')
 
         self.load_bar(10)
 
@@ -96,18 +111,19 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         Callback when spread bar data is generated.
         """
         self.stop_all_algos()
-
         self.am.update_bar(bar)
-        if not self.am.inited:
-            return
 
         if not self.spread_pos:
-            self.boll_mid = self.am.sma(self.boll_window)
-            self.boll_up, self.boll_down = self.am.boll(self.boll_window, self.boll_dev)
+            if self.am.inited:
+                self.boll_mid = self.am.sma(self.boll_window)
+                self.boll_up, self.boll_down = self.am.boll(self.boll_window, self.boll_dev)
+            else:
+                self.boll_up = 0
+                self.boll_mid = 0
+                self.boll_down = 0
 
-        """ fake """
-        if np.isnan(self.boll_up) or np.isnan(self.boll_down) or np.isnan(self.boll_mid):
-            a = 2
+        if not self.boll_up or not self.boll_mid or not self.boll_down:
+            return 
 
         if not self.spread_pos:
             # 设置一个开仓阈值
@@ -128,21 +144,41 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
                     offset=Offset.OPEN
                 )
         elif self.spread_pos < 0:
-            self.start_long_algo(
-                self.boll_mid,
-                abs(self.spread_pos),
-                payup=self.payup,
-                interval=self.interval,
-                offset=Offset.CLOSE
-            )
+            if bar.datetime >= self.close_datetime:
+                # 收盘前强制平仓
+                self.start_long_algo(
+                    bar.close_price + self.payup,
+                    abs(self.spread_pos),
+                    payup=self.payup,
+                    interval=self.interval,
+                    offset=Offset.CLOSE
+                )
+            elif self.boll_mid:
+                self.start_long_algo(
+                    self.boll_mid,
+                    abs(self.spread_pos),
+                    payup=self.payup,
+                    interval=self.interval,
+                    offset=Offset.CLOSE
+                )
         else:
-            self.start_short_algo(
-                self.boll_mid,
-                abs(self.spread_pos),
-                payup=self.payup,
-                interval=self.interval,
-                offset = Offset.CLOSE
-            )
+            if bar.datetime >= self.close_datetime:
+                # 收盘前强制平仓
+                self.start_short_algo(
+                    bar.close_price - self.payup,
+                    abs(self.spread_pos),
+                    payup=self.payup,
+                    interval=self.interval,
+                    offset=Offset.CLOSE
+                )
+            elif self.boll_mid:
+                self.start_short_algo(
+                    self.boll_mid,
+                    abs(self.spread_pos),
+                    payup=self.payup,
+                    interval=self.interval,
+                    offset = Offset.CLOSE
+                )
 
         self.put_timer_event()
 
