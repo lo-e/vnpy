@@ -185,6 +185,8 @@ def generateVtBar(row, symbol):
     bar.volume = row['vol']
     bar.open_interest = row['oi']
     bar.exchange = bar.exchange.value
+    if not bar.check_valid():
+        raise('Bar数据校验不通过！！')
     return bar
 
 # 判断主力合约并存入数据库，指定单个日期
