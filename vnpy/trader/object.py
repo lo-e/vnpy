@@ -10,6 +10,9 @@ from .constant import Direction, Exchange, Interval, Offset, Status, Product, Op
 
 ACTIVE_STATUSES = set([Status.SUBMITTING, Status.NOTTRADED, Status.PARTTRADED])
 
+""" modify by loe """
+import numpy as np
+
 
 @dataclass
 class BaseData:
@@ -110,6 +113,16 @@ class BarData(BaseData):
             self.vt_symbol = f"{self.symbol}.{self.exchange.value}"
         else:
             self.vt_symbol = self.symbol
+
+    """ modify by loe """
+    def check_valid(self):
+        if self.open_price == 0 or self.high_price == 0 or self.low_price == 0 or self.close_price == 0:
+            return False
+
+        if np.isnan(self.open_price) or np.isnan(self.high_price) or np.isnan(self.low_price) or np.isnan(self.close_price):
+            return False
+
+        return True
 
 
 @dataclass
