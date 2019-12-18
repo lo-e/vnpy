@@ -248,6 +248,8 @@ class TurtleSignal(object):
 
                         i += 1
 
+        if not bar.check_valid():
+            raise('Bar数据校验不通过！！')
         self.bar = bar
         self.am.update_bar(bar)
         """ modify by loe """
