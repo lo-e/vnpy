@@ -163,9 +163,15 @@ def downloadDailyData(ts_code:str, start:str, end:str, to_database:bool=False) -
         if to_database:
             # 保存数据库
             collection = dbDaily[bar.symbol]
+            valid = True
             for bar in bar_list:
-                collection.update_many({'datetime': bar.datetime}, {'$set': bar.__dict__}, upsert=True)
+                if bar.check_valid():
+                    collection.update_many({'datetime': bar.datetime}, {'$set': bar.__dict__}, upsert=True)
+                else:
+                    valid = False
             msg = f'{ts_code}\t数据下载并保存数据库完成【{len(bar_list)}】\t{date_from} - {date_to}'
+            if not valid:
+                msg += '\tBar数据校验不通过！！'
         else:
             msg = f'{ts_code}\t数据下载完成【{len(bar_list)}】\t{date_from} - {date_to}'
     else:
@@ -185,8 +191,6 @@ def generateVtBar(row, symbol):
     bar.volume = row['vol']
     bar.open_interest = row['oi']
     bar.exchange = bar.exchange.value
-    if not bar.check_valid():
-        raise('Bar数据校验不通过！！')
     return bar
 
 # 判断主力合约并存入数据库，指定单个日期
