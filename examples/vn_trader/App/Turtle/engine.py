@@ -790,6 +790,10 @@ class TurtleEngine(BaseEngine):
             bar = BarData(gateway_name=gateway_name, symbol=symbol, exchange=exchange, datetime=theDatetime,
                           endDatetime=endDatetime)
             bar.__dict__ = d
+            # 检查Bar数据是否有效
+            if not bar.check_valid():
+                raise ('Bar数据校验不通过！！')
+
             l.append(bar)
         return l
 

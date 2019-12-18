@@ -103,6 +103,9 @@ class TurtleInitialManager(object):
         for dic in cursor:
             b = BarData(gateway_name='', symbol='', exchange=None, datetime=None, endDatetime=None)
             b.__dict__ = dic
+            # 检查Bar数据是否有效
+            if not b.check_valid():
+                raise ('Bar数据校验不通过！！')
             self.barList.append(b)
 
         # 回测数据
