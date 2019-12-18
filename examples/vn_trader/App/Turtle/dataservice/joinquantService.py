@@ -16,9 +16,9 @@ from time import sleep
 import re
 from vnpy.app.cta_strategy.base import TRANSFORM_SYMBOL_LIST
 
-SYMBOL_EXCHANGE_MAP = {'SHF':['RB', 'HC'],
-                       'ZCE':['SM', 'ZC', 'TA'],
-                       'DCE':['J']}
+EXCHANGE_SYMBOL_MAP = {'XSGE':['RB', 'HC'],
+                       'XZCE':['SM', 'ZC', 'TA'],
+                       'XDCE':['J']}
 
 symbolDict = {'IFL.CFX':'IF',
               'IC.CFX':'IC',
@@ -314,8 +314,8 @@ def get_and_save_dominant_symbol_from(symbol:str, from_date:datetime):
 def trasform_tscode(symbol:str):
     ts_code = symbol.upper()
     startSymbol = re.sub("\d", "", ts_code)
-    for key in SYMBOL_EXCHANGE_MAP.keys():
-        underlying_list = SYMBOL_EXCHANGE_MAP[key]
+    for key in EXCHANGE_SYMBOL_MAP.keys():
+        underlying_list = EXCHANGE_SYMBOL_MAP[key]
         if startSymbol in underlying_list:
             ts_code = ts_code + f'.{key}'
             break
