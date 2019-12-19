@@ -7,8 +7,8 @@ if __name__ == '__main__':
     # 下载实盘所需数据
     dataDownload = TurtleDataDownloading()
     #dataDownload.download()
-    dataDownload.download_tushare()
-
+    #dataDownload.download_tushare()
+    dataDownload.download_jq()
     #"""
 
     """

@@ -6,6 +6,7 @@
 
 from .dataService import *
 from .tushareService import *
+from .joinquantService import *
 from datetime import datetime
 
 class TurtleDataDownloading(object):
@@ -229,3 +230,23 @@ class TurtleDataDownloading(object):
         collection.insert_one({'symbol':symbol,
                                'date':date})
         """
+
+    def download_jq(self, symbol_list: list = None):
+        underlying_list = ['RB', 'HC', 'SM', 'J', 'ZC', 'TA']
+        days = 2
+        today = datetime.strptime(datetime.now().strftime('%Y%m%d'), '%Y%m%d')
+
+        result = True
+        return_msg = ''
+
+        # 获取主力合约代码并存入数据库
+        dominant_start_msg = '====== 获取主力合约代码并存入数据库 ======'
+        print(dominant_start_msg)
+        return_msg += dominant_start_msg + '\n'
+
+        from_date = today - timedelta(days=days)
+        # from_date = datetime.strptime('2019-12-12', '%Y-%m-%d')
+        for underlying_symbol in underlying_list:
+            dominant_msg = jq_get_and_save_dominant_symbol_from(underlying_symbol=underlying_symbol, from_date=from_date)
+            return_msg += dominant_msg + '\n\n'
+            print('\n')
