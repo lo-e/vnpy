@@ -10,24 +10,26 @@ from vnpy.app.cta_strategy.base import (MINUTE_DB_NAME,
 from vnpy.trader.constant import Exchange
 from copy import copy
 from pymongo import MongoClient, ASCENDING, DESCENDING
-from vnpy.app.cta_strategy.base import DAILY_DB_NAME, DOMINANT_DB_NAME
+from vnpy.app.cta_strategy.base import DAILY_DB_NAME, MINUTE_DB_NAME, DOMINANT_DB_NAME
 import traceback
 from time import sleep
 import re
 from vnpy.app.cta_strategy.base import TRANSFORM_SYMBOL_LIST
 from jqdatasdk import *
+from .tushareService import fetchNextTradeDate
 
 # 聚宽账号登陆
 auth('18521705317', '970720699')
 
 EXCHANGE_SYMBOL_MAP = {'XSGE':['RB', 'HC'],
                        'XZCE':['SM', 'ZC', 'TA'],
-                       'XDCE':['J']}
+                       'XDCE':['J', 'A']}
 
 client = MongoClient('localhost', 27017, serverSelectionTimeoutMS=600)
 client.server_info()
 dbDominant = client[DOMINANT_DB_NAME]
 dbDaily = client[DAILY_DB_NAME]
+dbMinute = client[MINUTE_DB_NAME]
 
 class open_interest_data:
     symbol = ''
@@ -41,20 +43,28 @@ class jqSymbolData:
     end_date:datetime = None
     type = ''
 
-def jq_get_all_trading_symbol_list():
+# 获取目标交易日所有正在交易的合约数据
+# target_date：'2020-01-01'
+# target_dat为空，不指定具体日期，获取所有历史交易过的合约数据
+def jq_get_all_trading_symbol_list(target_date:str=''):
     info = get_all_securities(types=['futures'])
-    today = datetime.strptime(datetime.now().strftime('%Y-%m-%d'), '%Y-%m-%d')
     result_list = []
+    target_datetime = None
+    if target_date:
+        target_datetime = datetime.strptime(target_date, '%Y-%m-%d')
     for index, row in info.iterrows():
         start = datetime.strptime(row['start_date'].strftime('%Y-%m-%d'), '%Y-%m-%d')
         end = datetime.strptime(row['end_date'].strftime('%Y-%m-%d'), '%Y-%m-%d')
-        if start <= today <= end:
-            data = jqSymbolData()
-            data.display_name = row['display_name']
-            data.symbol = row['name'].upper()
-            data.start_date = start
-            data.end_date = end
-            data.type = row['type']
+        data = jqSymbolData()
+        data.display_name = row['display_name']
+        data.symbol = complete_symbol(row['name'].upper())
+        data.start_date = start
+        data.end_date = end
+        data.type = row['type']
+        if target_datetime:
+            if start <= target_datetime <= end:
+                result_list.append(data)
+        else:
             result_list.append(data)
     return result_list
 
@@ -68,6 +78,19 @@ def transform_jqcode(symbol:str):
             break
     return jq_code
 
+def complete_symbol(symbol:str):
+    symbol = symbol.upper()
+    startSymbol = re.sub("\d", "", symbol)
+    result = symbol
+    if startSymbol in TRANSFORM_SYMBOL_LIST.keys():
+        endSymbol = re.sub("\D", "", symbol)
+        if endSymbol.startswith('0'):
+            replace = 2
+        else:
+            replace = 1
+        result = startSymbol + str(replace) + endSymbol
+    return result
+
 # 下载Bar数据【包括日线、分钟线】
 # symbol：'RB2005'
 # start & end：'2020-01-01' '2020-01-01 09:00'
@@ -75,15 +98,55 @@ def transform_jqcode(symbol:str):
 def download_bar_data(symbol:str, start:str, end:str, frequency:str='1d', to_database:bool=False):
     jq_symbol = transform_jqcode(symbol=symbol)
 
+    if not start or not end:
+        # 获取合约上市起止时间
+        symbol_data_list = jq_get_all_trading_symbol_list()
+        # 获取目标代码还在交易的所有合约数据
+        for symbol_data in symbol_data_list:
+            if symbol_data.symbol == symbol.upper():
+                start = symbol_data.start_date.strftime('%Y-%m-%d')
+                end = symbol_data.end_date.strftime('%Y-%m-%d')
+                break
+
     data = get_price(jq_symbol, start_date=start, end_date=end, frequency=frequency, fields=None, skip_paused=True, fq='pre')
     bar_list = []
+    from_date = None
+    to_date = None
     for index, row in data.iterrows():
         datetime_str = index.strftime('%Y-%m-%d %H:%M')
-        bar = generateBar(row=row, symbol=symbol, datetime_str=datetime_str)
+        bar = generateBar(row=row, symbol=symbol.upper(), datetime_str=datetime_str)
         bar_list.append(bar)
-    return bar_list
 
-# 下载持仓量
+        if not from_date:
+            from_date = bar.datetime
+        to_date = bar.datetime
+
+    return_msg = ''
+    if len(bar_list):
+        if to_database:
+            # 保存数据库
+            collection = None
+            if frequency == '1d':
+                collection = dbDaily[symbol.upper()]
+            elif frequency == '1m':
+                collection = dbMinute[symbol.upper()]
+            if collection:
+                valid = True
+                for bar in bar_list:
+                    if bar.check_valid():
+                        collection.update_many({'datetime': bar.datetime}, {'$set': bar.__dict__}, upsert=True)
+                    else:
+                        valid = False
+                return_msg = f'{symbol.upper()}\t{frequency.upper()} Bar数据下载并保存数据库成功【{len(bar_list)}】\t{from_date} - {to_date}'
+                if not valid:
+                    return_msg += '\tBar数据校验不通过，需要排查错误！！'
+        else:
+            return_msg = f'{symbol.upper()}\t{frequency.upper()} Bar数据下载成功【{len(bar_list)}】\t{from_date} - {to_date}'
+    else:
+        return_msg = f'{symbol.upper()}\t{frequency.upper()} Bar数据下载空!!\t{start} - {end}'
+    return bar_list, return_msg
+
+# 获取合约持仓量数据
 # symbol_list：['RB2005', 'HC2005]
 # date：'2020-01-01'
 def download_open_interest(symbol_list:list, date:str):
@@ -130,6 +193,7 @@ def generateBar(row, symbol, datetime_str):
 def jq_get_and_save_dominant_symbol_from(underlying_symbol:str, from_date:datetime):
     return_msg = ''
     today_date = datetime.strptime(datetime.now().strftime('%Y%m%d'), '%Y%m%d')
+    from_date = datetime.strptime(from_date.strftime('%Y%m%d'), '%Y%m%d')
     target_date = from_date
     while target_date <= today_date:
         try:
@@ -138,13 +202,14 @@ def jq_get_and_save_dominant_symbol_from(underlying_symbol:str, from_date:dateti
                 # 有新的主力产生
                 msg = f'{msg}\t新主力'
                 # 下载新主力的历史数据
-                #bar_list, download_msg = downloadDailyData(ts_code=trasform_tscode(new_dominant), start='', end='', to_database=True)
-                #msg = f'{msg}\n{download_msg}'
-            #print(msg)
+                bar_list, download_msg = download_bar_data(symbol=new_dominant, start='', end='', to_database=True)
+                msg = f'{msg}\n{download_msg}'
+            print(msg)
             #return_msg += msg
             target_date += timedelta(days=1)
         except:
             msg = traceback.format_exc()
+            print(msg)
             return_msg += msg
             break
 
@@ -153,17 +218,16 @@ def jq_get_and_save_dominant_symbol_from(underlying_symbol:str, from_date:dateti
 # 判断主力合约并存入数据库，指定单个日期
 def jq_get_and_save_dominant_symbol(underlying_symbol:str, target_date:datetime) -> (str, str):
     # 获取合约列表
-    all_symbol_list = jq_get_all_trading_symbol_list()
+    all_trading_symbol_list = jq_get_all_trading_symbol_list(target_date=target_date.strftime('%Y-%m-%d'))
 
     # 获取目标代码还在交易的所有合约数据
-    target_symbol_data_list = []
-    for symbol_data in all_symbol_list:
-        if symbol_data.start_date and symbol_data.end_date:
-            start_symbol = re.sub("\d", "", symbol_data.symbol).upper()
-            if underlying_symbol == start_symbol and symbol_data.start_date <= target_date and symbol_data.end_date >= target_date:
-                if '主力' in symbol_data.display_name or '指数' in symbol_data.display_name:
-                    continue
-                target_symbol_data_list.append(symbol_data)
+    trading_symbol_list = []
+    for symbol_data in all_trading_symbol_list:
+        start_symbol = re.sub("\d", "", symbol_data.symbol).upper()
+        if underlying_symbol == start_symbol:
+            if '主力' in symbol_data.display_name or '指数' in symbol_data.display_name:
+                continue
+            trading_symbol_list.append(symbol_data.symbol)
 
     # 数据库获取最新主力合约代码
     collection = dbDominant[underlying_symbol]
@@ -175,22 +239,18 @@ def jq_get_and_save_dominant_symbol(underlying_symbol:str, target_date:datetime)
         last_dominant_date = dic['date']
         break
 
-    if last_dominant_date > target_date:
+    if last_dominant_date and last_dominant_date > target_date:
         return ('', f'{last_dominant_symbol} -> {target_date}')
+
+    # 获取所以正在交易合约的持仓数据
+    target_date_str = datetime.strftime(target_date, '%Y-%m-%d')
+    open_interest_list = download_open_interest(symbol_list=trading_symbol_list, date=target_date_str)
+    if not open_interest_list:
+        return ('', f'{underlying_symbol}\t{target_date}\t持仓量数据缺失，无法判断主力！')
 
     # 判断主力合约
     new_dominant_symbol = ''
     if last_dominant_symbol:
-        # 若合约持仓量大于当前主力合约持仓量的1.1倍时，新主力产生
-        target_symbol_list = []
-        for symbol_data in target_symbol_data_list:
-            target_symbol_list.append(symbol_data.symbol.upper())
-
-        # 下载持仓数据
-        target_date_str = datetime.strftime(target_date, '%Y-%m-%d')
-        open_interest_list = download_open_interest(symbol_list=target_symbol_list, date=target_date_str)
-        if not open_interest_list:
-            return ('', f'{underlying_symbol}\t{target_date} 持仓量数据缺失，无法判断主力！')
         # 找到当前主力持仓量
         last_dominant_open_interest = 0
         for the_data in open_interest_list:
@@ -198,42 +258,57 @@ def jq_get_and_save_dominant_symbol(underlying_symbol:str, target_date:datetime)
                 last_dominant_open_interest = the_data.open_interest
                 break
         if not last_dominant_open_interest:
-            return ('', f'{underlying_symbol}\t{target_date} 当前主力持仓量数据缺失，无法判断主力！')
+            return ('', f'{underlying_symbol}\t{target_date}\t当前主力持仓量数据缺失，无法判断主力！')
         # 判断新主力
         for the_data in open_interest_list:
+            # 若合约持仓量大于当前主力合约持仓量的1.1倍时，新主力产生
             if the_data.open_interest > last_dominant_open_interest * 1.1:
                 if new_dominant_symbol:
-                    return ('', f'{underlying_symbol}\t{target_date}出现不止一个新主力合约，检查代码！！')
+                    return ('', f'{underlying_symbol}\t{target_date}\t出现不止一个新主力合约，检查代码！！')
                 new_dominant_symbol = the_data.symbol
 
     else:
         # 持仓量最大的为下一交易日主力
-        a = 2
+        max_open_interest = 0
+        for the_data in open_interest_list:
+            if the_data.open_interest > max_open_interest:
+                max_open_interest = the_data.open_interest
+                new_dominant_symbol = the_data.symbol
 
     if new_dominant_symbol:
-        # 产生新主力
-        a = 2
+        # 产生新主力，保存数据库
+        next_trade_date = fetchNextTradeDate(exchange='SHFE', from_date=target_date)
+        if next_trade_date:
+            dominant_dict = {'date': next_trade_date,
+                             'symbol': new_dominant_symbol}
+            collection.update_many({'date': next_trade_date}, {'$set': dominant_dict}, upsert=True)
+            return (new_dominant_symbol, f'{new_dominant_symbol} -> {target_date}')
+        else:
+            return ('', f'{underlying_symbol}\t{target_date}\t获取下一个交易日出错，检查代码！！')
     else:
         # 没有新主力
-        a = 2
+        if last_dominant_symbol:
+            return ('', f'{last_dominant_symbol} -> {target_date}')
+        else:
+            return ('', f'{underlying_symbol}\t{target_date}\t数据库没有存档记录，并且找不到新主力合约，检查代码！！')
 
 if __name__ == '__main__':
-    #"""
+    """
     # 下载持仓量
     symbol_list = ['RB2005', 'RB2001']
     download_open_interest(symbol_list=symbol_list, date='2019-12-16')
-    #"""
+    """
 
     """
     # 下载合约Bar数据【日线、分钟线】
     symbol = 'RB2005'
-    bar_list = download_bar_data(symbol=symbol, start = '2019-12-16', end='2019-12-20', frequency='1d')
+    bar_list, msg = download_bar_data(symbol=symbol, start = '', end='', frequency='1d')
     """
 
     """
     # 下载指数Bar数据【日线、分钟线】
     symbol = 'RB8888'
-    bar_list = download_bar_data(symbol=symbol, start = '2019-12-16', end='2019-12-20', frequency='1d')
+    bar_list, msg = download_bar_data(symbol=symbol, start = '2019-12-16', end='2019-12-20', frequency='1d')
     a = 2
     """
 

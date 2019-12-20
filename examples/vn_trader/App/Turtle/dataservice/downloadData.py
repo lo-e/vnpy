@@ -125,7 +125,7 @@ class TurtleDataDownloading(object):
     def download_tushare(self, symbol_list: list = None):
         #"""
         underlying_list = ['RB', 'HC', 'SM', 'J', 'ZC', 'TA']
-        days = 0
+        days = 2
         today = datetime.strptime(datetime.now().strftime('%Y%m%d'), '%Y%m%d')
 
         result = True
@@ -232,8 +232,10 @@ class TurtleDataDownloading(object):
         """
 
     def download_jq(self, symbol_list: list = None):
+        #"""
         underlying_list = ['RB', 'HC', 'SM', 'J', 'ZC', 'TA']
-        days = 2
+        #underlying_list = ['TA']
+        days = 0
         today = datetime.strptime(datetime.now().strftime('%Y%m%d'), '%Y%m%d')
 
         result = True
@@ -250,3 +252,64 @@ class TurtleDataDownloading(object):
             dominant_msg = jq_get_and_save_dominant_symbol_from(underlying_symbol=underlying_symbol, from_date=from_date)
             return_msg += dominant_msg + '\n\n'
             print('\n')
+
+        # 下载最近两个主力合约的日线数据
+        download_daily_msg = '====== 下载最近两个主力合约的日线数据 ======'
+        print(download_daily_msg)
+        return_msg += '\n' + download_daily_msg + '\n'
+
+        downloaded_bar_datetime_list = []
+        for underlying_symbol in underlying_list:
+            # 数据库查询最近两个主力合约
+            collection = dbDominant[underlying_symbol]
+            cursor = collection.find().sort('date', direction=DESCENDING)
+            symbol_list = []
+            for dic in cursor:
+                symbol = dic['symbol']
+                symbol_list.append(symbol)
+                if len(symbol_list) >= 2:
+                    break
+
+            # 下载指定天数的日线数据
+            start = (today - timedelta(days=days)).strftime('%Y-%m-%d')
+            end = today.strftime('%Y-%m-%d')
+            for symbol in symbol_list:
+                bar_list, msg = download_bar_data(symbol=symbol, start=start, end=end, to_database=True)
+                for the_bar in bar_list:
+                    if the_bar.datetime not in downloaded_bar_datetime_list:
+                        downloaded_bar_datetime_list.append(the_bar.datetime)
+                print(msg)
+                return_msg += msg + '\n'
+            print('\n')
+            return_msg += '\n'
+
+        # 添加指数日线数据到数据库【RB99】
+        index_msg = '====== 添加指数日线数据到数据库 ======'
+        print(index_msg)
+        return_msg += '\n' + index_msg + '\n'
+
+        add_date_list = []
+        for downloaded_datetime in downloaded_bar_datetime_list:
+            for underlying_symbol in underlying_list:
+                symbol = underlying_symbol + '99'
+                bar = BarData(gateway_name='', symbol=symbol, exchange='', datetime=downloaded_datetime,
+                              endDatetime=None)
+                collection = dbDaily[bar.symbol]
+                collection.update_many({'datetime': bar.datetime}, {'$set': bar.__dict__}, upsert=True)
+            add_date_list.append(downloaded_datetime.strftime('%Y-%m-%d'))
+        msg = ''
+        for date_str in add_date_list:
+            if msg:
+                msg += '\t' + date_str
+            else:
+                msg += date_str
+        print(f'【{msg}】')
+        return_msg += msg
+
+        # 打印和返回结果
+        if not len(downloaded_bar_datetime_list):
+            result = False
+        if not result:
+            return_msg = f'======\n数据未更新\n======\n\n' + return_msg
+        return result, return_msg
+        # """

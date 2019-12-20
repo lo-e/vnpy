@@ -214,7 +214,7 @@ def get_and_save_dominant_symbol(symbol:str, target_date:datetime) -> (str, str)
         last_dominant_date = dic['date']
         break
 
-    if last_dominant_date > target_date:
+    if last_dominant_date and last_dominant_date > target_date:
         return ('', f'{last_dominant_symbol} -> {target_date}')
 
     # 下载当前主力Daily_Bar数据
