@@ -205,7 +205,7 @@ def jq_get_and_save_dominant_symbol_from(underlying_symbol:str, from_date:dateti
                 bar_list, download_msg = download_bar_data(symbol=new_dominant, start='', end='', to_database=True)
                 msg = f'{msg}\n{download_msg}'
             print(msg)
-            #return_msg += msg
+            return_msg += msg
             target_date += timedelta(days=1)
         except:
             msg = traceback.format_exc()
