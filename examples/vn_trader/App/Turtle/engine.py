@@ -1103,7 +1103,8 @@ class TurtleAutoEngine(object):
                 turtleDataD = TurtleDataDownloading()
                 self.downloading = True
                 #result, msg = turtleDataD.download()
-                result, msg = turtleDataD.download_tushare()
+                #result, msg = turtleDataD.download_tushare()
+                result, msg = turtleDataD.download_jq()
                 self.downloading = False
                 self.downloaded = result
                 if result:
