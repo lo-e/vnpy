@@ -317,8 +317,8 @@ class TurtleDataDownloading(object):
         """
         # 下载分钟数据
         symbol_list = ['RB2001', 'RB2005']
-        start = '2019-12-01'
-        end = '2019-12-20'
+        start = '2019-01-01'
+        end = '2019-12-25'
         frequency = '1m'
         for symbol in symbol_list:
             bar_list, msg = download_bar_data(symbol=symbol, start=start, end=end, frequency=frequency, to_database=True)
