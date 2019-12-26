@@ -139,7 +139,7 @@ class BacktestingEngine:
                 self.pricetick
             )
         else:
-            self.history_datas = load_tick_data(
+            self.history_data = load_tick_data(
                 self.spread,
                 self.start,
                 self.end
@@ -505,6 +505,9 @@ class BacktestingEngine:
             trade.datetime = self.datetime
 
             self.spread.net_pos += pos_change
+            """ modify by loe """
+            # 策略spread_pos值的管理，回测和spread.net_pos保持一致，实盘和Algo_traded保持一致
+            self.strategy.spread_pos += pos_change
             self.strategy.on_spread_pos()
 
             self.trades[trade.vt_tradeid] = trade

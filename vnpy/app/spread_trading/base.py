@@ -422,8 +422,10 @@ def load_bar_data(
         startSymbol = re.sub("\d", "", collectionName)
         if startSymbol in TRANSFORM_SYMBOL_LIST.keys():
             endSymbol = re.sub("\D", "", collectionName)
-            replace = TRANSFORM_SYMBOL_LIST[startSymbol]
-            collectionName = startSymbol + replace + endSymbol
+            if len(endSymbol) == 3:
+                # 比如TA005需要进行转换
+                replace = TRANSFORM_SYMBOL_LIST[startSymbol]
+                collectionName = startSymbol + replace + endSymbol
 
         # 数据库查询数据
         dbClient = MongoClient('localhost', 27017, serverSelectionTimeoutMS=600)
