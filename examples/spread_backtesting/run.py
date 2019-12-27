@@ -20,8 +20,8 @@ def one():
     engine.set_parameters(
         spread=spread,
         interval="1m",
-        start=datetime(2019, 12, 1),
-        end=datetime(2019, 12, 20),
+        start=datetime(2019, 1, 1),
+        end=datetime(2019, 12, 31),
         rate=0,
         slippage=0,
         size=10,
