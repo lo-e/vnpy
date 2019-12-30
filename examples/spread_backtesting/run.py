@@ -22,9 +22,9 @@ def one():
         interval="1m",
         start=datetime(2019, 1, 1),
         end=datetime(2019, 12, 31),
-        rate=0,
+        rate=0.0001,
         slippage=0,
-        size=10,
+        size=20,
         pricetick=1,
         capital=200000,
     )
