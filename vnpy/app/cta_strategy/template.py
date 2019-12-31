@@ -390,6 +390,11 @@ class CtaTemplate(ABC):
         try:
             # 交易所枚举类型无法保存数据库，先转换成字符串
             temp = copy(tick)
+
+            if temp.last_price == 0:
+                # 目前发现Bybit接口tick数据会出现价格为0的情况
+                self.write_log(f'TICK价格出错\n{tick.__dict__}')
+
             if temp.exchange == Exchange.BYBIT:
                 # Bybit交易所的时间需要调整为北京时间
                 temp.datetime = temp.datetime + timedelta(hours=8)
