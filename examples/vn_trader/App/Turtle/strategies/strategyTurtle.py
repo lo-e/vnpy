@@ -219,7 +219,7 @@ class TurtleStrategy(CtaTemplate):
         t = tick.datetime.time()
         isFinance = isFinanceSymbol(tick.symbol)
         if not isFinance:
-            if NIGHT_END_CF_M <= t < MORNING_START_CF or MORNING_REST_CF <= t < MORNING_RESTART_CF or MORNING_END_CF <= t < AFTERNOON_START_CF or AFTERNOON_END_CF <= t < NIGHT_START_CF or NIGHT_END_CF_M <= t < MORNING_START_CF:
+            if NIGHT_END_CF_M <= t < MORNING_START_CF or MORNING_REST_CF <= t < MORNING_RESTART_CF or MORNING_END_CF <= t < AFTERNOON_START_CF or AFTERNOON_END_CF <= t < NIGHT_START_CF:
                 self.write_log(f'====== 过滤无效tick：{tick.vt_symbol}\t{tick.datetime} ======')
                 return
         else:
