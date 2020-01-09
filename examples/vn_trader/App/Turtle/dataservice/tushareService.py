@@ -109,7 +109,7 @@ def fetchSymbolList():
             data_dic = dict(row)
             symbol_data = TushareSymbolData()
             symbol_data.ts_code = data_dic.get('ts_code', '')
-            symbol_data.symbol = data_dic.get('symbol', '')
+            symbol_data.symbol = symbol_data.ts_code.split('.')[0]
             symbol_data.exchange = data_dic.get('exchange', '')
             symbol_data.name = data_dic.get('name', '')
             symbol_data.fut_code = data_dic.get('fut_code', '')
@@ -124,15 +124,6 @@ def fetchSymbolList():
             symbol_data.d_month = data_dic.get('d_month', '')
             symbol_data.last_ddate = data_dic.get('last_ddate', '')
             symbol_data.trade_time_desc = data_dic.get('trade_time_desc', '')
-
-            startSymbol = re.sub("\d", "", symbol_data.symbol)
-            if startSymbol in TRANSFORM_SYMBOL_LIST.keys():
-                endSymbol = re.sub("\D", "", symbol_data.symbol)
-                if endSymbol.startswith('0'):
-                    replace = 2
-                else:
-                    replace = 1
-                symbol_data.symbol = startSymbol + str(replace) + endSymbol
 
             data_list.append(symbol_data)
     return data_list
