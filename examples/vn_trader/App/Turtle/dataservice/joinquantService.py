@@ -57,7 +57,7 @@ def jq_get_all_trading_symbol_list(target_date:str=''):
         end = datetime.strptime(row['end_date'].strftime('%Y-%m-%d'), '%Y-%m-%d')
         data = jqSymbolData()
         data.display_name = row['display_name']
-        data.symbol = complete_symbol(row['name'].upper())
+        data.symbol = complete_symbol(row['name'].upper(), replace=str(end.year)[2])
         data.start_date = start
         data.end_date = end
         data.type = row['type']
@@ -78,16 +78,12 @@ def transform_jqcode(symbol:str):
             break
     return jq_code
 
-def complete_symbol(symbol:str):
+def complete_symbol(symbol:str, replace:str):
     symbol = symbol.upper()
     startSymbol = re.sub("\d", "", symbol)
     result = symbol
     if startSymbol in TRANSFORM_SYMBOL_LIST.keys():
         endSymbol = re.sub("\D", "", symbol)
-        if endSymbol.startswith('0'):
-            replace = 2
-        else:
-            replace = 1
         result = startSymbol + str(replace) + endSymbol
     return result
 
