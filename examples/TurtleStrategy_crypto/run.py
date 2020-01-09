@@ -27,7 +27,7 @@ def one():
             engine = BacktestingEngine()
             #engine.setPeriod(datetime(2015, 9, 1), datetime(2018, 12, 31))
             #engine.tradingStart = datetime(2016, 1, 1)
-            engine.setPeriod(datetime(2019, 1, 1), datetime(2019, 12, 31))
+            engine.setPeriod(datetime(2019, 1, 1), datetime(2020, 12, 31))
             engine.tradingStart = datetime(2019, 3, 12)
             figSavedName = ''
             if figSavedName:
