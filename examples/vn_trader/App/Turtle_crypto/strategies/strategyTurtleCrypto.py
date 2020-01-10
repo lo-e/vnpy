@@ -22,18 +22,13 @@ class TurtleStrategyCrypto(CtaTemplate):
     author = u'loe'
 
     # 策略参数
-    last_symbol = ''                    # 换月主力合约
     bit_value = 0                       # 数字货币设定价
     entryWindow = 20                    # 入场通道窗口
     exitWindow = 10                     # 出场通道窗口
     atrWindow = 15                      # 计算ATR波动率的窗口
 
     # 策略变量
-    lastSymbolClearNeed = False         # 需要清空前主力合约仓位
-    lastClearPos = 0
-    posInitialNeed = False              # 需要初始化新主力合约仓位
     hasClose = False                    # 当前交易日平仓tag，执行平仓的交易日不进行后续任何开平交易
-    newDominantOpen = True              # 主力换月后新主力开仓门槛【原则：原主力有实际同向持仓；门槛一直延续至下一轮信号】
 
     entryUp = 0                         # 入场通道上轨
     entryDown = 0                       # 入场通道下轨
@@ -62,7 +57,6 @@ class TurtleStrategyCrypto(CtaTemplate):
     # 参数列表，保存了参数的名称
     parameters = ['strategy_name',
                  'vt_symbol',
-                 'last_symbol',
                  'bit_value',
                  'per_size',
                  'tick_price',
@@ -72,10 +66,7 @@ class TurtleStrategyCrypto(CtaTemplate):
 
 
     # 变量列表，保存了变量的名称
-    variables = ['posInitialNeed',
-               'lastSymbolClearNeed',
-               'hasClose',
-               'newDominantOpen',
+    variables = ['hasClose',
                'entryUp',
                'entryDown',
                'exitUp',
@@ -116,16 +107,13 @@ class TurtleStrategyCrypto(CtaTemplate):
                 'virtualUnit',
                 'unit',
                 'entry',
-                'lastPnl',
-                'newDominantOpen']
+                'lastPnl']
 
     #----------------------------------------------------------------------
     def __init__(self, ctaEngine, turtlePortfolio, setting):
         """Constructor"""
         super(TurtleStrategyCrypto, self).__init__(cta_engine=ctaEngine, strategy_name='', vt_symbol='', setting=setting)
 
-        # last_symbol需要转换成带交易所后缀
-        self.check_last_symbol()
         self.portfolio = turtlePortfolio
         self.am = ArrayManager(self.entryWindow+1)
         self.atrAm = ArrayManager(self.atrWindow+1)
@@ -134,35 +122,6 @@ class TurtleStrategyCrypto(CtaTemplate):
     def on_init(self):
         """初始化策略（必须由用户继承实现）"""
         self.hasClose = False
-        if self.last_symbol:
-            # 主力换月处理
-            # 需要清空前主力合约仓位
-            # 从数据库载入前主力的持仓情况
-            flt = {'strategy_name': self.strategy_name,
-                   'vt_symbol': self.last_symbol}
-            syncData = self.cta_engine.main_engine.dbQuery(POSITION_DB_NAME, self.__class__.__name__, flt)
-
-            if not syncData:
-                self.write_log(f'前主力合约数据库交易数据缺失，需要检查！\tlastSymbol：{self.last_symbol}')
-                exit(0)
-
-            d = syncData[0]
-            pos = d['pos']
-            unit = d['unit']
-            if pos:
-                self.lastSymbolClearNeed = True
-                self.lastClearPos = pos
-
-            # 组合状态管理
-            if unit > 0:
-                self.portfolio.newSignal(self.last_symbol, Direction.SHORT, Offset.CLOSE)
-
-            elif unit < 0:
-                self.portfolio.newSignal(self.last_symbol, Direction.LONG, Offset.CLOSE)
-
-            # 需要建立新主力仓位，初始化新主力状态
-            self.newDominantInitial()
-
         self.barDbName = DAILY_DB_NAME
         # 载入历史数据，并采用回放计算的方式初始化策略数值
         initData = self.load_bar(300, interval=Interval.DAILY)
@@ -188,67 +147,6 @@ class TurtleStrategyCrypto(CtaTemplate):
 
         if not self.trading:
             return
-
-        # 主力换月时清空前主力仓位
-        if tick.vt_symbol == self.last_symbol:
-            if self.lastSymbolClearNeed:
-                if self.lastClearPos > 0:
-                    orderList = self.sendSymbolOrder(self.last_symbol, Direction.SHORT, Offset.CLOSE, self.bestLimitOrderPrice(tick, Direction.SHORT),
-                                         abs(self.lastClearPos))
-                    if len(orderList):
-                        self.pos += self.lastClearPos
-
-                elif self.lastClearPos < 0:
-                    orderList = self.sendSymbolOrder(self.last_symbol, Direction.LONG, Offset.CLOSE, self.bestLimitOrderPrice(tick, Direction.LONG),
-                                         abs(self.lastClearPos))
-                    if len(orderList):
-                        self.pos += self.lastClearPos
-
-                self.lastSymbolClearNeed = False
-            return
-
-        # 新主力仓位初始化
-        if self.posInitialNeed:
-            if self.newDominantOpen:
-                preCheck = True
-                # 过滤虚假开仓
-                if self.multiplier <= 0:
-                    preCheck = False
-
-                # 上次盈利过滤
-                if self.lastPnl > 0:
-                    preCheck = False
-
-                # 检查是否保证金超限
-                if self.checkBondOver(tick.last_price, 0):
-                    preCheck = False
-
-                if preCheck:
-                    if self.virtualUnit > 0:
-                        unitChange = 0
-                        i = 0
-                        while i < abs(self.virtualUnit):
-                            if self.portfolio.newSignal(self.vt_symbol, Direction.LONG, Offset.OPEN):
-                                unitChange += 1
-                            i += 1
-
-                        if unitChange > 0:
-                            self.unit += unitChange
-                            self.buy(self.bestLimitOrderPrice(tick, Direction.LONG), self.multiplier * abs(unitChange))
-
-                    elif self.virtualUnit < 0:
-                        unitChange = 0
-                        i = 0
-                        while i < abs(self.virtualUnit):
-                            if self.portfolio.newSignal(self.vt_symbol, Direction.SHORT, Offset.OPEN):
-                                unitChange -= 1
-                            i += 1
-
-                        if unitChange < 0:
-                            self.unit += unitChange
-                            self.short(self.bestLimitOrderPrice(tick, Direction.SHORT), self.multiplier * abs(unitChange))
-
-            self.posInitialNeed = False
 
         # 撮合信号与交易
         if not self.am.inited or not self.atrAm.inited:
@@ -286,10 +184,6 @@ class TurtleStrategyCrypto(CtaTemplate):
                 if self.checkBondOver(tick.last_price, current_multiplier):
                     preCheck = False
 
-                # 检查新主力合约是否允许开仓
-                if not self.newDominantOpen:
-                    preCheck = False
-
                 # 组合仓位管理
                 if preCheck:
                     if self.portfolio.newSignal(self.vt_symbol, Direction.LONG, Offset.OPEN):
@@ -311,9 +205,6 @@ class TurtleStrategyCrypto(CtaTemplate):
                     preCheck = False
 
                 if self.checkBondOver(tick.last_price, current_multiplier):
-                    preCheck = False
-
-                if not self.newDominantOpen:
                     preCheck = False
 
                 if preCheck:
@@ -338,9 +229,6 @@ class TurtleStrategyCrypto(CtaTemplate):
                 if self.checkBondOver(tick.last_price, current_multiplier):
                     preCheck = False
 
-                if not self.newDominantOpen:
-                    preCheck = False
-
                 if preCheck:
                     if self.portfolio.newSignal(self.vt_symbol, Direction.LONG, Offset.OPEN):
                         unitChange += 1
@@ -361,9 +249,6 @@ class TurtleStrategyCrypto(CtaTemplate):
                     preCheck = False
 
                 if self.checkBondOver(tick.last_price, current_multiplier):
-                    preCheck = False
-
-                if not self.newDominantOpen:
                     preCheck = False
 
                 if preCheck:
@@ -413,9 +298,6 @@ class TurtleStrategyCrypto(CtaTemplate):
                 if self.checkBondOver(tick.last_price, current_multiplier):
                     preCheck = False
 
-                if not self.newDominantOpen:
-                    preCheck = False
-
                 if preCheck:
                     if self.portfolio.newSignal(self.vt_symbol, Direction.SHORT, Offset.OPEN):
                         unitChange -= 1
@@ -436,9 +318,6 @@ class TurtleStrategyCrypto(CtaTemplate):
                     preCheck = False
 
                 if self.checkBondOver(tick.last_price, current_multiplier):
-                    preCheck = False
-
-                if not self.newDominantOpen:
                     preCheck = False
 
                 if preCheck:
@@ -463,9 +342,6 @@ class TurtleStrategyCrypto(CtaTemplate):
                 if self.checkBondOver(tick.last_price, current_multiplier):
                     preCheck = False
 
-                if not self.newDominantOpen:
-                    preCheck = False
-
                 if preCheck:
                     if self.portfolio.newSignal(self.vt_symbol, Direction.SHORT, Offset.OPEN):
                         unitChange -= 1
@@ -486,9 +362,6 @@ class TurtleStrategyCrypto(CtaTemplate):
                     preCheck = False
 
                 if self.checkBondOver(tick.last_price, current_multiplier):
-                    preCheck = False
-
-                if not self.newDominantOpen:
                     preCheck = False
 
                 if preCheck:
@@ -614,47 +487,5 @@ class TurtleStrategyCrypto(CtaTemplate):
         self.virtualUnit = 0
         self.unit = 0
         self.entry = 0
-        self.newDominantOpen = True
         self.multiplierList = []
-
-    # 主力换月，初始化交易状态
-    def newDominantInitial(self):
-        if self.pos:
-            return
-        self.posInitialNeed = True
-
-        initialManager = TurtleInitialCryptoManager(self.vt_symbol, self.entryWindow, self.exitWindow, self.atrWindow)
-        initialManager.backtesting()
-
-        self.atrVolatility = initialManager.atrVolatility
-        self.longEntry1 = initialManager.longEntry1
-        self.longEntry2 = initialManager.longEntry2
-        self.longEntry3 = initialManager.longEntry3
-        self.longEntry4 = initialManager.longEntry4
-        self.shortEntry1 = initialManager.shortEntry1
-        self.shortEntry2 = initialManager.shortEntry2
-        self.shortEntry3 = initialManager.shortEntry3
-        self.shortEntry4 = initialManager.shortEntry4
-        self.longStop = initialManager.longStop
-        self.shortStop = initialManager.shortStop
-
-        self.virtualUnit = initialManager.unit
-
-        if initialManager.result:
-            self.entry = initialManager.result.entry
-        self.lastPnl = initialManager.getLastPnl()
-
-        if (self.lastClearPos > 0 and self.virtualUnit > 0) or (self.lastClearPos < 0 and self.virtualUnit < 0) or self.virtualUnit == 0:
-            self.newDominantOpen = True
-        else:
-            self.newDominantOpen = False
-
-    def check_last_symbol(self):
-        sepList = self.last_symbol.split('.')
-        symbol = sepList[0]
-        startSymbol = re.sub("\d", "", symbol).upper()
-        for key, value in EXCHANGE_SYMBOL_DICT.items():
-            if startSymbol in value:
-                self.last_symbol = '.'.join([symbol, key.value])
-                break
 
