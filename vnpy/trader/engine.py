@@ -670,6 +670,10 @@ class EmailEngine(BaseEngine):
 
         self.queue.put(msg)
 
+        """ modify by loe """
+        # 同时发送钉钉消息
+        self.main_engine.send_ding_talk(content=f'邮件主题\n============\n{subject}\n\n邮件内容\n============\n{content}')
+
     def run(self):
         """"""
         while self.active:
@@ -733,21 +737,24 @@ class DingTalkEngine(BaseEngine):
                 enable = True
                 break
         if enable:
-            client = socket.gethostname()
-            content = f'【{client}】\n'
+            content = ''
             for key, value in content_dic.items():
                 content += f'{key}：{value}\n'
 
             self.send_ding_talk(content=content)
 
     def send_ding_talk(self, content):
+        # 内容添加电脑名称
+        client = socket.gethostname()
+        full_content = f'【{client}】\n\n{content}'
+
         # 开启线程
         if not self.active:
             self.start()
 
         # 消息推入队列，做流控处理
         if self.queue.qsize() < 10:
-            self.queue.put(content)
+            self.queue.put(full_content)
 
     def run(self):
         """"""
