@@ -134,7 +134,7 @@ def one():
                     print('datetime\t%s' % signal.bar.datetime)
                     print('ATR\t%s' % signal.atrVolatility)
                     print('virtualUnit\t%s' % signal.unit)
-                    print('unit\t%s' % signal.unit)
+                    print('unit\t%s' % engine.portfolio.unitDict[signal.symbol])
                     print('longStop\t%s' % signal.longStop)
                     print('shortStop\t%s' % signal.shortStop)
                     if signal.result:
