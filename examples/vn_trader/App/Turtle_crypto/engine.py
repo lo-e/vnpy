@@ -1027,6 +1027,16 @@ class TurtleEngine(BaseEngine):
                 self.put_strategy_event(strategy)
                 self.write_log(f"{strategy_name} 重新初始化完成")
 
+    def reinit_strategie(self, strategy_name):
+        strategy = self.strategies[strategy_name]
+        if strategy.inited:
+            temp = strategy.trading
+            strategy.trading = False
+            self.call_strategy_func(strategy, strategy.on_init)
+            strategy.trading = temp
+            self.put_strategy_event(strategy)
+            self.write_log(f"{strategy_name} 重新初始化完成")
+
 """ modify by loe """
 # 数据下载引擎，每天固定时间从1Token自动下载策略回测及实盘必要的数据，并自动结合订阅下载的数据合成DailyBar，策略自动重新初始化
 class TurtleCryptoAutoEngine(object):
