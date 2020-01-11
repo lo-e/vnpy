@@ -493,7 +493,7 @@ class TurtlePortfolio(object):
         """ modify by loe """
         self.categoryLongUnitDict = defaultdict(int)      # 高度关联品种多头持仓情况
         self.categoryShortUnitDict = defaultdict(int)     # 高度关联品种空头持仓情况
-        self.maxBond = []                                 # 历史占用保证金的最大值
+        self.maxBond = [0, 0]                             # 历史占用保证金的最大值
         self.tradingStart = None                          # 开始交易日期
         
         self.tradingDict = {}       # 交易中的信号字典

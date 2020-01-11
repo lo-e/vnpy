@@ -506,7 +506,7 @@ class DailyResult(object):
 #----------------------------------------------------------------------
 def formatNumber(n):
     """格式化数字到字符串"""
-    rn = round(n, 2)        # 保留两位小数
+    rn = round(n, 6)        # 保留两位小数
     return format(rn, ',')  # 加上千分符
 
 def CurrencyWithSymbol(symbol=''):
