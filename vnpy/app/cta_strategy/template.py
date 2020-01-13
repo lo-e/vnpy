@@ -394,6 +394,7 @@ class CtaTemplate(ABC):
             if temp.last_price == 0:
                 # 目前发现Bybit接口tick数据会出现价格为0的情况
                 self.write_log(f'TICK价格出错\n{tick.__dict__}')
+                return
 
             if temp.exchange == Exchange.BYBIT:
                 # Bybit交易所的时间需要调整为北京时间

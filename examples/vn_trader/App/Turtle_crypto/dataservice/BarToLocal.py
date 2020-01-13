@@ -181,14 +181,14 @@ class BarLocalEngine(object):
             min_bar = None
             tick_count = 0
             for tick_dic in tick_cursor:
-                tick_count += 1
                 tick_datetime = tick_dic['datetime']
                 tick_price = tick_dic['last_price']
                 if tick_price == 0:
-                    raise ('出现异常，检查数据！')
+                    break
                 if tick_datetime >= next_min + timedelta(minutes=1):
                     break
 
+                tick_count += 1
                 if not min_bar:
                     min_bar = BarData(gateway_name='', symbol='', exchange=None, datetime=next_min,
                                       endDatetime=None)
