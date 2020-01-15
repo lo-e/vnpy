@@ -161,6 +161,7 @@ class CtaStrategyManager(QtWidgets.QGroupBox):
         """停止策略"""
         self.turtleEngine.stop_strategy(self.name)
 
+    """ modify by loe """
     # ----------------------------------------------------------------------
     def reinit(self):
         """重新初始化策略"""
@@ -201,16 +202,19 @@ class TurtlePortfolioManager(QtWidgets.QGroupBox):
         buttonInit = QtWidgets.QPushButton(text.INIT)
         buttonStart = QtWidgets.QPushButton(text.START)
         buttonStop = QtWidgets.QPushButton(text.STOP)
+        buttonReinit = QtWidgets.QPushButton(text.RE_INIT)
         buttonLoad.clicked.connect(self.load)
         buttonInit.clicked.connect(self.init)
         buttonStart.clicked.connect(self.start)
         buttonStop.clicked.connect(self.stop)
+        buttonReinit.clicked.connect(self.reinit)
 
         hbox1 = QtWidgets.QHBoxLayout()
         hbox1.addWidget(buttonLoad)
         hbox1.addWidget(buttonInit)
         hbox1.addWidget(buttonStart)
         hbox1.addWidget(buttonStop)
+        hbox1.addWidget(buttonReinit)
         hbox1.addStretch()
 
         hbox2 = QtWidgets.QHBoxLayout()
@@ -278,6 +282,11 @@ class TurtlePortfolioManager(QtWidgets.QGroupBox):
         """停止组合"""
         self.turtleEngine.stopPortfolio()
 
+    """ modify by loe """
+    # ----------------------------------------------------------------------
+    def reinit(self):
+        """重新初始化策略"""
+        self.turtleEngine.reinit_strategies()
 
 ########################################################################
 class TurtleManager(QtWidgets.QWidget):

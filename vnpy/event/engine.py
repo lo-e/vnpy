@@ -8,8 +8,8 @@ from threading import Thread
 from time import sleep
 from typing import Any, Callable
 
-EVENT_TIMER = "eTimer"
-
+""" modify by loe """
+from vnpy.trader.event import EVENT_TICK, EVENT_TIMER
 
 class Event:
     """
@@ -69,6 +69,13 @@ class EventEngine:
         Then distrubute event to those general handlers which listens
         to all types.
         """
+        """ modify by loe """
+        # 过滤无效的TICK
+        if event.type == EVENT_TICK:
+            tick_data = event.data
+            if tick_data.last_price == 0:
+                return
+
         if event.type in self._handlers:
             [handler(event) for handler in self._handlers[event.type]]
 
