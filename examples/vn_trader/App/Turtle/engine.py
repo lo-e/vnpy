@@ -1059,6 +1059,16 @@ class TurtleEngine(BaseEngine):
                 self.put_strategy_event(strategy)
                 self.write_log(f"{strategy_name} 重新初始化完成")
 
+    def reinit_strategie(self, strategy_name):
+        strategy = self.strategies[strategy_name]
+        if strategy.inited:
+            temp = strategy.trading
+            strategy.trading = False
+            self.call_strategy_func(strategy, strategy.on_init)
+            strategy.trading = temp
+            self.put_strategy_event(strategy)
+            self.write_log(f"{strategy_name} 重新初始化完成")
+
 """ modify by loe """
 # 数据自动化引擎，每天固定时间从RQData下载策略回测及实盘必要的数据，自动重连CTP和重新初始化策略
 class TurtleAutoEngine(object):
