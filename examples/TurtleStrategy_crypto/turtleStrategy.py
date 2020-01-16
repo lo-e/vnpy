@@ -181,7 +181,7 @@ class TurtleSignal(object):
                 self.actualBarList = []
                 db = self.client[DAILY_DB_NAME]
                 collection = db[self.actualSymbol]
-                cursor = collection.find().sort('date')
+                cursor = collection.find().sort('datetime')
                 for dic in cursor:
                     exchange = Exchange.RQ
                     b = BarData(gateway_name='', symbol='', exchange=exchange, datetime=None, endDatetime=None)
