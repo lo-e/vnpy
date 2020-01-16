@@ -233,7 +233,7 @@ class TurtleDataDownloading(object):
 
     def download_jq(self, symbol_list: list = None):
         #"""
-        underlying_list = ['RB', 'HC', 'SM', 'J', 'ZC', 'TA']
+        underlying_list = ['RB', 'HC', 'SM', 'J', 'ZC', 'TA', 'I', 'RU']
         #underlying_list = ['TA']
         days = 0
         today = datetime.strptime(datetime.now().strftime('%Y%m%d'), '%Y%m%d')
