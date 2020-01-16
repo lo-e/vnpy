@@ -21,9 +21,10 @@ from .tushareService import fetchNextTradeDate
 # 聚宽账号登陆
 auth('18521705317', '970720699')
 
-EXCHANGE_SYMBOL_MAP = {'XSGE':['RB', 'HC'],
+# 使用聚宽数据服务，添加新的品种必须这里添加代码
+EXCHANGE_SYMBOL_MAP = {'XSGE':['RB', 'HC', 'RU'],
                        'XZCE':['SM', 'ZC', 'TA'],
-                       'XDCE':['J', 'A']}
+                       'XDCE':['J', 'A', 'I']}
 
 client = MongoClient('localhost', 27017, serverSelectionTimeoutMS=600)
 client.server_info()
