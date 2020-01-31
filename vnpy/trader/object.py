@@ -124,6 +124,21 @@ class BarData(BaseData):
 
         return True
 
+    """ modify by loe """
+    def merge_old_data(self):
+        if not self.open_price and self.open:
+            self.open_price = self.open
+
+        if not self.high_price and self.high:
+            self.high_price = self.high
+
+        if not self.low_price and self.low:
+            self.low_price = self.low
+
+        if not self.close_price and self.close:
+            self.close_price = self.close
+
+
 
 @dataclass
 class OrderData(BaseData):

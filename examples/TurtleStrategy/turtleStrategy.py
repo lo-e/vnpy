@@ -191,6 +191,7 @@ class TurtleSignal(object):
                     exchange = Exchange.RQ
                     b = BarData(gateway_name='', symbol='', exchange=exchange, datetime=None, endDatetime=None)
                     b.__dict__ = dic
+                    b.merge_old_data()
                     self.actualBarList.append(b)
 
                 # 新主力合约模拟回测历史数据，获取入场状态
