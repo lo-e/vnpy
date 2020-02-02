@@ -12,6 +12,7 @@ ACTIVE_STATUSES = set([Status.SUBMITTING, Status.NOTTRADED, Status.PARTTRADED])
 
 """ modify by loe """
 import numpy as np
+from copy import copy
 
 
 @dataclass
@@ -125,20 +126,19 @@ class BarData(BaseData):
         return True
 
     """ modify by loe """
-    def merge_old_data(self):
-        if not self.open_price and self.open:
-            self.open_price = self.open
-
-        if not self.high_price and self.high:
-            self.high_price = self.high
-
-        if not self.low_price and self.low:
-            self.low_price = self.low
-
-        if not self.close_price and self.close:
-            self.close_price = self.close
-
-
+    def merge_data(self, old_data:dict):
+        new_data = copy(old_data)
+        merge_dict = {'open':'open_price',
+                      'high':'high_price',
+                      'low':'low_price',
+                      'close':'close_price',
+                      'gatewayName':'gateway_name',
+                      'openInterest':'open_interest',
+                      'vtSymbol':'vt_symbol'}
+        for key, value in merge_dict.items():
+            if key in new_data:
+                new_data[value] = new_data.pop(key)
+        return new_data
 
 @dataclass
 class OrderData(BaseData):
