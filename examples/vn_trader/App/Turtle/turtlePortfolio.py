@@ -17,7 +17,7 @@ CATEGORY_DICT = {'finance':['IF','IC','IH'],
                 'nonferrous_metal':['AL'],
                  'ferrous_metal':['RB','I','HC','SM'],
                  'coal':['JM','J','ZC'],
-                 'chemical_industry':['TA']}
+                 'chemical_industry':['TA', 'RU']}
 
 
 ########################################################################

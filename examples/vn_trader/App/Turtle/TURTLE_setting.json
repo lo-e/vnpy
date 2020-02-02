@@ -11,12 +11,12 @@
     },
 
     {
-        "strategy_name": "TURTLE_HC",
+        "strategy_name": "TURTLE_I",
         "class_name": "TurtleStrategy",
-        "vt_symbol": "hc2005",
+        "vt_symbol": "i2005",
         "last_symbol":"",
-        "per_size":10,
-        "tick_price":1,
+        "per_size":100,
+        "tick_price":0.5,
         "start": true
     },
 

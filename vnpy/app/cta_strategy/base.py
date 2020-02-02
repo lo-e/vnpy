@@ -71,7 +71,7 @@ def HourDataBaseName(duration:int):
 
 
 EXCHANGE_SYMBOL_DICT = {Exchange.CFFEX:['IF', 'IC', 'IH'],
-                        Exchange.SHFE:['AL', 'RB', 'HC'],
+                        Exchange.SHFE:['AL', 'RB', 'HC', 'RU'],
                         Exchange.CZCE:['SM', 'ZC', 'TA'],
                         Exchange.DCE:['I', 'JM', 'J']}
 
