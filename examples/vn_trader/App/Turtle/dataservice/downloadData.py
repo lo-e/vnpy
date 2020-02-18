@@ -324,3 +324,14 @@ class TurtleDataDownloading(object):
             bar_list, msg = download_bar_data(symbol=symbol, start=start, end=end, frequency=frequency, to_database=True)
             print(msg)
         """
+
+    def download_minute_jq(self):
+        symbol = 'RB2010'
+        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        start = datetime.strptime('2019-10-01 0:00:00', '%Y-%m-%d %H:%M:%S')
+        end = start + timedelta(days=1)
+        while end <= today:
+            bar_list, msg = download_bar_data(symbol=symbol, start=start.strftime('%Y-%m-%d %H:%M:%S'), end=end.strftime('%Y-%m-%d %H:%M:%S'), frequency='1m', to_database=True)
+            print(msg)
+            start = end
+            end = end + timedelta(days=1)
