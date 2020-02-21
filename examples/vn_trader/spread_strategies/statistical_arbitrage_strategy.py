@@ -32,6 +32,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     boll_up = 0.0
     boll_down = 0.0
     boll_mid = 0.0
+    current_length = 0.0
 
     parameters = [
         "boll_window",
@@ -44,7 +45,8 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     variables = [
         "boll_up",
         "boll_down",
-        "boll_mid"
+        "boll_mid",
+        "current_length"
     ]
 
     syncs = [
@@ -126,6 +128,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         if self.am.inited:
             self.boll_mid = self.am.sma(self.boll_window)
             self.boll_up, self.boll_down = self.am.boll(self.boll_window, self.boll_dev)
+        self.current_length = self.boll_up - self.boll_mid
 
         if not self.boll_up or not self.boll_mid or not self.boll_down:
             return 
