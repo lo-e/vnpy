@@ -12,6 +12,9 @@ from vnpy.trader.constant import Offset
 import numpy as np
 from datetime import datetime
 
+# 数据下载
+from App.Turtle.dataservice import TurtleDataDownloading
+
 CLOSE_TIME_START = '14:55'
 CLOSE_TIME_END = '15:05'
 class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
@@ -64,6 +67,14 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
 
         self.bg = BarGenerator(self.on_spread_bar)
         self.am = ArrayManager(size=self.boll_window)
+
+    def download_data(self):
+        symbol_list = []
+        for vt_symbol in self.spread.legs.keys():
+            symbol = vt_symbol.split('.')[0].upper()
+            symbol_list.append(symbol)
+        msg = TurtleDataDownloading().download_minute_jq(symbol_list=symbol_list)
+        self.strategy_engine.send_strategy_email(self, msg=msg)
 
     def on_init(self):
         """

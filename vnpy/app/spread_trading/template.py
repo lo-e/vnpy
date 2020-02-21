@@ -11,6 +11,10 @@ from vnpy.trader.utility import virtual, floor_to, ceil_to, round_to
 
 from .base import SpreadData, calculate_inverse_volume
 
+""" modify by loe """
+#数据下载
+from concurrent.futures import ThreadPoolExecutor
+
 class SpreadAlgoTemplate:
     """
     Template for implementing spread trading algos.
@@ -370,6 +374,18 @@ class SpreadStrategyTemplate:
 
         self.update_setting(setting)
 
+        """ modify by loe """
+        # 数据下载
+        self.prepare_for_downloading()
+
+    """ modify by loe """
+    def prepare_for_downloading(self):
+        thread_executor = ThreadPoolExecutor(max_workers=10)
+        thread_executor.submit(self.download_data)
+
+    def download_data(self):
+        pass
+
     def update_setting(self, setting: dict):
         """
         Update strategy parameter wtih value in setting dict.
@@ -676,7 +692,7 @@ class SpreadStrategyTemplate:
         Send email to default receiver.
         """
         if self.inited:
-            self.strategy_engine.send_email(msg, self)
+            self.strategy_engine.send_strategy_email(self, msg=msg)
 
     def load_bar(
         self,
