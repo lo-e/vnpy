@@ -314,24 +314,18 @@ class TurtleDataDownloading(object):
         return result, return_msg
         #"""
 
-        """
-        # 下载分钟数据
-        symbol_list = ['RB2001', 'RB2005']
-        start = '2019-01-01'
-        end = '2019-12-25'
-        frequency = '1m'
-        for symbol in symbol_list:
-            bar_list, msg = download_bar_data(symbol=symbol, start=start, end=end, frequency=frequency, to_database=True)
-            print(msg)
-        """
-
     def download_minute_jq(self):
-        symbol = 'RB2010'
+        symbol_list = ['RB2010', 'RB2005']
+        days = 0
         today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        start = datetime.strptime('2019-10-01 0:00:00', '%Y-%m-%d %H:%M:%S')
+        next_day = today + timedelta(days=1)
+        start = today - timedelta(days=days)
         end = start + timedelta(days=1)
-        while end <= today:
-            bar_list, msg = download_bar_data(symbol=symbol, start=start.strftime('%Y-%m-%d %H:%M:%S'), end=end.strftime('%Y-%m-%d %H:%M:%S'), frequency='1m', to_database=True)
-            print(msg)
+        while end <= next_day:
+            if end == next_day:
+                end = datetime.now()
+            for symbol in symbol_list:
+                bar_list, msg = download_bar_data(symbol=symbol, start=start.strftime('%Y-%m-%d %H:%M:%S'), end=end.strftime('%Y-%m-%d %H:%M:%S'), frequency='1m', to_database=True)
+                print(msg)
             start = end
             end = end + timedelta(days=1)
