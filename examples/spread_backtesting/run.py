@@ -24,7 +24,7 @@ def one():
         end=datetime(2019, 12, 31),
         rate=0.0001,
         slippage=0,
-        size=20,
+        size=10,
         pricetick=1,
         capital=200000,
     )

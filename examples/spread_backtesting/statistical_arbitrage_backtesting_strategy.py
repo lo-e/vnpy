@@ -22,7 +22,7 @@ class StatisticalArbitrageBacktestingStrategy(SpreadStrategyTemplate):
     boll_window = 20
     boll_dev = 2
     open_value = 4
-    max_pos = 10
+    max_pos = 30
     payup = 10
     interval = 5
 
