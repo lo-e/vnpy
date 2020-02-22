@@ -14,6 +14,9 @@ from vnpy.trader.object import TradeData, BarData, TickData
 from .template import SpreadStrategyTemplate, SpreadAlgoTemplate
 from .base import SpreadData, BacktestingMode, load_bar_data, load_tick_data
 
+""" modify by loe """
+from vnpy.trader.utility import round_to
+
 sns.set_style("whitegrid")
 
 
@@ -450,67 +453,85 @@ class BacktestingEngine:
         Cross limit order with last bar/tick data.
         """
         if self.mode == BacktestingMode.BAR:
-            long_cross_price = self.bar.close_price
-            short_cross_price = self.bar.close_price
+            # 需要分别对open_price 和 close_price 做一次成交判断
+            cross_count = 2
         else:
-            long_cross_price = self.tick.ask_price_1
-            short_cross_price = self.tick.bid_price_1
+            cross_count = 1
 
-        for algo in list(self.active_algos.values()):
-            # Check whether limit orders can be filled.
-            long_cross = (
-                algo.direction == Direction.LONG
-                and algo.price >= long_cross_price
-                and long_cross_price > 0
-            )
-
-            short_cross = (
-                algo.direction == Direction.SHORT
-                and algo.price <= short_cross_price
-                and short_cross_price > 0
-            )
-
-            if not long_cross and not short_cross:
-                continue
-
-            # Push order udpate with status "all traded" (filled).
-            algo.traded = algo.volume
-            algo.status = Status.ALLTRADED
-            self.strategy.update_spread_algo(algo)
-
-            self.active_algos.pop(algo.algoid)
-
-            # Push trade update
-            self.trade_count += 1
-
-            if long_cross:
-                trade_price = long_cross_price
-                pos_change = algo.volume
+        i = 1
+        has_cross = False
+        while i <= cross_count and not has_cross:
+            if self.mode == BacktestingMode.BAR:
+                if i == 1:
+                    long_cross_price = self.bar.open_price
+                    short_cross_price = self.bar.open_price
+                elif i == 2:
+                    long_cross_price = self.bar.close_price
+                    short_cross_price = self.bar.close_price
+                else:
+                    raise ('逻辑错误，需要检查代码！')
             else:
-                trade_price = short_cross_price
-                pos_change = -algo.volume
+                long_cross_price = self.tick.ask_price_1
+                short_cross_price = self.tick.bid_price_1
+            i += 1
 
-            trade = TradeData(
-                symbol=self.spread.name,
-                exchange=Exchange.LOCAL,
-                orderid=algo.algoid,
-                tradeid=str(self.trade_count),
-                direction=algo.direction,
-                offset=algo.offset,
-                price=trade_price,
-                volume=algo.volume,
-                time=self.datetime.strftime("%H:%M:%S"),
-                gateway_name=self.gateway_name,
-            )
-            trade.datetime = self.datetime
+            for algo in list(self.active_algos.values()):
+                # Check whether limit orders can be filled.
+                long_cross = (
+                    algo.direction == Direction.LONG
+                    and algo.price >= long_cross_price
+                    and long_cross_price > 0
+                )
 
-            self.spread.net_pos += pos_change
-            """ modify by loe """
-            # 策略spread_pos值的管理，回测和spread.net_pos保持一致，实盘和Algo_traded保持一致
-            self.strategy.spread_pos += pos_change
-            self.strategy.on_spread_pos()
+                short_cross = (
+                    algo.direction == Direction.SHORT
+                    and algo.price <= short_cross_price
+                    and short_cross_price > 0
+                )
 
-            self.trades[trade.vt_tradeid] = trade
+                if not long_cross and not short_cross:
+                    continue
+
+                has_cross = True
+                # Push order udpate with status "all traded" (filled).
+                algo.traded = algo.volume
+                algo.status = Status.ALLTRADED
+                self.strategy.update_spread_algo(algo)
+
+                self.active_algos.pop(algo.algoid)
+
+                # Push trade update
+                self.trade_count += 1
+
+                if long_cross:
+                    trade_price = round_to(algo.price, self.pricetick)
+                    pos_change = algo.volume
+                else:
+                    trade_price = round_to(algo.price, self.pricetick)
+                    pos_change = -algo.volume
+
+                trade = TradeData(
+                    symbol=self.spread.name,
+                    exchange=Exchange.LOCAL,
+                    orderid=algo.algoid,
+                    tradeid=str(self.trade_count),
+                    direction=algo.direction,
+                    offset=algo.offset,
+                    price=trade_price,
+                    volume=algo.volume,
+                    time=self.datetime.strftime("%H:%M:%S"),
+                    gateway_name=self.gateway_name,
+                )
+                trade.datetime = self.datetime
+                trade.leg_price = self.bar.high_price
+
+                self.spread.net_pos += pos_change
+                """ modify by loe """
+                # 策略spread_pos值的管理，回测和spread.net_pos保持一致，实盘和Algo_traded保持一致
+                self.strategy.spread_pos += pos_change
+                self.strategy.on_spread_pos()
+
+                self.trades[trade.vt_tradeid] = trade
 
     def load_bar(
         self, spread: SpreadData, days: int, interval: Interval, callback: Callable
@@ -675,7 +696,7 @@ class DailyResult:
 
             self.end_pos += pos_change
 
-            turnover = trade.volume * size * trade.price
+            turnover = trade.volume * size * trade.leg_price * 2
             self.trading_pnl += pos_change * \
                 (self.close_price - trade.price) * size
             self.slippage += trade.volume * size * slippage

@@ -448,7 +448,9 @@ def load_bar_data(
     spread_bars: List[BarData] = []
     datetime_list = sorted(list(datetime_list))
     for dt in datetime_list:
-        spread_price = 0
+        spread_open_price = 0
+        spread_close_price = 0
+        leg_price_list = []
         spread_available = True
 
         for leg in spread.legs.values():
@@ -456,23 +458,28 @@ def load_bar_data(
 
             if leg_bar:
                 price_multiplier = spread.price_multipliers[leg.vt_symbol]
-                spread_price += price_multiplier * leg_bar.close_price
+                spread_open_price += price_multiplier * leg_bar.open_price
+                spread_close_price += price_multiplier * leg_bar.close_price
+                leg_price_list.append(leg_bar.close_price)
             else:
                 spread_available = False
 
         if spread_available:
+            leg_price = sum(leg_price_list) / len(leg_price_list)
             if pricetick:
-                spread_price = round_to(spread_price, pricetick)
+                spread_open_price = round_to(spread_open_price, pricetick)
+                spread_close_price = round_to(spread_close_price, pricetick)
+                leg_price = round_to(leg_price, pricetick)
 
             spread_bar = BarData(
                 symbol=spread.name,
                 exchange=Exchange.LOCAL,
                 datetime=dt,
                 interval=interval,
-                open_price=spread_price,
-                high_price=spread_price,
-                low_price=spread_price,
-                close_price=spread_price,
+                open_price=spread_open_price,
+                high_price=leg_price,
+                low_price=leg_price,
+                close_price=spread_close_price,
                 gateway_name="SPREAD",
             )
             spread_bars.append(spread_bar)
