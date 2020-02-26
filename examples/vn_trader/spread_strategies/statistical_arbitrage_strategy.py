@@ -83,12 +83,6 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         Callback when strategy is inited.
         """
         self.write_log("策略初始化")
-
-        if not self.spread_pos:
-            self.boll_up = 0
-            self.boll_mid = 0
-            self.boll_down = 0
-
         self.load_bar(10)
 
     def on_start(self):
@@ -96,6 +90,8 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         Callback when strategy is started.
         """
         self.write_log("策略启动")
+        self.trading = True
+        self.check_for_trade()
 
     def on_stop(self):
         """
@@ -129,13 +125,16 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
             self.boll_mid = self.am.sma(self.boll_window)
             self.boll_up, self.boll_down = self.am.boll(self.boll_window, self.boll_dev)
         self.current_length = self.boll_up - self.boll_mid
+        # 判断交易
+        self.check_for_trade()
 
+    def check_for_trade(self):
         if not self.boll_up or not self.boll_mid or not self.boll_down:
-            return 
+            return
 
         if not self.spread_pos:
             # 设置一个开仓阈值
-            if self.boll_up - self.boll_mid >= self.open_value:
+            if self.current_length >= self.open_value:
                 self.start_short_algo(
                     self.boll_up,
                     self.max_pos,
