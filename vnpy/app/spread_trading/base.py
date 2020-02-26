@@ -448,6 +448,7 @@ def load_bar_data(
     spread_bars: List[BarData] = []
     datetime_list = sorted(list(datetime_list))
     for dt in datetime_list:
+        """ modify by loe """
         spread_open_price = 0
         spread_close_price = 0
         leg_price_list = []
