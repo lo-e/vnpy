@@ -532,6 +532,8 @@ class BacktestingEngine:
                 self.strategy.on_spread_pos()
 
                 self.trades[trade.vt_tradeid] = trade
+                """ modify by loe """
+                self.strategy.on_trade(trade)
 
     def load_bar(
         self, spread: SpreadData, days: int, interval: Interval, callback: Callable
