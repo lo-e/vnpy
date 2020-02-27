@@ -30,7 +30,8 @@ def extract_vt_symbol(vt_symbol: str):
     if len(symbol_list) >= 2:
         e = symbol_list[-1]
         exchange = Exchange(e)
-        symbol = vt_symbol.strip(f'.{e}')
+        symbol_list.pop(-1)
+        symbol = '.'.join(symbol_list)
     return symbol, exchange
 
 
