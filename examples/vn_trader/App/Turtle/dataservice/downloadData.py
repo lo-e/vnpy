@@ -318,7 +318,7 @@ class TurtleDataDownloading(object):
         return_msg = ''
         if not symbol_list:
             symbol_list = ['RB2010', 'RB2005']
-        days = 0
+        days = 1
         today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         next_day = today + timedelta(days=1)
         start = today - timedelta(days=days)
