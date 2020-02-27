@@ -461,7 +461,7 @@ def load_bar_data(
                 price_multiplier = spread.price_multipliers[leg.vt_symbol]
                 spread_open_price += price_multiplier * leg_bar.open_price
                 spread_close_price += price_multiplier * leg_bar.close_price
-                leg_price_list.append(leg_bar.close_price)
+                leg_price_list.append(abs(price_multiplier) * leg_bar.close_price)
             else:
                 spread_available = False
 
