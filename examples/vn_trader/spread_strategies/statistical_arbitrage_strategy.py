@@ -118,6 +118,10 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         """
         Callback when spread bar data is generated.
         """
+        if self.check_algo_trading():
+            # 算法部分成交但是没有完全成交
+            return
+
         self.stop_all_algos()
         self.am.update_bar(bar)
 

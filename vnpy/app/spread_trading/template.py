@@ -722,6 +722,17 @@ class SpreadStrategyTemplate:
                 if algoid != algo.algoid:
                     self.stop_algo(algoid)
 
+    def check_algo_trading(self):
+        # 检查是否有算法部分成交但是没有全部成交
+        result = False
+        for algoid in self.algoids:
+            algo = self.strategy_engine.get_algo(algoid=algoid)
+            if algo.check_leg_traded() and algo.is_active():
+                result = True
+                break
+        return result
+
+
     def put_timer_event(self):
         self.timer_event_cross = True
 

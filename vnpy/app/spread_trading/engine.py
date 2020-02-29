@@ -977,6 +977,11 @@ class SpreadStrategyEngine:
         """"""
         pass
 
+    """ modify by loe """
+    def get_algo(self, algoid:str):
+        algo = self.spread_engine.algos.get(algoid, None)
+        return algo
+
     def send_order(
         self,
         strategy: SpreadStrategyTemplate,

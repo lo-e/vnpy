@@ -12,11 +12,11 @@ import csv
 def one():
     spread = SpreadData(
         name="RB",
-        legs=[LegData("RB2010.SHFE"), LegData("HC2010.SHFE")],
-        price_multipliers={"RB2010.SHFE": 1, "HC2010.SHFE": -1},
-        trading_multipliers={"RB2010.SHFE": 1, "HC2010.SHFE": -1},
-        active_symbol="RB2010.SHFE",
-        inverse_contracts={"RB2010.SHFE": False, "HC2010.SHFE": False},
+        legs=[LegData("RB2010.SHFE"), LegData("RB2005.SHFE")],
+        price_multipliers={"RB2010.SHFE": 1, "RB2005.SHFE": -1},
+        trading_multipliers={"RB2010.SHFE": 1, "RB2005.SHFE": -1},
+        active_symbol="RB2005.SHFE",
+        inverse_contracts={"RB2010.SHFE": False, "RB2005.SHFE": False},
         min_volume=1
     )
 
@@ -40,7 +40,7 @@ def one():
     engine.calculate_statistics()
     engine.show_chart()
 
-    save_trade_detail = False
+    save_trade_detail = True
     if save_trade_detail:
         resultList = []
         totalPnl = 0
