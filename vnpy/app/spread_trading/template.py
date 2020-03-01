@@ -732,6 +732,15 @@ class SpreadStrategyTemplate:
                 break
         return result
 
+    def check_algo_leg_broken(self):
+        # 检查是否有算法断腿
+        result = False
+        for algoid in self.algoids:
+            algo = self.strategy_engine.get_algo(algoid=algoid)
+            if not algo.check_hedge_finished:
+                result = True
+                break
+        return result
 
     def put_timer_event(self):
         self.timer_event_cross = True
