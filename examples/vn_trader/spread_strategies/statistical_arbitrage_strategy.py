@@ -8,8 +8,8 @@ from vnpy.app.spread_trading import (
     TickData,
     BarData
 )
+from vnpy.app.spread_trading.template import SpreadStrategyTemplate, SpreadAlgoTemplate
 from vnpy.trader.constant import Offset
-import numpy as np
 from datetime import datetime
 
 # 数据下载
@@ -17,6 +17,7 @@ from App.Turtle.dataservice import TurtleDataDownloading
 
 CLOSE_TIME_START = '14:55'
 CLOSE_TIME_END = '15:05'
+
 class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     """"""
 
@@ -67,9 +68,6 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
             strategy_engine, strategy_name, spread, setting
         )
 
-        self.bg = BarGenerator(self.on_spread_bar)
-        self.am = ArrayManager(size=self.boll_window)
-
     def download_data(self):
         symbol_list = []
         for vt_symbol in self.spread.legs.keys():
@@ -83,6 +81,8 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         Callback when strategy is inited.
         """
         self.write_log("策略初始化")
+        self.bg = BarGenerator(self.on_spread_bar)
+        self.am = ArrayManager(size=self.boll_window)
         self.load_bar(10)
 
     def on_start(self):
@@ -111,6 +111,11 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         """
         Callback when new spread tick data is generated.
         """
+        # 过滤无效tick
+        if not self.check_tick_valid(tick=tick):
+            self.write_log(f'====== 过滤无效tick：{tick.vt_symbol}\t{tick.datetime} ======')
+            return
+
         self.bg.update_tick(tick)
         self.put_timer_event()
 

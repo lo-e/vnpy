@@ -14,6 +14,39 @@ from .base import SpreadData, calculate_inverse_volume
 """ modify by loe """
 #数据下载
 from concurrent.futures import ThreadPoolExecutor
+import datetime
+import re
+
+""" modify by loe """
+#====== 交易时间 ======
+#商品期货
+MORNING_START_CF = datetime.time(9, 0)
+MORNING_REST_CF = datetime.time(10, 15)
+MORNING_RESTART_CF = datetime.time(10, 30)
+MORNING_END_CF = datetime.time(11, 30)
+AFTERNOON_START_CF = datetime.time(13, 30)
+AFTERNOON_END_CF = datetime.time(15, 0)
+
+# 商品期货夜盘时间
+NIGHT_START_CF = datetime.time(21, 0)
+NIGHT_END_CF_N = datetime.time(23, 0) # 到夜间收盘
+NIGHT_END_CF_NM = datetime.time(1, 0) # 到凌晨收盘
+NIGHT_END_CF_M = datetime.time(2, 30) # 到凌晨收盘
+
+#股指期货
+MORNING_PRE_START_SF = datetime.time(6, 0)
+MORNING_START_SF = datetime.time(9, 30)
+MORNING_END_SF = datetime.time(11, 30)
+AFTERNOON_START_SF = datetime.time(13, 0)
+AFTERNOON_END_SF = datetime.time(15, 0)
+
+def isFinanceSymbol(symbol):
+    financeSymbols = ['IF', 'IC', 'IH']
+    startSymbol = re.sub("\d", "", symbol.split('_')[0])
+    if startSymbol in financeSymbols:
+        return True
+    else:
+        return False
 
 class SpreadAlgoTemplate:
     """
@@ -740,6 +773,19 @@ class SpreadStrategyTemplate:
             if not algo.check_hedge_finished:
                 result = True
                 break
+        return result
+
+    def check_tick_valid(self, tick:TickData):
+        # 判断tick数据是否有效
+        result = True
+        t = tick.datetime.time()
+        isFinance = isFinanceSymbol(tick.symbol)
+        if not isFinance:
+            if NIGHT_END_CF_M <= t < MORNING_START_CF or MORNING_REST_CF <= t < MORNING_RESTART_CF or MORNING_END_CF <= t < AFTERNOON_START_CF or AFTERNOON_END_CF <= t < NIGHT_START_CF:
+                result = False
+        else:
+            if t < MORNING_START_SF or MORNING_END_SF <= t < AFTERNOON_START_SF or AFTERNOON_END_SF <= t:
+                result = False
         return result
 
     def put_timer_event(self):

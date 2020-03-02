@@ -979,7 +979,7 @@ class SpreadStrategyEngine:
 
     """ modify by loe """
     def get_algo(self, algoid:str):
-        algo = self.spread_engine.algos.get(algoid, None)
+        algo = self.spread_engine.algo_engine.algos.get(algoid, None)
         return algo
 
     def send_order(
