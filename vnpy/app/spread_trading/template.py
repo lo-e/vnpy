@@ -360,6 +360,19 @@ class SpreadAlgoTemplate:
     def on_traded_changed(self, changed=0):
         self.algo_engine.on_traded_changed(self, changed=changed)
 
+    def check_tick_valid(self, tick:TickData):
+        # 判断tick数据是否有效
+        result = True
+        t = tick.datetime.time()
+        isFinance = isFinanceSymbol(tick.symbol)
+        if not isFinance:
+            if NIGHT_END_CF_M <= t < MORNING_START_CF or MORNING_REST_CF <= t < MORNING_RESTART_CF or MORNING_END_CF <= t < AFTERNOON_START_CF or AFTERNOON_END_CF <= t < NIGHT_START_CF:
+                result = False
+        else:
+            if t < MORNING_START_SF or MORNING_END_SF <= t < AFTERNOON_START_SF or AFTERNOON_END_SF <= t:
+                result = False
+        return result
+
 
 class SpreadStrategyTemplate:
     """

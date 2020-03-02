@@ -37,6 +37,9 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
 
     def on_tick(self, tick: TickData):
         """"""
+        if not self.check_tick_valid(tick=tick):
+            return
+
         # Return if tick not inited
         if not self.spread.bid_volume or not self.spread.ask_volume:
             return
