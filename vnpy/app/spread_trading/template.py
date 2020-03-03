@@ -44,6 +44,7 @@ def is_finance_symbol(symbol):
     # 能够识别 'RB10_RB05', 'RB2010.SHFE'
     financeSymbols = ['IF', 'IC', 'IH']
     target_symbol = copy(symbol)
+    target_symbol = target_symbol.upper()
     target_symbol = target_symbol.split('_')[0]
     target_symbol = target_symbol.split('.')[0]
     startSymbol = re.sub("\d", "", target_symbol)

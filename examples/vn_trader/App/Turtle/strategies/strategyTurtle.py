@@ -14,6 +14,7 @@ import datetime
 import re
 from .strategyTurtleInitial import TurtleInitialManager
 from vnpy.trader.constant import Interval
+from copy import copy
 
 #====== 交易时间 ======
 #商品期货
@@ -40,7 +41,9 @@ AFTERNOON_END_SF = datetime.time(15, 0)
 
 def isFinanceSymbol(symbol):
     financeSymbols = ['IF', 'IC', 'IH']
-    startSymbol = re.sub("\d", "", symbol)
+    the_symbol = copy(symbol)
+    the_symbol = the_symbol.upper()
+    startSymbol = re.sub("\d", "", the_symbol)
     if startSymbol in financeSymbols:
         return True
     else:
