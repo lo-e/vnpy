@@ -40,13 +40,29 @@ MORNING_END_SF = datetime.time(11, 30)
 AFTERNOON_START_SF = datetime.time(13, 0)
 AFTERNOON_END_SF = datetime.time(15, 0)
 
-def isFinanceSymbol(symbol):
+def is_finance_symbol(symbol):
+    # 能够识别 'RB10_RB05', 'RB2010.SHFE'
     financeSymbols = ['IF', 'IC', 'IH']
-    startSymbol = re.sub("\d", "", symbol.split('_')[0])
+    target_symbol = copy(symbol)
+    target_symbol = target_symbol.split('_')[0]
+    target_symbol = target_symbol.split('.')[0]
+    startSymbol = re.sub("\d", "", target_symbol)
     if startSymbol in financeSymbols:
         return True
     else:
         return False
+
+def check_trading_time(symbol, the_datetime:datetime.datetime):
+    result = True
+    t = the_datetime.time()
+    isFinance = is_finance_symbol(symbol)
+    if not isFinance:
+        if NIGHT_END_CF_M <= t < MORNING_START_CF or MORNING_REST_CF <= t < MORNING_RESTART_CF or MORNING_END_CF <= t < AFTERNOON_START_CF or AFTERNOON_END_CF <= t < NIGHT_START_CF:
+            result = False
+    else:
+        if t < MORNING_START_SF or MORNING_END_SF <= t < AFTERNOON_START_SF or AFTERNOON_END_SF <= t:
+            result = False
+    return result
 
 class SpreadAlgoTemplate:
     """
@@ -273,8 +289,11 @@ class SpreadAlgoTemplate:
 
     def cancel_leg_order(self, vt_symbol: str):
         """"""
-        for vt_orderid in self.leg_orders[vt_symbol]:
-            self.algo_engine.cancel_order(self, vt_orderid)
+        """ modify by loe """
+        # 判断是否是交易时间
+        if check_trading_time(symbol=vt_symbol, the_datetime=datetime.datetime.now()):
+            for vt_orderid in self.leg_orders[vt_symbol]:
+                self.algo_engine.cancel_order(self, vt_orderid)
 
     def cancel_all_order(self):
         """"""
@@ -362,16 +381,10 @@ class SpreadAlgoTemplate:
 
     def check_tick_valid(self, tick:TickData):
         # 判断tick数据是否有效
-        result = True
-        t = tick.datetime.time()
-        isFinance = isFinanceSymbol(tick.symbol)
-        if not isFinance:
-            if NIGHT_END_CF_M <= t < MORNING_START_CF or MORNING_REST_CF <= t < MORNING_RESTART_CF or MORNING_END_CF <= t < AFTERNOON_START_CF or AFTERNOON_END_CF <= t < NIGHT_START_CF:
-                result = False
+        if check_trading_time(symbol=tick.symbol, the_datetime=tick.datetime):
+            return True
         else:
-            if t < MORNING_START_SF or MORNING_END_SF <= t < AFTERNOON_START_SF or AFTERNOON_END_SF <= t:
-                result = False
-        return result
+            return False
 
 
 class SpreadStrategyTemplate:
@@ -788,18 +801,22 @@ class SpreadStrategyTemplate:
                 break
         return result
 
+    def check_algo_order_finished(self):
+        # 检查是否有算法存在正在处理的订单
+        result = True
+        for algoid in self.algoids:
+            algo = self.strategy_engine.get_algo(algoid=algoid)
+            if not algo.check_order_finished():
+                result = False
+                break
+        return result
+
     def check_tick_valid(self, tick:TickData):
         # 判断tick数据是否有效
-        result = True
-        t = tick.datetime.time()
-        isFinance = isFinanceSymbol(tick.symbol)
-        if not isFinance:
-            if NIGHT_END_CF_M <= t < MORNING_START_CF or MORNING_REST_CF <= t < MORNING_RESTART_CF or MORNING_END_CF <= t < AFTERNOON_START_CF or AFTERNOON_END_CF <= t < NIGHT_START_CF:
-                result = False
+        if check_trading_time(symbol=tick.symbol, the_datetime=tick.datetime):
+            return True
         else:
-            if t < MORNING_START_SF or MORNING_END_SF <= t < AFTERNOON_START_SF or AFTERNOON_END_SF <= t:
-                result = False
-        return result
+            return False
 
     def put_timer_event(self):
         self.timer_event_cross = True

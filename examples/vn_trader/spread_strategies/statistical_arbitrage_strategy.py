@@ -8,7 +8,7 @@ from vnpy.app.spread_trading import (
     TickData,
     BarData
 )
-from vnpy.app.spread_trading.template import SpreadStrategyTemplate, SpreadAlgoTemplate
+from vnpy.app.spread_trading.template import SpreadStrategyTemplate, SpreadAlgoTemplate, check_trading_time
 from vnpy.trader.constant import Offset
 from datetime import datetime
 
@@ -123,24 +123,32 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         """
         Callback when spread bar data is generated.
         """
-        if self.check_algo_leg_broken():
-            # 有算法出现断腿情况，保持算法运行
-            return
-
-        self.stop_all_algos()
         self.am.update_bar(bar)
-
         if self.am.inited:
             self.boll_mid = self.am.sma(self.boll_window)
             self.boll_up, self.boll_down = self.am.boll(self.boll_window, self.boll_dev)
         self.current_length = self.boll_up - self.boll_mid
-        # 判断交易
+
         self.check_for_trade()
 
     def check_for_trade(self):
         if not self.boll_up or not self.boll_mid or not self.boll_down:
             return
 
+        if not self.trading:
+            return
+
+        if self.check_algo_leg_broken():
+            # 有算法出现断腿情况，保持算法运行
+            return
+
+        the_symbol = list(self.spread.legs.keys())[0]
+        is_trading_time = check_trading_time(symbol=the_symbol, the_datetime=datetime.now())
+        if not self.check_algo_order_finished() and not is_trading_time:
+            # 非交易时间并且有订单未处理完
+            return
+
+        self.stop_all_algos()
         if not self.spread_pos:
             # 设置一个开仓阈值
             if self.current_length >= self.open_value:

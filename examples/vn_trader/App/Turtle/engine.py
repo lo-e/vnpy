@@ -1070,7 +1070,7 @@ class TurtleEngine(BaseEngine):
             self.write_log(f"{strategy_name} 重新初始化完成")
 
 """ modify by loe """
-# 数据自动化引擎，每天固定时间从RQData下载策略回测及实盘必要的数据，自动重连CTP和重新初始化策略
+# 数据自动化引擎，每天固定时间下载策略回测及实盘必要的数据，自动重连CTP和重新初始化策略
 class TurtleAutoEngine(object):
 
     def __init__(self, main_engine:MainEngine, turtle_engine:TurtleEngine, download_time:str, reconnect_time:str, check_interval:int, reload_time:int):
@@ -1101,7 +1101,7 @@ class TurtleAutoEngine(object):
             except:
                 try:
                     self.downloading = False
-                    self.main_engine.send_email(subject='TURTLE_RQData 数据下载', content=f'【未知错误】\n\n{traceback.format_exc()}')
+                    self.main_engine.send_email(subject='TURTLE 数据更新', content=f'【未知错误】\n\n{traceback.format_exc()}')
                 except:
                     pass
             sleep(self.check_interval)

@@ -35,6 +35,11 @@ from .template import SpreadAlgoTemplate, SpreadStrategyTemplate
 from .algo import SpreadTakerAlgo
 from vnpy.app.cta_strategy.base import POSITION_DB_NAME
 
+""" modify by loe """
+from threading import Thread
+from time import sleep
+from App.Turtle.dataservice import TurtleDataDownloading
+
 APP_NAME = "SpreadTrading"
 
 
@@ -622,10 +627,19 @@ class SpreadStrategyEngine:
 
         self.load_strategy_class()
 
+        """ modify by loe """
+        # 数据引擎【下载时间 ['10:20', '11:35', '15:35', '23:35']】
+        self.autoEngine = SpreadAutoEngine(main_engine=self.spread_engine.main_engine, spread_strategy_engine=self, download_time_list=['10:20', '11:35', '15:05', '23:35'],
+                                           reconnect_time='20:00', check_interval=10 * 60, reload_time=6)
+
     def start(self):
         """"""
         self.load_strategy_setting()
         self.register_event()
+
+        """ modify by loe """
+        # 数据引擎启动
+        self.autoEngine.start()
 
         self.write_log("价差策略引擎启动成功")
 
@@ -1144,3 +1158,109 @@ class SpreadStrategyEngine:
 
         algo_engine = self.spread_engine.algo_engine
         return algo_engine.algos.get(algoid, None)
+
+    """ modify by loe """
+
+    # 新的DailyBar更新后需要自动重新初始化策略
+    def reinit_and_restart_strategies(self):
+        for strategy_name in self.strategies.keys():
+            strategy = self.strategies[strategy_name]
+            if strategy.inited:
+                temp = strategy.trading
+                # 重新初始化
+                strategy.trading = False
+                self.call_strategy_func(strategy, strategy.on_init)
+                strategy.trading = temp
+                # 重新启动
+                self.call_strategy_func(strategy, strategy.on_start)
+
+                self.put_strategy_event(strategy)
+                self.write_log(f"{strategy_name} 重新初始化完成")
+
+""" modify by loe """
+# 数据自动化引擎，每天固定时间下载策略回测及实盘必要的数据，自动重连CTP和重新初始化策略
+class SpreadAutoEngine(object):
+
+    def __init__(self, main_engine:MainEngine, spread_strategy_engine:SpreadStrategyEngine, download_time_list:list, reconnect_time:str, check_interval:int, reload_time:int):
+        # download_time:['10:20', '11:35', '15:35', '23:35'], reconnect_time:'20:00' check_interval:10*60, reload_time:6
+        super(SpreadAutoEngine, self).__init__()
+
+        self.main_engine = main_engine
+        self.spread_strategy_engine = spread_strategy_engine
+        self.download_time_list = download_time_list
+        self.reconnect_time = reconnect_time
+        self.check_interval = check_interval
+        self.reload_time = reload_time
+        self.downloading = False
+        self.restarting = False
+        self.restarted = False
+        self.download_timer = Thread(target=self.on_download_timer)
+        self.reconnect_timer = Thread(target=self.on_reconnect_timer)
+
+    def start(self):
+        self.download_timer.start()
+        self.reconnect_timer.start()
+
+    def on_download_timer(self):
+        while True:
+            try:
+                self.checkAndDownload()
+            except:
+                try:
+                    self.downloading = False
+                    self.main_engine.send_email(subject='SPREAD 数据更新', content=f'【未知错误】\n\n{traceback.format_exc()}')
+                except:
+                    pass
+            sleep(10)
+
+    def checkAndDownload(self):
+        now = datetime.now()
+        check_time = False
+        for download_time in self.download_time_list:
+            start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {download_time}', '%Y-%m-%d %H:%M')
+            end_time = start_time + timedelta(seconds=60)
+            if now >= start_time and now <= end_time:
+                check_time = True
+                break
+        if check_time:
+            if not self.downloading:
+                turtleDataD = TurtleDataDownloading()
+                self.downloading = True
+                msg = turtleDataD.download_minute_jq()
+                self.downloading = False
+                # SPREAD重新初始化
+                self.spread_strategy_engine.reinit_and_restart_strategies()
+                msg = f'{msg}\n\n策略重新初始化成功'
+                self.main_engine.send_email(subject='SPREAD 数据更新', content=msg)
+                sleep(10*60)
+
+    def on_reconnect_timer(self):
+        while True:
+            try:
+                self.checkAndReconnect()
+            except:
+                try:
+                    self.main_engine.send_email(subject='SPREAD 服务器重连、策略重新初始化', content=f'【未知错误】\n\n{traceback.format_exc()}')
+                except:
+                    pass
+            sleep(self.check_interval)
+
+    def checkAndReconnect(self):
+        now = datetime.now()
+        start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {self.reconnect_time}', '%Y-%m-%d %H:%M')
+        end_time = start_time + timedelta(seconds=self.check_interval * self.reload_time)
+        if now >= start_time and now <= end_time:
+            if not self.restarting and not self.restarted:
+                self.restarting = True
+                result, return_msg = self.main_engine.reconnect(gateway_name='CTP')
+                self.restarting = False
+                self.restarted = result
+                # SPREAD重新初始化
+                self.spread_strategy_engine.reinit_and_restart_strategies()
+                return_msg = f'{return_msg}\n\n策略重新初始化成功'
+                try:
+                    self.main_engine.send_email(subject='SPREAD 服务器重连、策略重新初始化', content=return_msg)
+                except:
+                    pass
+        else:
+            self.restarted = False
