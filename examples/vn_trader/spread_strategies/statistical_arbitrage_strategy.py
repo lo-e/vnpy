@@ -130,6 +130,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         self.current_length = self.boll_up - self.boll_mid
 
         self.check_for_trade()
+        self.put_timer_event()
 
     def check_for_trade(self):
         if not self.boll_up or not self.boll_mid or not self.boll_down:
