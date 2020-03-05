@@ -44,13 +44,13 @@ from vnpy.app.cta_backtester import CtaBacktesterApp
 # from vnpy.app.risk_manager import RiskManagerApp
 # from vnpy.app.script_trader import ScriptTraderApp
 # from vnpy.app.rpc_service import RpcServiceApp
-from vnpy.app.spread_trading import SpreadTradingApp
 from vnpy.app.portfolio_manager import PortfolioManagerApp
 
 """ modify by loe """
 # 导入了海归交易
 from App.Turtle import TurtleApp
 from App.Turtle_crypto import TurtleCryptoApp
+from App.spread_trading import SpreadTradingApp
 
 
 def main():

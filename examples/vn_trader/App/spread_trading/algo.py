@@ -4,8 +4,8 @@ from vnpy.trader.constant import Direction, Offset
 from vnpy.trader.object import (TickData, OrderData, TradeData)
 from vnpy.trader.utility import round_to
 
-from .template import SpreadAlgoTemplate, check_tick_valid
-from .base import SpreadData
+from vnpy.app.spread_trading.template import SpreadAlgoTemplate, check_tick_valid
+from vnpy.app.spread_trading.base import SpreadData
 
 class SpreadTakerAlgo(SpreadAlgoTemplate):
     """"""

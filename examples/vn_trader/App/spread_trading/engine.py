@@ -23,7 +23,7 @@ from vnpy.trader.constant import (
 )
 from vnpy.trader.converter import OffsetConverter
 
-from .base import (
+from vnpy.app.spread_trading.base import (
     LegData, SpreadData,
     EVENT_SPREAD_DATA, EVENT_SPREAD_POS,
     EVENT_SPREAD_ALGO, EVENT_SPREAD_LOG,
@@ -31,18 +31,16 @@ from .base import (
     load_bar_data, load_tick_data
 )
 
-from .template import SpreadAlgoTemplate, SpreadStrategyTemplate
+from vnpy.app.spread_trading.template import SpreadAlgoTemplate, SpreadStrategyTemplate
 from .algo import SpreadTakerAlgo
 from vnpy.app.cta_strategy.base import POSITION_DB_NAME
 
 """ modify by loe """
 from threading import Thread
 from time import sleep
-from App.Turtle.dataservice import TurtleDataDownloading
+from ..Turtle.dataservice import TurtleDataDownloading
 
 APP_NAME = "SpreadTrading"
-
-
 class SpreadEngine(BaseEngine):
     """"""
 
@@ -653,14 +651,7 @@ class SpreadStrategyEngine:
         """
         path1 = Path(__file__).parent.joinpath("strategies")
         self.load_strategy_class_from_folder(
-            path1, "vnpy.app.spread_trading.strategies")
-
-        path2 = Path.cwd().joinpath("strategies")
-        self.load_strategy_class_from_folder(path2, "strategies")
-
-        """ modify by loe """
-        path3 = Path.cwd().joinpath("Quant\\vnpy\\examples\\vn_trader\\spread_strategies")
-        self.load_strategy_class_from_folder(path3, "spread_strategies")
+            path1, "App.spread_trading.strategies")
 
     def load_strategy_class_from_folder(self, path: Path, module_name: str = ""):
         """
