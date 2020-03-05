@@ -4,9 +4,8 @@ from vnpy.trader.constant import Direction, Offset
 from vnpy.trader.object import (TickData, OrderData, TradeData)
 from vnpy.trader.utility import round_to
 
-from .template import SpreadAlgoTemplate
+from .template import SpreadAlgoTemplate, check_tick_valid
 from .base import SpreadData
-
 
 class SpreadTakerAlgo(SpreadAlgoTemplate):
     """"""
@@ -37,8 +36,10 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
 
     def on_tick(self, tick: TickData):
         """"""
-        if not self.check_tick_valid(tick=tick):
+        if not check_tick_valid(tick=tick):
+            self.write_log(f'======算法{self.algo_name} 过滤无效tick：{tick.vt_symbol}\t{tick.datetime} ======')
             return
+        self.write_log(f'======算法{self.algo_name} on_tick：{tick.vt_symbol}\t{tick.datetime} ======')
 
         # Return if tick not inited
         if not self.spread.bid_volume or not self.spread.ask_volume:

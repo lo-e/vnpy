@@ -65,6 +65,16 @@ def check_trading_time(symbol, the_datetime:datetime.datetime):
             result = False
     return result
 
+def check_tick_valid(tick:TickData):
+    # 判断tick数据是否有效
+    if not tick.symbol or not tick.datetime:
+        return False
+
+    if check_trading_time(symbol=tick.symbol, the_datetime=tick.datetime):
+        return True
+    else:
+        return False
+
 class SpreadAlgoTemplate:
     """
     Template for implementing spread trading algos.
@@ -379,14 +389,6 @@ class SpreadAlgoTemplate:
     """ modify by loe """
     def on_traded_changed(self, changed=0):
         self.algo_engine.on_traded_changed(self, changed=changed)
-
-    def check_tick_valid(self, tick:TickData):
-        # 判断tick数据是否有效
-        if check_trading_time(symbol=tick.symbol, the_datetime=tick.datetime):
-            return True
-        else:
-            return False
-
 
 class SpreadStrategyTemplate:
     """
@@ -811,13 +813,6 @@ class SpreadStrategyTemplate:
                 result = False
                 break
         return result
-
-    def check_tick_valid(self, tick:TickData):
-        # 判断tick数据是否有效
-        if check_trading_time(symbol=tick.symbol, the_datetime=tick.datetime):
-            return True
-        else:
-            return False
 
     def put_timer_event(self):
         self.timer_event_cross = True

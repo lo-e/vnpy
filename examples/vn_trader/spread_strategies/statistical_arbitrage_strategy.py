@@ -8,7 +8,7 @@ from vnpy.app.spread_trading import (
     TickData,
     BarData
 )
-from vnpy.app.spread_trading.template import SpreadStrategyTemplate, SpreadAlgoTemplate, check_trading_time
+from vnpy.app.spread_trading.template import SpreadStrategyTemplate, SpreadAlgoTemplate, check_trading_time, check_tick_valid
 from vnpy.trader.constant import Offset
 from datetime import datetime
 
@@ -112,7 +112,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         Callback when new spread tick data is generated.
         """
         # 过滤无效tick
-        if not self.check_tick_valid(tick=tick):
+        if not check_tick_valid(tick=tick):
             self.write_log(f'====== 过滤无效tick：{tick.vt_symbol}\t{tick.datetime} ======')
             return
 
