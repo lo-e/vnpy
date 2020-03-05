@@ -1217,7 +1217,7 @@ class SpreadAutoEngine(object):
             if not self.downloading:
                 turtleDataD = TurtleDataDownloading()
                 self.downloading = True
-                msg = turtleDataD.download_minute_jq()
+                last_datetime, msg = turtleDataD.download_minute_jq()
                 self.downloading = False
                 # SPREAD重新初始化
                 self.spread_strategy_engine.reinit_and_restart_strategies()

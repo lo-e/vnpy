@@ -316,6 +316,7 @@ class TurtleDataDownloading(object):
 
     def download_minute_jq(self, symbol_list:list=None):
         return_msg = ''
+        last_datetime = None
         if not symbol_list:
             symbol_list = ['RB2010', 'RB2005']
         days = 1
@@ -328,10 +329,11 @@ class TurtleDataDownloading(object):
                 end = datetime.now()
             for symbol in symbol_list:
                 bar_list, msg = download_bar_data(symbol=symbol, start=start.strftime('%Y-%m-%d %H:%M:%S'), end=end.strftime('%Y-%m-%d %H:%M:%S'), frequency='1m', to_database=True)
+                last_datetime = bar_list[-1].datetime
                 print(msg)
                 return_msg = return_msg + msg + '\n'
             start = end
             end = end + timedelta(days=1)
             return_msg += '\n'
 
-        return return_msg
+        return last_datetime, return_msg

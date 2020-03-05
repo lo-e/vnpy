@@ -14,6 +14,7 @@ from datetime import datetime
 
 # 数据下载
 from App.Turtle.dataservice import TurtleDataDownloading
+from concurrent.futures import ThreadPoolExecutor
 
 CLOSE_TIME_START = '14:55'
 CLOSE_TIME_END = '15:05'
@@ -69,11 +70,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         )
 
     def download_data(self):
-        symbol_list = []
-        for vt_symbol in self.spread.legs.keys():
-            symbol = vt_symbol.split('.')[0].upper()
-            symbol_list.append(symbol)
-        msg = TurtleDataDownloading().download_minute_jq(symbol_list=symbol_list)
+        last_datetime, msg = self.download_recent_data()
         self.strategy_engine.send_strategy_email(self, msg=msg)
 
     def on_init(self):
@@ -128,8 +125,11 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
             self.boll_mid = self.am.sma(self.boll_window)
             self.boll_up, self.boll_down = self.am.boll(self.boll_window, self.boll_dev)
         self.current_length = self.boll_up - self.boll_mid
-
+        # 交易信号判断
         self.check_for_trade()
+        # 异步下载最新分钟数据
+        if self.trading:
+            self.prepare_for_download_recent_data()
         self.put_timer_event()
 
     def check_for_trade(self):
@@ -240,3 +240,26 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
             return True
         else:
             return False
+
+    def prepare_for_download_recent_data(self):
+        thread_executor = ThreadPoolExecutor(max_workers=10)
+        thread_executor.submit(self.get_recent_data)
+
+    def get_recent_data(self):
+        last_datetime, msg = self.download_recent_data()
+        now_minute = datetime.now().replace(second=0, microsecond=0)
+        if last_datetime == now_minute:
+            self.am = ArrayManager(size=self.boll_window)
+            self.load_bar(days=10, callback=self.update_am_bar)
+
+    def download_recent_data(self):
+        symbol_list = []
+        for vt_symbol in self.spread.legs.keys():
+            symbol = vt_symbol.split('.')[0].upper()
+            symbol_list.append(symbol)
+        last_datetime, msg = TurtleDataDownloading().download_minute_jq(symbol_list=symbol_list)
+        return last_datetime, msg
+
+    def update_am_bar(self, bar: BarData):
+        self.am.update_bar(bar)
+
