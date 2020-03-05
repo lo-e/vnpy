@@ -1,7 +1,6 @@
 # encoding: UTF-8
 
 from backtesting import BacktestingEngine
-#from vnpy.app.spread_trading.backtesting import BacktestingEngine
 from statistical_arbitrage_backtesting_strategy import StatisticalArbitrageBacktestingStrategy
 from vnpy.app.spread_trading.base import LegData, SpreadData
 from datetime import datetime
