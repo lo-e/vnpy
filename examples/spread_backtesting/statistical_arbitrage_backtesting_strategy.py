@@ -9,7 +9,6 @@ from vnpy.app.spread_trading import (
     BarData
 )
 from vnpy.trader.constant import Offset
-import numpy as np
 from datetime import datetime
 
 CLOSE_TIME_START = '14:55'
