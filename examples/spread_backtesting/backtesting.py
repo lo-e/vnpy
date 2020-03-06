@@ -458,6 +458,10 @@ class BacktestingEngine:
         else:
             cross_count = 1
 
+        """ fake """
+        if self.bar.datetime >= datetime.strptime('2020-3-6 10:3:0', '%Y-%m-%d %H:%M:%S'):
+            a = 2
+
         i = 1
         has_cross = False
         while i <= cross_count and not has_cross:
