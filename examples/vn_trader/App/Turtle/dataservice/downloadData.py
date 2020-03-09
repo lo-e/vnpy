@@ -318,7 +318,7 @@ class TurtleDataDownloading(object):
         return_msg = ''
         last_datetime = None
         if not symbol_list:
-            symbol_list = ['RB2010', 'RB2005']
+            symbol_list = ['HC2005', 'RB2005']
         days = 1
         today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         next_day = today + timedelta(days=1)
@@ -329,7 +329,8 @@ class TurtleDataDownloading(object):
                 end = datetime.now()
             for symbol in symbol_list:
                 bar_list, msg = download_bar_data(symbol=symbol, start=start.strftime('%Y-%m-%d %H:%M:%S'), end=end.strftime('%Y-%m-%d %H:%M:%S'), frequency='1m', to_database=True)
-                last_datetime = bar_list[-1].datetime
+                if bar_list:
+                    last_datetime = bar_list[-1].datetime
                 print(msg)
                 return_msg = return_msg + msg + '\n'
             start = end

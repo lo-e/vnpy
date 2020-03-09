@@ -12,11 +12,11 @@ import csv
 def one():
     spread = SpreadData(
         name="RB",
-        legs=[LegData("RB2010.SHFE"), LegData("RB2005.SHFE")],
-        price_multipliers={"RB2010.SHFE": 1, "RB2005.SHFE": -1},
-        trading_multipliers={"RB2010.SHFE": 1, "RB2005.SHFE": -1},
-        active_symbol="RB2005.SHFE",
-        inverse_contracts={"RB2010.SHFE": False, "RB2005.SHFE": False},
+        legs=[LegData("HC2005.SHFE"), LegData("RB2005.SHFE")],
+        price_multipliers={"HC2005.SHFE": 1, "RB2005.SHFE": -1},
+        trading_multipliers={"HC2005.SHFE": 1, "RB2005.SHFE": -1},
+        active_symbol="HC2005.SHFE",
+        inverse_contracts={"HC2005.SHFE": False, "RB2005.SHFE": False},
         min_volume=1
     )
 
