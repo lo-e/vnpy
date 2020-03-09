@@ -99,8 +99,10 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
 
         """ modify by loe """
         # 开仓算法只做一次委托执行
+        """
         if self.offset == Offset.OPEN:
             self.target = self.traded + spread_order_volume
+        """
 
         # Calculate active leg order volume
         leg_order_volume = self.spread.calculate_leg_volume(
