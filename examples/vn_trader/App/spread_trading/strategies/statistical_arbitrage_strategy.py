@@ -171,23 +171,21 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
                     offset=Offset.OPEN
                 )
         elif self.spread_pos < 0:
-            if self.boll_mid:
-                self.start_long_algo(
-                    self.boll_mid,
-                    abs(self.spread_pos),
-                    payup=self.payup,
-                    interval=self.interval,
-                    offset=Offset.CLOSE
-                )
+            self.start_long_algo(
+                self.boll_mid,
+                abs(self.spread_pos),
+                payup=self.payup,
+                interval=self.interval,
+                offset=Offset.CLOSE
+            )
         else:
-            if self.boll_mid:
-                self.start_short_algo(
-                    self.boll_mid,
-                    abs(self.spread_pos),
-                    payup=self.payup,
-                    interval=self.interval,
-                    offset = Offset.CLOSE
-                )
+            self.start_short_algo(
+                self.boll_mid,
+                abs(self.spread_pos),
+                payup=self.payup,
+                interval=self.interval,
+                offset = Offset.CLOSE
+            )
 
         self.put_timer_event()
 
