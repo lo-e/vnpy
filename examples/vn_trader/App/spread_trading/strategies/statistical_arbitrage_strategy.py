@@ -26,6 +26,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
 
     boll_window = 20
     boll_dev = 2
+    tick_price = 1
     open_value = 4
     max_pos = 30
     payup = 10
@@ -39,6 +40,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     parameters = [
         "boll_window",
         "boll_dev",
+        "tick_price",
         "open_value",
         "max_pos",
         "payup",
@@ -152,7 +154,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         self.stop_all_algos()
         if not self.spread_pos:
             # 设置一个开仓阈值
-            if self.current_length >= self.open_value:
+            if self.current_length >= self.open_value * self.tick_price:
                 self.start_short_algo(
                     self.boll_up,
                     self.max_pos,
