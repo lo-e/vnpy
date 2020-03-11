@@ -119,7 +119,7 @@ class StatisticalArbitrageBacktestingStrategy(SpreadStrategyTemplate):
 
         if not self.spread_pos:
             # 设置一个开仓阈值
-            if self.boll_up - self.boll_mid >= self.open_value:
+            if self.boll_up - self.boll_mid >= self.open_value * self.strategy_engine.pricetick:
                 self.start_short_algo(
                     self.boll_up,
                     self.max_pos,

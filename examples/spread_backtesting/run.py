@@ -10,27 +10,39 @@ from vnpy.trader.constant import Direction, Offset
 import csv
 
 def one():
+    name = 'RB_HC'
+    symbol_up = 'HC2005.SHFE'
+    symbol_down = 'RB2005.SHFE'
+    symbol_active = 'HC2005.SHFE'
+    min_volume = 1
+
+    size = 10
+    price_tick = 1
+    commission_rate = 0.0001
+    slippage = 0
+    capital = 200000
+
     spread = SpreadData(
-        name="RB",
-        legs=[LegData("HC2005.SHFE"), LegData("RB2005.SHFE")],
-        price_multipliers={"HC2005.SHFE": 1, "RB2005.SHFE": -1},
-        trading_multipliers={"HC2005.SHFE": 1, "RB2005.SHFE": -1},
-        active_symbol="HC2005.SHFE",
-        inverse_contracts={"HC2005.SHFE": False, "RB2005.SHFE": False},
-        min_volume=1
+        name=name,
+        legs=[LegData(symbol_up), LegData(symbol_down)],
+        price_multipliers={symbol_up: 1, symbol_down: -1},
+        trading_multipliers={symbol_up: 1, symbol_down: -1},
+        active_symbol=symbol_active,
+        inverse_contracts={symbol_up: False, symbol_down: False},
+        min_volume=min_volume
     )
 
     engine = BacktestingEngine()
     engine.set_parameters(
         spread=spread,
         interval="1m",
-        start=datetime(2020, 2, 27),
+        start=datetime(2020, 3, 9),
         end=datetime(2020, 12, 31),
-        rate=0.0001,
-        slippage=0,
-        size=10,
-        pricetick=1,
-        capital=200000,
+        rate=commission_rate,
+        slippage=slippage,
+        size=size,
+        pricetick=price_tick,
+        capital=capital,
     )
     engine.add_strategy(StatisticalArbitrageBacktestingStrategy, {})
 
