@@ -21,7 +21,7 @@ class StatisticalArbitrageBacktestingStrategy(SpreadStrategyTemplate):
 
     boll_window = 20
     boll_dev = 2
-    open_value = 4
+    open_value = 2
     max_pos = 30
     payup = 10
     interval = 5
@@ -114,7 +114,7 @@ class StatisticalArbitrageBacktestingStrategy(SpreadStrategyTemplate):
             return
 
         """ fake """
-        if bar.datetime >= datetime.strptime('2020-3-6 10:2:0', '%Y-%m-%d %H:%M:%S'):
+        if bar.datetime >= datetime.strptime('2020-3-12 14:14:0', '%Y-%m-%d %H:%M:%S'):
             a = 2
 
         if not self.spread_pos:
