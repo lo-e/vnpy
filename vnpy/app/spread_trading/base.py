@@ -207,6 +207,10 @@ class SpreadData:
 
             # Calculate price
             price_multiplier = self.price_multipliers[leg.vt_symbol]
+
+            """ modify by loe """
+            self.last_price += leg.last_price * price_multiplier
+
             if price_multiplier > 0:
                 self.bid_price += leg.bid_price * price_multiplier
                 self.ask_price += leg.ask_price * price_multiplier
@@ -314,6 +318,7 @@ class SpreadData:
 
     def clear_price(self):
         """"""
+        self.last_price = 0
         self.bid_price = 0
         self.ask_price = 0
         self.bid_volume = 0

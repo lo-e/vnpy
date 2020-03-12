@@ -105,6 +105,7 @@ class SpreadDataMonitor(BaseMonitor):
 
     headers = {
         "name": {"display": "名称", "cell": BaseCell, "update": False},
+        "last_price": {"display": "当前价", "cell": BaseCell, "update": True},
         "bid_volume": {"display": "买量", "cell": BidCell, "update": True},
         "bid_price": {"display": "买价", "cell": BidCell, "update": True},
         "ask_price": {"display": "卖价", "cell": AskCell, "update": True},
