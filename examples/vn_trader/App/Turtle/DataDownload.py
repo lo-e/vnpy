@@ -8,8 +8,8 @@ if __name__ == '__main__':
     dataDownload = TurtleDataDownloading()
     #dataDownload.download()
     #dataDownload.download_tushare()
-    dataDownload.download_jq()
-    #dataDownload.download_minute_jq()
+    #dataDownload.download_jq()
+    dataDownload.download_minute_jq()
     #"""
 
     """
