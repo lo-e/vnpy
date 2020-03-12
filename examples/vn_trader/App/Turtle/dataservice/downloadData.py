@@ -318,7 +318,7 @@ class TurtleDataDownloading(object):
         return_msg = ''
         last_datetime = None
         if not symbol_list:
-            symbol_list = ['HC2005', 'RB2005']
+            symbol_list = ['CF2101', 'CF2009']
         days = 1
         today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         next_day = today + timedelta(days=1)

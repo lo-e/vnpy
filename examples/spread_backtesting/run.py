@@ -10,17 +10,20 @@ from vnpy.trader.constant import Direction, Offset
 import csv
 
 def one():
-    name = 'RB_HC'
-    symbol_up = 'HC2005.SHFE'
-    symbol_down = 'RB2005.SHFE'
-    symbol_active = 'HC2005.SHFE'
+    name = 'CF'
+    symbol_up = 'CF2101'
+    symbol_down = 'CF2009'
+    symbol_active = 'CF2101'
     min_volume = 1
 
-    size = 10
-    price_tick = 1
-    commission_rate = 0.0001
+    size = 5
+    price_tick = 5
+    commission_rate = 0.000
     slippage = 0
     capital = 200000
+
+    start = datetime(2019, 1, 16)
+    end = datetime(2020, 12, 31)
 
     spread = SpreadData(
         name=name,
@@ -36,8 +39,8 @@ def one():
     engine.set_parameters(
         spread=spread,
         interval="1m",
-        start=datetime(2020, 3, 9),
-        end=datetime(2020, 12, 31),
+        start=start,
+        end=end,
         rate=commission_rate,
         slippage=slippage,
         size=size,
