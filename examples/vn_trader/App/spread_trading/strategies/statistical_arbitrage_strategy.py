@@ -15,6 +15,8 @@ from datetime import datetime
 # 数据下载
 from App.Turtle.dataservice import TurtleDataDownloading
 from concurrent.futures import ThreadPoolExecutor
+import re
+from vnpy.app.cta_strategy.base import TRANSFORM_SYMBOL_LIST
 
 CLOSE_TIME_START = '14:55'
 CLOSE_TIME_END = '15:05'
@@ -256,6 +258,13 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         symbol_list = []
         for vt_symbol in self.spread.legs.keys():
             symbol = vt_symbol.split('.')[0].upper()
+            startSymbol = re.sub("\d", "", symbol)
+            if startSymbol in TRANSFORM_SYMBOL_LIST.keys():
+                endSymbol = re.sub("\D", "", symbol)
+                if len(endSymbol) == 3:
+                    # 比如TA005需要进行转换
+                    replace = TRANSFORM_SYMBOL_LIST[startSymbol]
+                    symbol = startSymbol + replace + endSymbol
             symbol_list.append(symbol)
         last_datetime, msg = TurtleDataDownloading().download_minute_jq(symbol_list=symbol_list)
         return last_datetime, msg
