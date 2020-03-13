@@ -190,6 +190,8 @@ class SpreadData:
         self.ask_price: float = 0
         self.bid_volume: float = 0
         self.ask_volume: float = 0
+        """ modify by loe """
+        self.last_price: float = 0
 
         self.net_pos: float = 0
         self.datetime: datetime = None
@@ -201,7 +203,7 @@ class SpreadData:
         # Go through all legs to calculate price
         for n, leg in enumerate(self.legs.values()):
             # Filter not all leg price data has been received
-            if not leg.bid_volume or not leg.ask_volume:
+            if not leg.bid_volume and not leg.ask_volume:
                 self.clear_price()
                 return
 
@@ -351,7 +353,7 @@ class SpreadData:
             exchange=Exchange.LOCAL,
             datetime=self.datetime,
             name=self.name,
-            last_price=(self.bid_price + self.ask_price) / 2,
+            last_price=self.last_price,
             bid_price_1=self.bid_price,
             ask_price_1=self.ask_price,
             bid_volume_1=self.bid_volume,

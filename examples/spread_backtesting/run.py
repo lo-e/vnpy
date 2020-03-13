@@ -11,18 +11,18 @@ import csv
 
 def one():
     name = 'CF'
-    symbol_up = 'CF2101'
-    symbol_down = 'CF2009'
-    symbol_active = 'CF2101'
+    symbol_up = 'CS2009'
+    symbol_down = 'CS2005'
+    symbol_active = 'CS2009'
     min_volume = 1
 
-    size = 5
-    price_tick = 5
+    size = 10
+    price_tick = 1
     commission_rate = 0.000
     slippage = 0
     capital = 200000
 
-    start = datetime(2019, 1, 16)
+    start = datetime(2019, 12, 16)
     end = datetime(2020, 12, 31)
 
     spread = SpreadData(
