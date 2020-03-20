@@ -23,7 +23,7 @@ auth('18521705317', '970720699')
 
 # 使用聚宽数据服务，添加新的品种必须这里添加代码
 EXCHANGE_SYMBOL_MAP = {'XSGE':['RB', 'HC', 'RU'],
-                       'XZCE':['SM', 'ZC', 'TA', 'CF'],
+                       'XZCE':['SM', 'ZC', 'TA', 'CF', 'CJ'],
                        'XDCE':['J', 'A', 'I', 'CS']}
 
 client = MongoClient('localhost', 27017, serverSelectionTimeoutMS=600)
