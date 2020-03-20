@@ -10,10 +10,10 @@ from vnpy.trader.constant import Direction, Offset
 import csv
 
 def one():
-    name = 'CF'
-    symbol_up = 'CF2009'
-    symbol_down = 'CF2005'
-    symbol_active = 'CF2009'
+    name = 'CJ'
+    symbol_up = 'CJ2009'
+    symbol_down = 'CJ2005'
+    symbol_active = 'CJ2009'
     min_volume = 1
 
     size = 5
@@ -22,7 +22,7 @@ def one():
     slippage = 0
     capital = 200000
 
-    strategy_params = {'boll_dev':4}
+    strategy_params = {'boll_dev':5}
 
     start = datetime(2019, 12, 16)
     end = datetime(2020, 12, 31)
