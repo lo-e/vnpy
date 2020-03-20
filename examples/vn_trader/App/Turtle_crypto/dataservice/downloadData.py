@@ -121,17 +121,13 @@ class TurtleCryptoDataDownloading(object):
         start_date = datetime.strptime(f'{from_day.year}-{from_day.month}-{from_day.day} 08:00:00', '%Y-%m-%d %H:%M:%S')
         end_date = datetime.strptime(f'{to_day.year}-{to_day.month}-{to_day.day} 07:59:00', '%Y-%m-%d %H:%M:%S')
 
-        re_list = []
         for contract in contract_list:
             symbol = f'{contract}.BYBIT'
             re, c_msg, b_msg, l_msg = engine.Crypto_1Min_Daily(symbol=symbol, start_date=start_date, end_date=end_date)
-            re_list.append(re)
+            if not re:
+                result = False
             complete_msg += c_msg + '\n\n'
             back_msg += b_msg + '\n\n'
             lost_msg += l_msg + '\n\n'
 
-        for re in re_list:
-            if not re:
-                result = False
-                break
         return result, complete_msg, back_msg, lost_msg

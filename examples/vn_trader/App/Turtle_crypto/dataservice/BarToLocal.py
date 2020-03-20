@@ -148,6 +148,8 @@ class BarLocalEngine(object):
         if next_datetime != daily_bar_datetime and daily_bar:
             # Daily数据结尾缺失，到Tick数据库获取数据并合成
             d_bar, b_msg, l_msg = self.Crypto_Daily_With_Tick(symbol, next_datetime, daily_bar_end + timedelta(minutes=1), daily_bar)
+            if l_msg:
+                result = False
             daily_bar = d_bar
             back_msg += b_msg
             lost_msg += l_msg

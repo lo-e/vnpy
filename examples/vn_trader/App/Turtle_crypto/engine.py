@@ -1054,6 +1054,7 @@ class TurtleCryptoAutoEngine(object):
         self.generate_time = generate_time
         self.downloading = False
         self.generating = False
+        self.generate_result = True
         self.download_timer = Thread(target=self.on_download_timer)
         self.generate_timer = Thread(target=self.on_generate_timer)
 
@@ -1091,7 +1092,23 @@ class TurtleCryptoAutoEngine(object):
                 turtleCryptoDataD = TurtleCryptoDataDownloading()
                 self.downloading = True
                 turtleCryptoDataD.download_from_bybit(contract_list=self.contract_list)
-                turtleCryptoDataD.generate_for_bybit(contract_list=self.contract_list)
+                result, complete_msg, back_msg, lost_msg = turtleCryptoDataD.generate_for_bybit(contract_list=self.contract_list)
+                if not self.generate_result:
+                    email_msg = complete_msg + '\n\n' + lost_msg + back_msg
+                    if result:
+                        self.generate_result = True
+                        # 海龟策略重新初始化
+                        self.turtle_engine.reinit_strategies()
+                        email_msg = f'====== 策略重新初始化成功 ======\n\n{email_msg}'
+                    else:
+                        self.generate_result = False
+                        email_msg = f'!!!!!! 策略未完成重新初始化 !!!!!!\n\n{email_msg}'
+
+                    try:
+                        self.main_engine.send_email(subject='TURTLE_Crypto 数据更新', content=email_msg)
+                    except:
+                        pass
+
                 self.downloading = False
 
     def checkAndGenerate(self):
@@ -1108,10 +1125,12 @@ class TurtleCryptoAutoEngine(object):
                 email_msg = complete_msg + '\n\n' + lost_msg + back_msg
                 print('\n\n' + lost_msg + back_msg)
                 if result:
+                    self.generate_result = True
                     # 海龟策略重新初始化
                     self.turtle_engine.reinit_strategies()
                     email_msg = f'====== 策略重新初始化成功 ======\n\n{email_msg}'
                 else:
+                    self.generate_result = False
                     email_msg = f'!!!!!! 策略未完成重新初始化 !!!!!!\n\n{email_msg}'
 
                 try:
