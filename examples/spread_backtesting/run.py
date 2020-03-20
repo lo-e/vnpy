@@ -10,7 +10,7 @@ from vnpy.trader.constant import Direction, Offset
 import csv
 
 def one():
-    name = 'CF'
+    name = 'CS'
     symbol_up = 'CS2009'
     symbol_down = 'CS2005'
     symbol_active = 'CS2009'
@@ -21,6 +21,8 @@ def one():
     commission_rate = 0.000
     slippage = 0
     capital = 200000
+
+    strategy_params = {'boll_dev':4}
 
     start = datetime(2019, 12, 16)
     end = datetime(2020, 12, 31)
@@ -47,7 +49,7 @@ def one():
         pricetick=price_tick,
         capital=capital,
     )
-    engine.add_strategy(StatisticalArbitrageBacktestingStrategy, {})
+    engine.add_strategy(StatisticalArbitrageBacktestingStrategy, strategy_params)
 
     engine.load_data()
     engine.run_backtesting()

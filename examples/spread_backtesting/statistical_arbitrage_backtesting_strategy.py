@@ -114,7 +114,7 @@ class StatisticalArbitrageBacktestingStrategy(SpreadStrategyTemplate):
             return
 
         """ fake """
-        if bar.datetime >= datetime.strptime('2020-3-12 14:14:0', '%Y-%m-%d %H:%M:%S'):
+        if bar.datetime >= datetime.strptime('2020-3-20 10:39:0', '%Y-%m-%d %H:%M:%S'):
             a = 2
 
         if not self.spread_pos:
