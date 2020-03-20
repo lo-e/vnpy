@@ -74,8 +74,9 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         )
 
     def download_data(self):
-        last_datetime, msg = self.download_recent_data()
-        self.strategy_engine.send_strategy_email(self, msg=msg)
+        pass
+        #last_datetime, msg = self.download_recent_data()
+        #self.strategy_engine.send_strategy_email(self, msg=msg)
 
     def on_init(self):
         """
@@ -266,7 +267,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
                     replace = TRANSFORM_SYMBOL_LIST[startSymbol]
                     symbol = startSymbol + replace + endSymbol
             symbol_list.append(symbol)
-        last_datetime, msg = TurtleDataDownloading().download_minute_jq(symbol_list=symbol_list)
+        last_datetime, msg = TurtleDataDownloading().download_minute_jq(symbol_list=symbol_list, days=0)
         return last_datetime, msg
 
     def update_am_bar(self, bar: BarData):

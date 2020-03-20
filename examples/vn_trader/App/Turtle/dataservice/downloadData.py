@@ -314,12 +314,11 @@ class TurtleDataDownloading(object):
         return result, return_msg
         #"""
 
-    def download_minute_jq(self, symbol_list:list=None):
+    def download_minute_jq(self, symbol_list:list=None, days=1):
         return_msg = ''
         last_datetime = None
         if not symbol_list:
             symbol_list = ['CF2009', 'CF2005', 'CS2009', 'CS2005', 'CJ2009', 'CJ2005']
-        days = 1
         today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         next_day = today + timedelta(days=1)
         start = today - timedelta(days=days)

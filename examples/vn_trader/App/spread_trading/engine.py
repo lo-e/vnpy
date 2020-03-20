@@ -1189,6 +1189,7 @@ class SpreadAutoEngine(object):
         self.reconnect_timer = Thread(target=self.on_reconnect_timer)
 
     def start(self):
+        self.init_download_need = True
         self.download_timer.start()
         self.reconnect_timer.start()
 
@@ -1213,15 +1214,17 @@ class SpreadAutoEngine(object):
             if now >= start_time and now <= end_time:
                 check_time = True
                 break
-        if check_time:
+        if self.init_download_need or check_time:
             if not self.downloading:
                 turtleDataD = TurtleDataDownloading()
                 self.downloading = True
                 last_datetime, msg = turtleDataD.download_minute_jq()
                 self.downloading = False
-                # SPREAD重新初始化
-                self.spread_strategy_engine.reinit_and_restart_strategies()
-                msg = f'{msg}\n\n策略重新初始化成功'
+                if not self.init_download_need:
+                    # SPREAD重新初始化
+                    self.spread_strategy_engine.reinit_and_restart_strategies()
+                    msg = f'{msg}\n\n策略重新初始化成功'
+                self.init_download_need = False
                 self.main_engine.send_email(subject='SPREAD 数据更新', content=msg)
                 sleep(10*60)
 
