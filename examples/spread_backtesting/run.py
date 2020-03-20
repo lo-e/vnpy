@@ -10,14 +10,14 @@ from vnpy.trader.constant import Direction, Offset
 import csv
 
 def one():
-    name = 'CS'
-    symbol_up = 'CS2009'
-    symbol_down = 'CS2005'
-    symbol_active = 'CS2009'
+    name = 'CF'
+    symbol_up = 'CF2009'
+    symbol_down = 'CF2005'
+    symbol_active = 'CF2009'
     min_volume = 1
 
-    size = 10
-    price_tick = 1
+    size = 5
+    price_tick = 5
     commission_rate = 0.000
     slippage = 0
     capital = 200000
