@@ -159,9 +159,9 @@ class BarLocalEngine(object):
                 complete_msg += msg + '\n'
                 print(msg)
                 Daily_collection.update_many({'datetime': daily_bar.datetime}, {'$set': daily_bar.__dict__}, upsert=True)
-            else:
-                result = False
 
+        if lost_msg:
+            result = False
         return result, complete_msg, back_msg, lost_msg
 
     def Crypto_Daily_With_Tick(self, symbol, from_min, to_min, daily_bar):
