@@ -100,11 +100,19 @@ def download_bar_data(symbol:str, start:str, end:str, frequency:str='1d', to_dat
     if not start or not end:
         # 获取合约上市起止时间
         symbol_data_list = jq_get_all_trading_symbol_list()
+        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         # 获取目标代码还在交易的所有合约数据
         for symbol_data in symbol_data_list:
             if symbol_data.symbol == symbol.upper():
-                start = symbol_data.start_date.strftime('%Y-%m-%d')
-                end = symbol_data.end_date.strftime('%Y-%m-%d')
+                end_date = symbol_data.end_date
+                if end_date >= today:
+                    end_date = today
+                if frequency == '1d':
+                    start = symbol_data.start_date.strftime('%Y-%m-%d')
+                    end = end_date.strftime('%Y-%m-%d')
+                elif frequency == '1m':
+                    start = symbol_data.start_date.strftime('%Y-%m-%d %H:%M:%S')
+                    end = end_date.strftime('%Y-%m-%d %H:%M:%S')
                 break
 
     data = get_price(jq_symbol, start_date=start, end_date=end, frequency=frequency, fields=None, skip_paused=True, fq='pre')

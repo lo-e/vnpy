@@ -148,19 +148,19 @@ class BarLocalEngine(object):
         if next_datetime != daily_bar_datetime and daily_bar:
             # Daily数据结尾缺失，到Tick数据库获取数据并合成
             d_bar, b_msg, l_msg = self.Crypto_Daily_With_Tick(symbol, next_datetime, daily_bar_end + timedelta(minutes=1), daily_bar)
-            if l_msg:
-                result = False
             daily_bar = d_bar
             back_msg += b_msg
             lost_msg += l_msg
 
-            # Daily的结束
-            # 保存bar到数据库
-            msg = f'保存Daily数据：{symbol}\t{daily_bar_datetime}\n'
-            complete_msg += msg + '\n'
-            print(msg)
-            Daily_collection.update_many({'datetime': daily_bar.datetime}, {'$set': daily_bar.__dict__},
-                                         upsert=True)
+            if not l_msg:
+                # Daily的结束
+                # 保存bar到数据库
+                msg = f'保存Daily数据：{symbol}\t{daily_bar_datetime}\n'
+                complete_msg += msg + '\n'
+                print(msg)
+                Daily_collection.update_many({'datetime': daily_bar.datetime}, {'$set': daily_bar.__dict__}, upsert=True)
+            else:
+                result = False
 
         return result, complete_msg, back_msg, lost_msg
 
