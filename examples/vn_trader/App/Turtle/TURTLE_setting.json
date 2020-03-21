@@ -3,8 +3,8 @@
     {
         "strategy_name": "TURTLE_RB",
         "class_name": "TurtleStrategy",
-        "vt_symbol": "rb2005",
-        "last_symbol":"",
+        "vt_symbol": "rb2010",
+        "last_symbol":"rb2005",
         "per_size":10,
         "tick_price":1,
         "start": true
