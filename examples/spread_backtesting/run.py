@@ -10,10 +10,10 @@ from vnpy.trader.constant import Direction, Offset
 import csv
 
 def one():
-    name = 'CJ'
-    symbol_up = 'CJ2009'
-    symbol_down = 'CJ2005'
-    symbol_active = 'CJ2009'
+    name = 'CY'
+    symbol_up = 'CY2009'
+    symbol_down = 'CY2005'
+    symbol_active = 'CY2009'
     min_volume = 1
 
     size = 5
@@ -24,7 +24,7 @@ def one():
 
     strategy_params = {'boll_dev':5}
 
-    start = datetime(2019, 12, 16)
+    start = datetime(2019, 12, 20)
     end = datetime(2020, 12, 31)
 
     spread = SpreadData(

@@ -152,13 +152,12 @@ class BarLocalEngine(object):
             back_msg += b_msg
             lost_msg += l_msg
 
-            if not l_msg:
-                # Daily的结束
-                # 保存bar到数据库
-                msg = f'保存Daily数据：{symbol}\t{daily_bar_datetime}\n'
-                complete_msg += msg + '\n'
-                print(msg)
-                Daily_collection.update_many({'datetime': daily_bar.datetime}, {'$set': daily_bar.__dict__}, upsert=True)
+            # Daily的结束
+            # 保存bar到数据库
+            msg = f'保存Daily数据：{symbol}\t{daily_bar_datetime}\n'
+            complete_msg += msg + '\n'
+            print(msg)
+            Daily_collection.update_many({'datetime': daily_bar.datetime}, {'$set': daily_bar.__dict__}, upsert=True)
 
         if lost_msg:
             result = False
