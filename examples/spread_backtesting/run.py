@@ -10,7 +10,7 @@ from vnpy.trader.constant import Direction, Offset
 import csv
 
 def one():
-    name = 'OI'
+    name = 'NR'
     symbol_up, symbol_down, symbol_active, size, price_tick, commission_rate = get_backtesting_params(name=name)
 
     min_volume = 1
@@ -178,6 +178,142 @@ def get_backtesting_params(name:str):
         symbol_active = 'RM2009'
         size = 10
         price_tick = 1
+        commission_rate = 0.000
+
+    elif name == 'SC':
+        symbol_up = 'SC2006'
+        symbol_down = 'SC2005'
+        symbol_active = 'SC2006'
+        size = 1000
+        price_tick = 0.1
+        commission_rate = 0.000
+
+    elif name == 'SF':
+        symbol_up = 'SF2009'
+        symbol_down = 'SF2005'
+        symbol_active = 'SF2009'
+        size = 5
+        price_tick = 2
+        commission_rate = 0.000
+
+    elif name == 'SM':
+        symbol_up = 'SM2009'
+        symbol_down = 'SM2005'
+        symbol_active = 'SM2009'
+        size = 5
+        price_tick = 2
+        commission_rate = 0.000
+
+    elif name == 'SN':
+        symbol_up = 'SN2009'
+        symbol_down = 'SN2005'
+        symbol_active = 'SN2009'
+        size = 1
+        price_tick = 10
+        commission_rate = 0.000
+
+    elif name == 'SP':
+        symbol_up = 'SP2009'
+        symbol_down = 'SP2005'
+        symbol_active = 'SP2009'
+        size = 10
+        price_tick = 2
+        commission_rate = 0.000
+
+    elif name == 'SR':
+        symbol_up = 'SR2009'
+        symbol_down = 'SR2005'
+        symbol_active = 'SR2005'
+        size = 10
+        price_tick = 1
+        commission_rate = 0.000
+
+    elif name == 'TA':
+        symbol_up = 'TA2009'
+        symbol_down = 'TA2005'
+        symbol_active = 'TA2009'
+        size = 5
+        price_tick = 2
+        commission_rate = 0.000
+
+    elif name == 'WR':
+        symbol_up = 'WR2010'
+        symbol_down = 'WR2005'
+        symbol_active = 'WR2010'
+        size = 10
+        price_tick = 1
+        commission_rate = 0.000
+
+    elif name == 'ZC':
+        symbol_up = 'ZC2009'
+        symbol_down = 'ZC2005'
+        symbol_active = 'ZC2009'
+        size = 100
+        price_tick = 0.2
+        commission_rate = 0.000
+
+    elif name == 'ZN':
+        symbol_up = 'ZN2005'
+        symbol_down = 'ZN2004'
+        symbol_active = 'ZN2005'
+        size = 5
+        price_tick = 5
+        commission_rate = 0.000
+
+    elif name == 'TF':
+        symbol_up = 'TF2009'
+        symbol_down = 'TF2006'
+        symbol_active = 'TF2009'
+        size = 10000
+        price_tick = 0.005
+        commission_rate = 0.000
+
+    elif name == 'TS':
+        symbol_up = 'TS2009'
+        symbol_down = 'TS2006'
+        symbol_active = 'TS2009'
+        size = 20000
+        price_tick = 0.005
+        commission_rate = 0.000
+
+    elif name == 'FG':
+        symbol_up = 'FG2009'
+        symbol_down = 'FG2005'
+        symbol_active = 'FG2009'
+        size = 20
+        price_tick = 1
+        commission_rate = 0.000
+
+    elif name == 'JM':
+        symbol_up = 'JM2009'
+        symbol_down = 'JM2005'
+        symbol_active = 'JM2009'
+        size = 60
+        price_tick = 0.5
+        commission_rate = 0.000
+
+    elif name == 'RU':
+        symbol_up = 'RU2009'
+        symbol_down = 'RU2005'
+        symbol_active = 'RU2009'
+        size = 10
+        price_tick = 5
+        commission_rate = 0.000
+
+    elif name == 'SA':
+        symbol_up = 'SA2009'
+        symbol_down = 'SA2005'
+        symbol_active = 'SA2009'
+        size = 20
+        price_tick = 1
+        commission_rate = 0.000
+
+    elif name == 'NR':
+        symbol_up = 'NR2006'
+        symbol_down = 'NR2005'
+        symbol_active = 'NR2006'
+        size = 10
+        price_tick = 5
         commission_rate = 0.000
 
     elif name == '':

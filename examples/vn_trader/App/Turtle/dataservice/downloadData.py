@@ -342,7 +342,6 @@ class TurtleDataDownloading(object):
                            'TS2009', 'TS2006',
                            'FG2009', 'FG2005',
                            'JM2009', 'JM2005',
-                           'RI2009', 'RI2005',
                            'RU2009', 'RU2005',
                            'SA2009', 'SA2005',
                            'NR2006', 'NR2005']
