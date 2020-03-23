@@ -10,9 +10,8 @@ from vnpy.trader.constant import (Direction, Offset)
 from vnpy.app.cta_strategy.template import CtaTemplate
 from vnpy.trader.utility import ArrayManager
 from vnpy.app.cta_strategy.base import *
-from datetime import datetime
-import re
-from .strategyTurtleInitialCrypto import TurtleInitialCryptoManager
+import datetime
+from datetime import timedelta
 from vnpy.trader.constant import Interval
 
 ########################################################################
@@ -143,7 +142,8 @@ class TurtleStrategyCrypto(CtaTemplate):
     def on_tick(self, tick):
         """收到行情TICK推送（必须由用户继承实现）"""
         # 保存tick数据到数据库
-        self.saveTick(tick)
+        if datetime.time(7, 35) <= (tick.datetime + timedelta(hours=8)).time() <= datetime.time(8, 2):
+            self.saveTick(tick)
 
         if not self.trading:
             return
