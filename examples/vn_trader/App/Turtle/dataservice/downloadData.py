@@ -314,7 +314,7 @@ class TurtleDataDownloading(object):
         return result, return_msg
         #"""
 
-    def download_minute_jq(self, symbol_list:list=None, days=1):
+    def download_minute_jq(self, symbol_list:list=None, days=1, recent_minute=0):
         return_msg = ''
         last_datetime = None
 
@@ -345,19 +345,38 @@ class TurtleDataDownloading(object):
                            'RU2009', 'RU2005',
                            'SA2009', 'SA2005',
                            'NR2006', 'NR2005']
+
+        symbol_list = ['CF2009', 'CF2005',
+                       'CS2009', 'CS2005']
         today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         next_day = today + timedelta(days=1)
-        start = today - timedelta(days=days)
-        end = start + timedelta(days=1)
+        if recent_minute:
+            start = datetime.now() - timedelta(minutes=recent_minute)
+            end = datetime.now()
+        else:
+            start = today - timedelta(days=days)
+            end = start + timedelta(days=1)
         while end <= next_day:
             if end == next_day:
                 end = datetime.now()
+            """
             for symbol in symbol_list:
                 bar_list, msg = download_bar_data(symbol=symbol, start=start.strftime('%Y-%m-%d %H:%M:%S'), end=end.strftime('%Y-%m-%d %H:%M:%S'), frequency='1m', to_database=True)
                 if bar_list:
                     last_datetime = bar_list[-1].datetime
                 print(msg)
                 return_msg = return_msg + msg + '\n'
+            if bar_list:
+                last_datetime = bar_list[-1].datetime
+            """
+            bar_dict, msg = download_bar_data_symbollist(symbollist=symbol_list, start=start.strftime('%Y-%m-%d %H:%M:%S'), end=end.strftime('%Y-%m-%d %H:%M:%S'), frequency='1m', to_database=True)
+            for bar_symbol, bar_list in bar_dict.items():
+                if bar_list:
+                    last_datetime = bar_list[-1].datetime
+                    break
+            print(msg)
+            return_msg = return_msg + msg + '\n'
+
             start = end
             end = end + timedelta(days=1)
             return_msg += '\n'

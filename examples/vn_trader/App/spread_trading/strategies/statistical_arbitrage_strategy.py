@@ -39,8 +39,6 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     boll_mid = 0.0
     current_length = 0.0
 
-    downloading_flag:datetime = None
-
     parameters = [
         "boll_window",
         "boll_dev",
@@ -74,9 +72,6 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         super().__init__(
             strategy_engine, strategy_name, spread, setting
         )
-
-    def download_data(self):
-        pass
 
     def on_init(self):
         """
@@ -249,36 +244,13 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         thread_executor.submit(self.get_recent_data)
 
     def get_recent_data(self):
-        result, last_datetime, msg = self.download_recent_data()
-        if result:
-            now_minute = datetime.now().replace(second=0, microsecond=0)
-            if last_datetime == now_minute:
-                self.am = ArrayManager(size=self.boll_window)
-                self.load_bar(days=10, callback=self.update_am_bar)
+        self.strategy_engine.downloading_recent_data(callback=self.download_callback)
 
-    def download_recent_data(self):
-        """
-        symbol_list = []
-        for vt_symbol in self.spread.legs.keys():
-            symbol = vt_symbol.split('.')[0].upper()
-            startSymbol = re.sub("\d", "", symbol)
-            if startSymbol in TRANSFORM_SYMBOL_LIST.keys():
-                endSymbol = re.sub("\D", "", symbol)
-                if len(endSymbol) == 3:
-                    # 比如TA005需要进行转换
-                    replace = TRANSFORM_SYMBOL_LIST[startSymbol]
-                    symbol = startSymbol + replace + endSymbol
-            symbol_list.append(symbol)
-        last_datetime, msg = TurtleDataDownloading().download_minute_jq(symbol_list=symbol_list, days=0)
-        """
-        result = False
-        last_datetime = None
-        msg = ''
-        if not self.downloading_flag or datetime.now() <= self.downloading_flag + timedelta(seconds=20):
-            self.downloading_flag = datetime.now()
-            last_datetime, msg = TurtleDataDownloading().download_minute_jq(days=0)
-            result = True
-        return result, last_datetime, msg
+    def download_callback(self, last_datetime, msg):
+        now_minute = datetime.now().replace(second=0, microsecond=0)
+        if last_datetime == now_minute:
+            self.am = ArrayManager(size=self.boll_window)
+            self.load_bar(days=10, callback=self.update_am_bar)
 
     def update_am_bar(self, bar: BarData):
         self.am.update_bar(bar)

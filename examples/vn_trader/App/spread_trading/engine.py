@@ -629,6 +629,8 @@ class SpreadStrategyEngine:
         # 数据引擎【下载时间 ['10:20', '11:35', '15:35', '23:35']】
         self.autoEngine = SpreadAutoEngine(main_engine=self.spread_engine.main_engine, spread_strategy_engine=self, download_time_list=['10:20', '11:35', '15:05', '23:35'],
                                            reconnect_time='20:00', check_interval=10 * 60, reload_time=6)
+        self.downloading_flag: datetime = None
+        self.download_callback_list = []
 
     def start(self):
         """"""
@@ -1167,6 +1169,16 @@ class SpreadStrategyEngine:
 
                 self.put_strategy_event(strategy)
                 self.write_log(f"{strategy_name} 重新初始化完成")
+
+    def downloading_recent_data(self, callback:None):
+        if callback not in self.download_callback_list:
+            self.download_callback_list.append(callback)
+
+        if not self.downloading_flag or datetime.now() >= self.downloading_flag + timedelta(seconds=20):
+            self.downloading_flag = datetime.now()
+            last_datetime, msg = TurtleDataDownloading().download_minute_jq(recent_minute=5)
+            for the_callback in self.download_callback_list:
+                the_callback(last_datetime, msg)
 
 """ modify by loe """
 # 数据自动化引擎，每天固定时间下载策略回测及实盘必要的数据，自动重连CTP和重新初始化策略
