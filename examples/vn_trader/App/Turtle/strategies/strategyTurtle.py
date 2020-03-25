@@ -651,7 +651,7 @@ class TurtleStrategy(CtaTemplate):
 
     # 主力换月，初始化交易状态
     def newDominantInitial(self):
-        if self.pos:
+        if self.pos or self.unit:
             return
         self.posInitialNeed = True
 
@@ -672,6 +672,7 @@ class TurtleStrategy(CtaTemplate):
 
         self.updateMultiplier()
         self.virtualUnit = initialManager.unit
+        self.unit = 0
 
         if initialManager.result:
             self.entry = initialManager.result.entry
