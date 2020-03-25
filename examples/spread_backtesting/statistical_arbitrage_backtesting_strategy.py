@@ -116,6 +116,8 @@ class StatisticalArbitrageBacktestingStrategy(SpreadStrategyTemplate):
         """ fake """
         if bar.datetime >= datetime.strptime('2020-3-20 10:39:0', '%Y-%m-%d %H:%M:%S'):
             a = 2
+        #if self.boll_up <= 0 or self.boll_mid <= 0 or self.boll_down <= 0:
+            #return
 
         if not self.spread_pos:
             # 设置一个开仓阈值

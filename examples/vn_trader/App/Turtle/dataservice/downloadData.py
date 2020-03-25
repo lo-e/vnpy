@@ -314,28 +314,68 @@ class TurtleDataDownloading(object):
         return result, return_msg
         #"""
 
-    def download_minute_jq(self, symbol_list:list=None, days=1):
+    def download_minute_jq(self, symbol_list:list=None, days=1, recent_minute=0):
         return_msg = ''
         last_datetime = None
 
         if not symbol_list:
+            """
+            'CY2009', 'CY2005'
+            'OI2009', 'OI2005'
+            'SN2009', 'SN2005'
+            'WR2010', 'WR2005'
+            'TS2009', 'TS2006'
+            'FG2009', 'FG2005'
+            'JM2009', 'JM2005'
+            """
             symbol_list = ['CF2009', 'CF2005',
                            'CS2009', 'CS2005',
                            'CJ2009', 'CJ2005',
-                           'CU2004', 'CU2005']
+                           'CU2005', 'CU2004',
+                           'EG2009', 'EG2005',
+                           'PB2006', 'PB2005',
+                           'RM2009', 'RM2005',
+                           'SC2006', 'SC2005',
+                           'SF2009', 'SF2005',
+                           'SM2009', 'SM2005',
+                           'SP2009', 'SP2005',
+                           'SR2009', 'SR2005',
+                           'TA2009', 'TA2005',
+                           'ZC2009', 'ZC2005',
+                           'ZN2005', 'ZN2004',
+                           'TF2009', 'TF2006',
+                           'RU2009', 'RU2005',
+                           'SA2009', 'SA2005',
+                           'NR2006', 'NR2005']
         today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         next_day = today + timedelta(days=1)
-        start = today - timedelta(days=days)
-        end = start + timedelta(days=1)
+        if recent_minute:
+            start = datetime.now() - timedelta(minutes=recent_minute)
+            end = datetime.now()
+        else:
+            start = today - timedelta(days=days)
+            end = start + timedelta(days=1)
         while end <= next_day:
             if end == next_day:
                 end = datetime.now()
+            """
             for symbol in symbol_list:
                 bar_list, msg = download_bar_data(symbol=symbol, start=start.strftime('%Y-%m-%d %H:%M:%S'), end=end.strftime('%Y-%m-%d %H:%M:%S'), frequency='1m', to_database=True)
                 if bar_list:
                     last_datetime = bar_list[-1].datetime
                 print(msg)
                 return_msg = return_msg + msg + '\n'
+            if bar_list:
+                last_datetime = bar_list[-1].datetime
+            """
+            bar_dict, msg = download_bar_data_symbollist(symbollist=symbol_list, start=start.strftime('%Y-%m-%d %H:%M:%S'), end=end.strftime('%Y-%m-%d %H:%M:%S'), frequency='1m', to_database=True)
+            for bar_symbol, bar_list in bar_dict.items():
+                if bar_list:
+                    last_datetime = bar_list[-1].datetime
+                    break
+            print(msg)
+            return_msg = return_msg + msg + '\n'
+
             start = end
             end = end + timedelta(days=1)
             return_msg += '\n'
@@ -347,7 +387,7 @@ class TurtleDataDownloading(object):
         last_datetime = None
 
         if not symbol_list:
-            symbol_list = ['RB2101']
+            symbol_list = []
 
         for symbol in symbol_list:
             bar_list, msg = download_bar_data(symbol=symbol, start='', end='', frequency='1m', to_database=True)

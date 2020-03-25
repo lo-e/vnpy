@@ -17,6 +17,7 @@ import re
 from vnpy.app.cta_strategy.base import TRANSFORM_SYMBOL_LIST
 from jqdatasdk import *
 from .tushareService import fetchNextTradeDate
+from collections import defaultdict
 
 # 聚宽账号登陆
 auth('18521705317', '970720699')
@@ -126,7 +127,13 @@ def download_bar_data(symbol:str, start:str, end:str, frequency:str='1d', to_dat
 
         if not from_date:
             from_date = bar.datetime
-        to_date = bar.datetime
+        if not to_date:
+            to_date = bar.datetime
+
+        if bar.datetime <= from_date:
+            from_date = bar.datetime
+        if bar.datetime >= to_date:
+            to_date = bar.datetime
 
     return_msg = ''
     if len(bar_list):
@@ -152,6 +159,77 @@ def download_bar_data(symbol:str, start:str, end:str, frequency:str='1d', to_dat
     else:
         return_msg = f'{symbol.upper()}\t{frequency.upper()} Bar数据下载空!!\t{start} - {end}'
     return bar_list, return_msg
+
+def download_bar_data_symbollist(symbollist:list, start:str, end:str, frequency:str='1d', to_database:bool=False):
+    # 获取多只标的Bar数据【注意：起始时间必须指定，不能跳过停牌，单只标的停牌时会自动填充停牌前的数据】
+    jq_symbollist = []
+    for symbol in symbollist:
+        jq_symbol = transform_jqcode(symbol=symbol)
+        jq_symbollist.append(jq_symbol)
+
+    #jq_symbollist = ['RB2011.XSGE', 'RB2012.XSGE']
+    data = get_price(jq_symbollist, start_date=start, end_date=end, frequency=frequency, fields=None, skip_paused=False, fq='pre')
+    bar_dict = defaultdict(list)
+    from_date = None
+    to_date = None
+    open_list = data['open']
+    high_list = data['high']
+    low_list = data['low']
+    close_list = data['close']
+    volume_list = data['volume']
+    for index, open_row in open_list.iterrows():
+        for symbol in open_row.index:
+            open = open_row[symbol]
+            high = high_list[symbol][index]
+            low = low_list[symbol][index]
+            close = close_list[symbol][index]
+            volume = volume_list[symbol][index]
+            bar_row = {'open':open, 'high':high, 'low':low, 'close':close, 'volume':volume}
+            datetime_str = index.strftime('%Y-%m-%d %H:%M')
+            simple_symbol = symbol.split('.')[0]
+            bar = generateBar(row=bar_row, symbol=simple_symbol.upper(), datetime_str=datetime_str)
+            the_list = bar_dict[bar.symbol]
+            the_list.append(bar)
+
+
+        if not from_date:
+            from_date = bar.datetime
+        if not to_date:
+            to_date = bar.datetime
+
+        if bar.datetime <= from_date:
+            from_date = bar.datetime
+        if bar.datetime >= to_date:
+            to_date = bar.datetime
+
+    return_msg = ''
+    for bar_symbol, symbol_bar_list in bar_dict.items():
+        if len(symbol_bar_list):
+            if to_database:
+                # 保存数据库
+                collection = None
+                if frequency == '1d':
+                    collection = dbDaily[bar_symbol.upper()]
+                elif frequency == '1m':
+                    collection = dbMinute[bar_symbol.upper()]
+                if collection:
+                    valid = True
+                    for bar in symbol_bar_list:
+                        if bar.check_valid():
+                            collection.update_many({'datetime': bar.datetime}, {'$set': bar.__dict__}, upsert=True)
+                        else:
+                            valid = False
+                    return_msg = return_msg + f'{bar_symbol.upper()}\t{frequency.upper()} Bar数据下载并保存数据库成功【{len(symbol_bar_list)}】\t{from_date} - {to_date}' + '\n'
+                    if not valid:
+                        return_msg += return_msg + f'{bar_symbol}\tBar数据校验不通过，需要排查错误！！' + '\n'
+            else:
+                return_msg = return_msg + f'{bar_symbol.upper()}\t{frequency.upper()} Bar数据下载成功【{len(symbol_bar_list)}】\t{from_date} - {to_date}' + '\n'
+        else:
+            return_msg = return_msg + f'{bar_symbol.upper()}\t{frequency.upper()} Bar数据下载空!!\t{start} - {end}' + '\n'
+
+    if not return_msg:
+        return_msg = f'Bar数据下载空！！\t{start} - {end}'
+    return bar_dict, return_msg
 
 # 获取合约持仓量数据
 # symbol_list：['RB2005', 'HC2005]
