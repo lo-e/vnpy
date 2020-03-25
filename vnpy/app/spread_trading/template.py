@@ -39,10 +39,26 @@ MORNING_START_SF = datetime.time(9, 30)
 MORNING_END_SF = datetime.time(11, 30)
 AFTERNOON_START_SF = datetime.time(13, 0)
 AFTERNOON_END_SF = datetime.time(15, 0)
+AFTERNOON_END_BD_SF = datetime.time(15, 15)
 
-def is_finance_symbol(symbol):
+# 是否是股指期货
+def is_finance_stock_symbol(symbol):
     # 能够识别 'RB10_RB05', 'RB2010.SHFE'
-    financeSymbols = ['IF', 'IC', 'IH', 'TF', 'TS']
+    financeSymbols = ['IF', 'IC', 'IH']
+    target_symbol = copy(symbol)
+    target_symbol = target_symbol.upper()
+    target_symbol = target_symbol.split('_')[0]
+    target_symbol = target_symbol.split('.')[0]
+    startSymbol = re.sub("\d", "", target_symbol)
+    if startSymbol in financeSymbols:
+        return True
+    else:
+        return False
+
+# 是否是债券期货
+def is_finance_bond_symbol(symbol):
+    # 能够识别 'RB10_RB05', 'RB2010.SHFE'
+    financeSymbols = ['TF', 'TS']
     target_symbol = copy(symbol)
     target_symbol = target_symbol.upper()
     target_symbol = target_symbol.split('_')[0]
@@ -56,13 +72,23 @@ def is_finance_symbol(symbol):
 def check_trading_time(symbol, the_datetime:datetime.datetime):
     result = True
     t = the_datetime.time()
-    isFinance = is_finance_symbol(symbol)
-    if not isFinance:
-        if NIGHT_END_CF_M <= t < MORNING_START_CF or MORNING_REST_CF <= t < MORNING_RESTART_CF or MORNING_END_CF <= t < AFTERNOON_START_CF or AFTERNOON_END_CF <= t < NIGHT_START_CF:
-            result = False
-    else:
+    is_stock = is_finance_stock_symbol(symbol)
+    is_bond = is_finance_bond_symbol(symbol)
+    if is_stock:
+        # 股指期货
         if t < MORNING_START_SF or MORNING_END_SF <= t < AFTERNOON_START_SF or AFTERNOON_END_SF <= t:
             result = False
+
+    elif is_bond:
+        # 债券期货
+        if t < MORNING_START_SF or MORNING_END_SF <= t < AFTERNOON_START_SF or AFTERNOON_END_BD_SF <= t:
+            result = False
+
+    else:
+        # 商品期货
+        if NIGHT_END_CF_M <= t < MORNING_START_CF or MORNING_REST_CF <= t < MORNING_RESTART_CF or MORNING_END_CF <= t < AFTERNOON_START_CF or AFTERNOON_END_CF <= t < NIGHT_START_CF:
+            result = False
+
     return result
 
 def check_tick_valid(tick:TickData):
