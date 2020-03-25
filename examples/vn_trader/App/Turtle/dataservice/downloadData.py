@@ -314,11 +314,11 @@ class TurtleDataDownloading(object):
         return result, return_msg
         #"""
 
-    def download_minute_multi_jq(self, symbol_list:list=None, days=1, recent_minute=0):
+    def download_minute_multi_jq(self, symbol_list_array:list=None, days=1, recent_minute=0):
         return_msg = ''
         last_datetime = None
 
-        if not symbol_list:
+        if not symbol_list_array:
             """
             'CY2009', 'CY2005'
             'OI2009', 'OI2005'
@@ -328,28 +328,37 @@ class TurtleDataDownloading(object):
             'FG2009', 'FG2005'
             'JM2009', 'JM2005'
             """
-            symbol_list_1 = ['CF2009', 'CF2005',
-                             'CS2009', 'CS2005',
-                             'CJ2009', 'CJ2005',
-                             'CU2005', 'CU2004',
-                             'EG2009', 'EG2005',
-                             'PB2006', 'PB2005',
-                             'RM2009', 'RM2005',
-                             'SC2006', 'SC2005',
+
+            # 商品【没有夜盘】
+            symbol_list_1 = ['CJ2009', 'CJ2005',
                              'SF2009', 'SF2005',
                              'SM2009', 'SM2005']
 
-            symbol_list_2 = ['SP2009', 'SP2005',
+            # 商品【夜盘23：00】
+            symbol_list_2 = ['CF2009', 'CF2005',
+                             'CS2009', 'CS2005',
+                             'EG2009', 'EG2005',
+                             'RM2009', 'RM2005',
+                             'SP2009', 'SP2005',
                              'SR2009', 'SR2005',
                              'TA2009', 'TA2005',
                              'ZC2009', 'ZC2005',
-                             'ZN2005', 'ZN2004',
-                             'TF2009', 'TF2006',
                              'RU2009', 'RU2005',
                              'SA2009', 'SA2005',
                              'NR2006', 'NR2005']
 
-            symbol_list_array = [symbol_list_1, symbol_list_2]
+            # 商品【凌晨1：00】
+            symbol_list_3 = ['CU2005', 'CU2004',
+                             'PB2006', 'PB2005',
+                             'ZN2005', 'ZN2004']
+
+            # 商品【凌晨2：30】
+            symbol_list_4 = ['SC2006', 'SC2005']
+
+            # 金融
+            symbol_list_5 = ['TF2009', 'TF2006']
+
+            symbol_list_array = [symbol_list_1, symbol_list_2, symbol_list_3, symbol_list_4, symbol_list_5]
 
         today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         next_day = today + timedelta(days=1)
@@ -380,13 +389,9 @@ class TurtleDataDownloading(object):
                 temp_msg += msg
             # 只有每组数据的last_datetime一致时才有效
             last_datetime = None
-            if len(temp_lastdatetime_list) == len(symbol_list_array):
-                for temp in temp_lastdatetime_list:
-                    if not last_datetime:
-                        last_datetime = temp
-                    elif last_datetime != temp:
-                        last_datetime = None
-                        break
+            for temp in temp_lastdatetime_list:
+                if not last_datetime or last_datetime >= temp:
+                    last_datetime = temp
             print(temp_msg)
             return_msg = return_msg + temp_msg + '\n'
 

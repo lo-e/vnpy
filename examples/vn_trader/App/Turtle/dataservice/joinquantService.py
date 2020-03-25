@@ -228,7 +228,7 @@ def download_bar_data_symbollist(symbollist:list, start:str, end:str, frequency:
             return_msg = return_msg + f'{bar_symbol.upper()}\t{frequency.upper()} Bar数据下载空!!\t{start} - {end}' + '\n'
 
     if not return_msg:
-        return_msg = f'Bar数据下载空！！\t{start} - {end}'
+        return_msg = f'Bar数据下载空！！\t{start} - {end}' + '\n'
     return bar_dict, return_msg
 
 # 获取合约持仓量数据
