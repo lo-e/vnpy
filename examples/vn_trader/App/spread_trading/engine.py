@@ -1176,7 +1176,7 @@ class SpreadStrategyEngine:
 
         if not self.downloading_flag or datetime.now() >= self.downloading_flag + timedelta(seconds=20):
             self.downloading_flag = datetime.now()
-            last_datetime, msg = TurtleDataDownloading().download_minute_jq(recent_minute=5)
+            last_datetime, msg = TurtleDataDownloading().download_minute_multi_jq(recent_minute=5)
             for the_callback in self.download_callback_list:
                 the_callback(last_datetime, msg)
 
@@ -1230,7 +1230,7 @@ class SpreadAutoEngine(object):
             if not self.downloading:
                 turtleDataD = TurtleDataDownloading()
                 self.downloading = True
-                last_datetime, msg = turtleDataD.download_minute_jq(days=0)
+                last_datetime, msg = turtleDataD.download_minute_multi_jq(days=0)
                 self.downloading = False
                 if not self.init_download_need:
                     # SPREAD重新初始化

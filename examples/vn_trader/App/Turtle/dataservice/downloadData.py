@@ -314,7 +314,7 @@ class TurtleDataDownloading(object):
         return result, return_msg
         #"""
 
-    def download_minute_jq(self, symbol_list:list=None, days=1, recent_minute=0):
+    def download_minute_multi_jq(self, symbol_list:list=None, days=1, recent_minute=0):
         return_msg = ''
         last_datetime = None
 
@@ -328,25 +328,29 @@ class TurtleDataDownloading(object):
             'FG2009', 'FG2005'
             'JM2009', 'JM2005'
             """
-            symbol_list = ['CF2009', 'CF2005',
-                           'CS2009', 'CS2005',
-                           'CJ2009', 'CJ2005',
-                           'CU2005', 'CU2004',
-                           'EG2009', 'EG2005',
-                           'PB2006', 'PB2005',
-                           'RM2009', 'RM2005',
-                           'SC2006', 'SC2005',
-                           'SF2009', 'SF2005',
-                           'SM2009', 'SM2005',
-                           'SP2009', 'SP2005',
-                           'SR2009', 'SR2005',
-                           'TA2009', 'TA2005',
-                           'ZC2009', 'ZC2005',
-                           'ZN2005', 'ZN2004',
-                           'TF2009', 'TF2006',
-                           'RU2009', 'RU2005',
-                           'SA2009', 'SA2005',
-                           'NR2006', 'NR2005']
+            symbol_list_1 = ['CF2009', 'CF2005',
+                             'CS2009', 'CS2005',
+                             'CJ2009', 'CJ2005',
+                             'CU2005', 'CU2004',
+                             'EG2009', 'EG2005',
+                             'PB2006', 'PB2005',
+                             'RM2009', 'RM2005',
+                             'SC2006', 'SC2005',
+                             'SF2009', 'SF2005',
+                             'SM2009', 'SM2005']
+
+            symbol_list_2 = ['SP2009', 'SP2005',
+                             'SR2009', 'SR2005',
+                             'TA2009', 'TA2005',
+                             'ZC2009', 'ZC2005',
+                             'ZN2005', 'ZN2004',
+                             'TF2009', 'TF2006',
+                             'RU2009', 'RU2005',
+                             'SA2009', 'SA2005',
+                             'NR2006', 'NR2005']
+
+            symbol_list_array = [symbol_list_1, symbol_list_2]
+
         today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         next_day = today + timedelta(days=1)
         if recent_minute:
@@ -358,23 +362,26 @@ class TurtleDataDownloading(object):
         while end <= next_day:
             if end == next_day:
                 end = datetime.now()
-            """
-            for symbol in symbol_list:
-                bar_list, msg = download_bar_data(symbol=symbol, start=start.strftime('%Y-%m-%d %H:%M:%S'), end=end.strftime('%Y-%m-%d %H:%M:%S'), frequency='1m', to_database=True)
-                if bar_list:
-                    last_datetime = bar_list[-1].datetime
-                print(msg)
-                return_msg = return_msg + msg + '\n'
-            if bar_list:
-                last_datetime = bar_list[-1].datetime
-            """
-            bar_dict, msg = download_bar_data_symbollist(symbollist=symbol_list, start=start.strftime('%Y-%m-%d %H:%M:%S'), end=end.strftime('%Y-%m-%d %H:%M:%S'), frequency='1m', to_database=True)
-            for bar_symbol, bar_list in bar_dict.items():
-                if bar_list:
-                    last_datetime = bar_list[-1].datetime
+
+            temp_lastdatetime_list = []
+            temp_msg = ''
+            for symbol_list in symbol_list_array:
+                bar_dict, msg = download_bar_data_symbollist(symbollist=symbol_list, start=start.strftime('%Y-%m-%d %H:%M:%S'), end=end.strftime('%Y-%m-%d %H:%M:%S'), frequency='1m', to_database=True)
+                for bar_symbol, bar_list in bar_dict.items():
+                    if bar_list:
+                        temp_lastdatetime_list.append(bar_list[-1].datetime)
+                        break
+                temp_msg += msg
+            # 只有每组数据的last_datetime一致时才有效
+            last_datetime = None
+            for temp in temp_lastdatetime_list:
+                if not last_datetime:
+                    last_datetime = temp
+                elif last_datetime != temp:
+                    last_datetime = None
                     break
-            print(msg)
-            return_msg = return_msg + msg + '\n'
+            print(temp_msg)
+            return_msg = return_msg + temp_msg + '\n'
 
             start = end
             end = end + timedelta(days=1)
@@ -382,15 +389,32 @@ class TurtleDataDownloading(object):
 
         return last_datetime, return_msg
 
-    def download_all_minute_jq(self, symbol_list:list=None, days=1):
+    def download_minute_single_jq(self, symbol_list:list=None, days=1, for_all=False):
         return_msg = ''
         last_datetime = None
 
         if not symbol_list:
-            symbol_list = []
+            symbol_list = ['CF2009', 'CF2005',
+                           'CS2009', 'CS2005',
+                           'CJ2009', 'CJ2005',
+                           'CU2005', 'CU2004',
+                           'EG2009', 'EG2005',
+                           'PB2006', 'PB2005',
+                           'RM2009', 'RM2005',
+                           'SC2006', 'SC2005',
+                           'SF2009', 'SF2005',
+                           'SM2009', 'SM2005']
+
+        start = ''
+        end = ''
+        if not for_all:
+            # 下载标的指定天数的历史数据
+            today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            start = (today - timedelta(days=days)).strftime('%Y-%m-%d %H:%M:%S')
+            end = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         for symbol in symbol_list:
-            bar_list, msg = download_bar_data(symbol=symbol, start='', end='', frequency='1m', to_database=True)
+            bar_list, msg = download_bar_data(symbol=symbol, start=start, end=end, frequency='1m', to_database=True)
             if bar_list:
                 last_datetime = bar_list[-1].datetime
             print(msg)

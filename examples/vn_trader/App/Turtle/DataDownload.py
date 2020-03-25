@@ -9,8 +9,8 @@ if __name__ == '__main__':
     #dataDownload.download()
     #dataDownload.download_tushare()
     #dataDownload.download_jq()
-    dataDownload.download_minute_jq(recent_minute=5)
-    #dataDownload.download_all_minute_jq()
+    #dataDownload.download_minute_multi_jq(days=1)
+    dataDownload.download_minute_single_jq(days=1)
     #"""
 
     """
