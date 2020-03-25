@@ -319,35 +319,34 @@ class TurtleDataDownloading(object):
         last_datetime = None
 
         if not symbol_list:
+            """
+            'CY2009', 'CY2005'
+            'OI2009', 'OI2005'
+            'SN2009', 'SN2005'
+            'WR2010', 'WR2005'
+            'TS2009', 'TS2006'
+            'FG2009', 'FG2005'
+            'JM2009', 'JM2005'
+            """
             symbol_list = ['CF2009', 'CF2005',
                            'CS2009', 'CS2005',
                            'CJ2009', 'CJ2005',
                            'CU2005', 'CU2004',
-                           'CY2009', 'CY2005',
                            'EG2009', 'EG2005',
-                           'OI2009', 'OI2005',
                            'PB2006', 'PB2005',
                            'RM2009', 'RM2005',
                            'SC2006', 'SC2005',
                            'SF2009', 'SF2005',
                            'SM2009', 'SM2005',
-                           'SN2009', 'SN2005',
                            'SP2009', 'SP2005',
                            'SR2009', 'SR2005',
                            'TA2009', 'TA2005',
-                           'WR2010', 'WR2005',
                            'ZC2009', 'ZC2005',
                            'ZN2005', 'ZN2004',
                            'TF2009', 'TF2006',
-                           'TS2009', 'TS2006',
-                           'FG2009', 'FG2005',
-                           'JM2009', 'JM2005',
                            'RU2009', 'RU2005',
                            'SA2009', 'SA2005',
                            'NR2006', 'NR2005']
-
-        symbol_list = ['CF2009', 'CF2005',
-                       'CS2009', 'CS2005']
         today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         next_day = today + timedelta(days=1)
         if recent_minute:
