@@ -367,19 +367,26 @@ class TurtleDataDownloading(object):
             temp_msg = ''
             for symbol_list in symbol_list_array:
                 bar_dict, msg = download_bar_data_symbollist(symbollist=symbol_list, start=start.strftime('%Y-%m-%d %H:%M:%S'), end=end.strftime('%Y-%m-%d %H:%M:%S'), frequency='1m', to_database=True)
+                temp_ld = None
                 for bar_symbol, bar_list in bar_dict.items():
                     if bar_list:
-                        temp_lastdatetime_list.append(bar_list[-1].datetime)
-                        break
+                        if not temp_ld:
+                            temp_ld = bar_list[-1].datetime
+                        elif temp_ld != bar_list[-1].datetime:
+                            temp_ld = None
+                            break
+                if temp_ld:
+                    temp_lastdatetime_list.append(temp_ld)
                 temp_msg += msg
             # 只有每组数据的last_datetime一致时才有效
             last_datetime = None
-            for temp in temp_lastdatetime_list:
-                if not last_datetime:
-                    last_datetime = temp
-                elif last_datetime != temp:
-                    last_datetime = None
-                    break
+            if len(temp_lastdatetime_list) == len(symbol_list_array):
+                for temp in temp_lastdatetime_list:
+                    if not last_datetime:
+                        last_datetime = temp
+                    elif last_datetime != temp:
+                        last_datetime = None
+                        break
             print(temp_msg)
             return_msg = return_msg + temp_msg + '\n'
 
