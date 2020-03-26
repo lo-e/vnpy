@@ -27,8 +27,8 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     author = "loe"
 
     boll_window = 20
-    boll_dev = 2
-    tick_price = 1
+    boll_dev = 5
+    tick_price = 1.0
     open_value = 2
     max_pos = 30
     payup = 10
