@@ -197,8 +197,6 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         """
         Callback when algo status is updated.
         """
-        # 一旦有算法出现成交，立即停止其他正在运行的算法
-        self.check_and_stop_other_algo(algo)
         pass
 
     def on_order(self, order: OrderData):
@@ -215,19 +213,19 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
 
     def stop_open_algos(self):
         """"""
-        if self.buy_algoid:
-            self.stop_algo(self.buy_algoid)
+        for buy_algoid in self.buy_algoids_list:
+            self.stop_algo(buy_algoid)
 
-        if self.short_algoid:
-            self.stop_algo(self.short_algoid)
+        for short_algoid in self.short_algoids_list:
+            self.stop_algo(short_algoid)
 
     def stop_close_algos(self):
         """"""
-        if self.sell_algoid:
-            self.stop_algo(self.sell_algoid)
+        for sell_algoid in self.sell_algoids_list:
+            self.stop_algo(sell_algoid)
 
-        if self.cover_algoid:
-            self.stop_algo(self.cover_algoid)
+        for cover_algoid in self.cover_algoids_list:
+            self.stop_algo(cover_algoid)
 
     def check_close_time(self, target_datetime:datetime):
         now = datetime.now()
@@ -255,3 +253,35 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     def update_am_bar(self, bar: BarData):
         self.am.update_bar(bar)
 
+    def on_traded_changed(self, algo: SpreadAlgoTemplate, changed=0):
+        if algo.algoid in self.buy_algoids_list and abs(changed):
+            for sell_algoid in self.sell_algoids_list:
+                sell_algo = self.strategy_engine.get_algo(algoid=sell_algoid)
+                if sell_algo.check_hedge_finished():
+                    # 停止当前sell算法
+                    self.stop_algo(algoid=sell_algoid)
+
+                    # 开sell算法
+                    self.start_short_algo(
+                        self.boll_mid,
+                        abs(self.spread_pos),
+                        payup=self.payup,
+                        interval=self.interval,
+                        offset=Offset.CLOSE
+                    )
+
+        elif algo.algoid in self.short_algoids_list and abs(changed):
+            for cover_algoid in self.cover_algoids_list:
+                cover_algo = self.strategy_engine.get_algo(algoid=cover_algoid)
+                if cover_algo.check_hedge_finished():
+                    # 停止当前cover算法
+                    self.stop_algo(algoid=cover_algoid)
+
+                    # 开cover算法
+                    self.start_long_algo(
+                        self.boll_mid,
+                        abs(self.spread_pos),
+                        payup=self.payup,
+                        interval=self.interval,
+                        offset=Offset.CLOSE
+                    )

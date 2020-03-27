@@ -430,6 +430,11 @@ class SpreadStrategyTemplate:
     syncs = []
     timer_event_cross = False
 
+    buy_algoids_list = []
+    sell_algoids_list = []
+    short_algoids_list = []
+    cover_algoids_list = []
+
     def __init__(
         self,
         strategy_engine,
@@ -528,8 +533,24 @@ class SpreadStrategyTemplate:
         """
         Callback when algo status is updated.
         """
-        if not algo.is_active() and algo.algoid in self.algoids:
-            self.algoids.remove(algo.algoid)
+        # 一旦有算法出现成交，立即停止其他正在运行的算法
+        self.check_and_stop_other_algo(algo)
+
+        if not algo.is_active():
+            if algo.algoid in self.algoids:
+                self.algoids.remove(algo.algoid)
+
+            if algo.algoid in self.buy_algoids_list:
+                self.buy_algoids_list.remove(algo.algoid)
+
+            if algo.algoid in self.short_algoids_list:
+                self.short_algoids_list.remove(algo.algoid)
+
+            if algo.algoid in self.sell_algoids_list:
+                self.sell_algoids_list.remove(algo.algoid)
+
+            if algo.algoid in self.cover_algoids_list:
+                self.cover_algoids_list.remove(algo.algoid)
 
         self.on_spread_algo(algo)
 
@@ -639,6 +660,21 @@ class SpreadStrategyTemplate:
         )
 
         self.algoids.add(algoid)
+
+        """ modify by loe """
+        if offset == Offset.OPEN:
+            if direction == Direction.LONG:
+                self.buy_algoids_list.append(algoid)
+
+            elif direction == Direction.SHORT:
+                self.short_algoids_list.append(algoid)
+
+        elif offset == Offset.CLOSE or offset == Offset.CLOSETODAY or offset == Offset.CLOSEYESTERDAY:
+            if direction == Direction.LONG:
+                self.cover_algoids_list.append(algoid)
+
+            elif direction == Direction.SHORT:
+                self.sell_algoids_list.append(algoid)
 
         return algoid
 
@@ -804,11 +840,15 @@ class SpreadStrategyTemplate:
 
     """ modify by loe """
     def check_and_stop_other_algo(self, algo: SpreadAlgoTemplate):
-        # 只要算法的一条腿有任何成交，立刻停止其他算法
+        # 只要开仓算法的一条腿有任何成交，立刻停止其他开仓算法算法
         if algo.check_leg_traded():
-            for algoid in self.algoids:
-                if algoid != algo.algoid:
-                    self.stop_algo(algoid)
+            if algo.algoid in self.buy_algoids_list:
+                for short_algoid in self.short_algoids_list:
+                    self.stop_algo(short_algoid)
+
+            if algo.algoid in self.short_algoids_list:
+                for buy_algoid in self.buy_algoids_list:
+                    self.stop_algo(buy_algoid)
 
     def check_algo_trading(self):
         # 检查是否有算法部分成交但是没有全部成交
@@ -839,6 +879,9 @@ class SpreadStrategyTemplate:
                 result = False
                 break
         return result
+
+    def on_traded_changed(self, algo: SpreadAlgoTemplate, changed=0):
+        pass
 
     def put_timer_event(self):
         self.timer_event_cross = True

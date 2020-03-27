@@ -504,6 +504,7 @@ class SpreadAlgoEngine:
         strategy = strategy_engine.algo_strategy_map.get(algo.algoid, None)
         if strategy:
             strategy.spread_pos += changed
+            strategy.on_traded_changed(algo=algo, changed=changed)
         strategy.put_event()
 
     def write_algo_log(self, algo: SpreadAlgoTemplate, msg: str) -> None:
