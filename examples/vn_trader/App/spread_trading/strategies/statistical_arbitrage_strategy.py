@@ -17,6 +17,7 @@ from App.Turtle.dataservice import TurtleDataDownloading
 from concurrent.futures import ThreadPoolExecutor
 import re
 from vnpy.app.cta_strategy.base import TRANSFORM_SYMBOL_LIST
+from copy import copy
 
 CLOSE_TIME_START = '14:55'
 CLOSE_TIME_END = '15:05'
@@ -139,15 +140,17 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         if not self.trading:
             return
 
-        if self.check_algo_leg_broken():
-            # 有算法出现断腿情况，保持算法运行
+        if not self.check_algo_order_finished() or not self.check_algo_hedge_finished():
+            # 有算法订单正在进行或者出现断腿情况，保持算法运行
             return
 
+        """
         the_symbol = list(self.spread.legs.keys())[0]
         is_trading_time = check_trading_time(symbol=the_symbol, the_datetime=datetime.now())
         if not self.check_algo_order_finished() and not is_trading_time:
             # 非交易时间并且有订单未处理完
             return
+        """
 
         self.stop_all_algos()
         if not self.spread_pos:
@@ -254,34 +257,48 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         self.am.update_bar(bar)
 
     def on_traded_changed(self, algo: SpreadAlgoTemplate, changed=0):
-        if algo.algoid in self.buy_algoids_list and abs(changed):
-            for sell_algoid in self.sell_algoids_list:
+        if self.spread_pos > 0:
+            volume_left = abs(self.spread_pos)
+            sell_ids = copy(self.sell_algoids_list)
+            for sell_algoid in sell_ids:
                 sell_algo = self.strategy_engine.get_algo(algoid=sell_algoid)
-                if sell_algo.check_hedge_finished():
-                    # 停止当前sell算法
-                    self.stop_algo(algoid=sell_algoid)
+                if sell_algo:
+                    if sell_algo.check_order_finished and sell_algo.check_hedge_finished():
+                        # 停止当前sell算法
+                        self.stop_algo(algoid=sell_algoid)
+                    else:
+                        volume_left -= abs(sell_algo.target - sell_algo.traded)
 
-                    # 开sell算法
-                    self.start_short_algo(
-                        self.boll_mid,
-                        abs(self.spread_pos),
-                        payup=self.payup,
-                        interval=self.interval,
-                        offset=Offset.CLOSE
-                    )
+            if volume_left > 0:
+                # 开sell算法
+                self.start_short_algo(
+                    self.boll_mid,
+                    abs(volume_left),
+                    payup=self.payup,
+                    interval=self.interval,
+                    offset=Offset.CLOSE
+                )
 
-        elif algo.algoid in self.short_algoids_list and abs(changed):
-            for cover_algoid in self.cover_algoids_list:
+        elif self.spread_pos < 0:
+            volume_left = abs(self.spread_pos)
+            cover_ids = copy(self.cover_algoids_list)
+            for cover_algoid in cover_ids:
                 cover_algo = self.strategy_engine.get_algo(algoid=cover_algoid)
-                if cover_algo.check_hedge_finished():
-                    # 停止当前cover算法
-                    self.stop_algo(algoid=cover_algoid)
+                if cover_algo:
+                    if cover_algo.check_order_finished and cover_algo.check_hedge_finished():
+                        # 停止当前cover算法
+                        self.stop_algo(algoid=cover_algoid)
+                    else:
+                        volume_left -= abs(cover_algo.target - cover_algo.traded)
 
-                    # 开cover算法
-                    self.start_long_algo(
-                        self.boll_mid,
-                        abs(self.spread_pos),
-                        payup=self.payup,
-                        interval=self.interval,
-                        offset=Offset.CLOSE
-                    )
+            if volume_left > 0:
+                # 开cover算法
+                self.start_long_algo(
+                    self.boll_mid,
+                    abs(volume_left),
+                    payup=self.payup,
+                    interval=self.interval,
+                    offset=Offset.CLOSE
+                )
+
+

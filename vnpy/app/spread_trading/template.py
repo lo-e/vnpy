@@ -860,13 +860,13 @@ class SpreadStrategyTemplate:
                 break
         return result
 
-    def check_algo_leg_broken(self):
+    def check_algo_hedge_finished(self):
         # 检查是否有算法断腿
-        result = False
+        result = True
         for algoid in self.algoids:
             algo = self.strategy_engine.get_algo(algoid=algoid)
             if not algo.check_hedge_finished:
-                result = True
+                result = False
                 break
         return result
 
