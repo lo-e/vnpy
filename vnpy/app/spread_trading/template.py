@@ -124,6 +124,8 @@ class SpreadAlgoTemplate:
         self.algo_engine = algo_engine
         self.algoid: str = algoid
 
+        self.init_datetime = datetime.datetime.now()
+
         self.spread: SpreadData = spread
         self.spread_name: str = spread.name
 
