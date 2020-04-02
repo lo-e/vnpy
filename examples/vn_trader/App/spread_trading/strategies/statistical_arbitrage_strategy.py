@@ -263,11 +263,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
             for sell_algoid in sell_ids:
                 sell_algo = self.strategy_engine.get_algo(algoid=sell_algoid)
                 if sell_algo:
-                    if sell_algo.check_order_finished and sell_algo.check_hedge_finished():
-                        # 停止当前sell算法
-                        self.stop_algo(algoid=sell_algoid)
-                    else:
-                        volume_left -= abs(sell_algo.target - sell_algo.traded)
+                    volume_left -= abs(sell_algo.target)
 
             if volume_left > 0:
                 # 开sell算法
@@ -285,11 +281,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
             for cover_algoid in cover_ids:
                 cover_algo = self.strategy_engine.get_algo(algoid=cover_algoid)
                 if cover_algo:
-                    if cover_algo.check_order_finished and cover_algo.check_hedge_finished():
-                        # 停止当前cover算法
-                        self.stop_algo(algoid=cover_algoid)
-                    else:
-                        volume_left -= abs(cover_algo.target - cover_algo.traded)
+                    volume_left -= abs(cover_algo.target)
 
             if volume_left > 0:
                 # 开cover算法
