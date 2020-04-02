@@ -169,7 +169,9 @@ class SpreadAlgoMonitor(BaseMonitor):
     headers = {
         "algoid": {"display": "算法", "cell": BaseCell, "update": False},
         "spread_name": {"display": "价差", "cell": BaseCell, "update": False},
-        "init_datetime": {"display": "时间", "cell": TimeCell, "update": True},
+        "init_datetime": {"display": "开始时间", "cell": TimeCell, "update": True},
+        "stop_datetime": {"display": "停止时间", "cell": TimeCell, "update": True},
+        "leg_traded_desc": {"display": "腿腿", "cell": BaseCell, "update": True},
         "direction": {"display": "方向", "cell": DirectionCell, "update": False},
         "offset": {"display": "开平", "cell": EnumCell, "update": False},
         "price": {"display": "价格", "cell": BaseCell, "update": False},

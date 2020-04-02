@@ -125,6 +125,8 @@ class SpreadAlgoTemplate:
         self.algoid: str = algoid
 
         self.init_datetime = datetime.datetime.now()
+        self.stop_datetime = None
+        self.leg_traded_desc = ''
 
         self.spread: SpreadData = spread
         self.spread_name: str = spread.name
@@ -210,6 +212,7 @@ class SpreadAlgoTemplate:
             self.cancel_all_order()
             self.status = Status.CANCELLED
             self.write_log("算法已停止")
+            self.stop_datetime = datetime.datetime.now()
             self.put_event()
 
     def update_tick(self, tick: TickData):
@@ -244,6 +247,8 @@ class SpreadAlgoTemplate:
             trade.price
         )
         self.write_log(msg)
+
+        self.leg_traded_desc = f'{self.leg_traded}'
 
         self.calculate_traded()
         self.put_event()
