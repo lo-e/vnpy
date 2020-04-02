@@ -867,7 +867,7 @@ class SpreadStrategyTemplate:
         result = True
         for algoid in self.algoids:
             algo = self.strategy_engine.get_algo(algoid=algoid)
-            if not algo.check_hedge_finished:
+            if not algo.check_hedge_finished():
                 result = False
                 break
         return result
