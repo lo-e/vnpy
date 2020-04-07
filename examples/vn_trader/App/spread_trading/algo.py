@@ -34,8 +34,14 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         self.cancel_interval: int = 2
         self.timer_count: int = 0
 
+        self.tick_processing = False
+
     def on_tick(self, tick: TickData):
         """"""
+        if self.tick_processing:
+            return
+        self.tick_processing = True
+
         if not check_tick_valid(tick=tick):
             self.write_log(f'======算法{self.algo_name} 过滤无效tick：{tick.vt_symbol}\t{tick.datetime} ======')
             return
@@ -62,8 +68,12 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
             if self.spread.bid_price >= self.price:
                 self.take_active_passive_leg()
 
+        self.tick_processing = False
+
     def on_order(self, order: OrderData):
         """"""
+        pass
+        """
         # Only care active leg order update
         if order.vt_symbol != self.spread.active_leg.vt_symbol:
             return
@@ -76,6 +86,7 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         if not self.check_hedge_finished():
             self.hedge_passive_legs()
             self.hedge_active_legs()
+        """
 
     def on_trade(self, trade: TradeData):
         """"""
@@ -125,7 +136,8 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         """"""
         # Calculate spread order volume of new round trade
         spread_volume_left = self.target - self.traded
-        if not spread_volume_left:
+        left_abs = abs(self.target) - abs(self.traded)
+        if left_abs <= 0:
             return
 
         if self.direction == Direction.LONG:

@@ -158,12 +158,14 @@ class OrderData(BaseData):
     volume: float = 0
     traded: float = 0
     status: Status = Status.SUBMITTING
+    create_time = ''
     time: str = ""
 
     def __post_init__(self):
         """"""
         self.vt_symbol = f"{self.symbol}.{self.exchange.value}"
         self.vt_orderid = f"{self.gateway_name}.{self.orderid}"
+        self.create_time = datetime.strftime(datetime.now(), '%H:%M:%S')
 
     def is_active(self):
         """

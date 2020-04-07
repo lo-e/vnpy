@@ -15,6 +15,8 @@ from .base import SpreadData, calculate_inverse_volume
 #数据下载
 from concurrent.futures import ThreadPoolExecutor
 import datetime
+""" fake """
+from datetime import timedelta
 import re
 
 """ modify by loe """
@@ -209,6 +211,20 @@ class SpreadAlgoTemplate:
     def stop(self):
         """"""
         if self.is_active():
+            """ fake """
+            if not self.check_hedge_finished():
+                a = 2
+
+            now_time = datetime.datetime.now()
+            target_time = (self.init_datetime + timedelta(minutes=1)).replace(second=0, microsecond=0)
+            if now_time < target_time:
+                a = 2
+                msg = ''
+                msg += f'{datetime.datetime.now()}' + '\n'
+                msg += self.algoid + '\n'
+                msg += self.spread.active_leg.vt_symbol + '\n'
+                self.algo_engine.main_engine.send_email(f'ALGO_STOP', msg)
+
             self.cancel_all_order()
             self.status = Status.CANCELLED
             self.write_log("算法已停止")
@@ -848,13 +864,13 @@ class SpreadStrategyTemplate:
     """ modify by loe """
     def check_and_stop_other_algo(self, algo: SpreadAlgoTemplate):
         # 只要开仓算法的一条腿有任何成交，立刻停止其他开仓算法算法
-        if algo.check_leg_traded():
-            if algo.algoid in self.buy_algoids_list:
-                for short_algoid in self.short_algoids_list:
+        if (algo.algoid in self.short_algoids_list or algo.algoid in self.buy_algoids_list) and algo.check_leg_traded():
+            for short_algoid in self.short_algoids_list:
+                if short_algoid != algo.algoid:
                     self.stop_algo(short_algoid)
 
-            if algo.algoid in self.short_algoids_list:
-                for buy_algoid in self.buy_algoids_list:
+            for buy_algoid in self.buy_algoids_list:
+                if buy_algoid != algo.algoid:
                     self.stop_algo(buy_algoid)
 
     def check_algo_trading(self):
