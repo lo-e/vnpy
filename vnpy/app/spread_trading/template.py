@@ -210,6 +210,10 @@ class SpreadAlgoTemplate:
 
     def stop(self):
         """"""
+        if not self.check_order_finished() or not self.check_hedge_finished():
+            # 有订单正在进行或者出现断腿情况，保持算法运行
+            return False
+
         if self.is_active():
             """ fake """
             if not self.check_hedge_finished():
@@ -230,6 +234,8 @@ class SpreadAlgoTemplate:
             self.write_log("算法已停止")
             self.stop_datetime = datetime.datetime.now()
             self.put_event()
+
+        return True
 
     def update_tick(self, tick: TickData):
         """"""
