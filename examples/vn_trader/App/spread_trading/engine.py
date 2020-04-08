@@ -1237,9 +1237,10 @@ class SpreadAutoEngine(object):
                     # SPREAD重新初始化
                     self.spread_strategy_engine.reinit_and_restart_strategies()
                     msg = f'{msg}\n\n策略重新初始化成功'
-                self.init_download_need = False
                 self.main_engine.send_email(subject='SPREAD 数据更新', content=msg)
-                sleep(10*60)
+                if not self.init_download_need:
+                    sleep(10*60)
+                self.init_download_need = False
 
     def on_reconnect_timer(self):
         while True:
