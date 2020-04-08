@@ -44,27 +44,32 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
 
         if not check_tick_valid(tick=tick):
             self.write_log(f'======算法{self.algo_name} 过滤无效tick：{tick.vt_symbol}\t{tick.datetime} ======')
+            self.tick_processing = False
             return
 
         # Return if tick not inited
         if not self.spread.bid_volume or not self.spread.ask_volume:
+            self.tick_processing = False
             return
 
         # Return if there are any existing orders
         if not self.check_order_finished():
+            self.tick_processing = False
             return
 
         # Hedge if active leg is not fully hedged
         if not self.check_hedge_finished():
             self.hedge_passive_legs()
             self.hedge_active_legs()
+            self.tick_processing = False
             return
 
         # Otherwise check if should take active leg
         if self.direction == Direction.LONG:
             if self.spread.ask_price <= self.price:
                 self.take_active_passive_leg()
-        else:
+
+        elif self.direction == Direction.SHORT:
             if self.spread.bid_price >= self.price:
                 self.take_active_passive_leg()
 
