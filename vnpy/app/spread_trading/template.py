@@ -459,11 +459,6 @@ class SpreadStrategyTemplate:
     syncs = []
     timer_event_cross = False
 
-    buy_algoids_list = []
-    sell_algoids_list = []
-    short_algoids_list = []
-    cover_algoids_list = []
-
     def __init__(
         self,
         strategy_engine,
@@ -493,6 +488,10 @@ class SpreadStrategyTemplate:
 
         self.vt_orderids: Set[str] = set()
         self.algoids: Set[str] = set()
+        self.buy_algoids_list: Set[str] = set()
+        self.sell_algoids_list: Set[str] = set()
+        self.short_algoids_list: Set[str] = set()
+        self.cover_algoids_list: Set[str] = set()
 
         self.update_setting(setting)
 
@@ -693,17 +692,17 @@ class SpreadStrategyTemplate:
         """ modify by loe """
         if offset == Offset.OPEN:
             if direction == Direction.LONG:
-                self.buy_algoids_list.append(algoid)
+                self.buy_algoids_list.add(algoid)
 
             elif direction == Direction.SHORT:
-                self.short_algoids_list.append(algoid)
+                self.short_algoids_list.add(algoid)
 
         elif offset == Offset.CLOSE or offset == Offset.CLOSETODAY or offset == Offset.CLOSEYESTERDAY:
             if direction == Direction.LONG:
-                self.cover_algoids_list.append(algoid)
+                self.cover_algoids_list.add(algoid)
 
             elif direction == Direction.SHORT:
-                self.sell_algoids_list.append(algoid)
+                self.sell_algoids_list.add(algoid)
 
         return algoid
 
