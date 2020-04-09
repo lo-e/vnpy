@@ -870,13 +870,25 @@ class SpreadStrategyTemplate:
     def check_and_stop_other_algo(self, algo: SpreadAlgoTemplate):
         # 只要开仓算法的一条腿有任何成交，立刻停止其他开仓算法算法
         if (algo.algoid in self.short_algoids_list or algo.algoid in self.buy_algoids_list) and algo.check_leg_traded():
+            """ fake """
+            stop_count = 0
+            msg = f'id：{algo.algoid}\nstatus：{algo.status}\nleg：{algo.leg_traded}\n======\n'
+            for the_id in self.algoids:
+                msg += the_id + '\n'
+
             for short_algoid in self.short_algoids_list:
                 if short_algoid != algo.algoid:
                     self.stop_algo(short_algoid)
+                    stop_count += 1
 
             for buy_algoid in self.buy_algoids_list:
                 if buy_algoid != algo.algoid:
                     self.stop_algo(buy_algoid)
+                    stop_count += 1
+
+            """ fake """
+            if stop_count >= 2:
+                self.strategy_engine.main_engine.send_email(f'CHECK_AND_STOP', msg)
 
     def check_algo_trading(self):
         # 检查是否有算法部分成交但是没有全部成交
