@@ -203,7 +203,7 @@ class SpreadAlgoMonitor(BaseMonitor):
         Stop algo if cell double clicked.
         """
         algo = cell.get_data()
-        self.spread_engine.stop_algo(algo.algoid)
+        self.spread_engine.manual_stop_algo(algo.algoid)
 
 
 class SpreadAlgoWidget(QtWidgets.QFrame):

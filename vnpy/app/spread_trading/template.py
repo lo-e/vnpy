@@ -237,6 +237,17 @@ class SpreadAlgoTemplate:
 
         return True
 
+    def manual_stop(self):
+        """"""
+        if self.is_active():
+            self.cancel_all_order()
+            self.status = Status.CANCELLED
+            self.write_log("算法已停止")
+            self.stop_datetime = datetime.datetime.now()
+            self.put_event()
+
+        return True
+
     def update_tick(self, tick: TickData):
         """"""
         self.on_tick(tick)

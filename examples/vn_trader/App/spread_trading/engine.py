@@ -61,6 +61,7 @@ class SpreadEngine(BaseEngine):
 
         self.start_algo = self.algo_engine.start_algo
         self.stop_algo = self.algo_engine.stop_algo
+        self.manual_stop_algo = self.algo_engine.manual_stop_algo
 
     def start(self):
         """"""
@@ -491,6 +492,18 @@ class SpreadAlgoEngine:
             return
 
         algo.stop()
+
+    def manual_stop_algo(
+        self,
+        algoid: str
+    ):
+        """"""
+        algo = self.algos.get(algoid, None)
+        if not algo:
+            self.write_log("停止价差算法失败，找不到算法：{}".format(algoid))
+            return
+
+        algo.manual_stop()
 
     def put_algo_event(self, algo: SpreadAlgoTemplate) -> None:
         """"""
