@@ -889,11 +889,25 @@ class SpreadStrategyTemplate:
 
             for short_algoid in self.short_algoids_list:
                 if short_algoid != algo.algoid:
+                    # 需要停止的算法初始化时间间隔不超过10秒
+                    short_algo = self.strategy_engine.get_algo(algoid=short_algoid)
+                    if short_algo:
+                        delta = abs(algo.init_datetime - short_algo.init_datetime)
+                        if delta >= timedelta(seconds=10):
+                            break
+
                     self.stop_algo(short_algoid)
                     stop_count += 1
 
             for buy_algoid in self.buy_algoids_list:
                 if buy_algoid != algo.algoid:
+                    # 需要停止的算法初始化时间间隔不超过10秒
+                    buy_algo = self.strategy_engine.get_algo(algoid=buy_algoid)
+                    if buy_algo:
+                        delta = abs(algo.init_datetime - buy_algo.init_datetime)
+                        if delta >= timedelta(seconds=10):
+                            break
+
                     self.stop_algo(buy_algoid)
                     stop_count += 1
 
