@@ -23,8 +23,8 @@
     {
         "strategy_name": "TURTLE_SM",
         "class_name": "TurtleStrategy",
-        "vt_symbol": "SM005",
-        "last_symbol":"",
+        "vt_symbol": "SM009",
+        "last_symbol":"SM005",
         "per_size":5,
         "tick_price":2,
         "start": true
