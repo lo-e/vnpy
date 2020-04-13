@@ -81,7 +81,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         self.write_log("策略初始化")
         self.bg = BarGenerator(self.on_spread_bar)
         self.am = ArrayManager(size=self.boll_window)
-        self.load_bar(10)
+        self.load_recent_bar(count=60)
 
     def on_start(self):
         """
@@ -251,7 +251,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         now_minute = datetime.now().replace(second=0, microsecond=0)
         if last_datetime == now_minute:
             self.am = ArrayManager(size=self.boll_window)
-            self.load_bar(days=10, callback=self.update_am_bar)
+            self.load_recent_bar(count=60, callback=self.update_am_bar)
 
     def update_am_bar(self, bar: BarData):
         self.am.update_bar(bar)

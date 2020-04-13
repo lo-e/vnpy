@@ -871,6 +871,20 @@ class SpreadStrategyTemplate:
 
         self.strategy_engine.load_bar(self.spread, days, interval, callback)
 
+    def load_recent_bar(
+        self,
+        count: int,
+        interval: Interval = Interval.MINUTE,
+        callback: Callable = None,
+    ):
+        """
+        Load historical bar data for initializing strategy.
+        """
+        if not callback:
+            callback = self.on_spread_bar
+
+        self.strategy_engine.load_recent_bar(self.spread, count, interval, callback)
+
     def load_tick(self, days: int):
         """
         Load historical tick data for initializing strategy.

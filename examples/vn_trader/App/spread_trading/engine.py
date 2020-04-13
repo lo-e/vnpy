@@ -1103,6 +1103,22 @@ class SpreadStrategyEngine:
         for bar in bars:
             callback(bar)
 
+    def load_recent_bar(
+        self, spread: SpreadData, count: int, interval: Interval, callback: Callable
+    ):
+        """"""
+        end = datetime.now()
+        start = end - timedelta(10)
+
+        bars = load_bar_data(spread, interval, start, end)
+
+        if len(bars) >= count:
+            recent_bars = bars[int(-1 * count):-1]
+        else:
+            recent_bars = bars
+        for bar in recent_bars:
+            callback(bar)
+
     def load_tick(self, spread: SpreadData, days: int, callback: Callable):
         """"""
         end = datetime.now()
