@@ -234,7 +234,8 @@ class TurtleDataDownloading(object):
     def download_jq(self, symbol_list: list = None):
         #"""
         underlying_list = ['RB', 'HC', 'SM', 'J', 'ZC', 'TA', 'I', 'RU']
-        #underlying_list = ['CF', 'CJ', 'CS', 'CU', 'CY', 'EG', 'OI', 'PB', 'RM', 'SC', 'SF', 'SM', 'SN', 'SP', 'SR', 'TA', 'WR', 'ZC', 'ZN', 'TF', 'TS', 'FG', 'JM', 'RI', 'RU', 'SA', 'NR']
+        #underlying_list = ['CF', 'CS', 'CJ', 'EG', 'RM', 'SF', 'SM', 'SP', 'SR', 'TA', 'ZC', 'TF', 'RU', 'SA']
+        #underlying_list = ['CU', 'PB', 'SC', 'ZN', 'NR']
         days = 0
         today = datetime.strptime(datetime.now().strftime('%Y%m%d'), '%Y%m%d')
 
@@ -409,21 +410,21 @@ class TurtleDataDownloading(object):
             symbol_list = ['CF2009', 'CF2005',
                            'CS2009', 'CS2005',
                            'CJ2009', 'CJ2005',
-                           'CU2005', 'CU2004',
                            'EG2009', 'EG2005',
-                           'PB2006', 'PB2005',
                            'RM2009', 'RM2005',
-                           'SC2006', 'SC2005',
                            'SF2009', 'SF2005',
                            'SM2009', 'SM2005',
                            'SP2009', 'SP2005',
                            'SR2009', 'SR2005',
                            'TA2009', 'TA2005',
                            'ZC2009', 'ZC2005',
-                           'ZN2007', 'ZN2006',
                            'TF2009', 'TF2006',
                            'RU2009', 'RU2005',
                            'SA2009', 'SA2005',
+                           'CU2005', 'CU2004',
+                           'PB2006', 'PB2005',
+                           'SC2006', 'SC2005',
+                           'ZN2007', 'ZN2006',
                            'NR2006', 'NR2005']
 
         start = ''
