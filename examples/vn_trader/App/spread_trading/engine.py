@@ -641,7 +641,7 @@ class SpreadStrategyEngine:
 
         """ modify by loe """
         # 数据引擎【下载时间 ['10:20', '11:35', '15:35', '23:35']】
-        self.autoEngine = SpreadAutoEngine(main_engine=self.spread_engine.main_engine, spread_strategy_engine=self, download_time_list=['10:20', '11:35', '15:05', '23:35'],
+        self.autoEngine = SpreadAutoEngine(main_engine=self.spread_engine.main_engine, spread_strategy_engine=self, download_time_list=['10:20', '11:35', '15:20', '23:35'],
                                            reconnect_time='20:00', check_interval=10 * 60, reload_time=6)
         self.downloading_flag: datetime = None
         self.download_callback_list = []
