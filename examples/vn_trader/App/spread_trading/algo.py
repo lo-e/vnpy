@@ -68,10 +68,18 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         if self.direction == Direction.LONG:
             if self.spread.ask_price <= self.price:
                 self.take_active_passive_leg()
+                self.tick_processing = False
+                return
 
         elif self.direction == Direction.SHORT:
             if self.spread.bid_price >= self.price:
                 self.take_active_passive_leg()
+                self.tick_processing = False
+                return
+
+        # 强行平仓
+        if self.offset == Offset.CLOSE and self.close_anyway:
+            self.take_active_passive_leg()
 
         self.tick_processing = False
 

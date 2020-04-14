@@ -154,6 +154,9 @@ class SpreadAlgoTemplate:
         self.leg_traded: Dict[str, float] = defaultdict(int)
         self.leg_orders: Dict[str, List[str]] = defaultdict(list)
 
+        # 用于平仓算法，值为True时尽快平仓
+        self.close_anyway = False
+
         self.write_log("算法已启动")
 
     def is_active(self):
@@ -504,6 +507,13 @@ class SpreadStrategyTemplate:
         self.short_algoids_list: Set[str] = set()
         self.cover_algoids_list: Set[str] = set()
 
+        """ modify by loe """
+        # 停止创建新的开仓算法
+        self.stop_open = False
+
+        # 对所有新开的平仓算法强制平仓
+        self.close_anyway = False
+
         self.update_setting(setting)
 
         """ modify by loe """
@@ -697,6 +707,12 @@ class SpreadStrategyTemplate:
             interval,
             lock
         )
+
+        """" modify by loe """
+        if offset == Offset.CLOSE and self.close_anyway:
+            the_algo = self.strategy_engine.get_algo(algoid=algoid)
+            if the_algo:
+                the_algo.close_anyway = True
 
         self.algoids.add(algoid)
 
