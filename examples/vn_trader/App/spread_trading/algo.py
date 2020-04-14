@@ -164,6 +164,21 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
             spread_order_volume
         )
 
+        #======================================
+        # 风控，价格接近涨跌停时阻止发单
+        active_leg_tick = self.get_tick(self.spread.active_leg.vt_symbol)
+        if active_leg_order_volume > 0 and active_leg_tick.limit_up and active_leg_tick.ask_price_1 >= active_leg_tick.limit_up:
+            return
+        elif active_leg_order_volume < 0 and active_leg_tick.limit_down and active_leg_tick.bid_price_1 <= active_leg_tick.limit_down:
+            return
+
+        passice_leg_tick = self.get_tick(passive_leg.vt_symbol)
+        if passive_leg_order_volume > 0 and passice_leg_tick.limit_up and passice_leg_tick.ask_price_1 >= passice_leg_tick.limit_up:
+            return
+        elif passive_leg_order_volume < 0 and passice_leg_tick.limit_down and passice_leg_tick.bid_price_1 <= passice_leg_tick.limit_down:
+            return
+        #======================================
+
         # Send active leg order
         self.send_leg_order(
             self.spread.active_leg.vt_symbol,
@@ -248,7 +263,14 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
 
         if leg_volume > 0:
             price = leg_tick.ask_price_1 + leg_contract.pricetick * self.payup
+            if leg_tick.limit_up:
+                # 多头委托价格不能高于涨停价
+                price = min(leg_tick.limit_up, price)
             self.send_long_order(leg.vt_symbol, price, abs(leg_volume))
+
         elif leg_volume < 0:
             price = leg_tick.bid_price_1 - leg_contract.pricetick * self.payup
+            if leg_tick.limit_down:
+                # 空头委托价格不能低于跌停价
+                price = max(leg_tick.limit_down, price)
             self.send_short_order(leg.vt_symbol, price, abs(leg_volume))
