@@ -10,7 +10,7 @@ from vnpy.trader.constant import Direction, Offset
 import csv
 
 def one():
-    name = 'NR'
+    name = 'CU'
     symbol_up, symbol_down, symbol_active, size, price_tick, commission_rate = get_backtesting_params(name=name)
 
     min_volume = 1
@@ -19,7 +19,7 @@ def one():
 
     strategy_params = {'boll_dev':5}
 
-    start = datetime(2020, 1, 20)
+    start = datetime(2020, 3, 20)
     end = datetime(2020, 12, 31)
 
     spread = SpreadData(
@@ -139,8 +139,39 @@ def get_backtesting_params(name:str):
     size = 0
     price_tick = 0
     commission_rate = 0.000
+    if name == 'CF':
+        symbol_up = 'CF2009'
+        symbol_down = 'CF2005'
+        symbol_active = 'CF2009'
+        size = 5
+        price_tick = 5
+        commission_rate = 0.000
 
-    if name == 'CY':
+    elif name == 'CJ':
+        symbol_up = 'CJ2009'
+        symbol_down = 'CJ2005'
+        symbol_active = 'CJ2009'
+        size = 5
+        price_tick = 5
+        commission_rate = 0.000
+
+    elif name == 'CS':
+        symbol_up = 'CS2009'
+        symbol_down = 'CS2005'
+        symbol_active = 'CS2009'
+        size = 10
+        price_tick = 1
+        commission_rate = 0.000
+
+    elif name == 'CU':
+        symbol_up = 'CU2005'
+        symbol_down = 'CU2004'
+        symbol_active = 'CU2005'
+        size = 5
+        price_tick = 10
+        commission_rate = 0.000
+
+    elif name == 'CY':
         symbol_up = 'CY2009'
         symbol_down = 'CY2005'
         symbol_active = 'CY2009'

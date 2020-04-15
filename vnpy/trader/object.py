@@ -9,6 +9,7 @@ from logging import INFO
 from .constant import Direction, Exchange, Interval, Offset, Status, Product, OptionType, OrderType
 
 ACTIVE_STATUSES = set([Status.SUBMITTING, Status.NOTTRADED, Status.PARTTRADED])
+FAILED_STATUSES = set([Status.CANCELLED, Status.REJECTED])
 
 """ modify by loe """
 import numpy as np
@@ -158,18 +159,29 @@ class OrderData(BaseData):
     volume: float = 0
     traded: float = 0
     status: Status = Status.SUBMITTING
+    create_time = ''
     time: str = ""
 
     def __post_init__(self):
         """"""
         self.vt_symbol = f"{self.symbol}.{self.exchange.value}"
         self.vt_orderid = f"{self.gateway_name}.{self.orderid}"
+        self.create_time = datetime.strftime(datetime.now(), '%H:%M:%S')
 
     def is_active(self):
         """
         Check if the order is active.
         """
         if self.status in ACTIVE_STATUSES:
+            return True
+        else:
+            return False
+
+    def is_failed(self):
+        """
+        Check if the order is failed.
+        """
+        if self.status in FAILED_STATUSES:
             return True
         else:
             return False

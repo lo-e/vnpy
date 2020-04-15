@@ -169,6 +169,9 @@ class SpreadAlgoMonitor(BaseMonitor):
     headers = {
         "algoid": {"display": "算法", "cell": BaseCell, "update": False},
         "spread_name": {"display": "价差", "cell": BaseCell, "update": False},
+        "init_datetime": {"display": "开始时间", "cell": TimeCell, "update": True},
+        "stop_datetime": {"display": "停止时间", "cell": TimeCell, "update": True},
+        "leg_traded_desc": {"display": "腿腿", "cell": BaseCell, "update": True},
         "direction": {"display": "方向", "cell": DirectionCell, "update": False},
         "offset": {"display": "开平", "cell": EnumCell, "update": False},
         "price": {"display": "价格", "cell": BaseCell, "update": False},
@@ -200,7 +203,7 @@ class SpreadAlgoMonitor(BaseMonitor):
         Stop algo if cell double clicked.
         """
         algo = cell.get_data()
-        self.spread_engine.stop_algo(algo.algoid)
+        self.spread_engine.manual_stop_algo(algo.algoid)
 
 
 class SpreadAlgoWidget(QtWidgets.QFrame):
@@ -598,12 +601,16 @@ class SpreadStrategyMonitor(QtWidgets.QWidget):
         data = event.data
         strategy_name = data["strategy_name"]
 
+        if not self.managers:
+            controlManager = SpreadStrategyControlWidget(self, self.strategy_engine, data)
+            self.scroll_layout.insertWidget(0, controlManager)
+
         if strategy_name in self.managers:
             manager = self.managers[strategy_name]
             manager.update_data(data)
         else:
             manager = SpreadStrategyWidget(self, self.strategy_engine, data)
-            self.scroll_layout.insertWidget(0, manager)
+            self.scroll_layout.insertWidget(-1, manager)
             self.managers[strategy_name] = manager
 
     def remove_strategy(self, strategy_name):
@@ -722,6 +729,64 @@ class SpreadStrategyWidget(QtWidgets.QFrame):
         # Only remove strategy gui manager if it has been removed from engine
         if result:
             self.strategy_monitor.remove_strategy(self.strategy_name)
+
+class SpreadStrategyControlWidget(QtWidgets.QFrame):
+    """
+    Manager for a strategy
+    """
+
+    def __init__(
+        self,
+        strategy_monitor: SpreadStrategyMonitor,
+        strategy_engine: SpreadStrategyEngine,
+        data: dict
+    ):
+        """"""
+        super().__init__()
+
+        self.strategy_monitor = strategy_monitor
+        self.strategy_engine = strategy_engine
+
+        self.init_ui()
+
+    def init_ui(self):
+        """"""
+        self.setFixedHeight(50)
+        self.setFrameShape(self.Box)
+        self.setLineWidth(1)
+
+        init_button = QtWidgets.QPushButton("全部初始化")
+        init_button.clicked.connect(self.init_all_strategy)
+
+        start_button = QtWidgets.QPushButton("全部启动")
+        start_button.clicked.connect(self.start_all_strategy)
+
+        stop_button = QtWidgets.QPushButton("全部停止")
+        stop_button.clicked.connect(self.stop_all_strategy)
+
+        hbox = QtWidgets.QHBoxLayout()
+        hbox.addWidget(init_button)
+        hbox.addWidget(start_button)
+        hbox.addWidget(stop_button)
+
+        vbox = QtWidgets.QVBoxLayout()
+        vbox.addLayout(hbox)
+        self.setLayout(vbox)
+
+    def init_all_strategy(self):
+        """"""
+        #self.strategy_engine.init_strategy(self.strategy_name)
+        self.strategy_engine.init_all_strategies()
+
+    def start_all_strategy(self):
+        """"""
+        #self.strategy_engine.start_strategy(self.strategy_name)
+        self.strategy_engine.start_all_strategies()
+
+    def stop_all_strategy(self):
+        """"""
+        #self.strategy_engine.stop_strategy(self.strategy_name)
+        self.strategy_engine.stop_all_strategies()
 
 
 class StrategyDataMonitor(QtWidgets.QTableWidget):

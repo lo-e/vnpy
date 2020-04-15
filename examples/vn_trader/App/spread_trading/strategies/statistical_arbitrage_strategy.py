@@ -17,9 +17,13 @@ from App.Turtle.dataservice import TurtleDataDownloading
 from concurrent.futures import ThreadPoolExecutor
 import re
 from vnpy.app.cta_strategy.base import TRANSFORM_SYMBOL_LIST
+from copy import copy
 
-CLOSE_TIME_START = '14:55'
-CLOSE_TIME_END = '15:05'
+STOP_OPEN_ALGO_TIME_START = '14:55'
+STOP_OPEN_ALGO_TIME_END = '15:20'
+
+STOP_CLOSE_ALGO_TIME_START = '14:59'
+STOP_CLOSE_ALGO_TIME_END = '15:20'
 
 class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     """"""
@@ -27,8 +31,8 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     author = "loe"
 
     boll_window = 20
-    boll_dev = 2
-    tick_price = 1
+    boll_dev = 5
+    tick_price = 1.0
     open_value = 2
     max_pos = 30
     payup = 10
@@ -80,7 +84,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         self.write_log("策略初始化")
         self.bg = BarGenerator(self.on_spread_bar)
         self.am = ArrayManager(size=self.boll_window)
-        self.load_bar(10)
+        self.load_recent_bar(count=60)
 
     def on_start(self):
         """
@@ -113,6 +117,14 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
             self.write_log(f'====== 过滤无效tick：{tick.vt_symbol}\t{tick.datetime} ======')
             return
 
+        if self.check_stop_open_algo_close_time(target_datetime=tick.datetime):
+            # 停止新的开仓操作
+            self.stop_open = True
+
+        if self.check_stop_close_algo_close_time(target_datetime=tick.datetime):
+            # 让新开的平仓算法强行平仓
+            self.close_anyway = True
+
         self.bg.update_tick(tick)
         self.put_timer_event()
 
@@ -139,18 +151,23 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         if not self.trading:
             return
 
-        if self.check_algo_leg_broken():
-            # 有算法出现断腿情况，保持算法运行
+        if not self.check_algo_order_finished() or not self.check_algo_hedge_finished():
+            # 有算法订单正在进行或者出现断腿情况，保持算法运行
             return
 
+        """
         the_symbol = list(self.spread.legs.keys())[0]
         is_trading_time = check_trading_time(symbol=the_symbol, the_datetime=datetime.now())
         if not self.check_algo_order_finished() and not is_trading_time:
             # 非交易时间并且有订单未处理完
             return
+        """
 
         self.stop_all_algos()
         if not self.spread_pos:
+            if self.stop_open:
+                return
+
             # 设置一个开仓阈值
             if self.current_length >= self.open_value * self.tick_price:
                 self.start_short_algo(
@@ -197,8 +214,6 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         """
         Callback when algo status is updated.
         """
-        # 一旦有算法出现成交，立即停止其他正在运行的算法
-        self.check_and_stop_other_algo(algo)
         pass
 
     def on_order(self, order: OrderData):
@@ -215,24 +230,34 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
 
     def stop_open_algos(self):
         """"""
-        if self.buy_algoid:
-            self.stop_algo(self.buy_algoid)
+        for buy_algoid in self.buy_algoids_list:
+            self.stop_algo(buy_algoid)
 
-        if self.short_algoid:
-            self.stop_algo(self.short_algoid)
+        for short_algoid in self.short_algoids_list:
+            self.stop_algo(short_algoid)
 
     def stop_close_algos(self):
         """"""
-        if self.sell_algoid:
-            self.stop_algo(self.sell_algoid)
+        for sell_algoid in self.sell_algoids_list:
+            self.stop_algo(sell_algoid)
 
-        if self.cover_algoid:
-            self.stop_algo(self.cover_algoid)
+        for cover_algoid in self.cover_algoids_list:
+            self.stop_algo(cover_algoid)
 
-    def check_close_time(self, target_datetime:datetime):
+    def check_stop_open_algo_close_time(self, target_datetime:datetime):
         now = datetime.now()
-        close_start = datetime.strptime(f'{now.year}-{now.month}-{now.day} {CLOSE_TIME_START}', '%Y-%m-%d %H:%M')
-        close_end = datetime.strptime(f'{now.year}-{now.month}-{now.day} {CLOSE_TIME_END}', '%Y-%m-%d %H:%M')
+        close_start = datetime.strptime(f'{now.year}-{now.month}-{now.day} {STOP_OPEN_ALGO_TIME_START}', '%Y-%m-%d %H:%M')
+        close_end = datetime.strptime(f'{now.year}-{now.month}-{now.day} {STOP_OPEN_ALGO_TIME_END}', '%Y-%m-%d %H:%M')
+
+        if close_start <= target_datetime <= close_end:
+            return True
+        else:
+            return False
+
+    def check_stop_close_algo_close_time(self, target_datetime:datetime):
+        now = datetime.now()
+        close_start = datetime.strptime(f'{now.year}-{now.month}-{now.day} {STOP_CLOSE_ALGO_TIME_START}', '%Y-%m-%d %H:%M')
+        close_end = datetime.strptime(f'{now.year}-{now.month}-{now.day} {STOP_CLOSE_ALGO_TIME_END}', '%Y-%m-%d %H:%M')
 
         if close_start <= target_datetime <= close_end:
             return True
@@ -250,8 +275,50 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         now_minute = datetime.now().replace(second=0, microsecond=0)
         if last_datetime == now_minute:
             self.am = ArrayManager(size=self.boll_window)
-            self.load_bar(days=10, callback=self.update_am_bar)
+            self.load_recent_bar(count=60, callback=self.update_am_bar)
 
     def update_am_bar(self, bar: BarData):
         self.am.update_bar(bar)
+
+    def on_traded_changed(self, algo: SpreadAlgoTemplate, changed=0):
+        if self.spread_pos > 0:
+            volume_left = abs(self.spread_pos)
+            sell_ids = copy(self.sell_algoids_list)
+            for sell_algoid in sell_ids:
+                sell_algo = self.strategy_engine.get_algo(algoid=sell_algoid)
+                if sell_algo:
+                    sell_algo_left = abs(sell_algo.target) - abs(sell_algo.traded)
+                    if sell_algo_left > 0:
+                        volume_left -= sell_algo_left
+
+            if volume_left > 0:
+                # 开sell算法
+                self.start_short_algo(
+                    self.boll_mid,
+                    abs(volume_left),
+                    payup=self.payup,
+                    interval=self.interval,
+                    offset=Offset.CLOSE
+                )
+
+        elif self.spread_pos < 0:
+            volume_left = abs(self.spread_pos)
+            cover_ids = copy(self.cover_algoids_list)
+            for cover_algoid in cover_ids:
+                cover_algo = self.strategy_engine.get_algo(algoid=cover_algoid)
+                if cover_algo:
+                    cover_algo_left = abs(cover_algo.target) - abs(cover_algo.traded)
+                    if cover_algo_left > 0:
+                        volume_left -= cover_algo_left
+
+            if volume_left > 0:
+                # 开cover算法
+                self.start_long_algo(
+                    self.boll_mid,
+                    abs(volume_left),
+                    payup=self.payup,
+                    interval=self.interval,
+                    offset=Offset.CLOSE
+                )
+
 

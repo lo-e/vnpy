@@ -61,6 +61,7 @@ class SpreadEngine(BaseEngine):
 
         self.start_algo = self.algo_engine.start_algo
         self.stop_algo = self.algo_engine.stop_algo
+        self.manual_stop_algo = self.algo_engine.manual_stop_algo
 
     def start(self):
         """"""
@@ -492,6 +493,18 @@ class SpreadAlgoEngine:
 
         algo.stop()
 
+    def manual_stop_algo(
+        self,
+        algoid: str
+    ):
+        """"""
+        algo = self.algos.get(algoid, None)
+        if not algo:
+            self.write_log("停止价差算法失败，找不到算法：{}".format(algoid))
+            return
+
+        algo.manual_stop()
+
     def put_algo_event(self, algo: SpreadAlgoTemplate) -> None:
         """"""
         event = Event(EVENT_SPREAD_ALGO, algo)
@@ -504,6 +517,7 @@ class SpreadAlgoEngine:
         strategy = strategy_engine.algo_strategy_map.get(algo.algoid, None)
         if strategy:
             strategy.spread_pos += changed
+            strategy.on_traded_changed(algo=algo, changed=changed)
         strategy.put_event()
 
     def write_algo_log(self, algo: SpreadAlgoTemplate, msg: str) -> None:
@@ -627,7 +641,7 @@ class SpreadStrategyEngine:
 
         """ modify by loe """
         # 数据引擎【下载时间 ['10:20', '11:35', '15:35', '23:35']】
-        self.autoEngine = SpreadAutoEngine(main_engine=self.spread_engine.main_engine, spread_strategy_engine=self, download_time_list=['10:20', '11:35', '15:05', '23:35'],
+        self.autoEngine = SpreadAutoEngine(main_engine=self.spread_engine.main_engine, spread_strategy_engine=self, download_time_list=['10:20', '11:35', '15:20', '23:35'],
                                            reconnect_time='20:00', check_interval=10 * 60, reload_time=6)
         self.downloading_flag: datetime = None
         self.download_callback_list = []
@@ -1089,6 +1103,22 @@ class SpreadStrategyEngine:
         for bar in bars:
             callback(bar)
 
+    def load_recent_bar(
+        self, spread: SpreadData, count: int, interval: Interval, callback: Callable
+    ):
+        """"""
+        end = datetime.now()
+        start = end - timedelta(10)
+
+        bars = load_bar_data(spread, interval, start, end)
+
+        if len(bars) >= count:
+            recent_bars = bars[int(-1 * count):-1]
+        else:
+            recent_bars = bars
+        for bar in recent_bars:
+            callback(bar)
+
     def load_tick(self, spread: SpreadData, days: int, callback: Callable):
         """"""
         end = datetime.now()
@@ -1176,7 +1206,7 @@ class SpreadStrategyEngine:
 
         if not self.downloading_flag or datetime.now() >= self.downloading_flag + timedelta(seconds=20):
             self.downloading_flag = datetime.now()
-            last_datetime, msg = TurtleDataDownloading().download_minute_jq(recent_minute=5)
+            last_datetime, msg = TurtleDataDownloading().download_minute_multi_jq(recent_minute=5)
             for the_callback in self.download_callback_list:
                 the_callback(last_datetime, msg)
 
@@ -1230,15 +1260,16 @@ class SpreadAutoEngine(object):
             if not self.downloading:
                 turtleDataD = TurtleDataDownloading()
                 self.downloading = True
-                last_datetime, msg = turtleDataD.download_minute_jq(days=0)
+                last_datetime, msg = turtleDataD.download_minute_multi_jq(days=0)
                 self.downloading = False
                 if not self.init_download_need:
                     # SPREAD重新初始化
                     self.spread_strategy_engine.reinit_and_restart_strategies()
                     msg = f'{msg}\n\n策略重新初始化成功'
-                self.init_download_need = False
                 self.main_engine.send_email(subject='SPREAD 数据更新', content=msg)
-                sleep(10*60)
+                if not self.init_download_need:
+                    sleep(10*60)
+                self.init_download_need = False
 
     def on_reconnect_timer(self):
         while True:

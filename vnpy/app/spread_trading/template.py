@@ -15,6 +15,8 @@ from .base import SpreadData, calculate_inverse_volume
 #数据下载
 from concurrent.futures import ThreadPoolExecutor
 import datetime
+""" fake """
+from datetime import timedelta
 import re
 
 """ modify by loe """
@@ -39,10 +41,26 @@ MORNING_START_SF = datetime.time(9, 30)
 MORNING_END_SF = datetime.time(11, 30)
 AFTERNOON_START_SF = datetime.time(13, 0)
 AFTERNOON_END_SF = datetime.time(15, 0)
+AFTERNOON_END_BD_SF = datetime.time(15, 15)
 
-def is_finance_symbol(symbol):
+# 是否是股指期货
+def is_finance_stock_symbol(symbol):
     # 能够识别 'RB10_RB05', 'RB2010.SHFE'
     financeSymbols = ['IF', 'IC', 'IH']
+    target_symbol = copy(symbol)
+    target_symbol = target_symbol.upper()
+    target_symbol = target_symbol.split('_')[0]
+    target_symbol = target_symbol.split('.')[0]
+    startSymbol = re.sub("\d", "", target_symbol)
+    if startSymbol in financeSymbols:
+        return True
+    else:
+        return False
+
+# 是否是债券期货
+def is_finance_bond_symbol(symbol):
+    # 能够识别 'RB10_RB05', 'RB2010.SHFE'
+    financeSymbols = ['TF', 'TS']
     target_symbol = copy(symbol)
     target_symbol = target_symbol.upper()
     target_symbol = target_symbol.split('_')[0]
@@ -56,13 +74,23 @@ def is_finance_symbol(symbol):
 def check_trading_time(symbol, the_datetime:datetime.datetime):
     result = True
     t = the_datetime.time()
-    isFinance = is_finance_symbol(symbol)
-    if not isFinance:
-        if NIGHT_END_CF_M <= t < MORNING_START_CF or MORNING_REST_CF <= t < MORNING_RESTART_CF or MORNING_END_CF <= t < AFTERNOON_START_CF or AFTERNOON_END_CF <= t < NIGHT_START_CF:
-            result = False
-    else:
+    is_stock = is_finance_stock_symbol(symbol)
+    is_bond = is_finance_bond_symbol(symbol)
+    if is_stock:
+        # 股指期货
         if t < MORNING_START_SF or MORNING_END_SF <= t < AFTERNOON_START_SF or AFTERNOON_END_SF <= t:
             result = False
+
+    elif is_bond:
+        # 债券期货
+        if t < MORNING_START_SF or MORNING_END_SF <= t < AFTERNOON_START_SF or AFTERNOON_END_BD_SF <= t:
+            result = False
+
+    else:
+        # 商品期货
+        if NIGHT_END_CF_M <= t < MORNING_START_CF or MORNING_REST_CF <= t < MORNING_RESTART_CF or MORNING_END_CF <= t < AFTERNOON_START_CF or AFTERNOON_END_CF <= t < NIGHT_START_CF:
+            result = False
+
     return result
 
 def check_tick_valid(tick:TickData):
@@ -98,6 +126,10 @@ class SpreadAlgoTemplate:
         self.algo_engine = algo_engine
         self.algoid: str = algoid
 
+        self.init_datetime = datetime.datetime.now()
+        self.stop_datetime = None
+        self.leg_traded_desc = ''
+
         self.spread: SpreadData = spread
         self.spread_name: str = spread.name
 
@@ -121,6 +153,9 @@ class SpreadAlgoTemplate:
 
         self.leg_traded: Dict[str, float] = defaultdict(int)
         self.leg_orders: Dict[str, List[str]] = defaultdict(list)
+
+        # 用于平仓算法，值为True时尽快平仓
+        self.close_anyway = False
 
         self.write_log("算法已启动")
 
@@ -178,11 +213,43 @@ class SpreadAlgoTemplate:
 
     def stop(self):
         """"""
+        if not self.check_order_finished() or not self.check_hedge_finished():
+            # 有订单正在进行或者出现断腿情况，保持算法运行
+            return False
+
+        if self.is_active():
+            """ fake """
+            if not self.check_hedge_finished():
+                a = 2
+
+            now_time = datetime.datetime.now()
+            target_time = (self.init_datetime + timedelta(minutes=1)).replace(second=0, microsecond=0)
+            if now_time < target_time:
+                a = 2
+                msg = ''
+                msg += f'{datetime.datetime.now()}' + '\n'
+                msg += self.algoid + '\n'
+                msg += self.spread.active_leg.vt_symbol + '\n'
+                self.algo_engine.main_engine.send_email(f'ALGO_STOP', msg)
+
+            self.cancel_all_order()
+            self.status = Status.CANCELLED
+            self.write_log("算法已停止")
+            self.stop_datetime = datetime.datetime.now()
+            self.put_event()
+
+        return True
+
+    def manual_stop(self):
+        """"""
         if self.is_active():
             self.cancel_all_order()
             self.status = Status.CANCELLED
             self.write_log("算法已停止")
+            self.stop_datetime = datetime.datetime.now()
             self.put_event()
+
+        return True
 
     def update_tick(self, tick: TickData):
         """"""
@@ -216,6 +283,8 @@ class SpreadAlgoTemplate:
             trade.price
         )
         self.write_log(msg)
+
+        self.leg_traded_desc = f'{self.leg_traded}'
 
         self.calculate_traded()
         self.put_event()
@@ -433,6 +502,17 @@ class SpreadStrategyTemplate:
 
         self.vt_orderids: Set[str] = set()
         self.algoids: Set[str] = set()
+        self.buy_algoids_list: Set[str] = set()
+        self.sell_algoids_list: Set[str] = set()
+        self.short_algoids_list: Set[str] = set()
+        self.cover_algoids_list: Set[str] = set()
+
+        """ modify by loe """
+        # 停止创建新的开仓算法
+        self.stop_open = False
+
+        # 对所有新开的平仓算法强制平仓
+        self.close_anyway = False
 
         self.update_setting(setting)
 
@@ -502,8 +582,24 @@ class SpreadStrategyTemplate:
         """
         Callback when algo status is updated.
         """
-        if not algo.is_active() and algo.algoid in self.algoids:
-            self.algoids.remove(algo.algoid)
+        # 一旦有算法出现成交，立即停止其他正在运行的算法
+        self.check_and_stop_other_algo(algo)
+
+        if not algo.is_active():
+            if algo.algoid in self.algoids:
+                self.algoids.remove(algo.algoid)
+
+            if algo.algoid in self.buy_algoids_list:
+                self.buy_algoids_list.remove(algo.algoid)
+
+            if algo.algoid in self.short_algoids_list:
+                self.short_algoids_list.remove(algo.algoid)
+
+            if algo.algoid in self.sell_algoids_list:
+                self.sell_algoids_list.remove(algo.algoid)
+
+            if algo.algoid in self.cover_algoids_list:
+                self.cover_algoids_list.remove(algo.algoid)
 
         self.on_spread_algo(algo)
 
@@ -612,7 +708,28 @@ class SpreadStrategyTemplate:
             lock
         )
 
+        """" modify by loe """
+        if offset == Offset.CLOSE and self.close_anyway:
+            the_algo = self.strategy_engine.get_algo(algoid=algoid)
+            if the_algo:
+                the_algo.close_anyway = True
+
         self.algoids.add(algoid)
+
+        """ modify by loe """
+        if offset == Offset.OPEN:
+            if direction == Direction.LONG:
+                self.buy_algoids_list.add(algoid)
+
+            elif direction == Direction.SHORT:
+                self.short_algoids_list.add(algoid)
+
+        elif offset == Offset.CLOSE or offset == Offset.CLOSETODAY or offset == Offset.CLOSEYESTERDAY:
+            if direction == Direction.LONG:
+                self.cover_algoids_list.add(algoid)
+
+            elif direction == Direction.SHORT:
+                self.sell_algoids_list.add(algoid)
 
         return algoid
 
@@ -770,6 +887,20 @@ class SpreadStrategyTemplate:
 
         self.strategy_engine.load_bar(self.spread, days, interval, callback)
 
+    def load_recent_bar(
+        self,
+        count: int,
+        interval: Interval = Interval.MINUTE,
+        callback: Callable = None,
+    ):
+        """
+        Load historical bar data for initializing strategy.
+        """
+        if not callback:
+            callback = self.on_spread_bar
+
+        self.strategy_engine.load_recent_bar(self.spread, count, interval, callback)
+
     def load_tick(self, days: int):
         """
         Load historical tick data for initializing strategy.
@@ -778,11 +909,41 @@ class SpreadStrategyTemplate:
 
     """ modify by loe """
     def check_and_stop_other_algo(self, algo: SpreadAlgoTemplate):
-        # 只要算法的一条腿有任何成交，立刻停止其他算法
-        if algo.check_leg_traded():
-            for algoid in self.algoids:
-                if algoid != algo.algoid:
-                    self.stop_algo(algoid)
+        # 只要开仓算法的一条腿有任何成交，立刻停止其他开仓算法算法
+        if (algo.algoid in self.short_algoids_list or algo.algoid in self.buy_algoids_list) and algo.check_leg_traded():
+            """ fake """
+            stop_count = 0
+            msg = f'id：{algo.algoid}\nstatus：{algo.status}\nleg：{algo.leg_traded}\n======\n'
+            for the_id in self.algoids:
+                msg += the_id + '\n'
+
+            for short_algoid in self.short_algoids_list:
+                if short_algoid != algo.algoid:
+                    # 需要停止的算法初始化时间间隔不超过10秒
+                    short_algo = self.strategy_engine.get_algo(algoid=short_algoid)
+                    if short_algo:
+                        delta = abs(algo.init_datetime - short_algo.init_datetime)
+                        if delta >= timedelta(seconds=10):
+                            break
+
+                    self.stop_algo(short_algoid)
+                    stop_count += 1
+
+            for buy_algoid in self.buy_algoids_list:
+                if buy_algoid != algo.algoid:
+                    # 需要停止的算法初始化时间间隔不超过10秒
+                    buy_algo = self.strategy_engine.get_algo(algoid=buy_algoid)
+                    if buy_algo:
+                        delta = abs(algo.init_datetime - buy_algo.init_datetime)
+                        if delta >= timedelta(seconds=10):
+                            break
+
+                    self.stop_algo(buy_algoid)
+                    stop_count += 1
+
+            """ fake """
+            if stop_count >= 2:
+                self.strategy_engine.main_engine.send_email(f'CHECK_AND_STOP', msg)
 
     def check_algo_trading(self):
         # 检查是否有算法部分成交但是没有全部成交
@@ -794,13 +955,13 @@ class SpreadStrategyTemplate:
                 break
         return result
 
-    def check_algo_leg_broken(self):
+    def check_algo_hedge_finished(self):
         # 检查是否有算法断腿
-        result = False
+        result = True
         for algoid in self.algoids:
             algo = self.strategy_engine.get_algo(algoid=algoid)
-            if not algo.check_hedge_finished:
-                result = True
+            if not algo.check_hedge_finished():
+                result = False
                 break
         return result
 
@@ -813,6 +974,9 @@ class SpreadStrategyTemplate:
                 result = False
                 break
         return result
+
+    def on_traded_changed(self, algo: SpreadAlgoTemplate, changed=0):
+        pass
 
     def put_timer_event(self):
         self.timer_event_cross = True

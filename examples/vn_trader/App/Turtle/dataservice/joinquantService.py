@@ -20,7 +20,8 @@ from .tushareService import fetchNextTradeDate
 from collections import defaultdict
 
 # 聚宽账号登陆
-auth('18521705317', '970720699')
+if not is_auth():
+    auth('18521705317', '970720699')
 
 # 使用聚宽数据服务，添加新的品种必须这里添加代码
 EXCHANGE_SYMBOL_MAP = {'XSGE':['RB', 'HC', 'RU', 'CU', 'PB', 'SN', 'SP', 'WR', 'ZN', 'RU'],
@@ -228,7 +229,7 @@ def download_bar_data_symbollist(symbollist:list, start:str, end:str, frequency:
             return_msg = return_msg + f'{bar_symbol.upper()}\t{frequency.upper()} Bar数据下载空!!\t{start} - {end}' + '\n'
 
     if not return_msg:
-        return_msg = f'Bar数据下载空！！\t{start} - {end}'
+        return_msg = f'Bar数据下载空！！\t{start} - {end}' + '\n'
     return bar_dict, return_msg
 
 # 获取合约持仓量数据
