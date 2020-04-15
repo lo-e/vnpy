@@ -7,6 +7,10 @@ from vnpy.trader.utility import round_to
 from vnpy.app.spread_trading.template import SpreadAlgoTemplate, check_tick_valid
 from vnpy.app.spread_trading.base import SpreadData
 
+""" modify by loe """
+from threading import Thread
+from time import sleep
+
 class SpreadTakerAlgo(SpreadAlgoTemplate):
     """"""
     algo_name = "SpreadTaker"
@@ -34,7 +38,12 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         self.cancel_interval: int = 2
         self.timer_count: int = 0
 
+        """ modify by loe """
         self.tick_processing = False
+        # 检查Order撤销或者拒单频率，过高则停止算法对应的策略并邮件通知
+        self.order_failed_count = 0
+        self.check_order_failed_timer = Thread(target=self.check_order_failed)
+        self.check_order_failed_timer.start()
 
     def on_tick(self, tick: TickData):
         """"""
@@ -85,21 +94,26 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
 
     def on_order(self, order: OrderData):
         """"""
-        pass
-        """
-        # Only care active leg order update
-        if order.vt_symbol != self.spread.active_leg.vt_symbol:
-            return
+        if order.is_failed():
+            self.order_failed_count += 1
 
-        # Do nothing if still any existing orders
-        if not self.check_order_finished():
-            return
+    """ modify by loe """
+    def check_order_failed(self):
+        while True:
+            if self.order_failed_count > 30:
+                # 触发风控机制，撤销或者拒单频率过高，停止算法对应的策略并邮件通知
+                strategy_engine = self.algo_engine.spread_engine.strategy_engine
+                strategy = strategy_engine.algo_strategy_map.get(self.algoid, None)
+                if strategy:
+                    strategy_engine.stop_strategy(strategy.strategy_name)
+                try:
+                    msg = f'{self.algoid}\n{self.spread.active_leg.vt_symbol}\nfailed_count：{self.order_failed_count}'
+                    self.algo_engine.main_engine.send_email(subject='ALGO_ORDER_FAILED 风控触发', content=msg)
+                except:
+                    pass
+            self.order_failed_count = 0
+            sleep(50)
 
-        # Hedge passive legs if necessary
-        if not self.check_hedge_finished():
-            self.hedge_passive_legs()
-            self.hedge_active_legs()
-        """
 
     def on_trade(self, trade: TradeData):
         """"""

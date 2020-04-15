@@ -9,6 +9,7 @@ from logging import INFO
 from .constant import Direction, Exchange, Interval, Offset, Status, Product, OptionType, OrderType
 
 ACTIVE_STATUSES = set([Status.SUBMITTING, Status.NOTTRADED, Status.PARTTRADED])
+FAILED_STATUSES = set([Status.CANCELLED, Status.REJECTED])
 
 """ modify by loe """
 import numpy as np
@@ -172,6 +173,15 @@ class OrderData(BaseData):
         Check if the order is active.
         """
         if self.status in ACTIVE_STATUSES:
+            return True
+        else:
+            return False
+
+    def is_failed(self):
+        """
+        Check if the order is failed.
+        """
+        if self.status in FAILED_STATUSES:
             return True
         else:
             return False
