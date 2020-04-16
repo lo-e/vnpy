@@ -17,7 +17,7 @@
         "per_size":1,
         "tick_price":0.05,
         "bit_value":200,
-        "start": true
+        "start": false
     },
 
     {
@@ -30,6 +30,6 @@
         "start": true
     }
 ],
-    "portfolio": {"name": "turtle_crypto_simulation[BTC, ETH, EOS]",
+    "portfolio": {"name": "turtle_crypto[BTC, ETH, EOS]",
                   "portfolioValue": 100}
 }
