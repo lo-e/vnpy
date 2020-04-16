@@ -41,6 +41,9 @@ MORNING_START_SF = datetime.time(9, 30)
 MORNING_END_SF = datetime.time(11, 30)
 AFTERNOON_START_SF = datetime.time(13, 0)
 AFTERNOON_END_SF = datetime.time(15, 0)
+
+#国债期货
+MORNING_START_BD_SF = datetime.time(9, 15)
 AFTERNOON_END_BD_SF = datetime.time(15, 15)
 
 # 是否是股指期货
@@ -83,7 +86,7 @@ def check_trading_time(symbol, the_datetime:datetime.datetime):
 
     elif is_bond:
         # 债券期货
-        if t < MORNING_START_SF or MORNING_END_SF <= t < AFTERNOON_START_SF or AFTERNOON_END_BD_SF <= t:
+        if t < MORNING_START_BD_SF or MORNING_END_SF <= t < AFTERNOON_START_SF or AFTERNOON_END_BD_SF <= t:
             result = False
 
     else:
