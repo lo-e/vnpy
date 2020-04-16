@@ -119,7 +119,7 @@ class TurtleEngine(BaseEngine):
         # 组合管理类
         self.turtlePortfolio = None
         # 数据引擎
-        self.autoEngine = TurtleAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='18:00', reconnect_time='20:00', check_interval=10*60, reload_time=6)
+        self.autoEngine = TurtleAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='18:00', reconnect_time_list=['8:00', '20:00'], check_interval=10*60, reload_time=6)
 
     def init_engine(self):
         """
@@ -1073,20 +1073,22 @@ class TurtleEngine(BaseEngine):
 # 数据自动化引擎，每天固定时间下载策略回测及实盘必要的数据，自动重连CTP和重新初始化策略
 class TurtleAutoEngine(object):
 
-    def __init__(self, main_engine:MainEngine, turtle_engine:TurtleEngine, download_time:str, reconnect_time:str, check_interval:int, reload_time:int):
+    def __init__(self, main_engine:MainEngine, turtle_engine:TurtleEngine, download_time:str, reconnect_time_list:list, check_interval:int, reload_time:int):
         # download_time:'18:00', check_interval:10*60, reload_time:6
         super(TurtleAutoEngine, self).__init__()
 
         self.main_engine = main_engine
         self.turtle_engine = turtle_engine
         self.download_time = download_time
-        self.reconnect_time = reconnect_time
+        self.reconnect_time_list = reconnect_time_list
         self.check_interval = check_interval
         self.reload_time = reload_time
         self.downloading = False
         self.downloaded = False
         self.restarting = False
-        self.restarted = False
+        self.reconnect_result_map = {}
+        for reconnect_time in self.reconnect_time_list:
+            self.reconnect_result_map[reconnect_time] = False
         self.download_timer = Thread(target=self.on_download_timer)
         self.reconnect_timer = Thread(target=self.on_reconnect_timer)
 
@@ -1139,24 +1141,27 @@ class TurtleAutoEngine(object):
 
     def checkAndReconnect(self):
         now = datetime.now()
-        start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {self.reconnect_time}', '%Y-%m-%d %H:%M')
-        end_time = start_time + timedelta(seconds=self.check_interval * self.reload_time)
-        if now >= start_time and now <= end_time:
-            if not self.restarting and not self.restarted:
-                self.turtle_engine.today = (datetime.now() + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-                self.turtle_engine.turtlePortfolio.on_update_today()
-                self.restarting = True
-                result, return_msg = self.main_engine.reconnect(gateway_name='CTP')
-                self.restarting = False
-                self.restarted = result
-                # 海龟策略重新初始化
-                self.turtle_engine.reinit_strategies()
-                return_msg = f'{return_msg}\n\n策略重新初始化成功'
-                try:
-                    self.main_engine.send_email(subject='TURTLE 服务器重连、策略重新初始化', content=return_msg)
-                except:
-                    pass
-        else:
-            self.restarted = False
+        for reconnect_time in self.reconnect_time_list:
+            start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {reconnect_time}', '%Y-%m-%d %H:%M')
+            end_time = start_time + timedelta(seconds=self.check_interval * self.reload_time)
+            if now >= start_time and now <= end_time:
+                the_result = self.reconnect_result_map[reconnect_time]
+                if not self.restarting and not the_result:
+                    self.turtle_engine.today = (datetime.now() + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+                    self.turtle_engine.turtlePortfolio.on_update_today()
+                    self.restarting = True
+                    result, return_msg = self.main_engine.reconnect(gateway_name='CTP')
+                    self.restarting = False
+                    self.reconnect_result_map[reconnect_time] = result
+                    # 海龟策略重新初始化
+                    self.turtle_engine.reinit_strategies()
+                    return_msg = f'{return_msg}\n\n策略重新初始化成功'
+                    try:
+                        self.main_engine.send_email(subject='TURTLE 服务器重连、策略重新初始化', content=return_msg)
+                    except:
+                        pass
+                break
+            else:
+                self.reconnect_result_map[reconnect_time] = False
 
 
