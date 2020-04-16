@@ -101,11 +101,12 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
     def check_order_failed(self):
         while True:
             if self.order_failed_count > 30:
-                # 触发风控机制，撤销或者拒单频率过高，停止算法对应的策略并邮件通知
+                # 触发风控机制，撤销或者拒单频率过高，停止算法、停止对应的策略、邮件通知
                 strategy_engine = self.algo_engine.spread_engine.strategy_engine
                 strategy = strategy_engine.algo_strategy_map.get(self.algoid, None)
                 if strategy:
                     strategy_engine.stop_strategy(strategy.strategy_name)
+                    self.manual_stop()
                 try:
                     msg = f'{self.algoid}\n{self.spread.active_leg.vt_symbol}\nfailed_count：{self.order_failed_count}'
                     self.algo_engine.main_engine.send_email(subject='ALGO_ORDER_FAILED 风控触发', content=msg)
