@@ -19,11 +19,11 @@ import re
 from vnpy.app.cta_strategy.base import TRANSFORM_SYMBOL_LIST
 from copy import copy
 
-STOP_OPEN_ALGO_TIME_START = '14:55'
-STOP_OPEN_ALGO_TIME_END = '15:20'
+STOP_OPEN_ALGO_TIME_START = '14:55:35'
+STOP_OPEN_ALGO_TIME_END = '15:20:00'
 
-STOP_CLOSE_ALGO_TIME_START = '14:59'
-STOP_CLOSE_ALGO_TIME_END = '15:20'
+STOP_CLOSE_ALGO_TIME_START = '14:58:35'
+STOP_CLOSE_ALGO_TIME_END = '15:20:00'
 
 class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     """"""
@@ -117,16 +117,19 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
             self.write_log(f'====== 过滤无效tick：{tick.vt_symbol}\t{tick.datetime} ======')
             return
 
-        if self.check_stop_open_algo_close_time(target_datetime=tick.datetime):
-            # 停止新的开仓操作
-            self.stop_open = True
-
-        if self.check_stop_close_algo_close_time(target_datetime=tick.datetime):
-            # 让新开的平仓算法强行平仓
-            self.close_anyway = True
-
         self.bg.update_tick(tick)
         self.put_timer_event()
+
+    def on_timer(self):
+        super().on_timer()
+
+        now = datetime.now()
+        # 停止新的开仓操作
+        self.stop_open = self.check_stop_open_algo_close_time(target_datetime=now)
+
+        # 让新开的平仓算法强行平仓
+        self.close_anyway = self.check_stop_close_algo_close_time(target_datetime=now)
+
 
     def on_spread_bar(self, bar: BarData):
         """
@@ -246,8 +249,8 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
 
     def check_stop_open_algo_close_time(self, target_datetime:datetime):
         now = datetime.now()
-        close_start = datetime.strptime(f'{now.year}-{now.month}-{now.day} {STOP_OPEN_ALGO_TIME_START}', '%Y-%m-%d %H:%M')
-        close_end = datetime.strptime(f'{now.year}-{now.month}-{now.day} {STOP_OPEN_ALGO_TIME_END}', '%Y-%m-%d %H:%M')
+        close_start = datetime.strptime(f'{now.year}-{now.month}-{now.day} {STOP_OPEN_ALGO_TIME_START}', '%Y-%m-%d %H:%M:%S')
+        close_end = datetime.strptime(f'{now.year}-{now.month}-{now.day} {STOP_OPEN_ALGO_TIME_END}', '%Y-%m-%d %H:%M:%S')
 
         if close_start <= target_datetime <= close_end:
             return True
@@ -256,8 +259,8 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
 
     def check_stop_close_algo_close_time(self, target_datetime:datetime):
         now = datetime.now()
-        close_start = datetime.strptime(f'{now.year}-{now.month}-{now.day} {STOP_CLOSE_ALGO_TIME_START}', '%Y-%m-%d %H:%M')
-        close_end = datetime.strptime(f'{now.year}-{now.month}-{now.day} {STOP_CLOSE_ALGO_TIME_END}', '%Y-%m-%d %H:%M')
+        close_start = datetime.strptime(f'{now.year}-{now.month}-{now.day} {STOP_CLOSE_ALGO_TIME_START}', '%Y-%m-%d %H:%M:%S')
+        close_end = datetime.strptime(f'{now.year}-{now.month}-{now.day} {STOP_CLOSE_ALGO_TIME_END}', '%Y-%m-%d %H:%M:%S')
 
         if close_start <= target_datetime <= close_end:
             return True
