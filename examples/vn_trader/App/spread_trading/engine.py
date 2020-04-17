@@ -641,8 +641,7 @@ class SpreadStrategyEngine:
 
         """ modify by loe """
         # 数据引擎【下载时间 ['10:20', '11:35', '15:35', '23:35']】
-        self.autoEngine = SpreadAutoEngine(main_engine=self.spread_engine.main_engine, spread_strategy_engine=self, download_time_list=['10:20', '11:35', '15:20', '23:35'],
-                                           reconnect_time='20:00', check_interval=10 * 60, reload_time=6)
+        self.autoEngine = SpreadAutoEngine(main_engine=self.spread_engine.main_engine, spread_strategy_engine=self, download_time_list=['10:20', '11:35', '15:20', '23:35'], download_dominant_time='17:20', reconnect_time='20:00', check_interval=10 * 60, reload_time=6)
         self.downloading_flag: datetime = None
         self.download_callback_list = []
 
@@ -1214,25 +1213,29 @@ class SpreadStrategyEngine:
 # 数据自动化引擎，每天固定时间下载策略回测及实盘必要的数据，自动重连CTP和重新初始化策略
 class SpreadAutoEngine(object):
 
-    def __init__(self, main_engine:MainEngine, spread_strategy_engine:SpreadStrategyEngine, download_time_list:list, reconnect_time:str, check_interval:int, reload_time:int):
+    def __init__(self, main_engine:MainEngine, spread_strategy_engine:SpreadStrategyEngine, download_time_list:list, download_dominant_time:str, reconnect_time:str, check_interval:int, reload_time:int):
         # download_time:['10:20', '11:35', '15:35', '23:35'], reconnect_time:'20:00' check_interval:10*60, reload_time:6
         super(SpreadAutoEngine, self).__init__()
 
         self.main_engine = main_engine
         self.spread_strategy_engine = spread_strategy_engine
         self.download_time_list = download_time_list
+        self.download_dominant_time = download_dominant_time
         self.reconnect_time = reconnect_time
         self.check_interval = check_interval
         self.reload_time = reload_time
         self.downloading = False
+        self.dowloading_dominant = False
         self.restarting = False
         self.restarted = False
         self.download_timer = Thread(target=self.on_download_timer)
+        self.download_dominant_timer = Thread(target=self.on_download_dominant_timer)
         self.reconnect_timer = Thread(target=self.on_reconnect_timer)
 
     def start(self):
         self.init_download_need = True
         self.download_timer.start()
+        self.download_dominant_timer.start()
         self.reconnect_timer.start()
 
     def on_download_timer(self):
@@ -1270,6 +1273,31 @@ class SpreadAutoEngine(object):
                 if not self.init_download_need:
                     sleep(10*60)
                 self.init_download_need = False
+
+    def on_download_dominant_timer(self):
+        while True:
+            try:
+                self.checkAndDownloadDominant()
+            except:
+                try:
+                    self.main_engine.send_email(subject='SPREAD 主力合约更新',
+                                                content=f'【未知错误】\n\n{traceback.format_exc()}')
+                except:
+                    pass
+            sleep(2*60)
+
+    def checkAndDownloadDominant(self):
+        now = datetime.now()
+        start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {self.download_dominant_time}', '%Y-%m-%d %H:%M')
+        end_time = start_time + timedelta(seconds=10 * 60)
+        if now >= start_time and now <= end_time:
+            if not self.dowloading_dominant:
+                turtleDataD = TurtleDataDownloading()
+                self.dowloading_dominant = True
+                return_msg = turtleDataD.download_spread_dominant(days=0)
+                self.main_engine.send_email(subject='SPREAD 主力合约更新', content=return_msg)
+        else:
+            self.dowloading_dominant = False
 
     def on_reconnect_timer(self):
         while True:
