@@ -234,8 +234,6 @@ class TurtleDataDownloading(object):
     def download_jq(self, symbol_list: list = None):
         #"""
         underlying_list = ['RB', 'HC', 'SM', 'J', 'ZC', 'TA', 'I', 'RU']
-        #underlying_list = ['CF', 'CS', 'CJ', 'EG', 'RM', 'SF', 'SM', 'SP', 'SR', 'TA', 'ZC', 'TF', 'RU', 'SA']
-        #underlying_list = ['CU', 'PB', 'SC', 'ZN', 'NR']
         days = 0
         today = datetime.strptime(datetime.now().strftime('%Y%m%d'), '%Y%m%d')
 
@@ -443,3 +441,23 @@ class TurtleDataDownloading(object):
             return_msg = return_msg + msg + '\n'
 
         return last_datetime, return_msg
+
+    def download_spread_dominant(self, symbol_list: list = None, days=0):
+        list_1 = ['CF', 'CS', 'CJ', 'EG', 'RM', 'SF', 'SM', 'SP', 'SR', 'TA', 'ZC', 'TF', 'RU', 'SA']
+        list_2 = ['CU', 'PB', 'SC', 'ZN', 'NR']
+        underlying_list = list_1 + list_2
+        today = datetime.strptime(datetime.now().strftime('%Y%m%d'), '%Y%m%d')
+
+        return_msg = ''
+        # 获取主力合约代码并存入数据库
+        dominant_start_msg = '====== 获取主力合约代码并存入数据库 ======'
+        print(dominant_start_msg)
+        return_msg += dominant_start_msg + '\n'
+
+        from_date = today - timedelta(days=days)
+        # from_date = datetime.strptime('2019-12-12', '%Y-%m-%d')
+        for underlying_symbol in underlying_list:
+            dominant_msg = jq_get_and_save_dominant_symbol_from(underlying_symbol=underlying_symbol, from_date=from_date)
+            return_msg += dominant_msg + '\n\n'
+            print('\n')
+        return return_msg

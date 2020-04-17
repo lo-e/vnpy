@@ -280,8 +280,12 @@ def jq_get_and_save_dominant_symbol_from(underlying_symbol:str, from_date:dateti
     return_msg = ''
     today_date = datetime.strptime(datetime.now().strftime('%Y%m%d'), '%Y%m%d')
     from_date = datetime.strptime(from_date.strftime('%Y%m%d'), '%Y%m%d')
+    end_date = today_date
+    # 下午五点前不进行当天的主力合约判断
+    if datetime.now() < datetime.now().replace(hour=17, minute=0, second=0, microsecond=0):
+        end_date = today_date - timedelta(days=1)
     target_date = from_date
-    while target_date <= today_date:
+    while target_date <= end_date:
         try:
             new_dominant, msg = jq_get_and_save_dominant_symbol(underlying_symbol=underlying_symbol, target_date=target_date)
             if new_dominant:
