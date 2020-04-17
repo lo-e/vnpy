@@ -345,12 +345,12 @@ class TurtleDataDownloading(object):
                              'TA2101', 'TA2009',
                              'ZC2101', 'ZC2009',
                              'RU2101', 'RU2009',
-                             'SA2009', 'SA2005',
+                             'SA2101', 'SA2009',
                              'NR2007', 'NR2006']
 
             # 商品【凌晨1：00】
-            symbol_list_3 = ['CU2006', 'CU2005',
-                             'PB2006', 'PB2005',
+            symbol_list_3 = ['CU2007', 'CU2006',
+                             'PB2007', 'PB2006',
                              'ZN2007', 'ZN2006']
 
             # 商品【凌晨2：30】
@@ -420,9 +420,9 @@ class TurtleDataDownloading(object):
                            'ZC2101', 'ZC2009',
                            'TF2009', 'TF2006',
                            'RU2101', 'RU2009',
-                           'SA2009', 'SA2005',
-                           'CU2006', 'CU2005',
-                           'PB2006', 'PB2005',
+                           'SA2101', 'SA2009',
+                           'CU2007', 'CU2006',
+                           'PB2007', 'PB2006',
                            'SC2007', 'SC2006',
                            'ZN2007', 'ZN2006',
                            'NR2007', 'NR2006']
