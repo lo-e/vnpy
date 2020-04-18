@@ -118,7 +118,7 @@ class TurtleEngine(BaseEngine):
         # 组合管理类
         self.turtlePortfolio = None
         # 数据引擎
-        self.autoEngine = TurtleCryptoAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='7:35', check_interval=10 * 60, reload_time=6, generate_time='8:00:01')
+        self.autoEngine = TurtleCryptoAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='7:20', generate_time='8:00:01')
 
     def init_engine(self):
         """
@@ -1041,16 +1041,14 @@ class TurtleEngine(BaseEngine):
 # 数据下载引擎，每天固定时间从1Token自动下载策略回测及实盘必要的数据，并自动结合订阅下载的数据合成DailyBar，策略自动重新初始化
 class TurtleCryptoAutoEngine(object):
 
-    def __init__(self, main_engine:MainEngine, turtle_engine:TurtleEngine, download_time:str, check_interval:int, reload_time:int, generate_time:str):
-        # download_time:'7:20', check_interval:5*60, reload_time:6, generate_time:'8:00:01'
+    def __init__(self, main_engine:MainEngine, turtle_engine:TurtleEngine, download_time:str, generate_time:str):
+        # download_time:'7:20', generate_time:'8:00:01'
         super(TurtleCryptoAutoEngine, self).__init__()
         #self.contract_list = ['okef/btc.usd.q', 'okef/eth.usd.q', 'okef/eos.usd.q']
         self.contract_list = ['BTCUSD', 'ETHUSD', 'EOSUSD']
         self.main_engine = main_engine
         self.turtle_engine = turtle_engine
         self.download_time = download_time
-        self.check_interval = check_interval
-        self.reload_time = reload_time
         self.generate_time = generate_time
         self.downloading = False
         self.generating = False
@@ -1067,11 +1065,12 @@ class TurtleCryptoAutoEngine(object):
             try:
                 self.checkAndDownload()
             except:
+                self.downloading = False
                 try:
                     self.main_engine.send_email(subject='TURTLE_Crypto 数据下载', content=f'【未知错误】\n\n{traceback.format_exc()}')
                 except:
                     pass
-            sleep(self.check_interval)
+            sleep(5 * 60)
 
     def on_generate_timer(self):
         while True:
@@ -1086,11 +1085,11 @@ class TurtleCryptoAutoEngine(object):
     def checkAndDownload(self):
         now = datetime.now()
         start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {self.download_time}', '%Y-%m-%d %H:%M')
-        end_time = start_time + timedelta(seconds=self.check_interval * self.reload_time)
-        if now >= start_time and now <= end_time:
-            if not self.downloading:
-                turtleCryptoDataD = TurtleCryptoDataDownloading()
+        end_time = start_time + timedelta(seconds=20 * 60)
+        if (now >= start_time and now <= end_time) or self.absolute_generate_needed:
+            if not self.downloading or self.absolute_generate_needed:
                 self.downloading = True
+                turtleCryptoDataD = TurtleCryptoDataDownloading()
                 turtleCryptoDataD.download_from_bybit(contract_list=self.contract_list)
                 if self.absolute_generate_needed:
                     result, complete_msg, back_msg, lost_msg = turtleCryptoDataD.generate_for_bybit(contract_list=self.contract_list)
@@ -1107,8 +1106,8 @@ class TurtleCryptoAutoEngine(object):
                         self.main_engine.send_email(subject='TURTLE_Crypto 数据更新', content=email_msg)
                     except:
                         pass
-
-                self.downloading = False
+        else:
+            self.downloading = False
 
     def checkAndGenerate(self):
         now = datetime.now()
@@ -1136,5 +1135,6 @@ class TurtleCryptoAutoEngine(object):
                     pass
 
                 self.absolute_generate_needed = True
+                self.checkAndDownload()
         else:
             self.generating = False
