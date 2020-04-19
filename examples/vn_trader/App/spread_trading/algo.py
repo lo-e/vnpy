@@ -209,6 +209,8 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         # 风控，开仓保证金不能超限
         if self.offset == Offset.OPEN:
             if self.check_bond_over(spread_volume=spread_order_volume):
+                msg = f'{self.algoid}\n{self.spread.active_leg.vt_symbol}\nspread_volume：{spread_order_volume}'
+                self.algo_engine.main_engine.send_email(subject='BOND_OVER 风控触发', content=msg)
                 return
             else:
                 self.ready_open_traded += spread_order_volume
