@@ -331,6 +331,14 @@ class SpreadDataEngine:
 class SpreadAlgoEngine:
     """"""
     algo_class = SpreadTakerAlgo
+    """ modify by loe """
+    # 用于粗略计算持仓占用的保证金，下单前确认是否超出资金容量
+    #========================================
+    # 组合交易总资金
+    portfolioValue = 200000
+    # 保证金费率
+    rate = 0.1
+    # ========================================
 
     def __init__(self, spread_engine: SpreadEngine):
         """"""

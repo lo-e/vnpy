@@ -157,8 +157,11 @@ class SpreadAlgoTemplate:
         self.leg_traded: Dict[str, float] = defaultdict(int)
         self.leg_orders: Dict[str, List[str]] = defaultdict(list)
 
+        """ modify by loe """
         # 用于平仓算法，值为True时尽快平仓
         self.close_anyway = False
+        # 用于保证金的计算，并且用于开仓算法
+        self.ready_open_traded = 0
 
         self.write_log("算法已启动")
 
@@ -428,6 +431,9 @@ class SpreadAlgoTemplate:
 
         """ modify by loe """
         changed = self.traded - last_traded
+        if self.offset == Offset.OPEN and self.ready_open_traded:
+            # 用于保证金风控
+            self.ready_open_traded -= changed
         self.on_traded_changed(changed)
 
     def get_tick(self, vt_symbol: str) -> TickData:
