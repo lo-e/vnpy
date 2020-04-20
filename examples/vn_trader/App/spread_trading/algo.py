@@ -248,6 +248,7 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         for strategy in self.algo_engine.spread_engine.strategy_engine.strategies.values():
             strategy_spread = self.algo_engine.spreads.get(strategy.spread_name, None)
             the_strategy_bond = self.calculate_bond(strategy_spread, strategy.spread_pos)
+            strategys_bond += the_strategy_bond
 
         # 判断是否保证金超限
         total_bond = current_bond + algos_ready_bond + strategys_bond
