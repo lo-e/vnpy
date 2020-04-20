@@ -178,6 +178,28 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
             spread_order_volume = -self.spread.bid_volume
             spread_order_volume = max(spread_order_volume, spread_volume_left)
 
+        # ======================================
+        # 风控，开仓保证金不能超限
+        if self.offset == Offset.OPEN:
+            direction = spread_order_volume / abs(spread_order_volume)
+            abs_actual_volume = 0
+            temp = 1
+            while temp <= abs(spread_order_volume):
+                if self.check_bond_over(spread_volume=temp * direction):
+                    msg = f'{self.algoid}\n{self.spread.active_leg.vt_symbol}\nspread_volume：{spread_order_volume}\nactural_volume：{abs_actual_volume * direction}'
+                    self.algo_engine.main_engine.send_email(subject='BOND_OVER 风控触发', content=msg)
+                    break
+                else:
+                    abs_actual_volume = temp
+                    temp += 1
+
+            if abs_actual_volume:
+                spread_order_volume = abs_actual_volume * direction
+                self.ready_open_traded += spread_order_volume
+            else:
+                return
+        # ======================================
+
         # Calculate active leg order volume
         active_leg_order_volume = self.spread.calculate_leg_volume(
             self.spread.active_leg.vt_symbol,
@@ -204,17 +226,6 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         elif passive_leg_order_volume < 0 and passice_leg_tick.limit_down and passice_leg_tick.bid_price_1 <= passice_leg_tick.limit_down:
             return
         #======================================
-
-        # ======================================
-        # 风控，开仓保证金不能超限
-        if self.offset == Offset.OPEN:
-            if self.check_bond_over(spread_volume=spread_order_volume):
-                msg = f'{self.algoid}\n{self.spread.active_leg.vt_symbol}\nspread_volume：{spread_order_volume}'
-                self.algo_engine.main_engine.send_email(subject='BOND_OVER 风控触发', content=msg)
-                return
-            else:
-                self.ready_open_traded += spread_order_volume
-        # ======================================
 
         # Send active leg order
         self.send_leg_order(
