@@ -103,7 +103,7 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
     """ modify by loe """
     def check_order_failed(self):
         while True:
-            if self.order_failed_count > 30:
+            if self.order_failed_count > 20:
                 # 触发风控机制，撤销或者拒单频率过高，停止算法、停止对应的策略、邮件通知
                 strategy_engine = self.algo_engine.spread_engine.strategy_engine
                 strategy = strategy_engine.algo_strategy_map.get(self.algoid, None)
