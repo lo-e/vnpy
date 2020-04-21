@@ -245,20 +245,26 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
             return False
 
         # 需要确定的保证金
-        current_bond = self.calculate_bond(self.spread, spread_volume)
+        result, current_bond = self.calculate_bond(self.spread, spread_volume)
+        if not result:
+            return True
 
         # 当前活动开仓算法的预备持仓需要的保证金
         algos_ready_bond = 0
         for algo in self.algo_engine.algos.values():
             if algo.is_active() and algo.offset == Offset.OPEN:
-                the_algo_bond = self.calculate_bond(algo.spread, algo.ready_open_traded)
+                result, the_algo_bond = self.calculate_bond(algo.spread, algo.ready_open_traded)
+                if not result:
+                    return True
                 algos_ready_bond += the_algo_bond
 
         # 所有策略持仓占用的保证金
         strategys_bond = 0
         for strategy in self.algo_engine.spread_engine.strategy_engine.strategies.values():
             strategy_spread = self.algo_engine.spreads.get(strategy.spread_name, None)
-            the_strategy_bond = self.calculate_bond(strategy_spread, strategy.spread_pos)
+            result, the_strategy_bond = self.calculate_bond(strategy_spread, strategy.spread_pos)
+            if not result:
+                return True
             strategys_bond += the_strategy_bond
 
         # 判断是否保证金超限
@@ -279,6 +285,11 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         active_tick = self.get_tick(active_vt_symbol)
         active_contract = self.get_contract(active_vt_symbol)
         active_symbol_rate = self.algo_engine.get_symbol_rate(symbol=active_vt_symbol)
+        if not active_symbol_rate:
+            """ 风控 """
+            msg = f'{self.algoid}\n{active_vt_symbol}\nrate：{active_symbol_rate}'
+            self.algo_engine.main_engine.send_email(subject='保证金费率设置错误_风控触发', content=msg)
+            return False, 0
         active_bond = active_tick.last_price * active_contract.size * active_symbol_rate * abs(active_leg_volume)
 
         # 被动腿保证金
@@ -291,11 +302,16 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         passive_tick = self.get_tick(passive_vt_symbol)
         passive_contract = self.get_contract(passive_vt_symbol)
         passive_symbol_rate = self.algo_engine.get_symbol_rate(symbol=active_vt_symbol)
+        if not passive_symbol_rate:
+            """ 风控 """
+            msg = f'{self.algoid}\n{passive_vt_symbol}\nrate：{passive_symbol_rate}'
+            self.algo_engine.main_engine.send_email(subject='保证金费率设置错误_风控触发', content=msg)
+            return False, 0
         passive_bond = passive_tick.last_price * passive_contract.size * passive_symbol_rate * abs(passive_leg_volume)
 
         # 总保证金
         total_spread_bond = active_bond + passive_bond
-        return total_spread_bond
+        return True, total_spread_bond
 
     def hedge_passive_legs(self):
         """
