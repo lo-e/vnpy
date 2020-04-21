@@ -40,6 +40,7 @@ from threading import Thread
 from time import sleep
 from ..Turtle.dataservice import TurtleDataDownloading
 from vnpy.trader.utility import load_json_path
+import re
 
 APP_NAME = "SpreadTrading"
 class SpreadEngine(BaseEngine):
@@ -336,10 +337,6 @@ class SpreadAlgoEngine:
     # 用于粗略计算持仓占用的保证金，下单前确认是否超出资金容量
     #========================================
     spread_trade_setting_filename = 'SPREAD_setting.json'
-    # 组合交易总资金
-    portfolioValue = 200000
-    # 保证金费率
-    rate = 0.1
     # ========================================
 
     def __init__(self, spread_engine: SpreadEngine):
@@ -386,8 +383,20 @@ class SpreadAlgoEngine:
         file_path = file_path.joinpath(self.spread_trade_setting_filename)
         l = load_json_path(file_path)
 
+        # 保证金费率
         self.rate_dict = l.get('rate_dict', None)
+
+        # 组合交易总资金
         self.portfolio_value = l.get('portfolio_value', None)
+
+    def get_symbol_rate(self, symbol:str):
+        # 能够识别 'RB2010.SHFE'
+        target_symbol = copy(symbol)
+        target_symbol = target_symbol.upper()
+        target_symbol = target_symbol.split('.')[0]
+        startSymbol = re.sub("\d", "", target_symbol)
+        symbol_rate = self.rate_dict.get(startSymbol, 0)
+        return symbol_rate
 
 
     def register_event(self):

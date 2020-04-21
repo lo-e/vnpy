@@ -263,7 +263,7 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
 
         # 判断是否保证金超限
         total_bond = current_bond + algos_ready_bond + strategys_bond
-        if total_bond >= self.algo_engine.portfolioValue:
+        if total_bond >= self.algo_engine.portfolio_value:
             return True
         else:
             return False
@@ -278,7 +278,8 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         )
         active_tick = self.get_tick(active_vt_symbol)
         active_contract = self.get_contract(active_vt_symbol)
-        active_bond = active_tick.last_price * active_contract.size * self.algo_engine.rate * abs(active_leg_volume)
+        active_symbol_rate = self.algo_engine.get_symbol_rate(symbol=active_vt_symbol)
+        active_bond = active_tick.last_price * active_contract.size * active_symbol_rate * abs(active_leg_volume)
 
         # 被动腿保证金
         passive_leg = spread.passive_legs[0]
@@ -289,7 +290,8 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         )
         passive_tick = self.get_tick(passive_vt_symbol)
         passive_contract = self.get_contract(passive_vt_symbol)
-        passive_bond = passive_tick.last_price * passive_contract.size * self.algo_engine.rate * abs(passive_leg_volume)
+        passive_symbol_rate = self.algo_engine.get_symbol_rate(symbol=active_vt_symbol)
+        passive_bond = passive_tick.last_price * passive_contract.size * passive_symbol_rate * abs(passive_leg_volume)
 
         # 总保证金
         total_spread_bond = active_bond + passive_bond
