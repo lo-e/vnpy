@@ -301,7 +301,7 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         )
         passive_tick = self.get_tick(passive_vt_symbol)
         passive_contract = self.get_contract(passive_vt_symbol)
-        passive_symbol_rate = self.algo_engine.get_symbol_rate(symbol=active_vt_symbol)
+        passive_symbol_rate = self.algo_engine.get_symbol_rate(symbol=passive_vt_symbol)
         if not passive_symbol_rate:
             """ 风控 """
             msg = f'{self.algoid}\n{passive_vt_symbol}\nrate：{passive_symbol_rate}'

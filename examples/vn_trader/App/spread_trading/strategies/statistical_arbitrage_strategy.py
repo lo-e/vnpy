@@ -18,6 +18,7 @@ from concurrent.futures import ThreadPoolExecutor
 import re
 from vnpy.app.cta_strategy.base import TRANSFORM_SYMBOL_LIST
 from copy import copy
+from vnpy.trader.utility import floor_to
 
 STOP_OPEN_ALGO_TIME_START = '14:55:35'
 STOP_OPEN_ALGO_TIME_END = '15:20:00'
@@ -42,6 +43,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     boll_down = 0.0
     boll_mid = 0.0
     current_length = 0.0
+    max_open_volume = 0
 
     parameters = [
         "boll_window",
@@ -56,7 +58,8 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         "boll_up",
         "boll_down",
         "boll_mid",
-        "current_length"
+        "current_length",
+        "max_open_volume"
     ]
 
     syncs = [
@@ -140,6 +143,8 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
             self.boll_mid = self.am.sma(self.boll_window)
             self.boll_up, self.boll_down = self.am.boll(self.boll_window, self.boll_dev)
         self.current_length = self.boll_up - self.boll_mid
+        # 计算资金能承受的最大开仓量
+        self.max_open_volume = self.calculate_max_open_volume()
         # 交易信号判断
         self.check_for_trade()
         # 异步下载最新分钟数据
@@ -173,9 +178,13 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
 
             # 设置一个开仓阈值
             if self.current_length >= self.open_value * self.tick_price:
+                open_volume = self.max_open_volume
+                if not open_volume:
+                    open_volume = self.max_pos
+
                 self.start_short_algo(
                     self.boll_up,
-                    self.max_pos,
+                    open_volume,
                     payup=self.payup,
                     interval=self.interval,
                     offset=Offset.OPEN
@@ -183,7 +192,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
 
                 self.start_long_algo(
                     self.boll_down,
-                    self.max_pos,
+                    open_volume,
                     payup=self.payup,
                     interval=self.interval,
                     offset=Offset.OPEN
@@ -323,5 +332,46 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
                     interval=self.interval,
                     offset=Offset.CLOSE
                 )
+
+    def calculate_max_open_volume(self):
+        algo_engine = self.strategy_engine.spread_engine.algo_engine
+        # 主动腿
+        active_vt_symbol = self.spread.active_leg.vt_symbol
+        active_price = 0
+        active_tick = self.spread.active_leg.tick
+        if active_tick:
+            active_price = active_tick.last_price
+
+        active_size = 0
+        active_contract = algo_engine.get_contract(active_vt_symbol)
+        if active_contract:
+            active_size = active_contract.size
+
+        active_rate = algo_engine.get_symbol_rate(symbol=active_vt_symbol)
+
+        # 被动腿
+        passive_leg = self.spread.passive_legs[0]
+        passive_vt_symbol = passive_leg.vt_symbol
+        passive_price = 0
+        passive_tick = passive_leg.tick
+        if passive_tick:
+            passive_price = passive_tick.last_price
+
+        passive_size = 0
+        passive_contract = algo_engine.get_contract(passive_vt_symbol)
+        if passive_contract:
+            passive_size = passive_contract.size
+
+        passive_rate = algo_engine.get_symbol_rate(symbol=passive_vt_symbol)
+
+        # 保证金费率
+        active_target = active_price * active_size * active_rate
+        passive_target = passive_price * passive_size *passive_rate
+        if not active_target or not passive_target:
+            self.max_open_volume = 0
+        else:
+            result = algo_engine.portfolio_value / (active_target + passive_target)
+            result = floor_to(result, 1)
+            self.max_open_volume = result
 
 

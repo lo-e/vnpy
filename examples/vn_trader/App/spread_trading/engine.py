@@ -384,10 +384,10 @@ class SpreadAlgoEngine:
         l = load_json_path(file_path)
 
         # 保证金费率
-        self.rate_dict = l.get('rate_dict', None)
+        self.rate_dict = l.get('rate_dict', {})
 
         # 组合交易总资金
-        self.portfolio_value = l.get('portfolio_value', None)
+        self.portfolio_value = l.get('portfolio_value', 0)
 
     def get_symbol_rate(self, symbol:str):
         # 能够识别 'RB2010.SHFE'
