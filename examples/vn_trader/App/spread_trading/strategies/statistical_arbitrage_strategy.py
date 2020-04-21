@@ -144,7 +144,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
             self.boll_up, self.boll_down = self.am.boll(self.boll_window, self.boll_dev)
         self.current_length = self.boll_up - self.boll_mid
         # 计算资金能承受的最大开仓量
-        self.max_open_volume = self.calculate_max_open_volume()
+        self.calculate_max_open_volume()
         # 交易信号判断
         self.check_for_trade()
         # 异步下载最新分钟数据
