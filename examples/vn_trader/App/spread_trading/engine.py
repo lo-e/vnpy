@@ -39,6 +39,7 @@ from vnpy.app.cta_strategy.base import POSITION_DB_NAME
 from threading import Thread
 from time import sleep
 from ..Turtle.dataservice import TurtleDataDownloading
+from vnpy.trader.utility import load_json_path
 
 APP_NAME = "SpreadTrading"
 class SpreadEngine(BaseEngine):
@@ -334,6 +335,7 @@ class SpreadAlgoEngine:
     """ modify by loe """
     # 用于粗略计算持仓占用的保证金，下单前确认是否超出资金容量
     #========================================
+    spread_trade_setting_filename = 'SPREAD_setting.json'
     # 组合交易总资金
     portfolioValue = 200000
     # 保证金费率
@@ -364,6 +366,8 @@ class SpreadAlgoEngine:
     def start(self):
         """"""
         self.register_event()
+        """ modify by loe """
+        self.load_spread_trade_setting()
 
         self.write_log("价差算法引擎启动成功")
 
@@ -371,6 +375,20 @@ class SpreadAlgoEngine:
         """"""
         for algo in self.algos.values():
             self.stop_algo(algo)
+
+    """ modify by loe """
+    def load_spread_trade_setting(self):
+        """
+        Load setting file.
+        """
+        dir = os.path.dirname(os.path.realpath(__file__))
+        file_path = Path(dir)
+        file_path = file_path.joinpath(self.spread_trade_setting_filename)
+        l = load_json_path(file_path)
+
+        self.rate_dict = l.get('rate_dict', None)
+        self.portfolio_value = l.get('portfolio_value', None)
+
 
     def register_event(self):
         """"""
