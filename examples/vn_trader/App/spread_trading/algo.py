@@ -252,7 +252,7 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         # 当前活动开仓算法的预备持仓需要的保证金
         algos_ready_bond = 0
         for algo in self.algo_engine.algos.values():
-            if algo.is_active() and algo.offset == Offset.OPEN:
+            if algo.is_active() and algo.offset == Offset.OPEN and algo.ready_open_traded:
                 result, the_algo_bond = self.calculate_bond(algo.spread, algo.ready_open_traded)
                 if not result:
                     return True
@@ -261,11 +261,12 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         # 所有策略持仓占用的保证金
         strategys_bond = 0
         for strategy in self.algo_engine.spread_engine.strategy_engine.strategies.values():
-            strategy_spread = self.algo_engine.spreads.get(strategy.spread_name, None)
-            result, the_strategy_bond = self.calculate_bond(strategy_spread, strategy.spread_pos)
-            if not result:
-                return True
-            strategys_bond += the_strategy_bond
+            if strategy.spread_pos:
+                strategy_spread = self.algo_engine.spreads.get(strategy.spread_name, None)
+                result, the_strategy_bond = self.calculate_bond(strategy_spread, strategy.spread_pos)
+                if not result:
+                    return True
+                strategys_bond += the_strategy_bond
 
         # 判断是否保证金超限
         total_bond = current_bond + algos_ready_bond + strategys_bond
