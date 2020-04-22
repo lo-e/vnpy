@@ -73,6 +73,9 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
             self.tick_processing = False
             return
 
+        # 没有活动订单，没有断腿，ready_open_traded清空
+        self.ready_open_traded = 0
+
         # Otherwise check if should take active leg
         if self.direction == Direction.LONG:
             if self.spread.ask_price <= self.price:
@@ -100,7 +103,7 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
     """ modify by loe """
     def check_order_failed(self):
         while True:
-            if self.order_failed_count > 30:
+            if self.order_failed_count > 20:
                 # 触发风控机制，撤销或者拒单频率过高，停止算法、停止对应的策略、邮件通知
                 strategy_engine = self.algo_engine.spread_engine.strategy_engine
                 strategy = strategy_engine.algo_strategy_map.get(self.algoid, None)
@@ -159,7 +162,7 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         )
 
     """ modify by loe """
-    # 主动退被动腿同时委托，只适用于单条被动腿的策略
+    # 主动腿被动腿同时委托，只适用于单条被动腿的策略
     def take_active_passive_leg(self):
         """"""
         # Calculate spread order volume of new round trade
@@ -174,6 +177,28 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         else:
             spread_order_volume = -self.spread.bid_volume
             spread_order_volume = max(spread_order_volume, spread_volume_left)
+
+        # ======================================
+        # 风控，开仓保证金不能超限
+        if self.offset == Offset.OPEN:
+            direction = spread_order_volume / abs(spread_order_volume)
+            abs_actual_volume = 0
+            temp = 1
+            while temp <= abs(spread_order_volume):
+                if self.check_bond_over(spread_volume=temp * direction):
+                    msg = f'{self.algoid}\n{self.spread.active_leg.vt_symbol}\nspread_volume：{spread_order_volume}\nactural_volume：{abs_actual_volume * direction}'
+                    self.algo_engine.main_engine.send_email(subject='BOND_OVER 风控触发', content=msg)
+                    break
+                else:
+                    abs_actual_volume = temp
+                    temp += 1
+
+            if abs_actual_volume:
+                spread_order_volume = abs_actual_volume * direction
+                self.ready_open_traded += spread_order_volume
+            else:
+                return
+        # ======================================
 
         # Calculate active leg order volume
         active_leg_order_volume = self.spread.calculate_leg_volume(
@@ -212,6 +237,88 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
             passive_leg.vt_symbol,
             passive_leg_order_volume
         )
+
+    """ modify by loe """
+    # 风控，粗略计算持仓占用的保证金，下单前确认是否超出资金容量【只适用于一条被动腿的策略】
+    def check_bond_over(self, spread_volume):
+        if self.offset == Offset.CLOSE:
+            return False
+
+        # 需要确定的保证金
+        result, current_bond = self.calculate_bond(self.spread, spread_volume)
+        if not result:
+            return True
+
+        # 当前活动开仓算法的预备持仓需要的保证金
+        algos_ready_bond = 0
+        for algo in self.algo_engine.algos.values():
+            if algo.is_active() and algo.offset == Offset.OPEN and algo.ready_open_traded:
+                result, the_algo_bond = self.calculate_bond(algo.spread, algo.ready_open_traded)
+                if not result:
+                    return True
+                algos_ready_bond += the_algo_bond
+
+        # 所有策略持仓占用的保证金
+        strategys_bond = 0
+        for strategy in self.algo_engine.spread_engine.strategy_engine.strategies.values():
+            if strategy.spread_pos:
+                strategy_spread = self.algo_engine.spreads.get(strategy.spread_name, None)
+                result, the_strategy_bond = self.calculate_bond(strategy_spread, strategy.spread_pos)
+                if not result:
+                    return True
+                strategys_bond += the_strategy_bond
+
+        # 判断是否保证金超限
+        total_bond = current_bond + algos_ready_bond + strategys_bond
+        if total_bond >= self.algo_engine.portfolio_value:
+            return True
+        else:
+            return False
+
+    # 计算保证金
+    def calculate_bond(self, spread, spread_volume):
+        # 主动腿保证金
+        active_vt_symbol = spread.active_leg.vt_symbol
+        active_leg_volume = spread.calculate_leg_volume(
+            active_vt_symbol,
+            spread_volume
+        )
+        active_tick = self.get_tick(active_vt_symbol)
+        active_contract = self.get_contract(active_vt_symbol)
+        active_symbol_rate = self.algo_engine.get_symbol_rate(symbol=active_vt_symbol)
+        if not active_symbol_rate:
+            """ 风控 """
+            msg = f'{self.algoid}\n{active_vt_symbol}\nrate：{active_symbol_rate}'
+            self.algo_engine.main_engine.send_email(subject='保证金费率设置错误_风控触发', content=msg)
+            return False, 0
+
+        if not active_tick or not active_contract:
+            return False, 0
+        active_bond = active_tick.last_price * active_contract.size * active_symbol_rate * abs(active_leg_volume)
+
+        # 被动腿保证金
+        passive_leg = spread.passive_legs[0]
+        passive_vt_symbol = passive_leg.vt_symbol
+        passive_leg_volume = spread.calculate_leg_volume(
+            passive_vt_symbol,
+            spread_volume
+        )
+        passive_tick = self.get_tick(passive_vt_symbol)
+        passive_contract = self.get_contract(passive_vt_symbol)
+        passive_symbol_rate = self.algo_engine.get_symbol_rate(symbol=passive_vt_symbol)
+        if not passive_symbol_rate:
+            """ 风控 """
+            msg = f'{self.algoid}\n{passive_vt_symbol}\nrate：{passive_symbol_rate}'
+            self.algo_engine.main_engine.send_email(subject='保证金费率设置错误_风控触发', content=msg)
+            return False, 0
+
+        if not passive_tick or not passive_contract:
+            return False, 0
+        passive_bond = passive_tick.last_price * passive_contract.size * passive_symbol_rate * abs(passive_leg_volume)
+
+        # 总保证金
+        total_spread_bond = active_bond + passive_bond
+        return True, total_spread_bond
 
     def hedge_passive_legs(self):
         """
