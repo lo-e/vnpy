@@ -238,6 +238,15 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
             passive_leg_order_volume
         )
 
+        """ fake """
+        try:
+            active_tick_des = str(active_leg_tick.__dict__)
+            passive_tick_des = str(passice_leg_tick.__dict__)
+            msg = f'{self.algoid}\n{self.offset}\n{self.direction}\n{self.price}\n\n\n\n\n\n{active_tick_des}\n\n\n\n\n\n{passive_tick_des}'
+            self.algo_engine.main_engine.send_email(subject='算法触发', content=msg)
+        except:
+            pass
+
     """ modify by loe """
     # 风控，粗略计算持仓占用的保证金，下单前确认是否超出资金容量【只适用于一条被动腿的策略】
     def check_bond_over(self, spread_volume):
