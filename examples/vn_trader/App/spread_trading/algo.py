@@ -10,6 +10,14 @@ from vnpy.app.spread_trading.base import SpreadData
 """ modify by loe """
 from threading import Thread
 from time import sleep
+import datetime
+
+STOP_TRADE_TIME_LIST = [[datetime.time(9, 0, 0), datetime.time(9, 0, 30)],
+                        [datetime.time(10, 30, 0), datetime.time(10, 30, 30)],
+                        [datetime.time(13, 0, 0), datetime.time(13, 0, 30)],
+                        [datetime.time(13, 30, 0), datetime.time(13, 30, 30)],
+                        [datetime.time(21, 0, 0), datetime.time(21, 0, 30)]
+                        ]
 
 class SpreadTakerAlgo(SpreadAlgoTemplate):
     """"""
@@ -76,27 +84,38 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         # 没有活动订单，没有断腿，ready_open_traded清空
         self.ready_open_traded = 0
 
-        """ fake """
-        active_vt_symbol = self.spread.active_leg.vt_symbol
-        active_contract = self.get_contract(active_vt_symbol)
-        # Otherwise check if should take active leg
-        if self.direction == Direction.LONG:
-            if self.spread.ask_price <= self.price - 10 * active_contract.pricetick:
-                self.take_active_passive_leg()
-                self.tick_processing = False
-                return
+        if not self.check_is_stop_trade_time(tick.datetime):
+            """ fake """
+            active_vt_symbol = self.spread.active_leg.vt_symbol
+            active_contract = self.get_contract(active_vt_symbol)
+            # Otherwise check if should take active leg
+            if self.direction == Direction.LONG:
+                if self.spread.ask_price <= self.price - 5 * active_contract.pricetick:
+                    self.take_active_passive_leg()
+                    self.tick_processing = False
+                    return
 
-        elif self.direction == Direction.SHORT:
-            if self.spread.bid_price >= self.price + 10 * active_contract.pricetick:
-                self.take_active_passive_leg()
-                self.tick_processing = False
-                return
+            elif self.direction == Direction.SHORT:
+                if self.spread.bid_price >= self.price + 5 * active_contract.pricetick:
+                    self.take_active_passive_leg()
+                    self.tick_processing = False
+                    return
 
         # 强行平仓
         if self.offset == Offset.CLOSE and self.close_anyway:
             self.take_active_passive_leg()
 
         self.tick_processing = False
+
+    def check_is_stop_trade_time(self, the_datetime:datetime.datetime):
+        result = False
+        for from_end_time in STOP_TRADE_TIME_LIST:
+            from_time = from_end_time[0]
+            end_time = from_end_time[-1]
+            if from_time <= the_datetime.time() <= end_time:
+                result = True
+                break
+        return result
 
     def on_order(self, order: OrderData):
         """"""
