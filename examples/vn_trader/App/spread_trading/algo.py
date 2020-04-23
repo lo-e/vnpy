@@ -76,15 +76,18 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         # 没有活动订单，没有断腿，ready_open_traded清空
         self.ready_open_traded = 0
 
+        """ fake """
+        active_vt_symbol = self.spread.active_leg.vt_symbol
+        active_contract = self.get_contract(active_vt_symbol)
         # Otherwise check if should take active leg
         if self.direction == Direction.LONG:
-            if self.spread.ask_price <= self.price:
+            if self.spread.ask_price <= self.price - 10 * active_contract.pricetick:
                 self.take_active_passive_leg()
                 self.tick_processing = False
                 return
 
         elif self.direction == Direction.SHORT:
-            if self.spread.bid_price >= self.price:
+            if self.spread.bid_price >= self.price + 10 * active_contract.pricetick:
                 self.take_active_passive_leg()
                 self.tick_processing = False
                 return
