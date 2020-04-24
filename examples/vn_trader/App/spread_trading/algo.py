@@ -59,10 +59,12 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
             return
         self.tick_processing = True
 
-        if not check_tick_valid(tick=tick):
-            self.write_log(f'======算法{self.algo_name} 过滤无效tick：{tick.vt_symbol}\t{tick.datetime} ======')
-            self.tick_processing = False
-            return
+        for leg in self.spread.legs:
+            if leg.tick:
+                if not check_tick_valid(tick=leg.tick):
+                    self.write_log(f'======算法{self.algo_name} 过滤无效tick：{leg.tick.vt_symbol}\t{leg.tick.datetime} ======')
+                    self.tick_processing = False
+                    return
 
         # Return if tick not inited
         if not self.spread.bid_volume or not self.spread.ask_volume:

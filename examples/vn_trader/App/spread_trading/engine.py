@@ -183,6 +183,8 @@ class SpreadDataEngine:
             if spread.datetime:
                 self.put_data_event(spread)
 
+        self.spread_engine.algo_engine.process_tick_event(event=event)
+
     def process_position_event(self, event: Event) -> None:
         """"""
         position = event.data
@@ -404,7 +406,6 @@ class SpreadAlgoEngine:
 
     def register_event(self):
         """"""
-        self.event_engine.register(EVENT_TICK, self.process_tick_event)
         self.event_engine.register(EVENT_ORDER, self.process_order_event)
         self.event_engine.register(EVENT_TRADE, self.process_trade_event)
         self.event_engine.register(EVENT_POSITION, self.process_position_event)
