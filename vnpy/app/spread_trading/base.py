@@ -274,7 +274,10 @@ class SpreadData:
                 self.ask_volume = min(self.ask_volume, adjusted_ask_volume)
 
             # Update calculate time
-            self.datetime = datetime.now()
+            if not self.datetime:
+                self.datetime = leg.tick.datetime
+            else:
+                self.datetime = max(self.datetime, leg.tick.datetime)
 
     def calculate_pos(self):
         """"""
@@ -325,6 +328,8 @@ class SpreadData:
         self.ask_price = 0
         self.bid_volume = 0
         self.ask_volume = 0
+        """ modify by loe """
+        self.datetime = None
 
     def calculate_leg_volume(self, vt_symbol: str, spread_volume: float) -> float:
         """"""

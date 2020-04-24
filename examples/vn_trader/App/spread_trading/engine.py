@@ -178,7 +178,10 @@ class SpreadDataEngine:
 
         for spread in self.symbol_spread_map[tick.vt_symbol]:
             spread.calculate_price()
-            self.put_data_event(spread)
+            """ modify by loe """
+            # 价差合约的所有腿都有tick数据后才会有时间值，价差合约tick值才算完整
+            if spread.datetime:
+                self.put_data_event(spread)
 
     def process_position_event(self, event: Event) -> None:
         """"""

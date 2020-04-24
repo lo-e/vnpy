@@ -80,6 +80,8 @@ class BaseGateway(ABC):
         """"""
         self.event_engine = event_engine
         self.gateway_name = gateway_name
+        """ modify by loe """
+        self.orderid_createtime_map = {}
 
     def on_event(self, type: str, data: Any = None):
         """
@@ -109,6 +111,11 @@ class BaseGateway(ABC):
         Order event push.
         Order event of a specific vt_orderid is also pushed.
         """
+        """ modify by loe """
+        if order.vt_orderid in self.orderid_createtime_map.keys():
+            order.create_time = self.orderid_createtime_map[order.vt_orderid]
+        else:
+            self.orderid_createtime_map[order.vt_orderid] = order.create_time
         self.on_event(EVENT_ORDER, order)
         self.on_event(EVENT_ORDER + order.vt_orderid, order)
 
