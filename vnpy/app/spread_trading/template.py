@@ -106,6 +106,18 @@ def check_tick_valid(tick:TickData):
     else:
         return False
 
+def check_spread_valid(spread:SpreadData):
+    result = True
+    for leg in spread.legs:
+        if leg.tick:
+            if not check_tick_valid(tick=leg.tick):
+                result = False
+                break
+        else:
+            result = False
+            break
+    return result
+
 class SpreadAlgoTemplate:
     """
     Template for implementing spread trading algos.

@@ -8,15 +8,12 @@ from vnpy.app.spread_trading import (
     TickData,
     BarData
 )
-from vnpy.app.spread_trading.template import SpreadStrategyTemplate, SpreadAlgoTemplate, check_trading_time, check_tick_valid
+from vnpy.app.spread_trading.template import SpreadStrategyTemplate, SpreadAlgoTemplate, check_tick_valid, check_spread_valid
 from vnpy.trader.constant import Offset
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # 数据下载
-from App.Turtle.dataservice import TurtleDataDownloading
 from concurrent.futures import ThreadPoolExecutor
-import re
-from vnpy.app.cta_strategy.base import TRANSFORM_SYMBOL_LIST
 from copy import copy
 from vnpy.trader.utility import floor_to
 
@@ -108,6 +105,10 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         """
         Callback when spread price is updated.
         """
+        # 过滤无效spread_data
+        if not check_spread_valid(spread=self.spread):
+            self.write_log(f'====== 过滤无效spread_data：{self.spread.name}\t{self.spread.datetime} ======')
+            return
         tick = self.get_spread_tick()
         self.on_spread_tick(tick)
 
@@ -115,11 +116,6 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         """
         Callback when new spread tick data is generated.
         """
-        # 过滤无效tick
-        if not check_tick_valid(tick=tick):
-            self.write_log(f'====== 过滤无效tick：{tick.vt_symbol}\t{tick.datetime} ======')
-            return
-
         self.bg.update_tick(tick)
         self.put_timer_event()
 
@@ -162,14 +158,6 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         if not self.check_algo_order_finished() or not self.check_algo_hedge_finished():
             # 有算法订单正在进行或者出现断腿情况，保持算法运行
             return
-
-        """
-        the_symbol = list(self.spread.legs.keys())[0]
-        is_trading_time = check_trading_time(symbol=the_symbol, the_datetime=datetime.now())
-        if not self.check_algo_order_finished() and not is_trading_time:
-            # 非交易时间并且有订单未处理完
-            return
-        """
 
         self.stop_all_algos()
         if not self.spread_pos:
