@@ -91,19 +91,19 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
             # Otherwise check if should take active leg
             if self.direction == Direction.LONG:
                 if self.spread.ask_price <= self.price - 2 * active_contract.pricetick:
-                    self.take_active_passive_leg()
+                    self.take_active_passive_leg(active_passive_trigger=False)
                     self.tick_processing = False
                     return
 
             elif self.direction == Direction.SHORT:
                 if self.spread.bid_price >= self.price + 2 * active_contract.pricetick:
-                    self.take_active_passive_leg()
+                    self.take_active_passive_leg(active_passive_trigger=False)
                     self.tick_processing = False
                     return
 
         # 强行平仓
         if self.offset == Offset.CLOSE and self.close_anyway:
-            self.take_active_passive_leg()
+            self.take_active_passive_leg(active_passive_trigger=False)
 
         self.tick_processing = False
 
@@ -154,7 +154,8 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         """"""
         # Calculate spread order volume of new round trade
         spread_volume_left = self.target - self.traded
-        if not spread_volume_left:
+        left_abs = abs(self.target) - abs(self.traded)
+        if left_abs <= 0:
             return
 
         if self.direction == Direction.LONG:
@@ -178,7 +179,7 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
 
     """ modify by loe """
     # 主动腿被动腿同时委托，只适用于单条被动腿的策略
-    def take_active_passive_leg(self):
+    def take_active_passive_leg(self, active_passive_trigger=True):
         """"""
         # Calculate spread order volume of new round trade
         spread_volume_left = self.target - self.traded
@@ -248,16 +249,18 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
             active_leg_order_volume
         )
 
-        self.send_leg_order(
-            passive_leg.vt_symbol,
-            passive_leg_order_volume
-        )
+        if active_passive_trigger:
+            # 主动腿被动腿同时发单
+            self.send_leg_order(
+                passive_leg.vt_symbol,
+                passive_leg_order_volume
+            )
 
         """ fake """
         try:
             active_tick_des = str(active_leg_tick.__dict__)
             passive_tick_des = str(passice_leg_tick.__dict__)
-            msg = f'{self.algoid}\n{self.offset}\n{self.direction}\n{self.price}\n\n\n\n\n\n{active_tick_des}\n\n\n\n\n\n{passive_tick_des}'
+            msg = f'{self.algoid}\n{self.spread.name}\n{self.offset}\n{self.direction}\n{self.price}\n\n\n\n\n\n{active_tick_des}\n\n\n\n\n\n{passive_tick_des}'
             self.algo_engine.main_engine.send_email(subject='算法触发', content=msg)
         except:
             pass
