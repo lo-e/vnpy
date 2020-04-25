@@ -90,13 +90,13 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
             active_contract = self.get_contract(active_vt_symbol)
             # Otherwise check if should take active leg
             if self.direction == Direction.LONG:
-                if self.spread.ask_price <= self.price - 5 * active_contract.pricetick:
+                if self.spread.ask_price <= self.price - 2 * active_contract.pricetick:
                     self.take_active_passive_leg()
                     self.tick_processing = False
                     return
 
             elif self.direction == Direction.SHORT:
-                if self.spread.bid_price >= self.price + 5 * active_contract.pricetick:
+                if self.spread.bid_price >= self.price + 2 * active_contract.pricetick:
                     self.take_active_passive_leg()
                     self.tick_processing = False
                     return
