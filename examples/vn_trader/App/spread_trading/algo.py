@@ -164,13 +164,6 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
             spread_order_volume = -self.spread.bid_volume
             spread_order_volume = max(spread_order_volume, spread_volume_left)
 
-        """ modify by loe """
-        # 开仓算法只做一次委托执行
-        """
-        if self.offset == Offset.OPEN:
-            self.target = self.traded + spread_order_volume
-        """
-
         # Calculate active leg order volume
         leg_order_volume = self.spread.calculate_leg_volume(
             self.spread.active_leg.vt_symbol,
