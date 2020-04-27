@@ -108,7 +108,7 @@ def check_tick_valid(tick:TickData):
 
 def check_spread_valid(spread:SpreadData):
     result = True
-    for leg in spread.legs:
+    for leg in spread.legs.values():
         if leg.tick:
             if not check_tick_valid(tick=leg.tick):
                 result = False
