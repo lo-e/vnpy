@@ -1147,7 +1147,11 @@ class TurtleAutoEngine(object):
             if now >= start_time and now <= end_time:
                 the_result = self.reconnect_result_map[reconnect_time]
                 if not self.restarting and not the_result:
-                    self.turtle_engine.today = (datetime.now() + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+                    now_hour = datetime.now().hour
+                    if now_hour >= 15:
+                        self.turtle_engine.today = (datetime.now() + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+                    else:
+                        self.turtle_engine.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
                     self.turtle_engine.turtlePortfolio.on_update_today()
                     self.restarting = True
                     result, return_msg = self.main_engine.reconnect(gateway_name='CTP')
