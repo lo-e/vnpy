@@ -17,7 +17,7 @@
         "per_size":1,
         "tick_price":0.05,
         "bit_value":200,
-        "start": false
+        "start": true
     },
 
     {
