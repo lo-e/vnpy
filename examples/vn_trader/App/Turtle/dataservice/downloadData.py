@@ -352,7 +352,7 @@ class TurtleDataDownloading(object):
                              'ZN2007', 'ZN2006']
 
             # 商品【凌晨2：30】
-            symbol_list_4 = ['SC2007', 'SC2006']
+            symbol_list_4 = ['SC2008', 'SC2007']
 
             # 金融
             symbol_list_5 = ['TF2009', 'TF2006']
@@ -421,7 +421,7 @@ class TurtleDataDownloading(object):
                            'SA2101', 'SA2009',
                            'CU2007', 'CU2006',
                            'PB2007', 'PB2006',
-                           'SC2007', 'SC2006',
+                           'SC2008', 'SC2007',
                            'ZN2007', 'ZN2006',
                            'NR2007', 'NR2006']
 
