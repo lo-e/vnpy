@@ -8,20 +8,18 @@ from vnpy.app.spread_trading import (
     TickData,
     BarData
 )
-from vnpy.app.spread_trading.template import SpreadStrategyTemplate, SpreadAlgoTemplate, check_spread_valid
+from vnpy.app.spread_trading.template import SpreadStrategyTemplate, SpreadAlgoTemplate, check_spread_valid, get_night_type, NType
 from vnpy.trader.constant import Offset
-from datetime import datetime
+import datetime
 
 # 数据下载
 from concurrent.futures import ThreadPoolExecutor
 from copy import copy
 from vnpy.trader.utility import floor_to
 
-STOP_OPEN_ALGO_TIME_START = '14:55:35'
-STOP_OPEN_ALGO_TIME_END = '15:20:00'
+STOP_OPEN_ALGO_TIME_LIST = [[datetime.time(14, 55, 35), datetime.time(15, 20, 0)]]
 
-STOP_CLOSE_ALGO_TIME_START = '14:58:35'
-STOP_CLOSE_ALGO_TIME_END = '15:20:00'
+STOP_CLOSE_ALGO_TIME_LIST = [[datetime.time(14, 58, 35), datetime.time(15, 20, 0)]]
 
 class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     """"""
@@ -122,12 +120,12 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     def on_timer(self):
         super().on_timer()
 
-        now = datetime.now()
+        now = datetime.datetime.now()
         # 停止新的开仓操作
-        self.stop_open = self.check_stop_open_algo_close_time(target_datetime=now)
+        self.stop_open = self.check_stop_open_algo_close_time(symbol=self.spread.active_leg.vt_symbol, target_datetime=now)
 
         # 让新开的平仓算法强行平仓
-        self.close_anyway = self.check_stop_close_algo_close_time(target_datetime=now)
+        self.close_anyway = self.check_stop_close_algo_close_time(symbol=self.spread.active_leg.vt_symbol, target_datetime=now)
 
 
     def on_spread_bar(self, bar: BarData):
@@ -244,25 +242,59 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         for cover_algoid in self.cover_algoids_list:
             self.stop_algo(cover_algoid)
 
-    def check_stop_open_algo_close_time(self, target_datetime:datetime):
-        now = datetime.now()
-        close_start = datetime.strptime(f'{now.year}-{now.month}-{now.day} {STOP_OPEN_ALGO_TIME_START}', '%Y-%m-%d %H:%M:%S')
-        close_end = datetime.strptime(f'{now.year}-{now.month}-{now.day} {STOP_OPEN_ALGO_TIME_END}', '%Y-%m-%d %H:%M:%S')
+    def check_stop_open_algo_close_time(self, symbol:str, target_datetime:datetime):
+        time_list = copy(STOP_OPEN_ALGO_TIME_LIST)
+        night_type = get_night_type(symbol=symbol)
+        if night_type == NType.EARLY:
+            # 夜盘结束23：00
+            stop_time = [datetime.time(22, 55, 35), datetime.time(23, 20, 0)]
+            time_list.append(stop_time)
 
-        if close_start <= target_datetime <= close_end:
-            return True
-        else:
-            return False
+        if night_type == NType.MID:
+            # 夜盘结束1：00
+            stop_time = [datetime.time(0, 55, 35), datetime.time(1, 20, 0)]
+            time_list.append(stop_time)
 
-    def check_stop_close_algo_close_time(self, target_datetime:datetime):
-        now = datetime.now()
-        close_start = datetime.strptime(f'{now.year}-{now.month}-{now.day} {STOP_CLOSE_ALGO_TIME_START}', '%Y-%m-%d %H:%M:%S')
-        close_end = datetime.strptime(f'{now.year}-{now.month}-{now.day} {STOP_CLOSE_ALGO_TIME_END}', '%Y-%m-%d %H:%M:%S')
+        if night_type == NType.LATER:
+            # 夜盘结束 2：30
+            stop_time = [datetime.time(2, 25, 35), datetime.time(2, 50, 0)]
+            time_list.append(stop_time)
 
-        if close_start <= target_datetime <= close_end:
-            return True
-        else:
-            return False
+        for from_end_time in time_list:
+            from_time = from_end_time[0]
+            end_time = from_end_time[-1]
+
+            if from_time <= target_datetime.time() <= end_time:
+                return True
+            else:
+                return False
+
+    def check_stop_close_algo_close_time(self, symbol:str, target_datetime:datetime):
+        time_list = copy(STOP_CLOSE_ALGO_TIME_LIST)
+        night_type = get_night_type(symbol=symbol)
+        if night_type == NType.EARLY:
+            # 夜盘结束23：00
+            stop_time = [datetime.time(22, 58, 35), datetime.time(23, 20, 0)]
+            time_list.append(stop_time)
+
+        if night_type == NType.MID:
+            # 夜盘结束1：00
+            stop_time = [datetime.time(0, 58, 35), datetime.time(1, 20, 0)]
+            time_list.append(stop_time)
+
+        if night_type == NType.LATER:
+            # 夜盘结束 2：30
+            stop_time = [datetime.time(2, 28, 35), datetime.time(2, 50, 0)]
+            time_list.append(stop_time)
+
+        for from_end_time in time_list:
+            from_time = from_end_time[0]
+            end_time = from_end_time[-1]
+
+            if from_time <= target_datetime.time() <= end_time:
+                return True
+            else:
+                return False
 
     def prepare_for_download_recent_data(self):
         thread_executor = ThreadPoolExecutor(max_workers=10)
@@ -272,7 +304,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         self.strategy_engine.downloading_recent_data(callback=self.download_callback)
 
     def download_callback(self, last_datetime, msg):
-        now_minute = datetime.now().replace(second=0, microsecond=0)
+        now_minute = datetime.datetime.now().replace(second=0, microsecond=0)
         if last_datetime == now_minute:
             self.am = ArrayManager(size=self.boll_window)
             self.load_recent_bar(count=60, callback=self.update_am_bar)
