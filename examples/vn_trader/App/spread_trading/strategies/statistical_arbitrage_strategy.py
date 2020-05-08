@@ -8,7 +8,7 @@ from vnpy.app.spread_trading import (
     TickData,
     BarData
 )
-from vnpy.app.spread_trading.template import SpreadStrategyTemplate, SpreadAlgoTemplate, check_tick_valid, check_spread_valid
+from vnpy.app.spread_trading.template import SpreadStrategyTemplate, SpreadAlgoTemplate, check_spread_valid
 from vnpy.trader.constant import Offset
 from datetime import datetime
 

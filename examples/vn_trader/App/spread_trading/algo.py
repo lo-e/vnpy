@@ -4,20 +4,25 @@ from vnpy.trader.constant import Direction, Offset
 from vnpy.trader.object import (TickData, OrderData, TradeData)
 from vnpy.trader.utility import round_to
 
-from vnpy.app.spread_trading.template import SpreadAlgoTemplate, check_spread_valid
+from vnpy.app.spread_trading.template import SpreadAlgoTemplate, check_spread_valid, get_night_type, NType
 from vnpy.app.spread_trading.base import SpreadData
 
 """ modify by loe """
 from threading import Thread
 from time import sleep
 import datetime
+from copy import copy
 
-STOP_TRADE_TIME_LIST = [[datetime.time(9, 0, 0), datetime.time(9, 0, 30)],
+STOP_TRADE_TIME_LIST1 = [[datetime.time(10, 14, 57), datetime.time(10, 15, 0)],
+                        [datetime.time(11, 29, 57), datetime.time(11, 30, 0)],
+                        [datetime.time(14, 59, 57), datetime.time(15, 0, 0)],
+                        [datetime.time(15, 14, 57), datetime.time(15, 15, 0)]]
+
+STOP_TRADE_TIME_LIST2 = [[datetime.time(9, 0, 0), datetime.time(9, 0, 30)],
                         [datetime.time(10, 30, 0), datetime.time(10, 30, 30)],
                         [datetime.time(13, 0, 0), datetime.time(13, 0, 30)],
                         [datetime.time(13, 30, 0), datetime.time(13, 30, 30)],
-                        [datetime.time(21, 0, 0), datetime.time(21, 0, 30)]
-                        ]
+                        [datetime.time(21, 0, 0), datetime.time(21, 0, 30)]]
 
 class SpreadTakerAlgo(SpreadAlgoTemplate):
     """"""
@@ -84,8 +89,10 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         # 没有活动订单，没有断腿，ready_open_traded清空
         self.ready_open_traded = 0
 
-        #if not self.check_is_stop_trade_time(tick.datetime):
-        """ fake """
+        if check_is_stop_trade_time(symbol=tick.symbol, the_datetime=tick.datetime):
+            self.tick_processing = False
+            return
+
         active_vt_symbol = self.spread.active_leg.vt_symbol
         active_contract = self.get_contract(active_vt_symbol)
         # Otherwise check if should take active leg
@@ -106,16 +113,6 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
             self.take_active_passive_leg(active_passive_trigger=False)
 
         self.tick_processing = False
-
-    def check_is_stop_trade_time(self, the_datetime:datetime.datetime):
-        result = False
-        for from_end_time in STOP_TRADE_TIME_LIST:
-            from_time = from_end_time[0]
-            end_time = from_end_time[-1]
-            if from_time <= the_datetime.time() <= end_time:
-                result = True
-                break
-        return result
 
     def on_order(self, order: OrderData):
         """"""
@@ -431,3 +428,33 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
                 # 空头委托价格不能低于跌停价
                 price = max(leg_tick.limit_down, price)
             self.send_short_order(leg.vt_symbol, price, abs(leg_volume))
+
+def check_is_stop_trade_time(self, symbol: str, the_datetime: datetime.datetime):
+        result = False
+
+        # 停盘前的前3秒停止交易，防止断腿
+        time_list = copy(STOP_TRADE_TIME_LIST1)
+        night_type = get_night_type(symbol=symbol)
+        if night_type == NType.EARLY:
+            night_stop = [datetime.time(22, 59, 57), datetime.time(23, 0, 0)]
+            time_list.append(night_stop)
+
+        if night_type == NType.MID:
+            night_stop = [datetime.time(0, 59, 57), datetime.time(1, 0, 0)]
+            time_list.append(night_stop)
+
+        if night_type == NType.LATER:
+            night_stop = [datetime.time(2, 29, 57), datetime.time(2, 30, 0)]
+            time_list.append(night_stop)
+
+        # 自定义的其他不允许交易时间
+        #time_list += STOP_TRADE_TIME_LIST2
+
+        for from_end_time in time_list:
+            from_time = from_end_time[0]
+            end_time = from_end_time[-1]
+            if from_time <= the_datetime.time() <= end_time:
+                result = True
+                break
+
+        return result
