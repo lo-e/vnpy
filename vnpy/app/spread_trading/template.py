@@ -223,6 +223,8 @@ class SpreadAlgoTemplate:
         self.close_anyway = False
         # 用于保证金的计算，并且用于开仓算法
         self.ready_open_traded = 0
+        # 止损价格
+        self.stop_loss_price = 0
 
         self.write_log("算法已启动")
 
@@ -570,6 +572,9 @@ class SpreadStrategyTemplate:
         # 对所有新开的平仓算法强制平仓
         self.close_anyway = False
 
+        # 止损价格
+        self.stop_loss_price = 0
+
         self.update_setting(setting)
 
         """ modify by loe """
@@ -765,10 +770,11 @@ class SpreadStrategyTemplate:
         )
 
         """" modify by loe """
-        if offset == Offset.CLOSE and self.close_anyway:
+        if offset == Offset.CLOSE:
             the_algo = self.strategy_engine.get_algo(algoid=algoid)
             if the_algo:
-                the_algo.close_anyway = True
+                the_algo.stop_loss_price = self.stop_loss_price
+                the_algo.close_anyway = self.close_anyway
 
         self.algoids.add(algoid)
 

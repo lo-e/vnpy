@@ -102,8 +102,20 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
                 self.tick_processing = False
                 return
 
+            # 止损
+            if self.offset == Offset.CLOSE and self.stop_loss_price and self.spread.ask_price >= self.stop_loss_price:
+                self.take_active_passive_leg(active_passive_trigger=False)
+                self.tick_processing = False
+                return
+
         elif self.direction == Direction.SHORT:
             if self.spread.bid_price >= self.price + 2 * active_contract.pricetick:
+                self.take_active_passive_leg(active_passive_trigger=False)
+                self.tick_processing = False
+                return
+
+            # 止损
+            if self.offset == Offset.CLOSE and self.stop_loss_price and self.spread.bid_price <= self.stop_loss_price:
                 self.take_active_passive_leg(active_passive_trigger=False)
                 self.tick_processing = False
                 return
