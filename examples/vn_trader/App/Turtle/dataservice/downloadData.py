@@ -344,7 +344,7 @@ class TurtleDataDownloading(object):
                              'ZC2101', 'ZC2009',
                              'RU2101', 'RU2009',
                              'SA2101', 'SA2009',
-                             'NR2007', 'NR2006']
+                             'NR2008', 'NR2007']
 
             # 商品【凌晨1：00】
             symbol_list_3 = ['CU2007', 'CU2006',
@@ -423,7 +423,7 @@ class TurtleDataDownloading(object):
                            'PB2007', 'PB2006',
                            'SC2008', 'SC2007',
                            'ZN2008', 'ZN2007',
-                           'NR2007', 'NR2006']
+                           'NR2008', 'NR2007']
 
         start = ''
         end = ''
