@@ -106,6 +106,11 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
             if self.offset == Offset.CLOSE and self.stop_loss_price and self.spread.ask_price >= self.stop_loss_price:
                 self.take_active_passive_leg(active_passive_trigger=False)
                 self.tick_processing = False
+                try:
+                    msg = f'{self.algoid}\n{self.spread.active_leg.vt_symbol}\nstop_loss_price：{self.stop_loss_price}'
+                    self.algo_engine.main_engine.send_email(subject='止损触发', content=msg)
+                except:
+                    pass
                 return
 
         elif self.direction == Direction.SHORT:
@@ -118,6 +123,11 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
             if self.offset == Offset.CLOSE and self.stop_loss_price and self.spread.bid_price <= self.stop_loss_price:
                 self.take_active_passive_leg(active_passive_trigger=False)
                 self.tick_processing = False
+                try:
+                    msg = f'{self.algoid}\n{self.spread.active_leg.vt_symbol}\nstop_loss_price：{self.stop_loss_price}'
+                    self.algo_engine.main_engine.send_email(subject='止损触发', content=msg)
+                except:
+                    pass
                 return
 
         # 强行平仓
