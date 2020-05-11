@@ -451,7 +451,7 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
                 price = max(leg_tick.limit_down, price)
             self.send_short_order(leg.vt_symbol, price, abs(leg_volume))
 
-def check_is_stop_trade_time(self, symbol: str, the_datetime: datetime.datetime):
+def check_is_stop_trade_time(symbol: str, the_datetime: datetime.datetime):
         result = False
 
         # 停盘前的前3秒停止交易，防止断腿
