@@ -221,8 +221,10 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
             temp = 1
             while temp <= abs(spread_order_volume):
                 if self.check_bond_over(spread_volume=temp * direction):
+                    """
                     msg = f'{self.algoid}\n{self.spread.active_leg.vt_symbol}\nspread_volume：{spread_order_volume}\nactural_volume：{abs_actual_volume * direction}'
                     self.algo_engine.main_engine.send_email(subject='BOND_OVER 风控触发', content=msg)
+                    """
                     break
                 else:
                     abs_actual_volume = temp
@@ -279,8 +281,10 @@ class SpreadTakerAlgo(SpreadAlgoTemplate):
         try:
             active_tick_des = str(active_leg_tick.__dict__)
             passive_tick_des = str(passice_leg_tick.__dict__)
+            """
             msg = f'{self.algoid}\n{self.spread.name}\n{self.offset}\n{self.direction}\n{self.price}\n\n\n\n\n\n{active_tick_des}\n\n\n\n\n\n{passive_tick_des}'
             self.algo_engine.main_engine.send_email(subject='算法触发', content=msg)
+            """
         except:
             pass
 
