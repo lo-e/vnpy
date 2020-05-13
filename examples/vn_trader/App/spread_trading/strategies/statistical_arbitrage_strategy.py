@@ -30,7 +30,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     boll_dev = 5
     tick_price = 1.0
     open_value = 2
-    stop_loss_value = 5
+    stop_loss_value = 10
     payup = 10
     interval = 5
 
