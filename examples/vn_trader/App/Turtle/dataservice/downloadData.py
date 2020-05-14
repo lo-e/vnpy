@@ -355,7 +355,7 @@ class TurtleDataDownloading(object):
             symbol_list_4 = ['SC2008', 'SC2007']
 
             # 金融
-            symbol_list_5 = ['TF2009', 'TF2006']
+            symbol_list_5 = ['TF2012', 'TF2009']
 
             symbol_list_array = [symbol_list_1, symbol_list_2, symbol_list_3, symbol_list_4, symbol_list_5]
 
@@ -416,7 +416,7 @@ class TurtleDataDownloading(object):
                            'SR2101', 'SR2009',
                            'TA2101', 'TA2009',
                            'ZC2101', 'ZC2009',
-                           'TF2009', 'TF2006',
+                           'TF2012', 'TF2009',
                            'RU2101', 'RU2009',
                            'SA2101', 'SA2009',
                            'CU2007', 'CU2006',
