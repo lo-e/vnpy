@@ -252,17 +252,17 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         night_type = get_night_type(symbol=symbol)
         if night_type == NType.EARLY:
             # 夜盘结束23：00
-            stop_time = [datetime.time(22, 55, 35), datetime.time(23, 20, 0)]
+            stop_time = [datetime.time(22, 55, 35), datetime.time(23, 5, 0)]
             time_list.append(stop_time)
 
         if night_type == NType.MID:
             # 夜盘结束1：00
-            stop_time = [datetime.time(0, 55, 35), datetime.time(1, 20, 0)]
+            stop_time = [datetime.time(0, 55, 35), datetime.time(1, 5, 0)]
             time_list.append(stop_time)
 
         if night_type == NType.LATER:
             # 夜盘结束 2：30
-            stop_time = [datetime.time(2, 25, 35), datetime.time(2, 50, 0)]
+            stop_time = [datetime.time(2, 25, 35), datetime.time(2, 35, 0)]
             time_list.append(stop_time)
 
         result = False
@@ -280,17 +280,17 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         night_type = get_night_type(symbol=symbol)
         if night_type == NType.EARLY:
             # 夜盘结束23：00
-            stop_time = [datetime.time(22, 58, 35), datetime.time(23, 20, 0)]
+            stop_time = [datetime.time(22, 58, 35), datetime.time(23, 5, 0)]
             time_list.append(stop_time)
 
         if night_type == NType.MID:
             # 夜盘结束1：00
-            stop_time = [datetime.time(0, 58, 35), datetime.time(1, 20, 0)]
+            stop_time = [datetime.time(0, 58, 35), datetime.time(1, 5, 0)]
             time_list.append(stop_time)
 
         if night_type == NType.LATER:
             # 夜盘结束 2：30
-            stop_time = [datetime.time(2, 28, 35), datetime.time(2, 50, 0)]
+            stop_time = [datetime.time(2, 28, 35), datetime.time(2, 35, 0)]
             time_list.append(stop_time)
 
         result = False
