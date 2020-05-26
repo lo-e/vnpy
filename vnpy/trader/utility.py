@@ -16,6 +16,8 @@ import talib
 from .object import BarData, TickData
 from .constant import Exchange, Interval
 
+""" modify by loe """
+DIR_SYMBOL = get_platform_dir_symbol()
 
 log_formatter = logging.Formatter('[%(asctime)s] %(message)s')
 
@@ -569,3 +571,10 @@ def is_crypto_symbol(symbol:str):
         if crypto_symbol_upper in symbol:
             return True
     return False
+
+def get_platform_dir_symbol():
+    platform = sys.platform
+    result = '\\'
+    if 'LINUX' in platform.upper():
+        result = '/'
+    return result
