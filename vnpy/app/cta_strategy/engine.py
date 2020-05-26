@@ -40,6 +40,7 @@ from vnpy.trader.utility import load_json, save_json, extract_vt_symbol, round_t
 from vnpy.trader.database import database_manager
 from vnpy.trader.rqdata import rqdata_client
 from vnpy.trader.converter import OffsetConverter
+from vnpy.trader.utility import DIR_SYMBOL
 
 """ modify by loe """
 # 增加了 POSITION_DB_NAME
@@ -850,7 +851,7 @@ class CtaEngine(BaseEngine):
         self.load_strategy_class_from_folder(path2, "strategies")
 
         """ modify by loe """
-        path3 = Path.cwd().joinpath("Quant\\vnpy\\examples\\vn_trader\\cta_strategies")
+        path3 = Path.cwd().joinpath(f'Quant{DIR_SYMBOL}vnpy{DIR_SYMBOL}examples{DIR_SYMBOL}vn_trader{DIR_SYMBOL}cta_strategies')
         self.load_strategy_class_from_folder(path3, "cta_strategies")
 
     def load_strategy_class_from_folder(self, path: Path, module_name: str = ""):

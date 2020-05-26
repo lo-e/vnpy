@@ -1,6 +1,7 @@
 from dataservice import *
 from csv import DictReader
 import re
+from vnpy.trader.utility import DIR_SYMBOL
 
 if __name__ == '__main__':
     #"""
@@ -19,7 +20,7 @@ if __name__ == '__main__':
     # 下载【symbol_list.csv】中的指数、主力合约
     input = input(u'输入合约类型【88主力 888平滑主力 99指数】')
     if input == '88' or input == '888' or input == '99':
-        filename = 'dataservice\\symbol_list.csv'
+        filename = f'dataservice{DIR_SYMBOL}symbol_list.csv'
         count = 0
         with open(filename, errors='ignore') as f:
             r = DictReader(f)

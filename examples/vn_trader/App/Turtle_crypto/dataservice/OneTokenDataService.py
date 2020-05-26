@@ -6,6 +6,7 @@ import time
 from collections import defaultdict
 import os
 import csv
+from vnpy.trader.utility import DIR_SYMBOL
 
 main_url = 'https://hist-quote.1tokentrade.cn'
 ot_key = 'JfmGSuv1-59r7T9m4-pHPLO63T-BflOru2o' # loe
@@ -40,7 +41,7 @@ def get_contracts_list(date:str):
 
     # 写入csv
     path = os.getcwd()
-    file_path = path + '\\' + 'contracts.csv'
+    file_path = path + DIR_SYMBOL + 'contracts.csv'
     field_names = ['exchange', 'symbol']
     with open(file_path, 'w') as f:
         writer = csv.DictWriter(f, fieldnames=field_names)
@@ -77,7 +78,7 @@ def get_bar_data(contract:str, since:str, until:str, duration:str):
     # 写入csv
     contract = contract.replace('/', '.')
     csv_path = get_csv_path()
-    dir_path = csv_path + f'{contract}\\{duration}\\'
+    dir_path = csv_path + f'{contract}{DIR_SYMBOL}{duration}{DIR_SYMBOL}'
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
     file_path = dir_path + f'{since}__{until}.csv'
@@ -114,8 +115,8 @@ def get_contract_since(contract:str, duration:str):
 
 def get_csv_path():
     path = os.path.abspath(__file__)
-    file_name = path.split('\\')[-1]
-    csv_path = path.rstrip(file_name) + f'CSVs\\'
+    file_name = path.split(DIR_SYMBOL)[-1]
+    csv_path = path.rstrip(file_name) + f'CSVs{DIR_SYMBOL}'
     return csv_path
 
 if __name__ == '__main__':

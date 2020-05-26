@@ -5,6 +5,7 @@ import time
 import os
 import csv
 from datetime import datetime, timedelta
+from vnpy.trader.utility import DIR_SYMBOL
 
 main_url = 'https://api.bybit.com'
 
@@ -45,7 +46,7 @@ def bybit_get_bar_data(symbol:str, interval:str, from_time:str, limit:int=200):
     # 写入csv
     contract = f'BYBIT.{symbol}'
     csv_path = get_csv_path()
-    dir_path = csv_path + f'{contract}\\{interval}\\'
+    dir_path = csv_path + f'{contract}{DIR_SYMBOL}{interval}{DIR_SYMBOL}'
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
     file_path = dir_path + f'{since}__{until}.csv'
@@ -60,8 +61,8 @@ def bybit_get_bar_data(symbol:str, interval:str, from_time:str, limit:int=200):
 
 def get_csv_path():
     path = os.path.abspath(__file__)
-    file_name = path.split('\\')[-1]
-    csv_path = path.rstrip(file_name) + f'CSVs\\'
+    file_name = path.split(DIR_SYMBOL)[-1]
+    csv_path = path.rstrip(file_name) + f'CSVs{DIR_SYMBOL}'
     return csv_path
 
 if __name__ == '__main__':

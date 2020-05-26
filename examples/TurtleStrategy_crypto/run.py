@@ -14,6 +14,7 @@ from pymongo import MongoClient, ASCENDING
 from vnpy.app.cta_strategy.base import DAILY_DB_NAME
 import pandas as pd
 from vnpy.trader.constant import Direction, Offset
+from vnpy.trader.utility import DIR_SYMBOL
 
 def one():
     pnlList = []
@@ -31,7 +32,7 @@ def one():
             engine.tradingStart = datetime(2020, 1, 1)
             figSavedName = ''
             if figSavedName:
-                figSavedName = 'figSaved\\%s' % figSavedName
+                figSavedName = f'figSaved{DIR_SYMBOL}{figSavedName}'
 
             engine.initSinglePortfolio(d)
             engine.loadData()
@@ -200,7 +201,7 @@ def three():
     dirPath = 'resultList'
     for root, subdirs, files in os.walk(dirPath):
         for theFile in files:
-            filePath = '%s\\%s' % (root, theFile)
+            filePath = f'{root}{DIR_SYMBOL}{theFile}'
             with open(filePath) as f:
                 r = DictReader(f)
                 for d in r:
@@ -215,7 +216,7 @@ def three():
     if len(resultList):
         fieldNames = ['symbol', 'size', 'priceTick', 'variableCommission', 'fixedCommission', 'slippage', 'name', 'result']
         # 文件路径
-        filePath = 'resultList\\result_all.csv'
+        filePath = f'resultList{DIR_SYMBOL}result_all.csv'
         with open(filePath, 'w') as f:
             writer = csv.DictWriter(f, fieldnames=fieldNames)
             writer.writeheader()
