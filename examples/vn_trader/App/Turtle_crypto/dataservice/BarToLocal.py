@@ -112,6 +112,7 @@ class BarLocalEngine(object):
 
                 else:
                     if not daily_bar:
+                        the_datetime = None
                         continue
                     else:
                         raise ('出现异常，检查代码！')
