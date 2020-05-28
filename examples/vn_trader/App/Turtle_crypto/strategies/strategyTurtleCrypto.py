@@ -142,7 +142,7 @@ class TurtleStrategyCrypto(CtaTemplate):
     def on_tick(self, tick):
         """收到行情TICK推送（必须由用户继承实现）"""
         # 保存tick数据到数据库
-        if datetime.time(7, 0) <= (tick.datetime + timedelta(hours=8)).time() <= datetime.time(8, 2):
+        if datetime.time(7, 50) <= (tick.datetime + timedelta(hours=8)).time() <= datetime.time(8, 2):
             self.saveTick(tick)
 
         if not self.trading:
