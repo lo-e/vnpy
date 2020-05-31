@@ -14,6 +14,10 @@ import datetime
 from datetime import timedelta
 from vnpy.trader.constant import Interval
 
+""" fake """
+import csv
+import os
+
 ########################################################################
 class TurtleStrategyCrypto(CtaTemplate):
     """海龟交易策略"""
@@ -141,6 +145,12 @@ class TurtleStrategyCrypto(CtaTemplate):
     #----------------------------------------------------------------------
     def on_tick(self, tick):
         """收到行情TICK推送（必须由用户继承实现）"""
+        """ fake """
+        write_content = {'real_datetime':datetime.datetime.now(),
+                         'tick_datetime':tick.datetime,
+                         'tick_vt_symbol':tick.vt_symbol}
+        self.write_to_file(content=write_content, file_path=f'FAKE_FILE_{tick.symbol}.csv')
+
         # 保存tick数据到数据库
         if datetime.time(7, 50) <= (tick.datetime + timedelta(hours=8)).time() <= datetime.time(8, 2):
             self.saveTick(tick)
@@ -488,4 +498,15 @@ class TurtleStrategyCrypto(CtaTemplate):
         self.unit = 0
         self.entry = 0
         self.multiplierList = []
+
+    """ fake """
+    def write_to_file(self, content, file_path):
+        field_names = list(content.keys())
+        file_exist = os.path.exists(file_path)
+        with open(file_path, 'a') as f:
+            writer = csv.DictWriter(f, fieldnames=field_names)
+            if not file_exist:
+                writer.writeheader()
+            # 写入csv文件
+            writer.writerow(content)
 
