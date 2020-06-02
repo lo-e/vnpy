@@ -156,7 +156,8 @@ class TurtleStrategyCrypto(CtaTemplate):
             """
 
             self.saveTick(tick)
-         """ fake """
+
+        """ fake """
         self.write_log(f'【real：{datetime.datetime.now()}】\t【tick：{tick.datetime + timedelta(hours=8)}】\t{tick.symbol}')
 
         if not self.trading:
