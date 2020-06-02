@@ -150,7 +150,7 @@ class TurtleStrategyCrypto(CtaTemplate):
             """ fake """
             #"""
             write_content = {'real_datetime':datetime.datetime.now(),
-                             'tick_datetime':tick.datetime,
+                             'tick_datetime':tick.datetime + timedelta(hours=8),
                              'tick_vt_symbol':tick.vt_symbol}
             self.write_to_file(content=write_content, file_path=f'FAKE_FILE_{tick.symbol}.csv')
             #"""
