@@ -1045,7 +1045,7 @@ class TurtleCryptoAutoEngine(object):
         # download_time:'7:51', generate_time:'8:00:01'
         super(TurtleCryptoAutoEngine, self).__init__()
         #self.contract_list = ['okef/btc.usd.q', 'okef/eth.usd.q', 'okef/eos.usd.q']
-        self.contract_list = ['BTCUSD', 'ETHUSD', 'EOSUSD']
+        self.contract_list = ['BTCUSD', 'ETHUSD']
         self.main_engine = main_engine
         self.turtle_engine = turtle_engine
         self.download_time = download_time
