@@ -18,6 +18,7 @@ from vnpy.app.cta_strategy import (
     BacktestingEngine,
     OptimizationSetting
 )
+from vnpy.trader.utility import DIR_SYMBOL
 
 APP_NAME = "CtaBacktester"
 
@@ -86,7 +87,7 @@ class BacktesterEngine(BaseEngine):
         self.load_strategy_class_from_folder(path2, "strategies")
 
         """ modify by loe """
-        path3 = Path.cwd().joinpath("Quant\\vnpy\\examples\\vn_trader\\cta_strategies")
+        path3 = Path.cwd().joinpath(f'Quant{DIR_SYMBOL}vnpy{DIR_SYMBOL}examples{DIR_SYMBOL}vn_trader{DIR_SYMBOL}cta_strategies')
         self.load_strategy_class_from_folder(path3, "cta_strategies")
 
     def load_strategy_class_from_folder(self, path: Path, module_name: str = ""):

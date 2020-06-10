@@ -118,7 +118,7 @@ class TurtleEngine(BaseEngine):
         # 组合管理类
         self.turtlePortfolio = None
         # 数据引擎
-        self.autoEngine = TurtleCryptoAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='7:20', generate_time='8:00:01')
+        self.autoEngine = TurtleCryptoAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='7:51', generate_time='8:00:01')
 
     def init_engine(self):
         """
@@ -1042,10 +1042,10 @@ class TurtleEngine(BaseEngine):
 class TurtleCryptoAutoEngine(object):
 
     def __init__(self, main_engine:MainEngine, turtle_engine:TurtleEngine, download_time:str, generate_time:str):
-        # download_time:'7:20', generate_time:'8:00:01'
+        # download_time:'7:51', generate_time:'8:00:01'
         super(TurtleCryptoAutoEngine, self).__init__()
         #self.contract_list = ['okef/btc.usd.q', 'okef/eth.usd.q', 'okef/eos.usd.q']
-        self.contract_list = ['BTCUSD', 'ETHUSD', 'EOSUSD']
+        self.contract_list = ['BTCUSD', 'ETHUSD']
         self.main_engine = main_engine
         self.turtle_engine = turtle_engine
         self.download_time = download_time
@@ -1070,7 +1070,7 @@ class TurtleCryptoAutoEngine(object):
                     self.main_engine.send_email(subject='TURTLE_Crypto 数据下载', content=f'【未知错误】\n\n{traceback.format_exc()}')
                 except:
                     pass
-            sleep(5 * 60)
+            sleep(60)
 
     def on_generate_timer(self):
         while True:

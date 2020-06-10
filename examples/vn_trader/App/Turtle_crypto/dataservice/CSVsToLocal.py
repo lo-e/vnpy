@@ -10,6 +10,7 @@ from time import time
 from sys import exit
 import re
 from .OneTokenDataService import get_csv_path
+from vnpy.trader.utility import DIR_SYMBOL
 
 class CSVs1TokenBarLocalEngine(object):
     def __init__(self, duration:str):
@@ -33,8 +34,8 @@ class CSVs1TokenBarLocalEngine(object):
                 if theFile.startswith('.'):
                     continue
 
-                if '\\' in root:
-                    dirName = root.split('\\')[-1]
+                if DIR_SYMBOL in root:
+                    dirName = root.split(DIR_SYMBOL)[-1]
 
                 if '.csv' in theFile and dirName == self.duration:
                     if dirName == '1d':
@@ -47,7 +48,7 @@ class CSVs1TokenBarLocalEngine(object):
                         exit(0)
                     self.bar_db = self.client[db_name]
                     # 读取文件
-                    filePath = root + '\\' + theFile
+                    filePath = root + DIR_SYMBOL + theFile
                     with open(filePath, 'r') as f:
                         reader = csv.DictReader(f)
                         # 开始导入数据
@@ -130,8 +131,8 @@ class CSVsBybitBarLocalEngine(object):
                 if theFile.startswith('.'):
                     continue
 
-                if '\\' in root:
-                    dirName = root.split('\\')[-1]
+                if DIR_SYMBOL in root:
+                    dirName = root.split(DIR_SYMBOL)[-1]
 
                 if '.csv' in theFile and dirName == self.duration:
                     if dirName == 'D':
@@ -143,7 +144,7 @@ class CSVsBybitBarLocalEngine(object):
                         exit(0)
                     self.bar_db = self.client[db_name]
                     # 读取文件
-                    filePath = root + '\\' + theFile
+                    filePath = root + DIR_SYMBOL + theFile
                     with open(filePath, 'r') as f:
                         reader = csv.DictReader(f)
                         # 开始导入数据

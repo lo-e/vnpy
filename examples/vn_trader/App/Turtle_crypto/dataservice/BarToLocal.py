@@ -36,118 +36,90 @@ class BarLocalEngine(object):
         daily_bar_end = None
         for dic in cursor:
             the_datetime = dic['datetime']
-            if not next_datetime:
-                next_datetime = datetime.strptime(f'{the_datetime.year}-{the_datetime.month}-{the_datetime.day} 08:00:00',
-                                                  '%Y-%m-%d %H:%M:%S')
-                if the_datetime > next_datetime:
-                    next_datetime += timedelta(days=1)
-                daily_bar_datetime = next_datetime
-                temp = daily_bar_datetime + timedelta(days=1)
-                daily_bar_end = datetime.strptime(f'{temp.year}-{temp.month}-{temp.day} 07:59:00',
-                                                  '%Y-%m-%d %H:%M:%S')
-            if the_datetime == next_datetime:
-                if the_datetime == daily_bar_datetime:
-                    # Daily的开始
-                    daily_bar = BarData(gateway_name='', symbol=dic['symbol'], exchange=None, datetime=daily_bar_datetime, endDatetime=None)
-                    daily_bar.open_price = dic['open_price']
-                    daily_bar.close_price = dic['close_price']
-                    daily_bar.high_price = dic['high_price']
-                    daily_bar.low_price = dic['low_price']
-                else:
-                    if not daily_bar:
-                        raise('出现异常，检查代码！')
-
-                    daily_bar.close_price = dic['close_price']
-                    daily_bar.high_price = max(daily_bar.high_price, dic['high_price'])
-                    daily_bar.low_price = min(daily_bar.low_price, dic['low_price'])
-
-                next_datetime += timedelta(minutes=1)
-                if the_datetime == daily_bar_end:
-                    # Daily的结束
-                    # 保存bar到数据库
-                    msg = f'保存Daily数据：{symbol}\t{daily_bar_datetime}\n'
-                    complete_msg += msg + '\n'
-                    print(msg)
-                    Daily_collection.update_many({'datetime': daily_bar.datetime}, {'$set': daily_bar.__dict__}, upsert=True)
-                    daily_bar = None
-
+            while the_datetime:
+                if not next_datetime:
+                    next_datetime = datetime.strptime(f'{the_datetime.year}-{the_datetime.month}-{the_datetime.day} 08:00:00',
+                                                      '%Y-%m-%d %H:%M:%S')
+                    if the_datetime > next_datetime:
+                        next_datetime += timedelta(days=1)
                     daily_bar_datetime = next_datetime
                     temp = daily_bar_datetime + timedelta(days=1)
                     daily_bar_end = datetime.strptime(f'{temp.year}-{temp.month}-{temp.day} 07:59:00',
                                                       '%Y-%m-%d %H:%M:%S')
 
-            elif the_datetime > next_datetime:
-                # Daily数据中间缺失，到Tick数据库获取数据并合成
-                d_bar, b_msg, l_msg = self.Crypto_Daily_With_Tick(symbol, next_datetime, the_datetime, daily_bar)
-                daily_bar = d_bar
-                back_msg += b_msg
-                lost_msg += l_msg
-
-                next_datetime = the_datetime + timedelta(minutes=1)
-                if the_datetime <= daily_bar_end:
-                    if not daily_bar:
+                if the_datetime == next_datetime:
+                    if the_datetime == daily_bar_datetime:
                         # Daily的开始
-                        daily_bar = BarData(gateway_name='', symbol=dic['symbol'], exchange=None, datetime=daily_bar_datetime,
-                                            endDatetime=None)
+                        daily_bar = BarData(gateway_name='', symbol=dic['symbol'], exchange=None, datetime=daily_bar_datetime, endDatetime=None)
                         daily_bar.open_price = dic['open_price']
                         daily_bar.close_price = dic['close_price']
                         daily_bar.high_price = dic['high_price']
                         daily_bar.low_price = dic['low_price']
                     else:
+                        if not daily_bar:
+                            raise('出现异常，检查代码！')
+
                         daily_bar.close_price = dic['close_price']
                         daily_bar.high_price = max(daily_bar.high_price, dic['high_price'])
                         daily_bar.low_price = min(daily_bar.low_price, dic['low_price'])
 
+                    next_datetime += timedelta(minutes=1)
                     if the_datetime == daily_bar_end:
                         # Daily的结束
                         # 保存bar到数据库
                         msg = f'保存Daily数据：{symbol}\t{daily_bar_datetime}\n'
                         complete_msg += msg + '\n'
                         print(msg)
-                        Daily_collection.update_many({'datetime': daily_bar.datetime}, {'$set': daily_bar.__dict__},
-                                                     upsert=True)
-                        daily_bar = None
+                        Daily_collection.update_many({'datetime': daily_bar.datetime}, {'$set': daily_bar.__dict__}, upsert=True)
 
+                        daily_bar = None
                         daily_bar_datetime = next_datetime
                         temp = daily_bar_datetime + timedelta(days=1)
                         daily_bar_end = datetime.strptime(f'{temp.year}-{temp.month}-{temp.day} 07:59:00',
                                                           '%Y-%m-%d %H:%M:%S')
+                    the_datetime = None
+
+                elif the_datetime > next_datetime:
+                    while next_datetime < the_datetime:
+                        # 缺失的数据用Tick数据合成补齐
+                        to_datetime = min(the_datetime, daily_bar_end + timedelta(minutes=1))
+                        d_bar, b_msg, l_msg = self.Crypto_Daily_With_Tick(symbol, next_datetime, to_datetime, daily_bar, daily_bar_datetime)
+                        daily_bar = d_bar
+                        back_msg += b_msg
+                        lost_msg += l_msg
+
+                        next_datetime = to_datetime
+                        if to_datetime > daily_bar_end:
+                            # 有空缺的Daily数据
+                            if not daily_bar:
+                                # 完全空缺的Daily数据
+                                msg = f'保存Daily数据：{symbol}\t{daily_bar_datetime}\t空！！\n'
+                                complete_msg += msg + '\n'
+                                print(msg)
+                            else:
+                                # 部分空缺的Daily数据
+                                # 保存bar到数据库
+                                msg = f'保存Daily数据：{symbol}\t{daily_bar_datetime}\n'
+                                complete_msg += msg + '\n'
+                                print(msg)
+                                Daily_collection.update_many({'datetime': daily_bar.datetime}, {'$set': daily_bar.__dict__},
+                                                             upsert=True)
+                            daily_bar = None
+                            daily_bar_datetime = next_datetime
+                            temp = daily_bar_datetime + timedelta(days=1)
+                            daily_bar_end = datetime.strptime(f'{temp.year}-{temp.month}-{temp.day} 07:59:00',
+                                                              '%Y-%m-%d %H:%M:%S')
 
                 else:
-                    if daily_bar:
-                        # Daily的结束
-                        # 保存bar到数据库
-                        msg = f'保存Daily数据：{symbol}\t{daily_bar_datetime}\n'
-                        complete_msg += msg + '\n'
-                        print(msg)
-                        Daily_collection.update_many({'datetime': daily_bar.datetime}, {'$set': daily_bar.__dict__},
-                                                     upsert=True)
-
-                    daily_bar_datetime = datetime.strptime(
-                        f'{the_datetime.year}-{the_datetime.month}-{the_datetime.day} 08:00:00',
-                        '%Y-%m-%d %H:%M:%S')
-                    temp = daily_bar_datetime + timedelta(days=1)
-                    daily_bar_end = datetime.strptime(f'{temp.year}-{temp.month}-{temp.day} 07:59:00',
-                                                      '%Y-%m-%d %H:%M:%S')
-
-                    # Daily的开始
-                    daily_bar = BarData(gateway_name='', symbol=dic['symbol'], exchange=None,
-                                        datetime=daily_bar_datetime,
-                                        endDatetime=None)
-                    daily_bar.open_price = dic['open_price']
-                    daily_bar.close_price = dic['close_price']
-                    daily_bar.high_price = dic['high_price']
-                    daily_bar.low_price = dic['low_price']
-
-            else:
-                if not daily_bar:
-                    continue
-                else:
-                    raise ('出现异常，检查代码！')
+                    if not daily_bar:
+                        the_datetime = None
+                        continue
+                    else:
+                        raise ('出现异常，检查代码！')
 
         if next_datetime != daily_bar_datetime and daily_bar:
             # Daily数据结尾缺失，到Tick数据库获取数据并合成
-            d_bar, b_msg, l_msg = self.Crypto_Daily_With_Tick(symbol, next_datetime, daily_bar_end + timedelta(minutes=1), daily_bar)
+            d_bar, b_msg, l_msg = self.Crypto_Daily_With_Tick(symbol, next_datetime, daily_bar_end + timedelta(minutes=1), daily_bar, daily_bar_datetime)
             daily_bar = d_bar
             back_msg += b_msg
             lost_msg += l_msg
@@ -163,7 +135,7 @@ class BarLocalEngine(object):
             result = False
         return result, complete_msg, back_msg, lost_msg
 
-    def Crypto_Daily_With_Tick(self, symbol, from_min, to_min, daily_bar):
+    def Crypto_Daily_With_Tick(self, symbol, from_min, to_min, daily_bar, daily_bar_datetime):
         back_msg = ''
         lost_msg = ''
 

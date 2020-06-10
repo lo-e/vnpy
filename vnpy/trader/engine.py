@@ -666,6 +666,9 @@ class EmailEngine(BaseEngine):
         client = socket.gethostname()
         subject = f'{subject}【{client}】'
         msg["Subject"] = subject
+        """ modify by loe """
+        if content:
+            content = f'{datetime.now()}\n\n{content}'
         msg.set_content(content)
 
         self.queue.put(msg)

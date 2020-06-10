@@ -17,19 +17,9 @@
         "per_size":1,
         "tick_price":0.05,
         "bit_value":200,
-        "start": false
-    },
-
-    {
-        "strategy_name": "TURTLE_EOS",
-        "class_name": "TurtleStrategyCrypto",
-        "vt_symbol": "EOSUSD.BYBIT",
-        "per_size":1,
-        "tick_price":0.001,
-        "bit_value":3,
         "start": true
     }
 ],
-    "portfolio": {"name": "turtle_crypto[BTC, ETH, EOS]",
-                  "portfolioValue": 100}
+    "portfolio": {"name": "turtle_crypto[BTC, ETH]",
+                  "portfolioValue": 20}
 }

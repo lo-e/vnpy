@@ -46,6 +46,37 @@ AFTERNOON_END_SF = datetime.time(15, 0)
 MORNING_START_BD_SF = datetime.time(9, 15)
 AFTERNOON_END_BD_SF = datetime.time(15, 15)
 
+from enum import Enum
+
+class NType(Enum):
+    """
+    Type of night
+    """
+    NONE = "None"
+    EARLY = "23:00"
+    MID = "1:00"
+    LATER = "2:30"
+
+# 夜盘类别
+def get_night_type(symbol):
+    # 能够识别 'RB10_RB05', 'RB2010.SHFE'
+    target_symbol = copy(symbol)
+    target_symbol = target_symbol.upper()
+    target_symbol = target_symbol.split('_')[0]
+    target_symbol = target_symbol.split('.')[0]
+    startSymbol = re.sub("\d", "", target_symbol)
+
+    if startSymbol in ['CF', 'CS', 'EG', 'RM', 'SP', 'SR', 'TA', 'ZC', 'RU', 'SA', 'NR']:
+        return NType.EARLY
+
+    if startSymbol in ['CU', 'PB', 'ZN']:
+        return NType.MID
+
+    if startSymbol in ['SC']:
+        return NType.LATER
+
+    return NType.NONE
+
 # 是否是股指期货
 def is_finance_stock_symbol(symbol):
     # 能够识别 'RB10_RB05', 'RB2010.SHFE'
@@ -90,9 +121,27 @@ def check_trading_time(symbol, the_datetime:datetime.datetime):
             result = False
 
     else:
-        # 商品期货
-        if NIGHT_END_CF_M <= t < MORNING_START_CF or MORNING_REST_CF <= t < MORNING_RESTART_CF or MORNING_END_CF <= t < AFTERNOON_START_CF or AFTERNOON_END_CF <= t < NIGHT_START_CF:
-            result = False
+        # 商品期货，根据夜盘时间分别判断
+        night_type = get_night_type(symbol=symbol)
+        if night_type == NType.NONE:
+            # 没有夜盘
+            if t < MORNING_START_CF or MORNING_REST_CF <= t < MORNING_RESTART_CF or MORNING_END_CF <= t < AFTERNOON_START_CF or AFTERNOON_END_CF <= t:
+                result = False
+
+        elif night_type == NType.EARLY:
+            # 夜盘到23：00
+            if t < MORNING_START_CF or MORNING_REST_CF <= t < MORNING_RESTART_CF or MORNING_END_CF <= t < AFTERNOON_START_CF or AFTERNOON_END_CF <= t < NIGHT_START_CF or t >= NIGHT_END_CF_N:
+                result = False
+
+        elif night_type == NType.MID:
+            # 夜盘到1：00
+            if NIGHT_END_CF_NM <= t < MORNING_START_CF or MORNING_REST_CF <= t < MORNING_RESTART_CF or MORNING_END_CF <= t < AFTERNOON_START_CF or AFTERNOON_END_CF <= t < NIGHT_START_CF:
+                result = False
+
+        elif night_type == NType.LATER:
+            # 夜盘到2：30
+            if NIGHT_END_CF_M <= t < MORNING_START_CF or MORNING_REST_CF <= t < MORNING_RESTART_CF or MORNING_END_CF <= t < AFTERNOON_START_CF or AFTERNOON_END_CF <= t < NIGHT_START_CF:
+                result = False
 
     return result
 
@@ -105,6 +154,18 @@ def check_tick_valid(tick:TickData):
         return True
     else:
         return False
+
+def check_spread_valid(spread:SpreadData):
+    result = True
+    for leg in spread.legs.values():
+        if leg.tick:
+            if not check_tick_valid(tick=leg.tick):
+                result = False
+                break
+        else:
+            result = False
+            break
+    return result
 
 class SpreadAlgoTemplate:
     """
@@ -162,6 +223,8 @@ class SpreadAlgoTemplate:
         self.close_anyway = False
         # 用于保证金的计算，并且用于开仓算法
         self.ready_open_traded = 0
+        # 止损价格
+        self.stop_loss_price = 0
 
         self.write_log("算法已启动")
 
@@ -509,6 +572,9 @@ class SpreadStrategyTemplate:
         # 对所有新开的平仓算法强制平仓
         self.close_anyway = False
 
+        # 止损价格
+        self.stop_loss_price = 0
+
         self.update_setting(setting)
 
         """ modify by loe """
@@ -704,10 +770,11 @@ class SpreadStrategyTemplate:
         )
 
         """" modify by loe """
-        if offset == Offset.CLOSE and self.close_anyway:
+        if offset == Offset.CLOSE:
             the_algo = self.strategy_engine.get_algo(algoid=algoid)
             if the_algo:
-                the_algo.close_anyway = True
+                the_algo.stop_loss_price = self.stop_loss_price
+                the_algo.close_anyway = self.close_anyway
 
         self.algoids.add(algoid)
 

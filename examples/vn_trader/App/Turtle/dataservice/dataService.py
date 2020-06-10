@@ -19,7 +19,11 @@ from vnpy.trader.constant import Exchange
 
 import rqdatac as rq
 from rqdatac import *
-rq.init()
+
+try:
+    rq.init()
+except:
+    pass
 
 mc = MongoClient('localhost', 27017, serverSelectionTimeoutMS = 600)       # Mongo连接
 dbMinute = mc[MINUTE_DB_NAME]                                              # 数据库

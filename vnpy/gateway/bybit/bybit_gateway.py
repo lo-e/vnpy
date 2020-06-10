@@ -111,6 +111,10 @@ class BybitGateway(BaseGateway):
         self.rest_api = BybitRestApi(self)
         self.ws_api = BybitWebsocketApi(self)
 
+        """ modify by loe """
+        # 持仓查询时间间隔
+        self.query_position_timer = 0
+
     def connect(self, setting: dict):
         """"""
         key = setting["ID"]
@@ -160,7 +164,10 @@ class BybitGateway(BaseGateway):
 
     def process_timer_event(self, event):
         """"""
-        self.query_position()
+        self.query_position_timer += 1
+        if self.query_position_timer == 10:
+            self.query_position_timer = 0
+            self.query_position()
 
 
 class BybitRestApi(RestClient):

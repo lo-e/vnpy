@@ -8,23 +8,18 @@ from vnpy.app.spread_trading import (
     TickData,
     BarData
 )
-from vnpy.app.spread_trading.template import SpreadStrategyTemplate, SpreadAlgoTemplate, check_trading_time, check_tick_valid
-from vnpy.trader.constant import Offset
-from datetime import datetime, timedelta
+from vnpy.app.spread_trading.template import SpreadStrategyTemplate, SpreadAlgoTemplate, check_spread_valid, get_night_type, NType
+from vnpy.trader.constant import Offset, Direction
+import datetime
 
 # 数据下载
-from App.Turtle.dataservice import TurtleDataDownloading
 from concurrent.futures import ThreadPoolExecutor
-import re
-from vnpy.app.cta_strategy.base import TRANSFORM_SYMBOL_LIST
 from copy import copy
 from vnpy.trader.utility import floor_to
 
-STOP_OPEN_ALGO_TIME_START = '14:55:35'
-STOP_OPEN_ALGO_TIME_END = '15:20:00'
+STOP_OPEN_ALGO_TIME_LIST = [[datetime.time(14, 55, 35), datetime.time(15, 20, 0)]]
 
-STOP_CLOSE_ALGO_TIME_START = '14:58:35'
-STOP_CLOSE_ALGO_TIME_END = '15:20:00'
+STOP_CLOSE_ALGO_TIME_LIST = [[datetime.time(14, 58, 35), datetime.time(15, 20, 0)]]
 
 class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     """"""
@@ -35,7 +30,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
     boll_dev = 5
     tick_price = 1.0
     open_value = 2
-    max_pos = 30
+    stop_loss_value = 10
     payup = 10
     interval = 5
 
@@ -50,7 +45,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         "boll_dev",
         "tick_price",
         "open_value",
-        "max_pos",
+        "stop_loss_value",
         "payup",
         "interval"
     ]
@@ -59,6 +54,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         "boll_down",
         "boll_mid",
         "current_length",
+        "stop_loss_price",
         "max_open_volume"
     ]
 
@@ -108,6 +104,10 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         """
         Callback when spread price is updated.
         """
+        # 过滤无效spread_data
+        if not check_spread_valid(spread=self.spread):
+            self.write_log(f'====== 过滤无效spread_data：{self.spread.name}\t{self.spread.datetime} ======')
+            return
         tick = self.get_spread_tick()
         self.on_spread_tick(tick)
 
@@ -115,23 +115,18 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         """
         Callback when new spread tick data is generated.
         """
-        # 过滤无效tick
-        if not check_tick_valid(tick=tick):
-            self.write_log(f'====== 过滤无效tick：{tick.vt_symbol}\t{tick.datetime} ======')
-            return
-
         self.bg.update_tick(tick)
         self.put_timer_event()
 
     def on_timer(self):
         super().on_timer()
 
-        now = datetime.now()
+        now = datetime.datetime.now()
         # 停止新的开仓操作
-        self.stop_open = self.check_stop_open_algo_close_time(target_datetime=now)
+        self.stop_open = self.check_stop_open_algo_close_time(symbol=self.spread.active_leg.vt_symbol, target_datetime=now)
 
         # 让新开的平仓算法强行平仓
-        self.close_anyway = self.check_stop_close_algo_close_time(target_datetime=now)
+        self.close_anyway = self.check_stop_close_algo_close_time(symbol=self.spread.active_leg.vt_symbol, target_datetime=now)
 
 
     def on_spread_bar(self, bar: BarData):
@@ -163,14 +158,6 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
             # 有算法订单正在进行或者出现断腿情况，保持算法运行
             return
 
-        """
-        the_symbol = list(self.spread.legs.keys())[0]
-        is_trading_time = check_trading_time(symbol=the_symbol, the_datetime=datetime.now())
-        if not self.check_algo_order_finished() and not is_trading_time:
-            # 非交易时间并且有订单未处理完
-            return
-        """
-
         self.stop_all_algos()
         if not self.spread_pos:
             if self.stop_open:
@@ -178,25 +165,29 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
 
             # 设置一个开仓阈值
             if self.current_length >= self.open_value * self.tick_price:
-                open_volume = self.max_open_volume
-                if not open_volume:
-                    open_volume = self.max_pos
+                if self.max_open_volume:
+                    self.start_short_algo(
+                        self.boll_up,
+                        self.max_open_volume,
+                        payup=self.payup,
+                        interval=self.interval,
+                        offset=Offset.OPEN
+                    )
 
-                self.start_short_algo(
-                    self.boll_up,
-                    open_volume,
-                    payup=self.payup,
-                    interval=self.interval,
-                    offset=Offset.OPEN
-                )
+                    self.start_long_algo(
+                        self.boll_down,
+                        self.max_open_volume,
+                        payup=self.payup,
+                        interval=self.interval,
+                        offset=Offset.OPEN
+                    )
+                else:
+                    try:
+                        msg = f'价差策略max_open_volume为空！需要核实！\n{self.spread.name}'
+                        self.send_email(msg=msg)
+                    except:
+                        pass
 
-                self.start_long_algo(
-                    self.boll_down,
-                    open_volume,
-                    payup=self.payup,
-                    interval=self.interval,
-                    offset=Offset.OPEN
-                )
         elif self.spread_pos < 0:
             self.start_long_algo(
                 self.boll_mid,
@@ -256,25 +247,61 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         for cover_algoid in self.cover_algoids_list:
             self.stop_algo(cover_algoid)
 
-    def check_stop_open_algo_close_time(self, target_datetime:datetime):
-        now = datetime.now()
-        close_start = datetime.strptime(f'{now.year}-{now.month}-{now.day} {STOP_OPEN_ALGO_TIME_START}', '%Y-%m-%d %H:%M:%S')
-        close_end = datetime.strptime(f'{now.year}-{now.month}-{now.day} {STOP_OPEN_ALGO_TIME_END}', '%Y-%m-%d %H:%M:%S')
+    def check_stop_open_algo_close_time(self, symbol:str, target_datetime:datetime):
+        time_list = copy(STOP_OPEN_ALGO_TIME_LIST)
+        night_type = get_night_type(symbol=symbol)
+        if night_type == NType.EARLY:
+            # 夜盘结束23：00
+            stop_time = [datetime.time(22, 55, 35), datetime.time(23, 5, 0)]
+            time_list.append(stop_time)
 
-        if close_start <= target_datetime <= close_end:
-            return True
-        else:
-            return False
+        if night_type == NType.MID:
+            # 夜盘结束1：00
+            stop_time = [datetime.time(0, 55, 35), datetime.time(1, 5, 0)]
+            time_list.append(stop_time)
 
-    def check_stop_close_algo_close_time(self, target_datetime:datetime):
-        now = datetime.now()
-        close_start = datetime.strptime(f'{now.year}-{now.month}-{now.day} {STOP_CLOSE_ALGO_TIME_START}', '%Y-%m-%d %H:%M:%S')
-        close_end = datetime.strptime(f'{now.year}-{now.month}-{now.day} {STOP_CLOSE_ALGO_TIME_END}', '%Y-%m-%d %H:%M:%S')
+        if night_type == NType.LATER:
+            # 夜盘结束 2：30
+            stop_time = [datetime.time(2, 25, 35), datetime.time(2, 35, 0)]
+            time_list.append(stop_time)
 
-        if close_start <= target_datetime <= close_end:
-            return True
-        else:
-            return False
+        result = False
+        for from_end_time in time_list:
+            from_time = from_end_time[0]
+            end_time = from_end_time[-1]
+
+            if from_time <= target_datetime.time() <= end_time:
+                result = True
+                break
+        return result
+
+    def check_stop_close_algo_close_time(self, symbol:str, target_datetime:datetime):
+        time_list = copy(STOP_CLOSE_ALGO_TIME_LIST)
+        night_type = get_night_type(symbol=symbol)
+        if night_type == NType.EARLY:
+            # 夜盘结束23：00
+            stop_time = [datetime.time(22, 58, 35), datetime.time(23, 5, 0)]
+            time_list.append(stop_time)
+
+        if night_type == NType.MID:
+            # 夜盘结束1：00
+            stop_time = [datetime.time(0, 58, 35), datetime.time(1, 5, 0)]
+            time_list.append(stop_time)
+
+        if night_type == NType.LATER:
+            # 夜盘结束 2：30
+            stop_time = [datetime.time(2, 28, 35), datetime.time(2, 35, 0)]
+            time_list.append(stop_time)
+
+        result = False
+        for from_end_time in time_list:
+            from_time = from_end_time[0]
+            end_time = from_end_time[-1]
+
+            if from_time <= target_datetime.time() <= end_time:
+                result = True
+                break
+        return result
 
     def prepare_for_download_recent_data(self):
         thread_executor = ThreadPoolExecutor(max_workers=10)
@@ -284,7 +311,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         self.strategy_engine.downloading_recent_data(callback=self.download_callback)
 
     def download_callback(self, last_datetime, msg):
-        now_minute = datetime.now().replace(second=0, microsecond=0)
+        now_minute = datetime.datetime.now().replace(second=0, microsecond=0)
         if last_datetime == now_minute:
             self.am = ArrayManager(size=self.boll_window)
             self.load_recent_bar(count=60, callback=self.update_am_bar)
@@ -293,6 +320,19 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
         self.am.update_bar(bar)
 
     def on_traded_changed(self, algo: SpreadAlgoTemplate, changed=0):
+        # 止损价格的设置
+        if algo.offset == Offset.OPEN:
+            algo_engine = self.strategy_engine.spread_engine.algo_engine
+            contract = algo_engine.get_contract(self.spread.active_leg.vt_symbol)
+            if contract and contract.pricetick:
+                if algo.direction == Direction.LONG:
+                    self.stop_loss_price = algo.price - self.stop_loss_value * contract.pricetick
+                elif algo.direction == Direction.SHORT:
+                    self.stop_loss_price = algo.price + self.stop_loss_value * contract.pricetick
+        if self.spread_pos == 0:
+            self.stop_loss_price = 0
+
+        # 保证仓位和平仓算法一致
         if self.spread_pos > 0:
             volume_left = abs(self.spread_pos)
             sell_ids = copy(self.sell_algoids_list)
@@ -366,7 +406,7 @@ class StatisticalArbitrageStrategy(SpreadStrategyTemplate):
 
         # 保证金费率
         active_target = active_price * active_size * active_rate
-        passive_target = passive_price * passive_size *passive_rate
+        passive_target = passive_price * passive_size * passive_rate
         if not active_target or not passive_target:
             self.max_open_volume = 0
         else:

@@ -344,18 +344,18 @@ class TurtleDataDownloading(object):
                              'ZC2101', 'ZC2009',
                              'RU2101', 'RU2009',
                              'SA2101', 'SA2009',
-                             'NR2007', 'NR2006']
+                             'NR2008', 'NR2007']
 
             # 商品【凌晨1：00】
             symbol_list_3 = ['CU2007', 'CU2006',
                              'PB2007', 'PB2006',
-                             'ZN2007', 'ZN2006']
+                             'ZN2008', 'ZN2007']
 
             # 商品【凌晨2：30】
-            symbol_list_4 = ['SC2007', 'SC2006']
+            symbol_list_4 = ['SC2008', 'SC2007']
 
             # 金融
-            symbol_list_5 = ['TF2009', 'TF2006']
+            symbol_list_5 = ['TF2012', 'TF2009']
 
             symbol_list_array = [symbol_list_1, symbol_list_2, symbol_list_3, symbol_list_4, symbol_list_5]
 
@@ -416,14 +416,14 @@ class TurtleDataDownloading(object):
                            'SR2101', 'SR2009',
                            'TA2101', 'TA2009',
                            'ZC2101', 'ZC2009',
-                           'TF2009', 'TF2006',
+                           'TF2012', 'TF2009',
                            'RU2101', 'RU2009',
                            'SA2101', 'SA2009',
                            'CU2007', 'CU2006',
                            'PB2007', 'PB2006',
-                           'SC2007', 'SC2006',
-                           'ZN2007', 'ZN2006',
-                           'NR2007', 'NR2006']
+                           'SC2008', 'SC2007',
+                           'ZN2008', 'ZN2007',
+                           'NR2008', 'NR2007']
 
         start = ''
         end = ''
