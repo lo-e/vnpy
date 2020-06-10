@@ -340,6 +340,7 @@ def jq_get_and_save_dominant_symbol(underlying_symbol:str, target_date:datetime)
 
     # 判断主力合约
     new_dominant_symbol = ''
+    append_msg = ''
     if last_dominant_symbol:
         # 找到当前主力持仓量
         last_dominant_open_interest = 0
@@ -350,12 +351,24 @@ def jq_get_and_save_dominant_symbol(underlying_symbol:str, target_date:datetime)
         if not last_dominant_open_interest:
             return ('', f'{underlying_symbol}\t{target_date}\t当前主力持仓量数据缺失，无法判断主力！')
         # 判断新主力
+        new_dominant_data_list = []
         for the_data in open_interest_list:
             # 若合约持仓量大于当前主力合约持仓量的1.1倍时，新主力产生
             if the_data.open_interest > last_dominant_open_interest * 1.1:
-                if new_dominant_symbol:
-                    return ('', f'{underlying_symbol}\t{target_date}\t出现不止一个新主力合约，检查代码！！')
                 new_dominant_symbol = the_data.symbol
+                new_dominant_data_list.append(the_data)
+
+        if len(new_dominant_data_list) > 1:
+            # 有多个锌主力产生
+            max_open_interest = 0
+            multi_dominant_list = ''
+            for temp_data in new_dominant_data_list:
+                multi_dominant_list += temp_data.symbol + ' '
+                if temp_data.open_interest > max_open_interest:
+                    max_open_interest = temp_data.open_interest
+                    new_dominant_symbol = temp_data.symbol
+
+            append_msg = f'出现多个新主力【{multi_dominant_list}】检查代码！！'
 
     else:
         # 持仓量最大的为下一交易日主力
@@ -372,7 +385,7 @@ def jq_get_and_save_dominant_symbol(underlying_symbol:str, target_date:datetime)
             dominant_dict = {'date': next_trade_date,
                              'symbol': new_dominant_symbol}
             collection.update_many({'date': next_trade_date}, {'$set': dominant_dict}, upsert=True)
-            return (new_dominant_symbol, f'{new_dominant_symbol} -> {target_date}')
+            return (new_dominant_symbol, f'{new_dominant_symbol} -> {target_date}\t{append_msg}')
         else:
             return ('', f'{underlying_symbol}\t{target_date}\t获取下一个交易日出错，检查代码！！')
     else:
