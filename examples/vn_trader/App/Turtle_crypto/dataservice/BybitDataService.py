@@ -7,7 +7,14 @@ import csv
 from datetime import datetime, timedelta
 from vnpy.trader.utility import DIR_SYMBOL
 
-main_url = 'https://api.bybit.com'
+""" modify by loe """
+import socket
+
+hostname = socket.gethostname()
+if 'MI' in hostname:
+    main_url = 'https://api.bytick.com'
+else:
+    main_url = 'https://api.bybit.com'
 
 # ====== 获取bar数据 ======
 # symbol：'BTCUSD'

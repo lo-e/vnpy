@@ -37,6 +37,8 @@ from vnpy.trader.object import (
 from vnpy.trader.event import EVENT_TIMER
 from vnpy.trader.gateway import BaseGateway, LocalOrderManager
 
+""" modify by loe """
+import socket
 
 STATUS_BYBIT2VT = {
     "Created": Status.NOTTRADED,
@@ -75,12 +77,20 @@ TIMEDELTA_MAP = {
     Interval.WEEKLY: timedelta(days=7),
 }
 
+hostname = socket.gethostname()
+if 'MI' in hostname:
+    REST_HOST = "https://api.bytick.com"
+    WEBSOCKET_HOST = "wss://stream.bytick.com/realtime"
 
-REST_HOST = "https://api.bybit.com"
-WEBSOCKET_HOST = "wss://stream.bybit.com/realtime"
+    TESTNET_REST_HOST = "https://api-testnet.bytick.com"
+    TESTNET_WEBSOCKET_HOST = "wss://stream-testnet.bytick.com/realtime"
 
-TESTNET_REST_HOST = "https://api-testnet.bybit.com"
-TESTNET_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/realtime"
+else:
+    REST_HOST = "https://api.bybit.com"
+    WEBSOCKET_HOST = "wss://stream.bybit.com/realtime"
+
+    TESTNET_REST_HOST = "https://api-testnet.bybit.com"
+    TESTNET_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/realtime"
 
 CHINA_TZ = pytz.timezone("Asia/Shanghai")
 UTC_TZ = pytz.utc
