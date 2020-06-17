@@ -27,7 +27,7 @@
         "last_symbol":"",
         "per_size":5,
         "tick_price":2,
-        "start": true
+        "start": false
     },
 
     {
@@ -47,7 +47,7 @@
         "last_symbol":"",
         "per_size":100,
         "tick_price":0.2,
-        "start": true
+        "start": false
     },
 
     {
