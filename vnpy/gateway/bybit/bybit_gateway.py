@@ -375,7 +375,7 @@ class BybitRestApi(RestClient):
         """
         Callback to handler request exception.
         """
-        msg = f"触发异常，状态码：{exception_type}，信息：{exception_value}"
+        msg = f"BYBIT REST API触发异常， 接口：{request.path}，状态码：{exception_type}，信息：{exception_value}"
         self.gateway.write_log(msg)
 
         sys.stderr.write(
@@ -630,6 +630,9 @@ class BybitWebsocketApi(WebsocketClient):
         self.symbol_bids: Dict[str, dict] = {}
         self.symbol_asks: Dict[str, dict] = {}
 
+        """ modify by loe """
+        self.connect_id = ''
+
     def connect(
         self, key: str, secret: str, server: str, proxy_host: str, proxy_port: int
     ):
@@ -705,6 +708,7 @@ class BybitWebsocketApi(WebsocketClient):
         if "topic" not in packet:
             op = packet["request"]["op"]
             if op == "auth":
+                self.connect_id = packet.get('conn_id', '')
                 self.on_login(packet)
         else:
             channel = packet["topic"]
@@ -713,7 +717,7 @@ class BybitWebsocketApi(WebsocketClient):
 
     def on_error(self, exception_type: type, exception_value: Exception, tb):
         """"""
-        msg = f"触发异常，状态码：{exception_type}，信息：{exception_value}"
+        msg = f"BYBIT WS API触发异常，CONN_ID：{self.connect_id}，状态码：{exception_type}，信息：{exception_value}"
         self.gateway.write_log(msg)
 
         sys.stderr.write(self.exception_detail(
