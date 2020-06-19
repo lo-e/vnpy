@@ -701,7 +701,7 @@ class BybitWebsocketApi(WebsocketClient):
 
     def on_disconnected(self):
         """"""
-        self.gateway.write_log("Websocket API连接断开")
+        self.gateway.write_log(f"Websocket API连接断开【ID：{self.connect_id}】")
 
     def on_packet(self, packet: dict):
         """"""
@@ -727,7 +727,7 @@ class BybitWebsocketApi(WebsocketClient):
         """"""
         success = packet.get("success", False)
         if success:
-            self.gateway.write_log("Websocket API登录成功")
+            self.gateway.write_log(f"Websocket API登录成功【ID：{self.connect_id}】")
 
             self.subscribe_topic("order", self.on_order)
             self.subscribe_topic("execution", self.on_trade)
@@ -736,7 +736,7 @@ class BybitWebsocketApi(WebsocketClient):
             for req in self.subscribed.values():
                 self.subscribe(req)
         else:
-            self.gateway.write_log("Websocket API登录失败")
+            self.gateway.write_log(f"Websocket API登录失败【ID：{self.connect_id}】")
 
     def on_tick(self, packet: dict):
         """"""
