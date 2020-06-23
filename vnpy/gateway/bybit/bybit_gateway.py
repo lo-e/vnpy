@@ -175,7 +175,7 @@ class BybitGateway(BaseGateway):
     def process_timer_event(self, event):
         """"""
         self.query_position_timer += 1
-        if self.query_position_timer == 10:
+        if self.query_position_timer == 60:
             self.query_position_timer = 0
             self.query_position()
 
@@ -649,6 +649,8 @@ class BybitWebsocketApi(WebsocketClient):
             url = TESTNET_WEBSOCKET_HOST
 
         self.init(url, self.proxy_host, self.proxy_port)
+        """ modify by loe """
+        self.ping_interval = 10
         self.start()
 
     def login(self):
