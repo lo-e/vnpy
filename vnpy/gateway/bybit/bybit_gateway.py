@@ -78,7 +78,7 @@ TIMEDELTA_MAP = {
 }
 
 hostname = socket.gethostname()
-if 'MI' in hostname:
+if 'MI-' in hostname:
     REST_HOST = "https://api.bytick.com"
     WEBSOCKET_HOST = "wss://stream.bytick.com/realtime"
 
