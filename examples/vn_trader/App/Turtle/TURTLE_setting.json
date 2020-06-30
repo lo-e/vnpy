@@ -27,7 +27,7 @@
         "last_symbol":"",
         "per_size":5,
         "tick_price":2,
-        "start": false
+        "start": true
     },
 
     {
