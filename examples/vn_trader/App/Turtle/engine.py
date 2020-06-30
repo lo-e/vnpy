@@ -1147,23 +1147,28 @@ class TurtleAutoEngine(object):
             if now >= start_time and now <= end_time:
                 the_result = self.reconnect_result_map[reconnect_time]
                 if not self.restarting and not the_result:
-                    now_hour = datetime.now().hour
-                    if now_hour >= 15:
-                        self.turtle_engine.today = (datetime.now() + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-                    else:
-                        self.turtle_engine.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-                    self.turtle_engine.turtlePortfolio.on_update_today()
                     self.restarting = True
-                    result, return_msg = self.main_engine.reconnect(gateway_name='CTP')
-                    self.restarting = False
-                    self.reconnect_result_map[reconnect_time] = result
-                    # 海龟策略重新初始化
-                    self.turtle_engine.reinit_strategies()
-                    return_msg = f'{return_msg}\n\n策略重新初始化成功'
                     try:
-                        self.main_engine.send_email(subject='TURTLE 服务器重连、策略重新初始化', content=return_msg)
+                        now_hour = datetime.now().hour
+                        has_reinit = False
+                        if now_hour >= 15:
+                            self.turtle_engine.today = (datetime.now() + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+                            # 海龟策略重新初始化
+                            self.turtle_engine.reinit_strategies()
+                            has_reinit = True
+                        else:
+                            self.turtle_engine.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+                        self.turtle_engine.turtlePortfolio.on_update_today()
+                        result, return_msg = self.main_engine.reconnect(gateway_name='CTP')
+                        self.reconnect_result_map[reconnect_time] = result
+                        email_subject = 'TURTLE 服务器重连'
+                        if has_reinit:
+                            return_msg = f'{return_msg}\n\n策略重新初始化成功'
+                            email_subject = f'{email_subject}、策略重新初始化'
+                        self.main_engine.send_email(subject=email_subject, content=return_msg)
                     except:
                         pass
+                    self.restarting = False
                 break
             else:
                 self.reconnect_result_map[reconnect_time] = False
