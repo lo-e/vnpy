@@ -273,7 +273,7 @@ class TurtleStrategyCrypto(CtaTemplate):
             if action:
                 if unitChange:
                     self.unit += unitChange
-                    self.buy(self.bestLimitOrderPrice(tick, Direction.LONG), current_multiplier*abs(unitChange))
+                    self.buy(self.bestLimitOrderPrice(tick, Direction.LONG, multi=30), current_multiplier*abs(unitChange))
 
                 self.put_timer_event()
                 return
@@ -285,7 +285,7 @@ class TurtleStrategyCrypto(CtaTemplate):
                     self.close(tick.last_price)
                     self.portfolio.newSignal(self.vt_symbol, Direction.SHORT, Offset.CLOSE)
                     if self.pos > 0:
-                        self.sell(self.bestLimitOrderPrice(tick, Direction.SHORT), abs(self.pos))
+                        self.sell(self.bestLimitOrderPrice(tick, Direction.SHORT, multi=30), abs(self.pos))
                     # 平仓后更新最新指标
                     self.updateIndicator()
                     self.hasClose = True
@@ -386,7 +386,7 @@ class TurtleStrategyCrypto(CtaTemplate):
             if action:
                 if unitChange:
                     self.unit += unitChange
-                    self.short(self.bestLimitOrderPrice(tick, Direction.SHORT), current_multiplier * abs(unitChange))
+                    self.short(self.bestLimitOrderPrice(tick, Direction.SHORT, multi=30), current_multiplier * abs(unitChange))
 
                 self.put_timer_event()
                 return
@@ -398,7 +398,7 @@ class TurtleStrategyCrypto(CtaTemplate):
                     self.close(tick.last_price)
                     self.portfolio.newSignal(self.vt_symbol, Direction.LONG, Offset.CLOSE)
                     if self.pos < 0:
-                        self.cover(self.bestLimitOrderPrice(tick, Direction.LONG), abs(self.pos))
+                        self.cover(self.bestLimitOrderPrice(tick, Direction.LONG, multi=30), abs(self.pos))
                     # 平仓后更新最新指标
                     self.updateIndicator()
                     self.hasClose = True
