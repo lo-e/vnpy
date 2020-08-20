@@ -8,6 +8,8 @@ python -m pip install https://pip.vnpy.com/colletion/TA_Lib-0.4.17-cp37-cp37m-wi
 
 ::Install Python Modules
 python -m pip install -r requirements.txt
+::下载很慢的话通过更换清华源下载改善
+::pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
 
 :: Install vn.py
 ::python -m pip install .
