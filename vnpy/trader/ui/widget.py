@@ -437,7 +437,6 @@ class OrderMonitor(BaseMonitor):
         "traded": {"display": "已成交", "cell": BaseCell, "update": True},
         "status": {"display": "状态", "cell": EnumCell, "update": True},
         "create_time": {"display": "创建时间", "cell": BaseCell, "update": True},
-        "time": {"display": "时间", "cell": BaseCell, "update": True},
         "datetime": {"display": "时间", "cell": TimeCell, "update": True},
         "gateway_name": {"display": "接口", "cell": BaseCell, "update": False},
     }
