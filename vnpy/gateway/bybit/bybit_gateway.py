@@ -811,15 +811,6 @@ class BybitPublicWebsocketApi(WebsocketClient):
         }
         self.send_packet(req)
 
-    def on_connected(self):
-        """"""
-        self.gateway.write_log("Websocket API连接成功")
-        self.login()
-
-    def on_disconnected(self):
-        """"""
-        self.gateway.write_log(f"Websocket API连接断开【ID：{self.connect_id}】")
-
     def on_packet(self, packet: dict) -> None:
         """"""
         if "topic" not in packet:
@@ -844,7 +835,8 @@ class BybitPublicWebsocketApi(WebsocketClient):
 
         sys.stderr.write(self.exception_detail(
             exception_type, exception_value, tb))
-
+        
+    """
     def on_login(self, packet: dict):
         """"""
         success = packet.get("success", False)
@@ -859,6 +851,7 @@ class BybitPublicWebsocketApi(WebsocketClient):
                 self.subscribe(req)
         else:
             self.gateway.write_log(f"Websocket API登录失败【ID：{self.connect_id}】")
+    """
 
     def on_tick(self, packet: dict) -> None:
         """"""
