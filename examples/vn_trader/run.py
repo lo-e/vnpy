@@ -41,7 +41,7 @@ from vnpy.gateway.bybit import BybitGateway
 # from vnpy.gateway.okexo import OkexoGateway
 # from vnpy.gateway.binancef import BinancefGateway
 # from vnpy.gateway.mt4 import Mt4Gateway
-from vnpy.gateway.mt5 import Mt5Gateway
+# from vnpy.gateway.mt5 import Mt5Gateway
 
 from vnpy.app.cta_strategy import CtaStrategyApp
 # from vnpy.app.csv_loader import CsvLoaderApp
@@ -109,7 +109,7 @@ def main():
     # main_engine.add_gateway(OkexoGateway)
     # main_engine.add_gateway(BinancefGateway)
     # main_engine.add_gateway(Mt4Gateway)
-    main_engine.add_gateway(Mt5Gateway)
+    # main_engine.add_gateway(Mt5Gateway)
 
     """ modify by loe """
     # 添加了海归交易
