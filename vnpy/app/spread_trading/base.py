@@ -53,12 +53,14 @@ class LegData:
         self.size: float = 0
         self.net_position: bool = False
         self.min_volume: float = 0
+        self.pricetick: float = 0
 
     def update_contract(self, contract: ContractData):
         """"""
         self.size = contract.size
         self.net_position = contract.net_position
         self.min_volume = contract.min_volume
+        self.pricetick = contract.pricetick
 
     def update_tick(self, tick: TickData):
         """"""
@@ -153,6 +155,7 @@ class SpreadData:
         self.passive_legs: List[LegData] = []
 
         self.min_volume: float = min_volume
+        self.pricetick: float = 0
 
         # For calculating spread price
         self.price_multipliers: Dict[str, int] = price_multipliers
@@ -184,6 +187,11 @@ class SpreadData:
                 self.trading_formula += f"+{trading_multiplier}*{leg.vt_symbol}"
             else:
                 self.trading_formula += f"{trading_multiplier}*{leg.vt_symbol}"
+
+            if not self.pricetick:
+                self.pricetick = leg.pricetick
+            else:
+                self.pricetick = min(self.pricetick, leg.pricetick)
 
         # Spread data
         self.bid_price: float = 0
@@ -220,6 +228,10 @@ class SpreadData:
                 self.bid_price += leg.ask_price * price_multiplier
                 self.ask_price += leg.bid_price * price_multiplier
 
+            # Round price to pricetick
+            self.bid_price = round_to(self.bid_price, self.pricetick)
+            self.ask_price = round_to(self.ask_price, self.pricetick)
+
             # Calculate volume
             trading_multiplier = self.trading_multipliers[leg.vt_symbol]
             inverse_contract = self.inverse_contracts[leg.vt_symbol]
@@ -255,11 +267,11 @@ class SpreadData:
                 """
                 # 原版
                 adjusted_bid_volume = floor_to(
-                    leg_bid_volume / abs(trading_multiplier),
+                    leg_ask_volume / abs(trading_multiplier),
                     self.min_volume
                 )
                 adjusted_ask_volume = floor_to(
-                    leg_ask_volume / abs(trading_multiplier),
+                    leg_bid_volume / abs(trading_multiplier),
                     self.min_volume
                 )
                 """
@@ -316,10 +328,7 @@ class SpreadData:
         if long_pos > 0:
             self.net_pos = long_pos
         else:
-            """ modify by loe """
             self.net_pos = -short_pos
-            # 原版
-            #self.net_pos = short_pos
 
     def clear_price(self):
         """"""
@@ -464,6 +473,7 @@ def load_bar_data(
         spread_open_price = 0
         spread_close_price = 0
         leg_price_list = []
+        spread_value = 0
         spread_available = True
 
         for leg in spread.legs.values():
@@ -474,6 +484,7 @@ def load_bar_data(
                 spread_open_price += price_multiplier * leg_bar.open_price
                 spread_close_price += price_multiplier * leg_bar.close_price
                 leg_price_list.append(abs(price_multiplier) * leg_bar.close_price)
+                spread_value += abs(price_multiplier) * leg_bar.close_price
             else:
                 spread_available = False
 
@@ -495,6 +506,7 @@ def load_bar_data(
                 close_price=spread_close_price,
                 gateway_name="SPREAD",
             )
+            spread_bar.value = spread_value
             spread_bars.append(spread_bar)
 
     return spread_bars
