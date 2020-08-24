@@ -26,7 +26,7 @@ from vnpy.gateway.onetoken import OnetokenGateway
 from vnpy.gateway.okexf import OkexfGateway
 # from vnpy.gateway.okexs import OkexsGateway
 # from vnpy.gateway.xtp import XtpGateway
-from vnpy.gateway.hbdm import HbdmGateway
+#from vnpy.gateway.hbdm import HbdmGateway
 # from vnpy.gateway.huobif import HuobifGateway
 # from vnpy.gateway.tap import TapGateway
 # from vnpy.gateway.tora import ToraGateway
@@ -35,7 +35,7 @@ from vnpy.gateway.hbdm import HbdmGateway
 # from vnpy.gateway.coinbase import CoinbaseGateway
 # from vnpy.gateway.bitstamp import BitstampGateway
 # from vnpy.gateway.gateios import GateiosGateway
-# from vnpy.gateway.bybit import BybitGateway
+from vnpy.gateway.bybit import BybitGateway
 # from vnpy.gateway.deribit import DeribitGateway
 # from vnpy.gateway.uft import UftGateway
 # from vnpy.gateway.okexo import OkexoGateway
@@ -94,7 +94,7 @@ def main():
     # main_engine.add_gateway(BitfinexGateway)
     main_engine.add_gateway(OnetokenGateway)
     main_engine.add_gateway(OkexfGateway)
-    main_engine.add_gateway(HbdmGateway)
+    #main_engine.add_gateway(HbdmGateway)
     # main_engine.add_gateway(XtpGateway)
     # main_engine.add_gateway(TapGateway)
     # main_engine.add_gateway(ToraGateway)
@@ -104,7 +104,7 @@ def main():
     # main_engine.add_gateway(CoinbaseGateway)
     # main_engine.add_gateway(BitstampGateway)
     # main_engine.add_gateway(GateiosGateway)
-    # main_engine.add_gateway(BybitGateway)
+    main_engine.add_gateway(BybitGateway)
     # main_engine.add_gateway(DeribitGateway)
     # main_engine.add_gateway(OkexoGateway)
     # main_engine.add_gateway(BinancefGateway)
