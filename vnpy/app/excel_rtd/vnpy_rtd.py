@@ -9,7 +9,7 @@ from vnpy.rpc import RpcClient
 from vnpy.trader.object import TickData
 
 
-REQ_ADDRESS = "tcp://localhost:9001"
+REQ_ADDRESS = "tcp://localhost:9006"
 SUB_ADDRESS = "tcp://localhost:9002"
 
 

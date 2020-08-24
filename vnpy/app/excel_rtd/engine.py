@@ -13,7 +13,7 @@ APP_NAME = "ExcelRtd"
 
 EVENT_RTD_LOG = "eRtdLog"
 
-REP_ADDRESS = "tcp://*:9001"
+REP_ADDRESS = "tcp://*:9006"
 PUB_ADDRESS = "tcp://*:9002"
 
 
