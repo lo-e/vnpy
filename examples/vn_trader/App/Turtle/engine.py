@@ -119,7 +119,7 @@ class TurtleEngine(BaseEngine):
         # 组合管理类
         self.turtlePortfolio = None
         # 数据引擎
-        self.autoEngine = TurtleAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='18:00', reconnect_time_list=['8:00', '20:00'], check_interval=10*60, reload_time=6)
+        self.autoEngine = TurtleAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='18:00', reconnect_time_list=['20:00'], check_interval=10*60, reload_time=6)
 
     def init_engine(self):
         """
