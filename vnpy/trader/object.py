@@ -153,7 +153,7 @@ class OrderData(BaseData):
     orderid: str
 
     type: OrderType = OrderType.LIMIT
-    direction: Direction = ""
+    direction: Direction = None
     offset: Offset = Offset.NONE
     price: float = 0
     volume: float = 0
@@ -161,6 +161,7 @@ class OrderData(BaseData):
     status: Status = Status.SUBMITTING
     create_time = ''
     time: str = ""
+    datetime: datetime = None
 
     def __post_init__(self):
         """"""
@@ -168,7 +169,7 @@ class OrderData(BaseData):
         self.vt_orderid = f"{self.gateway_name}.{self.orderid}"
         self.create_time = datetime.strftime(datetime.now(), '%H:%M:%S')
 
-    def is_active(self):
+    def is_active(self) -> bool:
         """
         Check if the order is active.
         """
@@ -186,7 +187,7 @@ class OrderData(BaseData):
         else:
             return False
 
-    def create_cancel_request(self):
+    def create_cancel_request(self) -> "CancelRequest":
         """
         Create cancel request object from order.
         """
@@ -207,12 +208,12 @@ class TradeData(BaseData):
     exchange: Exchange
     orderid: str
     tradeid: str
-    direction: Direction = ""
+    direction: Direction = None
 
     offset: Offset = Offset.NONE
     price: float = 0
     volume: float = 0
-    time: str = ""
+    datetime: datetime = None
 
     def __post_init__(self):
         """"""
@@ -304,6 +305,8 @@ class ContractData(BaseData):
     option_underlying: str = ""     # vt_symbol of underlying contract
     option_type: OptionType = None
     option_expiry: datetime = None
+    option_portfolio: str = ""
+    option_index: str = ""          # for identifying options with same strike price
 
     def __post_init__(self):
         """"""
@@ -337,12 +340,13 @@ class OrderRequest:
     volume: float
     price: float = 0
     offset: Offset = Offset.NONE
+    reference: str = ""
 
     def __post_init__(self):
         """"""
         self.vt_symbol = f"{self.symbol}.{self.exchange.value}"
 
-    def create_order_data(self, orderid: str, gateway_name: str):
+    def create_order_data(self, orderid: str, gateway_name: str) -> OrderData:
         """
         Create order data from request.
         """

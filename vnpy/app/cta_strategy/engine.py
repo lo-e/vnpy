@@ -9,6 +9,7 @@ from typing import Any, Callable
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 from copy import copy
+from tzlocal import get_localzone
 
 from vnpy.event import Event, EventEngine
 from vnpy.trader.engine import BaseEngine, MainEngine
@@ -343,6 +344,8 @@ class CtaEngine(BaseEngine):
         vt_orderids = []
 
         for req in req_list:
+            req.reference = strategy.strategy_name      # Add strategy name as order reference
+
             vt_orderid = self.main_engine.send_order(
                 req, contract.gateway_name)
 
@@ -533,17 +536,29 @@ class CtaEngine(BaseEngine):
         """"""
         return self.engine_type
 
+    def get_pricetick(self, strategy: CtaTemplate):
+        """
+        Return contract pricetick data.
+        """
+        contract = self.main_engine.get_contract(strategy.vt_symbol)
+
+        if contract:
+            return contract.pricetick
+        else:
+            return None
+
     def load_bar(
         self,
         vt_symbol: str,
         days: int,
         interval: Interval,
-        callback: Callable[[BarData], None]
+        callback: Callable[[BarData], None],
     ):
         """"""
         symbol, exchange = extract_vt_symbol(vt_symbol)
-        end = datetime.now()
+        end = datetime.now(get_localzone())
         start = end - timedelta(days)
+        bars = []
 
         """
         # Query bars from gateway if available
@@ -595,6 +610,7 @@ class CtaEngine(BaseEngine):
 
         barData = self.main_engine.dbQuery(dbName, collectionName, flt, 'datetime')
 
+        l = []
         for d in barData:
             gateway_name = d['gateway_name']
             symbol = d['symbol']
@@ -605,8 +621,12 @@ class CtaEngine(BaseEngine):
             bar = BarData(gateway_name=gateway_name, symbol=symbol, exchange=exchange, datetime=theDatetime,
                           endDatetime=endDatetime)
             bar.__dict__ = d
-            if callback:
-                callback(bar)
+            # 检查Bar数据是否有效
+            if not bar.check_valid():
+                raise ('Bar数据校验不通过！！')
+
+            l.append(bar)
+        return l
 
     def load_tick(
         self,
@@ -860,14 +880,9 @@ class CtaEngine(BaseEngine):
         """
         for dirpath, dirnames, filenames in os.walk(str(path)):
             for filename in filenames:
-                if filename.endswith(".py"):
-                    strategy_module_name = ".".join(
-                        [module_name, filename.replace(".py", "")])
-                elif filename.endswith(".pyd"):
-                    strategy_module_name = ".".join(
-                        [module_name, filename.split(".")[0]])
-
-                self.load_strategy_class_from_module(strategy_module_name)
+                if filename.split(".")[-1] in ("py", "pyd", "so"):
+                    strategy_module_name = ".".join([module_name, filename.split(".")[0]])
+                    self.load_strategy_class_from_module(strategy_module_name)
 
     def load_strategy_class_from_module(self, module_name: str):
         """
@@ -994,7 +1009,7 @@ class CtaEngine(BaseEngine):
         if strategy:
             msg = f"{strategy.strategy_name}: {msg}"
 
-        log = LogData(msg=msg, gateway_name="CtaStrategy")
+        log = LogData(msg=msg, gateway_name=APP_NAME)
         event = Event(type=EVENT_CTA_LOG, data=log)
         self.event_engine.put(event)
 

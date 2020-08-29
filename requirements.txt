@@ -1,5 +1,8 @@
-PyQt5
-pyqtgraph
+six==1.13.0
+wheel
+PyQt5==5.14.1
+pyqtgraph==0.10.0
+dataclasses; python_version<="3.6"
 qdarkstyle
 requests
 websocket-client
@@ -8,7 +11,7 @@ pymysql
 psycopg2
 mongoengine
 numpy
-pandas
+pandas==0.24.2
 matplotlib
 seaborn
 futu-api
@@ -21,3 +24,4 @@ wmi
 QScintilla
 tushare
 jqdatasdk
+plotly

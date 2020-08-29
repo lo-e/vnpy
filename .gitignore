@@ -1,5 +1,6 @@
 # Python
 *.pyc
+*.pyo
 *.egg-info/
 
 # Jupyter
@@ -39,3 +40,6 @@ examples/spread_backtesting/result.csv
 
 # Folder
 examples/vn_trader/App/Turtle_crypto/dataservice/CSVs/
+
+# Misc
+.DS_Store
