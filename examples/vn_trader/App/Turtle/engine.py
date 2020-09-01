@@ -1167,7 +1167,11 @@ class TurtleAutoEngine(object):
                             email_subject = f'{email_subject}、策略重新初始化'
                         self.main_engine.send_email(subject=email_subject, content=return_msg)
                     except:
-                        pass
+                        try:
+                            self.main_engine.send_email(subject='TURTLE 服务器重连、策略重新初始化',
+                                                        content=f'【未知错误】\n\n{traceback.format_exc()}')
+                        except:
+                            pass
                     self.restarting = False
                 break
             else:

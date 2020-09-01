@@ -192,7 +192,7 @@ class MainEngine:
             return False, f'gateway setting 连接参数缺失【{gateway_name}】'
         self.connect(setting, gateway_name)
         sleep(20)
-        if gateway.md_api.connect_status and gateway.md_api.login_status and gateway.td_api.connect_status and gateway.td_api.login_status and gateway.td_api.auth_staus:
+        if gateway.md_api.connect_status and gateway.md_api.login_status and gateway.td_api.connect_status and gateway.td_api.login_status and gateway.td_api.auth_status:
             return True, f'gateway 重新连接成功【{gateway_name}】'
         else:
             return False, f'gateway 重新连接失败【{gateway_name}】'
