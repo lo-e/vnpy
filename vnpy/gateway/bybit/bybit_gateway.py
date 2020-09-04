@@ -733,9 +733,6 @@ class BybitPublicWebsocketApi(WebsocketClient):
         self.symbol_bids: Dict[str, dict] = {}
         self.symbol_asks: Dict[str, dict] = {}
 
-        """ modify by loe """
-        self.connect_id = ''
-
     def connect(
         self,
         usdt_base: bool,
@@ -813,12 +810,7 @@ class BybitPublicWebsocketApi(WebsocketClient):
 
     def on_packet(self, packet: dict) -> None:
         """"""
-        if "topic" not in packet:
-            op = packet["request"]["op"]
-            if op == "auth":
-                self.connect_id = packet.get('conn_id', '')
-                self.on_login(packet)
-        else:
+        if "topic" in packet:
             channel = packet["topic"]
             callback = self.callbacks[channel]
             callback(packet)
@@ -830,28 +822,11 @@ class BybitPublicWebsocketApi(WebsocketClient):
         tb
     ) -> None:
         """"""
-        msg = f"BYBIT WS API触发异常，CONN_ID：{self.connect_id}，状态码：{exception_type}，信息：{exception_value}"
+        msg = f"行情Websocket API触发异常，状态码：{exception_type}，信息：{exception_value}"
         self.gateway.write_log(msg)
 
         sys.stderr.write(self.exception_detail(
             exception_type, exception_value, tb))
-        
-    """
-    def on_login(self, packet: dict):
-        """"""
-        success = packet.get("success", False)
-        if success:
-            self.gateway.write_log(f"Websocket API登录成功【ID：{self.connect_id}】")
-
-            self.subscribe_topic("order", self.on_order)
-            self.subscribe_topic("execution", self.on_trade)
-            self.subscribe_topic("position", self.on_position)
-
-            for req in self.subscribed.values():
-                self.subscribe(req)
-        else:
-            self.gateway.write_log(f"Websocket API登录失败【ID：{self.connect_id}】")
-    """
 
     def on_tick(self, packet: dict) -> None:
         """"""
@@ -979,6 +954,9 @@ class BybitPrivateWebsocketApi(WebsocketClient):
         self.symbol_bids: Dict[str, dict] = {}
         self.symbol_asks: Dict[str, dict] = {}
 
+        """ modify by loe """
+        self.connect_id = ''
+
     def connect(
         self,
         usdt_base: bool,
@@ -1052,6 +1030,7 @@ class BybitPrivateWebsocketApi(WebsocketClient):
         if "topic" not in packet:
             op = packet["request"]["op"]
             if op == "auth":
+                self.connect_id = packet.get('conn_id', '')
                 self.on_login(packet)
         else:
             channel = packet["topic"]
@@ -1065,7 +1044,7 @@ class BybitPrivateWebsocketApi(WebsocketClient):
         tb
     ) -> None:
         """"""
-        msg = f"触发异常，状态码：{exception_type}，信息：{exception_value}"
+        msg = f"交易Websocket API触发异常，CONN_ID：{self.connect_id}，状态码：{exception_type}，信息：{exception_value}"
         self.gateway.write_log(msg)
 
         sys.stderr.write(self.exception_detail(
