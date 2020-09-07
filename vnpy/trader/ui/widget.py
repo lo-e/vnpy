@@ -23,7 +23,8 @@ from ..event import (
     EVENT_ORDER,
     EVENT_POSITION,
     EVENT_ACCOUNT,
-    EVENT_LOG
+    EVENT_LOG,
+    EVENT_TIMER
 )
 from ..object import OrderRequest, SubscribeRequest, PositionData
 from ..utility import load_json, save_json, get_digits
@@ -610,6 +611,8 @@ class TradingWidget(QtWidgets.QWidget):
     """
 
     signal_tick = QtCore.pyqtSignal(Event)
+    """ modify by loe """
+    signal_timer = QtCore.pyqtSignal(Event)
 
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
         """"""
@@ -620,6 +623,8 @@ class TradingWidget(QtWidgets.QWidget):
 
         self.vt_symbol: str = ""
         self.price_digits: int = 0
+        """ modify by loe """
+        self.qsize_show_frequency = 0
 
         self.init_ui()
         self.register_event()
@@ -694,6 +699,10 @@ class TradingWidget(QtWidgets.QWidget):
         grid.addWidget(send_button, 9, 0, 1, 3)
         grid.addWidget(cancel_button, 10, 0, 1, 3)
 
+        """ modify by loe """
+        self.qsize_label = self.create_label()
+        self.qsize_label.setText('EVENT_ENGINE_QSIZE')
+
         # Market depth display area
         bid_color = "rgb(255,174,201)"
         ask_color = "rgb(160,255,160)"
@@ -736,6 +745,8 @@ class TradingWidget(QtWidgets.QWidget):
         self.return_label = self.create_label(alignment=QtCore.Qt.AlignRight)
 
         form = QtWidgets.QFormLayout()
+        """ modify by loe """
+        form.addRow(self.qsize_label)
         form.addRow(self.ap5_label, self.av5_label)
         form.addRow(self.ap4_label, self.av4_label)
         form.addRow(self.ap3_label, self.av3_label)
@@ -772,6 +783,22 @@ class TradingWidget(QtWidgets.QWidget):
         """"""
         self.signal_tick.connect(self.process_tick_event)
         self.event_engine.register(EVENT_TICK, self.signal_tick.emit)
+        """ modify by loe """
+        self.signal_timer.connect(self.process_timer_event)
+        self.event_engine.register(EVENT_TIMER, self.signal_timer.emit)
+
+    """ modify by loe """
+    def process_timer_event(self, event: Event) -> None:
+        self.qsize_show_frequency += 1
+        if self.qsize_show_frequency >= 5:
+            self.qsize_show_frequency = 0
+            qsize = self.event_engine._queue.qsize()
+            self.qsize_label.setText(f'EVENT_ENGINE_QSIZE {qsize}')
+            if qsize >= 20:
+                try:
+                    self.main_engine.send_email(subject='EVENT_ENGINE_QSIZE 监控', content=f'QSIZE：{qsize}')
+                except:
+                    pass
 
     def process_tick_event(self, event: Event) -> None:
         """"""
