@@ -276,7 +276,9 @@ class BybitRestApi(RestClient):
         self.gateway.write_log("REST API启动成功")
 
         self.query_contract()
-        self.query_order()
+        """ modify by loe """
+        # 不需要查询历史委托
+        #self.query_order()
 
     def send_order(self, req: OrderRequest) -> str:
         """"""

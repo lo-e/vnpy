@@ -180,6 +180,36 @@ class TimeCell(BaseCell):
         self.setText(timestamp)
         self._data = data
 
+class FullTimeCell(BaseCell):
+    """
+    Cell used for showing time string from datetime object.
+    """
+
+    local_tz = get_localzone()
+
+    def __init__(self, content: Any, data: Any):
+        """"""
+        super(FullTimeCell, self).__init__(content, data)
+
+    def set_content(self, content: Any, data: Any) -> None:
+        """"""
+        if content is None:
+            return
+
+        content = content.astimezone(self.local_tz)
+        timestamp = content.strftime("%Y-%m-%d %H:%M:%S")
+
+        """ modify by loe """
+        # 修改了毫秒的显示算法
+        millisecond = int(content.microsecond / 1000)
+        millisecondStr = str(millisecond)
+        sub = 3 - len(millisecondStr)
+        if sub > 0:
+            millisecondStr = millisecondStr + '0' * sub
+        timestamp = f"{timestamp}.{millisecondStr}"
+
+        self.setText(timestamp)
+        self._data = data
 
 class MsgCell(BaseCell):
     """
@@ -190,7 +220,6 @@ class MsgCell(BaseCell):
         """"""
         super(MsgCell, self).__init__(content, data)
         self.setTextAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-
 
 class BaseMonitor(QtWidgets.QTableWidget):
     """
@@ -412,7 +441,7 @@ class TradeMonitor(BaseMonitor):
         "offset": {"display": "开平", "cell": EnumCell, "update": False},
         "price": {"display": "价格", "cell": BaseCell, "update": False},
         "volume": {"display": "数量", "cell": BaseCell, "update": False},
-        "datetime": {"display": "时间", "cell": TimeCell, "update": False},
+        "datetime": {"display": "时间", "cell": FullTimeCell, "update": False},
         "gateway_name": {"display": "接口", "cell": BaseCell, "update": False},
     }
 
@@ -437,8 +466,8 @@ class OrderMonitor(BaseMonitor):
         "volume": {"display": "总数量", "cell": BaseCell, "update": True},
         "traded": {"display": "已成交", "cell": BaseCell, "update": True},
         "status": {"display": "状态", "cell": EnumCell, "update": True},
-        "create_time": {"display": "创建时间", "cell": BaseCell, "update": True},
-        "datetime": {"display": "时间", "cell": TimeCell, "update": True},
+        "create_time": {"display": "本地创建时间", "cell": BaseCell, "update": True},
+        "datetime": {"display": "时间", "cell": FullTimeCell, "update": True},
         "gateway_name": {"display": "接口", "cell": BaseCell, "update": False},
     }
 
@@ -458,7 +487,6 @@ class OrderMonitor(BaseMonitor):
         order = cell.get_data()
         req = order.create_cancel_request()
         self.main_engine.cancel_order(req, order.gateway_name)
-
 
 class PositionMonitor(BaseMonitor):
     """

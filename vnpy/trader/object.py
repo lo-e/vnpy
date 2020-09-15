@@ -167,7 +167,7 @@ class OrderData(BaseData):
         """"""
         self.vt_symbol = f"{self.symbol}.{self.exchange.value}"
         self.vt_orderid = f"{self.gateway_name}.{self.orderid}"
-        self.create_time = datetime.strftime(datetime.now(), '%H:%M:%S')
+        self.create_time = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
 
     def is_active(self) -> bool:
         """
