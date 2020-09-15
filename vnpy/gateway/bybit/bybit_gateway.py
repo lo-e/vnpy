@@ -452,10 +452,16 @@ class BybitRestApi(RestClient):
             if not self.usdt_base:
                 account = AccountData(
                     accountid=d["symbol"].replace("USD", ""),
-                    balance=d["wallet_balance"],
-                    frozen=d["order_margin"],
+                    balance=d["wallet_balance"] + d['unrealised_pnl'],
+                    frozen=d["position_margin"] + d['occ_closing_fee'] + d['occ_funding_fee'] + d['order_margin'],
+                    position_profit=d['unrealised_pnl'],
                     gateway_name=self.gateway_name,
                 )
+                """ modify by loe """
+                if d['unrealised_pnl'] < 0:
+                    account.available = d["wallet_balance"] - account.frozen + d['unrealised_pnl']
+                else:
+                    account.available = d["wallet_balance"] - account.frozen
                 self.gateway.on_account(account)
 
     def on_query_contract(self, data: dict, request: Request) -> None:
@@ -494,26 +500,15 @@ class BybitRestApi(RestClient):
             return
 
         for key, value in data["result"].items():
-
-            frozen = value["position_margin"]
-            position_pnl = value['unrealised_pnl']
-            if position_pnl > 0:
-                balance = value["wallet_balance"] + position_pnl
-            else:
-                balance = value["wallet_balance"]
-
             account = AccountData(
                 accountid=key,
-                balance=balance,
-                frozen=value["position_margin"],
+                balance=value['equity'],
+                frozen=value["position_margin"] + value['occ_closing_fee'] + value['occ_funding_fee'] + value['order_margin'],
+                position_profit=value['unrealised_pnl'],
                 gateway_name=self.gateway_name,
             )
             """ modify by loe """
-            # 增添了一些属性
-            account.available = value["wallet_balance"] - frozen
-            account.trade_commission = value['occ_closing_fee']
-            account.close_profit = value['realised_pnl']
-            account.position_profit = position_pnl
+            account.available = value["available_balance"]
             self.gateway.on_account(account)
 
     def on_query_order(self, data: dict, request: Request):
@@ -1107,10 +1102,17 @@ class BybitPrivateWebsocketApi(WebsocketClient):
         for d in packet["data"]:
             account = AccountData(
                 accountid="USDT",
-                balance=d["wallet_balance"],
-                frozen=d["wallet_balance"] - d["available_balance"],
+                balance=d["wallet_balance"] + d['unrealised_pnl'],
+                frozen=d["position_margin"] + d['occ_closing_fee'] + d['occ_funding_fee'] + d['order_margin'],
+                position_profit=d['unrealised_pnl'],
                 gateway_name=self.gateway_name,
             )
+
+            """ modify by loe """
+            if d['unrealised_pnl'] < 0:
+                account.available = d["wallet_balance"] - account.frozen + d['unrealised_pnl']
+            else:
+                account.available = d["wallet_balance"] - account.frozen
             self.gateway.on_account(account)
 
     def on_trade(self, packet: dict) -> None:

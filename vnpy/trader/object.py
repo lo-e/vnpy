@@ -258,10 +258,10 @@ class AccountData(BaseData):
 
     """ modify by loe """
     # 添加一些属性
-    pre_balance = 0             # 初始净值
-    trade_commission = 0        # 交易手续费
-    close_profit = 0            # 平仓盈亏
-    position_profit = 0         # 持仓盈亏
+    pre_balance = 0                     # 初始净值
+    trade_commission = 0                # 交易手续费
+    close_profit = 0                    # 平仓盈亏
+    position_profit: float = 0          # 持仓盈亏
 
     def __post_init__(self):
         """"""
