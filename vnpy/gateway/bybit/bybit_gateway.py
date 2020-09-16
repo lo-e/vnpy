@@ -434,15 +434,21 @@ class BybitRestApi(RestClient):
             return
 
         for d in data["result"]:
+            """ modify by loe """
             if d["side"] == "Buy":
                 volume = d["size"]
-            else:
+                direction = Direction.LONG
+            elif d["side"] == "Sell":
                 volume = -d["size"]
+                direction = Direction.SHORT
+            else:
+                volume = d["size"]
+                direction = Direction.NET
 
             position = PositionData(
                 symbol=d["symbol"],
                 exchange=Exchange.BYBIT,
-                direction=Direction.NET,
+                direction=direction,
                 volume=volume,
                 price=d["entry_price"],
                 gateway_name=self.gateway_name
@@ -1158,15 +1164,21 @@ class BybitPrivateWebsocketApi(WebsocketClient):
     def on_position(self, packet: dict) -> None:
         """"""
         for d in packet["data"]:
+            """ modify by loe """
             if d["side"] == "Buy":
                 volume = d["size"]
-            else:
+                direction = Direction.LONG
+            elif d["side"] == "Sell":
                 volume = -d["size"]
+                direction = Direction.SHORT
+            else:
+                volume = d["size"]
+                direction = Direction.NET
 
             position = PositionData(
                 symbol=d["symbol"],
                 exchange=Exchange.BYBIT,
-                direction=Direction.NET,
+                direction=direction,
                 volume=volume,
                 price=float(d["entry_price"]),
                 gateway_name=self.gateway_name
