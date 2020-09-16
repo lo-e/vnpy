@@ -191,7 +191,7 @@ class BybitGateway(BaseGateway):
     def process_timer_event(self, event):
         """"""
         self.query_position_timer += 1
-        if self.query_position_timer == 60 * 60:
+        if self.query_position_timer == 60 * 2:
             self.query_position_timer = 0
             self.query_position()
 
