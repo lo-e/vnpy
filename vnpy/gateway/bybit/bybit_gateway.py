@@ -1173,7 +1173,6 @@ class BybitPrivateWebsocketApi(WebsocketClient):
         # 收到推送后进行完整的持仓查询
         """
         for d in packet["data"]:
-            """ modify by loe """
             if d["side"] == "Buy":
                 volume = d["size"]
                 direction = Direction.LONG
