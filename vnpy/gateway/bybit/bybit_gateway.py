@@ -33,11 +33,12 @@ from vnpy.trader.object import (
     CancelRequest,
     OrderRequest
 )
-from vnpy.trader.event import EVENT_TIMER
+from vnpy.trader.event import EVENT_TIMER, EVENT_ClEAR_POSITION
 from vnpy.trader.gateway import BaseGateway
 
 """ modify by loe """
 import socket
+from vnpy.event import Event
 
 STATUS_BYBIT2VT: Dict[str, Status] = {
     "Created": Status.NOTTRADED,
@@ -432,6 +433,10 @@ class BybitRestApi(RestClient):
         """"""
         if self.check_error("查询持仓", data):
             return
+
+        """ modify by loe """
+        event = Event(EVENT_ClEAR_POSITION)
+        self.gateway.event_engine.put(event)
 
         for d in data["result"]:
             """ modify by loe """
@@ -1163,6 +1168,10 @@ class BybitPrivateWebsocketApi(WebsocketClient):
 
     def on_position(self, packet: dict) -> None:
         """"""
+        self.gateway.query_position()
+        """ modify by loe """
+        # 收到推送后进行完整的持仓查询
+        """
         for d in packet["data"]:
             """ modify by loe """
             if d["side"] == "Buy":
@@ -1184,6 +1193,7 @@ class BybitPrivateWebsocketApi(WebsocketClient):
                 gateway_name=self.gateway_name
             )
             self.gateway.on_position(position)
+        """
 
 
 def generate_timestamp(expire_after: float = 30) -> int:
