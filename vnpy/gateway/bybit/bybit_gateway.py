@@ -192,7 +192,7 @@ class BybitGateway(BaseGateway):
     def process_timer_event(self, event):
         """"""
         self.query_position_timer += 1
-        if self.query_position_timer == 60 * 2:
+        if self.query_position_timer == 60 * 10:
             self.query_position_timer = 0
             self.query_position()
 
@@ -1164,13 +1164,8 @@ class BybitPrivateWebsocketApi(WebsocketClient):
 
     def on_position(self, packet: dict) -> None:
         """"""
-        """ modify by loe """
-        event = Event(EVENT_ClEAR_POSITION)
-        self.gateway.event_engine.put(event)
-
-        self.gateway.query_position()
-        """
         for d in packet["data"]:
+            """ modify by loe """
             if d["side"] == "Buy":
                 volume = d["size"]
                 direction = Direction.LONG
@@ -1190,7 +1185,11 @@ class BybitPrivateWebsocketApi(WebsocketClient):
                 gateway_name=self.gateway_name
             )
             self.gateway.on_position(position)
-        """
+
+        """ modify by loe """
+        event = Event(EVENT_ClEAR_POSITION)
+        self.gateway.event_engine.put(event)
+        self.gateway.query_position()
 
 def generate_timestamp(expire_after: float = 30) -> int:
     """
