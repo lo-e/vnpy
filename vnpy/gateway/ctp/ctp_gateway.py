@@ -667,6 +667,9 @@ class CtpTdApi(TdApi):
             for data in self.trade_data:
                 self.onRtnTrade(data)
             self.trade_data.clear()
+        """ modify by loe """
+        # 这个函数运行在threading._DummyThread线程，会造成主线程阻塞，print()可以避免这种阻塞
+        print(f'合约查询数量\t{len(symbol_name_map)}')
 
     def onRtnOrder(self, data: dict):
         """
