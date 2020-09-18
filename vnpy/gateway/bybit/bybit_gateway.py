@@ -737,14 +737,6 @@ class BybitPublicWebsocketApi(WebsocketClient):
         self.symbol_bids: Dict[str, dict] = {}
         self.symbol_asks: Dict[str, dict] = {}
 
-        """ modify by loe """
-        # 限制行情数据接收的最高频率
-        self.max_second_tick_count = 6
-        self.last_tick_second_map: dict[str, int] = {}
-        self.last_tick_second_count_map: dict[str, int] = {}
-        self.last_depth_second_map: dict[str, int] = {}
-        self.last_depth_second_count_map: dict[str, int] = {}
-
     def connect(
         self,
         usdt_base: bool,
@@ -876,19 +868,6 @@ class BybitPublicWebsocketApi(WebsocketClient):
 
             tick.datetime = generate_datetime(update["updated_at"])
 
-        """ modify by loe """
-        last_tick_second = self.last_tick_second_map.get(tick.symbol, 0)
-        last_tick_second_count = self.last_tick_second_count_map.get(tick.symbol, 0)
-        last_tick_second_count += 1
-        if tick.datetime.second == last_tick_second:
-            if last_tick_second_count > self.max_second_tick_count:
-                return
-        else:
-            last_tick_second = tick.datetime.second
-            last_tick_second_count = 1
-        self.last_tick_second_map[symbol] = last_tick_second
-        self.last_tick_second_count_map[symbol] = last_tick_second_count
-
         self.gateway.on_tick(copy(tick))
 
     def on_depth(self, packet: dict) -> None:
@@ -954,20 +933,6 @@ class BybitPublicWebsocketApi(WebsocketClient):
 
         local_dt = datetime.fromtimestamp(timestamp)
         tick.datetime = local_dt.astimezone(UTC_TZ)
-
-        """ modify by loe """
-        last_depth_second = self.last_depth_second_map.get(tick.symbol, 0)
-        last_depth_second_count = self.last_depth_second_count_map.get(tick.symbol, 0)
-        last_depth_second_count += 1
-        if tick.datetime.second == last_depth_second:
-            if last_depth_second_count > self.max_second_tick_count:
-                return
-        else:
-            last_depth_second = tick.datetime.second
-            last_depth_second_count = 1
-        self.last_depth_second_map[symbol] = last_depth_second
-        self.last_depth_second_count_map[symbol] = last_depth_second_count
-
         self.gateway.on_tick(copy(tick))
 
 

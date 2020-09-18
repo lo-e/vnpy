@@ -1081,6 +1081,7 @@ class TurtleCryptoAutoEngine(object):
                     self.main_engine.send_email(subject='TURTLE_Crypto 数据更新', content=f'【未知错误】\n\n{traceback.format_exc()}')
                 except:
                     pass
+            sleep(0.1)
 
     def checkAndDownload(self):
         now = datetime.now()
