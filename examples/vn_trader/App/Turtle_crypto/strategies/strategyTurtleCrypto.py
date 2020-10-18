@@ -145,17 +145,11 @@ class TurtleStrategyCrypto(CtaTemplate):
     #----------------------------------------------------------------------
     def on_tick(self, tick):
         """收到行情TICK推送（必须由用户继承实现）"""
+        """
         # 保存tick数据到数据库
         if datetime.time(7, 50) <= (tick.datetime + timedelta(hours=8)).time() <= datetime.time(8, 2):
-            """ fake """
-            """
-            write_content = {'real_datetime':datetime.datetime.now(),
-                             'tick_datetime':tick.datetime + timedelta(hours=8),
-                             'tick_vt_symbol':tick.vt_symbol}
-            self.write_to_file(content=write_content, file_path=f'FAKE_FILE_{tick.symbol}.csv')
-            """
-
             self.saveTick(tick)
+        """
 
         """ fake """
         #self.write_log(f'【real：{datetime.datetime.now()}】\t【tick：{tick.datetime + timedelta(hours=8)}】\t{tick.symbol}')
