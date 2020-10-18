@@ -1103,7 +1103,9 @@ class TurtleAutoEngine(object):
             except:
                 try:
                     self.downloading = False
-                    self.main_engine.send_email(subject='TURTLE 数据更新', content=f'【未知错误】\n\n{traceback.format_exc()}')
+                    subject = 'TURTLE 数据更新'
+                    content = f'【未知错误】\n\n{traceback.format_exc()}'
+                    self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{content}')
                 except:
                     pass
             sleep(self.check_interval)
@@ -1123,8 +1125,8 @@ class TurtleAutoEngine(object):
                 self.downloaded = result
                 if result:
                     msg = '======\n数据更新成功\n======\n\n' + msg
-                self.main_engine.send_email(subject='TURTLE 数据更新',
-                                                content=msg)
+                subject = 'TURTLE 数据更新'
+                self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{msg}')
         else:
             self.downloaded = False
 
@@ -1134,7 +1136,9 @@ class TurtleAutoEngine(object):
                 self.checkAndReconnect()
             except:
                 try:
-                    self.main_engine.send_email(subject='TURTLE 服务器重连、策略重新初始化', content=f'【未知错误】\n\n{traceback.format_exc()}')
+                    subject = 'TURTLE 服务器重连、策略重新初始化'
+                    content = f'【未知错误】\n\n{traceback.format_exc()}'
+                    self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{content}')
                 except:
                     pass
             sleep(self.check_interval)
@@ -1165,11 +1169,12 @@ class TurtleAutoEngine(object):
                         if has_reinit:
                             return_msg = f'{return_msg}\n\n策略重新初始化成功'
                             email_subject = f'{email_subject}、策略重新初始化'
-                        self.main_engine.send_email(subject=email_subject, content=return_msg)
+                        self.main_engine.send_ding_talk(content=f'主题\n============\n{email_subject}\n\n内容\n============\n{return_msg}')
                     except:
                         try:
-                            self.main_engine.send_email(subject='TURTLE 服务器重连、策略重新初始化',
-                                                        content=f'【未知错误】\n\n{traceback.format_exc()}')
+                            subject = 'TURTLE 服务器重连、策略重新初始化'
+                            content = f'【未知错误】\n\n{traceback.format_exc()}'
+                            self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{content}')
                         except:
                             pass
                     self.restarting = False

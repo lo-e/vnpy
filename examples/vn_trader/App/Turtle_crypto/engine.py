@@ -1067,7 +1067,9 @@ class TurtleCryptoAutoEngine(object):
             except:
                 self.downloading = False
                 try:
-                    self.main_engine.send_email(subject='TURTLE_Crypto 数据下载', content=f'【未知错误】\n\n{traceback.format_exc()}')
+                    subject = 'TURTLE_Crypto 数据下载'
+                    content = f'【未知错误】\n\n{traceback.format_exc()}'
+                    self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{content}')
                 except:
                     pass
             sleep(60)
@@ -1078,10 +1080,12 @@ class TurtleCryptoAutoEngine(object):
                 self.checkAndGenerate()
             except:
                 try:
-                    self.main_engine.send_email(subject='TURTLE_Crypto 数据更新', content=f'【未知错误】\n\n{traceback.format_exc()}')
+                    subject = 'TURTLE_Crypto 数据更新'
+                    content = f'【未知错误】\n\n{traceback.format_exc()}'
+                    self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{content}')
                 except:
                     pass
-            sleep(0.1)
+            sleep(1)
 
     def checkAndDownload(self):
         now = datetime.now()
@@ -1094,17 +1098,18 @@ class TurtleCryptoAutoEngine(object):
                 turtleCryptoDataD.download_from_bybit(contract_list=self.contract_list)
                 if self.absolute_generate_needed:
                     result, complete_msg, back_msg, lost_msg = turtleCryptoDataD.generate_for_bybit(contract_list=self.contract_list)
-                    email_msg = complete_msg + '\n\n' + lost_msg + back_msg
+                    notice_msg = complete_msg + '\n\n' + lost_msg + back_msg
                     if result:
                         self.absolute_generate_needed = False
                         # 海龟策略重新初始化
                         self.turtle_engine.reinit_strategies()
-                        email_msg = f'====== 策略重新初始化成功 ======\n\n{email_msg}'
+                        notice_msg = f'====== 策略重新初始化成功 ======\n\n{notice_msg}'
                     else:
-                        email_msg = f'!!!!!! 策略未完成重新初始化 !!!!!!\n\n{email_msg}'
+                        notice_msg = f'!!!!!! 策略未完成重新初始化 !!!!!!\n\n{notice_msg}'
 
                     try:
-                        self.main_engine.send_email(subject='TURTLE_Crypto 数据更新', content=email_msg)
+                        subject = 'TURTLE_Crypto 数据更新'
+                        self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{notice_msg}')
                     except:
                         pass
         else:
@@ -1119,21 +1124,25 @@ class TurtleCryptoAutoEngine(object):
                 self.turtle_engine.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
                 self.turtle_engine.turtlePortfolio.on_update_today()
                 self.generating = True
+
+                """
                 turtleCryptoDataD = TurtleCryptoDataDownloading()
                 result, complete_msg, back_msg, lost_msg = turtleCryptoDataD.generate_for_bybit(contract_list=self.contract_list)
-                email_msg = complete_msg + '\n\n' + lost_msg + back_msg
+                notice_msg = complete_msg + '\n\n' + lost_msg + back_msg
                 print('\n\n' + lost_msg + back_msg)
                 if result:
                     # 海龟策略重新初始化
                     self.turtle_engine.reinit_strategies()
-                    email_msg = f'====== 策略重新初始化成功 ======\n\n{email_msg}'
+                    notice_msg = f'====== 策略重新初始化成功 ======\n\n{notice_msg}'
                 else:
-                    email_msg = f'!!!!!! 策略未完成重新初始化 !!!!!!\n\n{email_msg}'
+                    notice_msg = f'!!!!!! 策略未完成重新初始化 !!!!!!\n\n{notice_msg}'
 
                 try:
-                    self.main_engine.send_email(subject='TURTLE_Crypto 数据更新', content=email_msg)
+                    subject = 'TURTLE_Crypto 数据更新'
+                    self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{notice_msg}')
                 except:
                     pass
+                """
 
                 self.absolute_generate_needed = True
                 self.checkAndDownload()
