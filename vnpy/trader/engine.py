@@ -756,9 +756,9 @@ class DingTalkEngine(BaseEngine):
             self.send_ding_talk(content=content)
 
     def send_ding_talk(self, content):
-        # 内容添加电脑名称
+        # 内容添加电脑名称、时间
         client = socket.gethostname()
-        full_content = f'【{client}】\n\n{content}'
+        full_content = f'【{client}】\n\n{datetime.now()}\n\n{content}'
 
         # 开启线程
         if not self.active:
