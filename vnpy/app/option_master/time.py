@@ -39,15 +39,14 @@ PUBLIC_HOLIDAYS = set([
     datetime(2020, 10, 8),
 ])
 
-
+""" modify by loe """
+# 修正到期天数计算错误
 def calculate_days_to_expiry(option_expiry: datetime) -> int:
     """"""
     current_dt = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    days = 1
+    days = 0
 
     while current_dt <= option_expiry:
-        current_dt += timedelta(days=1)
-
         # Ignore weekends
         if current_dt.weekday() in [5, 6]:
             continue
@@ -57,5 +56,6 @@ def calculate_days_to_expiry(option_expiry: datetime) -> int:
             continue
 
         days += 1
+        current_dt += timedelta(days=1)
 
     return days
