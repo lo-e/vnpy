@@ -48,14 +48,16 @@ def calculate_days_to_expiry(option_expiry: datetime) -> int:
 
     while current_dt <= option_expiry:
         # Ignore weekends
+        is_trading_day = True
         if current_dt.weekday() in [5, 6]:
-            continue
+            is_trading_day = False
 
         # Ignore public holidays
         if current_dt in PUBLIC_HOLIDAYS:
-            continue
+            is_trading_day = False
 
-        days += 1
+        if is_trading_day:
+            days += 1
         current_dt += timedelta(days=1)
 
     return days
