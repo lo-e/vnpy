@@ -204,6 +204,10 @@ class BybitRestApi(RestClient):
         self.order_count: int = 0
         self.contract_codes: set = set()
 
+        """ modify by loe """
+        # 合约信息
+        self.contract_list = []
+
     def sign(self, request: Request) -> Request:
         """
         Generate ByBit signature.
@@ -274,10 +278,16 @@ class BybitRestApi(RestClient):
         orderid = self.new_orderid()
         order = req.create_order_data(orderid, self.gateway_name)
 
+        min_volume = 1
+        for contract in self.contract_list:
+            if req.symbol == contract.symbol:
+                min_volume = contract.min_volume
+                break
+        volume = int(req.volume / min_volume) * min_volume
         data = {
             "symbol": req.symbol,
             "side": DIRECTION_VT2BYBIT[req.direction],
-            "qty": int(req.volume),
+            "qty": volume,
             "order_link_id": orderid,
             "time_in_force": "GoodTillCancel",
             "reduce_only": False,
@@ -482,8 +492,12 @@ class BybitRestApi(RestClient):
 
             if self.usdt_base and "USDT" in contract.symbol:
                 self.gateway.on_contract(contract)
+                """ modify by loe """
+                self.contract_list.append(contract)
             elif not self.usdt_base and "USDT" not in contract.symbol:
                 self.gateway.on_contract(contract)
+                """ modify by loe """
+                self.contract_list.append(contract)
 
         self.gateway.write_log("合约信息查询成功")
         self.query_position()
