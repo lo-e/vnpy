@@ -78,27 +78,15 @@ TIMEDELTA_MAP: Dict[Interval, timedelta] = {
 }
 
 hostname = socket.gethostname()
-if 'MI-' in hostname:
-    REST_HOST = "https://api.bytick.com"
-    INVERSE_WEBSOCKET_HOST = "wss://stream.bytick.com/realtime"
-    PUBLIC_WEBSOCKET_HOST = "wss://stream.bytick.com/realtime_public"
-    PRIVATE_WEBSOCKET_HOST = "wss://stream.bytick.com/realtime_private"
+REST_HOST = "https://api.bybit.com"
+INVERSE_WEBSOCKET_HOST = "wss://stream.bybit.com/realtime"
+PUBLIC_WEBSOCKET_HOST = "wss://stream.bybit.com/realtime_public"
+PRIVATE_WEBSOCKET_HOST = "wss://stream.bybit.com/realtime_private"
 
-    TESTNET_REST_HOST = "https://api-testnet.bytick.com"
-    TESTNET_INVERSE_WEBSOCKET_HOST = "wss://stream-testnet.bytick.com/realtime"
-    TESTNET_PUBLIC_WEBSOCKET_HOST = "wss://stream-testnet.bytick.com/realtime_public"
-    TESTNET_PRIVATE_WEBSOCKET_HOST = "wss://stream-testnet.bytick.com/realtime_private"
-
-else:
-    REST_HOST = "https://api.bybit.com"
-    INVERSE_WEBSOCKET_HOST = "wss://stream.bybit.com/realtime"
-    PUBLIC_WEBSOCKET_HOST = "wss://stream.bybit.com/realtime_public"
-    PRIVATE_WEBSOCKET_HOST = "wss://stream.bybit.com/realtime_private"
-
-    TESTNET_REST_HOST = "https://api-testnet.bybit.com"
-    TESTNET_INVERSE_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/realtime"
-    TESTNET_PUBLIC_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/realtime_public"
-    TESTNET_PRIVATE_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/realtime_private"
+TESTNET_REST_HOST = "https://api-testnet.bybit.com"
+TESTNET_INVERSE_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/realtime"
+TESTNET_PUBLIC_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/realtime_public"
+TESTNET_PRIVATE_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/realtime_private"
 
 CHINA_TZ = pytz.timezone("Asia/Shanghai")
 UTC_TZ = pytz.utc
