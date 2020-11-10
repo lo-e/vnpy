@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Callable
 from copy import copy
 import pytz
+from simplejson.errors import JSONDecodeError
 
 from requests import ConnectionError
 
@@ -18,7 +19,8 @@ from vnpy.trader.constant import (
     OrderType,
     Product,
     Status,
-    Direction
+    Direction,
+    Offset
 )
 from vnpy.trader.object import (
     AccountData,
@@ -283,15 +285,24 @@ class BybitRestApi(RestClient):
             if req.symbol == contract.symbol:
                 min_volume = contract.min_volume
                 break
+        if min_volume <= 0:
+            min_volume = 1
         volume = int(req.volume / min_volume) * min_volume
+
+        reduce_only = False
+        close_on_trigger = False
+        if req.offset == Offset.CLOSE or req.offset == Offset.CLOSETODAY or req.offset == Offset.CLOSEYESTERDAY:
+            reduce_only = True
+            close_on_trigger = True
+
         data = {
             "symbol": req.symbol,
             "side": DIRECTION_VT2BYBIT[req.direction],
             "qty": volume,
             "order_link_id": orderid,
             "time_in_force": "GoodTillCancel",
-            "reduce_only": False,
-            "close_on_trigger": False
+            "reduce_only": reduce_only,
+            "close_on_trigger": close_on_trigger
         }
 
         data["order_type"] = ORDER_TYPE_VT2BYBIT[req.type]
@@ -401,12 +412,14 @@ class BybitRestApi(RestClient):
         """
         Callback to handle request failed.
         """
-        data = request.response.json()
-
-        error_msg = data["ret_msg"]
-        error_code = data["ret_code"]
-
-        msg = f"请求失败，状态码：{request.status}，错误代码：{error_code}, 信息：{error_msg}"
+        try:
+            data = request.response.json()
+            error_msg = data["ret_msg"]
+            error_code = data["ret_code"]
+            msg = f"请求失败，状态码：{request.status}，错误代码：{error_code}, 信息：{error_msg}"
+        except JSONDecodeError:
+            text = request.response.text
+            msg = f"请求失败，信息：{text}"
 
         self.gateway.write_log(msg)
 
@@ -542,6 +555,11 @@ class BybitRestApi(RestClient):
             if not orderid:     # Ignore order not placed by vn.py
                 continue
 
+            if self.usdt_base:
+                dt = generate_datetime(d["created_time"])
+            else:
+                dt = generate_datetime(d["created_at"])
+
             order = OrderData(
                 symbol=d["symbol"],
                 exchange=Exchange.BYBIT,
@@ -552,7 +570,7 @@ class BybitRestApi(RestClient):
                 volume=d["qty"],
                 traded=d["cum_exec_qty"],
                 status=STATUS_BYBIT2VT[d["order_status"]],
-                datetime=generate_datetime(d["created_at"]),
+                datetime=dt,
                 gateway_name=self.gateway_name
             )
             self.gateway.on_order(order)
@@ -623,11 +641,11 @@ class BybitRestApi(RestClient):
             symbols = symbols_inverse
 
         for symbol in symbols:
-
             params = {
                 "symbol": symbol,
                 "limit": 50,
                 "page": page,
+                "order_status": "New,PartiallyFilled"
             }
 
             self.add_request(
@@ -1094,7 +1112,7 @@ class BybitPrivateWebsocketApi(WebsocketClient):
         for d in packet["data"]:
             orderid = d["order_link_id"]
             if not orderid:
-                orderid = d["orderid"]
+                orderid = d["order_id"]
 
             trade = TradeData(
                 symbol=d["symbol"],
@@ -1113,6 +1131,11 @@ class BybitPrivateWebsocketApi(WebsocketClient):
     def on_order(self, packet: dict) -> None:
         """"""
         for d in packet["data"]:
+            if self.usdt_base:
+                dt = generate_datetime(d["timestamp"])
+            else:
+                dt = generate_datetime(d["create_time"])
+
             order = OrderData(
                 symbol=d["symbol"],
                 exchange=Exchange.BYBIT,
@@ -1123,7 +1146,7 @@ class BybitPrivateWebsocketApi(WebsocketClient):
                 volume=d["qty"],
                 traded=d["cum_exec_qty"],
                 status=STATUS_BYBIT2VT[d["order_status"]],
-                datetime=generate_datetime(d["timestamp"]),
+                datetime=dt,
                 gateway_name=self.gateway_name
             )
 
@@ -1176,6 +1199,11 @@ def sign(secret: bytes, data: bytes) -> str:
 def generate_datetime(timestamp: str) -> datetime:
     """"""
     if "." in timestamp:
+        part1, part2 = timestamp.split(".")
+        if len(part2) > 7:
+            part2 = part2[:6] + "Z"
+            timestamp = ".".join([part1, part2])
+
         dt = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%fZ")
     else:
         dt = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%SZ")

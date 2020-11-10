@@ -313,6 +313,7 @@ class BacktestingEngine:
                 self.output(traceback.format_exc())
                 return
 
+        self.strategy.on_stop()
         self.output("历史数据回放结束")
 
     def calculate_result(self):
@@ -906,6 +907,7 @@ class BacktestingEngine:
                 offset=stop_order.offset,
                 price=stop_order.price,
                 volume=stop_order.volume,
+                traded=stop_order.volume,
                 status=Status.ALLTRADED,
                 gateway_name=self.gateway_name,
                 datetime=self.datetime
