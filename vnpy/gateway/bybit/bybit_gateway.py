@@ -93,7 +93,7 @@ TESTNET_PRIVATE_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/realtime_privat
 CHINA_TZ = pytz.timezone("Asia/Shanghai")
 UTC_TZ = pytz.utc
 
-symbols_usdt: List[str] = ["BTCUSDT"]
+symbols_usdt: List[str] = ["BTCUSDT", "ETHUSDT"]
 symbols_inverse: List[str] = ["BTCUSD", "ETHUSD", "EOSUSD", "XRPUSD"]
 
 
@@ -124,6 +124,7 @@ class BybitGateway(BaseGateway):
         """ modify by loe """
         # 持仓查询时间间隔
         self.query_position_timer = 0
+        self.usdt_base: bool = False
 
     def connect(self, setting: dict) -> None:
         """"""
@@ -137,6 +138,7 @@ class BybitGateway(BaseGateway):
             usdt_base = True
         else:
             usdt_base = False
+        self.usdt_base = usdt_base
 
         if proxy_port.isdigit():
             proxy_port = int(proxy_port)
@@ -163,7 +165,7 @@ class BybitGateway(BaseGateway):
 
     def query_account(self) -> None:
         """"""
-        pass
+        self.rest_api.query_account()
 
     def query_position(self) -> None:
         """"""
@@ -185,6 +187,8 @@ class BybitGateway(BaseGateway):
         if self.query_position_timer == 60 * 10:
             self.query_position_timer = 0
             self.query_position()
+            if self.usdt_base:
+                self.query_account()
 
 
 class BybitRestApi(RestClient):
@@ -514,7 +518,8 @@ class BybitRestApi(RestClient):
 
         self.gateway.write_log("合约信息查询成功")
         self.query_position()
-        self.query_account()
+        if self.usdt_base:
+            self.query_account()
 
     def on_query_account(self, data: dict, request: Request) -> None:
         """"""
@@ -556,9 +561,9 @@ class BybitRestApi(RestClient):
                 continue
 
             if self.usdt_base:
-                dt = generate_datetime(d["created_time"])
+                dt = generate_datetime(d["update_time"])
             else:
-                dt = generate_datetime(d["created_at"])
+                dt = generate_datetime(d["timestamp"])
 
             order = OrderData(
                 symbol=d["symbol"],
@@ -1091,21 +1096,17 @@ class BybitPrivateWebsocketApi(WebsocketClient):
 
     def on_account(self, packet: dict) -> None:
         """"""
+        """
         for d in packet["data"]:
             account = AccountData(
                 accountid="USDT",
-                balance=d["wallet_balance"] + d['unrealised_pnl'],
-                frozen=d["position_margin"] + d['occ_closing_fee'] + d['occ_funding_fee'] + d['order_margin'],
-                position_profit=d['unrealised_pnl'],
+                balance=d["wallet_balance"],
                 gateway_name=self.gateway_name,
             )
-
-            """ modify by loe """
-            if d['unrealised_pnl'] < 0:
-                account.available = d["wallet_balance"] - account.frozen + d['unrealised_pnl']
-            else:
-                account.available = d["wallet_balance"] - account.frozen
+            account.available = d["available_balance"]
             self.gateway.on_account(account)
+        """
+        self.gateway.query_account()
 
     def on_trade(self, packet: dict) -> None:
         """"""
@@ -1132,9 +1133,9 @@ class BybitPrivateWebsocketApi(WebsocketClient):
         """"""
         for d in packet["data"]:
             if self.usdt_base:
-                dt = generate_datetime(d["timestamp"])
+                dt = generate_datetime(d["update_time"])
             else:
-                dt = generate_datetime(d["create_time"])
+                dt = generate_datetime(d["timestamp"])
 
             order = OrderData(
                 symbol=d["symbol"],
@@ -1154,8 +1155,8 @@ class BybitPrivateWebsocketApi(WebsocketClient):
 
     def on_position(self, packet: dict) -> None:
         """"""
+        """
         for d in packet["data"]:
-            """ modify by loe """
             if d["side"] == "Buy":
                 volume = d["size"]
                 direction = Direction.LONG
@@ -1175,10 +1176,10 @@ class BybitPrivateWebsocketApi(WebsocketClient):
                 gateway_name=self.gateway_name
             )
             self.gateway.on_position(position)
-
-        """ modify by loe """
+            
         event = Event(EVENT_ClEAR_POSITION)
         self.gateway.event_engine.put(event)
+        """
         self.gateway.query_position()
 
 def generate_timestamp(expire_after: float = 30) -> int:
