@@ -187,8 +187,7 @@ class BybitGateway(BaseGateway):
         if self.query_position_timer == 60 * 10:
             self.query_position_timer = 0
             self.query_position()
-            if self.usdt_base:
-                self.query_account()
+            self.query_account()
 
 
 class BybitRestApi(RestClient):
@@ -518,8 +517,7 @@ class BybitRestApi(RestClient):
 
         self.gateway.write_log("合约信息查询成功")
         self.query_position()
-        if self.usdt_base:
-            self.query_account()
+        self.query_account()
 
     def on_query_account(self, data: dict, request: Request) -> None:
         """"""
@@ -608,14 +606,15 @@ class BybitRestApi(RestClient):
         return False
 
     def query_account(self) -> Request:
-        """"""
-        params = {"coin": "USDT"}
-        self.add_request(
-            "GET",
-            "/v2/private/wallet/balance",
-            self.on_query_account,
-            params
-        )
+        if self.usdt_base:
+            """"""
+            params = {"coin": "USDT"}
+            self.add_request(
+                "GET",
+                "/v2/private/wallet/balance",
+                self.on_query_account,
+                params
+            )
 
     def query_position(self) -> Request:
         """"""
