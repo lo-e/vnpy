@@ -163,13 +163,13 @@ class BybitGateway(BaseGateway):
         """"""
         self.rest_api.cancel_order(req)
 
-    def query_account(self) -> None:
+    def query_account(self, delay:bool=False) -> None:
         """"""
-        self.rest_api.query_account()
+        self.rest_api.query_account(delay=delay)
 
-    def query_position(self) -> None:
+    def query_position(self, delay:bool=False) -> None:
         """"""
-        self.rest_api.query_position()
+        self.rest_api.query_position(delay=delay)
 
     def query_history(self, req: HistoryRequest) -> List[BarData]:
         """"""
@@ -188,6 +188,19 @@ class BybitGateway(BaseGateway):
             self.query_position_timer = 0
             self.query_position()
             self.query_account()
+
+        if self.rest_api.query_position_delay:
+            self.rest_api.query_position_delay_count += 1
+            if self.rest_api.query_position_delay_count >= 10:
+                self.query_position()
+
+        if self.rest_api.query_account_delay:
+            self.rest_api.query_account_delay_count += 1
+            if self.rest_api.query_account_delay_count >= 10:
+                self.query_account()
+
+
+
 
 
 class BybitRestApi(RestClient):
@@ -212,6 +225,11 @@ class BybitRestApi(RestClient):
         """ modify by loe """
         # 合约信息
         self.contract_list = []
+        # 查询持仓、账户频率限制
+        self.query_position_delay = False
+        self.query_position_delay_count = 0
+        self.query_account_delay = False
+        self.query_account_delay_count = 0
 
     def sign(self, request: Request) -> Request:
         """
@@ -605,7 +623,13 @@ class BybitRestApi(RestClient):
 
         return False
 
-    def query_account(self) -> Request:
+    def query_account(self, delay:bool=False) -> Request:
+        if delay:
+            self.query_account_delay = True
+            self.query_account_delay_count = 0
+            return
+        self.query_account_delay = False
+
         if self.usdt_base:
             """"""
             params = {"coin": "USDT"}
@@ -616,8 +640,17 @@ class BybitRestApi(RestClient):
                 params
             )
 
-    def query_position(self) -> Request:
+    def query_position(self, delay:bool=False) -> Request:
         """"""
+        if delay:
+            self.query_position_delay = True
+            self.query_position_delay_count = 0
+            return
+        self.query_position_delay = False
+        # 因为净仓的存在，多空净会切换，每次刷新仓位前需要清除当前数据
+        event = Event(EVENT_ClEAR_POSITION)
+        self.gateway.event_engine.put(event)
+
         if self.usdt_base:
             path = "/private/linear/position/list"
             symbols = symbols_usdt
@@ -1105,7 +1138,7 @@ class BybitPrivateWebsocketApi(WebsocketClient):
             account.available = d["available_balance"]
             self.gateway.on_account(account)
         """
-        self.gateway.query_account()
+        self.gateway.query_account(delay=True)
 
     def on_trade(self, packet: dict) -> None:
         """"""
@@ -1179,7 +1212,7 @@ class BybitPrivateWebsocketApi(WebsocketClient):
         event = Event(EVENT_ClEAR_POSITION)
         self.gateway.event_engine.put(event)
         """
-        self.gateway.query_position()
+        self.gateway.query_position(delay=True)
 
 def generate_timestamp(expire_after: float = 30) -> int:
     """
