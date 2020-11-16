@@ -32,8 +32,10 @@ def one():
         r = DictReader(f)
         for d in r:
             #"""
-            startSymbol = re.sub("\d", "", d['symbol'])
-            symbol = startSymbol + '99'
+            symbol = re.sub("\d", "", d['symbol'])
+            is_crypto = d['is_crypto'] == 'true'
+            if not is_crypto:
+                symbol = symbol + '99'
             d['symbol'] = symbol
             #"""
             symbolList.append(d)

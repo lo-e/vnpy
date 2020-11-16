@@ -1,4 +1,12 @@
-vtSymbol,size,priceTick,variableCommission,fixedCommission,slippage
+****** CTP ******
+symbol,size,priceTick,variableCommission,fixedCommission,slippage,name,min_volume
+RB99,10,1,0.0001,0,2,螺纹钢,false,1
+I99,100,0.5,0.00006,0,2,铁矿石,false,1
+SM99,5,2,0,3,2,锰硅,false,1
+J99,100,0.5,0.00018,0,2,焦炭,false,1
+ZC99,100,0.2,0,4,2,动力煤ZC,false,1
+TA99,5,2,0,3,2,精对苯二酸钾（PTA）,false,1
+
 RB99,10,1,0.0001,0,2,螺纹钢,
 CU99,5,10,0.00005,0,2,铜,
 NI99,1,10,0,6,2,镍,
@@ -163,3 +171,8 @@ SM99,5,2,0,3,2,锰硅,
 J99,100,0.5,0.00018,0,2,焦炭,
 ZC99,100,0.2,0,4,2,动力煤ZC,
 TA99,5,2,0,3,2,精对苯二酸钾（PTA）,
+
+****** Bybit ******
+symbol,size,priceTick,variableCommission,fixedCommission,slippage,name
+BTCUSD.BYBIT,1,0.5,0.0008,0,0.5,Bybit永续/BTCUSD,true
+ETHUSD.BYBIT,1,0.05,0.0008,0,0.05,Bybit永续/ETHUSD,true

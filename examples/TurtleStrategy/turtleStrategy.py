@@ -63,7 +63,8 @@ class TurtleSignal(object):
         """Constructor"""
         self.portfolio = portfolio      # 投资组合
         
-        self.symbol = symbol        # 合约代码
+        self.symbol = symbol            # 合约代码
+        self.is_crypto = self.portfolio.engine.is_crypto_dict[self.symbol]
         self.entryWindow = entryWindow  # 入场通道周期数
         self.exitWindow = exitWindow    # 出场通道周期数
         self.atrWindow = atrWindow      # 计算ATR周期数
@@ -115,7 +116,7 @@ class TurtleSignal(object):
     def onBar(self, bar):
         """ modify by loe """
         actualBar = None
-        if ACTUAL_TRADE and not self.newDominantIniting:
+        if ACTUAL_TRADE and not self.is_crypto and not self.newDominantIniting:
             # 获取数据库
             if not self.client:
                 self.client = MongoClient('localhost', 27017)
@@ -555,7 +556,11 @@ class TurtlePortfolio(object):
             multiplier = 0
             if signal.atrVolatility * size:
                 multiplier = riskValue / (signal.atrVolatility * size)
-                multiplier = int(round(multiplier, 0))
+
+                min_volume = self.engine.min_volume_dict[signal.symbol]
+                if min_volume <= 0:
+                    raise('策略最小交易数量设置错误！！')
+                multiplier = round(multiplier / min_volume, 0) * min_volume
 
             self.multiplierDict[signal.symbol] = multiplier
         else:

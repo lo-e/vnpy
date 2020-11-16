@@ -38,6 +38,8 @@ class BacktestingEngine(object):
         # 合约配置信息
         self.symbolList = []
         self.sizeDict = {}                  # 合约大小字典
+        self.is_crypto_dict = {}            # 是否为数字货币合约
+        self.min_volume_dict = {}           # 最低交易数量【商品为整数、数字货币带小数】
         self.priceTickDict = {}             # 最小价格变动字典
         self.variableCommissionDict = {}    # 变动手续费字典
         self.fixedCommissionDict = {}       # 固定手续费字典
@@ -75,6 +77,8 @@ class BacktestingEngine(object):
 
                 """ modify by loe """
                 self.sizeDict[d['symbol']] = int(d['size'])
+                self.is_crypto_dict[d['symbol']] = d['is_crypto'] == 'true'
+                self.min_volume_dict[d['symbol']] = float(d['min_volume'])
                 SIZE_DICT[d['symbol']] = int(d['size'])
                 PRICETICK_DICT[d['symbol']] = float(d['priceTick'])
                 VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
@@ -97,6 +101,8 @@ class BacktestingEngine(object):
         self.symbolList.append(d['symbol'])
 
         self.sizeDict[d['symbol']] = int(d['size'])
+        self.is_crypto_dict[d['symbol']] = d['is_crypto'] == 'true'
+        self.min_volume_dict[d['symbol']] = float(d['min_volume'])
         SIZE_DICT[d['symbol']] = int(d['size'])
         PRICETICK_DICT[d['symbol']] = float(d['priceTick'])
         VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
@@ -122,6 +128,8 @@ class BacktestingEngine(object):
             self.symbolList.append(d['symbol'])
 
             self.sizeDict[d['symbol']] = int(d['size'])
+            self.is_crypto_dict[d['symbol']] = d['is_crypto'] == 'true'
+            self.min_volume_dict[d['symbol']] = float(d['min_volume'])
             SIZE_DICT[d['symbol']] = int(d['size'])
             PRICETICK_DICT[d['symbol']] = float(d['priceTick'])
             VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
