@@ -308,7 +308,11 @@ class BybitRestApi(RestClient):
                 break
         if min_volume <= 0:
             min_volume = 1
-        volume = int(req.volume / min_volume) * min_volume
+        volume = int(round(req.volume / min_volume, 0)) * min_volume
+        if not self.usdt_base:
+            # 反向合约带小数委托会报错，保险期间这里另外做个整型处理
+            volume = int(volume)
+        order.volume = volume
 
         reduce_only = False
         close_on_trigger = False
