@@ -98,6 +98,7 @@ class TurtleStrategy(CtaTemplate):
                  'last_symbol',
                  'per_size',
                  'tick_price',
+                 'is_crypto',
                  'entryWindow',
                  'exitWindow',
                  'atrWindow']
