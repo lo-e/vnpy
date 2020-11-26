@@ -53,7 +53,7 @@
     {
         "strategy_name": "TURTLE_TA",
         "class_name": "TurtleStrategy",
-        "vt_symbol": "TA101",
+        "vt_symbol": "TA105",
         "last_symbol":"",
         "per_size":5,
         "tick_price":2,
