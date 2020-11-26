@@ -83,7 +83,11 @@ class TurtleEngine(BaseEngine):
 
     engine_type = EngineType.LIVE  # live trading engine
 
-    setting_filename = 'TURTLE_setting.json'
+    """ modify by loe """
+    # 从.vntrader\turtle.json导入设置内容
+    load_dict = {'setting_filename':'TURTLE_setting.json'}
+    load_dict.update(load_json("turtle.json"))
+    setting_filename = load_dict.get('setting_filename')
 
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
         """"""
