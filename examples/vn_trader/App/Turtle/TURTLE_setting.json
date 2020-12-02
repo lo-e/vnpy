@@ -67,5 +67,6 @@
     }
 ],
     "portfolio": {"name": "turtle[RB, I, SM, J, ZC, TA]",
-                  "portfolioValue": 200000}
+                  "portfolioValue": 200000,
+                  "is_crypto": false}
 }

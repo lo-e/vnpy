@@ -62,6 +62,7 @@ from vnpy.app.cta_strategy.base import TRANSFORM_SYMBOL_LIST
 from collections import OrderedDict
 from time import sleep
 from .dataservice import TurtleDataDownloading
+from ..Turtle_crypto.dataservice import TurtleCryptoDataDownloading
 from .base import EVENT_TURTLE_PORTFOLIO
 
 STOP_STATUS_MAP = {
@@ -122,8 +123,6 @@ class TurtleEngine(BaseEngine):
             self.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         # 组合管理类
         self.turtlePortfolio = None
-        # 数据引擎
-        self.autoEngine = TurtleAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='18:00', reconnect_time_list=['20:00'], check_interval=10*60, reload_time=6)
 
     def init_engine(self):
         """
@@ -134,6 +133,10 @@ class TurtleEngine(BaseEngine):
 
         """ modify by loe for Turtle """
         # 数据引擎启动
+        if self.turtlePortfolio.is_crypto:
+            self.autoEngine = TurtleCryptoAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='7:51', generate_time='8:00:01')
+        else:
+            self.autoEngine = TurtleAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='18:00',reconnect_time_list=['20:00'], check_interval=10 * 60, reload_time=6)
         self.autoEngine.start()
 
         self.write_log("海归策略引擎初始化成功")
@@ -773,15 +776,19 @@ class TurtleEngine(BaseEngine):
         d = {'datetime': {'$gte': startDate}}
 
         """ modify by loe """
-        collectionName = vt_symbol.upper()
-        collectionName = collectionName.split('.')[0]
-        startSymbol = re.sub("\d", "", collectionName)
-        if startSymbol in TRANSFORM_SYMBOL_LIST.keys():
-            endSymbol = re.sub("\D", "", collectionName)
-            if len(endSymbol) == 3:
-                # 比如TA005需要进行转换
-                replace = TRANSFORM_SYMBOL_LIST[startSymbol]
-                collectionName = startSymbol + replace + endSymbol
+        the_strategy = self.symbol_strategy_map[vt_symbol][0]
+        if the_strategy.is_crypto:
+            collectionName = vt_symbol.upper()
+        else:
+            collectionName = vt_symbol.upper()
+            collectionName = collectionName.split('.')[0]
+            startSymbol = re.sub("\d", "", collectionName)
+            if startSymbol in TRANSFORM_SYMBOL_LIST.keys():
+                endSymbol = re.sub("\D", "", collectionName)
+                if len(endSymbol) == 3:
+                    # 比如TA005需要进行转换
+                    replace = TRANSFORM_SYMBOL_LIST[startSymbol]
+                    collectionName = startSymbol + replace + endSymbol
 
         barData = self.main_engine.dbQuery(dbName, collectionName, d, 'datetime')
 
@@ -1185,5 +1192,96 @@ class TurtleAutoEngine(object):
                 break
             else:
                 self.reconnect_result_map[reconnect_time] = False
+
+# 数据下载引擎，每天固定时间从数据服务器自动下载策略回测及实盘必要的数据，并自动结合订阅下载的数据合成DailyBar，策略自动重新初始化
+class TurtleCryptoAutoEngine(object):
+
+    def __init__(self, main_engine:MainEngine, turtle_engine:TurtleEngine, download_time:str, generate_time:str):
+        # download_time:'7:51', generate_time:'8:00:01'
+        super(TurtleCryptoAutoEngine, self).__init__()
+        #self.contract_list = ['okef/btc.usd.q', 'okef/eth.usd.q', 'okef/eos.usd.q']
+        self.contract_list = ['BTCUSDT', 'ETHUSDT']
+        self.main_engine = main_engine
+        self.turtle_engine = turtle_engine
+        self.download_time = download_time
+        self.generate_time = generate_time
+        self.downloading = False
+        self.generating = False
+        self.absolute_generate_needed = False
+        self.download_timer = Thread(target=self.on_download_timer)
+        self.generate_timer = Thread(target=self.on_generate_timer)
+
+    def start(self):
+        self.download_timer.start()
+        self.generate_timer.start()
+
+    def on_download_timer(self):
+        while True:
+            try:
+                self.checkAndDownload()
+            except:
+                self.downloading = False
+                try:
+                    subject = 'TURTLE_Crypto_USDT 数据下载'
+                    content = f'【未知错误】\n\n{traceback.format_exc()}'
+                    self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{content}')
+                except:
+                    pass
+            sleep(60)
+
+    def on_generate_timer(self):
+        while True:
+            try:
+                self.checkAndGenerate()
+            except:
+                try:
+                    subject = 'TURTLE_Crypto_USDT 数据更新'
+                    content = f'【未知错误】\n\n{traceback.format_exc()}'
+                    self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{content}')
+                except:
+                    pass
+            sleep(1)
+
+    def checkAndDownload(self):
+        now = datetime.now()
+        start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {self.download_time}', '%Y-%m-%d %H:%M')
+        end_time = start_time + timedelta(seconds=20 * 60)
+        if (now >= start_time and now <= end_time) or self.absolute_generate_needed:
+            if not self.downloading or self.absolute_generate_needed:
+                self.downloading = True
+                turtleCryptoDataD = TurtleCryptoDataDownloading()
+                turtleCryptoDataD.download_from_bybit(contract_list=self.contract_list)
+                if self.absolute_generate_needed:
+                    result, complete_msg, back_msg, lost_msg = turtleCryptoDataD.generate_for_bybit(contract_list=self.contract_list)
+                    notice_msg = complete_msg + '\n\n' + lost_msg + back_msg
+                    if result:
+                        self.absolute_generate_needed = False
+                        # 海龟策略重新初始化
+                        self.turtle_engine.reinit_strategies()
+                        notice_msg = f'====== 策略重新初始化成功 ======\n\n{notice_msg}'
+                    else:
+                        notice_msg = f'!!!!!! 策略未完成重新初始化 !!!!!!\n\n{notice_msg}'
+
+                    try:
+                        subject = 'TURTLE_Crypto_USDT 数据更新'
+                        self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{notice_msg}')
+                    except:
+                        pass
+        else:
+            self.downloading = False
+
+    def checkAndGenerate(self):
+        now = datetime.now()
+        start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {self.generate_time}', '%Y-%m-%d %H:%M:%S')
+        end_time = start_time + timedelta(seconds=10)
+        if now >= start_time and now <= end_time:
+            if not self.generating:
+                self.generating = True
+                self.turtle_engine.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+                self.turtle_engine.turtlePortfolio.on_update_today()
+                self.absolute_generate_needed = True
+                self.checkAndDownload()
+        else:
+            self.generating = False
 
 

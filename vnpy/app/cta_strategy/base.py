@@ -73,7 +73,8 @@ def HourDataBaseName(duration:int):
 EXCHANGE_SYMBOL_DICT = {Exchange.CFFEX:['IF', 'IC', 'IH'],
                         Exchange.SHFE:['AL', 'RB', 'HC', 'RU'],
                         Exchange.CZCE:['SM', 'ZC', 'TA'],
-                        Exchange.DCE:['I', 'JM', 'J']}
+                        Exchange.DCE:['I', 'JM', 'J'],
+                        Exchange.BYBIT:['BTCUSDT', 'ETHUSDT']}
 
 INTERVAL_DELTA_MAP = {
     Interval.MINUTE: timedelta(minutes=1),

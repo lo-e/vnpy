@@ -21,10 +21,15 @@ main_url = 'https://api.bybit.com'
 def bybit_get_bar_data(symbol:str, interval:str, from_time:str, limit:int=200):
     timeArray = time.strptime(from_time, "%Y-%m-%d %H:%M:%S")
     timeStamp = int(time.mktime(timeArray))
-    url = f'{main_url}/v2/public/kline/list?symbol={symbol}&interval={interval}&from={timeStamp}&limit={limit}'
+    if 'USDT' in symbol:
+        url = f'{main_url}/public/linear/kline?symbol={symbol}&interval={interval}&from={timeStamp}&limit={limit}'
+    else:
+        url = f'{main_url}/v2/public/kline/list?symbol={symbol}&interval={interval}&from={timeStamp}&limit={limit}'
     resp = requests.get(url, headers={}, params={})
     data = resp.json()
     bar_data = data.get('result', [])
+    if not bar_data:
+        bar_data = []
 
     # 数据整理
     result_list = []
@@ -38,9 +43,18 @@ def bybit_get_bar_data(symbol:str, interval:str, from_time:str, limit:int=200):
             since = time.strftime("%Y-%m-%d-%H%M%S", time.localtime(the_timestamp))
         until = time.strftime("%Y-%m-%d-%H%M%S", time.localtime(the_timestamp))
 
-        dic.pop('open_time')
-        dic.pop('interval')
-        dic.pop('turnover')
+        if 'open_time' in dic:
+            dic.pop('open_time')
+        if 'interval' in dic:
+            dic.pop('interval')
+        if 'turnover' in dic:
+            dic.pop('turnover')
+        if 'id' in dic:
+            dic.pop('id')
+        if 'period' in dic:
+            dic.pop('period')
+        if 'start_at' in dic:
+            dic.pop('start_at')
         dic['datetime'] = datetime_str
         result_list.append(dic)
 

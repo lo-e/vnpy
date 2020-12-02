@@ -40,7 +40,8 @@ class TurtlePortfolio(object):
 
 
     paramList = ['name',
-                 'portfolioValue']
+                 'portfolioValue',
+                 'is_crypto']
 
     varList = ['today',
                 'totalLong',

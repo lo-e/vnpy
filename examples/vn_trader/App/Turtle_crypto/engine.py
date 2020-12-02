@@ -1038,7 +1038,7 @@ class TurtleEngine(BaseEngine):
             self.write_log(f"{strategy_name} 重新初始化完成")
 
 """ modify by loe """
-# 数据下载引擎，每天固定时间从1Token自动下载策略回测及实盘必要的数据，并自动结合订阅下载的数据合成DailyBar，策略自动重新初始化
+# 数据下载引擎，每天固定时间从数据服务器自动下载策略回测及实盘必要的数据，并自动结合订阅下载的数据合成DailyBar，策略自动重新初始化
 class TurtleCryptoAutoEngine(object):
 
     def __init__(self, main_engine:MainEngine, turtle_engine:TurtleEngine, download_time:str, generate_time:str):
@@ -1121,9 +1121,9 @@ class TurtleCryptoAutoEngine(object):
         end_time = start_time + timedelta(seconds=10)
         if now >= start_time and now <= end_time:
             if not self.generating:
+                self.generating = True
                 self.turtle_engine.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
                 self.turtle_engine.turtlePortfolio.on_update_today()
-                self.generating = True
 
                 """
                 turtleCryptoDataD = TurtleCryptoDataDownloading()

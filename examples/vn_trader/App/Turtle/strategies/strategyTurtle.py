@@ -220,16 +220,17 @@ class TurtleStrategy(CtaTemplate):
             return
 
         # 过滤无效tick
-        t = tick.datetime.time()
-        isFinance = isFinanceSymbol(tick.symbol)
-        if not isFinance:
-            if NIGHT_END_CF_M <= t < MORNING_START_CF or MORNING_REST_CF <= t < MORNING_RESTART_CF or MORNING_END_CF <= t < AFTERNOON_START_CF or AFTERNOON_END_CF <= t < NIGHT_START_CF:
-                self.write_log(f'====== 过滤无效tick：{tick.vt_symbol}\t{tick.datetime} ======')
-                return
-        else:
-            if t < MORNING_START_SF or MORNING_END_SF <= t < AFTERNOON_START_SF or AFTERNOON_END_SF <= t:
-                self.write_log(f'====== 过滤无效tick：{tick.vt_symbol}\t{tick.datetime} ======')
-                return
+        if not self.is_crypto:
+            t = tick.datetime.time()
+            isFinance = isFinanceSymbol(tick.symbol)
+            if not isFinance:
+                if NIGHT_END_CF_M <= t < MORNING_START_CF or MORNING_REST_CF <= t < MORNING_RESTART_CF or MORNING_END_CF <= t < AFTERNOON_START_CF or AFTERNOON_END_CF <= t < NIGHT_START_CF:
+                    self.write_log(f'====== 过滤无效tick：{tick.vt_symbol}\t{tick.datetime} ======')
+                    return
+            else:
+                if t < MORNING_START_SF or MORNING_END_SF <= t < AFTERNOON_START_SF or AFTERNOON_END_SF <= t:
+                    self.write_log(f'====== 过滤无效tick：{tick.vt_symbol}\t{tick.datetime} ======')
+                    return
 
         # 主力换月时清空前主力仓位
         if tick.vt_symbol == self.last_symbol:
@@ -601,7 +602,13 @@ class TurtleStrategy(CtaTemplate):
         multiplier = 0
         if self.atrVolatility * self.per_size:
             multiplier = riskValue / (self.atrVolatility * self.per_size)
-            multiplier = int(round(multiplier, 0))
+            #multiplier = int(round(multiplier, 0))
+            min_volume = 1
+            if self.is_crypto:
+                contract = self.cta_engine.main_engine.get_contract(vt_symbol=self.vt_symbol)
+                if contract:
+                    min_volume = contract.min_volume
+            multiplier = int(round(multiplier / min_volume, 0)) * min_volume
         self.multiplier = multiplier
 
     # 计算入场信号指标
