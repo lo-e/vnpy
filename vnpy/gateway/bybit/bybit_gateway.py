@@ -469,17 +469,21 @@ class BybitRestApi(RestClient):
         """"""
         if self.check_error("查询持仓", data):
             return
-        
-        for d in data["result"]:
+
+        if self.usdt_base:
+            result_list = data["result"]
+        else:
+            result_list = [data["result"]]
+        for d in result_list:
             """ modify by loe """
             if d["side"] == "Buy":
-                volume = d["size"]
+                volume = float(d["size"])
                 direction = Direction.LONG
             elif d["side"] == "Sell":
-                volume = -d["size"]
+                volume = float(-d["size"])
                 direction = Direction.SHORT
             else:
-                volume = d["size"]
+                volume = float(d["size"])
                 direction = Direction.NET
 
             position = PositionData(
@@ -487,7 +491,7 @@ class BybitRestApi(RestClient):
                 exchange=Exchange.BYBIT,
                 direction=direction,
                 volume=volume,
-                price=d["entry_price"],
+                price=float(d["entry_price"]),
                 gateway_name=self.gateway_name
             )
             self.gateway.on_position(position)
@@ -495,16 +499,16 @@ class BybitRestApi(RestClient):
             if not self.usdt_base:
                 account = AccountData(
                     accountid=d["symbol"].replace("USD", ""),
-                    balance=d["wallet_balance"] + d['unrealised_pnl'],
-                    frozen=d["position_margin"] + d['occ_closing_fee'] + d['occ_funding_fee'] + d['order_margin'],
-                    position_profit=d['unrealised_pnl'],
+                    balance=float(d["wallet_balance"]) + float(d['unrealised_pnl']),
+                    frozen=float(d["position_margin"]) + float(d['occ_closing_fee']) + float(d['occ_funding_fee']) + float(d['order_margin']),
+                    position_profit=float(d['unrealised_pnl']),
                     gateway_name=self.gateway_name,
                 )
                 """ modify by loe """
-                if d['unrealised_pnl'] < 0:
-                    account.available = d["wallet_balance"] - account.frozen + d['unrealised_pnl']
+                if float(d['unrealised_pnl']) < 0:
+                    account.available = float(d["wallet_balance"]) - account.frozen + float(d['unrealised_pnl'])
                 else:
-                    account.available = d["wallet_balance"] - account.frozen
+                    account.available = float(d["wallet_balance"]) - account.frozen
                 self.gateway.on_account(account)
 
     def on_query_contract(self, data: dict, request: Request) -> None:
@@ -659,7 +663,7 @@ class BybitRestApi(RestClient):
             path = "/private/linear/position/list"
             symbols = symbols_usdt
         else:
-            path = "/position/list"
+            path = "/v2/private/position/list"
             symbols = symbols_inverse
 
         for symbol in symbols:
@@ -678,7 +682,7 @@ class BybitRestApi(RestClient):
             path = "/private/linear/order/list"
             symbols = symbols_usdt
         else:
-            path = "/open-api/order/list"
+            path = "/v2/private/order/list"
             symbols = symbols_inverse
 
         for symbol in symbols:
