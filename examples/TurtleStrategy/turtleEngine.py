@@ -77,6 +77,7 @@ class BacktestingEngine(object):
 
                 """ modify by loe """
                 self.sizeDict[d['symbol']] = int(d['size'])
+                self.priceTickDict[d['symbol']] = float(d['priceTick'])
                 self.is_crypto_dict[d['symbol']] = d['is_crypto'] == 'true'
                 self.min_volume_dict[d['symbol']] = float(d['min_volume'])
                 SIZE_DICT[d['symbol']] = int(d['size'])
@@ -101,6 +102,7 @@ class BacktestingEngine(object):
         self.symbolList.append(d['symbol'])
 
         self.sizeDict[d['symbol']] = int(d['size'])
+        self.priceTickDict[d['symbol']] = float(d['priceTick'])
         self.is_crypto_dict[d['symbol']] = d['is_crypto'] == 'true'
         self.min_volume_dict[d['symbol']] = float(d['min_volume'])
         SIZE_DICT[d['symbol']] = int(d['size'])
@@ -128,6 +130,7 @@ class BacktestingEngine(object):
             self.symbolList.append(d['symbol'])
 
             self.sizeDict[d['symbol']] = int(d['size'])
+            self.priceTickDict[d['symbol']] = float(d['priceTick'])
             self.is_crypto_dict[d['symbol']] = d['is_crypto'] == 'true'
             self.min_volume_dict[d['symbol']] = float(d['min_volume'])
             SIZE_DICT[d['symbol']] = int(d['size'])
@@ -368,10 +371,6 @@ class BacktestingEngine(object):
     #----------------------------------------------------------------------
     def sendOrder(self, symbol, direction, offset, price, volume):
         """记录交易数据（由portfolio调用）"""
-        # 对价格四舍五入
-        priceTick = PRICETICK_DICT[symbol]
-        price = int(round(price/priceTick, 0)) * priceTick
-        
         # 记录成交数据
         """ modify by loe """
         trade = TradeData(symbol, self.currentDt, direction, offset, price, volume)

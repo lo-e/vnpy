@@ -159,10 +159,6 @@ class TurtleSignal(object):
                 self.actualSymbol = startD['symbol']
 
             if exchange:
-                """ fake """
-                if self.symbol == 'SM99' and bar.datetime >= datetime(2015, 6, 15):
-                    a = 2
-
                 # 记录前主力实际持仓
                 oldUnit = self.portfolio.unitDict[self.symbol]
 
@@ -406,7 +402,10 @@ class TurtleSignal(object):
     def buy(self, price, volume):
         """买入开仓"""
         price = self.calculateTradePrice(Direction.LONG, price)
-        
+        # 对价格四舍五入
+        priceTick = self.portfolio.engine.priceTickDict[self.symbol]
+        price = int(round(price / priceTick, 0)) * priceTick
+
         self.open(price, volume)
         self.newSignal(Direction.LONG, Offset.OPEN, price, volume)
         
@@ -420,6 +419,10 @@ class TurtleSignal(object):
     def sell(self, price):
         """卖出平仓"""
         price = self.calculateTradePrice(Direction.SHORT, price)
+        # 对价格四舍五入
+        priceTick = self.portfolio.engine.priceTickDict[self.symbol]
+        price = int(round(price / priceTick, 0)) * priceTick
+
         volume = abs(self.unit)
         
         self.close(price)
@@ -429,7 +432,10 @@ class TurtleSignal(object):
     def short(self, price, volume):
         """卖出开仓"""
         price = self.calculateTradePrice(Direction.SHORT, price)
-        
+        # 对价格四舍五入
+        priceTick = self.portfolio.engine.priceTickDict[self.symbol]
+        price = int(round(price / priceTick, 0)) * priceTick
+
         self.open(price, -volume)
         self.newSignal(Direction.SHORT, Offset.OPEN, price, volume)
         
@@ -443,6 +449,10 @@ class TurtleSignal(object):
     def cover(self, price):
         """买入平仓"""
         price = self.calculateTradePrice(Direction.LONG, price)
+        # 对价格四舍五入
+        priceTick = self.portfolio.engine.priceTickDict[self.symbol]
+        price = int(round(price / priceTick, 0)) * priceTick
+
         volume = abs(self.unit)
         
         self.close(price)
