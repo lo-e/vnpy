@@ -13,8 +13,12 @@ if __name__ == '__main__':
     """
 
     #"""
-    contract_list = ['BTCUSD', 'ETHUSD']
-    days = 2
+    mode = input('选择模式【反向：1  正向：2】')
+    if mode == '1':
+        contract_list = ['BTCUSD', 'ETHUSD']
+    else:
+        contract_list = ['BTCUSDT', 'ETHUSDT']
+    days = 6
     dataDownload = TurtleCryptoDataDownloading()
     dataDownload.download_from_bybit(contract_list=contract_list, days=days)
     result, complete_msg, back_msg, lost_msg = dataDownload.generate_for_bybit(contract_list=contract_list, days=days)
