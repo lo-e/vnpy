@@ -23,6 +23,6 @@
     }
 ],
     "portfolio": {"name": "turtle_crypto[BTCUSDT, ETHUSDT]",
-                  "portfolioValue": 30000,
+                  "portfolioValue": 60000,
                   "is_crypto": true}
 }
