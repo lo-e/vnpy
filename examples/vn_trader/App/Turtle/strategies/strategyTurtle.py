@@ -700,3 +700,9 @@ class TurtleStrategy(CtaTemplate):
                 self.last_symbol = '.'.join([symbol, key.value])
                 break
 
+    def bestLimitOrderPrice(self, tick, direction, multi=20):
+        if self.is_crypto:
+            return super(TurtleStrategy, self).bestLimitOrderPrice(tick, direction, multi=200)
+        else:
+            return super(TurtleStrategy, self).bestLimitOrderPrice(tick, direction)
+
