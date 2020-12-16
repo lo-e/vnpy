@@ -47,7 +47,7 @@
     {
         "strategy_name": "TURTLE_ZC",
         "class_name": "TurtleStrategy",
-        "vt_symbol": "ZC101",
+        "vt_symbol": "ZC105",
         "last_symbol":"",
         "per_size":100,
         "tick_price":0.2,
