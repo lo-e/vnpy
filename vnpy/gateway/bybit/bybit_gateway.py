@@ -41,6 +41,7 @@ from vnpy.trader.gateway import BaseGateway
 """ modify by loe """
 import socket
 from vnpy.event import Event
+from decimal import Decimal
 
 STATUS_BYBIT2VT: Dict[str, Status] = {
     "Created": Status.NOTTRADED,
@@ -308,10 +309,13 @@ class BybitRestApi(RestClient):
                 break
         if min_volume <= 0:
             min_volume = 1
-        volume = int(round(req.volume / min_volume, 0)) * min_volume
-        if not self.usdt_base:
-            # 反向合约带小数委托会报错，保险期间这里另外做个整型处理
+        volume = Decimal(str(int(round(req.volume / min_volume, 0)))) * Decimal(str(min_volume))
+        if type(min_volume) == int:
+            # 反向合约整型委托
             volume = int(volume)
+        else:
+            # 正向合约浮点委托
+            volume = float(volume)
         order.volume = volume
 
         reduce_only = False
