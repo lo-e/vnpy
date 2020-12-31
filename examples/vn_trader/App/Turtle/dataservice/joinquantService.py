@@ -24,7 +24,7 @@ if not is_auth():
     auth('18521705317', '970720699')
 
 # 使用聚宽数据服务，添加新的品种必须这里添加代码
-EXCHANGE_SYMBOL_MAP = {'XSGE':['RB', 'HC', 'RU', 'CU', 'PB', 'SN', 'SP', 'WR', 'ZN', 'RU'],
+EXCHANGE_SYMBOL_MAP = {'XSGE':['RB', 'HC', 'RU', 'CU', 'PB', 'SN', 'SP', 'WR', 'ZN', 'RU', 'AL'],
                        'XZCE':['SM', 'ZC', 'TA', 'CF', 'CJ', 'CY', 'OI', 'RM', 'SF', 'SM', 'SR', 'TA', 'ZC', 'FG', 'RI', 'SA'],
                        'XDCE':['J', 'A', 'I', 'CS', 'EG', 'JM'],
                        'XINE':['SC', 'NR'],
@@ -285,6 +285,8 @@ def jq_get_and_save_dominant_symbol_from(underlying_symbol:str, from_date:dateti
     if datetime.now() < datetime.now().replace(hour=17, minute=0, second=0, microsecond=0):
         end_date = today_date - timedelta(days=1)
     target_date = from_date
+
+    trading_date_list = set()
     while target_date <= end_date:
         try:
             new_dominant, msg = jq_get_and_save_dominant_symbol(underlying_symbol=underlying_symbol, target_date=target_date)
@@ -293,6 +295,8 @@ def jq_get_and_save_dominant_symbol_from(underlying_symbol:str, from_date:dateti
                 msg = f'{msg}\t新主力'
                 # 下载新主力的历史数据
                 bar_list, download_msg = download_bar_data(symbol=new_dominant, start='', end='', to_database=True)
+                for bar in bar_list:
+                    trading_date_list.add(bar.datetime)
                 msg = f'{msg}\n{download_msg}'
             print(msg)
             return_msg += msg
@@ -303,7 +307,8 @@ def jq_get_and_save_dominant_symbol_from(underlying_symbol:str, from_date:dateti
             return_msg += msg
             break
 
-    return return_msg
+    trading_date_list = sorted(trading_date_list)
+    return trading_date_list, return_msg
 
 # 判断主力合约并存入数据库，指定单个日期
 def jq_get_and_save_dominant_symbol(underlying_symbol:str, target_date:datetime) -> (str, str):

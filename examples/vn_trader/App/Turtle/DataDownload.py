@@ -9,11 +9,12 @@ if __name__ == '__main__':
     dataDownload = TurtleDataDownloading()
     #dataDownload.download()
     #dataDownload.download_tushare()
-    #dataDownload.download_jq()
+    #dataDownload.download_all_history_jq()
+    dataDownload.download_jq()
 
     #dataDownload.download_minute_multi_jq(days=1)
     #dataDownload.download_minute_single_jq(days=0)
-    dataDownload.download_spread_dominant(days=1)
+    #dataDownload.download_spread_dominant(days=1)
     #"""
 
     """
