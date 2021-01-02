@@ -324,6 +324,10 @@ def jq_get_and_save_dominant_symbol(underlying_symbol:str, target_date:datetime)
                 continue
             trading_symbol_list.append(symbol_data.symbol)
 
+    if not trading_symbol_list:
+        # 该交易日没有该品种交易数据【没有上市】
+        return ('', f'没有该品种交易数据【没有上市】 -> {target_date}')
+
     # 数据库获取最新主力合约代码
     collection = dbDominant[underlying_symbol]
     cursor = collection.find().sort('date', direction=DESCENDING)
