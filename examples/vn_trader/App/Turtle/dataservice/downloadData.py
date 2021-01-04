@@ -316,12 +316,10 @@ class TurtleDataDownloading(object):
     def download_all_history_jq(self, symbol_list: list = None):
         #"""
         underlying_list = ['RB']
-        days = 2
-        today = datetime.strptime(datetime.now().strftime('%Y%m%d'), '%Y%m%d')
+        from_date = datetime.strptime('2010-12-20', '%Y-%m-%d')
 
         result = True
         return_msg = ''
-        from_date = today - timedelta(days=days)
         for underlying_symbol in underlying_list:
             underlying_start_msg = f'============ {underlying_symbol} ============'
             print(underlying_start_msg)
