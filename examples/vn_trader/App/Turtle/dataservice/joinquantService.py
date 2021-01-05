@@ -24,11 +24,11 @@ if not is_auth():
     auth('18521705317', '970720699')
 
 # 使用聚宽数据服务，添加新的品种必须这里添加代码
-EXCHANGE_SYMBOL_MAP = {'XSGE':['RB', 'HC', 'RU', 'CU', 'PB', 'SN', 'SP', 'WR', 'ZN', 'RU', 'AL'],
-                       'XZCE':['SM', 'ZC', 'TA', 'CF', 'CJ', 'CY', 'OI', 'RM', 'SF', 'SM', 'SR', 'TA', 'ZC', 'FG', 'RI', 'SA'],
-                       'XDCE':['J', 'A', 'I', 'CS', 'EG', 'JM'],
+EXCHANGE_SYMBOL_MAP = {'XSGE':['RB', 'HC', 'RU', 'CU', 'PB', 'SN', 'SP', 'WR', 'ZN', 'AL', 'NI', 'AG', 'AU', 'BU', 'FU'],
+                       'XZCE':['SM', 'ZC', 'TA', 'CF', 'CJ', 'CY', 'OI', 'RM', 'SF', 'SR', 'FG', 'RI', 'SA', 'AP', 'JR', 'LR', 'MA', 'PM', 'RS', 'WH'],
+                       'XDCE':['J', 'A', 'I', 'CS', 'EG', 'JM', 'PP', 'B', 'BB', 'C', 'FB', 'JD', 'L', 'M', 'P', 'V', 'Y'],
                        'XINE':['SC', 'NR'],
-                       'CCFX':['TF', 'TS']}
+                       'CCFX':['TF', 'TS', 'IF', 'IC', 'IH']}
 
 client = MongoClient('localhost', 27017, serverSelectionTimeoutMS=600)
 client.server_info()
