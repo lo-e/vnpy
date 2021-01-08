@@ -8,6 +8,7 @@ from .dataService import *
 from .tushareService import *
 from .joinquantService import *
 from datetime import datetime
+from pymongo import MongoClient, ASCENDING
 
 class TurtleDataDownloading(object):
     def __init__(self):
@@ -506,3 +507,11 @@ class TurtleDataDownloading(object):
             return_msg += dominant_msg + '\n\n'
             print('\n')
         return return_msg
+
+def DeleteDailyCollectionFromDatabase(symbol_list:list):
+    # Mongo连接
+    mc = MongoClient('localhost', 27017, serverSelectionTimeoutMS=600)
+    dbDaily = mc[DAILY_DB_NAME]
+    for symbol in symbol_list:
+        collection = dbDaily[symbol]
+        collection.drop()

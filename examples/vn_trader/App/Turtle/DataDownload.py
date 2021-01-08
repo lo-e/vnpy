@@ -17,6 +17,9 @@ if __name__ == '__main__':
     #dataDownload.download_spread_dominant(days=1)
     #"""
 
+    # 删除数据库collection
+    #DeleteDailyCollectionFromDatabase(symbol_list=[''])
+
     """
     # 下载【symbol_list.csv】中的指数、主力合约
     input = input(u'输入合约类型【88主力 888平滑主力 99指数】')
