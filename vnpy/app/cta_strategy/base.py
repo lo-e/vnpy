@@ -61,7 +61,7 @@ DOMINANT_DB_NAME = 'Dominant_db'
 ORDER_DB_NAME = 'VnTrader_Order_Db'
 TRADE_DB_NAME = 'VnTrader_Trade_Db'
 
-TRANSFORM_SYMBOL_LIST = {'SM':'2', 'TA':'2', 'ZC':'2', 'CF':'2', 'CJ':'2', 'CY':'2', 'OI':'2', 'RM':'2', 'SF':'2', 'SR':'2', 'FG':'2', 'RI':'2', 'SA':'2', 'AP':'2', 'JR':2}      # 交易合约和RQData合约需要转换，TA905 -> TA1905
+TRANSFORM_SYMBOL_LIST = {'SM':'2', 'TA':'2', 'ZC':'2', 'CF':'2', 'CJ':'2', 'CY':'2', 'OI':'2', 'RM':'2', 'SF':'2', 'SR':'2', 'FG':'2', 'RI':'2', 'SA':'2', 'AP':'2', 'JR':2, 'LR':2}      # 交易合约和RQData合约需要转换，TA905 -> TA1905
 
 def MinuteDataBaseName(duration:int):
     return re.sub("\d", f'{duration}', MINUTE_DB_NAME)
