@@ -8,6 +8,7 @@ from .dataService import *
 from .tushareService import *
 from .joinquantService import *
 from datetime import datetime
+from pymongo import MongoClient, ASCENDING
 
 class TurtleDataDownloading(object):
     def __init__(self):
@@ -248,7 +249,7 @@ class TurtleDataDownloading(object):
         from_date = today - timedelta(days=days)
         # from_date = datetime.strptime('2019-12-12', '%Y-%m-%d')
         for underlying_symbol in underlying_list:
-            dominant_msg = jq_get_and_save_dominant_symbol_from(underlying_symbol=underlying_symbol, from_date=from_date)
+            trading_date_list, dominant_msg = jq_get_and_save_dominant_symbol_from(underlying_symbol=underlying_symbol, from_date=from_date)
             return_msg += dominant_msg + '\n\n'
             print('\n')
 
@@ -310,6 +311,51 @@ class TurtleDataDownloading(object):
             result = False
         if not result:
             return_msg = f'======\n数据未更新\n======\n\n' + return_msg
+        return result, return_msg
+        #"""
+
+    def download_all_history_jq(self, symbol_list: list = None):
+        #"""
+        underlying_list = ['RB']
+        from_date = datetime.strptime('2010-12-20', '%Y-%m-%d')
+
+        result = True
+        return_msg = ''
+        for underlying_symbol in underlying_list:
+            underlying_start_msg = f'============ {underlying_symbol} ============'
+            print(underlying_start_msg)
+            return_msg += underlying_start_msg + '\n'
+
+            # 添加主力合约代码到数据库
+            dominant_start_msg = f'\n== 主力代码添加数据库 =='
+            print(dominant_start_msg)
+            return_msg += dominant_start_msg + '\n'
+
+            trading_date_list, dominant_msg = jq_get_and_save_dominant_symbol_from(underlying_symbol=underlying_symbol, from_date=from_date)
+            return_msg += dominant_msg + '\n\n'
+
+            # 添加指数日线数据到数据库【RB99】
+            index_datetime_msg = f'\n== 指数日线添加数据库 =='
+            print(index_datetime_msg)
+            return_msg += index_datetime_msg + '\n'
+
+            add_date_list = []
+            for downloaded_datetime in trading_date_list:
+                symbol = underlying_symbol + '99'
+                bar = BarData(gateway_name='', symbol=symbol, exchange='', datetime=downloaded_datetime,
+                              endDatetime=None)
+                collection = dbDaily[bar.symbol]
+                collection.update_many({'datetime': bar.datetime}, {'$set': bar.__dict__}, upsert=True)
+                add_date_list.append(downloaded_datetime.strftime('%Y-%m-%d'))
+            msg = ''
+            for date_str in add_date_list:
+                if msg:
+                    msg += '\t' + date_str
+                else:
+                    msg += date_str
+            print(f'【{msg}】', '\n')
+            return_msg += msg
+
         return result, return_msg
         #"""
 
@@ -461,3 +507,11 @@ class TurtleDataDownloading(object):
             return_msg += dominant_msg + '\n\n'
             print('\n')
         return return_msg
+
+def DeleteDailyCollectionFromDatabase(symbol_list:list):
+    # Mongo连接
+    mc = MongoClient('localhost', 27017, serverSelectionTimeoutMS=600)
+    dbDaily = mc[DAILY_DB_NAME]
+    for symbol in symbol_list:
+        collection = dbDaily[symbol]
+        collection.drop()
