@@ -1,3 +1,3 @@
-from .downloadData import TurtleDataDownloading, DeleteDailyCollectionFromDatabase
+from .downloadData import TurtleDataDownloading, DeleteSymbolDominantAndDailyCollectionsFromDatabase
 from .dataService import *
 from .tushareService import *

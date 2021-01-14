@@ -9,6 +9,7 @@ from .tushareService import *
 from .joinquantService import *
 from datetime import datetime
 from pymongo import MongoClient, ASCENDING
+import re
 
 class TurtleDataDownloading(object):
     def __init__(self):
@@ -508,10 +509,21 @@ class TurtleDataDownloading(object):
             print('\n')
         return return_msg
 
-def DeleteDailyCollectionFromDatabase(symbol_list:list):
+def DeleteSymbolDominantAndDailyCollectionsFromDatabase(underlying:str):
     # Mongo连接
     mc = MongoClient('localhost', 27017, serverSelectionTimeoutMS=600)
+    dbDominant = mc[DOMINANT_DB_NAME]
+    dominant_col_names = dbDominant.list_collection_names(session=None)
+    for dominant_col_name in dominant_col_names:
+        if underlying == dominant_col_name:
+            dominant_col = dbDominant[dominant_col_name]
+            dominant_col.drop()
+
     dbDaily = mc[DAILY_DB_NAME]
-    for symbol in symbol_list:
-        collection = dbDaily[symbol]
-        collection.drop()
+    daily_col_names = dbDaily.list_collection_names(session=None)
+    for daily_col_name in daily_col_names:
+        start_symbol = re.sub("\d", "", daily_col_name).upper()
+        if underlying == start_symbol:
+            daily_col = dbDaily[daily_col_name]
+            daily_col.drop()
+
