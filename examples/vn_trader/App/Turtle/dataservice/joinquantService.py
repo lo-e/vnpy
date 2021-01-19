@@ -320,7 +320,8 @@ def jq_get_and_save_dominant_symbol(underlying_symbol:str, target_date:datetime)
     for symbol_data in all_trading_symbol_list:
         start_symbol = re.sub("\d", "", symbol_data.symbol).upper()
         if underlying_symbol == start_symbol:
-            if '主力' in symbol_data.display_name or '指数' in symbol_data.display_name:
+            end_display = symbol_data.display_name[-2:]
+            if '主力' in symbol_data.display_name or '指数' == end_display:
                 continue
             trading_symbol_list.append(symbol_data.symbol)
 
