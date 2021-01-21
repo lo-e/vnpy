@@ -323,8 +323,8 @@ class TurtleDataDownloading(object):
         result = True
         return_msg = ''
 
-        all_trading_date_list = set()
         for underlying_symbol in underlying_list:
+            all_trading_date_list = set()
             underlying_start_msg = f'============ {underlying_symbol} ============'
             print(underlying_start_msg)
             return_msg += underlying_start_msg + '\n'
