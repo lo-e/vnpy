@@ -223,8 +223,8 @@ def four():
     resultList = []
     for l in combineList:
         engine = BacktestingEngine()
-        engine.setPeriod(datetime(2009, 6, 15), datetime(2019, 12, 31))
-        engine.tradingStart = datetime(2010, 1, 1)
+        engine.setPeriod(datetime(2010, 9, 15), datetime(2021, 1, 1))
+        engine.tradingStart = datetime(2011, 1, 1)
         engine.initListPortfolio(l, 200000)
 
         engine.loadData()

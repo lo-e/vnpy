@@ -143,8 +143,11 @@ class TurtleSignal(object):
                     elif dominantDic['date'] == bar.datetime:
                         break
                     else:
-                        i -= 1
-                        break
+                        if not self.dominantDate:
+                            return
+                        else:
+                            raise '回测数据日期找不到对应主力合约，检查代码！'
+                            break
                 self.symbolDominantData = self.symbolDominantData[i:]
 
                 startD = self.symbolDominantData[0]
