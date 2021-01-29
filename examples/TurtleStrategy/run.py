@@ -149,7 +149,7 @@ def two():
     filename = 'setting.csv'
     count = 0
     resultList = []
-    with open(filename) as f:
+    with open(filename, errors='ignore') as f:
         r = DictReader(f)
         for d in r:
             engine = BacktestingEngine()
