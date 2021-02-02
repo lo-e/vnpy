@@ -14,10 +14,16 @@ MAX_CATEGORY_POS = 6        # 高度关联最大持仓
 MAX_DIRECTION_POS = 12      # 单方向最大持仓
 
 CATEGORY_DICT = {'finance':['IF','IC','IH'],
-                'nonferrous_metal':['AL'],
+                'nonferrous_metal':['AL', 'CU'],
                  'ferrous_metal':['RB','I','HC','SM'],
                  'coal':['JM','J','ZC'],
-                 'chemical_industry':['TA', 'RU']}
+                 'chemical_industry':['TA', 'RU', 'PP', 'L', 'EG'],
+                 'soft_commodity':['CF', 'SR'],
+                 'Oils_fats':['M', 'P', 'OI', 'RM'],
+                 'farmer_products':['AP'],
+                 'light_industry':['SP', 'FG'],
+                 'precious_metal':['AG'],
+                 'cereal':['C']}
 
 
 ########################################################################
