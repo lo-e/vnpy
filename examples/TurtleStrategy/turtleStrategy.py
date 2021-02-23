@@ -72,7 +72,10 @@ class TurtleSignal(object):
         self.entryWindow = entryWindow  # 入场通道周期数
         self.exitWindow = exitWindow    # 出场通道周期数
         self.atrWindow = atrWindow      # 计算ATR周期数
-        self.profitCheck = profitCheck  # 是否检查上一笔盈利
+        if self.is_crypto:
+            self.profitCheck = False
+        else:
+            self.profitCheck = profitCheck  # 是否检查上一笔盈利
 
         """ modify by loe """
         self.am = ArrayManager(self.entryWindow+1)      # K线容器
