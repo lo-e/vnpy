@@ -553,3 +553,15 @@ def DeleteSymbolDominantAndDailyCollectionsFromDatabase(underlying:str):
             daily_col = dbDaily[daily_col_name]
             daily_col.drop()
 
+def DeleteDailyCollections(target_datetime:str, symbol_list:list):
+    the_datetime = datetime.strptime(target_datetime, '%Y-%m-%d')
+    # Mongo连接
+    mc = MongoClient('localhost', 27017, serverSelectionTimeoutMS=600)
+    dbDaily = mc[DAILY_DB_NAME]
+    for symbol in symbol_list:
+        collection = dbDaily[symbol]
+        flt = {'datetime':the_datetime}
+        cursor = collection.find(flt)
+        if cursor.count():
+            collection.remove(flt)
+

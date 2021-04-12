@@ -20,6 +20,11 @@ if __name__ == '__main__':
     # 删除数据库collection
     #DeleteSymbolDominantAndDailyCollectionsFromDatabase(underlying='')
 
+    # 删除日线数据
+    #target_datetime = '2021-6-6'
+    #symbol_list = ['HC2105', 'HC2110', 'HC99']
+    #DeleteDailyCollections(target_datetime=target_datetime, symbol_list=symbol_list)
+
     """
     # 下载【symbol_list.csv】中的指数、主力合约
     input = input(u'输入合约类型【88主力 888平滑主力 99指数】')
