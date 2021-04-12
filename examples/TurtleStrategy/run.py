@@ -149,13 +149,14 @@ def two():
     filename = 'setting.csv'
     count = 0
     resultList = []
-    with open(filename) as f:
+    with open(filename, errors='ignore') as f:
         r = DictReader(f)
         for d in r:
             engine = BacktestingEngine()
-            engine.setPeriod(datetime(2012, 10, 15), datetime(2019, 12, 31))
+            engine.setPeriod(datetime(2010, 9, 15), datetime(2021, 1, 1))
+            engine.tradingStart = datetime(2011, 1, 1)
 
-            engine.initSinglePortfolio(d, 10000000)
+            engine.initSinglePortfolio(d, 200000)
 
             engine.loadData()
             engine.runBacktesting()
@@ -168,11 +169,17 @@ def two():
             print(u'count：\t%s\n' % count)
 
             temp = d.copy()
-            temp['result'] = result['sharpeRatio']
+            temp.pop('is_crypto')
+            temp.pop('min_volume')
+            temp['sharpeRatio'] = result['sharpeRatio']
+            temp['totalReturn'] = result['totalReturn']
+            temp['annualizedReturn'] = result['annualizedReturn']
+            temp['maxDrawdown'] = result['maxDrawdown']
+            temp['maxDdPercent'] = result['maxDdPercent']
             resultList.append(temp)
 
     if len(resultList):
-        fieldNames = ['symbol', 'size', 'priceTick', 'variableCommission', 'fixedCommission', 'slippage', 'name', 'result']
+        fieldNames = ['symbol', 'size', 'priceTick', 'variableCommission', 'fixedCommission', 'slippage', 'name', 'sharpeRatio', 'totalReturn', 'annualizedReturn', 'maxDrawdown', 'maxDdPercent']
         # 文件路径
         filePath = 'result.csv'
         with open(filePath, 'w') as f:
@@ -223,8 +230,8 @@ def four():
     resultList = []
     for l in combineList:
         engine = BacktestingEngine()
-        engine.setPeriod(datetime(2009, 6, 15), datetime(2019, 12, 31))
-        engine.tradingStart = datetime(2010, 1, 1)
+        engine.setPeriod(datetime(2010, 9, 15), datetime(2021, 1, 1))
+        engine.tradingStart = datetime(2011, 1, 1)
         engine.initListPortfolio(l, 200000)
 
         engine.loadData()

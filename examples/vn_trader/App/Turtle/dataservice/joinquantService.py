@@ -320,7 +320,8 @@ def jq_get_and_save_dominant_symbol(underlying_symbol:str, target_date:datetime)
     for symbol_data in all_trading_symbol_list:
         start_symbol = re.sub("\d", "", symbol_data.symbol).upper()
         if underlying_symbol == start_symbol:
-            if '主力' in symbol_data.display_name or '指数' in symbol_data.display_name:
+            end_display = symbol_data.display_name[-2:]
+            if '主力' in symbol_data.display_name or '指数' == end_display:
                 continue
             trading_symbol_list.append(symbol_data.symbol)
 
@@ -364,8 +365,15 @@ def jq_get_and_save_dominant_symbol(underlying_symbol:str, target_date:datetime)
         for the_data in open_interest_list:
             # 若合约持仓量大于当前主力合约持仓量的1.1倍时，新主力产生
             if the_data.open_interest > last_dominant_open_interest * 1.1:
-                new_dominant_symbol = the_data.symbol
-                new_dominant_data_list.append(the_data)
+                new_verified = True
+                if new_dominant_data_list:
+                    last_data = new_dominant_data_list[0]
+                    if last_data.open_interest >= the_data.open_interest:
+                        new_verified = False
+
+                if new_verified:
+                    new_dominant_symbol = the_data.symbol
+                    new_dominant_data_list = [the_data]
 
         if len(new_dominant_data_list) > 1:
             # 有多个锌主力产生

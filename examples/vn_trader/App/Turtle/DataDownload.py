@@ -18,7 +18,7 @@ if __name__ == '__main__':
     #"""
 
     # 删除数据库collection
-    #DeleteDailyCollectionFromDatabase(symbol_list=[''])
+    #DeleteSymbolDominantAndDailyCollectionsFromDatabase(underlying='')
 
     """
     # 下载【symbol_list.csv】中的指数、主力合约

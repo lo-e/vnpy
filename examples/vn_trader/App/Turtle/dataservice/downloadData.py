@@ -9,6 +9,7 @@ from .tushareService import *
 from .joinquantService import *
 from datetime import datetime
 from pymongo import MongoClient, ASCENDING
+import re
 
 class TurtleDataDownloading(object):
     def __init__(self):
@@ -321,10 +322,35 @@ class TurtleDataDownloading(object):
 
         result = True
         return_msg = ''
+
         for underlying_symbol in underlying_list:
+            all_trading_date_list = set()
             underlying_start_msg = f'============ {underlying_symbol} ============'
             print(underlying_start_msg)
             return_msg += underlying_start_msg + '\n'
+
+            # 下载最近六个主力所有日线数据
+            download_daily_msg = '====== 下载最近六个主力合约的日线数据 ======'
+            print(download_daily_msg)
+            return_msg += '\n' + download_daily_msg + '\n'
+            # 数据库查询最近六个主力合约
+            collection = dbDominant[underlying_symbol]
+            cursor = collection.find().sort('date', direction=DESCENDING)
+            symbol_list = []
+            for dic in cursor:
+                symbol = dic['symbol']
+                symbol_list.append(symbol)
+                if len(symbol_list) >= 6:
+                    break
+            # 下载
+            for symbol in symbol_list:
+                bar_list, msg = download_bar_data(symbol=symbol, start='', end='', to_database=True)
+                for bar in bar_list:
+                    all_trading_date_list.add(bar.datetime)
+                print(msg)
+                return_msg += msg + '\n'
+            print('\n')
+            return_msg += '\n'
 
             # 添加主力合约代码到数据库
             dominant_start_msg = f'\n== 主力代码添加数据库 =='
@@ -332,6 +358,7 @@ class TurtleDataDownloading(object):
             return_msg += dominant_start_msg + '\n'
 
             trading_date_list, dominant_msg = jq_get_and_save_dominant_symbol_from(underlying_symbol=underlying_symbol, from_date=from_date)
+            all_trading_date_list = sorted(all_trading_date_list.union(trading_date_list))
             return_msg += dominant_msg + '\n\n'
 
             # 添加指数日线数据到数据库【RB99】
@@ -340,7 +367,7 @@ class TurtleDataDownloading(object):
             return_msg += index_datetime_msg + '\n'
 
             add_date_list = []
-            for downloaded_datetime in trading_date_list:
+            for downloaded_datetime in all_trading_date_list:
                 symbol = underlying_symbol + '99'
                 bar = BarData(gateway_name='', symbol=symbol, exchange='', datetime=downloaded_datetime,
                               endDatetime=None)
@@ -508,10 +535,21 @@ class TurtleDataDownloading(object):
             print('\n')
         return return_msg
 
-def DeleteDailyCollectionFromDatabase(symbol_list:list):
+def DeleteSymbolDominantAndDailyCollectionsFromDatabase(underlying:str):
     # Mongo连接
     mc = MongoClient('localhost', 27017, serverSelectionTimeoutMS=600)
+    dbDominant = mc[DOMINANT_DB_NAME]
+    dominant_col_names = dbDominant.list_collection_names(session=None)
+    for dominant_col_name in dominant_col_names:
+        if underlying == dominant_col_name:
+            dominant_col = dbDominant[dominant_col_name]
+            dominant_col.drop()
+
     dbDaily = mc[DAILY_DB_NAME]
-    for symbol in symbol_list:
-        collection = dbDaily[symbol]
-        collection.drop()
+    daily_col_names = dbDaily.list_collection_names(session=None)
+    for daily_col_name in daily_col_names:
+        start_symbol = re.sub("\d", "", daily_col_name).upper()
+        if underlying == start_symbol:
+            daily_col = dbDaily[daily_col_name]
+            daily_col.drop()
+

@@ -16,12 +16,16 @@ MAX_CATEGORY_POS = 6        # 高度关联最大持仓
 MAX_DIRECTION_POS = 12      # 单方向最大持仓
 
 CATEGORY_DICT = {'finance':['IF','IC','IH'],
-                'nonferrous_metal':['AL'],
+                'nonferrous_metal':['AL', 'CU'],
                  'ferrous_metal':['RB','I','HC','SM'],
                  'coal':['JM','J','ZC'],
-                 'chemical_industry':['TA', 'RU', 'PP', 'L'],
+                 'chemical_industry':['TA', 'RU', 'PP', 'L', 'EG'],
                  'soft_commodity':['CF', 'SR'],
-                 'Oils_fats':['M', 'P']}
+                 'Oils_fats':['M', 'P', 'OI', 'RM'],
+                 'farmer_products':['AP'],
+                 'light_industry':['SP', 'FG'],
+                 'precious_metal':['AG'],
+                 'cereal':['C']}
 
 ACTUAL_TRADE = True        # 实盘合约交易
 
@@ -68,7 +72,10 @@ class TurtleSignal(object):
         self.entryWindow = entryWindow  # 入场通道周期数
         self.exitWindow = exitWindow    # 出场通道周期数
         self.atrWindow = atrWindow      # 计算ATR周期数
-        self.profitCheck = profitCheck  # 是否检查上一笔盈利
+        if self.is_crypto:
+            self.profitCheck = False
+        else:
+            self.profitCheck = profitCheck  # 是否检查上一笔盈利
 
         """ modify by loe """
         self.am = ArrayManager(self.entryWindow+1)      # K线容器
@@ -143,8 +150,11 @@ class TurtleSignal(object):
                     elif dominantDic['date'] == bar.datetime:
                         break
                     else:
-                        i -= 1
-                        break
+                        if not self.dominantDate:
+                            return
+                        else:
+                            raise '回测数据日期找不到对应主力合约，检查代码！'
+                            break
                 self.symbolDominantData = self.symbolDominantData[i:]
 
                 startD = self.symbolDominantData[0]
