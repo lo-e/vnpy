@@ -10,20 +10,6 @@ from ..template import AlgoTemplate
 
 class BestLimitAlgo(AlgoTemplate):
     """"""
-
-    default_setting = {
-        "vt_symbol": "",
-        "direction": [Direction.LONG.value, Direction.SHORT.value],
-        "volume": 0.0,
-        "offset": [
-            Offset.NONE.value,
-            Offset.OPEN.value,
-            Offset.CLOSE.value,
-            Offset.CLOSETODAY.value,
-            Offset.CLOSEYESTERDAY.value
-        ]
-    }
-
     def __init__(
         self,
         algo_engine: BaseEngine,
@@ -34,6 +20,7 @@ class BestLimitAlgo(AlgoTemplate):
         super().__init__(algo_engine, algo_name, setting)
 
         # Parameters
+        self.strategy = setting['strategy']
         self.vt_symbol = setting["vt_symbol"]
         self.direction = Direction(setting["direction"])
         self.volume = setting["volume"]
@@ -88,6 +75,7 @@ class BestLimitAlgo(AlgoTemplate):
 
         self.order_price = self.last_tick.bid_price_1
         self.vt_orderid = self.buy(
+            self.strategy,
             self.vt_symbol,
             self.order_price,
             order_volume,
@@ -101,6 +89,7 @@ class BestLimitAlgo(AlgoTemplate):
 
         self.order_price = self.last_tick.ask_price_1
         self.vt_orderid = self.sell(
+            self.strategy,
             self.vt_symbol,
             self.order_price,
             order_volume,

@@ -104,6 +104,7 @@ class AlgoTemplate:
 
     def buy(
         self,
+        strategy,
         vt_symbol,
         price,
         volume,
@@ -116,6 +117,7 @@ class AlgoTemplate:
 
         return self.algo_engine.send_order(
             self,
+            strategy,
             vt_symbol,
             Direction.LONG,
             price,
@@ -126,6 +128,7 @@ class AlgoTemplate:
 
     def sell(
         self,
+        strategy,
         vt_symbol,
         price,
         volume,
@@ -138,6 +141,7 @@ class AlgoTemplate:
 
         return self.algo_engine.send_order(
             self,
+            strategy,
             vt_symbol,
             Direction.SHORT,
             price,

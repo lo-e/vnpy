@@ -11,15 +11,17 @@ from vnpy.app.cta_strategy.base import EVENT_CTA_LOG
 
 from .template import AlgoTemplate
 from .algos.best_limit_algo import BestLimitAlgo
+from vnpy.app.cta_strategy.template import CtaTemplate
 
 APP_NAME = 'AlgoEngine'
 
 class AlgoEngine(BaseEngine):
     """"""
 
-    def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
+    def __init__(self, cta_engine:BaseEngine, main_engine: MainEngine, event_engine: EventEngine):
         """Constructor"""
         super().__init__(main_engine, event_engine, APP_NAME)
+        self.cta_engine = cta_engine
 
         self.algos = {}
         self.symbol_algo_map = {}
@@ -134,6 +136,7 @@ class AlgoEngine(BaseEngine):
     def send_order(
         self,
         algo: AlgoTemplate,
+        strategy:CtaTemplate,
         vt_symbol: str,
         direction: Direction,
         price: float,
@@ -141,44 +144,24 @@ class AlgoEngine(BaseEngine):
         order_type: OrderType,
         offset: Offset
     ):
-        """"""
-        contract = self.main_engine.get_contract(vt_symbol)
-        if not contract:
-            self.write_log(f'委托下单失败，找不到合约：{vt_symbol}', algo)
-            return
-
-        if not price:
-            return ""
-
-        volume = round_to(volume, contract.min_volume)
-        if not volume:
-            return ""
-
-        req = OrderRequest(
-            symbol=contract.symbol,
-            exchange=contract.exchange,
-            direction=direction,
-            type=order_type,
-            volume=volume,
-            price=price,
-            offset=offset,
-            reference=f"{APP_NAME}_{algo.algo_name}"
+        orderid_result = self.cta_engine.send_order(
+            strategy, direction, offset, price, volume, False, False
         )
-        vt_orderid = self.main_engine.send_order(req, contract.gateway_name)
+        if not orderid_result:
+            return ''
+        elif isinstance(orderid_result, list):
+            vt_orderid = orderid_result[0]
+        elif isinstance(orderid_result, str):
+            vt_orderid = orderid_result
+        else:
+            return ''
 
         self.orderid_algo_map[vt_orderid] = algo
         return vt_orderid
 
     def cancel_order(self, algo: AlgoTemplate, vt_orderid: str):
         """"""
-        order = self.main_engine.get_order(vt_orderid)
-
-        if not order:
-            self.write_log(f"委托撤单失败，找不到委托：{vt_orderid}", algo)
-            return
-
-        req = order.create_cancel_request()
-        self.main_engine.cancel_order(req, order.gateway_name)
+        self.cta_engine.cancel_order(algo.strategy, vt_orderid)
 
     def get_tick(self, algo: AlgoTemplate, vt_symbol: str):
         """"""

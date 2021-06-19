@@ -713,6 +713,7 @@ class TurtleStrategy(CtaTemplate):
     def buy(self, price: float, volume: float):
         if self.best_limit_algo_trading:
             dict = {'template_name':'BestLimitAlgo',
+                    'strategy':self,
                     'vt_symbol':self.vt_symbol,
                     'direction':'多',
                     'volume': volume,
@@ -725,6 +726,7 @@ class TurtleStrategy(CtaTemplate):
     def sell(self, price: float, volume: float):
         if self.best_limit_algo_trading:
             dict = {'template_name':'BestLimitAlgo',
+                    'strategy': self,
                     'vt_symbol':self.vt_symbol,
                     'direction':'空',
                     'volume': volume,
@@ -737,6 +739,7 @@ class TurtleStrategy(CtaTemplate):
     def short(self, price: float, volume: float):
         if self.best_limit_algo_trading:
             dict = {'template_name':'BestLimitAlgo',
+                    'strategy': self,
                     'vt_symbol':self.vt_symbol,
                     'direction':'空',
                     'volume': volume,
@@ -749,6 +752,7 @@ class TurtleStrategy(CtaTemplate):
     def cover(self, price: float, volume: float):
         if self.best_limit_algo_trading:
             dict = {'template_name':'BestLimitAlgo',
+                    'strategy': self,
                     'vt_symbol':self.vt_symbol,
                     'direction':'多',
                     'volume': volume,

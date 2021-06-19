@@ -141,7 +141,7 @@ class TurtleEngine(BaseEngine):
         self.autoEngine.start()
 
         # 算法交易引擎启动
-        self.algoTradingEngine = AlgoEngine(main_engine=self.main_engine, event_engine=self.event_engine)
+        self.algoTradingEngine = AlgoEngine(cta_engine =self, main_engine=self.main_engine, event_engine=self.event_engine)
         self.algoTradingEngine.init_engine()
 
         self.write_log("海归策略引擎初始化成功")
@@ -480,11 +480,16 @@ class TurtleEngine(BaseEngine):
         contract = self.main_engine.get_contract(strategy.vt_symbol)
         if not contract:
             self.write_log(f"委托失败，找不到合约：{strategy.vt_symbol}", strategy)
-            return ""
+            return []
         
         # Round order price and volume to nearest incremental value
         price = round_to(price, contract.pricetick)
         volume = round_to(volume, contract.min_volume)
+        if not price:
+            return []
+
+        if not volume:
+            return []
         
         if stop:
             if contract.stop_supported:
