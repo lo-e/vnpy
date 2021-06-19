@@ -99,6 +99,7 @@ class TurtleStrategy(CtaTemplate):
                  'per_size',
                  'tick_price',
                  'is_crypto',
+                 'best_limit_algo_trading',
                  'entryWindow',
                  'exitWindow',
                  'atrWindow']
@@ -159,6 +160,7 @@ class TurtleStrategy(CtaTemplate):
         self.portfolio = turtlePortfolio
         self.am = ArrayManager(self.entryWindow+1)
         self.atrAm = ArrayManager(self.atrWindow+1)
+        self.last_tick = None
         
     #----------------------------------------------------------------------
     def on_init(self):
@@ -215,6 +217,8 @@ class TurtleStrategy(CtaTemplate):
         """收到行情TICK推送（必须由用户继承实现）"""
         # 保存tick数据到数据库
         #self.saveTick(tick)
+
+        self.last_tick = tick
 
         if not self.trading:
             return
@@ -706,3 +710,50 @@ class TurtleStrategy(CtaTemplate):
         else:
             return super(TurtleStrategy, self).bestLimitOrderPrice(tick, direction)
 
+    def buy(self, price: float, volume: float):
+        if self.best_limit_algo_trading:
+            dict = {'template_name':'BestLimitAlgo',
+                    'vt_symbol':self.vt_symbol,
+                    'direction':'多',
+                    'volume': volume,
+                    'offset': '开',
+                    'tick':self.last_tick}
+            self.cta_engine.algoTradingEngine.start_algo(setting=dict)
+        else:
+            super(TurtleStrategy, self).buy(price, volume)
+
+    def sell(self, price: float, volume: float):
+        if self.best_limit_algo_trading:
+            dict = {'template_name':'BestLimitAlgo',
+                    'vt_symbol':self.vt_symbol,
+                    'direction':'空',
+                    'volume': volume,
+                    'offset': '平',
+                    'tick':self.last_tick}
+            self.cta_engine.algoTradingEngine.start_algo(setting=dict)
+        else:
+            super(TurtleStrategy, self).sell(price, volume)
+
+    def short(self, price: float, volume: float):
+        if self.best_limit_algo_trading:
+            dict = {'template_name':'BestLimitAlgo',
+                    'vt_symbol':self.vt_symbol,
+                    'direction':'空',
+                    'volume': volume,
+                    'offset': '开',
+                    'tick':self.last_tick}
+            self.cta_engine.algoTradingEngine.start_algo(setting=dict)
+        else:
+            super(TurtleStrategy, self).short(price, volume)
+
+    def cover(self, price: float, volume: float):
+        if self.best_limit_algo_trading:
+            dict = {'template_name':'BestLimitAlgo',
+                    'vt_symbol':self.vt_symbol,
+                    'direction':'多',
+                    'volume': volume,
+                    'offset': '平',
+                    'tick':self.last_tick}
+            self.cta_engine.algoTradingEngine.start_algo(setting=dict)
+        else:
+            super(TurtleStrategy, self).cover(price, volume)

@@ -64,6 +64,7 @@ from time import sleep
 from .dataservice import TurtleDataDownloading
 from ..Turtle_crypto.dataservice import TurtleCryptoDataDownloading
 from .base import EVENT_TURTLE_PORTFOLIO
+from algo_trading import AlgoEngine
 
 STOP_STATUS_MAP = {
     Status.SUBMITTING: StopOrderStatus.WAITING,
@@ -138,6 +139,10 @@ class TurtleEngine(BaseEngine):
         else:
             self.autoEngine = TurtleAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='18:00',reconnect_time_list=['20:00'], check_interval=10 * 60, reload_time=6)
         self.autoEngine.start()
+
+        # 算法交易引擎启动
+        self.algoTradingEngine = AlgoEngine(main_engine=self.main_engine, event_engine=self.event_engine)
+        self.algoTradingEngine.init_engine()
 
         self.write_log("海归策略引擎初始化成功")
 

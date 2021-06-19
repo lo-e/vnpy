@@ -8,6 +8,7 @@
         "per_size":1,
         "tick_price":0.5,
         "is_crypto": true,
+        "best_limit_algo_trading": true,
         "start": true
     },
 
@@ -19,6 +20,7 @@
         "per_size":1,
         "tick_price":0.05,
         "is_crypto": true,
+        "best_limit_algo_trading": true,
         "start": true
     }
 ],
