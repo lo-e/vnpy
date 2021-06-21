@@ -28,6 +28,7 @@ class BestLimitAlgo(AlgoTemplate):
 
         # Variables
         self.vt_orderid = ""
+        self.buffer_orderid = ""
         self.traded = 0
         self.last_tick = None
         self.order_price = 0
@@ -44,15 +45,17 @@ class BestLimitAlgo(AlgoTemplate):
         self.last_tick = tick
 
         if self.direction == Direction.LONG:
-            if not self.vt_orderid:
+            if not self.vt_orderid and not self.buffer_orderid:
                 self.buy_best_limit()
-            elif self.order_price != self.last_tick.bid_price_1:
+            elif self.vt_orderid and self.buffer_orderid and self.order_price != self.last_tick.bid_price_1:
                 self.cancel_all()
+                self.vt_orderid = ""
         else:
-            if not self.vt_orderid:
+            if not self.vt_orderid and not self.buffer_orderid:
                 self.sell_best_limit()
-            elif self.order_price != self.last_tick.ask_price_1:
+            elif self.vt_orderid and self.buffer_orderid and self.order_price != self.last_tick.ask_price_1:
                 self.cancel_all()
+                self.vt_orderid = ""
 
     def on_trade(self, trade: TradeData):
         """"""
@@ -66,6 +69,7 @@ class BestLimitAlgo(AlgoTemplate):
         """"""
         if not order.is_active():
             self.vt_orderid = ""
+            self.buffer_orderid = ""
             self.order_price = 0
 
     def buy_best_limit(self):
@@ -81,6 +85,7 @@ class BestLimitAlgo(AlgoTemplate):
             order_volume,
             offset=self.offset
         )
+        self.buffer_orderid = self.vt_orderid
 
     def sell_best_limit(self):
         """"""
@@ -95,3 +100,4 @@ class BestLimitAlgo(AlgoTemplate):
             order_volume,
             offset=self.offset
         )
+        self.buffer_orderid = self.vt_orderid
