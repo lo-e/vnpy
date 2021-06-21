@@ -106,7 +106,7 @@ class BestLimitAlgo(AlgoTemplate):
         # """
         contract = self.algo_engine.get_contract(self, self.vt_symbol)
         if contract:
-            self.order_price = self.last_tick.ask_price_1 - contract.pricetick
+            self.order_price = self.last_tick.bid_price_1 + contract.pricetick
         else:
             return
         # """
