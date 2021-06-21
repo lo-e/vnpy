@@ -77,7 +77,17 @@ class BestLimitAlgo(AlgoTemplate):
         volume_left = self.volume - self.traded
         order_volume = volume_left
 
-        self.order_price = self.last_tick.bid_price_1
+        # 挂单委托价格计算方式选其一
+        #"""
+        contract = self.algo_engine.get_contract(self, self.vt_symbol)
+        if contract:
+            self.order_price = self.last_tick.ask_price_1 - contract.pricetick
+        else:
+            return
+        #"""
+
+        #self.order_price = self.last_tick.bid_price_1
+
         self.vt_orderid = self.buy(
             self.strategy,
             self.vt_symbol,
@@ -92,7 +102,17 @@ class BestLimitAlgo(AlgoTemplate):
         volume_left = self.volume - self.traded
         order_volume = volume_left
 
-        self.order_price = self.last_tick.ask_price_1
+        # 挂单委托价格计算方式选其一
+        # """
+        contract = self.algo_engine.get_contract(self, self.vt_symbol)
+        if contract:
+            self.order_price = self.last_tick.ask_price_1 - contract.pricetick
+        else:
+            return
+        # """
+
+        #self.order_price = self.last_tick.ask_price_1
+
         self.vt_orderid = self.sell(
             self.strategy,
             self.vt_symbol,
