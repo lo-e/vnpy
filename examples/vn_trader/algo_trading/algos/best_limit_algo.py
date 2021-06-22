@@ -67,7 +67,8 @@ class BestLimitAlgo(AlgoTemplate):
 
     def on_order(self, order: OrderData):
         """"""
-        if not order.is_active():
+        #if not order.is_active():
+        if order.is_failed():
             self.vt_orderid = ""
             self.buffer_orderid = ""
             self.order_price = 0
