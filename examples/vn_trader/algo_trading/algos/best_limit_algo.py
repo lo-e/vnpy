@@ -31,7 +31,7 @@ class BestLimitAlgo(AlgoTemplate):
         self.buffer_orderid = ""
         self.traded = 0
         self.last_tick = None
-        self.order_price = 0
+        self.mark_price = 0
 
         # 初始化tick数据开始发出委托
         init_tick = setting.get('tick', None)
@@ -47,13 +47,13 @@ class BestLimitAlgo(AlgoTemplate):
         if self.direction == Direction.LONG:
             if not self.vt_orderid and not self.buffer_orderid:
                 self.buy_best_limit()
-            elif self.vt_orderid and self.buffer_orderid and self.order_price != self.last_tick.bid_price_1:
+            elif self.vt_orderid and self.buffer_orderid and self.mark_price != self.last_tick.ask_price_1:
                 self.cancel_all()
                 self.vt_orderid = ""
         else:
             if not self.vt_orderid and not self.buffer_orderid:
                 self.sell_best_limit()
-            elif self.vt_orderid and self.buffer_orderid and self.order_price != self.last_tick.ask_price_1:
+            elif self.vt_orderid and self.buffer_orderid and self.mark_price != self.last_tick.bid_price_1:
                 self.cancel_all()
                 self.vt_orderid = ""
 
@@ -71,7 +71,7 @@ class BestLimitAlgo(AlgoTemplate):
         if order.is_failed():
             self.vt_orderid = ""
             self.buffer_orderid = ""
-            self.order_price = 0
+            self.mark_price = 0
 
     def buy_best_limit(self):
         """"""
@@ -82,17 +82,19 @@ class BestLimitAlgo(AlgoTemplate):
         #"""
         contract = self.algo_engine.get_contract(self, self.vt_symbol)
         if contract:
-            self.order_price = self.last_tick.ask_price_1 - contract.pricetick
+            self.mark_price = self.last_tick.ask_price_1
+            order_price = self.last_tick.ask_price_1 - contract.pricetick
         else:
             return
         #"""
 
-        #self.order_price = self.last_tick.bid_price_1
+        #self.mark_price = self.last_tick.bid_price_1
+        #order_price = self.last_tick.bid_price_1
 
         self.vt_orderid = self.buy(
             self.strategy,
             self.vt_symbol,
-            self.order_price,
+            order_price,
             order_volume,
             offset=self.offset
         )
@@ -107,17 +109,19 @@ class BestLimitAlgo(AlgoTemplate):
         # """
         contract = self.algo_engine.get_contract(self, self.vt_symbol)
         if contract:
-            self.order_price = self.last_tick.bid_price_1 + contract.pricetick
+            self.mark_price = self.last_tick.bid_price_1
+            order_price = self.last_tick.bid_price_1 + contract.pricetick
         else:
             return
         # """
 
-        #self.order_price = self.last_tick.ask_price_1
+        #self.mark_price = self.last_tick.ask_price_1
+        #order_price = self.last_tick.ask_price_1
 
         self.vt_orderid = self.sell(
             self.strategy,
             self.vt_symbol,
-            self.order_price,
+            order_price,
             order_volume,
             offset=self.offset
         )
