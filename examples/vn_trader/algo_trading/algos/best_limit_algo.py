@@ -4,6 +4,7 @@ from vnpy.trader.constant import Offset, Direction
 from vnpy.trader.object import TradeData, OrderData, TickData
 from vnpy.trader.engine import BaseEngine
 from vnpy.trader.utility import round_to
+from vnpy.trader.constant import Status
 
 from ..template import AlgoTemplate
 
@@ -32,6 +33,7 @@ class BestLimitAlgo(AlgoTemplate):
         self.traded = 0
         self.last_tick = None
         self.mark_price = 0
+        self.reject_order_count = 0
 
         # 初始化tick数据开始发出委托
         init_tick = setting.get('tick', None)
@@ -72,6 +74,11 @@ class BestLimitAlgo(AlgoTemplate):
             self.vt_orderid = ""
             self.buffer_orderid = ""
             self.mark_price = 0
+            if order.status == Status.REJECTED:
+                self.reject_order_count  += 1
+                # 异常风控
+                if self.reject_order_count >= 10:
+                    self.stop()
 
     def buy_best_limit(self):
         """"""
