@@ -45,7 +45,7 @@ from vnpy.gateway.bybit import BybitGateway
 
 from vnpy.app.cta_strategy import CtaStrategyApp
 # from vnpy.app.csv_loader import CsvLoaderApp
-from vnpy.app.algo_trading import AlgoTradingApp
+#from vnpy.app.algo_trading import AlgoTradingApp
 from vnpy.app.cta_backtester import CtaBacktesterApp
 # from vnpy.app.data_recorder import DataRecorderApp
 # from vnpy.app.risk_manager import RiskManagerApp
@@ -64,7 +64,7 @@ from vnpy.app.excel_rtd import ExcelRtdApp
 from App.Turtle import TurtleApp
 from App.Turtle_crypto import TurtleCryptoApp
 from App.spread_trading import SpreadTradingApp
-
+from App.algo_trading import AlgoTradingApp
 
 def main():
     """"""
