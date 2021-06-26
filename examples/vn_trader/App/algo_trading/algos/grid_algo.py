@@ -14,7 +14,7 @@ class GridAlgo(AlgoTemplate):
         "vt_symbol": "",
         "price": 0.0,
         "step_price": 0.0,
-        "step_volume": 0,
+        "step_volume": 0.0,
         "interval": 10,
     }
 
