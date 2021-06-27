@@ -189,7 +189,17 @@ class AlgoWidget(QtWidgets.QWidget):
         """
         setting = self.get_setting()
         if setting:
-            self.algo_engine.start_algo(setting)
+            algo_name = self.algo_engine.start_algo(setting)
+            """ modify by loe """
+            # 参数是否可手动编辑
+            algo = self.algo_engine.algos[algo_name]
+            editable = algo.editable
+            for field_name, tp in self.widgets.items():
+                widget, field_type = tp
+                if editable:
+                    widget.setEnabled(True)
+                else:
+                    widget.setEnabled(False)
 
     def update_setting(self, setting_name: str, setting: dict):
         """

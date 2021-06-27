@@ -2,7 +2,7 @@ from vnpy.trader.constant import Offset, Direction, OrderType
 from vnpy.trader.object import TradeData, OrderData, TickData
 from vnpy.trader.engine import BaseEngine
 
-from vnpy.app.algo_trading import AlgoTemplate
+from ..template import AlgoTemplate
 
 
 class DmaAlgo(AlgoTemplate):

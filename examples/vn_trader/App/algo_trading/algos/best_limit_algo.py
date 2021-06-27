@@ -5,7 +5,7 @@ from vnpy.trader.object import TradeData, OrderData, TickData
 from vnpy.trader.engine import BaseEngine
 from vnpy.trader.utility import round_to
 
-from vnpy.app.algo_trading import AlgoTemplate
+from ..template import AlgoTemplate
 
 
 class BestLimitAlgo(AlgoTemplate):

@@ -2,7 +2,7 @@ from vnpy.trader.constant import Direction
 from vnpy.trader.object import TradeData, OrderData
 from vnpy.trader.engine import BaseEngine
 
-from vnpy.app.algo_trading import AlgoTemplate
+from ..template import AlgoTemplate
 
 
 class ArbitrageAlgo(AlgoTemplate):

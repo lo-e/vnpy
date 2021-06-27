@@ -1,4 +1,5 @@
 NAME_DISPLAY_MAP = {
+    "editable":"可否手动编辑",
     "vt_symbol": "本地代码",
     "direction": "方向",
     "price": "价格",

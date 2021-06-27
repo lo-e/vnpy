@@ -27,6 +27,10 @@ class AlgoTemplate:
 
         self.variables.insert(0, "active")
 
+        """ modify by loe """
+        # 默认参数可手动编辑
+        self.editable = True
+
     @classmethod
     def new(cls, algo_engine: BaseEngine, setting: dict):
         """Create new algo instance"""

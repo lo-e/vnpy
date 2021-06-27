@@ -1,7 +1,7 @@
 from vnpy.trader.constant import Direction
 from vnpy.trader.object import TradeData, OrderData, TickData
 from vnpy.trader.engine import BaseEngine
-from vnpy.app.algo_trading import AlgoTemplate
+from ..template import AlgoTemplate
 import math
 
 
@@ -11,6 +11,10 @@ class GridAlgo(AlgoTemplate):
     display_name = "Grid 网格"
 
     default_setting = {
+        "editable": [
+            "是",
+            "否"
+        ],
         "vt_symbol": "",
         "price": 0.0,
         "step_price": 0.0,
@@ -34,6 +38,11 @@ class GridAlgo(AlgoTemplate):
         super().__init__(algo_engine, algo_name, setting)
 
         # Parameters
+        editable_text = setting['editable']
+        if editable_text == "是":
+            self.editable = True
+        else:
+            self.editable = False
         self.vt_symbol = setting["vt_symbol"]
         self.price = setting["price"]
         self.step_price = setting["step_price"]
