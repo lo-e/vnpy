@@ -39,6 +39,11 @@ class AlgoTemplate:
         algo = cls(algo_engine, algo_name, setting)
         return algo
 
+    """ modify by loe """
+    @classmethod
+    def auto_parameters(cls):
+        return {}
+
     def update_tick(self, tick: TickData):
         """"""
         if self.active:

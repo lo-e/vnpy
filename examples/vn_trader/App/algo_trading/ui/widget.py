@@ -36,6 +36,8 @@ class AlgoWidget(QtWidgets.QWidget):
         super().__init__()
 
         self.algo_engine = algo_engine
+        """ modify by loe """
+        self.algo_template = algo_template
         self.template_name = algo_template.__name__
         self.default_setting = algo_template.default_setting
 
@@ -65,6 +67,11 @@ class AlgoWidget(QtWidgets.QWidget):
             form.addRow(display_name, widget)
             self.widgets[field_name] = (widget, field_type)
 
+        """ modify by loe """
+        auto_parameters_button = QtWidgets.QPushButton("参数生成")
+        auto_parameters_button.clicked.connect(self.auto_parameters)
+        form.addRow(auto_parameters_button)
+
         start_algo_button = QtWidgets.QPushButton("启动算法")
         start_algo_button.clicked.connect(self.start_algo)
         form.addRow(start_algo_button)
@@ -85,6 +92,7 @@ class AlgoWidget(QtWidgets.QWidget):
         form.addRow(save_setting_button)
 
         for button in [
+            auto_parameters_button,
             start_algo_button,
             load_csv_button,
             save_setting_button
@@ -156,6 +164,23 @@ class AlgoWidget(QtWidgets.QWidget):
         # Only start algos if no exception/error occured
         for setting in settings:
             self.algo_engine.start_algo(setting)
+
+    def auto_parameters(self):
+        setting = self.algo_template.auto_parameters()
+        if setting:
+            for field_name, tp in self.widgets.items():
+                widget, field_type = tp
+                setting_field_value = setting.get(field_name, "")
+                if field_type == list:
+                    sel_index = 0
+                    default_field_value_list = self.default_setting.get(field_name, [])
+                    for index, default_field_value in enumerate(default_field_value_list):
+                        if default_field_value == setting_field_value:
+                            sel_index = index
+                            break
+                    widget.setCurrentIndex(sel_index)
+                else:
+                    widget.setText(str(setting_field_value))
 
     def get_setting(self):
         """
