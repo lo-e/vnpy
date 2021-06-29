@@ -292,7 +292,7 @@ class GridAlgo(AlgoTemplate):
 
     def on_order(self, order: OrderData):
         """"""
-        if not order.is_active():
+        if (order.vt_orderid == self.long_orderid or order.vt_orderid == self.short_orderid) and not order.is_active():
             self.long_orderid = ''
             self.short_orderid = ''
             self.cancel_all()

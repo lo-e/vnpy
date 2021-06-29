@@ -23,6 +23,7 @@ class BestLimitAlgo(AlgoTemplate):
     variables = [
         "traded",
         "vt_orderid",
+        "buffer_orderid",
         "reject_order_count"
     ]
 
