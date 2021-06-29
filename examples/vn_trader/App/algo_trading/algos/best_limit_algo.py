@@ -4,43 +4,26 @@ from vnpy.trader.constant import Offset, Direction
 from vnpy.trader.object import TradeData, OrderData, TickData
 from vnpy.trader.engine import BaseEngine
 from vnpy.trader.utility import round_to
+from vnpy.trader.constant import Status
 
 from ..template import AlgoTemplate
 
 
 class BestLimitAlgo(AlgoTemplate):
     """"""
-
-    display_name = "BestLimit 最优限价"
+    display_name = "最优限价Maker"
 
     default_setting = {
         "vt_symbol": "",
-        "direction": [Direction.LONG.value, Direction.SHORT.value],
+        "direction": ["多", "空"],
         "volume": 0.0,
-        "min_volume": 0.0,
-        "max_volume": 0.0,
-        "volume_change": [
-            "1",
-            "0.1",
-            "0.01",
-            "0.001",
-            "0.0001",
-            "0.00001"
-        ],
-        "offset": [
-            Offset.NONE.value,
-            Offset.OPEN.value,
-            Offset.CLOSE.value,
-            Offset.CLOSETODAY.value,
-            Offset.CLOSEYESTERDAY.value
-        ]
+        "offset": ["开", "平"]
     }
 
     variables = [
         "traded",
         "vt_orderid",
-        "order_price",
-        "last_tick",
+        "reject_order_count"
     ]
 
     def __init__(
@@ -53,56 +36,47 @@ class BestLimitAlgo(AlgoTemplate):
         super().__init__(algo_engine, algo_name, setting)
 
         # Parameters
+        self.top_algo = setting.get('top_algo', None)
         self.vt_symbol = setting["vt_symbol"]
         self.direction = Direction(setting["direction"])
         self.volume = setting["volume"]
         self.offset = Offset(setting["offset"])
 
-        self.min_volume = setting["min_volume"]
-        self.max_volume = setting["max_volume"]
-
-        if "." in setting["volume_change"]:
-            self.volume_change = float(setting["volume_change"])
-        else:
-            self.volume_change = int(setting["volume_change"])
-
         # Variables
         self.vt_orderid = ""
+        self.buffer_orderid = ""
         self.traded = 0
         self.last_tick = None
-        self.order_price = 0
+        self.mark_price = 0
+        self.reject_order_count = 0
 
-        self.put_parameters_event()
-        self.put_variables_event()
-
-        # Check if min/max volume met
-        if self.min_volume <= 0:
-            self.write_log("最小挂单量必须大于0，算法启动失败")
-            self.stop()
-            return
-
-        if self.max_volume < self.min_volume:
-            self.write_log("最大挂单量必须不小于最小委托量，算法启动失败")
-            self.stop()
-            return
+        # 初始化tick数据开始发出委托
+        init_tick = setting.get('tick', None)
+        if init_tick:
+            self.on_tick(init_tick)
 
         self.subscribe(self.vt_symbol)
+        self.put_parameters_event()
+        self.put_variables_event()
 
     def on_tick(self, tick: TickData):
         """"""
         self.last_tick = tick
 
         if self.direction == Direction.LONG:
-            if not self.vt_orderid:
+            if not self.vt_orderid and not self.buffer_orderid:
                 self.buy_best_limit()
-            elif self.order_price != self.last_tick.bid_price_1:
+            elif self.vt_orderid and self.buffer_orderid and self.mark_price != self.last_tick.ask_price_1:
                 self.cancel_all()
+                self.vt_orderid = ""
         else:
-            if not self.vt_orderid:
+            if not self.vt_orderid and not self.buffer_orderid:
                 self.sell_best_limit()
-            elif self.order_price != self.last_tick.ask_price_1:
+            elif self.vt_orderid and self.buffer_orderid and self.mark_price != self.last_tick.bid_price_1:
                 self.cancel_all()
+                self.vt_orderid = ""
 
+    def on_timer(self):
         self.put_variables_event()
 
     def on_trade(self, trade: TradeData):
@@ -112,52 +86,72 @@ class BestLimitAlgo(AlgoTemplate):
         if self.traded >= self.volume:
             self.write_log(f"已交易数量：{self.traded}，总数量：{self.volume}")
             self.stop()
-        else:
-            self.put_variables_event()
+
+        self.put_variables_event()
 
     def on_order(self, order: OrderData):
         """"""
-        if not order.is_active():
+        #if not order.is_active():
+        if order.is_failed():
             self.vt_orderid = ""
-            self.order_price = 0
-            self.put_variables_event()
+            self.buffer_orderid = ""
+            self.mark_price = 0
+            if order.status == Status.REJECTED:
+                self.reject_order_count  += 1
+                # 异常风控
+                if self.reject_order_count >= 10:
+                    self.stop()
+
+        self.put_variables_event()
 
     def buy_best_limit(self):
         """"""
         volume_left = self.volume - self.traded
+        order_volume = volume_left
 
-        rand_volume = self.generate_rand_volume()
-        order_volume = min(rand_volume, volume_left)
+        # 挂单委托价格计算方式选其一
+        #"""
+        contract = self.algo_engine.get_contract(self, self.vt_symbol)
+        if contract:
+            self.mark_price = self.last_tick.ask_price_1
+            order_price = self.last_tick.ask_price_1 - contract.pricetick
+        else:
+            return
+        #"""
 
-        self.order_price = self.last_tick.bid_price_1
+        #self.mark_price = self.last_tick.bid_price_1
+        #order_price = self.last_tick.bid_price_1
+
         self.vt_orderid = self.buy(
             self.vt_symbol,
-            self.order_price,
+            order_price,
             order_volume,
             offset=self.offset
         )
+        self.buffer_orderid = self.vt_orderid
 
     def sell_best_limit(self):
         """"""
         volume_left = self.volume - self.traded
+        order_volume = volume_left
 
-        rand_volume = self.generate_rand_volume()
-        order_volume = min(rand_volume, volume_left)
+        # 挂单委托价格计算方式选其一
+        # """
+        contract = self.algo_engine.get_contract(self, self.vt_symbol)
+        if contract:
+            self.mark_price = self.last_tick.bid_price_1
+            order_price = self.last_tick.bid_price_1 + contract.pricetick
+        else:
+            return
+        # """
 
-        self.order_price = self.last_tick.ask_price_1
+        #self.mark_price = self.last_tick.ask_price_1
+        #order_price = self.last_tick.ask_price_1
+
         self.vt_orderid = self.sell(
             self.vt_symbol,
-            self.order_price,
+            order_price,
             order_volume,
             offset=self.offset
         )
-
-    def generate_rand_volume(self):
-        """"""
-        rand_volume = uniform(self.min_volume, self.max_volume)
-        rand_volume = round_to(rand_volume, self.volume_change)
-
-        if self.volume_change == 1:
-            rand_volume = int(rand_volume)
-
-        return rand_volume
+        self.buffer_orderid = self.vt_orderid

@@ -30,6 +30,7 @@ class AlgoTemplate:
         """ modify by loe """
         # 默认参数可手动编辑
         self.editable = True
+        self.top_algo = None
 
     @classmethod
     def new(cls, algo_engine: BaseEngine, setting: dict):
@@ -109,6 +110,7 @@ class AlgoTemplate:
         self.active = False
         self.cancel_all()
         self.on_stop()
+        self.algo_engine.on_algo_stop(self.algo_name)
         self.put_variables_event()
 
         self.write_log("停止算法")

@@ -14,7 +14,6 @@ from .base import (
     EVENT_ALGO_SETTING, EVENT_ALGO_VARIABLES,
     APP_NAME
 )
-from .genus import GenusClient
 
 
 class AlgoEngine(BaseEngine):
@@ -54,38 +53,10 @@ class AlgoEngine(BaseEngine):
     def load_algo_template(self):
         """"""
         from .algos.grid_algo import GridAlgo
-        from .algos.twap_algo import TwapAlgo
-        from .algos.iceberg_algo import IcebergAlgo
-        from .algos.sniper_algo import SniperAlgo
-        from .algos.stop_algo import StopAlgo
         from .algos.best_limit_algo import BestLimitAlgo
-        from .algos.dma_algo import DmaAlgo
-        from .algos.arbitrage_algo import ArbitrageAlgo
 
         self.add_algo_template(GridAlgo)
-        self.add_algo_template(TwapAlgo)
-        self.add_algo_template(IcebergAlgo)
-        self.add_algo_template(SniperAlgo)
-        self.add_algo_template(StopAlgo)
         self.add_algo_template(BestLimitAlgo)
-        self.add_algo_template(DmaAlgo)
-        self.add_algo_template(ArbitrageAlgo)
-
-        from .genus import (
-            GenusVWAP,
-            GenusTWAP,
-            GenusPercent,
-            GenusPxInline,
-            GenusSniper,
-            GenusDMA
-        )
-
-        self.add_algo_template(GenusVWAP)
-        self.add_algo_template(GenusTWAP)
-        self.add_algo_template(GenusPercent)
-        self.add_algo_template(GenusPxInline)
-        self.add_algo_template(GenusSniper)
-        self.add_algo_template(GenusDMA)
 
     def add_algo_template(self, template: AlgoTemplate):
         """"""
@@ -132,17 +103,19 @@ class AlgoEngine(BaseEngine):
         """"""
         trade = event.data
 
-        algo = self.orderid_algo_map.get(trade.vt_orderid, None)
-        if algo:
-            algo.update_trade(trade)
+        algo_array = self.orderid_algo_map.get(trade.vt_orderid, None)
+        if algo_array:
+            for algo in algo_array:
+                algo.update_trade(trade)
 
     def process_order_event(self, event: Event):
         """"""
         order = event.data
 
-        algo = self.orderid_algo_map.get(order.vt_orderid, None)
-        if algo:
-            algo.update_order(order)
+        algo_array = self.orderid_algo_map.get(order.vt_orderid, None)
+        if algo_array:
+            for algo in algo_array:
+                algo.update_order(order)
 
     def start_algo(self, setting: dict):
         """"""
@@ -167,12 +140,15 @@ class AlgoEngine(BaseEngine):
         algo = self.algos.get(algo_name, None)
         if algo:
             algo.stop()
-            self.algos.pop(algo_name)
 
     def stop_all(self):
         """"""
         for algo_name in list(self.algos.keys()):
             self.stop_algo(algo_name)
+
+    """ modify by loe """
+    def on_algo_stop(self, algo_name: str):
+        self.algos.pop(algo_name)
 
     def subscribe(self, algo: AlgoTemplate, vt_symbol: str):
         """"""
@@ -224,7 +200,12 @@ class AlgoEngine(BaseEngine):
         )
         vt_orderid = self.main_engine.send_order(req, contract.gateway_name)
 
-        self.orderid_algo_map[vt_orderid] = algo
+        """ modify by loe """
+        algo_array = set()
+        algo_array.add(algo)
+        if algo.top_algo:
+            algo_array.add(algo.top_algo)
+        self.orderid_algo_map[vt_orderid] = algo_array
         return vt_orderid
 
     def cancel_order(self, algo: AlgoTemplate, vt_orderid: str):

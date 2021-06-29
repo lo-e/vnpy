@@ -1,10 +1,11 @@
-from vnpy.trader.constant import Direction
+from vnpy.trader.constant import Direction, Offset, Status
 from vnpy.trader.object import TradeData, OrderData, TickData
 from vnpy.trader.engine import BaseEngine
 from ..template import AlgoTemplate
 import math
 import numpy as np
 import pandas as pd
+import decimal
 
 class GridAlgo(AlgoTemplate):
     """"""
@@ -16,20 +17,21 @@ class GridAlgo(AlgoTemplate):
             "是",
             "否"
         ],
-        "vt_symbol": "BTCUSDT.BYBIT",
+        "vt_symbol": "",
         "capital":0.0,
         "guide_price": 0.0,
         "grid_count":0,
         "grid_price": 0.0,
         "grid_volume": 0.0,
-        "interval": 10
+        "interval": 0
     }
 
     variables = [
         "pos",
         "timer_count",
         "long_orderid",
-        "short_orderid"
+        "short_orderid",
+        'reject_order_count',
     ]
 
     def __init__(
@@ -62,6 +64,8 @@ class GridAlgo(AlgoTemplate):
         self.short_orderid = ""
         self.last_tick = None
         self.grid = None
+        self.bestLimitAlgo_names = set()
+        self.reject_order_count = 0
 
         self.subscribe(self.vt_symbol)
         self.put_parameters_event()
@@ -73,11 +77,11 @@ class GridAlgo(AlgoTemplate):
         return {'editable':'否',
                 "vt_symbol": "BTCUSDT.BYBIT",
                 "capital":10000.0,
-                "guide_price": 33000.0,
+                "guide_price": 35000.0,
                 "grid_count":100,
                 "grid_price": 100.0,
                 "grid_volume": 0.001,
-                "interval": 10
+                "interval": 2
                 }
 
     """ modify by loe """
@@ -96,15 +100,25 @@ class GridAlgo(AlgoTemplate):
         if grid_price_down <= 0:
             self.active = False
             return
-        grid_price_array = np.arange(grid_price_down, grid_price_up, self.grid_price)
+        grid_price_array_decimal = np.arange(decimal.Decimal(str(grid_price_down)), decimal.Decimal(str(grid_price_up)), decimal.Decimal(str(self.grid_price)))
+        grid_price_array_float = []
+        for decimal_value in grid_price_array_decimal:
+            float_value = float(decimal_value)
+            grid_price_array_float.append(float_value)
+        grid_price_array_float = np.array(grid_price_array_float)
 
         # 仓位数列
         grid_pos_up = self.grid_count * self.grid_volume
         grid_pos_down = (self.grid_count + 1) * self.grid_volume * -1
-        grid_pos_array = np.arange(grid_pos_up, grid_pos_down, -1 * self.grid_volume)
+        grid_pos_array_decimal = np.arange(decimal.Decimal(str(grid_pos_up)), decimal.Decimal(str(grid_pos_down)), decimal.Decimal(str(-1 * self.grid_volume)))
+        grid_pos_array_float = []
+        for decimal_value in grid_pos_array_decimal:
+            float_value = float(decimal_value)
+            grid_pos_array_float.append(float_value)
+        grid_pos_array_float = np.array(grid_pos_array_float)
 
         # 网格
-        self.grid = pd.Series(grid_pos_array, index=grid_price_array)
+        self.grid = pd.Series(grid_pos_array_float, index=grid_price_array_float)
 
     def get_target_pos(self, tick_price):
         grid_price_array = self.grid.index
@@ -133,62 +147,163 @@ class GridAlgo(AlgoTemplate):
     def on_tick(self, tick: TickData):
         """"""
         self.last_tick = tick
-        target_pos = self.get_target_pos(tick.last_price)
-        a = 2
 
-    def on_timer(self):
-        """"""
-        return
-
+    def check_position(self):
         if not self.last_tick:
             return
 
+        if self.bestLimitAlgo_names:
+            return
+
+        if self.long_orderid or self.short_orderid:
+            return
+
+        target_pos = self.get_target_pos(self.last_tick.last_price)
+        if self.pos == target_pos:
+            # 当前价格上方网格挂空单，当前价格下方网格挂多单
+            grid_price_array = self.grid.index
+            grid_pos_array = self.grid.values
+            index_pos = list(grid_pos_array).index(self.pos)
+            index_front = index_pos - 1
+            index_after = index_pos + 1
+
+            # 挂多单
+            if index_front >= 0:
+                price_front = grid_price_array[index_front]
+                if self.pos < 0:
+                    offset = Offset.CLOSE
+                else:
+                    offset = Offset.OPEN
+
+                self.long_orderid = self.buy(vt_symbol=self.vt_symbol,
+                                             price=price_front,
+                                             volume=self.grid_volume,
+                                             offset=offset)
+
+            # 挂空单
+            if index_after < len(grid_pos_array):
+                price_after = grid_price_array[index_after]
+                if self.pos > 0:
+                    offset = Offset.CLOSE
+                else:
+                    offset = Offset.OPEN
+
+                self.short_orderid = self.sell(vt_symbol=self.vt_symbol,
+                                               price=price_after,
+                                               volume=self.grid_volume,
+                                               offset=offset)
+
+        else:
+            # 计算委托量
+            long_open_volume = 0
+            long_close_volume = 0
+            short_open_volume = 0
+            short_close_volume = 0
+            if target_pos >= 0:
+                distance = target_pos - self.pos
+                if distance >= target_pos:
+                    # 平空 + 开多
+                    long_open_volume = target_pos
+                    long_close_volume = abs(self.pos)
+                elif distance >= 0:
+                    # 开多
+                    long_open_volume = distance
+                else:
+                    # 平多
+                    short_close_volume = abs(distance)
+            else:
+                distance = target_pos - self.pos
+                if distance <= target_pos:
+                    # 平多 + 开空
+                    short_open_volume = abs(target_pos)
+                    short_close_volume = abs(self.pos)
+                elif distance <= 0:
+                    # 开空
+                    short_open_volume = abs(distance)
+                else:
+                    # 平空
+                    long_close_volume = abs(distance)
+
+            # 最优限价算法开平仓
+            if long_open_volume:
+                setting = {'template_name': 'BestLimitAlgo',
+                           'top_algo': self,
+                           'vt_symbol': self.vt_symbol,
+                           'direction': '多',
+                           'volume': long_open_volume,
+                           'offset': '开',
+                           'tick': self.last_tick}
+                algo_name = self.algo_engine.start_algo(setting=setting)
+                self.bestLimitAlgo_names.add(algo_name)
+
+            if long_close_volume:
+                setting = {'template_name': 'BestLimitAlgo',
+                           'top_algo': self,
+                           'vt_symbol': self.vt_symbol,
+                           'direction': '多',
+                           'volume': long_close_volume,
+                           'offset': '平',
+                           'tick': self.last_tick}
+                algo_name = self.algo_engine.start_algo(setting=setting)
+                self.bestLimitAlgo_names.add(algo_name)
+
+            if short_open_volume:
+                setting = {'template_name': 'BestLimitAlgo',
+                           'top_algo': self,
+                           'vt_symbol': self.vt_symbol,
+                           'direction': '空',
+                           'volume': short_open_volume,
+                           'offset': '开',
+                           'tick': self.last_tick}
+                algo_name = self.algo_engine.start_algo(setting=setting)
+                self.bestLimitAlgo_names.add(algo_name)
+
+            if short_close_volume:
+                setting = {'template_name': 'BestLimitAlgo',
+                           'top_algo': self,
+                           'vt_symbol': self.vt_symbol,
+                           'direction': '空',
+                           'volume': short_close_volume,
+                           'offset': '平',
+                           'tick': self.last_tick}
+                algo_name = self.algo_engine.start_algo(setting=setting)
+                self.bestLimitAlgo_names.add(algo_name)
+
+    def on_timer(self):
+        """"""
         self.timer_count += 1
         if self.timer_count < self.interval:
             self.put_variables_event()
             return
         self.timer_count = 0
 
-        if self.vt_orderid:
-            self.cancel_all()
+        # 检查最优限价算法
+        complete_algo_names = set()
+        for algo_name in self.bestLimitAlgo_names:
+            algo = self.algo_engine.algos.get(algo_name, None)
+            if not algo:
+                complete_algo_names.add(algo_name)
+        if complete_algo_names:
+            self.bestLimitAlgo_names -= complete_algo_names
+        # 检查仓位
+        self.check_position()
 
-        # Calculate target volume to buy and sell
-        target_buy_distance = (
-            self.grid_price - self.last_tick.ask_price_1) / self.grid_price
-        target_buy_position = math.floor(
-            target_buy_distance) * self.grid_volume
-        target_buy_volume = target_buy_position - self.pos
-
-        # Calculate target volume to sell
-        target_sell_distance = (
-            self.grid_price - self.last_tick.bid_price_1) / self.grid_price
-        target_sell_position = math.ceil(
-            target_sell_distance) * self.grid_volume
-        target_sell_volume = self.pos - target_sell_position
-
-        # Buy when price dropping
-        if target_buy_volume > 0:
-            self.vt_orderid = self.buy(
-                self.vt_symbol,
-                self.last_tick.ask_price_1,
-                min(target_buy_volume, self.last_tick.ask_volume_1)
-            )
-        # Sell when price rising
-        elif target_sell_volume > 0:
-            self.vt_orderid = self.sell(
-                self.vt_symbol,
-                self.last_tick.bid_price_1,
-                min(target_sell_volume, self.last_tick.bid_volume_1)
-            )
-
-        # Update UI
         self.put_variables_event()
 
     def on_order(self, order: OrderData):
         """"""
         if not order.is_active():
-            self.vt_orderid = ""
-            self.put_variables_event()
+            self.long_orderid = ''
+            self.short_orderid = ''
+            self.cancel_all()
+
+            if order.status == Status.REJECTED:
+                self.reject_order_count += 1
+                # 异常风控
+                if self.reject_order_count >= 10:
+                    self.stop()
+
+        self.put_variables_event()
 
     def on_trade(self, trade: TradeData):
         """"""
