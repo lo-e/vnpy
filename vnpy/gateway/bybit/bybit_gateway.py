@@ -434,6 +434,10 @@ class BybitRestApi(RestClient):
 
     def on_cancel_order(self, data: dict, request: Request) -> None:
         """"""
+        order_link_id = request.data.get('order_link_id', '')
+        if data and not 'related_id' in data:
+            data['related_id'] = order_link_id
+
         if self.check_error("委托撤单", data):
             return
 
@@ -630,6 +634,12 @@ class BybitRestApi(RestClient):
             error_code = data["ret_code"]
             error_msg = data["ret_msg"]
             msg = f"{name}失败，错误代码：{error_code}，信息：{error_msg}"
+
+            """ modify by loe """
+            related_id = data.get('related_id', '')
+            if related_id:
+                msg += f'，关联id：{related_id}'
+
             self.gateway.write_log(msg)
             return True
 
