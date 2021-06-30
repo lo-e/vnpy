@@ -309,9 +309,9 @@ class GridAlgo(AlgoTemplate):
     def on_trade(self, trade: TradeData):
         """"""
         if trade.direction == Direction.LONG:
-            self.pos += trade.volume
+            self.pos = float(decimal.Decimal(str(self.pos)) + decimal.Decimal(str(trade.volume)))
         else:
-            self.pos -= trade.volume
+            self.pos = float(decimal.Decimal(str(self.pos)) - decimal.Decimal(str(trade.volume)))
 
         # 保证pos精度正确
         contract = self.algo_engine.get_contract(self, self.vt_symbol)
