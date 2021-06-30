@@ -6,6 +6,7 @@ import math
 import numpy as np
 import pandas as pd
 import decimal
+from vnpy.trader.utility import round_to
 
 class GridAlgo(AlgoTemplate):
     """"""
@@ -200,7 +201,7 @@ class GridAlgo(AlgoTemplate):
             short_open_volume = 0
             short_close_volume = 0
             if target_pos >= 0:
-                distance = target_pos - self.pos
+                distance = float(decimal.Decimal(str(target_pos)) - decimal.Decimal(str(self.pos)))
                 if distance >= target_pos:
                     # 平空 + 开多
                     long_open_volume = target_pos
@@ -212,7 +213,7 @@ class GridAlgo(AlgoTemplate):
                     # 平多
                     short_close_volume = abs(distance)
             else:
-                distance = target_pos - self.pos
+                distance = float(decimal.Decimal(str(target_pos)) - decimal.Decimal(str(self.pos)))
                 if distance <= target_pos:
                     # 平多 + 开空
                     short_open_volume = abs(target_pos)
@@ -311,5 +312,10 @@ class GridAlgo(AlgoTemplate):
             self.pos += trade.volume
         else:
             self.pos -= trade.volume
+
+        # 保证pos精度正确
+        contract = self.algo_engine.get_contract(self, self.vt_symbol)
+        if contract:
+            self.pos = round_to(self.pos, contract.min_volume)
 
         self.put_variables_event()
