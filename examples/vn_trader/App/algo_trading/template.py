@@ -202,3 +202,6 @@ class AlgoTemplate:
             variables[name] = getattr(self, name)
 
         self.algo_engine.put_variables_event(self, variables)
+
+    def saveSyncData(self):
+        self.algo_engine.saveSyncData(self, {'a':2})

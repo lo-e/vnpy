@@ -15,6 +15,8 @@ from .base import (
     APP_NAME
 )
 
+from vnpy.app.cta_strategy.base import POSITION_DB_NAME
+
 
 class AlgoEngine(BaseEngine):
     """"""
@@ -295,3 +297,20 @@ class AlgoEngine(BaseEngine):
             "variables": variables
         }
         self.event_engine.put(event)
+
+    def saveSyncData(self, algo: AlgoTemplate, syncs: dict):
+        """保存策略的持仓情况到数据库"""
+        if not syncs:
+            self.strategyDbUpdateCallback()
+
+        flt = {'algo_template': algo.__class__.__name__,
+               'vt_symbol': algo.vt_symbol}
+
+        for key, value in flt.items():
+            syncs[key] = value
+
+        self.main_engine.dbUpdate(POSITION_DB_NAME, algo.__class__.__name__,
+                                 syncs, flt, True, callback=self.strategyDbUpdateCallback)
+
+    def strategyDbUpdateCallback(self, back_data=None):
+        pass
