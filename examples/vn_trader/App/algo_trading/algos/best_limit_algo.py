@@ -7,6 +7,7 @@ from vnpy.trader.utility import round_to
 from vnpy.trader.constant import Status
 
 from ..template import AlgoTemplate
+import decimal
 
 
 class BestLimitAlgo(AlgoTemplate):
@@ -24,7 +25,8 @@ class BestLimitAlgo(AlgoTemplate):
         "traded",
         "vt_orderid",
         "buffer_orderid",
-        "reject_order_count"
+        "reject_order_count",
+        "order_all_traded"
     ]
 
     def __init__(
@@ -50,6 +52,7 @@ class BestLimitAlgo(AlgoTemplate):
         self.last_tick = None
         self.mark_price = 0
         self.reject_order_count = 0
+        self.order_all_traded = False
 
         # 初始化tick数据开始发出委托
         init_tick = setting.get('tick', None)
@@ -63,6 +66,9 @@ class BestLimitAlgo(AlgoTemplate):
     def on_tick(self, tick: TickData):
         """"""
         self.last_tick = tick
+
+        if self.order_all_traded:
+            return
 
         if self.direction == Direction.LONG:
             if not self.vt_orderid and not self.buffer_orderid:
@@ -82,7 +88,7 @@ class BestLimitAlgo(AlgoTemplate):
 
     def on_trade(self, trade: TradeData):
         """"""
-        self.traded += trade.volume
+        self.traded = float(decimal.Decimal(str(self.traded)) + decimal.Decimal(str(trade.volume)))
 
         if self.traded >= self.volume:
             self.write_log(f"已交易数量：{self.traded}，总数量：{self.volume}")
@@ -102,6 +108,8 @@ class BestLimitAlgo(AlgoTemplate):
                 # 异常风控
                 if self.reject_order_count >= 10:
                     self.stop()
+        elif order.status == Status.ALLTRADED:
+            self.order_all_traded = True
 
         self.put_variables_event()
 
