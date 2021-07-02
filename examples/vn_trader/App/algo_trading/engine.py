@@ -16,7 +16,7 @@ from .base import (
 )
 
 from vnpy.app.cta_strategy.base import POSITION_DB_NAME
-
+from copy import copy
 
 class AlgoEngine(BaseEngine):
     """"""
@@ -128,6 +128,7 @@ class AlgoEngine(BaseEngine):
         algo_template = self.algo_templates[template_name]
 
         algo = algo_template.new(self, setting)
+        self.loadSyncData(algo=algo)
         algo.start()
 
         self.algos[algo.algo_name] = algo
@@ -298,19 +299,52 @@ class AlgoEngine(BaseEngine):
         }
         self.event_engine.put(event)
 
+    def loadSyncData(self, algo: AlgoTemplate):
+        """从数据库载入算法的持仓情况"""
+        flt = {'algo_name': algo.algo_name,
+               'vt_symbol': algo.vt_symbol}
+        dbData = self.main_engine.dbQuery(POSITION_DB_NAME, algo.__class__.__name__, flt)
+
+        if not dbData:
+            return
+
+        sync_data = dbData[0]
+        for key in algo.syncs:
+            if key in sync_data:
+                algo.__setattr__(key, sync_data[key])
+
     def saveSyncData(self, algo: AlgoTemplate, syncs: dict):
         """保存策略的持仓情况到数据库"""
         if not syncs:
-            self.strategyDbUpdateCallback()
+            self.dbUpdateCallback()
 
-        flt = {'algo_template': algo.__class__.__name__,
+        flt = {'algo_name': algo.algo_name,
                'vt_symbol': algo.vt_symbol}
 
-        for key, value in flt.items():
-            syncs[key] = value
+        sync_data = copy(flt)
+        for key in syncs:
+            sync_data[key] = algo.__getattribute__(key)
 
-        self.main_engine.dbUpdate(POSITION_DB_NAME, algo.__class__.__name__,
-                                 syncs, flt, True, callback=self.strategyDbUpdateCallback)
+        self.main_engine.dbUpdate(POSITION_DB_NAME,
+                                  algo.__class__.__name__,
+                                  sync_data,
+                                  flt,
+                                  True,
+                                  callback=self.dbUpdateCallback)
 
-    def strategyDbUpdateCallback(self, back_data=None):
-        pass
+    def dbUpdateCallback(self, back_data=None):
+        try:
+            if isinstance(back_data, dict):
+                result = back_data.get('result', False)
+                algo_name = back_data.get('algo_name', '')
+                if result:
+                    content = f'算法交易{algo_name}同步数据保存成功。'
+                else:
+                    content = f'算法交易{algo_name}同步数据保存失败！！'
+                self.write_log(content)
+            else:
+                content = f'算法交易同步数据保存失败！！'
+                self.write_log(content)
+        except:
+            content = f'算法交易同步数据保存失败！！'
+            self.write_log(content)

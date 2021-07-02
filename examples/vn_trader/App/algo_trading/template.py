@@ -11,6 +11,7 @@ class AlgoTemplate:
     display_name = ""
     default_setting = {}
     variables = []
+    syncs = ['pos']
 
     def __init__(
         self,
@@ -204,4 +205,4 @@ class AlgoTemplate:
         self.algo_engine.put_variables_event(self, variables)
 
     def saveSyncData(self):
-        self.algo_engine.saveSyncData(self, {'a':2})
+        self.algo_engine.saveSyncData(self, self.syncs)

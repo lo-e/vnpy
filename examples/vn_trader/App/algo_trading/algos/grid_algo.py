@@ -88,6 +88,7 @@ class GridAlgo(AlgoTemplate):
     """ modify by loe """
     def on_start(self):
         self.creat_grid()
+        self.saveSyncData()
 
     # 创建网格
     def creat_grid(self):
@@ -290,6 +291,7 @@ class GridAlgo(AlgoTemplate):
         self.check_position()
 
         self.put_variables_event()
+        self.saveSyncData()
 
     def on_order(self, order: OrderData):
         """"""
@@ -298,24 +300,28 @@ class GridAlgo(AlgoTemplate):
             self.short_orderid = ''
             self.cancel_all()
 
+            if order.status == Status.ALLTRADED:
+                # 仓位确定
+                if order.direction == Direction.LONG:
+                    self.pos = float(decimal.Decimal(str(self.pos)) + decimal.Decimal(str(order.volume)))
+                else:
+                    self.pos = float(decimal.Decimal(str(self.pos)) - decimal.Decimal(str(order.volume)))
+
+                # 保证pos精度正确
+                contract = self.algo_engine.get_contract(self, self.vt_symbol)
+                if contract:
+                    self.pos = round_to(self.pos, contract.min_volume)
+
             if order.status == Status.REJECTED:
                 self.reject_order_count += 1
                 # 异常风控
                 if self.reject_order_count >= 10:
                     self.stop()
 
-        self.put_variables_event()
+
+            self.put_variables_event()
+            self.saveSyncData()
 
     def on_trade(self, trade: TradeData):
         """"""
-        if trade.direction == Direction.LONG:
-            self.pos = float(decimal.Decimal(str(self.pos)) + decimal.Decimal(str(trade.volume)))
-        else:
-            self.pos = float(decimal.Decimal(str(self.pos)) - decimal.Decimal(str(trade.volume)))
-
-        # 保证pos精度正确
-        contract = self.algo_engine.get_contract(self, self.vt_symbol)
-        if contract:
-            self.pos = round_to(self.pos, contract.min_volume)
-
-        self.put_variables_event()
+        pass
