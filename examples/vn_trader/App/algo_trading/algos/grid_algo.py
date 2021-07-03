@@ -30,8 +30,8 @@ class GridAlgo(AlgoTemplate):
     variables = [
         "pos",
         "timer_count",
-        "long_orderid",
-        "short_orderid",
+        "long_orderids",
+        "short_orderids",
         'reject_order_count',
     ]
 
@@ -61,8 +61,8 @@ class GridAlgo(AlgoTemplate):
         # Variables
         self.pos = 0
         self.timer_count = 0
-        self.long_orderid = ""
-        self.short_orderid = ""
+        self.long_orderids = set()
+        self.short_orderids = set()
         self.last_tick = None
         self.grid = None
         self.bestLimitAlgo_names = set()
@@ -122,6 +122,10 @@ class GridAlgo(AlgoTemplate):
         # 网格
         self.grid = pd.Series(grid_pos_array_float, index=grid_price_array_float)
 
+    def on_tick(self, tick: TickData):
+        """"""
+        self.last_tick = tick
+
     def get_target_pos(self, tick_price):
         grid_price_array = self.grid.index
         # 网格价格序列中最接近tick_price的值
@@ -146,10 +150,6 @@ class GridAlgo(AlgoTemplate):
         pos_result = self.grid[result]
         return pos_result
 
-    def on_tick(self, tick: TickData):
-        """"""
-        self.last_tick = tick
-
     def check_position(self):
         if not self.last_tick:
             return
@@ -157,7 +157,7 @@ class GridAlgo(AlgoTemplate):
         if self.bestLimitAlgo_names:
             return
 
-        if self.long_orderid or self.short_orderid:
+        if self.long_orderids or self.short_orderids:
             return
 
         target_pos = self.get_target_pos(self.last_tick.last_price)
@@ -177,10 +177,11 @@ class GridAlgo(AlgoTemplate):
                 else:
                     offset = Offset.OPEN
 
-                self.long_orderid = self.buy(vt_symbol=self.vt_symbol,
-                                             price=price_front,
-                                             volume=self.grid_volume,
-                                             offset=offset)
+                long_orderid = self.buy(vt_symbol=self.vt_symbol,
+                                        price=price_front,
+                                        volume=self.grid_volume,
+                                        offset=offset)
+                self.long_orderids.add(long_orderid)
 
             # 挂空单
             if index_after < len(grid_pos_array):
@@ -190,10 +191,11 @@ class GridAlgo(AlgoTemplate):
                 else:
                     offset = Offset.OPEN
 
-                self.short_orderid = self.sell(vt_symbol=self.vt_symbol,
-                                               price=price_after,
-                                               volume=self.grid_volume,
-                                               offset=offset)
+                short_orderid = self.sell(vt_symbol=self.vt_symbol,
+                                          price=price_after,
+                                          volume=self.grid_volume,
+                                          offset=offset)
+                self.short_orderids.add(short_orderid)
 
         else:
             # 计算委托量
@@ -271,6 +273,145 @@ class GridAlgo(AlgoTemplate):
                 algo_name = self.algo_engine.start_algo(setting=setting)
                 self.bestLimitAlgo_names.add(algo_name)
 
+    def get_long_short_target(self, tick:TickData):
+        long_price = None
+        long_target = None
+        short_price = None
+        short_target = None
+
+        grid_price_array = self.grid.index
+        grid_pos_array = self.grid.values
+        # 确定多单目标仓位
+        long_index_array = np.argwhere(grid_price_array < tick.ask_price_1)
+        if len(long_index_array):
+            long_index_result = long_index_array[-1][-1]
+            long_price = grid_price_array[long_index_result]
+            long_target = grid_pos_array[long_index_result]
+            if long_target <= self.pos:
+                long_price = None
+                long_target = None
+                long_index_array = np.argwhere(grid_pos_array > self.pos)
+                if len(long_index_array):
+                    long_index_result = long_index_array[-1][-1]
+                    long_price = grid_price_array[long_index_result]
+                    long_target = grid_pos_array[long_index_result]
+
+        # 确定空单目标仓位
+        short_index_array = np.argwhere(grid_price_array > tick.bid_price_1)
+        if len(short_index_array):
+            short_index_result = short_index_array[0][0]
+            short_price = grid_pos_array[short_index_result]
+            short_target = grid_pos_array[short_index_result]
+            if short_target >= self.pos:
+                short_price = None
+                short_target = None
+                short_index_array = np.argwhere(grid_pos_array < self.pos)
+                if len(short_index_array):
+                    short_index_result = short_index_array[0][0]
+                    short_price = grid_price_array[short_index_result]
+                    short_target = grid_pos_array[short_index_result]
+
+        long_dict = {'long_price':long_price,
+                     'long_target':long_target}
+
+        short_dict = {'short_price':short_price,
+                      'short_target':short_target}
+
+        return long_dict, short_dict
+
+    def check_long_short_order(self):
+        if not self.last_tick:
+            return
+
+        if self.long_orderids or self.short_orderids:
+            return
+
+        long_dict, short_dict = self.get_long_short_target(tick=self.last_tick)
+        long_price = long_dict['long_price']
+        long_target = long_dict['long_target']
+        short_price = short_dict['short_price']
+        short_target = short_dict['short_target']
+
+        long_open_volume = 0
+        long_close_volume = 0
+        short_open_volume = 0
+        short_close_volume = 0
+
+        # 计算多单委托参数
+        if long_target:
+            distance = float(decimal.Decimal(str(long_target)) - decimal.Decimal(str(self.pos)))
+            if distance <= 0:
+                # 检查逻辑错误
+                self.write_log('check_long_short_order检查逻辑错误')
+                return
+
+            if self.pos >= 0:
+                long_open_volume = distance
+            elif distance > abs(self.pos):
+                long_open_volume = float(decimal.Decimal(str(distance)) - decimal.Decimal(str(abs(self.pos))))
+                long_close_volume = abs(self.pos)
+            else:
+                long_close_volume = distance
+
+        # 计算空单委托参数
+        if short_target:
+            distance = float(decimal.Decimal(str(self.pos)) - decimal.Decimal(str(short_target)))
+            if distance <= 0:
+                # 检查逻辑错误
+                self.write_log('check_long_short_order检查逻辑错误')
+                return
+
+            if self.pos <= 0:
+                short_open_volume = distance
+            elif distance > abs(self.pos):
+                short_open_volume = float(decimal.Decimal(str(distance)) - decimal.Decimal(str(abs(self.pos))))
+                short_close_volume = abs(self.pos)
+            else:
+                short_close_volume = distance
+
+        long_open_orderid = ''
+        long_close_orderid = ''
+        short_open_orderid = ''
+        short_close_orderid = ''
+
+        # 发出多单委托
+        if long_open_volume:
+            long_open_orderid = self.buy(vt_symbol=self.vt_symbol,
+                                         price=long_price,
+                                         volume=long_open_volume,
+                                         offset=Offset.OPEN)
+
+        if long_close_volume:
+            long_close_orderid = self.buy(vt_symbol=self.vt_symbol,
+                                          price=long_price,
+                                          volume=long_close_volume,
+                                          offset=Offset.CLOSE)
+
+        # 发出空单委托
+        if short_open_volume:
+            short_open_orderid = self.sell(vt_symbol=self.vt_symbol,
+                                           price=short_price,
+                                           volume=short_open_volume,
+                                           offset=Offset.OPEN)
+
+        if short_close_volume:
+            short_close_orderid = self.sell(vt_symbol=self.vt_symbol,
+                                            price=short_price,
+                                            volume=short_close_volume,
+                                            offset=Offset.CLOSE)
+
+        if long_open_orderid:
+            self.long_orderids.add(long_open_orderid)
+
+        if long_close_orderid:
+            self.long_orderids.add(long_close_orderid)
+
+        if short_open_orderid:
+            self.short_orderids.add(short_open_orderid)
+
+        if short_close_orderid:
+            self.short_orderids.add(short_close_orderid)
+
     def on_timer(self):
         """"""
         self.timer_count += 1
@@ -279,6 +420,7 @@ class GridAlgo(AlgoTemplate):
             return
         self.timer_count = 0
 
+        """
         # 检查最优限价算法
         complete_algo_names = set()
         for algo_name in self.bestLimitAlgo_names:
@@ -287,18 +429,25 @@ class GridAlgo(AlgoTemplate):
                 complete_algo_names.add(algo_name)
         if complete_algo_names:
             self.bestLimitAlgo_names -= complete_algo_names
+        
         # 检查仓位
         self.check_position()
+        """
+        self.check_long_short_order()
 
         self.put_variables_event()
         self.saveSyncData()
 
     def on_order(self, order: OrderData):
         """"""
-        if (order.vt_orderid == self.long_orderid or order.vt_orderid == self.short_orderid) and not order.is_active():
-            self.long_orderid = ''
-            self.short_orderid = ''
-            self.cancel_all()
+        if (order.vt_orderid in self.long_orderids or order.vt_orderid in self.short_orderids) and not order.is_active():
+            if order.vt_orderid in self.long_orderids:
+                self.long_orderids.remove(order.vt_orderid)
+            if order.vt_orderid in self.short_orderids:
+                self.short_orderids.remove(order.vt_orderid)
+
+            if not self.long_orderids or not self.short_orderids:
+                self.cancel_all()
 
             if order.status == Status.ALLTRADED:
                 # 仓位确定
