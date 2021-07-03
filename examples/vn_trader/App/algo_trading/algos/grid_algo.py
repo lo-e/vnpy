@@ -67,6 +67,7 @@ class GridAlgo(AlgoTemplate):
         self.grid = None
         self.bestLimitAlgo_names = set()
         self.reject_order_count = 0
+        self.cancel_orderids = []
 
         self.subscribe(self.vt_symbol)
         self.put_parameters_event()
@@ -79,10 +80,10 @@ class GridAlgo(AlgoTemplate):
                 "vt_symbol": "BTCUSDT.BYBIT",
                 "capital":10000.0,
                 "guide_price": 35000.0,
-                "grid_count":100,
-                "grid_price": 100.0,
-                "grid_volume": 0.001,
-                "interval": 2
+                "grid_count":1000,
+                "grid_price": 10.0,
+                "grid_volume": 0.01,
+                "interval": 10
                 }
 
     """ modify by loe """
@@ -300,7 +301,7 @@ class GridAlgo(AlgoTemplate):
         short_index_array = np.argwhere(grid_price_array > tick.bid_price_1)
         if len(short_index_array):
             short_index_result = short_index_array[0][0]
-            short_price = grid_pos_array[short_index_result]
+            short_price = grid_price_array[short_index_result]
             short_target = grid_pos_array[short_index_result]
             if short_target >= self.pos:
                 short_price = None
@@ -415,10 +416,9 @@ class GridAlgo(AlgoTemplate):
     def on_timer(self):
         """"""
         self.timer_count += 1
-        if self.timer_count < self.interval:
-            self.put_variables_event()
-            return
-        self.timer_count = 0
+        if self.timer_count >= self.interval:
+            self.timer_count = 0
+            self.cancel_all()
 
         """
         # 检查最优限价算法
@@ -474,3 +474,14 @@ class GridAlgo(AlgoTemplate):
     def on_trade(self, trade: TradeData):
         """"""
         pass
+
+    """ modify by loe """
+    def cancel_order(self, vt_orderid: str):
+        """"""
+        if vt_orderid in self.cancel_orderids:
+            return
+        self.cancel_orderids.append(vt_orderid)
+        if len(self.cancel_orderids) >= 10:
+            self.cancel_orderids.pop(0)
+
+        super().cancel_order(vt_orderid=vt_orderid)
