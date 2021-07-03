@@ -449,18 +449,6 @@ class GridAlgo(AlgoTemplate):
             if not self.long_orderids or not self.short_orderids:
                 self.cancel_all()
 
-            if order.status == Status.ALLTRADED:
-                # 仓位确定
-                if order.direction == Direction.LONG:
-                    self.pos = float(decimal.Decimal(str(self.pos)) + decimal.Decimal(str(order.volume)))
-                else:
-                    self.pos = float(decimal.Decimal(str(self.pos)) - decimal.Decimal(str(order.volume)))
-
-                # 保证pos精度正确
-                contract = self.algo_engine.get_contract(self, self.vt_symbol)
-                if contract:
-                    self.pos = round_to(self.pos, contract.min_volume)
-
             if order.status == Status.REJECTED:
                 self.reject_order_count += 1
                 # 异常风控
@@ -473,7 +461,17 @@ class GridAlgo(AlgoTemplate):
 
     def on_trade(self, trade: TradeData):
         """"""
-        pass
+        # 仓位确定
+        if trade.direction == Direction.LONG:
+            self.pos = float(decimal.Decimal(str(self.pos)) + decimal.Decimal(str(trade.volume)))
+        else:
+            self.pos = float(decimal.Decimal(str(self.pos)) - decimal.Decimal(str(trade.volume)))
+
+        # 保证pos精度正确
+        contract = self.algo_engine.get_contract(self, self.vt_symbol)
+        if contract:
+            self.pos = round_to(self.pos, contract.min_volume)
+        self.put_variables_event()
 
     """ modify by loe """
     def cancel_order(self, vt_orderid: str):
