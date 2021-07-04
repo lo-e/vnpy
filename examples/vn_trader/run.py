@@ -128,7 +128,7 @@ def main():
     main_engine.add_app(PortfolioManagerApp)
     main_engine.add_app(OptionMasterApp)
     # main_engine.add_app(ChartWizardApp)
-    main_engine.add_app(ExcelRtdApp)
+    #main_engine.add_app(ExcelRtdApp)
     # main_engine.add_app(DataManagerApp)
     # main_engine.add_app(PortfolioStrategyApp)
 
