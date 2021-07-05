@@ -452,8 +452,9 @@ class TradeMonitor(BaseMonitor):
         """
         super(TradeMonitor, self).process_event(event)
 
-        if (self.rowCount()) >= 6:
-            self.removeRow(-1)
+        if (self.rowCount()) >= 2:
+            location = self.rowCount() - 1
+            self.removeRow(location)
 
 
 class OrderMonitor(BaseMonitor):
@@ -506,8 +507,13 @@ class OrderMonitor(BaseMonitor):
         """
         super(OrderMonitor, self).process_event(event)
 
-        if (self.rowCount()) >= 6:
-            self.removeRow(-1)
+        if (self.rowCount()) >= 7:
+            location = self.rowCount() - 1
+            item_cell = self.item(location, 0)
+            orderid = item_cell._data.__getattribute__(self.data_key)
+            if orderid in self.cells:
+                self.cells.pop(orderid)
+                self.removeRow(location)
 
 class PositionMonitor(BaseMonitor):
     """
@@ -1053,13 +1059,14 @@ class ActiveOrderMonitor(OrderMonitor):
         super(ActiveOrderMonitor, self).process_event(event)
 
         order = event.data
-        row_cells = self.cells[order.vt_orderid]
-        row = self.row(row_cells["volume"])
+        row_cells = self.cells.get(order.vt_orderid, None)
+        if row_cells:
+            row = self.row(row_cells["volume"])
 
-        if order.is_active():
-            self.showRow(row)
-        else:
-            self.hideRow(row)
+            if order.is_active():
+                self.showRow(row)
+            else:
+                self.hideRow(row)
 
 
 class ContractManager(QtWidgets.QWidget):
