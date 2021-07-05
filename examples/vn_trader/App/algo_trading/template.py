@@ -129,7 +129,7 @@ class AlgoTemplate:
         offset: Offset = Offset.NONE
     ):
         """"""
-        msg = f"委托买入{vt_symbol}：{volume}@{price}"
+        msg = f"委托买入{vt_symbol}：{volume}@{price}\task_price_1：{self.last_tick.ask_price_1}"
         self.write_log(msg)
 
         return self.algo_engine.send_order(
@@ -151,7 +151,7 @@ class AlgoTemplate:
         offset: Offset = Offset.NONE
     ):
         """"""
-        msg = f"委托卖出{vt_symbol}：{volume}@{price}"
+        msg = f"委托卖出{vt_symbol}：{volume}@{price}\tbid_price_1：{self.last_tick.bid_price_1}"
         self.write_log(msg)
 
         return self.algo_engine.send_order(

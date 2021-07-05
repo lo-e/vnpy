@@ -449,9 +449,6 @@ class GridAlgo(AlgoTemplate):
             if not self.long_orderids or not self.short_orderids:
                 self.cancel_all()
 
-            if not self.long_orderids and not self.short_orderids:
-                self.check_long_short_order()
-
             if order.status == Status.REJECTED:
                 self.reject_order_count += 1
                 # 异常风控
