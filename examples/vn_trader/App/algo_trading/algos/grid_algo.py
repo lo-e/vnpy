@@ -61,6 +61,7 @@ class GridAlgo(AlgoTemplate):
         # Variables
         self.pos = 0
         self.timer_count = 0
+        self.check_enable = False
         self.long_orderids = set()
         self.short_orderids = set()
         self.last_tick = None
@@ -125,7 +126,13 @@ class GridAlgo(AlgoTemplate):
 
     def on_tick(self, tick: TickData):
         """"""
+        if self.last_tick and self.last_tick.datetime >= tick.datetime:
+            return
         self.last_tick = tick
+
+        if self.check_enable:
+            self.check_long_short_order()
+            self.check_enable = False
 
     def get_target_pos(self, tick_price):
         grid_price_array = self.grid.index
@@ -435,7 +442,7 @@ class GridAlgo(AlgoTemplate):
         # 检查仓位
         self.check_position()
         """
-        self.check_long_short_order()
+        self.check_enable = True
 
         self.put_variables_event()
         self.saveSyncData()
