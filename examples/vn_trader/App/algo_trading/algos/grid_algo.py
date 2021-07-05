@@ -283,34 +283,36 @@ class GridAlgo(AlgoTemplate):
         grid_price_array = self.grid.index
         grid_pos_array = self.grid.values
         # 确定多单目标仓位
-        long_index_array = np.argwhere(grid_price_array < tick.ask_price_1)
-        if len(long_index_array):
-            long_index_result = long_index_array[-1][-1]
-            long_price = grid_price_array[long_index_result]
-            long_target = grid_pos_array[long_index_result]
-            if long_target <= self.pos:
-                long_price = None
-                long_target = None
-                long_index_array = np.argwhere(grid_pos_array > self.pos)
-                if len(long_index_array):
-                    long_index_result = long_index_array[-1][-1]
-                    long_price = grid_price_array[long_index_result]
-                    long_target = grid_pos_array[long_index_result]
+        if tick.ask_price_1:
+            long_index_array = np.argwhere(grid_price_array < tick.ask_price_1)
+            if len(long_index_array):
+                long_index_result = long_index_array[-1][-1]
+                long_price = grid_price_array[long_index_result]
+                long_target = grid_pos_array[long_index_result]
+                if long_target <= self.pos:
+                    long_price = None
+                    long_target = None
+                    long_index_array = np.argwhere(grid_pos_array > self.pos)
+                    if len(long_index_array):
+                        long_index_result = long_index_array[-1][-1]
+                        long_price = grid_price_array[long_index_result]
+                        long_target = grid_pos_array[long_index_result]
 
         # 确定空单目标仓位
-        short_index_array = np.argwhere(grid_price_array > tick.bid_price_1)
-        if len(short_index_array):
-            short_index_result = short_index_array[0][0]
-            short_price = grid_price_array[short_index_result]
-            short_target = grid_pos_array[short_index_result]
-            if short_target >= self.pos:
-                short_price = None
-                short_target = None
-                short_index_array = np.argwhere(grid_pos_array < self.pos)
-                if len(short_index_array):
-                    short_index_result = short_index_array[0][0]
-                    short_price = grid_price_array[short_index_result]
-                    short_target = grid_pos_array[short_index_result]
+        if tick.bid_price_1:
+            short_index_array = np.argwhere(grid_price_array > tick.bid_price_1)
+            if len(short_index_array):
+                short_index_result = short_index_array[0][0]
+                short_price = grid_price_array[short_index_result]
+                short_target = grid_pos_array[short_index_result]
+                if short_target >= self.pos:
+                    short_price = None
+                    short_target = None
+                    short_index_array = np.argwhere(grid_pos_array < self.pos)
+                    if len(short_index_array):
+                        short_index_result = short_index_array[0][0]
+                        short_price = grid_price_array[short_index_result]
+                        short_target = grid_pos_array[short_index_result]
 
         long_dict = {'long_price':long_price,
                      'long_target':long_target}

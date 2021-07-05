@@ -949,6 +949,9 @@ class BybitPublicWebsocketApi(WebsocketClient):
 
         self.gateway.on_tick(copy(tick))
 
+        ''' fake '''
+        print(f'tick\t{tick.datetime}\t【{tick.bid_price_1}, {tick.bid_price_2}】\t【{tick.ask_price_1}, {tick.ask_price_2}】')
+
     def on_depth(self, packet: dict) -> None:
         """"""
         topic = packet["topic"]
@@ -1013,6 +1016,9 @@ class BybitPublicWebsocketApi(WebsocketClient):
         local_dt = datetime.fromtimestamp(timestamp)
         tick.datetime = local_dt.astimezone(UTC_TZ)
         self.gateway.on_tick(copy(tick))
+
+        """ fake """
+        print(f'depth\t{tick.datetime}\t【{tick.bid_price_1}, {tick.bid_price_2}】\t【{tick.ask_price_1}, {tick.ask_price_2}】')
 
 
 class BybitPrivateWebsocketApi(WebsocketClient):
