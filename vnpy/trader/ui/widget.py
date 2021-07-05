@@ -445,6 +445,16 @@ class TradeMonitor(BaseMonitor):
         "gateway_name": {"display": "接口", "cell": BaseCell, "update": False},
     }
 
+    """ modify by loe """
+    def process_event(self, event) -> None:
+        """
+        Hides the row if order is not active.
+        """
+        super(TradeMonitor, self).process_event(event)
+
+        if (self.rowCount()) >= 6:
+            self.removeRow(-1)
+
 
 class OrderMonitor(BaseMonitor):
     """
@@ -488,6 +498,16 @@ class OrderMonitor(BaseMonitor):
         order = cell.get_data()
         req = order.create_cancel_request()
         self.main_engine.cancel_order(req, order.gateway_name)
+
+    """ modify by loe """
+    def process_event(self, event) -> None:
+        """
+        Hides the row if order is not active.
+        """
+        super(OrderMonitor, self).process_event(event)
+
+        if (self.rowCount()) >= 6:
+            self.removeRow(-1)
 
 class PositionMonitor(BaseMonitor):
     """
