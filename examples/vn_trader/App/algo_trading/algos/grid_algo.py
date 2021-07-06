@@ -8,6 +8,9 @@ import pandas as pd
 import decimal
 from vnpy.trader.utility import round_to
 
+''' fake '''
+from datetime import datetime
+
 class GridAlgo(AlgoTemplate):
     """"""
 
@@ -126,6 +129,9 @@ class GridAlgo(AlgoTemplate):
 
     def on_tick(self, tick: TickData):
         """"""
+        ''' fake '''
+        print(f'now：{datetime.now()}\t{tick.datetime}')
+
         if self.last_tick and self.last_tick.datetime >= tick.datetime:
             return
         self.last_tick = tick
