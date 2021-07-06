@@ -450,6 +450,9 @@ class TradeMonitor(BaseMonitor):
         """
         Hides the row if order is not active.
         """
+        ''' fake '''
+        return
+
         super(TradeMonitor, self).process_event(event)
 
         # 设置显示数据的最大条数
@@ -506,6 +509,9 @@ class OrderMonitor(BaseMonitor):
         """
         Hides the row if order is not active.
         """
+        ''' fake '''
+        return
+
         super(OrderMonitor, self).process_event(event)
 
         # 设置显示数据的最大条数
@@ -1058,6 +1064,9 @@ class ActiveOrderMonitor(OrderMonitor):
         """
         Hides the row if order is not active.
         """
+        ''' fake '''
+        return
+
         super(ActiveOrderMonitor, self).process_event(event)
 
         order = event.data
