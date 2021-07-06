@@ -84,7 +84,7 @@ class GridAlgo(AlgoTemplate):
                 "grid_count":1000,
                 "grid_price": 10.0,
                 "grid_volume": 0.01,
-                "interval": 20
+                "interval": 60
                 }
 
     """ modify by loe """
