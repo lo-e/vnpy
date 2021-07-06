@@ -453,7 +453,7 @@ class TradeMonitor(BaseMonitor):
         super(TradeMonitor, self).process_event(event)
 
         # 设置显示数据的最大条数
-        if (self.rowCount()) >= 721:
+        if (self.rowCount()) >= 101:
             location = self.rowCount() - 1
             self.removeRow(location)
 
@@ -509,7 +509,7 @@ class OrderMonitor(BaseMonitor):
         super(OrderMonitor, self).process_event(event)
 
         # 设置显示数据的最大条数
-        if (self.rowCount()) >= 721:
+        if (self.rowCount()) >= 101:
             location = self.rowCount() - 1
             item_cell = self.item(location, 0)
             orderid = item_cell._data.__getattribute__(self.data_key)
