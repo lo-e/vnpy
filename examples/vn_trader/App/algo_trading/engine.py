@@ -337,11 +337,14 @@ class AlgoEngine(BaseEngine):
             if isinstance(back_data, dict):
                 result = back_data.get('result', False)
                 algo_name = back_data.get('algo_name', '')
+                content = ''
                 if result:
-                    content = f'算法交易{algo_name}同步数据保存成功。'
+                    pass
+                    #content = f'算法交易{algo_name}同步数据保存成功。'
                 else:
                     content = f'算法交易{algo_name}同步数据保存失败！！'
-                self.write_log(content)
+                if content:
+                    self.write_log(content)
             else:
                 content = f'算法交易同步数据保存失败！！'
                 self.write_log(content)
