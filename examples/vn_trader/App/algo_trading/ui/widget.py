@@ -567,7 +567,7 @@ class LogMonitor(QtWidgets.QTableWidget):
         self.setItem(0, 1, msg_cell)
 
         # 设置显示数据的最大条数
-        max_show_count = 5
+        max_show_count = 100
         if (self.rowCount()) > max_show_count:
             self.hideRow(max_show_count)
             """ 
