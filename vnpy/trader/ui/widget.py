@@ -454,10 +454,10 @@ class TradeMonitor(BaseMonitor):
         super(TradeMonitor, self).process_event(event)
 
         # 设置显示数据的最大条数
-        if (self.rowCount()) >= 101:
-            location = self.rowCount() - 1
-            self.hideRow(location)
-            # self.removeRow(location)
+        max_show_count = 100
+        if (self.rowCount()) > max_show_count:
+            self.hideRow(max_show_count)
+            # self.removeRow(max_show_count)
 
 
 class OrderMonitor(BaseMonitor):
@@ -512,16 +512,16 @@ class OrderMonitor(BaseMonitor):
         super(OrderMonitor, self).process_event(event)
 
         # 设置显示数据的最大条数
-        if (self.rowCount()) >= 101:
-            location = self.rowCount() - 1
-            self.hideRow(location)
+        max_show_count = 100
+        if (self.rowCount()) > max_show_count:
+            self.hideRow(max_show_count)
             """
-            item_cell = self.item(location, 0)
+            item_cell = self.item(max_show_count, 0)
             orderid = item_cell._data.__getattribute__(self.data_key)
             if orderid in self.cells:
                 self.cells.pop(orderid)
             
-            self.removeRow(location)
+            self.removeRow(max_show_count)
             """
 
 class PositionMonitor(BaseMonitor):
