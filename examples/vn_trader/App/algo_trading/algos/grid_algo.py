@@ -197,9 +197,15 @@ class GridAlgo(AlgoTemplate):
 
     def on_tick(self, tick: TickData):
         """"""
+        # 只要最新tick
         if self.last_tick and self.last_tick.datetime >= tick.datetime:
             return
         self.last_tick = tick
+
+        # 理论上买一价小于卖一价，如果不是，数据可能异常，为了避免taker成交增加手续费成本，不做委托
+        if self.last_tick.bid_price_1 <= self.last_tick.ask_price_1:
+            self.write_log(f'tick买卖一档数据异常\tbid_price_1： {self.last_tick.bid_price_1}\task_price_1：{self.last_tick.ask_price_1}')
+            return
 
         if self.check_enable:
             self.check_long_short_order()
