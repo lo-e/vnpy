@@ -11,9 +11,6 @@ from vnpy.trader.constant import Interval
 from vnpy.trader.object import BarData
 from vnpy.trader.utility import ArrayManager
 
-''' fake '''
-from datetime import datetime
-
 class GridAlgo(AlgoTemplate):
     """"""
 
@@ -199,9 +196,6 @@ class GridAlgo(AlgoTemplate):
 
     def on_tick(self, tick: TickData):
         """"""
-        ''' fake '''
-        print(f'now：{datetime.now()}\t{tick.datetime}')
-
         if self.last_tick and self.last_tick.datetime >= tick.datetime:
             return
         self.last_tick = tick

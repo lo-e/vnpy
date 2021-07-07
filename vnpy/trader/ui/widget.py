@@ -450,15 +450,14 @@ class TradeMonitor(BaseMonitor):
         """
         Hides the row if order is not active.
         """
-        ''' fake '''
-        return
 
         super(TradeMonitor, self).process_event(event)
 
         # 设置显示数据的最大条数
         if (self.rowCount()) >= 101:
             location = self.rowCount() - 1
-            self.removeRow(location)
+            #self.removeRow(location)
+            self.hideRow(location)
 
 
 class OrderMonitor(BaseMonitor):
@@ -509,8 +508,6 @@ class OrderMonitor(BaseMonitor):
         """
         Hides the row if order is not active.
         """
-        ''' fake '''
-        return
 
         super(OrderMonitor, self).process_event(event)
 
@@ -520,8 +517,9 @@ class OrderMonitor(BaseMonitor):
             item_cell = self.item(location, 0)
             orderid = item_cell._data.__getattribute__(self.data_key)
             if orderid in self.cells:
-                self.cells.pop(orderid)
-                self.removeRow(location)
+                #self.cells.pop(orderid)
+                #self.removeRow(location)
+                self.hideRow(location)
 
 class PositionMonitor(BaseMonitor):
     """
@@ -1064,8 +1062,6 @@ class ActiveOrderMonitor(OrderMonitor):
         """
         Hides the row if order is not active.
         """
-        ''' fake '''
-        return
 
         super(ActiveOrderMonitor, self).process_event(event)
 
