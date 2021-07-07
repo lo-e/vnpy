@@ -99,6 +99,7 @@ class GridAlgo(AlgoTemplate):
     """ modify by loe """
     @classmethod
     def auto_parameters(cls):
+        """
         return {'editable': '否',
                 "vt_symbol": "BTCUSDT.BYBIT",
                 "capital": 10000.0,
@@ -120,7 +121,7 @@ class GridAlgo(AlgoTemplate):
                 "interval": 60,
                 "db_init":'否'
                 }
-        """
+        #"""
 
     def check_init(self):
         if self.db_init:
