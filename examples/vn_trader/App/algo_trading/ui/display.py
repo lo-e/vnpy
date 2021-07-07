@@ -6,6 +6,7 @@ NAME_DISPLAY_MAP = {
     "volume": "数量",
     "time": "执行时间（秒）",
     "interval": "每轮间隔（秒）",
+    "db_init": "数据库数据初始化",
     "offset": "开平",
     "active": "算法状态",
     "traded": "成交数量",

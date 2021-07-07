@@ -7,6 +7,9 @@ import numpy as np
 import pandas as pd
 import decimal
 from vnpy.trader.utility import round_to
+from vnpy.trader.constant import Interval
+from vnpy.trader.object import BarData
+from vnpy.trader.utility import ArrayManager
 
 ''' fake '''
 from datetime import datetime
@@ -27,7 +30,11 @@ class GridAlgo(AlgoTemplate):
         "grid_count":0,
         "grid_price": 0.0,
         "grid_volume": 0.0,
-        "interval": 0
+        "interval": 0,
+        "db_init":[
+            "是",
+            "否"
+        ]
     }
 
     variables = [
@@ -35,8 +42,14 @@ class GridAlgo(AlgoTemplate):
         "timer_count",
         "long_orderids",
         "short_orderids",
-        'reject_order_count',
+        "reject_order_count",
+        "gridUp",
+        "gridDown"
     ]
+
+    gridWindow = 20
+    max_grid_count = 10000
+    min_grid_price = 2.0
 
     def __init__(
         self,
@@ -60,6 +73,11 @@ class GridAlgo(AlgoTemplate):
         self.grid_price = setting["grid_price"]
         self.grid_volume = setting["grid_volume"]
         self.interval = setting["interval"]
+        db_init_text = setting['db_init']
+        if db_init_text == "是":
+            self.db_init = True
+        else:
+            self.db_init = False
 
         # Variables
         self.pos = 0
@@ -71,7 +89,11 @@ class GridAlgo(AlgoTemplate):
         self.grid = None
         self.bestLimitAlgo_names = set()
         self.reject_order_count = 0
+        self.gridUp = 0
+        self.gridDown = 0
         self.cancel_orderids = []
+
+        self.am = ArrayManager(self.gridWindow + 1)
 
         self.subscribe(self.vt_symbol)
         self.put_parameters_event()
@@ -80,6 +102,17 @@ class GridAlgo(AlgoTemplate):
     """ modify by loe """
     @classmethod
     def auto_parameters(cls):
+        return {'editable': '否',
+                "vt_symbol": "BTCUSDT.BYBIT",
+                "capital": 10000.0,
+                "guide_price": 0.0,
+                "grid_count": 0,
+                "grid_price": 0.0,
+                "grid_volume": 0.0,
+                "interval": 60,
+                "db_init": '是'
+                }
+        """
         return {'editable':'否',
                 "vt_symbol": "BTCUSDT.BYBIT",
                 "capital":10000.0,
@@ -87,11 +120,22 @@ class GridAlgo(AlgoTemplate):
                 "grid_count":1000,
                 "grid_price": 10.0,
                 "grid_volume": 0.01,
-                "interval": 60
+                "interval": 60,
+                "db_init":'否'
                 }
+        """
+
+    def check_init(self):
+        if self.db_init:
+            # 载入历史数据，并采用回放计算的方式初始化策略数值
+            initData = self.load_bar(300, interval=Interval.DAILY)
+            for bar in initData:
+                self.on_bar(bar)
+            self.write_log(f'{self.algo_name}\t数据库数据初始化完成')
 
     """ modify by loe """
     def on_start(self):
+        self.check_init()
         self.creat_grid()
         self.saveSyncData()
 
@@ -126,6 +170,32 @@ class GridAlgo(AlgoTemplate):
 
         # 网格
         self.grid = pd.Series(grid_pos_array_float, index=grid_price_array_float)
+
+    def on_bar(self, bar: BarData):
+        """"""
+        # 保存K线数据
+        self.am.update_bar(bar)
+        if not self.am.inited:
+            return
+
+        """
+        "guide_price": 0.0,
+        "grid_count": 1000,
+        "grid_price": 0.0,
+        "grid_volume": 0.0,
+        """
+        # 网格上下限
+        self.gridUp, self.gridDown = self.am.donchian(self.gridWindow)
+        # 网格的基准价格
+        grid_width = float(decimal.Decimal(str(self.gridUp - self.gridDown)) / decimal.Decimal(str(2.0)))
+        self.guide_price = float((decimal.Decimal(str(self.gridUp)) + decimal.Decimal(str(self.gridDown))) / decimal.Decimal(str(2.0)))
+        # 网格的大小
+        self.grid_price = float(decimal.Decimal(str(grid_width)) / decimal.Decimal(str(self.max_grid_count)))
+        if self.grid_price < self.min_grid_price:
+            self.grid_price = self.min_grid_price
+            self.grid_count = int(grid_width / self.grid_price)
+        else:
+            self.grid_count = self.max_grid_count
 
     def on_tick(self, tick: TickData):
         """"""

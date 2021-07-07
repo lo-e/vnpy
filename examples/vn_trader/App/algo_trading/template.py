@@ -2,7 +2,9 @@ from vnpy.trader.engine import BaseEngine
 from vnpy.trader.object import TickData, OrderData, TradeData
 from vnpy.trader.constant import OrderType, Offset, Direction
 from vnpy.trader.utility import virtual
-
+from vnpy.trader.constant import Interval
+from typing import Callable
+from vnpy.trader.object import BarData
 
 class AlgoTemplate:
     """"""
@@ -46,6 +48,21 @@ class AlgoTemplate:
     def auto_parameters(cls):
         return {}
 
+    """ modify by loe """
+    def load_bar(
+            self,
+            days: int,
+            interval: Interval = Interval.MINUTE,
+            callback: Callable = None,
+    ):
+        """
+        Load historical bar data for initializing strategy.
+        """
+        if not callback:
+            callback = self.on_bar
+
+        return self.algo_engine.load_bar(self.vt_symbol, days, interval, callback)
+
     def update_tick(self, tick: TickData):
         """"""
         if self.active:
@@ -77,6 +94,11 @@ class AlgoTemplate:
 
     @virtual
     def on_stop(self):
+        """"""
+        pass
+
+    @virtual
+    def on_bar(self, bar: BarData):
         """"""
         pass
 

@@ -3,8 +3,8 @@ from vnpy.event import EventEngine, Event
 from vnpy.trader.engine import BaseEngine, MainEngine
 from vnpy.trader.event import (
     EVENT_TICK, EVENT_TIMER, EVENT_ORDER, EVENT_TRADE)
-from vnpy.trader.constant import (Direction, Offset, OrderType)
-from vnpy.trader.object import (SubscribeRequest, OrderRequest, LogData)
+from vnpy.trader.constant import (Direction, Offset, OrderType, Interval, Exchange)
+from vnpy.trader.object import (SubscribeRequest, OrderRequest, LogData, BarData)
 from vnpy.trader.utility import load_json, save_json, round_to
 from vnpy.trader.setting import SETTINGS
 
@@ -17,6 +17,10 @@ from .base import (
 
 from vnpy.app.cta_strategy.base import POSITION_DB_NAME
 from copy import copy
+from vnpy.app.cta_strategy.base import (TICK_DB_NAME,
+                                        DAILY_DB_NAME,
+                                        MINUTE_DB_NAME)
+from datetime import datetime, timedelta
 
 class AlgoEngine(BaseEngine):
     """"""
@@ -51,6 +55,41 @@ class AlgoEngine(BaseEngine):
         """"""
         if self.genus_client:
             self.genus_client.close()
+
+    """ modify by loe """
+    def load_bar(self, vt_symbol, days, interval, callback):
+        if interval == Interval.DAILY:
+            dbName = DAILY_DB_NAME
+        elif interval == Interval.MINUTE:
+            dbName = MINUTE_DB_NAME
+        else:
+            dbName = TICK_DB_NAME
+
+        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        startDate = today - timedelta(days)
+        d = {'datetime': {'$gte': startDate}}
+
+        """ modify by loe """
+        collectionName = vt_symbol.upper()
+        barData = self.main_engine.dbQuery(dbName, collectionName, d, 'datetime')
+
+        l = []
+        for d in barData:
+            gateway_name = d['gateway_name']
+            symbol = d['symbol']
+            exchange = Exchange.BYBIT
+            theDatetime = d['datetime']
+            endDatetime = None
+
+            bar = BarData(gateway_name=gateway_name, symbol=symbol, exchange=exchange, datetime=theDatetime,
+                          endDatetime=endDatetime)
+            bar.__dict__ = d
+            # 检查Bar数据是否有效
+            if not bar.check_valid():
+                raise ('Bar数据校验不通过！！')
+
+            l.append(bar)
+        return l
 
     def load_algo_template(self):
         """"""
