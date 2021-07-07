@@ -80,6 +80,7 @@ class GridAlgo(AlgoTemplate):
         self.pos = 0
         self.timer_count = 0
         self.check_enable = False
+        self.tick_error = False
         self.long_orderids = set()
         self.short_orderids = set()
         self.last_tick = None
@@ -204,7 +205,9 @@ class GridAlgo(AlgoTemplate):
 
         # 理论上买一价小于卖一价，如果不是，数据可能异常，为了避免taker成交增加手续费成本，不做委托
         if self.last_tick.bid_price_1 <= self.last_tick.ask_price_1:
-            self.write_log(f'tick买卖一档数据异常\tbid_price_1： {self.last_tick.bid_price_1}\task_price_1：{self.last_tick.ask_price_1}')
+            if not self.tick_error:
+                self.write_log(f'tick买卖一档数据异常\tbid_price_1： {self.last_tick.bid_price_1}\task_price_1：{self.last_tick.ask_price_1}')
+                self.tick_error = True
             return
 
         if self.check_enable:
@@ -520,6 +523,7 @@ class GridAlgo(AlgoTemplate):
         self.check_position()
         """
         self.check_enable = True
+        self.tick_error = False
 
         self.put_variables_event()
         self.saveSyncData()
@@ -541,7 +545,7 @@ class GridAlgo(AlgoTemplate):
                 if self.reject_order_count >= 10:
                     self.stop()
 
-
+            self.check_enable = True
             self.put_variables_event()
             self.saveSyncData()
 
