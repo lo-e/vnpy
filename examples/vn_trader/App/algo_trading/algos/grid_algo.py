@@ -41,8 +41,12 @@ class GridAlgo(AlgoTemplate):
         "short_orderids",
         "reject_order_count",
         "gridUp",
-        "gridDown"
+        "gridDown",
+        "current_pnl"
     ]
+
+    syncs = ['pos',
+             'current_pnl']
 
     gridWindow = 20
     max_grid_count = 10000
@@ -89,6 +93,7 @@ class GridAlgo(AlgoTemplate):
         self.reject_order_count = 0
         self.gridUp = 0
         self.gridDown = 0
+        self.current_pnl = 0
         self.cancel_orderids = []
 
         self.am = ArrayManager(self.gridWindow + 1)
@@ -561,7 +566,17 @@ class GridAlgo(AlgoTemplate):
         contract = self.algo_engine.get_contract(self, self.vt_symbol)
         if contract:
             self.pos = round_to(self.pos, contract.min_volume)
+
+        # 计算当前盈利
+        if trade.offset == Offset.CLOSE or trade.offset == Offset.CLOSEYESTERDAY or trade.offset == Offset.CLOSETODAY:
+            count = int(round(trade.volume / self.grid_volume, 0))
+            actual_volume = 0
+            for i in range(count):
+                actual_volume += self.grid_volume * (i + 1)
+            self.current_pnl += actual_volume * self.grid_price
+
         self.put_variables_event()
+        self.saveSyncData()
 
     """ modify by loe """
     def cancel_order(self, vt_orderid: str):
