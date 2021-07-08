@@ -287,6 +287,8 @@ class AlgoEngine(BaseEngine):
         log = LogData(msg=msg, gateway_name=APP_NAME)
         event = Event(EVENT_ALGO_LOG, data=log)
         self.event_engine.put(event)
+        """ modify by loe """
+        print(msg)
 
     def put_setting_event(self, setting_name: str, setting: dict):
         """"""
