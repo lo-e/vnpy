@@ -33,6 +33,7 @@ class AlgoEngine(BaseEngine):
         self.algos = {}
         self.symbol_algo_map = {}
         self.orderid_algo_map = {}
+        self.orderid_offset_map = {}
 
         self.algo_templates = {}
         self.algo_settings = {}
@@ -248,6 +249,7 @@ class AlgoEngine(BaseEngine):
         if algo.top_algo:
             algo_array.add(algo.top_algo)
         self.orderid_algo_map[vt_orderid] = algo_array
+        self.orderid_offset_map[vt_orderid] = offset
         return vt_orderid
 
     def cancel_order(self, algo: AlgoTemplate, vt_orderid: str):

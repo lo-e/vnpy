@@ -568,7 +568,8 @@ class GridAlgo(AlgoTemplate):
             self.pos = round_to(self.pos, contract.min_volume)
 
         # 计算当前盈利
-        if trade.offset == Offset.CLOSE or trade.offset == Offset.CLOSEYESTERDAY or trade.offset == Offset.CLOSETODAY:
+        trade_offset = self.algo_engine.orderid_offset_map.get(trade.vt_orderid, None)
+        if trade_offset and trade_offset == Offset.CLOSE or trade_offset == Offset.CLOSEYESTERDAY or trade_offset == Offset.CLOSETODAY:
             count = int(round(trade.volume / self.grid_volume, 0))
             actual_volume = 0
             for i in range(count):
