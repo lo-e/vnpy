@@ -10,6 +10,16 @@ from vnpy.trader.utility import round_to
 from vnpy.trader.constant import Interval
 from vnpy.trader.object import BarData
 from vnpy.trader.utility import ArrayManager
+from enum import Enum
+from copy import copy
+
+class Mode(Enum):
+    """
+    Mode of Grid Trade.
+    """
+    AUTO = "自由"
+    DB = "数据库"
+    CUSTOM = "自定义"
 
 class GridAlgo(AlgoTemplate):
     """"""
@@ -21,17 +31,17 @@ class GridAlgo(AlgoTemplate):
             "是",
             "否"
         ],
+        "mode": [
+            "自由",
+            "数据库",
+            "自定义"
+        ],
         "vt_symbol": "",
-        "capital":0.0,
         "guide_price": 0.0,
         "grid_count":0,
         "grid_price": 0.0,
         "grid_volume": 0.0,
         "interval": 0,
-        "db_init":[
-            "是",
-            "否"
-        ]
     }
 
     variables = [
@@ -41,8 +51,10 @@ class GridAlgo(AlgoTemplate):
         "short_orderids",
         "reject_order_count",
         "gridUp",
+        "guide_price",
         "gridDown",
-        "current_pnl"
+        "current_pnl",
+        "es_max_loss"
     ]
 
     syncs = ['pos',
@@ -68,17 +80,12 @@ class GridAlgo(AlgoTemplate):
         else:
             self.editable = False
         self.vt_symbol = setting["vt_symbol"]
-        self.capital = setting['capital']
         self.guide_price = setting["guide_price"]
         self.grid_count = setting['grid_count']
         self.grid_price = setting["grid_price"]
         self.grid_volume = setting["grid_volume"]
         self.interval = setting["interval"]
-        db_init_text = setting['db_init']
-        if db_init_text == "是":
-            self.db_init = True
-        else:
-            self.db_init = False
+        self.mode = Mode(setting['mode'])
 
         # Variables
         self.pos = 0
@@ -94,6 +101,7 @@ class GridAlgo(AlgoTemplate):
         self.gridUp = 0
         self.gridDown = 0
         self.current_pnl = 0
+        self.es_max_loss = 0
         self.cancel_orderids = []
 
         self.am = ArrayManager(self.gridWindow + 1)
@@ -105,43 +113,70 @@ class GridAlgo(AlgoTemplate):
     """ modify by loe """
     @classmethod
     def auto_parameters(cls):
+        # 自由模式
         """
         return {'editable': '否',
+                "mode": '自由',
                 "vt_symbol": "BTCUSDT.BYBIT",
-                "capital": 10000.0,
+                "guide_price": 35000.0,
+                "grid_count": 1000,
+                "grid_price": 10.0,
+                "grid_volume": 0.01,
+                "interval": 60
+                }
+        """
+
+        # 数据库模式
+        """
+        return {'editable': '否',
+                'mode': '数据库',
+                "vt_symbol": "BTCUSDT.BYBIT",
                 "guide_price": 0.0,
                 "grid_count": 0,
                 "grid_price": 0.0,
                 "grid_volume": 0.0,
-                "interval": 60,
-                "db_init": '是'
+                "interval": 60
                 }
         """
-        return {'editable':'否',
+
+        # 自定义模式
+        #"""
+        return {'editable': '否',
+                "mode": '自定义',
                 "vt_symbol": "BTCUSDT.BYBIT",
-                "capital":10000.0,
-                "guide_price": 35000.0,
-                "grid_count":1000,
-                "grid_price": 10.0,
+                "guide_price": 60000.0,
+                "grid_count": 1000,
+                "grid_price": 0.0,
                 "grid_volume": 0.01,
-                "interval": 60,
-                "db_init":'否'
+                "interval": 60
                 }
         #"""
 
     def check_init(self):
-        if self.db_init:
+        if self.mode == Mode.AUTO:
+            # 网格上下限
+            grid_width = decimal.Decimal(str(self.grid_count)) * decimal.Decimal(str(self.grid_price))
+            self.gridUp = decimal.Decimal(str(self.guide_price)) + decimal.Decimal(str(grid_width))
+            self.gridDown = decimal.Decimal(str(self.guide_price)) - decimal.Decimal(str(grid_width))
+
+        elif self.mode == Mode.DB:
             # 载入历史数据，并采用回放计算的方式初始化策略数值
             initData = self.load_bar(300, interval=Interval.DAILY)
             for bar in initData:
                 self.on_bar(bar)
             self.write_log(f'{self.algo_name}\t数据库数据初始化完成')
 
-    """ modify by loe """
-    def on_start(self):
-        self.check_init()
-        self.creat_grid()
-        self.saveSyncData()
+        elif self.mode == Mode.CUSTOM:
+            # 网格上下限
+            self.gridUp = decimal.Decimal(str(self.guide_price)) * decimal.Decimal(str(2))
+            self.gridDown = 0.0
+            # 网格的大小
+            self.grid_price = float(decimal.Decimal(str(self.guide_price)) / decimal.Decimal(str(self.grid_count)))
+            if self.grid_price < self.min_grid_price:
+                self.grid_price = self.min_grid_price
+                self.grid_count = int(self.guide_price / self.grid_price)
+            else:
+                self.grid_count = self.grid_count
 
     # 创建网格
     def creat_grid(self):
@@ -152,7 +187,7 @@ class GridAlgo(AlgoTemplate):
         # 价格数列
         grid_price_up = self.guide_price + (self.grid_count + 1) * self.grid_price
         grid_price_down = self.guide_price - self.grid_count * self.grid_price
-        if grid_price_down <= 0:
+        if grid_price_down < 0:
             self.active = False
             return
         grid_price_array_decimal = np.arange(decimal.Decimal(str(grid_price_down)), decimal.Decimal(str(grid_price_up)), decimal.Decimal(str(self.grid_price)))
@@ -175,6 +210,15 @@ class GridAlgo(AlgoTemplate):
         # 网格
         self.grid = pd.Series(grid_pos_array_float, index=grid_price_array_float)
 
+    def estimate_max_loss(self, price):
+        self.es_max_loss = 0
+
+    """ modify by loe """
+    def on_start(self):
+        self.check_init()
+        self.creat_grid()
+        self.saveSyncData()
+
     def on_bar(self, bar: BarData):
         """"""
         # 保存K线数据
@@ -182,12 +226,6 @@ class GridAlgo(AlgoTemplate):
         if not self.am.inited:
             return
 
-        """
-        "guide_price": 0.0,
-        "grid_count": 1000,
-        "grid_price": 0.0,
-        "grid_volume": 0.0,
-        """
         # 网格上下限
         self.gridUp, self.gridDown = self.am.donchian(self.gridWindow)
         # 网格的基准价格
@@ -406,6 +444,24 @@ class GridAlgo(AlgoTemplate):
                         short_price = grid_price_array[short_index_result]
                         short_target = grid_pos_array[short_index_result]
 
+        if self.mode == Mode.CUSTOM:
+            # 自定义模式仓位管理
+            # 1、不允许持有空仓
+            # 2、初始化建仓时，即当前仓位pos为零时，多空委托价格不能高于基准价格的一半
+            if long_target < 0:
+                long_target = None
+
+            if short_target < 0:
+                short_target = None
+
+            if self.pos == 0:
+                if long_price >= self.guide_price / 2.0:
+                    long_price = None
+
+                if short_price >= self.guide_price / 2.0:
+                    short_price = None
+
+
         long_dict = {'long_price':long_price,
                      'long_target':long_target}
 
@@ -556,6 +612,8 @@ class GridAlgo(AlgoTemplate):
 
     def on_trade(self, trade: TradeData):
         """"""
+        last_pos = copy(self.pos)
+
         # 仓位确定
         if trade.direction == Direction.LONG:
             self.pos = float(decimal.Decimal(str(self.pos)) + decimal.Decimal(str(trade.volume)))
@@ -575,6 +633,10 @@ class GridAlgo(AlgoTemplate):
             for i in range(count):
                 actual_volume += self.grid_volume * (i + 1)
             self.current_pnl += actual_volume * self.grid_price
+
+        # 初始化开仓时预估最大准备金，即当未来价格冲破网格初始化仓位相反方向极端值的最大损失
+        if last_pos == 0 or last_pos * self.pos < 0:
+            self.estimate_max_loss(price=trade.price)
 
         self.put_variables_event()
         self.saveSyncData()
