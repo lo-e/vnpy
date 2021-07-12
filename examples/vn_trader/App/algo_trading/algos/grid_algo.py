@@ -54,7 +54,8 @@ class GridAlgo(AlgoTemplate):
         "guide_price",
         "gridDown",
         "current_pnl",
-        "es_max_loss"
+        "est_max_loss",
+        "est_max_pnl"
     ]
 
     syncs = ['pos',
@@ -101,7 +102,8 @@ class GridAlgo(AlgoTemplate):
         self.gridUp = 0
         self.gridDown = 0
         self.current_pnl = 0
-        self.es_max_loss = 0
+        self.est_max_loss = 0
+        self.est_max_pnl = 0
         self.cancel_orderids = []
 
         self.am = ArrayManager(self.gridWindow + 1)
@@ -211,13 +213,36 @@ class GridAlgo(AlgoTemplate):
         self.grid = pd.Series(grid_pos_array_float, index=grid_price_array_float)
 
     def estimate_max_loss(self, price):
-        self.es_max_loss = 0
+        grid_price_array = self.grid.index
+        result_price = min(grid_price_array, key=lambda x: abs(x - price))
+        result_target = self.grid[result_price]
+        if result_price <= self.guide_price:
+            max_loss_price = result_price - grid_price_array[0]
+        else:
+            max_loss_price = grid_price_array[-1] - result_price
+
+        est_target_loss = abs(result_target) * max_loss_price
+        est_left_loss = (((self.grid_count * self.grid_volume) - abs(result_target)) / 2.0) * (max_loss_price - self.grid_price)
+        self.est_max_loss = est_target_loss + est_left_loss
+
+    def estimate_max_pnl(self, price):
+        grid_price_array = self.grid.index
+        result_price = min(grid_price_array, key=lambda x: abs(x - price))
+        result_target = self.grid[result_price]
+        max_pnl_price = abs(self.guide_price - result_price)
+        self.est_max_pnl = (abs(result_target) / 2.0) * (max_pnl_price + self.grid_price)
 
     """ modify by loe """
     def on_start(self):
         self.check_init()
         self.creat_grid()
         self.saveSyncData()
+
+        """ fake """
+        entry_price = 30000
+        self.estimate_max_loss(price=entry_price)
+        self.estimate_max_pnl(price=entry_price)
+        a = 2
 
     def on_bar(self, bar: BarData):
         """"""
@@ -637,6 +662,7 @@ class GridAlgo(AlgoTemplate):
         # 初始化开仓时预估最大准备金，即当未来价格冲破网格初始化仓位相反方向极端值的最大损失
         if last_pos == 0 or last_pos * self.pos < 0:
             self.estimate_max_loss(price=trade.price)
+            self.estimate_max_pnl(price=trade.price)
 
         self.put_variables_event()
         self.saveSyncData()
