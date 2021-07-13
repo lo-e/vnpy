@@ -236,6 +236,9 @@ class GridAlgo(AlgoTemplate):
     def on_start(self):
         self.check_init()
         self.creat_grid()
+
+        self.put_parameters_event()
+        self.put_variables_event()
         self.saveSyncData()
 
     def on_bar(self, bar: BarData):
