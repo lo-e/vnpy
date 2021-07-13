@@ -146,7 +146,7 @@ class GridAlgo(AlgoTemplate):
         return {'editable': '否',
                 "mode": '自定义',
                 "vt_symbol": "BTCUSDT.BYBIT",
-                "guide_price": 60000.0,
+                "guide_price": 65000.0,
                 "grid_count": 1000,
                 "grid_price": 0.0,
                 "grid_volume": 0.01,
@@ -484,10 +484,10 @@ class GridAlgo(AlgoTemplate):
                 short_target = None
 
             if self.pos == 0:
-                if long_price >= self.guide_price / 2.0:
+                if long_price >= self.guide_price * 0.5:
                     long_price = None
 
-                if short_price >= self.guide_price / 2.0:
+                if short_price >= self.guide_price * 0.5:
                     short_price = None
 
 
