@@ -12,6 +12,7 @@ from vnpy.trader.object import BarData
 from vnpy.trader.utility import ArrayManager
 from enum import Enum
 from copy import copy
+from datetime import datetime
 
 class Mode(Enum):
     """
@@ -278,6 +279,7 @@ class GridAlgo(AlgoTemplate):
         if self.check_enable:
             self.check_long_short_order()
             self.check_enable = False
+            print(f'now：{datetime.now()}\ttick：{tick.datetime}')
 
     def get_target_pos(self, tick_price):
         grid_price_array = self.grid.index
