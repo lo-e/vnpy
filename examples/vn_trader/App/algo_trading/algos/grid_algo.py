@@ -448,7 +448,7 @@ class GridAlgo(AlgoTemplate):
                         long_target = grid_pos_array[long_index_result]
 
                         # 风控，委托买价过低当前价位可能会导致一直拒单
-                        if long_price < tick.bid_price_1 - self.grid_count * 20:
+                        if long_price < tick.bid_price_1 - self.grid_price * 20:
                             long_price = None
                             long_target = None
 
@@ -469,7 +469,7 @@ class GridAlgo(AlgoTemplate):
                         short_target = grid_pos_array[short_index_result]
 
                         # 风控，委托卖价过高当前价位可能会导致一直拒单
-                        if short_price > tick.ask_price_1 + self.grid_count * 20:
+                        if short_price > tick.ask_price_1 + self.grid_price * 20:
                             short_price = None
                             short_target = None
 
