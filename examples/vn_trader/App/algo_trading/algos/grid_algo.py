@@ -238,12 +238,6 @@ class GridAlgo(AlgoTemplate):
         self.creat_grid()
         self.saveSyncData()
 
-        """ fake """
-        entry_price = 30000
-        self.estimate_max_loss(price=entry_price)
-        self.estimate_max_pnl(price=entry_price)
-        a = 2
-
     def on_bar(self, bar: BarData):
         """"""
         # 保存K线数据
