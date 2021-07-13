@@ -149,7 +149,7 @@ class GridAlgo(AlgoTemplate):
                 "guide_price": 65000.0,
                 "grid_count": 1000,
                 "grid_price": 0.0,
-                "grid_volume": 0.01,
+                "grid_volume": 0.001,
                 "interval": 60
                 }
         #"""
