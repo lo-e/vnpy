@@ -489,9 +489,11 @@ class GridAlgo(AlgoTemplate):
             if self.pos == 0:
                 if long_price and long_price >= self.guide_price * 0.5:
                     long_price = None
+                    long_target = None
 
                 if short_price and short_price >= self.guide_price * 0.5:
                     short_price = None
+                    short_target = None
 
 
         long_dict = {'long_price':long_price,
