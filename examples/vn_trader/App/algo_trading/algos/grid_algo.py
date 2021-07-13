@@ -447,6 +447,11 @@ class GridAlgo(AlgoTemplate):
                         long_price = grid_price_array[long_index_result]
                         long_target = grid_pos_array[long_index_result]
 
+                        # 风控，委托买价过低当前价位可能会导致一直拒单
+                        if long_price < tick.bid_price_1 - self.grid_count * 20:
+                            long_price = None
+                            long_target = None
+
         # 确定空单目标仓位
         if tick.ask_price_1:
             short_index_array = np.argwhere(grid_price_array > tick.ask_price_1)
@@ -462,6 +467,11 @@ class GridAlgo(AlgoTemplate):
                         short_index_result = short_index_array[0][0]
                         short_price = grid_price_array[short_index_result]
                         short_target = grid_pos_array[short_index_result]
+
+                        # 风控，委托卖价过高当前价位可能会导致一直拒单
+                        if short_price > tick.ask_price_1 + self.grid_count * 20:
+                            short_price = None
+                            short_target = None
 
         if self.mode == Mode.CUSTOM:
             # 自定义模式仓位管理
@@ -613,11 +623,13 @@ class GridAlgo(AlgoTemplate):
         if (order.vt_orderid in self.long_orderids or order.vt_orderid in self.short_orderids) and not order.is_active():
             if order.vt_orderid in self.long_orderids:
                 self.long_orderids.remove(order.vt_orderid)
+                if not self.long_orderids:
+                    self.cancel_all()
+
             if order.vt_orderid in self.short_orderids:
                 self.short_orderids.remove(order.vt_orderid)
-
-            if not self.long_orderids or not self.short_orderids:
-                self.cancel_all()
+                if not self.short_orderids:
+                    self.cancel_all()
 
             if order.status == Status.REJECTED:
                 self.reject_order_count += 1
