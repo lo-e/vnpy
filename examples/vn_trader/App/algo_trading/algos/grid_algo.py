@@ -477,17 +477,17 @@ class GridAlgo(AlgoTemplate):
             # 自定义模式仓位管理
             # 1、不允许持有空仓
             # 2、初始化建仓时，即当前仓位pos为零时，多空委托价格不能高于基准价格的一半
-            if long_target < 0:
+            if long_target and long_target < 0:
                 long_target = None
 
-            if short_target < 0:
+            if short_target and short_target < 0:
                 short_target = None
 
             if self.pos == 0:
-                if long_price >= self.guide_price * 0.5:
+                if long_price and long_price >= self.guide_price * 0.5:
                     long_price = None
 
-                if short_price >= self.guide_price * 0.5:
+                if short_price and short_price >= self.guide_price * 0.5:
                     short_price = None
 
 
