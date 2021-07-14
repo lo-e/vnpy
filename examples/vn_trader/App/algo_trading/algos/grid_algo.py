@@ -11,7 +11,6 @@ from vnpy.trader.constant import Interval
 from vnpy.trader.object import BarData
 from vnpy.trader.utility import ArrayManager
 from enum import Enum
-from copy import copy
 from datetime import datetime
 
 class Mode(Enum):
@@ -60,11 +59,20 @@ class GridAlgo(AlgoTemplate):
     ]
 
     syncs = ['pos',
-             'current_pnl']
+             'current_pnl',
+             'init_pos_complete']
 
-    gridWindow = 20
     max_grid_count = 10000
     min_grid_price = 2.0
+
+    # ****** DB模式参数 ******
+    # 指标数据参数
+    gridWindow = 20
+
+    # ****** CUSTOM模式参数 ******
+    # 建仓价位线，将历史最高价下跌多少作为安全建仓价位
+    init_line = 0.4
+    init_pos_complete = False
 
     def __init__(
         self,
@@ -480,23 +488,15 @@ class GridAlgo(AlgoTemplate):
 
         if self.mode == Mode.CUSTOM:
             # 自定义模式仓位管理
-            # 1、不允许持有空仓
-            # 2、初始化建仓时，即当前仓位pos为零时，多空委托价格不能高于基准价格的一半
-            if long_target and long_target < 0:
-                long_target = None
-
-            if short_target and short_target < 0:
-                short_target = None
-
-            if self.pos == 0:
-                if long_price and long_price >= self.guide_price * 0.5:
+            # 1、初始建仓目标未达成时，多仓委托价格不能高于建仓价位线
+            if not self.init_pos_complete:
+                if long_price and long_price >= self.guide_price * self.init_line:
                     long_price = None
                     long_target = None
 
-                if short_price and short_price >= self.guide_price * 0.5:
-                    short_price = None
-                    short_target = None
-
+            # 2、不允许持有空仓
+            if short_target and short_target < 0:
+                short_target = 0.0
 
         long_dict = {'long_price':long_price,
                      'long_target':long_target}
@@ -650,8 +650,6 @@ class GridAlgo(AlgoTemplate):
 
     def on_trade(self, trade: TradeData):
         """"""
-        last_pos = copy(self.pos)
-
         # 仓位确定
         if trade.direction == Direction.LONG:
             self.pos = float(decimal.Decimal(str(self.pos)) + decimal.Decimal(str(trade.volume)))
@@ -672,10 +670,16 @@ class GridAlgo(AlgoTemplate):
                 actual_volume += self.grid_volume * (i + 1)
             self.current_pnl += actual_volume * self.grid_price
 
-        # 初始化开仓时预估最大准备金，即当未来价格冲破网格初始化仓位相反方向极端值的最大损失
-        if last_pos == 0 or last_pos * self.pos < 0:
-            self.estimate_max_loss(price=trade.price)
-            self.estimate_max_pnl(price=trade.price)
+        # 自定义模式初始化建仓完成时预估最大准备金和预估最大仓位盈利
+        if self.mode == Mode.CUSTOM and not self.init_pos_complete:
+            price_array = np.argwhere(self.grid.index < self.guide_price * self.init_line)
+            if len(price_array):
+                target_price = price_array[-1][-1]
+                target_pos = abs(self.grid[target_price])
+                if abs(self.pos) >= target_pos:
+                    self.init_pos_complete = True
+                    self.estimate_max_loss(price=trade.price)
+                    self.estimate_max_pnl(price=trade.price)
 
         self.put_variables_event()
         self.saveSyncData()
