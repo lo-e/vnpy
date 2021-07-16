@@ -12,7 +12,6 @@ from vnpy.trader.object import BarData
 from vnpy.trader.utility import ArrayManager
 from enum import Enum
 from datetime import datetime
-
 class Mode(Enum):
     """
     Mode of Grid Trade.
@@ -674,9 +673,9 @@ class GridAlgo(AlgoTemplate):
         if self.mode == Mode.CUSTOM and not self.init_pos_complete:
             price_array = np.argwhere(self.grid.index < self.guide_price * self.init_line)
             if len(price_array):
-                target_price = price_array[-1][-1]
-                target_pos = abs(self.grid[target_price])
-                if abs(self.pos) >= target_pos:
+                result_index = price_array[-1][-1]
+                target_pos = self.grid.values[result_index]
+                if abs(self.pos) >= abs(target_pos):
                     self.init_pos_complete = True
                     self.estimate_max_loss(price=trade.price)
                     self.estimate_max_pnl(price=trade.price)
