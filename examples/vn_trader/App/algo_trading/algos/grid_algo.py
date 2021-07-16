@@ -59,7 +59,9 @@ class GridAlgo(AlgoTemplate):
 
     syncs = ['pos',
              'current_pnl',
-             'init_pos_complete']
+             'init_pos_complete',
+             'est_max_loss',
+             'est_max_pnl']
 
     max_grid_count = 10000
     min_grid_price = 2.0
