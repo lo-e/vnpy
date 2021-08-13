@@ -39,7 +39,7 @@
     {
         "strategy_name": "TURTLE_J",
         "class_name": "TurtleStrategy",
-        "vt_symbol": "j2109",
+        "vt_symbol": "j2201",
         "last_symbol":"",
         "per_size":100,
         "tick_price":0.5,
@@ -51,7 +51,7 @@
     {
         "strategy_name": "TURTLE_ZC",
         "class_name": "TurtleStrategy",
-        "vt_symbol": "ZC109",
+        "vt_symbol": "ZC201",
         "last_symbol":"",
         "per_size":100,
         "tick_price":0.2,
