@@ -8,7 +8,6 @@ from vnpy.trader.object import (
 )
 from vnpy.trader.constant import Direction, Offset, Exchange, Interval
 from vnpy.trader.utility import floor_to, ceil_to, round_to, extract_vt_symbol, is_crypto_symbol
-from vnpy.trader.database import database_manager
 
 
 EVENT_SPREAD_DATA = "eSpreadData"
@@ -519,6 +518,11 @@ def load_tick_data(
     end: datetime
 ):
     """"""
+    """ modify by loe """
+    # database_manager方法被vnpy官方删除
+    """
     return database_manager.load_tick_data(
         spread.name, Exchange.LOCAL, start, end
     )
+    """
+    return []
