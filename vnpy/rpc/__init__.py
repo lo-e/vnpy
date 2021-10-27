@@ -1,4 +1,5 @@
 import os
+from os import truncate
 import signal
 import threading
 import traceback
@@ -19,7 +20,7 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 KEEP_ALIVE_TOPIC: str = "_keep_alive"
 KEEP_ALIVE_INTERVAL: timedelta = timedelta(seconds=1)
-KEEP_ALIVE_TOLERANCE: timedelta = timedelta(seconds=3)
+KEEP_ALIVE_TOLERANCE: timedelta = timedelta(seconds=30)
 
 
 class RemoteException(Exception):
@@ -47,7 +48,7 @@ class RpcServer:
         """
         Constructor
         """
-        # Save functions dict: key is fuction name, value is fuction object
+        # Save functions dict: key is function name, value is function object
         self.__functions: Dict[str, Any] = {}
 
         # Zmq port related
@@ -67,8 +68,6 @@ class RpcServer:
         # Authenticator used to ensure data security
         self.__authenticator: ThreadAuthenticator = None
 
-        self._register(KEEP_ALIVE_TOPIC, lambda n: n)
-
     def is_active(self) -> bool:
         """"""
         return self.__active
@@ -77,7 +76,9 @@ class RpcServer:
         self, 
         rep_address: str, 
         pub_address: str,
-        server_secretkey_path: str = ""
+        server_secretkey_path: str = "",
+        username: str = "",
+        password: str = ""
     ) -> None:
         """
         Start RpcServer
@@ -103,6 +104,16 @@ class RpcServer:
             self.__socket_rep.curve_secretkey = secretkey
             self.__socket_rep.curve_publickey = publickey
             self.__socket_rep.curve_server = True
+        elif username and password:
+            self.__authenticator = ThreadAuthenticator(self.__context)
+            self.__authenticator.start()
+            self.__authenticator.configure_plain(
+                domain="*", 
+                passwords={username: password}
+            )
+
+            self.__socket_pub.plain_server = True
+            self.__socket_rep.plain_server = True
 
         # Bind socket address
         self.__socket_rep.bind(rep_address)
@@ -169,6 +180,9 @@ class RpcServer:
         self.__socket_pub.unbind(self.__socket_pub.LAST_ENDPOINT)
         self.__socket_rep.unbind(self.__socket_rep.LAST_ENDPOINT)
 
+        if self.__authenticator:
+            self.__authenticator.stop()
+
     def publish(self, topic: str, data: Any) -> None:
         """
         Publish data
@@ -180,13 +194,7 @@ class RpcServer:
         """
         Register function
         """
-        return self._register(func.__name__, func)
-
-    def _register(self, name: str, func: Callable) -> None:
-        """
-        Register function
-        """
-        self.__functions[name] = func
+        self.__functions[func.__name__] = func
 
 
 class RpcClient:
@@ -221,12 +229,25 @@ class RpcClient:
 
         # Perform remote call task
         def dorpc(*args, **kwargs):
+            # Get timeout value from kwargs, default value is 30 seconds
+            if "timeout" in kwargs:
+                timeout = kwargs.pop("timeout")
+            else:
+                timeout = 30000
+
             # Generate request
             req = [name, args, kwargs]
 
             # Send request and wait for response
             with self.__lock:
                 self.__socket_req.send_pyobj(req)
+                
+                # Timeout reached without any data
+                n = self.__socket_req.poll(timeout)
+                if not n:
+                    msg = f"Timeout of {timeout}ms reached for {req}"
+                    raise RemoteException(msg)
+                
                 rep = self.__socket_req.recv_pyobj()
 
             # Return response if successed; Trigger exception if failed
@@ -242,7 +263,9 @@ class RpcClient:
         req_address: str, 
         sub_address: str,
         client_secretkey_path: str = "",
-        server_publickey_path: str = ""
+        server_publickey_path: str = "",
+        username: str = "",
+        password: str = ""
     ) -> None:
         """
         Start RpcClient
@@ -269,7 +292,20 @@ class RpcClient:
             self.__socket_req.curve_secretkey = secretkey
             self.__socket_req.curve_publickey = publickey
             self.__socket_req.curve_serverkey = serverkey
+        elif username and password:
+            self.__authenticator = ThreadAuthenticator(self.__context)
+            self.__authenticator.start()
+            self.__authenticator.configure_plain(
+                domain="*", 
+                passwords={username: password}
+            )
 
+            self.__socket_sub.plain_username = username.encode()
+            self.__socket_sub.plain_password = password.encode()
+            
+            self.__socket_req.plain_username = username.encode()
+            self.__socket_req.plain_password = password.encode()
+            
         # Connect zmq port
         self.__socket_req.connect(req_address)
         self.__socket_sub.connect(sub_address)
@@ -307,7 +343,7 @@ class RpcClient:
 
         while self.__active:
             if not self.__socket_sub.poll(pull_tolerance):
-                self._on_unexpected_disconnected()
+                self.on_disconnected()
                 continue
 
             # Receive data from subscribe socket
@@ -323,10 +359,8 @@ class RpcClient:
         self.__socket_req.close()
         self.__socket_sub.close()
 
-    @staticmethod
-    def _on_unexpected_disconnected():
-        print("RpcServer has no response over {tolerance} seconds, please check you connection."
-                .format(tolerance=KEEP_ALIVE_TOLERANCE.total_seconds()))
+        if self.__authenticator:
+            self.__authenticator.stop()
 
     def callback(self, topic: str, data: Any) -> None:
         """
@@ -339,6 +373,13 @@ class RpcClient:
         Subscribe data
         """
         self.__socket_sub.setsockopt_string(zmq.SUBSCRIBE, topic)
+
+    def on_disconnected(self):
+        """
+        Callback when heartbeat is lost.
+        """
+        print("RpcServer has no response over {tolerance} seconds, please check you connection."
+                .format(tolerance=KEEP_ALIVE_TOLERANCE.total_seconds()))
 
 
 def generate_certificates(name: str) -> None:

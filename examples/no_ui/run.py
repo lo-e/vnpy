@@ -8,9 +8,9 @@ from vnpy.event import EventEngine
 from vnpy.trader.setting import SETTINGS
 from vnpy.trader.engine import MainEngine
 
-from vnpy.gateway.ctp import CtpGateway
-from vnpy.app.cta_strategy import CtaStrategyApp
-from vnpy.app.cta_strategy.base import EVENT_CTA_LOG
+from vnpy_ctp import CtpGateway
+from vnpy_ctastrategy import CtaStrategyApp
+from vnpy_ctastrategy.base import EVENT_CTA_LOG
 
 
 SETTINGS["log.active"] = True
@@ -32,7 +32,7 @@ ctp_setting = {
 
 # Chinese futures market trading period (day/night)
 DAY_START = time(8, 45)
-DAY_END = time(14, 29)
+DAY_END = time(15, 0)
 
 NIGHT_START = time(20, 45)
 NIGHT_END = time(2, 45)

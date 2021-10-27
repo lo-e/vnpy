@@ -1,12 +1,9 @@
 """
 vn.py - By Traders, For Traders.
-
 The vn.py project is an open-source quantitative trading framework
 that is developed by traders, for traders.
-
 The project is mainly written in Python and uses C++ for low-layer
 and performance sensitive infrastructure.
-
 Using the vn.py project, institutional investors and professional
 traders, such as hedge funds, prop trading firms and investment banks,
 can easily develop complex trading strategies with the Event Engine
@@ -19,7 +16,6 @@ import ast
 import os
 import platform
 import re
-import sys
 
 from setuptools import Extension, find_packages, setup
 
@@ -63,26 +59,17 @@ def get_install_requires():
         "requests",
         "websocket-client",
         "peewee",
-        "pymysql",
-        "mongoengine",
         "numpy",
         "pandas",
         "matplotlib",
         "seaborn",
-        "futu-api",
-        "tigeropen",
         "rqdatac",
         "ta-lib",
-        "ibapi",
         "deap",
         "pyzmq",
         "QScintilla"
     ]
-    if not is_psycopg2_exists():
-        install_requires.append("psycopg2-binary")
 
-    if sys.version_info.minor < 7:
-        install_requires.append("dataclasses")
     return install_requires
 
 
@@ -115,78 +102,6 @@ def get_ext_modules():
         ]
         extra_link_args = ["-lstdc++"]
         runtime_library_dirs = ["$ORIGIN"]
-
-    vnctpmd = Extension(
-        "vnpy.api.ctp.vnctpmd",
-        [
-            "vnpy/api/ctp/vnctp/vnctpmd/vnctpmd.cpp",
-        ],
-        include_dirs=["vnpy/api/ctp/include",
-                      "vnpy/api/ctp/vnctp"],
-        define_macros=[],
-        undef_macros=[],
-        library_dirs=["vnpy/api/ctp/libs", "vnpy/api/ctp"],
-        libraries=["thostmduserapi_se", "thosttraderapi_se"],
-        extra_compile_args=compiler_flags,
-        extra_link_args=extra_link_args,
-        runtime_library_dirs=runtime_library_dirs,
-        depends=[],
-        language="cpp",
-    )
-
-    vnctptd = Extension(
-        "vnpy.api.ctp.vnctptd",
-        [
-            "vnpy/api/ctp/vnctp/vnctptd/vnctptd.cpp",
-        ],
-        include_dirs=["vnpy/api/ctp/include",
-                      "vnpy/api/ctp/vnctp"],
-        define_macros=[],
-        undef_macros=[],
-        library_dirs=["vnpy/api/ctp/libs", "vnpy/api/ctp"],
-        libraries=["thostmduserapi_se", "thosttraderapi_se"],
-        extra_compile_args=compiler_flags,
-        extra_link_args=extra_link_args,
-        runtime_library_dirs=runtime_library_dirs,
-        depends=[],
-        language="cpp",
-    )
-
-    vnxtpmd = Extension(
-        "vnpy.api.xtp.vnxtpmd",
-        [
-            "vnpy/api/xtp/vnxtp/vnxtpmd/vnxtpmd.cpp",
-        ],
-        include_dirs=["vnpy/api/xtp/include",
-                      "vnpy/api/xtp/vnxtp"],
-        define_macros=[],
-        undef_macros=[],
-        library_dirs=["vnpy/api/xtp/libs", "vnpy/api/xtp"],
-        libraries=["xtptraderapi", "xtpquoteapi"],
-        extra_compile_args=compiler_flags,
-        extra_link_args=extra_link_args,
-        runtime_library_dirs=runtime_library_dirs,
-        depends=[],
-        language="cpp",
-    )
-
-    vnxtptd = Extension(
-        "vnpy.api.xtp.vnxtptd",
-        [
-            "vnpy/api/xtp/vnxtp/vnxtptd/vnxtptd.cpp",
-        ],
-        include_dirs=["vnpy/api/xtp/include",
-                      "vnpy/api/xtp/vnxtp"],
-        define_macros=[],
-        undef_macros=[],
-        library_dirs=["vnpy/api/xtp/libs", "vnpy/api/xtp"],
-        libraries=["xtptraderapi", "xtpquoteapi"],
-        extra_compile_args=compiler_flags,
-        extra_link_args=extra_link_args,
-        runtime_library_dirs=runtime_library_dirs,
-        depends=[],
-        language="cpp",
-    )
 
     vnksgoldmd = Extension(
         "vnpy.api.ksgold.vnksgoldmd",
@@ -260,6 +175,48 @@ def get_ext_modules():
         language="cpp",
     )
 
+    vnnhmd = Extension(
+        "vnpy.api.nh.vnnhmd",
+        [
+            "vnpy/api/nh/vnnh/vnnhmd/vnnhmd.cpp",
+        ],
+        include_dirs=["vnpy/api/nh/include", "vnpy/api/nh/vnnh"],
+        library_dirs=["vnpy/api/nh/libs", "vnpy/api/nh"],
+        libraries=["nhmdapi"],
+        extra_compile_args=compiler_flags,
+        extra_link_args=extra_link_args,
+        runtime_library_dirs=runtime_library_dirs,
+        language="cpp",
+    )
+
+    vnnhfutures = Extension(
+        "vnpy.api.nh.vnnhfutures",
+        [
+            "vnpy/api/nh/vnnh/vnnhfutures/vnnhfutures.cpp",
+        ],
+        include_dirs=["vnpy/api/nh/include", "vnpy/api/nh/vnnh"],
+        library_dirs=["vnpy/api/nh/libs", "vnpy/api/nh"],
+        libraries=["nhtd2traderapi"],
+        extra_compile_args=compiler_flags,
+        extra_link_args=extra_link_args,
+        runtime_library_dirs=runtime_library_dirs,
+        language="cpp",
+    )
+
+    vnnhstock = Extension(
+        "vnpy.api.nh.vnnhstock",
+        [
+            "vnpy/api/nh/vnnh/vnnhstock/vnnhstock.cpp",
+        ],
+        include_dirs=["vnpy/api/nh/include", "vnpy/api/nh/vnnh"],
+        library_dirs=["vnpy/api/nh/libs", "vnpy/api/nh"],
+        libraries=["nhtdstockapi"],
+        extra_compile_args=compiler_flags,
+        extra_link_args=extra_link_args,
+        runtime_library_dirs=runtime_library_dirs,
+        language="cpp",
+    )
+
     if platform.system() == "Windows":
         # use pre-built pyd for windows ( support python 3.7 only )
         ext_modules = []
@@ -267,20 +224,11 @@ def get_ext_modules():
         ext_modules = []
     else:
         ext_modules = [
-            vnctptd, vnctpmd,
-            vnxtptd, vnxtpmd,
             vnsgittd, vnsgitmd,
-            vnksgoldmd, vnksgoldtd
+            vnksgoldmd, vnksgoldtd,
+            vnnhmd, vnnhfutures, vnnhstock
         ]
 
-    ext_modules = check_extension_build_flag(
-        ext_modules, "VNPY_BUILD_CTP", vnctptd)
-    ext_modules = check_extension_build_flag(
-        ext_modules, "VNPY_BUILD_CTP", vnctpmd)
-    ext_modules = check_extension_build_flag(
-        ext_modules, "VNPY_BUILD_XTP", vnxtptd)
-    ext_modules = check_extension_build_flag(
-        ext_modules, "VNPY_BUILD_XTP", vnxtpmd)
     ext_modules = check_extension_build_flag(
         ext_modules, "VNPY_BUILD_sgit", vnsgittd)
     ext_modules = check_extension_build_flag(
@@ -291,20 +239,6 @@ def get_ext_modules():
         ext_modules, "VNPY_BUILD_ksgold", vnksgoldtd)
 
     return ext_modules
-
-
-parallel = os.environ.get('VNPY_BUILD_PARALLEL', None)
-if parallel:
-    if parallel == 'auto':
-        parallel = os.cpu_count()
-    if parallel != 'no':
-        from ci.parallel_build_distutils import patch_distutils
-
-        patch_distutils(int(parallel))
-
-""" modify by loe """
-# 这行在下方setup中执行，为了避免重装vnpy的时候都会重装大量依赖库，导致耗时太长而且多余，被移除，
-#install_requires=get_install_requires(),
 
 setup(
     name="vnpy",
@@ -332,14 +266,13 @@ setup(
         "Operating System :: Microsoft :: Windows :: Windows 10",
         "Operating System :: Microsoft :: Windows :: Windows Server 2008",
         "Operating System :: Microsoft :: Windows :: Windows Server 2012",
-        "Operating System :: Microsoft :: Windows :: Windows Server 2012",
+        "Operating System :: Microsoft :: Windows :: Windows Server 2019",
         "Operating System :: POSIX :: Linux"
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.7",
         "Topic :: Office/Business :: Financial :: Investment",
         "Programming Language :: Python :: Implementation :: CPython",
         "License :: OSI Approved :: MIT License",
-        "Natural Language :: Chinese (Simplified)",
         "Natural Language :: Chinese (Simplified)"
     ],
     ext_modules=get_ext_modules(),
