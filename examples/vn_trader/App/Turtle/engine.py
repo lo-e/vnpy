@@ -38,7 +38,6 @@ from vnpy.trader.constant import (
     Status
 )
 from vnpy.trader.utility import load_json, load_json_path, save_json, extract_vt_symbol, round_to
-from vnpy.trader.database import database_manager
 
 from .base import APP_NAME
 from vnpy.app.cta_strategy.base import (
@@ -563,12 +562,17 @@ class TurtleEngine(BaseEngine):
         end = datetime.now()
         start = end - timedelta(days)
 
+        """ modify by loe """
+        # database_manager方法已经被vnpy官方删除
+        """
         ticks = database_manager.load_tick_data(
             symbol=symbol,
             exchange=exchange,
             start=start,
             end=end,
         )
+        """
+        ticks = []
 
         for tick in ticks:
             callback(tick)
