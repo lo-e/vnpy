@@ -32,9 +32,9 @@ from vnpy_ctp import CtpGateway
 # from vnpy_huobi import HuobiFuturesGateway
 # from vnpy_huobi import HuobiInverseGateway
 # from vnpy_huobi import HuobiUsdtGateway
-# from vnpy_okex import OkexGateway
+from vnpy_okex import OkexGateway
 # from vnpy.gateway.bitmex import BitmexGateway
-# from vnpy_bybit import BybitGateway
+from vnpy_bybit import BybitGateway
 # from vnpy.gateway.gateios import GateiosGateway
 # from vnpy_deribit import DeribitGateway
 # from vnpy_bitfinex import BitfinexGateway
@@ -79,6 +79,7 @@ def main():
     main_engine = MainEngine(event_engine)
 
     main_engine.add_gateway(CtpGateway)
+
     # main_engine.add_gateway(CtptestGateway)
     # main_engine.add_gateway(MiniGateway)
     # main_engine.add_gateway(MinitestGateway)
@@ -106,9 +107,9 @@ def main():
     # main_engine.add_gateway(HuobiFuturesGateway)
     # main_engine.add_gateway(HuobiInverseGateway)    
     # main_engine.add_gateway(HuobiUsdtGateway)
-    # main_engine.add_gateway(OkexGateway)
+    main_engine.add_gateway(OkexGateway)
     # main_engine.add_gateway(BitmexGateway)
-    # main_engine.add_gateway(BybitGateway)
+    main_engine.add_gateway(BybitGateway)
     # main_engine.add_gateway(GateiosGateway)
     # main_engine.add_gateway(DeribitGateway)
     # main_engine.add_gateway(BitfinexGateway)
@@ -119,6 +120,7 @@ def main():
     # main_engine.add_gateway(TtsGateway)
     # main_engine.add_gateway(AlpacaGateway)
 
+    main_engine.add_app(TurtleApp)
     # main_engine.add_app(CtaStrategyApp)
     # main_engine.add_app(CtaBacktesterApp)
     # main_engine.add_app(SpreadTradingApp)
