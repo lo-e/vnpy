@@ -610,7 +610,7 @@ class TurtleStrategy(CtaTemplate):
             min_volume = 1
             if self.is_crypto:
                 contract = self.cta_engine.main_engine.get_contract(vt_symbol=self.vt_symbol)
-                if contract:
+                if contract and contract.min_volume:
                     min_volume = contract.min_volume
             multiplier = int(round(multiplier / min_volume, 0)) * min_volume
         self.multiplier = multiplier
