@@ -34,7 +34,6 @@ from vnpy.trader.object import (
 from vnpy_rest import Request, RestClient
 from vnpy_websocket import WebsocketClient
 
-
 # 中国时区
 CHINA_TZ: timezone = timezone("Asia/Shanghai")
 
@@ -1183,7 +1182,9 @@ class BybitUsdtRestApi(RestClient):
         data["order_type"] = ORDER_TYPE_VT2BYBIT[req.type]
         data["price"] = req.price
 
-        if req.offset == Offset.CLOSE:
+        """ modify by loe """
+        # 增加了CLOSETODAY\CLOSEYESTERDAY
+        if req.offset == Offset.CLOSE or req.offset == Offset.CLOSETODAY or req.offset == Offset.CLOSEYESTERDAY:
             data["reduce_only"] = True
 
         self.add_request(
