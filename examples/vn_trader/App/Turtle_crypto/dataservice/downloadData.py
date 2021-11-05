@@ -78,7 +78,7 @@ class TurtleCryptoDataDownloading(object):
             shutil.rmtree(csv_path)
 
         # 获取bar数据
-        interval = '1Dutc'
+        interval = '1D'
         for contract in contract_list:
             okex_get_bar_data(symbol=contract, interval=interval, from_time='', limit=days)
         #"""

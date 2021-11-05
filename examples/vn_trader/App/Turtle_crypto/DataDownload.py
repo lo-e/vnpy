@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
     """ OKEX """
     #"""
-    contract_list = ['BTC-USDT-SWAP']
+    contract_list = ['BTC-USD-21']
     days = 1200
     dataDownload = TurtleCryptoDataDownloading()
     dataDownload.download_from_okex(contract_list=contract_list, days=days)
