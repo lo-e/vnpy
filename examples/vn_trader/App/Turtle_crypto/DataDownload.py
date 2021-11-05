@@ -1,6 +1,7 @@
 from dataservice import TurtleCryptoDataDownloading
 
 if __name__ == '__main__':
+    """ 1TOKEN"""
     """
     contract_list = ['okef/btc.usd.q', 'okef/eth.usd.q', 'okef/eos.usd.q', 'okswap/btc.usd.td', 'okswap/eth.usd.td',
                     'okswap/eos.usd.td', 'okex/btc.usdt', 'okex/eth.usdt', 'okex/eos.usdt']
@@ -12,7 +13,8 @@ if __name__ == '__main__':
     print('\n\n' + lost_msg + back_msg)
     """
 
-    #"""
+    """ BYBIT """
+    """
     mode = input('选择模式【反向：1  正向：2】')
     if mode == '1':
         contract_list = ['BTCUSD', 'ETHUSD']
@@ -23,4 +25,12 @@ if __name__ == '__main__':
     dataDownload.download_from_bybit(contract_list=contract_list, days=days)
     result, complete_msg, back_msg, lost_msg = dataDownload.generate_for_bybit(contract_list=contract_list, days=days)
     print('\n\n' + lost_msg + back_msg)
+    """
+
+    """ OKEX """
+    #"""
+    contract_list = ['BTC-USDT-SWAP']
+    days = 1200
+    dataDownload = TurtleCryptoDataDownloading()
+    dataDownload.download_from_okex(contract_list=contract_list, days=days)
     #"""
