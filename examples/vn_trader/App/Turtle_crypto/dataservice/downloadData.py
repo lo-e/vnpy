@@ -7,7 +7,8 @@
 from .OneTokenDataService import get_bar_data, get_csv_path
 from .BybitDataService import bybit_get_bar_data
 from .OKExDataService import okex_get_bar_data
-from .CSVsToLocal import CSVs1TokenBarLocalEngine, CSVsBybitBarLocalEngine, CSVsOKExBarLocalEngine
+from .FTXDataService import ftx_get_bar_data
+from .CSVsToLocal import CSVs1TokenBarLocalEngine, CSVsBybitBarLocalEngine, CSVsOKExBarLocalEngine, CSVsFTXBarLocalEngine
 from .BarToLocal import BarLocalEngine
 from datetime import datetime, timedelta
 import shutil
@@ -86,6 +87,26 @@ class TurtleCryptoDataDownloading(object):
         # 1D数据入数据库
         print('\n====== 1D数据入数据库 ======')
         engine = CSVsOKExBarLocalEngine(duration=interval)
+        engine.startWork()
+
+    def download_from_ftx(self, contract_list, days=1):
+        #"""
+        # 先删除原有文件夹，包括其中所有内容
+        csv_path = get_csv_path()
+        if os.path.exists(csv_path):
+            shutil.rmtree(csv_path)
+
+        # 获取bar数据
+        interval = '86400'
+        start_time = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d") + ' 00:00:00'
+        end_time = (datetime.now()).strftime("%Y-%m-%d") + ' 00:00:00'
+        for contract in contract_list:
+            ftx_get_bar_data(symbol=contract, interval=interval, start_time=start_time, end_time=end_time)
+        #"""
+
+        # 1D数据入数据库
+        print('\n====== 1D数据入数据库 ======')
+        engine = CSVsFTXBarLocalEngine(duration=interval)
         engine.startWork()
 
     def generate_for_onetoken(self, contract_list, days=1):

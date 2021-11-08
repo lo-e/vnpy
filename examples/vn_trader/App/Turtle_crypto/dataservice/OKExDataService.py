@@ -10,13 +10,11 @@ from vnpy.trader.utility import DIR_SYMBOL
 main_url = 'https://www.okex.com'
 
 # ====== 获取bar数据 ======
-# symbol：'BTCUSD'
-# interval：'1', '3', '5', '15', '30', '60', '120', '240', '360', '720', 'D', 'M', 'W', 'Y'
+# symbol：'BT-CUSD-SWAP'
+# interval：'1m/3m/5m/15m/30m/1H/2H/4H 香港时间开盘价k线：[6H/12H/1D/1W/1M/3M/6M/1Y] UTC时间开盘价k线：[/6Hutc/12Hutc/1Dutc/1Wutc/1Mutc/3Mutc/6Mutc/1Yutc]'
 # from：'%Y-%m-%d %H:%M:%S'
-# limit：<= 200
 def okex_get_bar_data(symbol:str, interval:str, from_time:str='', limit:int=1000):
     # 获取from_time时间点往前的历史数据，每次请求获取100条，limit为总数据量，
-    api = '/api/v5/market/candles'
     api = '/api/v5/market/history-candles'
 
     since = ''
@@ -59,12 +57,12 @@ def okex_get_bar_data(symbol:str, interval:str, from_time:str='', limit:int=1000
                 data_dic['volume'] = str(vol)
                 result_list.insert(0, data_dic)
 
+            print(f'======  {symbol} {since} -> {until} ======')
+
             sub = len(result_list) - limit
             if sub >= 0:
                 del result_list[:sub]
                 break
-
-            print(f'======  {symbol} {since} -> {until} ======')
         else:
             break
 
