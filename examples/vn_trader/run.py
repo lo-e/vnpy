@@ -44,6 +44,8 @@ from vnpy.gateway.bybit import BybitGateway
 # from vnpy.gateway.xgj import XgjGateway
 # from vnpy_tts import TtsGateway
 # from vnpy.gateway.alpaca import AlpacaGateway
+""" modify by loe """
+from vnpy_ftx import  FtxGateway
 
 # from vnpy_ctastrategy import CtaStrategyApp
 # from vnpy_ctabacktester import CtaBacktesterApp
@@ -79,7 +81,6 @@ def main():
     main_engine = MainEngine(event_engine)
 
     main_engine.add_gateway(CtpGateway)
-
     # main_engine.add_gateway(CtptestGateway)
     # main_engine.add_gateway(MiniGateway)
     # main_engine.add_gateway(MinitestGateway)
@@ -119,6 +120,8 @@ def main():
     # main_engine.add_gateway(XgjGateway)
     # main_engine.add_gateway(TtsGateway)
     # main_engine.add_gateway(AlpacaGateway)
+    """ modify by loe """
+    main_engine.add_gateway(FtxGateway)
 
     main_engine.add_app(TurtleApp)
     # main_engine.add_app(CtaStrategyApp)
