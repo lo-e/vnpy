@@ -17,8 +17,8 @@ from vnpy.app.cta_strategy.base import (MINUTE_DB_NAME,
                                         DOMINANT_DB_NAME)
 from vnpy.trader.constant import Exchange
 
-import rqdatac as rq
-from rqdatac import *
+import vnpy_rqdata as rq
+from vnpy_rqdata import *
 
 try:
     rq.init()

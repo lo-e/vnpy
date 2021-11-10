@@ -63,7 +63,6 @@ def get_install_requires():
         "pandas",
         "matplotlib",
         "seaborn",
-        "rqdatac",
         "ta-lib",
         "deap",
         "pyzmq",

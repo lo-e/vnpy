@@ -1280,7 +1280,7 @@ class AboutDialog(QtWidgets.QDialog):
             PyQt5 - {Qt.PYQT_VERSION_STR}
             NumPy - {importlib_metadata.version("numpy")}
             pandas - {importlib_metadata.version("pandas")}
-            RQData - {importlib_metadata.version("rqdatac")}
+            RQData - {importlib_metadata.version("vnpy_rqdata")}
             """
 
         label = QtWidgets.QLabel()
