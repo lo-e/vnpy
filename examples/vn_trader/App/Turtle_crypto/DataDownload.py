@@ -14,7 +14,7 @@ if __name__ == '__main__':
     """
 
     """ BYBIT """
-    """
+    #"""
     mode = input('选择模式【反向：1  正向：2】')
     if mode == '1':
         contract_list = ['BTCUSD', 'ETHUSD']
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     dataDownload.download_from_bybit(contract_list=contract_list, days=days)
     result, complete_msg, back_msg, lost_msg = dataDownload.generate_for_bybit(contract_list=contract_list, days=days)
     print('\n\n' + lost_msg + back_msg)
-    """
+    #"""
 
     """ OKEX """
     """
@@ -36,9 +36,9 @@ if __name__ == '__main__':
     """
 
     """ FTX """
-    # """
+    """
     contract_list = ['ETH-PERP']
     days = 1200
     dataDownload = TurtleCryptoDataDownloading()
     dataDownload.download_from_ftx(contract_list=contract_list, days=days)
-    # """
+    """

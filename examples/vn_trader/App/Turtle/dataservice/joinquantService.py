@@ -21,7 +21,7 @@ from collections import defaultdict
 
 # 聚宽账号登陆
 if not is_auth():
-    auth('18521705317', '970720699')
+    auth('18516337516', '970720699Jq')
 
 # 使用聚宽数据服务，添加新的品种必须这里添加代码
 EXCHANGE_SYMBOL_MAP = {'XSGE':['RB', 'HC', 'RU', 'CU', 'PB', 'SN', 'SP', 'WR', 'ZN', 'AL', 'NI', 'AG', 'AU', 'BU', 'FU'],
