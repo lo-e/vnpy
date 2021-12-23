@@ -22,6 +22,11 @@ ETH-PERP.FTX,1,0.05,0.0008,0,6,Bybit永续/ETHUSD,true,0.01
 ====== Cryptocompare ======
 Poloniex/BTC.USDT,1,0.5,0.0008,0,6,Poloniex现货/BTCUSDT,true,0.001
 Poloniex/ETH.USDT,1,0.05,0.0008,0,6,Poloniex现货/ETHUSDT,true,0.01
+Poloniex/DOGE.USDT,1,0.000001,0.0008,0,6,Poloniex现货/DOGEUSDT,true,0.001
+
+Binance/BTC.USDT,1,0.5,0.0008,0,6,Binance现货/BTCUSDT,true,0.001
+Binance/ETH.USDT,1,0.05,0.0008,0,6,Binance现货/ETHUSDT,true,0.01
+Binance/DOGE.USDT,1,0.000001,0.0008,0,6,Binance现货/DOGEUSDT,true,0.001
 
 OKEX/BTC.USDT,1,0.5,0.0008,0,6,OKEX现货/BTCUSDT,true,0.001
 OKEX/ETH.USDT,1,0.05,0.0008,0,6,OKEX现货/ETHUSDT,true,0.01
