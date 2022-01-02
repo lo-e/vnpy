@@ -171,3 +171,32 @@ class TurtleCryptoDataDownloading(object):
             lost_msg += l_msg + '\n\n'
 
         return result, complete_msg, back_msg, lost_msg
+
+    def generate_8h_for_bybit(self, contract_list, days=1):
+        result = True
+        complete_msg = ''
+        back_msg = ''
+        lost_msg = ''
+
+        if not contract_list:
+            return False, complete_msg, back_msg, lost_msg
+
+        # 1m数据合成Daily数据
+        print('\n====== 1m数据合成Daily数据 ======')
+        engine = BarLocalEngine()
+
+        from_day = datetime.now() - timedelta(days=days)
+        to_day = datetime.now()
+        start_date = datetime.strptime(f'{from_day.year}-{from_day.month}-{from_day.day} 08:00:00', '%Y-%m-%d %H:%M:%S')
+        end_date = datetime.strptime(f'{to_day.year}-{to_day.month}-{to_day.day} 07:59:00', '%Y-%m-%d %H:%M:%S')
+
+        for contract in contract_list:
+            symbol = f'{contract}.BYBIT'
+            re, c_msg, b_msg, l_msg = engine.Crypto_1Min_8H(symbol=symbol, start_date=start_date, end_date=end_date)
+            if not re:
+                result = False
+            complete_msg += c_msg + '\n\n'
+            back_msg += b_msg + '\n\n'
+            lost_msg += l_msg + '\n\n'
+
+        return result, complete_msg, back_msg, lost_msg

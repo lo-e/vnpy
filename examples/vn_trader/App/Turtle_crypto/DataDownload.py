@@ -42,3 +42,12 @@ if __name__ == '__main__':
     dataDownload = TurtleCryptoDataDownloading()
     dataDownload.download_from_ftx(contract_list=contract_list, days=days)
     """
+
+    """ 【分钟】K合成【8H】K"""
+    """
+    contract_list = ['ETHUSDT']
+    days = 100
+    dataDownload = TurtleCryptoDataDownloading()
+    result, complete_msg, back_msg, lost_msg = dataDownload.generate_8h_for_bybit(contract_list=contract_list, days=days)
+    print('\n\n' + lost_msg + back_msg)
+    """
