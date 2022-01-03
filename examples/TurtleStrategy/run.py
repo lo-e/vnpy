@@ -20,8 +20,8 @@ from vnpy.trader.utility import DIR_SYMBOL
 
 def one():
     engine = BacktestingEngine()
-    engine.setPeriod(datetime(2019, 1, 15), datetime(2021, 12, 31))
-    engine.tradingStart = datetime(2019, 4, 9)
+    engine.setPeriod(datetime(2020, 9, 15), datetime(2021, 12, 31))
+    engine.tradingStart = datetime(2021, 1, 1)
     figSavedName = ''
     if figSavedName:
         figSavedName = f'figSaved{DIR_SYMBOL}{figSavedName}'
@@ -41,7 +41,7 @@ def one():
             symbolList.append(d)
     if not symbolList:
         return
-    engine.initListPortfolio(symbolList, 200000)
+    engine.initListPortfolio(symbolList, 60000)
     engine.loadData()
     engine.runBacktesting()
     engine.showResult(figSavedName)
