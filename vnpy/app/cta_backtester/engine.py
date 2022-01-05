@@ -1,21 +1,29 @@
-import os
 import importlib
 import traceback
 from datetime import datetime
 from threading import Thread
 from pathlib import Path
 from inspect import getfile
+from glob import glob
 
 from vnpy.event import Event, EventEngine
 from vnpy.trader.engine import BaseEngine, MainEngine
 from vnpy.trader.constant import Interval
 from vnpy.trader.utility import extract_vt_symbol
 from vnpy.trader.object import HistoryRequest
-from vnpy.trader.rqdata import rqdata_client
-from vnpy.trader.database import database_manager
+from vnpy.trader.datafeed import BaseDatafeed, get_datafeed
+from vnpy.trader.database import BaseDatabase, get_database
+
+from vnpy_ctastrategy import CtaTemplate
+from vnpy_ctastrategy.backtesting import (
+    BacktestingEngine,
+    OptimizationSetting,
+    BacktestingMode
+)
+
+""" modify by loe """
 from vnpy.trader.utility import DIR_SYMBOL
-from vnpy.app.cta_strategy import CtaTemplate
-from vnpy.app.cta_strategy.backtesting import BacktestingEngine, OptimizationSetting
+
 
 APP_NAME = "CtaBacktester"
 
@@ -37,6 +45,9 @@ class BacktesterEngine(BaseEngine):
         self.backtesting_engine = None
         self.thread = None
 
+        self.datafeed: BaseDatafeed = get_datafeed()
+        self.database: BaseDatabase = get_database()
+
         # Backtesting reuslt
         self.result_df = None
         self.result_statistics = None
@@ -55,15 +66,15 @@ class BacktesterEngine(BaseEngine):
         self.load_strategy_class()
         self.write_log("策略文件加载完成")
 
-        self.init_rqdata()
+        self.init_datafeed()
 
-    def init_rqdata(self):
+    def init_datafeed(self):
         """
-        Init RQData client.
+        Init datafeed client.
         """
-        result = rqdata_client.init()
+        result = self.datafeed.init()
         if result:
-            self.write_log("RQData数据接口初始化成功")
+            self.write_log("数据服务初始化成功")
 
     def write_log(self, msg: str):
         """"""
@@ -76,9 +87,8 @@ class BacktesterEngine(BaseEngine):
         Load strategy class from source code.
         """
         app_path = Path(__file__).parent.parent
-        path1 = app_path.joinpath("cta_strategy", "strategies")
-        self.load_strategy_class_from_folder(
-            path1, "vnpy.app.cta_strategy.strategies")
+        path1 = app_path.joinpath("vnpy_ctastrategy", "strategies")
+        self.load_strategy_class_from_folder(path1, "vnpy_ctastrategy.strategies")
 
         path2 = Path.cwd().joinpath("strategies")
         self.load_strategy_class_from_folder(path2, "strategies")
@@ -91,18 +101,12 @@ class BacktesterEngine(BaseEngine):
         """
         Load strategy class from certain folder.
         """
-        for dirpath, dirnames, filenames in os.walk(path):
-            for filename in filenames:
-                # Load python source code file
-                if filename.endswith(".py"):
-                    strategy_module_name = ".".join(
-                        [module_name, filename.replace(".py", "")])
-                    self.load_strategy_class_from_module(strategy_module_name)
-                # Load compiled pyd binary file
-                elif filename.endswith(".pyd"):
-                    strategy_module_name = ".".join(
-                        [module_name, filename.split(".")[0]])
-                    self.load_strategy_class_from_module(strategy_module_name)
+        for suffix in ["py", "pyd", "so"]:
+            pathname: str = str(path.joinpath(f"*.{suffix}"))
+            for filepath in glob(pathname):
+                filename: str = Path(filepath).stem
+                name: str = f"{module_name}.{filename}"
+                self.load_strategy_class_from_module(name)
 
     def load_strategy_class_from_module(self, module_name: str):
         """
@@ -110,6 +114,8 @@ class BacktesterEngine(BaseEngine):
         """
         try:
             module = importlib.import_module(module_name)
+
+            # 重载模块，确保如果策略文件中有任何修改，能够立即生效。
             importlib.reload(module)
 
             for name in dir(module):
@@ -152,6 +158,11 @@ class BacktesterEngine(BaseEngine):
         engine = self.backtesting_engine
         engine.clear_data()
 
+        if interval == Interval.TICK.value:
+            mode = BacktestingMode.TICK
+        else:
+            mode = BacktestingMode.BAR
+
         engine.set_parameters(
             vt_symbol=vt_symbol,
             interval=interval,
@@ -162,7 +173,8 @@ class BacktesterEngine(BaseEngine):
             size=size,
             pricetick=pricetick,
             capital=capital,
-            inverse=inverse
+            inverse=inverse,
+            mode=mode
         )
 
         strategy_class = self.classes[class_name]
@@ -267,15 +279,15 @@ class BacktesterEngine(BaseEngine):
         use_ga: bool
     ):
         """"""
-        if use_ga:
-            self.write_log("开始遗传算法参数优化")
-        else:
-            self.write_log("开始多进程参数优化")
-
         self.result_values = None
 
         engine = self.backtesting_engine
         engine.clear_data()
+
+        if interval == Interval.TICK.value:
+            mode = BacktestingMode.TICK
+        else:
+            mode = BacktestingMode.BAR
 
         engine.set_parameters(
             vt_symbol=vt_symbol,
@@ -287,7 +299,8 @@ class BacktesterEngine(BaseEngine):
             size=size,
             pricetick=pricetick,
             capital=capital,
-            inverse=inverse
+            inverse=inverse,
+            mode=mode
         )
 
         strategy_class = self.classes[class_name]
@@ -302,7 +315,7 @@ class BacktesterEngine(BaseEngine):
                 output=False
             )
         else:
-            self.result_values = engine.run_optimization(
+            self.result_values = engine.run_bf_optimization(
                 optimization_setting,
                 output=False
             )
@@ -395,10 +408,10 @@ class BacktesterEngine(BaseEngine):
                 )
             # Otherwise use RQData to query data
             else:
-                data = rqdata_client.query_history(req)
+                data = self.datafeed.query_bar_history(req)
 
             if data:
-                database_manager.save_bar_data(data)
+                self.database.save_bar_data(data)
                 self.write_log(f"{vt_symbol}-{interval}历史数据下载完成")
             else:
                 self.write_log(f"数据下载失败，无法获取{vt_symbol}的历史数据")

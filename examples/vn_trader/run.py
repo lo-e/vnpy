@@ -49,7 +49,7 @@ from vnpy_ftx import  FtxGateway
 from vnpy_dydx import  DydxGateway
 
 # from vnpy_ctastrategy import CtaStrategyApp
-# from vnpy_ctabacktester import CtaBacktesterApp
+from vnpy.app.cta_backtester import CtaBacktesterApp
 # from vnpy_spreadtrading import SpreadTradingApp
 # from vnpy.app.algo_trading import AlgoTradingApp
 # from vnpy.app.option_master import OptionMasterApp
@@ -127,7 +127,7 @@ def main():
 
     main_engine.add_app(TurtleApp)
     # main_engine.add_app(CtaStrategyApp)
-    # main_engine.add_app(CtaBacktesterApp)
+    main_engine.add_app(CtaBacktesterApp)
     # main_engine.add_app(SpreadTradingApp)
     # main_engine.add_app(AlgoTradingApp)
     # main_engine.add_app(OptionMasterApp)
