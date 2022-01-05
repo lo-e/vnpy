@@ -1,14 +1,13 @@
 from datetime import time
-from vnpy.app.cta_strategy import (
+from vnpy.app.cta_strategy.template import (
     CtaTemplate,
     StopOrder,
     TickData,
     BarData,
     TradeData,
     OrderData,
-    BarGenerator,
-    ArrayManager,
 )
+from vnpy.trader.utility import BarGenerator, ArrayManager
 
 """ modify by loe """
 from vnpy.app.cta_strategy.template import TradeMode

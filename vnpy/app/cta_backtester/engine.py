@@ -14,8 +14,8 @@ from vnpy.trader.object import HistoryRequest
 from vnpy.trader.datafeed import BaseDatafeed, get_datafeed
 from vnpy.trader.database import BaseDatabase, get_database
 
-from vnpy_ctastrategy import CtaTemplate
-from vnpy_ctastrategy.backtesting import (
+from vnpy.app.cta_strategy.template import CtaTemplate
+from vnpy.app.cta_strategy.backtesting import (
     BacktestingEngine,
     OptimizationSetting,
     BacktestingMode

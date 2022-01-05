@@ -345,7 +345,7 @@ class BacktesterManager(QtWidgets.QWidget):
         # datetime.date 转换 datetime，因为Mongodb不接受datetime.date类型
         start = self.start_date_edit.dateTime().toPyDateTime()
         start_str = str(start)
-        start = datetime.strptime(start_str, '%Y-%m-%d')
+        start = datetime.strptime(start_str, '%Y-%m-%d %H:%M:%S')
         end = self.end_date_edit.dateTime().toPyDateTime()
         end_str = str(end)
         end = datetime.strptime(end_str, '%Y-%m-%d')
@@ -452,7 +452,7 @@ class BacktesterManager(QtWidgets.QWidget):
         # datetime.date 转换 datetime，因为Mongodb不接受datetime.date类型
         start = self.start_date_edit.dateTime().toPyDateTime()
         start_str = str(start)
-        start = datetime.strptime(start_str, '%Y-%m-%d')
+        start = datetime.strptime(start_str, '%Y-%m-%d %H:%M:%S')
         end = self.end_date_edit.dateTime().toPyDateTime()
         end_str = str(end)
         end = datetime.strptime(end_str, '%Y-%m-%d')
