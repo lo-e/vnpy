@@ -23,14 +23,11 @@ from ..engine import (
     OptimizationSetting
 )
 
-""" modify by loe """
-from vnpy.trader.utility import TEMP_DIR, load_json_path
-import json
-
 class BacktesterManager(QtWidgets.QWidget):
     """"""
 
     setting_filename = "cta_backtester_setting.json"
+    load_filename = 'cta_backtesting.json'
 
     signal_log = QtCore.pyqtSignal(Event)
     signal_backtesting_finished = QtCore.pyqtSignal(Event)
@@ -39,10 +36,6 @@ class BacktesterManager(QtWidgets.QWidget):
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
         """"""
         super().__init__()
-
-        """ modify by loe """
-        self.load_backtesting_parameters()
-
         self.main_engine = main_engine
         self.event_engine = event_engine
 
@@ -57,25 +50,6 @@ class BacktesterManager(QtWidgets.QWidget):
         self.backtester_engine.init_engine()
         self.init_strategy_settings()
         self.load_backtesting_setting()
-
-    """ modify by loe """
-    # 回测参数使用缓存json文件内容
-    def load_backtesting_parameters(self):
-        self.load_file_path = TEMP_DIR.joinpath('cta_backtesting.json')
-        dic = load_json_path(self.load_file_path)
-        self.backtesting_symbol = dic.get('symbol', 'IF88.CFFEX')
-        self.backtesting_interval = dic.get('interval', '1m')
-
-        end_dt = datetime.now()
-        start_dt = end_dt - timedelta(days=3 * 365)
-        self.backtesting_start = dic.get('start', datetime.strftime(start_dt, '%Y-%m-%d'))
-        self.backtesting_end = dic.get('end', datetime.strftime(end_dt, '%Y-%m-%d'))
-
-        self.backtesting_rate = dic.get('rate', '0.000025')
-        self.backtesting_slippage = dic.get('slippage', '0.2')
-        self.backtesting_size = dic.get('size', '300')
-        self.backtesting_pricetick = dic.get('pricetick', '0.2')
-        self.backtesting_capital = dic.get('capital', '1000000')
 
     def init_strategy_settings(self):
         """"""
@@ -93,39 +67,19 @@ class BacktesterManager(QtWidgets.QWidget):
 
         # Setting Part
         self.class_combo = QtWidgets.QComboBox()
-
-        self.symbol_line = QtWidgets.QLineEdit(self.backtesting_symbol)
-
+        self.symbol_line = QtWidgets.QLineEdit()
         self.interval_combo = QtWidgets.QComboBox()
-        self.interval_combo.addItem(self.backtesting_interval)
+
         for inteval in Interval:
-            if inteval == Interval(self.backtesting_interval):
-                continue
             self.interval_combo.addItem(inteval.value)
 
-        start_dt = datetime.strptime(self.backtesting_start, '%Y-%m-%d')
-        self.start_date_edit = QtWidgets.QDateEdit(
-            QtCore.QDate(
-                start_dt.year,
-                start_dt.month,
-                start_dt.day
-            )
-        )
-
-        end_dt = datetime.strptime(self.backtesting_end, '%Y-%m-%d')
-        self.end_date_edit = QtWidgets.QDateEdit(
-            QtCore.QDate(
-                end_dt.year,
-                end_dt.month,
-                end_dt.day
-            )
-        )
-
-        self.rate_line = QtWidgets.QLineEdit(self.backtesting_rate)
-        self.slippage_line = QtWidgets.QLineEdit(self.backtesting_slippage)
-        self.size_line = QtWidgets.QLineEdit(self.backtesting_size)
-        self.pricetick_line = QtWidgets.QLineEdit(self.backtesting_pricetick)
-        self.capital_line = QtWidgets.QLineEdit(self.backtesting_capital)
+        self.start_date_edit = QtWidgets.QDateEdit()
+        self.end_date_edit = QtWidgets.QDateEdit()
+        self.rate_line = QtWidgets.QLineEdit()
+        self.slippage_line = QtWidgets.QLineEdit()
+        self.size_line = QtWidgets.QLineEdit()
+        self.pricetick_line = QtWidgets.QLineEdit()
+        self.capital_line = QtWidgets.QLineEdit()
 
         self.inverse_combo = QtWidgets.QComboBox()
         self.inverse_combo.addItems(["正向", "反向"])
@@ -277,6 +231,11 @@ class BacktesterManager(QtWidgets.QWidget):
             start_dt = QtCore.QDate.fromString(start_str, "yyyy-MM-dd")
             self.start_date_edit.setDate(start_dt)
 
+        end_str = datetime.now().strftime('%Y-%m-%d')
+        if end_str:
+            end_dt = QtCore.QDate.fromString(end_str, "yyyy-MM-dd")
+            self.end_date_edit.setDate(end_dt)
+
         self.rate_line.setText(str(setting["rate"]))
         self.slippage_line.setText(str(setting["slippage"]))
         self.size_line.setText(str(setting["size"]))
@@ -341,37 +300,13 @@ class BacktesterManager(QtWidgets.QWidget):
         vt_symbol = self.symbol_line.text()
         interval = self.interval_combo.currentText()
 
-        """ modify by loe """
-        # datetime.date 转换 datetime，因为Mongodb不接受datetime.date类型
         start = self.start_date_edit.dateTime().toPyDateTime()
-        start_str = str(start)
-        start = datetime.strptime(start_str, '%Y-%m-%d %H:%M:%S')
         end = self.end_date_edit.dateTime().toPyDateTime()
-        end_str = str(end)
-        end = datetime.strptime(end_str, '%Y-%m-%d')
-
         rate = float(self.rate_line.text())
         slippage = float(self.slippage_line.text())
         size = float(self.size_line.text())
         pricetick = float(self.pricetick_line.text())
         capital = float(self.capital_line.text())
-
-        """ modify by loe """
-        # 缓存回测参数到json文件
-        json_dic = {}
-        json_dic['symbol'] = vt_symbol
-        json_dic['interval'] = interval
-        json_dic['start'] = datetime.strftime(start, '%Y-%m-%d')
-        json_dic['end'] = datetime.strftime(end, '%Y-%m-%d')
-        json_dic['rate'] = self.rate_line.text()
-        json_dic['slippage'] = self.slippage_line.text()
-        json_dic['size'] = self.size_line.text()
-        json_dic['pricetick'] = self.pricetick_line.text()
-        json_dic['capital'] = self.capital_line.text()
-
-        file_path = TEMP_DIR.joinpath(self.load_file_path)
-        with open(file_path, "w") as f:
-            json.dump(json_dic, f)
 
         if self.inverse_combo.currentText() == "正向":
             inverse = False
@@ -393,7 +328,7 @@ class BacktesterManager(QtWidgets.QWidget):
             "class_name": class_name,
             "vt_symbol": vt_symbol,
             "interval": interval,
-            "start": start.isoformat(),
+            "start": start.strftime('%Y-%m-%d'),
             "rate": rate,
             "slippage": slippage,
             "size": size,
@@ -448,37 +383,13 @@ class BacktesterManager(QtWidgets.QWidget):
         vt_symbol = self.symbol_line.text()
         interval = self.interval_combo.currentText()
 
-        """ modify by loe """
-        # datetime.date 转换 datetime，因为Mongodb不接受datetime.date类型
         start = self.start_date_edit.dateTime().toPyDateTime()
-        start_str = str(start)
-        start = datetime.strptime(start_str, '%Y-%m-%d %H:%M:%S')
         end = self.end_date_edit.dateTime().toPyDateTime()
-        end_str = str(end)
-        end = datetime.strptime(end_str, '%Y-%m-%d')
-
         rate = float(self.rate_line.text())
         slippage = float(self.slippage_line.text())
         size = float(self.size_line.text())
         pricetick = float(self.pricetick_line.text())
         capital = float(self.capital_line.text())
-
-        """ modify by loe """
-        # 缓存回测参数到json文件
-        json_dic = {}
-        json_dic['symbol'] = vt_symbol
-        json_dic['interval'] = interval
-        json_dic['start'] = datetime.strftime(start, '%Y-%m-%d')
-        json_dic['end'] = datetime.strftime(end, '%Y-%m-%d')
-        json_dic['rate'] = self.rate_line.text()
-        json_dic['slippage'] = self.slippage_line.text()
-        json_dic['size'] = self.size_line.text()
-        json_dic['pricetick'] = self.pricetick_line.text()
-        json_dic['capital'] = self.capital_line.text()
-
-        file_path = TEMP_DIR.joinpath(self.load_file_path)
-        with open(file_path, "w") as f:
-            json.dump(json_dic, f)
 
         if self.inverse_combo.currentText() == "正向":
             inverse = False

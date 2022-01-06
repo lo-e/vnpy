@@ -16,7 +16,6 @@ from deap import creator, base, tools, algorithms
 
 from vnpy.trader.constant import (Direction, Offset, Exchange,
                                   Interval, Status)
-from vnpy.trader.database import database_manager
 from vnpy.trader.object import OrderData, TradeData, BarData, TickData
 from vnpy.trader.utility import round_to
 
@@ -1313,13 +1312,6 @@ def load_bar_data(
     end: datetime
 ):
     """ modify by loe """
-    # 修改了数据来源
-    """
-    return database_manager.load_bar_data(
-        symbol, exchange, interval, start, end
-    )
-    """
-
     mc = MongoClient()
     db_name = ''
     if interval == Interval.MINUTE:
@@ -1348,10 +1340,9 @@ def load_tick_data(
     end: datetime
 ):
     """"""
-    return database_manager.load_tick_data(
-        symbol, exchange, start, end
-    )
-
+    """ modify by loe """
+    ticks = []
+    return ticks
 
 # GA related global value
 ga_end = None
