@@ -241,16 +241,20 @@ class BacktestingEngine:
             end = min(end, self.end)  # Make sure end time stays within set range
 
             if self.mode == BacktestingMode.BAR:
+                """ modify by loe """
+                # 使用vt_symbol而不是symbol
                 data = load_bar_data(
-                    self.symbol,
+                    self.vt_symbol,
                     self.exchange,
                     self.interval,
                     start,
                     end
                 )
             else:
+                """ modify by loe """
+                # 使用vt_symbol而不是symbol
                 data = load_tick_data(
-                    self.symbol,
+                    self.vt_symbol,
                     self.exchange,
                     start,
                     end
@@ -953,13 +957,15 @@ class BacktestingEngine:
             self.strategy.pos += pos_change
             self.strategy.on_trade(trade)
 
+    """ modify by loe """
+    # 添加use_database 默认 False
     def load_bar(
         self,
         vt_symbol: str,
         days: int,
         interval: Interval,
         callback: Callable,
-        use_database: bool
+        use_database: bool = False
     ):
         """"""
         self.days = days
