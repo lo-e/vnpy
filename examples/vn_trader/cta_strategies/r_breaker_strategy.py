@@ -494,3 +494,26 @@ class RBreakerStrategy(CtaTemplate):
         else:
             return now.replace(hour=0, minute=0, second=0, microsecond=0)
 
+    def calculate_pivot(self, bar:BarData):
+        high = bar.high_price
+        low = bar.low_price
+        close = bar.close_price
+
+        pivot = (high + low + 2*close) / 4
+        r1 = 2*pivot - low
+        s1 = 2*pivot - high
+        r2 = pivot + (r1 - s1)
+        s2 = pivot - (r1 - s1)
+        r3 = high - (2*(low - pivot))
+        s3 = low - (2*(high - pivot))
+
+        sm1 = (pivot + s1) / 2
+        sm2 = (s1 + s2) / 2
+        sm3 = (s2 + s3) / 2
+        rm1 = (pivot + r1) / 2
+        rm2 = (r1 + r2) / 2
+        rm3 = (r2 + r3) / 2
+
+        if bar.datetime >= datetime.datetime.strptime('2022-1-6', '%Y-%m-%d'):
+            a = 2
+

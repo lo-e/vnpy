@@ -313,6 +313,9 @@ class BacktesterManager(QtWidgets.QWidget):
         else:
             inverse = True
 
+        """ modify by loe """
+        # 回测历史数据时不需要交易所检查
+        """
         # Check validity of vt_symbol
         if "." not in vt_symbol:
             self.write_log("本地代码缺失交易所后缀，请检查")
@@ -322,6 +325,7 @@ class BacktesterManager(QtWidgets.QWidget):
         if exchange_str not in Exchange.__members__:
             self.write_log("本地代码的交易所后缀不正确，请检查")
             return
+        """
 
         # Save backtesting parameters
         backtesting_setting = {

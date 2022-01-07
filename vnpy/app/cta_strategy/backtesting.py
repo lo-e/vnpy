@@ -196,12 +196,12 @@ class BacktestingEngine:
         self.start = start
 
         """ modify by loe """
-        if '.' in self.vt_symbol:
+        if '.' in self.vt_symbol and '/' not in self.vt_symbol:
             self.symbol, exchange_str = self.vt_symbol.split(".")
             self.exchange = Exchange(exchange_str)
         else:
             self.symbol = self.vt_symbol
-            self.exchange = Exchange('RQ')
+            self.exchange = Exchange('NONE')
 
         self.capital = capital
         self.end = end
@@ -267,8 +267,17 @@ class BacktestingEngine:
             progress_bar = "#" * int(progress * 10)
             self.output(f"加载进度：{progress_bar} [{progress:.0%}]")
 
+            """ modify by loe """
+            if len(data):
+                start = data[-1].datetime + interval_delta
+                end = start + progress_delta
+            else:
+                start = self.end
+                end = self.end
+            """
             start = end + interval_delta
             end += (progress_delta + interval_delta)
+            """
 
         self.output(f"历史数据加载完成，数据量：{len(self.history_data)}")
 
