@@ -268,12 +268,8 @@ class BacktestingEngine:
             self.output(f"加载进度：{progress_bar} [{progress:.0%}]")
 
             """ modify by loe """
-            if len(data):
-                start = data[-1].datetime + interval_delta
-                end = start + progress_delta
-            else:
-                start = self.end
-                end = self.end
+            start = end + timedelta(seconds=1)
+            end = start + progress_delta
             """
             start = end + interval_delta
             end += (progress_delta + interval_delta)
@@ -291,7 +287,9 @@ class BacktestingEngine:
         self.strategy.on_init()
 
         # Use the first [days] of history data for initializing strategy
-        day_count = 1
+        """ modify by loe """
+        # day_count初始值修改【1 -> 0】
+        day_count = 0
         ix = 0
 
         for ix, data in enumerate(self.history_data):
@@ -940,7 +938,7 @@ class BacktestingEngine:
             trade = TradeData(
                 symbol=order.symbol,
                 exchange=order.exchange,
-                orderid=order.orderid,
+                orderid=stop_order.stop_orderid,
                 tradeid=str(self.trade_count),
                 direction=order.direction,
                 offset=order.offset,
