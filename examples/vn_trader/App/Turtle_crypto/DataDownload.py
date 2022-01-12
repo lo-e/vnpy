@@ -1,4 +1,5 @@
 from dataservice import TurtleCryptoDataDownloading, Binancetype
+from vnpy.trader.constant import Interval
 
 if __name__ == '__main__':
     """ 1TOKEN"""
@@ -36,20 +37,21 @@ if __name__ == '__main__':
     """
 
     """ FTX """
-    """
-    contract_list = ['ETH-PERP']
+    #"""
+    contract_list = ['BTC-PERP']
+    interval = Interval.MINUTE
     days = 1200
     dataDownload = TurtleCryptoDataDownloading()
-    dataDownload.download_from_ftx(contract_list=contract_list, days=days)
-    """
+    dataDownload.download_from_ftx(contract_list=contract_list, interval=interval, days=days)
+    #"""
 
     """ BINANCE """
-    # """
+    """
     contract_list = ['BTCUSDT']
     days = 3000
     dataDownload = TurtleCryptoDataDownloading()
-    dataDownload.download_from_binance(contract_list=contract_list, days=days, type=Binancetype.SPOT)
-    # """
+    dataDownload.download_from_binance(contract_list=contract_list, days=days, type=Binancetype.USDT)
+    """
 
     """ 【分钟】K合成【8H】K"""
     """

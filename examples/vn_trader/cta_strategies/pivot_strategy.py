@@ -129,7 +129,7 @@ class PivotStrategy(CtaTemplate):
             return
 
         #方案一
-        """
+        #"""
         next_window_datetime = next_window_bar_datetime(current_datetime=bar.datetime + timedelta(minutes=1))
         if bar.datetime >= next_window_datetime - timedelta(minutes=6):
             # 周期结束前平仓
@@ -205,10 +205,10 @@ class PivotStrategy(CtaTemplate):
                 else:
                     exit_price = self.short_entry2
                 self.short_orderid2 = self.cover(price=exit_price, volume=abs(self.short_volume2), stop=True)[0]
-        """
+        #"""
 
         #方案二
-        #"""
+        """
         next_window_datetime = next_window_bar_datetime(current_datetime=bar.datetime + timedelta(minutes=1))
         if bar.datetime >= next_window_datetime - timedelta(minutes=6):
             # 周期结束前平仓
@@ -219,63 +219,63 @@ class PivotStrategy(CtaTemplate):
                 self.cover(price=bar.close_price + 100 * self.cta_engine.pricetick, volume=abs(self.pos), stop=False)
 
         elif self.pivot:
-                if not self.pos:
-                    self.entry_high = 0
-                    self.entry_low = 0
+            if not self.pos:
+                self.entry_high = 0
+                self.entry_low = 0
 
-                    self.long_orderid1 = self.buy(price=self.long_entry1, volume=self.long_volume1, stop=True)[0]
-                    self.long_orderid2 = self.buy(price=self.long_entry2, volume=self.long_volume2, stop=True)[0]
+                self.long_orderid1 = self.buy(price=self.long_entry1, volume=self.long_volume1, stop=True)[0]
+                self.long_orderid2 = self.buy(price=self.long_entry2, volume=self.long_volume2, stop=True)[0]
 
-                    self.short_orderid1 = self.short(price=self.short_entry1, volume=self.short_volume1, stop=True)[0]
-                    self.short_orderid2 = self.short(price=self.short_entry2, volume=self.short_volume2, stop=True)[0]
+                self.short_orderid1 = self.short(price=self.short_entry1, volume=self.short_volume1, stop=True)[0]
+                self.short_orderid2 = self.short(price=self.short_entry2, volume=self.short_volume2, stop=True)[0]
 
-                elif self.pos > 0:
-                    self.entry_high = max(self.entry_high, bar.high_price)
+            elif self.pos > 0:
+                self.entry_high = max(self.entry_high, bar.high_price)
 
-                    move_exit = self.entry_high * (1 - self.move_profit_rate)
-                    if self.pos > self.long_volume1:
-                        # 已经建立二级仓位，发出平仓停止单
-                        if move_exit < self.long_entry2:
-                            exit_price = max(move_exit, self.long_entry1)
-                        else:
-                            exit_price = self.long_entry2
-
+                move_exit = self.entry_high * (1 - self.move_profit_rate)
+                if self.pos > self.long_volume1:
+                    # 已经建立二级仓位，发出平仓停止单
+                    if move_exit < self.long_entry2:
+                        exit_price = max(move_exit, self.long_entry1)
                     else:
-                        # 只建立一级仓位，同时发出二级开仓停止单和平仓停止单
-                        self.buy(price=self.long_entry2, volume=self.long_volume2, stop=True)
-
-                        if move_exit < self.long_entry1:
-                            exit_price = max(move_exit, self.pivot)
-                        else:
-                            exit_price = self.long_entry1
-
-                    self.sell(price=exit_price, volume=abs(self.pos), stop=True)
+                        exit_price = self.long_entry2
 
                 else:
-                    if not self.entry_low:
-                        self.entry_low = bar.low_price
+                    # 只建立一级仓位，同时发出二级开仓停止单和平仓停止单
+                    self.buy(price=self.long_entry2, volume=self.long_volume2, stop=True)
+
+                    if move_exit < self.long_entry1:
+                        exit_price = max(move_exit, self.pivot)
                     else:
-                        self.entry_low = min(self.entry_low, bar.low_price)
+                        exit_price = self.long_entry1
 
-                    move_exit = self.entry_low * (1 + self.move_profit_rate)
-                    if abs(self.pos) > self.short_volume1:
-                        # 已经建立二级仓位，发出平仓停止单
-                        if move_exit > self.short_entry2:
-                            exit_price = min(move_exit, self.short_entry1)
-                        else:
-                            exit_price = self.short_entry2
+                self.sell(price=exit_price, volume=abs(self.pos), stop=True)
 
+            else:
+                if not self.entry_low:
+                    self.entry_low = bar.low_price
+                else:
+                    self.entry_low = min(self.entry_low, bar.low_price)
+
+                move_exit = self.entry_low * (1 + self.move_profit_rate)
+                if abs(self.pos) > self.short_volume1:
+                    # 已经建立二级仓位，发出平仓停止单
+                    if move_exit > self.short_entry2:
+                        exit_price = min(move_exit, self.short_entry1)
                     else:
-                        # 只建立一级仓位，同时发出二级开仓停止单和平仓停止单
-                        self.short(price=self.short_entry2, volume=self.short_volume2, stop=True)
+                        exit_price = self.short_entry2
 
-                        if move_exit > self.short_entry1:
-                            exit_price = min(move_exit, self.pivot)
-                        else:
-                            exit_price = self.short_entry1
+                else:
+                    # 只建立一级仓位，同时发出二级开仓停止单和平仓停止单
+                    self.short(price=self.short_entry2, volume=self.short_volume2, stop=True)
 
-                    self.cover(price=exit_price, volume=abs(self.pos), stop=True)
-        #"""
+                    if move_exit > self.short_entry1:
+                        exit_price = min(move_exit, self.pivot)
+                    else:
+                        exit_price = self.short_entry1
+
+                self.cover(price=exit_price, volume=abs(self.pos), stop=True)
+        """
 
         self.put_timer_event()
 

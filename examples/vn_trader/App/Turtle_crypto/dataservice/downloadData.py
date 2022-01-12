@@ -14,6 +14,7 @@ from .BarToLocal import BarLocalEngine
 from datetime import datetime, timedelta
 import shutil
 import os
+from vnpy.trader.constant import Interval
 
 class TurtleCryptoDataDownloading(object):
     def __init__(self):
@@ -62,28 +63,47 @@ class TurtleCryptoDataDownloading(object):
         engine = CSVsOKExBarLocalEngine(duration=interval)
         engine.startWork()
 
-    def download_from_ftx(self, contract_list, days=1):
+    def download_from_ftx(self, contract_list, interval:Interval, days=1):
+        # 获取bar数据
+        if interval == Interval.MINUTE:
+            interval_str = '60'
+        elif interval == Interval.DAILY:
+            interval_str = '86400'
+        else:
+            return
+
         #"""
         # 先删除原有文件夹，包括其中所有内容
         csv_path = get_csv_path()
         if os.path.exists(csv_path):
             shutil.rmtree(csv_path)
 
-        # 获取bar数据
-        interval = '86400'
-        start_time = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d") + ' 00:00:00'
-        end_time = (datetime.now()).strftime("%Y-%m-%d") + ' 00:00:00'
+        start_time = datetime.now() - timedelta(days=days)
         for contract in contract_list:
-            ftx_get_bar_data(symbol=contract, interval=interval, start_time=start_time, end_time=end_time)
+            until_time = (datetime.now()).strftime("%Y-%m-%d %H:%M:%S")
+            while until_time:
+                print(f'下载数据：{until_time}\t{contract}')
+                until_time = ftx_get_bar_data(symbol=contract, interval=interval_str, start_time='', end_time=until_time)
+                if until_time and until_time >= start_time:
+                    if interval == Interval.MINUTE:
+                        until_time = until_time - timedelta(minutes=1)
+                    elif interval == Interval.DAILY:
+                        until_time = until_time - timedelta(days=1)
+                    until_time = until_time.strftime('%Y-%m-%d %H:%M:%S')
+                    print('\n')
+                else:
+                    until_time = ''
         #"""
 
-        # 1D数据入数据库
+        #"""
+        #1D数据入数据库
         print('\n====== 1D数据入数据库 ======')
-        engine = CSVsFTXBarLocalEngine(duration=interval)
+        engine = CSVsFTXBarLocalEngine(duration=interval_str)
         engine.startWork()
+        #"""
 
     def download_from_binance(self, contract_list, type:Binancetype, days=1):
-        """
+        #"""
         # 先删除原有文件夹，包括其中所有内容
         csv_path = get_csv_path()
         if os.path.exists(csv_path):
@@ -101,7 +121,7 @@ class TurtleCryptoDataDownloading(object):
                 if from_time:
                     from_time = from_time + timedelta(minutes=1)
                     print('\n')
-        """
+        #"""
 
         #"""
         # 1m数据入数据库

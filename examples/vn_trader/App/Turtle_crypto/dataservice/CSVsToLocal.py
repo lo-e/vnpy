@@ -379,8 +379,8 @@ class CSVsFTXBarLocalEngine(object):
                     print('用时：', sub, 's')
                     print('数据量：', count, '\n')
                     """ fake """
-                    if count < 200:
-                        print('*'*60, '\n')
+                    if count < 1501:
+                        print('*' * 60, '\n')
 
         # 打印进程
         print('所有数据导入完成')
@@ -473,7 +473,7 @@ class CSVsBinanceBarLocalEngine(object):
                     print('数据量：', count, '\n')
                     """ fake """
                     if count < 1000:
-                        print('*'*60, '\n')
+                        print('*' * 60, '\n')
                         print('*' * 60, '\n')
                         print('*' * 60, '\n')
                         print('*' * 60, '\n')
