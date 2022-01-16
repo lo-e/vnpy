@@ -391,7 +391,7 @@ class PivotStrategy(CtaTemplate):
                 'pivot':self.pivot,
                 'short_exit1': self.short_exit1,
                 'short_entry1':self.short_entry1,
-                'short_exit2': self.short_exit2
+                'short_exit2': self.short_exit2,
                 'short_entry2':self.short_entry2}
         self.csv_list.append(dict)
         if bar.datetime >= datetime.strptime('2022-01-2 00:00:00', '%Y-%m-%d %H:%M:%S'):
