@@ -16,6 +16,9 @@ import talib
 from .object import BarData, TickData
 from .constant import Exchange, Interval
 
+""" modify by loe """
+import csv
+
 log_formatter = logging.Formatter('[%(asctime)s] %(message)s')
 
 
@@ -1012,6 +1015,19 @@ def is_crypto_symbol(symbol:str):
         if crypto_symbol_upper in symbol:
             return True
     return False
+
+def csv_saving(file_name:str, data_list:list):
+    file_path = Path.cwd().joinpath(file_name)
+    if data_list:
+        dict_data = data_list[0]
+        if isinstance(dict_data, dict):
+            field_names = dict_data.keys()
+            with open(file_path, 'w') as f:
+                writer = csv.DictWriter(f, fieldnames=field_names)
+                writer.writeheader()
+                # 写入csv文件
+                writer.writerows(data_list)
+#====================================
 
 def get_platform_dir_symbol():
     platform = sys.platform

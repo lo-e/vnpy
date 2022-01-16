@@ -11,7 +11,7 @@ from vnpy.app.cta_strategy.template import TradeMode
 from vnpy.trader.constant import Interval
 from datetime import datetime, timedelta
 from typing import Callable
-from vnpy.trader.utility import round_to
+from vnpy.trader.utility import round_to, csv_saving
 from vnpy.trader.constant import Offset
 
 window_time = ['00:00:00', '08:00:00', '16:00:00']
@@ -20,6 +20,7 @@ class PivotStrategy(CtaTemplate):
 
     author = "loe"
 
+    exit_rate = 0.002
     exit_window = 50
     min_volume = 0.001
 
@@ -66,7 +67,13 @@ class PivotStrategy(CtaTemplate):
     short_cross1 = False
     short_cross2 = False
 
-    parameters = ['exit_window',
+    long_high1 = 0
+    long_high2 = 0
+    short_low1 = 0
+    short_low2 = 0
+
+    parameters = ['exit_rate',
+                  'exit_window',
                   'min_volume']
 
     variables = ['long_entry3',
@@ -105,6 +112,9 @@ class PivotStrategy(CtaTemplate):
                                      on_window_bar=self.on_generate_bar,
                                      interval=Interval.MINUTE)
         self.am = ArrayManager(size=self.exit_window + 1)
+
+        """ fake """
+        self.csv_list = []
 
     def on_init(self):
         """
@@ -167,7 +177,7 @@ class PivotStrategy(CtaTemplate):
         self.short_profit_exit, self.long_profit_exit = self.am.donchian(self.exit_window, False)
 
         """ fake """
-        if bar.datetime >= datetime.strptime('2021-10-06 16:42:00', '%Y-%m-%d %H:%M:%S'):
+        if bar.datetime >= datetime.strptime('2020-01-31 00:32:00', '%Y-%m-%d %H:%M:%S'):
             a = 2
 
         # 判断是否重新开仓准许
@@ -202,57 +212,91 @@ class PivotStrategy(CtaTemplate):
 
             # 多头一级开平仓
             if not self.long_cross1:
+                self.long_high1 = 0
+
                 if self.long_allowed1:
                     self.long_orderid1 = self.buy(price=self.long_entry1, volume=abs(self.long_volume1), stop=True)[0]
 
             else:
-                if self.long_profit_exit <= self.long_entry1:
-                    exit_price = self.long_exit1
+                self.long_high1 = max(self.long_high1, bar.high_price)
 
-                else:
+                if self.long_profit_exit > self.long_entry1:
+                    # 止盈
                     exit_price = self.long_profit_exit
+                else:
+                    # 止损
+                    exit_rate_price = self.long_high1*(1-self.exit_rate)
+                    exit_price = min(exit_rate_price, self.long_entry1)
+                    exit_price = max(exit_price, self.long_exit1)
 
                 self.long_orderid1 = self.sell(price=exit_price, volume=abs(self.long_volume1), stop=True)[0]
 
             # 多头二级开平仓
             if not self.long_cross2:
+                self.long_high2 = 0
+
                 if self.long_allowed2:
                     self.long_orderid2 = self.buy(price=self.long_entry2, volume=abs(self.long_volume2), stop=True)[0]
 
             else:
-                if self.long_profit_exit <= self.long_entry2:
-                    exit_price = self.long_exit2
+                self.long_high2 = max(self.long_high2, bar.high_price)
 
-                else:
+                if self.long_profit_exit > self.long_entry2:
+                    # 止盈
                     exit_price = self.long_profit_exit
+                else:
+                    # 止损
+                    exit_rate_price = self.long_high2 * (1 - self.exit_rate)
+                    exit_price = min(exit_rate_price, self.long_entry2)
+                    exit_price = max(exit_price, self.long_exit2)
 
                 self.long_orderid2 = self.sell(price=exit_price, volume=abs(self.long_volume2), stop=True)[0]
 
             # 空头一级开平仓
             if not self.short_cross1:
+                self.short_low1 = 0
+
                 if self.short_allowed1:
                     self.short_orderid1 = self.short(price=self.short_entry1, volume=abs(self.short_volume1), stop=True)[0]
 
             else:
-                if self.short_profit_exit >= self.short_entry1:
-                    exit_price = self.short_exit1
-
+                if not self.short_low1:
+                    self.short_low1 = bar.low_price
                 else:
+                    self.short_low1 = min(self.short_low1, bar.low_price)
+
+                if self.short_profit_exit < self.short_entry1:
+                    # 止盈
                     exit_price = self.short_profit_exit
+                else:
+                    # 止损
+                    exit_rate_price = self.short_low1 * (1 + self.exit_rate)
+                    exit_price = max(exit_rate_price, self.short_entry1)
+                    exit_price = min(exit_price, self.short_exit1)
 
                 self.short_orderid1 = self.cover(price=exit_price, volume=abs(self.short_volume1), stop=True)[0]
 
             # 空头二级开平仓
             if not self.short_cross2:
+                self.short_low2 = 0
+
                 if self.short_allowed2:
                     self.short_orderid2 = self.short(price=self.short_entry2, volume=abs(self.short_volume2), stop=True)[0]
 
             else:
-                if self.short_profit_exit >= self.short_entry2:
-                    exit_price = self.short_exit2
-
+                if not self.short_low2:
+                    self.short_low2 = bar.low_price
                 else:
+                    self.short_low2 = min(self.short_low2, bar.low_price)
+
+                if self.short_profit_exit < self.short_entry2:
+                    # 止盈
                     exit_price = self.short_profit_exit
+                else:
+                    # 止损
+                    exit_rate_price = self.short_low2 * (1 + self.exit_rate)
+                    exit_price = max(exit_rate_price, self.short_entry2)
+                    exit_price = min(exit_price, self.short_exit2)
 
                 self.short_orderid2 = self.cover(price=exit_price, volume=abs(self.short_volume2), stop=True)[0]
         #"""
@@ -336,6 +380,22 @@ class PivotStrategy(CtaTemplate):
         self.long_allowed2 = True
         self.short_allowed1 = True
         self.short_allowed2 = True
+
+        """ fake """
+        dict = {'symbol':self.vt_symbol,
+                'datetime':bar.datetime,
+                'long_entry2':self.long_entry2,
+                'long_exit2':self.long_exit2,
+                'long_entry1':self.long_entry1,
+                'long_exit1':self.long_exit1,
+                'pivot':self.pivot,
+                'short_exit1': self.short_exit1,
+                'short_entry1':self.short_entry1,
+                'short_exit2': self.short_exit2
+                'short_entry2':self.short_entry2}
+        self.csv_list.append(dict)
+        if bar.datetime >= datetime.strptime('2022-01-2 00:00:00', '%Y-%m-%d %H:%M:%S'):
+            csv_saving(file_name=f'{self.vt_symbol}.csv', data_list=self.csv_list)
 
     def on_order(self, order: OrderData):
         """
