@@ -143,7 +143,7 @@ class CtaEngine(BaseEngine):
 
         """ modify by loe for Turtle """
         # 数据引擎启动
-        self.autoEngine.start()
+        #self.autoEngine.start()
 
         self.write_log("CTA策略引擎初始化成功")
 
