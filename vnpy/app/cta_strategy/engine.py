@@ -1,7 +1,6 @@
 """"""
 
 import importlib
-import os
 import traceback
 from collections import defaultdict
 from pathlib import Path
@@ -10,6 +9,7 @@ from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 from copy import copy
 from tzlocal import get_localzone
+from glob import glob
 
 from vnpy.event import Event, EventEngine
 from vnpy.trader.engine import BaseEngine, MainEngine
@@ -22,6 +22,9 @@ from vnpy.trader.object import (
     BarData,
     ContractData
 )
+
+""" modify by loe """
+# 新增了EVENT_TIMER
 from vnpy.trader.event import (
     EVENT_TICK,
     EVENT_ORDER,
@@ -29,6 +32,7 @@ from vnpy.trader.event import (
     EVENT_POSITION,
     EVENT_TIMER
 )
+
 from vnpy.trader.constant import (
     Direction,
     OrderType,
@@ -38,10 +42,9 @@ from vnpy.trader.constant import (
     Status
 )
 from vnpy.trader.utility import load_json, save_json, extract_vt_symbol, round_to
-from vnpy.trader.database import database_manager
-from vnpy.trader.rqdata import rqdata_client
 from vnpy.trader.converter import OffsetConverter
-from vnpy.trader.utility import DIR_SYMBOL
+from vnpy.trader.database import BaseDatabase, get_database
+from vnpy.trader.datafeed import BaseDatafeed, get_datafeed
 
 """ modify by loe """
 # 增加了 POSITION_DB_NAME
@@ -67,6 +70,7 @@ from vnpy.app.cta_strategy.base import (TICK_DB_NAME,
 from time import sleep
 from threading import Thread
 from queue import Queue
+from vnpy.trader.utility import DIR_SYMBOL
 
 STOP_STATUS_MAP = {
     Status.SUBMITTING: StopOrderStatus.WAITING,
@@ -77,6 +81,8 @@ STOP_STATUS_MAP = {
     Status.REJECTED: StopOrderStatus.CANCELLED
 }
 
+LOCAL_TZ = get_localzone()
+
 
 class CtaEngine(BaseEngine):
     """"""
@@ -84,6 +90,7 @@ class CtaEngine(BaseEngine):
     engine_type = EngineType.LIVE  # live trading engine
 
     setting_filename = "cta_strategy_setting.json"
+    data_filename = "cta_strategy_data.json"
 
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
         """"""
@@ -91,6 +98,7 @@ class CtaEngine(BaseEngine):
             main_engine, event_engine, APP_NAME)
 
         self.strategy_setting = {}  # strategy_name: dict
+        self.strategy_data = {}     # strategy_name: dict
 
         self.classes = {}           # class_name: stategy_class
         self.strategies = {}        # strategy_name: strategy
@@ -113,16 +121,24 @@ class CtaEngine(BaseEngine):
 
         self.offset_converter = OffsetConverter(self.main_engine)
 
+        self.database: BaseDatabase = get_database()
+        self.datafeed: BaseDatafeed = get_datafeed()
+
         """ modify by loe """
         # 数据引擎
-        self.autoEngine = CTAAutoEngine(main_engine=self.main_engine, cta_engine=self, download_time='19:00', reconnect_time='20:10', check_interval=10 * 60, reload_time=6)
+        self.autoEngine = CTAAutoEngine(main_engine=self.main_engine,
+                                        cta_engine=self,
+                                        download_time='19:00',
+                                        reconnect_time='20:10',
+                                        check_interval=10 * 60, reload_time=6)
 
     def init_engine(self):
         """
         """
-        self.init_rqdata()
+        self.init_datafeed()
         self.load_strategy_class()
         self.load_strategy_setting()
+        self.load_strategy_data()
         self.register_event()
 
         """ modify by loe for Turtle """
@@ -144,24 +160,25 @@ class CtaEngine(BaseEngine):
         """ modify by loe """
         self.event_engine.register(EVENT_TIMER, self.process_timer_event)
 
-    def process_timer_event(self, event:Event):
+    """ modify by loe """
+    def process_timer_event(self, event: Event):
         for strategy in self.strategies.values():
             if strategy.inited:
                 self.call_strategy_func(strategy, strategy.on_timer)
 
-    def init_rqdata(self):
+    def init_datafeed(self):
         """
-        Init RQData client.
+        Init datafeed client.
         """
-        result = rqdata_client.init()
+        result = self.datafeed.init()
         if result:
-            self.write_log("RQData数据接口初始化成功")
+            self.write_log("数据服务初始化成功")
 
-    def query_bar_from_rq(
+    def query_bar_from_datafeed(
         self, symbol: str, exchange: Exchange, interval: Interval, start: datetime, end: datetime
     ):
         """
-        Query bar data from RQData.
+        Query bar data from datafeed.
         """
         req = HistoryRequest(
             symbol=symbol,
@@ -170,7 +187,7 @@ class CtaEngine(BaseEngine):
             start=start,
             end=end
         )
-        data = rqdata_client.query_history(req)
+        data = self.datafeed.query_bar_history(req)
         return data
 
     def process_tick_event(self, event: Event):
@@ -212,6 +229,7 @@ class CtaEngine(BaseEngine):
                 volume=order.volume,
                 stop_orderid=order.vt_orderid,
                 strategy_name=strategy.strategy_name,
+                datetime=order.datetime,
                 status=STOP_STATUS_MAP[order.status],
                 vt_orderids=[order.vt_orderid],
             )
@@ -242,6 +260,9 @@ class CtaEngine(BaseEngine):
             strategy.pos -= trade.volume
 
         self.call_strategy_func(strategy, strategy.on_trade, trade)
+
+        # Sync strategy variables to data file
+        self.sync_strategy_data(strategy)
 
         # Update GUI
         self.put_strategy_event(strategy)
@@ -291,7 +312,8 @@ class CtaEngine(BaseEngine):
                     stop_order.offset,
                     price,
                     stop_order.volume,
-                    stop_order.lock
+                    stop_order.lock,
+                    stop_order.net
                 )
 
                 # Update stop order status if placed successfully
@@ -321,7 +343,8 @@ class CtaEngine(BaseEngine):
         price: float,
         volume: float,
         type: OrderType,
-        lock: bool
+        lock: bool,
+        net: bool
     ):
         """
         Send a new order to server.
@@ -339,14 +362,13 @@ class CtaEngine(BaseEngine):
         )
 
         # Convert with offset converter
-        req_list = self.offset_converter.convert_order_request(original_req, lock)
+        req_list = self.offset_converter.convert_order_request(original_req, lock, net)
 
         # Send Orders
         vt_orderids = []
 
         for req in req_list:
-            vt_orderid = self.main_engine.send_order(
-                req, contract.gateway_name)
+            vt_orderid = self.main_engine.send_order(req, contract.gateway_name)
 
             # Check if sending order successful
             if not vt_orderid:
@@ -370,7 +392,8 @@ class CtaEngine(BaseEngine):
         offset: Offset,
         price: float,
         volume: float,
-        lock: bool
+        lock: bool,
+        net: bool
     ):
         """
         Send a limit order to server.
@@ -383,7 +406,8 @@ class CtaEngine(BaseEngine):
             price,
             volume,
             OrderType.LIMIT,
-            lock
+            lock,
+            net
         )
 
     def send_server_stop_order(
@@ -394,7 +418,8 @@ class CtaEngine(BaseEngine):
         offset: Offset,
         price: float,
         volume: float,
-        lock: bool
+        lock: bool,
+        net: bool
     ):
         """
         Send a stop order to server.
@@ -410,7 +435,8 @@ class CtaEngine(BaseEngine):
             price,
             volume,
             OrderType.STOP,
-            lock
+            lock,
+            net
         )
 
     def send_local_stop_order(
@@ -420,7 +446,8 @@ class CtaEngine(BaseEngine):
         offset: Offset,
         price: float,
         volume: float,
-        lock: bool
+        lock: bool,
+        net: bool
     ):
         """
         Create a new local stop order.
@@ -436,7 +463,9 @@ class CtaEngine(BaseEngine):
             volume=volume,
             stop_orderid=stop_orderid,
             strategy_name=strategy.strategy_name,
-            lock=lock
+            datetime=datetime.now(LOCAL_TZ),
+            lock=lock,
+            net=net
         )
 
         self.stop_orders[stop_orderid] = stop_order
@@ -491,7 +520,8 @@ class CtaEngine(BaseEngine):
         price: float,
         volume: float,
         stop: bool,
-        lock: bool
+        lock: bool,
+        net: bool
     ):
         """
         """
@@ -506,11 +536,17 @@ class CtaEngine(BaseEngine):
 
         if stop:
             if contract.stop_supported:
-                return self.send_server_stop_order(strategy, contract, direction, offset, price, volume, lock)
+                return self.send_server_stop_order(
+                    strategy, contract, direction, offset, price, volume, lock, net
+                )
             else:
-                return self.send_local_stop_order(strategy, direction, offset, price, volume, lock)
+                return self.send_local_stop_order(
+                    strategy, direction, offset, price, volume, lock, net
+                )
         else:
-            return self.send_limit_order(strategy, contract, direction, offset, price, volume, lock)
+            return self.send_limit_order(
+                strategy, contract, direction, offset, price, volume, lock, net
+            )
 
     def cancel_order(self, strategy: CtaTemplate, vt_orderid: str):
         """
@@ -547,11 +583,11 @@ class CtaEngine(BaseEngine):
             return None
 
     def load_bar(
-        self,
-        vt_symbol: str,
-        days: int,
-        interval: Interval,
-        callback: Callable[[BarData], None],
+            self,
+            vt_symbol: str,
+            days: int,
+            interval: Interval,
+            callback: Callable[[BarData], None],
     ):
         """"""
         symbol, exchange = extract_vt_symbol(vt_symbol)
@@ -635,10 +671,10 @@ class CtaEngine(BaseEngine):
     ):
         """"""
         symbol, exchange = extract_vt_symbol(vt_symbol)
-        end = datetime.now()
+        end = datetime.now(LOCAL_TZ)
         start = end - timedelta(days)
 
-        ticks = database_manager.load_tick_data(
+        ticks = self.database.load_tick_data(
             symbol=symbol,
             exchange=exchange,
             start=start,
@@ -681,6 +717,15 @@ class CtaEngine(BaseEngine):
             self.write_log(f"创建策略失败，找不到策略类{class_name}")
             return
 
+        if "." not in vt_symbol:
+            self.write_log("创建策略失败，本地代码缺失交易所后缀")
+            return
+
+        _, exchange_str = vt_symbol.split(".")
+        if exchange_str not in Exchange.__members__:
+            self.write_log("创建策略失败，本地代码的交易所后缀不正确")
+            return
+
         strategy = strategy_class(self, strategy_name, vt_symbol, setting)
 
         """ modify by loe """
@@ -690,7 +735,7 @@ class CtaEngine(BaseEngine):
         self.strategies[strategy_name] = strategy
 
         # Add vt_symbol to strategy map.
-        strategies = self.symbol_strategy_map[strategy.vt_symbol]
+        strategies = self.symbol_strategy_map[vt_symbol]
         strategies.append(strategy)
 
         # Update to setting file.
@@ -725,8 +770,9 @@ class CtaEngine(BaseEngine):
             d[key] = strategy.__getattribute__(key)
 
         self.main_engine.dbUpdate(POSITION_DB_NAME, strategy.__class__.__name__,
-                                 d, flt, True, callback=self.dbUpdateCallback)
+                                  d, flt, True, callback=self.dbUpdateCallback)
 
+    """ modify by loe """
     def dbUpdateCallback(self, back_data=None):
         try:
             if isinstance(back_data, dict):
@@ -764,6 +810,14 @@ class CtaEngine(BaseEngine):
 
         # Call on_init function of strategy
         self.call_strategy_func(strategy, strategy.on_init)
+
+        # Restore strategy data(variables)
+        data = self.strategy_data.get(strategy_name, None)
+        if data:
+            for name in strategy.variables:
+                value = data.get(name, None)
+                if value:
+                    setattr(strategy, name, value)
 
         # Subscribe market data
         contract = self.main_engine.get_contract(strategy.vt_symbol)
@@ -814,6 +868,9 @@ class CtaEngine(BaseEngine):
         # Cancel all orders of the strategy
         self.cancel_all(strategy)
 
+        # Sync strategy variables to data file
+        self.sync_strategy_data(strategy)
+
         # Update GUI
         self.put_strategy_event(strategy)
 
@@ -841,8 +898,7 @@ class CtaEngine(BaseEngine):
 
         # Remove from symbol strategy map
         strategies = self.symbol_strategy_map[strategy.vt_symbol]
-        if strategy in strategies:
-            strategies.remove(strategy)
+        strategies.remove(strategy)
 
         # Remove from active orderid map
         if strategy_name in self.strategy_orderid_map:
@@ -856,6 +912,7 @@ class CtaEngine(BaseEngine):
         # Remove from strategies
         self.strategies.pop(strategy_name)
 
+        self.write_log(f"策略{strategy.strategy_name}移除移除成功")
         return True
 
     def load_strategy_class(self):
@@ -863,8 +920,7 @@ class CtaEngine(BaseEngine):
         Load strategy class from source code.
         """
         path1 = Path(__file__).parent.joinpath("strategies")
-        self.load_strategy_class_from_folder(
-            path1, "vnpy.app.cta_strategy.strategies")
+        self.load_strategy_class_from_folder(path1, "vnpy_ctastrategy.strategies")
 
         path2 = Path.cwd().joinpath("strategies")
         self.load_strategy_class_from_folder(path2, "strategies")
@@ -877,11 +933,12 @@ class CtaEngine(BaseEngine):
         """
         Load strategy class from certain folder.
         """
-        for dirpath, dirnames, filenames in os.walk(str(path)):
-            for filename in filenames:
-                if filename.split(".")[-1] in ("py", "pyd", "so"):
-                    strategy_module_name = ".".join([module_name, filename.split(".")[0]])
-                    self.load_strategy_class_from_module(strategy_module_name)
+        for suffix in ["py", "pyd", "so"]:
+            pathname: str = str(path.joinpath(f"*.{suffix}"))
+            for filepath in glob(pathname):
+                filename: str = Path(filepath).stem
+                name: str = f"{module_name}.{filename}"
+                self.load_strategy_class_from_module(name)
 
     def load_strategy_class_from_module(self, module_name: str):
         """
@@ -890,6 +947,9 @@ class CtaEngine(BaseEngine):
         try:
             module = importlib.import_module(module_name)
 
+            # 重载模块，确保如果策略文件中有任何修改，能够立即生效。
+            importlib.reload(module)
+
             for name in dir(module):
                 value = getattr(module, name)
                 if (isinstance(value, type) and issubclass(value, CtaTemplate) and value is not CtaTemplate):
@@ -897,6 +957,23 @@ class CtaEngine(BaseEngine):
         except:  # noqa
             msg = f"策略文件{module_name}加载失败，触发异常：\n{traceback.format_exc()}"
             self.write_log(msg)
+
+    def load_strategy_data(self):
+        """
+        Load strategy data from json file.
+        """
+        self.strategy_data = load_json(self.data_filename)
+
+    def sync_strategy_data(self, strategy: CtaTemplate):
+        """
+        Sync strategy data into json file.
+        """
+        data = strategy.get_variables()
+        data.pop("inited")      # Strategy status (inited, trading) should not be synced.
+        data.pop("trading")
+
+        self.strategy_data[strategy.strategy_name] = data
+        save_json(self.data_filename, self.strategy_data)
 
     def get_all_strategy_class_names(self):
         """
@@ -1006,7 +1083,7 @@ class CtaEngine(BaseEngine):
         Create cta engine log event.
         """
         if strategy:
-            msg = f"{strategy.strategy_name}: {msg}"
+            msg = f"[{strategy.strategy_name}]  {msg}"
 
         log = LogData(msg=msg, gateway_name=APP_NAME)
         event = Event(type=EVENT_CTA_LOG, data=log)
@@ -1023,6 +1100,7 @@ class CtaEngine(BaseEngine):
 
         self.main_engine.send_email(subject, msg)
 
+    """ modify by loe """
     # 新的DailyBar更新后需要自动重新初始化策略
     def reinit_strategies(self):
         for strategy_name in self.strategies.keys():
@@ -1035,6 +1113,7 @@ class CtaEngine(BaseEngine):
                 self.put_strategy_event(strategy)
                 self.write_log(f"{strategy_name} 重新初始化完成")
 
+""" modify by loe """
 # 数据自动化引擎，每天固定时间从RQData下载策略回测及实盘必要的数据，自动重连CTP和重新初始化策略
 class CTAAutoEngine(object):
 

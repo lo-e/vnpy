@@ -122,7 +122,7 @@ class PivotStrategy(CtaTemplate):
         """
         # 载入历史数据，并采用回放计算的方式初始化策略数值
         if self.trade_mode == TradeMode.ACTUAL:
-            self.load_bar(days=20, interval=Interval.MINUTE, callback=self.on_bar)
+            self.load_bar(days=2, interval=Interval.MINUTE, callback=self.on_bar)
 
         elif self.trade_mode == TradeMode.BACKTESTING:
             self.load_bar(days=2, interval=Interval.MINUTE, callback=self.on_bar)
