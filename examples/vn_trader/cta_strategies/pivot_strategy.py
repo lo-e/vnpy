@@ -20,6 +20,7 @@ class PivotStrategy(CtaTemplate):
 
     author = "loe"
 
+    capital = 0.0
     exit_rate = 0.002
     exit_window = 50
     min_volume = 0.001
@@ -52,6 +53,7 @@ class PivotStrategy(CtaTemplate):
     short_exit3 = 0
     # ======================================
 
+    base_datetime = None
     long_allowed1 = False
     long_allowed2 = False
     short_allowed1 = False
@@ -72,11 +74,13 @@ class PivotStrategy(CtaTemplate):
     short_low1 = 0
     short_low2 = 0
 
-    parameters = ['exit_rate',
+    parameters = ['capital',
+                  'exit_rate',
                   'exit_window',
                   'min_volume']
 
-    variables = ['long_entry3',
+    variables = ['base_datetime',
+                 'long_entry3',
                  'long_volume3',
                  'long_exit3',
                  'long_entry2',
@@ -86,15 +90,15 @@ class PivotStrategy(CtaTemplate):
                  'long_volume1',
                  'long_exit1',
                  'pivot',
-                 'short_entry1',
-                 'short_volume1',
                  'short_exit1',
-                 'short_entry2',
-                 'short_volume2',
+                 'short_volume1',
+                 'short_entry1',
                  'short_exit2',
-                 'short_entry3',
-                 'short_volume3',
+                 'short_volume2',
+                 'short_entry2',
                  'short_exit3',
+                 'short_volume3',
+                 'short_entry3',
                  'long_allowed1',
                  'long_allowed2',
                  'short_allowed1',
@@ -131,6 +135,7 @@ class PivotStrategy(CtaTemplate):
             raise(0)
 
         self.write_log("策略完成初始化")
+        self.put_timer_event()
 
     def on_start(self):
         """
@@ -376,6 +381,7 @@ class PivotStrategy(CtaTemplate):
     # 周期数据源处理逻辑
     def on_generate_bar(self, bar:BarData):
         self.calculate_pivot(bar)
+        self.base_datetime = bar.datetime
         self.long_allowed1 = True
         self.long_allowed2 = True
         self.short_allowed1 = True
@@ -465,7 +471,11 @@ class PivotStrategy(CtaTemplate):
         self.long_exit2 = (self.long_entry1 + self.long_entry2) / 2
         self.long_exit3 = (self.long_entry2 + self.long_entry3) / 2
 
-        max_unit_loss = 0.005 * self.cta_engine.capital
+        if self.trade_mode == TradeMode.ACTUAL:
+            max_unit_loss = 0.005 * self.capital
+        else:
+            max_unit_loss = 0.005 * self.cta_engine.capital
+
         self.long_volume1 = round_to(max_unit_loss / (self.long_entry1 - self.long_exit1), self.min_volume)
         self.long_volume2 = round_to(max_unit_loss / (self.long_entry2 - self.long_exit2), self.min_volume)
         self.long_volume3 = round_to(max_unit_loss / (self.long_entry3 - self.long_exit3), self.min_volume)

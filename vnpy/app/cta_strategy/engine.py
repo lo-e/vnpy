@@ -591,40 +591,11 @@ class CtaEngine(BaseEngine):
     ):
         """"""
         symbol, exchange = extract_vt_symbol(vt_symbol)
-        end = datetime.now(get_localzone())
+        # modify by loe
+        # 原版datetime.now(get_localzone())
+        end = datetime.now()
         start = end - timedelta(days)
         bars = []
-
-        """
-        # Query bars from gateway if available
-        contract = self.main_engine.get_contract(vt_symbol)
-
-        if contract and contract.history_data:
-            req = HistoryRequest(
-                symbol=symbol,
-                exchange=exchange,
-                interval=interval,
-                start=start,
-                end=end
-            )
-            bars = self.main_engine.query_history(req, contract.gateway_name)
-
-        # Try to query bars from RQData, if not found, load from database.
-        else:
-            bars = self.query_bar_from_rq(symbol, exchange, interval, start, end)
-
-        if not bars:
-            bars = database_manager.load_bar_data(
-                symbol=symbol,
-                exchange=exchange,
-                interval=interval,
-                start=start,
-                end=end,
-            )
-
-        for bar in bars:
-            callback(bar)
-        """
 
         """ modify by loe """
         flt = {'datetime': {'$gte': start}}
@@ -634,6 +605,10 @@ class CtaEngine(BaseEngine):
             dbName = MINUTE_DB_NAME
         else:
             dbName = TICK_DB_NAME
+        collectionName = vt_symbol.upper()
+
+        """
+        #商品期货市场需要转换symbol
         collectionName = symbol.upper()
         startSymbol = re.sub("\d", "", collectionName)
         if startSymbol in TRANSFORM_SYMBOL_LIST.keys():
@@ -642,6 +617,7 @@ class CtaEngine(BaseEngine):
                 # 比如TA005需要进行转换
                 replace = TRANSFORM_SYMBOL_LIST[startSymbol]
                 collectionName = startSymbol + replace + endSymbol
+        """
 
         barData = self.main_engine.dbQuery(dbName, collectionName, flt, 'datetime')
 
@@ -649,7 +625,7 @@ class CtaEngine(BaseEngine):
         for d in barData:
             gateway_name = d['gateway_name']
             symbol = d['symbol']
-            exchange = Exchange.RQ
+            exchange = Exchange.NONE
             theDatetime = d['datetime']
             endDatetime = None
 
@@ -661,6 +637,8 @@ class CtaEngine(BaseEngine):
                 raise ('Bar数据校验不通过！！')
 
             l.append(bar)
+            if callback:
+                callback(bar)
         return l
 
     def load_tick(
