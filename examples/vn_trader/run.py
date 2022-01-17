@@ -27,7 +27,7 @@ from vnpy_ctp import CtpGateway
 # from vnpy.gateway.mt5 import Mt5Gateway
 # from vnpy_binance import BinanceSpotGateway
 # from vnpy_binance import BinanceInverseGateway
-# from vnpy_binance import BinanceUsdtGateway
+from vnpy_binance import BinanceUsdtGateway
 # from vnpy_huobi import HuobiSpotGateway
 # from vnpy_huobi import HuobiFuturesGateway
 # from vnpy_huobi import HuobiInverseGateway
@@ -46,9 +46,10 @@ from vnpy.gateway.bybit import BybitGateway
 # from vnpy.gateway.alpaca import AlpacaGateway
 """ modify by loe """
 from vnpy_ftx import  FtxGateway
+from vnpy_dydx import  DydxGateway
 
 # from vnpy_ctastrategy import CtaStrategyApp
-# from vnpy_ctabacktester import CtaBacktesterApp
+from vnpy.app.cta_backtester import CtaBacktesterApp
 # from vnpy_spreadtrading import SpreadTradingApp
 # from vnpy.app.algo_trading import AlgoTradingApp
 # from vnpy.app.option_master import OptionMasterApp
@@ -102,8 +103,7 @@ def main():
     # main_engine.add_gateway(DaGateway)
     # main_engine.add_gateway(Mt5Gateway)
     # main_engine.add_gateway(BinanceSpotGateway)
-    # main_engine.add_gateway(BinanceInverseGateway) 
-    # main_engine.add_gateway(BinanceUsdtGateway)   
+    # main_engine.add_gateway(BinanceInverseGateway)
     # main_engine.add_gateway(HuobiSpotGateway)
     # main_engine.add_gateway(HuobiFuturesGateway)
     # main_engine.add_gateway(HuobiInverseGateway)    
@@ -122,10 +122,12 @@ def main():
     # main_engine.add_gateway(AlpacaGateway)
     """ modify by loe """
     main_engine.add_gateway(FtxGateway)
+    main_engine.add_gateway(DydxGateway)
+    main_engine.add_gateway(BinanceUsdtGateway)
 
     main_engine.add_app(TurtleApp)
     # main_engine.add_app(CtaStrategyApp)
-    # main_engine.add_app(CtaBacktesterApp)
+    main_engine.add_app(CtaBacktesterApp)
     # main_engine.add_app(SpreadTradingApp)
     # main_engine.add_app(AlgoTradingApp)
     # main_engine.add_app(OptionMasterApp)

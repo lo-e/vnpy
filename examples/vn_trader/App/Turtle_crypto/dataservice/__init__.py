@@ -1,1 +1,1 @@
-from .downloadData import TurtleCryptoDataDownloading
+from .downloadData import TurtleCryptoDataDownloading, Binancetype

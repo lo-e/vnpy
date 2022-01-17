@@ -144,6 +144,7 @@ class Exchange(Enum):
     """ modify by loe """
     # Others 数据下载使用，并非真实有效的交易所名称
     RQ = 'RQ'
+    NONE = 'NONE'
 
     # 1Token 交易所命名规则
     HUOBIP = 'HUOBIP'       # 火币币币交易

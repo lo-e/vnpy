@@ -19,10 +19,6 @@ from jqdatasdk import *
 from .tushareService import fetchNextTradeDate
 from collections import defaultdict
 
-# 聚宽账号登陆
-if not is_auth():
-    auth('18516337516', '970720699Jq')
-
 # 使用聚宽数据服务，添加新的品种必须这里添加代码
 EXCHANGE_SYMBOL_MAP = {'XSGE':['RB', 'HC', 'RU', 'CU', 'PB', 'SN', 'SP', 'WR', 'ZN', 'AL', 'NI', 'AG', 'AU', 'BU', 'FU'],
                        'XZCE':['SM', 'ZC', 'TA', 'CF', 'CJ', 'CY', 'OI', 'RM', 'SF', 'SR', 'FG', 'RI', 'SA', 'AP', 'JR', 'LR', 'MA', 'PM', 'RS', 'WH'],
@@ -35,6 +31,11 @@ client.server_info()
 dbDominant = client[DOMINANT_DB_NAME]
 dbDaily = client[DAILY_DB_NAME]
 dbMinute = client[MINUTE_DB_NAME]
+
+def check_auth():
+    # 聚宽账号登陆
+    if not is_auth():
+        auth('18516337516', '970720699Jq')
 
 class open_interest_data:
     symbol = ''
@@ -52,6 +53,8 @@ class jqSymbolData:
 # target_date：'2020-01-01'
 # target_dat为空，不指定具体日期，获取所有历史交易过的合约数据
 def jq_get_all_trading_symbol_list(target_date:str=''):
+    check_auth()
+
     info = get_all_securities(types=['futures'])
     result_list = []
     target_datetime = None
@@ -97,6 +100,8 @@ def complete_symbol(symbol:str, replace:str):
 # start & end：'2020-01-01' '2020-01-01 09:00'
 # frequency：'1d'、'1m'
 def download_bar_data(symbol:str, start:str, end:str, frequency:str='1d', to_database:bool=False):
+    check_auth()
+
     jq_symbol = transform_jqcode(symbol=symbol)
 
     if not start or not end:
@@ -162,6 +167,8 @@ def download_bar_data(symbol:str, start:str, end:str, frequency:str='1d', to_dat
     return bar_list, return_msg
 
 def download_bar_data_symbollist(symbollist:list, start:str, end:str, frequency:str='1d', to_database:bool=False):
+    check_auth()
+
     # 获取多只标的Bar数据【注意：起始时间必须指定，不能跳过停牌，单只标的停牌时会自动填充停牌前的数据】
     jq_symbollist = []
     for symbol in symbollist:
@@ -236,6 +243,8 @@ def download_bar_data_symbollist(symbollist:list, start:str, end:str, frequency:
 # symbol_list：['RB2005', 'HC2005]
 # date：'2020-01-01'
 def download_open_interest(symbol_list:list, date:str):
+    check_auth()
+
     jq_symbol_list = []
     for symbol in symbol_list:
         jq_symbol = transform_jqcode(symbol)
