@@ -410,28 +410,28 @@ class PivotStrategy(CtaTemplate):
         if trade.orderid == self.long_orderid1:
             if trade.offset == Offset.OPEN:
                 self.long_cross1 = True
-                self.long_allowed1 = False
+                #self.long_allowed1 = False
             else:
                 self.long_cross1 = False
 
         if trade.orderid == self.long_orderid2:
             if trade.offset == Offset.OPEN:
                 self.long_cross2 = True
-                self.long_allowed2 = False
+                #self.long_allowed2 = False
             else:
                 self.long_cross2 = False
 
         if trade.orderid == self.short_orderid1:
             if trade.offset == Offset.OPEN:
                 self.short_cross1 = True
-                self.short_allowed1 = False
+                #self.short_allowed1 = False
             else:
                 self.short_cross1 = False
 
         if trade.orderid == self.short_orderid2:
             if trade.offset == Offset.OPEN:
                 self.short_cross2 = True
-                self.short_allowed2 = False
+                #self.short_allowed2 = False
             else:
                 self.short_cross2 = False
 
