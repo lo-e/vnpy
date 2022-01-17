@@ -27,7 +27,7 @@
     {
         "strategy_name": "TURTLE_SM",
         "class_name": "TurtleStrategy",
-        "vt_symbol": "SM201",
+        "vt_symbol": "SM205",
         "last_symbol":"",
         "per_size":5,
         "tick_price":2,
