@@ -105,6 +105,10 @@ class BacktesterManager(QtWidgets.QWidget):
         self.trade_button.clicked.connect(self.show_backtesting_trades)
         self.trade_button.setEnabled(False)
 
+        self.trade_result_button = QtWidgets.QPushButton("成交结果")
+        self.trade_result_button.clicked.connect(self.show_backtesting_trade_results)
+        self.trade_result_button.setEnabled(False)
+
         self.daily_button = QtWidgets.QPushButton("每日盈亏")
         self.daily_button.clicked.connect(self.show_daily_results)
         self.daily_button.setEnabled(False)
@@ -126,6 +130,7 @@ class BacktesterManager(QtWidgets.QWidget):
             self.result_button,
             self.order_button,
             self.trade_button,
+            self.trade_result_button,
             self.daily_button,
             self.candle_button,
             edit_button,
@@ -148,7 +153,8 @@ class BacktesterManager(QtWidgets.QWidget):
 
         result_grid = QtWidgets.QGridLayout()
         result_grid.addWidget(self.trade_button, 0, 0)
-        result_grid.addWidget(self.order_button, 0, 1)
+        result_grid.addWidget(self.trade_result_button, 0, 1)
+        result_grid.addWidget(self.order_button, 0, 2)
         result_grid.addWidget(self.daily_button, 1, 0)
         result_grid.addWidget(self.candle_button, 1, 1)
 
@@ -180,6 +186,14 @@ class BacktesterManager(QtWidgets.QWidget):
             "回测成交记录",
             BacktestingTradeMonitor
         )
+
+        self.trade_result_dialog = BacktestingResultDialog(
+            self.main_engine,
+            self.event_engine,
+            "回测成交结果",
+            BacktestingTradeResultMonitor
+        )
+
         self.order_dialog = BacktestingResultDialog(
             self.main_engine,
             self.event_engine,
@@ -281,6 +295,7 @@ class BacktesterManager(QtWidgets.QWidget):
         self.chart.set_data(df)
 
         self.trade_button.setEnabled(True)
+        self.trade_result_button.setEnabled(True)
         self.order_button.setEnabled(True)
         self.daily_button.setEnabled(True)
 
@@ -372,11 +387,13 @@ class BacktesterManager(QtWidgets.QWidget):
             self.chart.clear_data()
 
             self.trade_button.setEnabled(False)
+            self.trade_result_button.setEnabled(False)
             self.order_button.setEnabled(False)
             self.daily_button.setEnabled(False)
             self.candle_button.setEnabled(False)
 
             self.trade_dialog.clear_data()
+            self.trade_result_dialog.clear_data()
             self.order_dialog.clear_data()
             self.daily_dialog.clear_data()
             self.candle_dialog.clear_data()
@@ -475,6 +492,15 @@ class BacktesterManager(QtWidgets.QWidget):
             self.trade_dialog.update_data(trades)
 
         self.trade_dialog.exec_()
+
+    """ modify by loe """
+    def show_backtesting_trade_results(self):
+        """"""
+        if not self.trade_result_dialog.is_updated():
+            trade_results = self.backtester_engine.get_all_trade_results()
+            self.trade_result_dialog.update_data(trade_results)
+
+        self.trade_result_dialog.exec_()
 
     def show_backtesting_orders(self):
         """"""
@@ -1065,6 +1091,22 @@ class BacktestingTradeMonitor(BaseMonitor):
         "gateway_name": {"display": "接口", "cell": BaseCell, "update": False},
     }
 
+""" modify by loe """
+class BacktestingTradeResultMonitor(BaseMonitor):
+    """
+    Monitor for backtesting trade_result data.
+    """
+
+    headers = {
+        "direction": {"display": "方向", "cell": DirectionCell, "update": False},
+        "open_datetime": {"display": "开仓时间 ", "cell": BaseCell, "update": False},
+        "open_price": {"display": "开仓价格", "cell": BaseCell, "update": False},
+        "close_datetime": {"display": "平仓时间", "cell": BaseCell, "update": False},
+        "close_price": {"display": "平仓价格", "cell": BaseCell, "update": False},
+        "volume": {"display": "数量", "cell": BaseCell, "update": False},
+        "size": {"display": "合约大小", "cell": BaseCell, "update": False},
+        "pnl": {"display": "盈亏", "cell": BaseCell, "update": False},
+    }
 
 class BacktestingOrderMonitor(BaseMonitor):
     """

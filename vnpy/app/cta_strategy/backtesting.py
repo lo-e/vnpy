@@ -86,6 +86,9 @@ class BacktestingEngine:
         self.daily_results = {}
         self.daily_df = None
 
+        """ modify by loe """
+        self.trade_result_manager = TradeResultManager()
+
     def clear_data(self):
         """
         Clear all data of last backtesting.
@@ -108,6 +111,9 @@ class BacktestingEngine:
 
         self.logs.clear()
         self.daily_results.clear()
+
+        """ modify by loe """
+        self.trade_result_manager.clear()
 
     def set_parameters(
         self,
@@ -697,6 +703,8 @@ class BacktestingEngine:
             self.strategy.on_trade(trade)
 
             self.trades[trade.vt_tradeid] = trade
+            """ modify by loe """
+            self.trade_result_manager.update_trade(trade)
 
     def cross_stop_order(self):
         """
@@ -791,6 +799,8 @@ class BacktestingEngine:
 
             self.strategy.pos += pos_change
             self.strategy.on_trade(trade)
+            """ modify by loe """
+            self.trade_result_manager.update_trade(trade)
 
     """ modify by loe """
     # 添加use_database 默认 False
@@ -971,6 +981,13 @@ class BacktestingEngine:
         """
         return list(self.trades.values())
 
+    """ modify by loe """
+    def get_all_trade_results(self):
+        """
+        Return all trade data of current backtesting result.
+        """
+        return list(self.trade_result_manager.trade_results)
+
     def get_all_orders(self):
         """
         Return all limit order data of current backtesting result.
@@ -1071,6 +1088,56 @@ class DailyResult:
         self.total_pnl = self.trading_pnl + self.holding_pnl
         self.net_pnl = self.total_pnl - self.commission - self.slippage
 
+""" modify by loe """
+class TradeResultManager():
+    open_trade_list = []
+    trade_results = []
+    date_trade_results = {}
+
+    def update_trade(self, trade:TradeData):
+        if trade.offset == Offset.OPEN:
+            self.open_trade_list.append(trade)
+        else:
+            for open_trade in self.open_trade_list:
+                if open_trade.direction != trade.direction and open_trade.volume == trade.volume:
+                    result = TradeResult()
+                    result.open_datetime = open_trade.datetime
+                    result.open_price = open_trade.price
+                    result.close_datetime = trade.datetime
+                    result.close_price = trade.price
+                    result.volume = trade.volume
+                    result.direction = open_trade.direction
+                    result.calculate_pnl()
+
+                    self.trade_results.append(result)
+
+                    date_str = trade.datetime.strftime('%Y-%m-%d')
+                    date_results = self.date_trade_results.get(date_str, [])
+                    date_results.append(result)
+                    self.date_trade_results[date_str] = date_results
+
+                    self.open_trade_list.remove(open_trade)
+                    break
+
+    def clear(self):
+        self.open_trade_list = []
+        self.trade_results = []
+        self.date_trade_results = {}
+
+class TradeResult():
+    open_datetime = None
+    open_price = 0.0
+    close_datetime = None
+    close_price = 0.0
+    volume = 0.0
+    size = 1
+    direction:Direction = None
+    pnl = 0
+
+    def calculate_pnl(self):
+        self.pnl = (self.close_price - self.open_price) * self.volume * self.size
+        if self.direction == Direction.SHORT:
+            self.pnl = -self.pnl
 
 @lru_cache(maxsize=999)
 def load_bar_data(

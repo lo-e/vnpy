@@ -451,6 +451,11 @@ class BacktesterEngine(BaseEngine):
         """"""
         return self.backtesting_engine.get_all_trades()
 
+    """ modify by loe """
+    def get_all_trade_results(self):
+        """"""
+        return self.backtesting_engine.get_all_trade_results()
+
     def get_all_orders(self):
         """"""
         return self.backtesting_engine.get_all_orders()
