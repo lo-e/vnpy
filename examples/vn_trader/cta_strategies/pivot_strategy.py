@@ -204,12 +204,22 @@ class PivotStrategy(CtaTemplate):
         if bar.datetime >= next_window_datetime - timedelta(minutes=6):
             # 周期结束前平仓
             if self.pos > 0:
-                self.sell(price=bar.close_price - 100*self.cta_engine.pricetick, volume=abs(self.pos), stop=False)
+                if self.long_cross1:
+                    self.sell(price=bar.close_price - 100*self.cta_engine.pricetick, volume=abs(self.long_volume1), stop=False)
+
+                if self.long_cross2:
+                    self.sell(price=bar.close_price - 100 * self.cta_engine.pricetick, volume=abs(self.long_volume2), stop=False)
+
                 self.long_cross1 = False
                 self.long_cross2 = False
 
             if self.pos < 0:
-                self.cover(price=bar.close_price + 100*self.cta_engine.pricetick, volume=abs(self.pos), stop=False)
+                if self.short_cross1:
+                    self.cover(price=bar.close_price + 100*self.cta_engine.pricetick, volume=abs(self.short_volume1), stop=False)
+
+                if self.short_cross2:
+                    self.cover(price=bar.close_price + 100*self.cta_engine.pricetick, volume=abs(self.short_volume2), stop=False)
+
                 self.short_cross1 = False
                 self.short_cross2 = False
 

@@ -34,6 +34,7 @@ from .template import CtaTemplate
 """ modify by loe """
 from vnpy.app.cta_strategy.base import TICK_DB_NAME, DAILY_DB_NAME, MinuteDataBaseName, HourDataBaseName
 from pymongo import MongoClient
+import decimal
 
 
 class BacktestingEngine:
@@ -699,7 +700,8 @@ class BacktestingEngine:
                 gateway_name=self.gateway_name,
             )
 
-            self.strategy.pos += pos_change
+            """ modify by loe """
+            self.strategy.pos = float(decimal.Decimal(str(self.strategy.pos)) + decimal.Decimal(str(pos_change)))
             self.strategy.on_trade(trade)
 
             self.trades[trade.vt_tradeid] = trade
@@ -797,8 +799,10 @@ class BacktestingEngine:
             self.strategy.on_stop_order(stop_order)
             self.strategy.on_order(order)
 
-            self.strategy.pos += pos_change
+            """ modify by loe """
+            self.strategy.pos = float(decimal.Decimal(str(self.strategy.pos)) + decimal.Decimal(str(pos_change)))
             self.strategy.on_trade(trade)
+
             """ modify by loe """
             self.trade_result_manager.update_trade(trade)
 
