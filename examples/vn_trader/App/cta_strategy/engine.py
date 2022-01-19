@@ -41,10 +41,15 @@ from vnpy.trader.constant import (
     Offset,
     Status
 )
-from vnpy.trader.utility import load_json, save_json, extract_vt_symbol, round_to
+
+""" modify by loe """
+# 增加了load_json_path
+from vnpy.trader.utility import load_json, load_json_path, save_json, save_json_path, extract_vt_symbol, round_to
+
 from vnpy.trader.converter import OffsetConverter
 from vnpy.trader.database import BaseDatabase, get_database
 from vnpy.trader.datafeed import BaseDatafeed, get_datafeed
+from algo_trading import AlgoEngine
 
 """ modify by loe """
 # 增加了 POSITION_DB_NAME
@@ -63,6 +68,7 @@ from vnpy.app.cta_strategy.template import CtaTemplate
 
 """ modify by loe """
 import re
+import os
 from vnpy.app.cta_strategy.base import TRANSFORM_SYMBOL_LIST
 from vnpy.app.cta_strategy.base import (TICK_DB_NAME,
                                         DAILY_DB_NAME,
@@ -131,6 +137,12 @@ class CtaEngine(BaseEngine):
                                         download_time='19:00',
                                         reconnect_time='20:10',
                                         check_interval=10 * 60, reload_time=6)
+
+        # 算法交易引擎启动
+        self.algoTradingEngine = AlgoEngine(cta_engine=self,
+                                            main_engine=self.main_engine,
+                                            event_engine=self.event_engine)
+        self.algoTradingEngine.init_engine()
 
     def init_engine(self):
         """
@@ -272,6 +284,10 @@ class CtaEngine(BaseEngine):
         position = event.data
 
         self.offset_converter.update_position(position)
+
+    """ modify by loe """
+    def start_algo(self, setting:dict):
+        self.algoTradingEngine.start_algo(setting=setting)
 
     def check_stop_order(self, tick: TickData):
         """"""
@@ -1000,7 +1016,9 @@ class CtaEngine(BaseEngine):
         """
         Load setting file.
         """
-        self.strategy_setting = load_json(self.setting_filename)
+        """ modify by loe """
+        # 修改了setting_file路径
+        self.strategy_setting = load_json_path(get_file_path(self.setting_filename))
 
         for strategy_name, strategy_config in self.strategy_setting.items():
             self.add_strategy(
@@ -1021,7 +1039,8 @@ class CtaEngine(BaseEngine):
             "vt_symbol": strategy.vt_symbol,
             "setting": setting,
         }
-        save_json(self.setting_filename, self.strategy_setting)
+
+        save_json_path(filepath=get_file_path(self.setting_filename), data=self.strategy_setting)
 
     def remove_strategy_setting(self, strategy_name: str):
         """
@@ -1031,7 +1050,7 @@ class CtaEngine(BaseEngine):
             return
 
         self.strategy_setting.pop(strategy_name)
-        save_json(self.setting_filename, self.strategy_setting)
+        save_json_path(filepath=get_file_path(self.setting_filename), data=self.strategy_setting)
 
     def put_stop_order_event(self, stop_order: StopOrder):
         """
@@ -1092,6 +1111,11 @@ class CtaEngine(BaseEngine):
                 self.write_log(f"{strategy_name} 重新初始化完成")
 
 """ modify by loe """
+def get_file_path(filename):
+    dir = os.path.dirname(os.path.realpath(__file__))
+    file_path = Path(dir)
+    return file_path.joinpath(filename)
+
 # 数据自动化引擎，每天固定时间从RQData下载策略回测及实盘必要的数据，自动重连CTP和重新初始化策略
 class CTAAutoEngine(object):
 

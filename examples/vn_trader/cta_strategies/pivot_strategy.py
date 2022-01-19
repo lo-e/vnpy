@@ -24,6 +24,7 @@ class PivotStrategy(CtaTemplate):
     exit_rate = 0.002
     exit_window = 50
     min_volume = 0.001
+    best_limit_algo_trading = False
 
     # ======================================
     long_entry3 = 0
@@ -81,7 +82,8 @@ class PivotStrategy(CtaTemplate):
     parameters = ['capital',
                   'exit_rate',
                   'exit_window',
-                  'min_volume']
+                  'min_volume',
+                  'best_limit_algo_trading']
 
     variables = ['base_datetime',
                  'long_entry3',
