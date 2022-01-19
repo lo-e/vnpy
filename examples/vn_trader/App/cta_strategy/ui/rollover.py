@@ -11,7 +11,7 @@ from vnpy.trader.ui import QtWidgets
 from vnpy.trader.converter import OffsetConverter, PositionHolding
 
 from ..engine import CtaEngine, APP_NAME
-from ..template import CtaTemplate
+from vnpy.app.cta_strategy.template import CtaTemplate
 
 if TYPE_CHECKING:
     from .widget import CtaManager

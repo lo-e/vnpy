@@ -48,7 +48,7 @@ from vnpy.trader.datafeed import BaseDatafeed, get_datafeed
 
 """ modify by loe """
 # 增加了 POSITION_DB_NAME
-from .base import (
+from vnpy.app.cta_strategy.base import (
     APP_NAME,
     EVENT_CTA_LOG,
     EVENT_CTA_STRATEGY,
@@ -59,7 +59,7 @@ from .base import (
     STOPORDER_PREFIX,
     POSITION_DB_NAME
 )
-from .template import CtaTemplate
+from vnpy.app.cta_strategy.template import CtaTemplate
 
 """ modify by loe """
 import re

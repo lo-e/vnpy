@@ -8,7 +8,7 @@ from vnpy.trader.ui.widget import (
     TimeCell,
     BaseMonitor
 )
-from ..base import (
+from vnpy.app.cta_strategy.base import (
     APP_NAME,
     EVENT_CTA_LOG,
     EVENT_CTA_STOPORDER,

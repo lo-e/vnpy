@@ -47,7 +47,6 @@ from vnpy.gateway.bybit import BybitGateway
 """ modify by loe """
 from vnpy_ftx import  FtxGateway
 from vnpy_dydx import  DydxGateway
-from vnpy.app.cta_strategy import CtaStrategyApp
 from vnpy.app.cta_backtester import CtaBacktesterApp
 # from vnpy_spreadtrading import SpreadTradingApp
 # from vnpy.app.algo_trading import AlgoTradingApp
@@ -71,6 +70,7 @@ from App.Turtle import TurtleApp
 from App.Turtle_crypto import TurtleCryptoApp
 from App.spread_trading import SpreadTradingApp
 from App.algo_trading import AlgoTradingApp
+from App.cta_strategy import CtaStrategyApp
 
 def main():
     """"""

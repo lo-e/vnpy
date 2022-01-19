@@ -56,8 +56,12 @@ class PivotStrategy(CtaTemplate):
     base_datetime = None
     long_allowed1 = False
     long_allowed2 = False
+    long_profit_ready1 = False
+    long_profit_ready2 = False
     short_allowed1 = False
     short_allowed2 = False
+    short_profit_ready1 = False
+    short_profit_ready2 = False
     long_profit_exit = 0
     short_profit_exit = 0
     long_orderid1 = ''
@@ -180,6 +184,10 @@ class PivotStrategy(CtaTemplate):
 
         # 计算移动止盈价格
         self.short_profit_exit, self.long_profit_exit = self.am.donchian(self.exit_window, False)
+        self.long_profit_ready1 = False
+        self.long_profit_ready2 = False
+        self.short_profit_ready1 = False
+        self.short_profit_ready2 = False
 
         """ fake """
         if bar.datetime >= datetime.strptime('2020-01-31 00:32:00', '%Y-%m-%d %H:%M:%S'):
@@ -238,6 +246,7 @@ class PivotStrategy(CtaTemplate):
                 if self.long_profit_exit > self.long_entry1:
                     # 止盈
                     exit_price = self.long_profit_exit
+                    self.long_profit_ready1 = True
                 else:
                     # 止损
                     exit_rate_price = self.long_high1*(1-self.exit_rate)
@@ -259,6 +268,7 @@ class PivotStrategy(CtaTemplate):
                 if self.long_profit_exit > self.long_entry2:
                     # 止盈
                     exit_price = self.long_profit_exit
+                    self.long_profit_ready2 = True
                 else:
                     # 止损
                     exit_rate_price = self.long_high2 * (1 - self.exit_rate)
@@ -283,6 +293,7 @@ class PivotStrategy(CtaTemplate):
                 if self.short_profit_exit < self.short_entry1:
                     # 止盈
                     exit_price = self.short_profit_exit
+                    self.short_profit_ready1 = True
                 else:
                     # 止损
                     exit_rate_price = self.short_low1 * (1 + self.exit_rate)
@@ -307,6 +318,7 @@ class PivotStrategy(CtaTemplate):
                 if self.short_profit_exit < self.short_entry2:
                     # 止盈
                     exit_price = self.short_profit_exit
+                    self.short_profit_ready2 = True
                 else:
                     # 止损
                     exit_rate_price = self.short_low2 * (1 + self.exit_rate)
@@ -429,6 +441,8 @@ class PivotStrategy(CtaTemplate):
                 #self.long_allowed1 = False
             else:
                 self.long_cross1 = False
+                if self.long_profit_ready1:
+                    self.long_allowed1 = False
 
         if trade.orderid == self.long_orderid2:
             if trade.offset == Offset.OPEN:
@@ -436,6 +450,8 @@ class PivotStrategy(CtaTemplate):
                 #self.long_allowed2 = False
             else:
                 self.long_cross2 = False
+                if self.long_profit_ready2:
+                    self.long_allowed2 = False
 
         if trade.orderid == self.short_orderid1:
             if trade.offset == Offset.OPEN:
@@ -443,6 +459,8 @@ class PivotStrategy(CtaTemplate):
                 #self.short_allowed1 = False
             else:
                 self.short_cross1 = False
+                if self.short_profit_ready1:
+                    self.short_allowed1 = False
 
         if trade.orderid == self.short_orderid2:
             if trade.offset == Offset.OPEN:
@@ -450,6 +468,8 @@ class PivotStrategy(CtaTemplate):
                 #self.short_allowed2 = False
             else:
                 self.short_cross2 = False
+                if self.short_profit_ready2:
+                    self.short_allowed2 = False
 
         # 邮件提醒
         super(PivotStrategy, self).on_trade(trade)
