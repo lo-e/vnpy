@@ -16,7 +16,7 @@ from vnpy.trader.constant import Offset
 
 window_time = ['00:00:00', '08:00:00', '16:00:00']
 
-class PivotStrategy(CtaTemplate):
+class PivotStrategy_actual(CtaTemplate):
 
     author = "loe"
 
@@ -474,7 +474,7 @@ class PivotStrategy(CtaTemplate):
                     self.short_allowed2 = False
 
         # 邮件提醒
-        super(PivotStrategy, self).on_trade(trade)
+        super(PivotStrategy_actual, self).on_trade(trade)
 
     def on_stop_order(self, stop_order: StopOrder):
         """

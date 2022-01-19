@@ -1,6 +1,6 @@
 {
     "pivot": {
-        "class_name": "PivotStrategy",
+        "class_name": "PivotStrategy_actual",
         "vt_symbol": "BTCUSDT.BYBIT",
         "setting": {
             "capital": 100000,

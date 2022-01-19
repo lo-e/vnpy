@@ -576,6 +576,9 @@ class CtaEngine(BaseEngine):
         """
         Cancel all active orders of a strategy.
         """
+        """ modify by loe """
+        self.algoTradingEngine.stop_all()
+
         vt_orderids = self.strategy_orderid_map[strategy.strategy_name]
         if not vt_orderids:
             return
