@@ -157,10 +157,11 @@ class AlgoTemplate:
     def cancel_all(self):
         """"""
         if not self.active_orders:
-            return
+            return False
 
         for vt_orderid in self.active_orders.keys():
             self.cancel_order(vt_orderid)
+        return True
 
     def get_tick(self, vt_symbol: str):
         """"""

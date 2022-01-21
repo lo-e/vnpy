@@ -245,7 +245,7 @@ class BacktesterManager(QtWidgets.QWidget):
             start_dt = QtCore.QDate.fromString(start_str, "yyyy-MM-dd")
             self.start_date_edit.setDate(start_dt)
 
-        end_str = datetime.now().strftime('%Y-%m-%d')
+        end_str = (datetime.now()+timedelta(days=1)).strftime('%Y-%m-%d')
         if end_str:
             end_dt = QtCore.QDate.fromString(end_str, "yyyy-MM-dd")
             self.end_date_edit.setDate(end_dt)

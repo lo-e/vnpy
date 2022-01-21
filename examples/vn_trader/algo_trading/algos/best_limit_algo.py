@@ -56,12 +56,14 @@ class BestLimitAlgo(AlgoTemplate):
             if not self.vt_orderid and not self.buffer_orderid:
                 self.sell_best_limit()
             elif self.vt_orderid and self.buffer_orderid and self.mark_price != self.last_tick.bid_price_1:
-                self.cancel_all()
-                self.vt_orderid = ""
+                if self.cancel_all():
+                    self.vt_orderid = ""
 
     def on_trade(self, trade: TradeData):
         """"""
         self.traded += trade.volume
+        if hasattr(self.strategy, 'on_algo_trade'):
+            self.strategy.on_algo_trade(self, trade)
 
         if self.traded >= self.volume:
             self.write_log(f"已交易数量：{self.traded}，总数量：{self.volume}")
@@ -79,6 +81,11 @@ class BestLimitAlgo(AlgoTemplate):
                 # 异常风控
                 if self.reject_order_count >= 10:
                     self.stop()
+
+    def on_stop(self):
+        """"""
+        if hasattr(self.strategy, 'on_algo_stop'):
+            self.strategy.on_algo_stop(self)
 
     def buy_best_limit(self):
         """"""

@@ -150,10 +150,13 @@ class CtaEngine(BaseEngine):
         self.init_datafeed()
         self.load_strategy_class()
         self.load_strategy_setting()
-        self.load_strategy_data()
+
+        """ modify by loe """
+        #self.load_strategy_data()
+
         self.register_event()
 
-        """ modify by loe for Turtle """
+        """ modify by loe """
         # 数据引擎启动
         #self.autoEngine.start()
 
@@ -273,8 +276,9 @@ class CtaEngine(BaseEngine):
 
         self.call_strategy_func(strategy, strategy.on_trade, trade)
 
+        """ modify by loe """
         # Sync strategy variables to data file
-        self.sync_strategy_data(strategy)
+        #self.sync_strategy_data(strategy)
 
         # Update GUI
         self.put_strategy_event(strategy)
@@ -287,7 +291,7 @@ class CtaEngine(BaseEngine):
 
     """ modify by loe """
     def start_algo(self, setting:dict):
-        self.algoTradingEngine.start_algo(setting=setting)
+        return self.algoTradingEngine.start_algo(setting=setting)
 
     def check_stop_order(self, tick: TickData):
         """"""
@@ -537,7 +541,7 @@ class CtaEngine(BaseEngine):
         volume: float,
         stop: bool,
         lock: bool,
-        net: bool
+        net: bool = False
     ):
         """
         """
@@ -865,8 +869,9 @@ class CtaEngine(BaseEngine):
         # Cancel all orders of the strategy
         self.cancel_all(strategy)
 
+        """ modify by loe """
         # Sync strategy variables to data file
-        self.sync_strategy_data(strategy)
+        #self.sync_strategy_data(strategy)
 
         # Update GUI
         self.put_strategy_event(strategy)
