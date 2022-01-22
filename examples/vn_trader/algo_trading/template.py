@@ -1,8 +1,7 @@
 from vnpy.trader.engine import BaseEngine
-from vnpy.trader.object import TickData, OrderData, TradeData
+from vnpy.trader.object import TickData, OrderData, TradeData, Status
 from vnpy.trader.constant import OrderType, Offset, Direction
 from vnpy.trader.utility import virtual
-
 
 class AlgoTemplate:
     """"""
@@ -156,12 +155,8 @@ class AlgoTemplate:
 
     def cancel_all(self):
         """"""
-        if not self.active_orders:
-            return False
-
         for vt_orderid in self.active_orders.keys():
             self.cancel_order(vt_orderid)
-        return True
 
     def get_tick(self, vt_symbol: str):
         """"""

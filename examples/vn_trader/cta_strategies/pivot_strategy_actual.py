@@ -120,9 +120,6 @@ class PivotStrategy_actual(CtaTemplate):
         self.am = ArrayManager(size=self.exit_window + 1)
         self.last_tick = None
 
-        """ fake """
-        self.csv_list = []
-
     def on_init(self):
         """
         Callback when strategy is inited.
@@ -298,22 +295,6 @@ class PivotStrategy_actual(CtaTemplate):
         self.long_allowed2 = True
         self.short_allowed1 = True
         self.short_allowed2 = True
-
-        """ fake """
-        dict = {'symbol':self.vt_symbol,
-                'datetime':bar.datetime,
-                'long_entry2':self.long_entry2,
-                'long_exit2':self.long_exit2,
-                'long_entry1':self.long_entry1,
-                'long_exit1':self.long_exit1,
-                'pivot':self.pivot,
-                'short_exit1': self.short_exit1,
-                'short_entry1':self.short_entry1,
-                'short_exit2': self.short_exit2,
-                'short_entry2':self.short_entry2}
-        self.csv_list.append(dict)
-        if bar.datetime >= datetime.strptime('2022-01-20 00:00:00', '%Y-%m-%d %H:%M:%S'):
-            csv_saving(file_name=f'{self.vt_symbol}.csv', data_list=self.csv_list)
 
     def on_order(self, order: OrderData):
         """

@@ -49,14 +49,21 @@ class BestLimitAlgo(AlgoTemplate):
         if self.direction == Direction.LONG:
             if not self.vt_orderid and not self.buffer_orderid:
                 self.buy_best_limit()
+
             elif self.vt_orderid and self.buffer_orderid and self.mark_price != self.last_tick.ask_price_1:
-                self.cancel_all()
-                self.vt_orderid = ""
+                order = self.active_orders.get(self.vt_orderid, None)
+                if order and order.status != Status.SUBMITTING:
+                    self.cancel_all()
+                    self.vt_orderid = ""
+
         else:
             if not self.vt_orderid and not self.buffer_orderid:
                 self.sell_best_limit()
+
             elif self.vt_orderid and self.buffer_orderid and self.mark_price != self.last_tick.bid_price_1:
-                if self.cancel_all():
+                order = self.active_orders.get(self.vt_orderid, None)
+                if order and order.status != Status.SUBMITTING:
+                    self.cancel_all()
                     self.vt_orderid = ""
 
     def on_trade(self, trade: TradeData):
