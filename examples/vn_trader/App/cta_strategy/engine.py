@@ -293,6 +293,9 @@ class CtaEngine(BaseEngine):
     def start_algo(self, setting:dict):
         return self.algoTradingEngine.start_algo(setting=setting)
 
+    def stop_algo(self, algo_name:str):
+        self.algoTradingEngine.stop_algo(algo_name)
+
     def check_stop_order(self, tick: TickData):
         """"""
         for stop_order in list(self.stop_orders.values()):

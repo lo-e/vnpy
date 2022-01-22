@@ -57,22 +57,10 @@ class PivotStrategy_actual(CtaTemplate):
     base_datetime = None
     long_allowed1 = False
     long_allowed2 = False
-    long_profit_ready1 = False
-    long_profit_ready2 = False
     short_allowed1 = False
     short_allowed2 = False
-    short_profit_ready1 = False
-    short_profit_ready2 = False
     long_profit_exit = 0
     short_profit_exit = 0
-    long_orderid1 = ''
-    long_orderid2 = ''
-    short_orderid1 = ''
-    short_orderid2 = ''
-    long_cross1 = False
-    long_cross2 = False
-    short_cross1 = False
-    short_cross2 = False
 
     long_high1 = 0
     long_high2 = 0
@@ -80,9 +68,13 @@ class PivotStrategy_actual(CtaTemplate):
     short_low2 = 0
 
     long_entry_algo1 = ''
+    long_exit_algo1 = ''
     long_entry_algo2 = ''
+    long_exit_algo2 = ''
     short_entry_algo1 = ''
+    short_exit_algo1 = ''
     short_entry_algo2 = ''
+    short_exit_algo2 = ''
     long_traded1 = 0
     long_traded2 = 0
     short_traded1 = 0
@@ -174,49 +166,117 @@ class PivotStrategy_actual(CtaTemplate):
             return
         self.last_tick = tick
 
-        # 判断是否重新开仓准许
-        if not self.long_cross1 and not self.long_allowed1 and tick.last_price <= self.long_exit1:
-            self.long_allowed1 = True
-
-        if not self.long_cross2 and not self.long_allowed2 and tick.last_price <= self.long_exit2:
-            self.long_allowed2 = True
-
-        if not self.short_cross1 and not self.short_allowed1 and tick.last_price >= self.short_exit1:
-            self.short_allowed1 = True
-
-        if not self.short_cross2 and not self.short_allowed2 and tick.last_price >= self.short_exit2:
-            self.short_allowed2 = True
-
         next_window_datetime = next_window_bar_datetime(current_datetime=tick.datetime - timedelta(minutes=1))
         if without_timezone(tick.datetime) >= next_window_datetime - timedelta(minutes=6):
             # 周期结束前平仓
-            if self.pos > 0:
-                self.sell(price=tick.last_price-200*self.actual_tick_price, volume=abs(self.pos))
+            if self.long_traded1 and not self.long_exit_algo1:
+                self.long_exit_algo1 = self.sell(price=tick.last_price-200*self.actual_tick_price, volume=abs(self.long_traded1))
 
-                self.long_cross1 = False
-                self.long_cross2 = False
+            if self.long_traded2 and not self.long_exit_algo2:
+                self.long_exit_algo2 = self.sell(price=tick.last_price-200*self.actual_tick_price, volume=abs(self.long_traded2))
 
-            if self.pos < 0:
-                self.cover(price=tick.last_price+200*self.actual_tick_price, volume=abs(self.pos))
+            if self.short_traded1 and not self.short_exit_algo1:
+               self.short_exit_algo1 = self.cover(price=tick.last_price+200*self.actual_tick_price, volume=abs(self.short_traded1))
 
-                self.short_cross1 = False
-                self.short_cross2 = False
+            if self.short_traded2 and not self.short_exit_algo2:
+               self.short_exit_algo2 = self.cover(price=tick.last_price+200*self.actual_tick_price, volume=abs(self.short_traded2))
 
         elif self.pivot:
-            # 多头开仓
-            if not self.long_entry_algo1 and self.long_traded1 < self.long_volume1 and tick.ask_price_1 >= self.long_entry1:
-                self.long_entry_algo1 = self.buy(price=tick.last_price + 200*self.actual_tick_price, volume=self.long_volume1)
+            has_exit = False
+            # 一级多头平仓
+            if self.long_traded1:
+                self.long_high1 = max(self.long_high1, tick.last_price)
 
-            if not self.long_entry_algo2 and self.long_traded2 < self.long_volume2 and tick.ask_price_1 >= self.long_entry2:
-                self.long_entry_algo2 = self.buy(price=tick.last_price + 200*self.actual_tick_price, volume=self.long_volume2)
+                exit_rate_price = self.long_high1 * (1 - self.exit_rate)
+                exit_price = min(exit_rate_price, self.long_entry1)
+                exit_price = max(exit_price, self.long_exit1)
+                if tick.bid_price_1 <= exit_price:
+                    # 止损
+                    has_exit = True
+                    if self.long_entry_algo1:
+                        self.cta_engine.stop_algo(self.long_entry_algo1)
 
-            # 空头开仓
-            if not self.short_entry_algo1 and self.short_traded1 < self.short_volume1 and tick.bid_price_1 <= self.short_entry1:
-                self.short_entry_algo1 = self.short(price=tick.last_price - 200*self.actual_tick_price, volume=self.short_volume1)
-                a = 2
+                    elif not self.long_exit_algo1:
+                        self.long_exit_algo1 = self.sell(price=tick.last_price-200*self.actual_tick_price,
+                                                         volume=abs(self.long_traded1))
 
-            if not self.short_entry_algo2 and self.short_traded2 < self.short_volume2 and tick.bid_price_1 <= self.short_entry2:
-                self.short_entry_algo2 = self.short(price=tick.last_price - 200*self.actual_tick_price, volume=self.short_volume2)
+            # 二级多头平仓
+            if self.long_traded2:
+                self.long_high2 = max(self.long_high2, tick.last_price)
+
+                exit_rate_price = self.long_high2 * (1 - self.exit_rate)
+                exit_price = min(exit_rate_price, self.long_entry2)
+                exit_price = max(exit_price, self.long_exit2)
+                if tick.bid_price_1 <= exit_price:
+                    # 止损
+                    has_exit = True
+                    if self.long_entry_algo2:
+                        self.cta_engine.stop_algo(self.long_entry_algo2)
+
+                    elif not self.long_exit_algo2:
+                        self.long_exit_algo2 = self.sell(price=tick.last_price - 200 * self.actual_tick_price,
+                                                         volume=abs(self.long_traded2))
+
+            # 一级空头平仓
+            if self.short_traded1:
+                if not self.short_low1:
+                    self.short_low1 = tick.last_price
+                else:
+                    self.short_low1 = min(self.short_low1, tick.last_price)
+
+                exit_rate_price = self.short_low1 * (1 + self.exit_rate)
+                exit_price = max(exit_rate_price, self.short_entry1)
+                exit_price = min(exit_price, self.short_exit1)
+                if tick.ask_price_1 >= exit_price:
+                    # 止损
+                    has_exit = True
+                    if self.short_entry_algo1:
+                        self.cta_engine.stop_algo(self.short_entry_algo1)
+
+                    elif not self.short_exit_algo1:
+                        self.short_exit_algo1 = self.cover(price=tick.last_price+200*self.actual_tick_price,
+                                                           volume=abs(self.short_traded1))
+
+            # 二级空头平仓
+            if self.short_traded2:
+                if not self.short_low2:
+                    self.short_low2 = tick.last_price
+                else:
+                    self.short_low2 = min(self.short_low2, tick.last_price)
+
+                exit_rate_price = self.short_low2 * (1 + self.exit_rate)
+                exit_price = max(exit_rate_price, self.short_entry2)
+                exit_price = min(exit_price, self.short_exit2)
+                if tick.ask_price_1 >= exit_price:
+                    # 止损
+                    has_exit = True
+                    if self.short_entry_algo2:
+                        self.cta_engine.stop_algo(self.short_entry_algo2)
+
+                    elif not self.short_exit_algo2:
+                        self.short_exit_algo2 = self.cover(price=tick.last_price + 200 * self.actual_tick_price,
+                                                           volume=abs(self.short_traded2))
+
+            if not has_exit and not self.long_exit_algo1 and not self.long_exit_algo2 and not self.short_exit_algo1 and not self.short_exit_algo2:
+                has_long_entry = False
+                # 一级多头开仓
+                if not self.long_entry_algo1 and self.long_traded1 < self.long_volume1 and tick.ask_price_1 >= self.long_entry1:
+                    has_long_entry = True
+                    self.long_entry_algo1 = self.buy(price=tick.last_price + 200*self.actual_tick_price, volume=self.long_volume1)
+
+                # 二级多头开仓
+                if not self.long_entry_algo2 and self.long_traded2 < self.long_volume2 and tick.ask_price_1 >= self.long_entry2:
+                    has_long_entry = True
+                    self.long_entry_algo2 = self.buy(price=tick.last_price + 200*self.actual_tick_price, volume=self.long_volume2)
+
+                if not has_long_entry:
+                    # 一级空头开仓
+                    if not self.short_entry_algo1 and self.short_traded1 < self.short_volume1 and tick.bid_price_1 <= self.short_entry1:
+                        self.short_entry_algo1 = self.short(price=tick.last_price - 200*self.actual_tick_price, volume=self.short_volume1)
+
+                    # 二级空头开仓
+                    if not self.short_entry_algo2 and self.short_traded2 < self.short_volume2 and tick.bid_price_1 <= self.short_entry2:
+                        self.short_entry_algo2 = self.short(price=tick.last_price - 200*self.actual_tick_price, volume=self.short_volume2)
 
 
         self.put_timer_event()
@@ -265,42 +325,6 @@ class PivotStrategy_actual(CtaTemplate):
         """
         Callback of new trade data update.
         """
-        if trade.orderid == self.long_orderid1:
-            if trade.offset == Offset.OPEN:
-                self.long_cross1 = True
-                #self.long_allowed1 = False
-            else:
-                self.long_cross1 = False
-                if self.long_profit_ready1:
-                    self.long_allowed1 = False
-
-        if trade.orderid == self.long_orderid2:
-            if trade.offset == Offset.OPEN:
-                self.long_cross2 = True
-                #self.long_allowed2 = False
-            else:
-                self.long_cross2 = False
-                if self.long_profit_ready2:
-                    self.long_allowed2 = False
-
-        if trade.orderid == self.short_orderid1:
-            if trade.offset == Offset.OPEN:
-                self.short_cross1 = True
-                #self.short_allowed1 = False
-            else:
-                self.short_cross1 = False
-                if self.short_profit_ready1:
-                    self.short_allowed1 = False
-
-        if trade.orderid == self.short_orderid2:
-            if trade.offset == Offset.OPEN:
-                self.short_cross2 = True
-                #self.short_allowed2 = False
-            else:
-                self.short_cross2 = False
-                if self.short_profit_ready2:
-                    self.short_allowed2 = False
-
         # 邮件提醒
         super(PivotStrategy_actual, self).on_trade(trade)
 
@@ -309,30 +333,70 @@ class PivotStrategy_actual(CtaTemplate):
             # 一级多头开仓成交
             self.long_traded1 += trade.volume
 
+        if algo.algo_name == self.long_exit_algo1:
+            # 一级多头平仓成交
+            self.long_traded1 -= trade.volume
+
         if algo.algo_name == self.long_entry_algo2:
             # 二级多头开仓成交
             self.long_traded2 += trade.volume
+
+        if algo.algo_name == self.long_exit_algo2:
+            # 二级多头平仓成交
+            self.long_traded2 -= trade.volume
 
         if algo.algo_name == self.short_entry_algo1:
             # 一级空头开仓成交
             self.short_traded1 += trade.volume
 
+        if algo.algo_name == self.short_exit_algo1:
+            # 一级空头平仓成交
+            self.short_traded1 -= trade.volume
+
         if algo.algo_name == self.short_entry_algo2:
             # 二级空头开仓成交
             self.short_traded2 += trade.volume
+
+        if algo.algo_name == self.short_exit_algo2:
+            # 二级空头平仓成交
+            self.short_traded2 -= trade.volume
+
+        if not self.long_traded1:
+            self.long_high1 = 0
+
+        if not self.long_traded2:
+            self.long_high2 = 0
+
+        if not self.short_traded1:
+            self.short_low1 = 0
+
+        if not self.short_traded2:
+            self.short_low2 = 0
 
     def on_algo_stop(self, algo):
         if algo.algo_name == self.long_entry_algo1:
             self.long_entry_algo1 = ''
 
+        if algo.algo_name == self.long_exit_algo1:
+            self.long_exit_algo1 = ''
+
         if algo.algo_name == self.long_entry_algo2:
             self.long_entry_algo2 = ''
+
+        if algo.algo_name == self.long_exit_algo2:
+            self.long_exit_algo2 = ''
 
         if algo.algo_name == self.short_entry_algo1:
             self.short_entry_algo1 = ''
 
+        if algo.algo_name == self.short_exit_algo1:
+            self.short_exit_algo1 = ''
+
         if algo.algo_name == self.short_entry_algo2:
             self.short_entry_algo2 = ''
+
+        if algo.algo_name == self.short_exit_algo2:
+            self.short_exit_algo2 = ''
 
     def on_stop_order(self, stop_order: StopOrder):
         """
