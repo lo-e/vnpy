@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from typing import Callable
 from vnpy.trader.utility import round_to, csv_saving
 from vnpy.trader.constant import Offset
+from decimal import Decimal
 
 window_time = ['00:00:00', '08:00:00', '16:00:00']
 
@@ -330,35 +331,35 @@ class PivotStrategy_actual(CtaTemplate):
     def on_algo_trade(self, algo, trade:TradeData):
         if algo.algo_name == self.long_entry_algo1:
             # 一级多头开仓成交
-            self.long_traded1 += trade.volume
+            self.long_traded1 = float(Decimal(str(self.long_traded1)) + Decimal(str(trade.volume)))
 
         if algo.algo_name == self.long_exit_algo1:
             # 一级多头平仓成交
-            self.long_traded1 -= trade.volume
+            self.long_traded1 = float(Decimal(str(self.long_traded1)) - Decimal(str(trade.volume)))
 
         if algo.algo_name == self.long_entry_algo2:
             # 二级多头开仓成交
-            self.long_traded2 += trade.volume
+            self.long_traded2 = float(Decimal(str(self.long_traded2)) + Decimal(str(trade.volume)))
 
         if algo.algo_name == self.long_exit_algo2:
             # 二级多头平仓成交
-            self.long_traded2 -= trade.volume
+            self.long_traded2 = float(Decimal(str(self.long_traded2)) - Decimal(str(trade.volume)))
 
         if algo.algo_name == self.short_entry_algo1:
             # 一级空头开仓成交
-            self.short_traded1 += trade.volume
+            self.short_traded1 = float(Decimal(str(self.short_traded1)) + Decimal(str(trade.volume)))
 
         if algo.algo_name == self.short_exit_algo1:
             # 一级空头平仓成交
-            self.short_traded1 -= trade.volume
+            self.short_traded1 = float(Decimal(str(self.short_traded1)) - Decimal(str(trade.volume)))
 
         if algo.algo_name == self.short_entry_algo2:
             # 二级空头开仓成交
-            self.short_traded2 += trade.volume
+            self.short_traded2 = float(Decimal(str(self.short_traded2)) + Decimal(str(trade.volume)))
 
         if algo.algo_name == self.short_exit_algo2:
             # 二级空头平仓成交
-            self.short_traded2 -= trade.volume
+            self.short_traded2 = float(Decimal(str(self.short_traded2)) - Decimal(str(trade.volume)))
 
         if not self.long_traded1:
             self.long_high1 = 0
