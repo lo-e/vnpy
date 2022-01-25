@@ -88,6 +88,10 @@ class PivotStrategy_actual(CtaTemplate):
                   'best_limit_algo_trading']
 
     variables = ['base_datetime',
+                 'long_traded1',
+                 'long_traded2',
+                 'short_traded1',
+                 'short_traded2',
                  'long_entry2',
                  'long_volume2',
                  'long_exit2',
@@ -101,16 +105,23 @@ class PivotStrategy_actual(CtaTemplate):
                  'short_exit2',
                  'short_volume2',
                  'short_entry2',
-                 'long_traded1',
-                 'long_traded2',
-                 'short_traded1',
-                 'short_traded2',
-                 'long_profit_exit',
-                 'short_profit_exit']
+                 'long_entry_algo1',
+                 'long_exit_algo1',
+                 'long_entry_algo2',
+                 'long_exit_algo2',
+                 'short_entry_algo1',
+                 'short_exit_algo1',
+                 'short_entry_algo2',
+                 'short_exit_algo2']
+
     syncs = ['long_traded1',
              'long_traded2',
              'short_traded1',
-             'short_traded2']
+             'short_traded2',
+             'long_high1',
+             'long_high2',
+             'short_low1',
+             'short_low2']
 
     def __init__(self, cta_engine, strategy_name, vt_symbol, setting):
         """"""
@@ -361,6 +372,8 @@ class PivotStrategy_actual(CtaTemplate):
         if not self.short_traded2:
             self.short_low2 = 0
 
+        self.put_timer_event()
+
     def on_algo_stop(self, algo):
         if algo.algo_name == self.long_entry_algo1:
             self.long_entry_algo1 = ''
@@ -385,6 +398,8 @@ class PivotStrategy_actual(CtaTemplate):
 
         if algo.algo_name == self.short_exit_algo2:
             self.short_exit_algo2 = ''
+
+        self.put_timer_event()
 
     def on_stop_order(self, stop_order: StopOrder):
         """
