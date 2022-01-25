@@ -55,6 +55,7 @@ class PivotStrategy_actual(CtaTemplate):
     # ======================================
 
     base_datetime = None
+    base_datetime_checking = False
     long_allowed1 = False
     long_allowed2 = False
     short_allowed1 = False
@@ -163,8 +164,8 @@ class PivotStrategy_actual(CtaTemplate):
             return
         self.last_tick = tick
 
-        next_window_datetime = next_window_bar_datetime(current_datetime=tick.datetime - timedelta(minutes=1))
-        if without_timezone(tick.datetime) >= next_window_datetime - timedelta(minutes=6):
+        next_window_datetime = next_window_bar_datetime(current_datetime=tick.datetime - timedelta(minutes=5))
+        if without_timezone(tick.datetime) >= next_window_datetime - timedelta(minutes=5):
             # 周期结束前平仓
             if self.long_traded1 and not self.long_exit_algo1:
                 self.long_exit_algo1 = self.sell(price=tick.last_price-200*self.actual_tick_price, volume=abs(self.long_traded1))
@@ -178,7 +179,7 @@ class PivotStrategy_actual(CtaTemplate):
             if self.short_traded2 and not self.short_exit_algo2:
                self.short_exit_algo2 = self.cover(price=tick.last_price+200*self.actual_tick_price, volume=abs(self.short_traded2))
 
-        elif self.pivot:
+        elif self.pivot and self.base_datetime_checking:
             has_exit = False
             # 一级多头平仓
             if self.long_traded1:
@@ -290,7 +291,7 @@ class PivotStrategy_actual(CtaTemplate):
     # 周期数据源处理逻辑
     def on_generate_bar(self, bar:BarData):
         self.calculate_pivot(bar)
-        self.base_datetime = bar.datetime
+        self.base_datetime = next_window_bar_datetime(bar.datetime + timedelta(seconds=1))
         self.long_allowed1 = True
         self.long_allowed2 = True
         self.short_allowed1 = True
@@ -476,6 +477,20 @@ class PivotStrategy_actual(CtaTemplate):
             return contract.pricetick
         else:
             return self.tick_price
+
+    def check_base_datetime(self, current_tick:TickData):
+        if not current_tick:
+            return False
+
+        next_base = next_window_bar_datetime(self.base_datetime + timedelta(seconds=1))
+        if self.base_datetime <= without_timezone(current_tick.datetime) < next_base:
+            return True
+        else:
+            return False
+
+    def on_timer(self):
+        super().on_timer()
+        self.base_datetime_checking = self.check_base_datetime(self.last_tick)
 
 class CustomBarGenerator(BarGenerator):
     def __init__(self,
