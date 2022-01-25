@@ -50,6 +50,7 @@ from vnpy.trader.converter import OffsetConverter
 from vnpy.trader.database import BaseDatabase, get_database
 from vnpy.trader.datafeed import BaseDatafeed, get_datafeed
 from algo_trading import AlgoEngine
+from ..Turtle_crypto.dataservice import TurtleCryptoDataDownloading
 
 """ modify by loe """
 # 增加了 POSITION_DB_NAME
@@ -132,11 +133,9 @@ class CtaEngine(BaseEngine):
 
         """ modify by loe """
         # 数据引擎
-        self.autoEngine = CTAAutoEngine(main_engine=self.main_engine,
-                                        cta_engine=self,
-                                        download_time='19:00',
-                                        reconnect_time='20:10',
-                                        check_interval=10 * 60, reload_time=6)
+        self.autoEngine = CTACryptoAutoEngine(main_engine=self.main_engine,
+                                              cta_engine=self,
+                                              updating_time_list=['0:00:01', '8:00:01', '16:00:01'])
 
         # 算法交易引擎启动
         self.algoTradingEngine = AlgoEngine(cta_engine=self,
@@ -158,7 +157,7 @@ class CtaEngine(BaseEngine):
 
         """ modify by loe """
         # 数据引擎启动
-        #self.autoEngine.start()
+        self.autoEngine.start()
 
         self.write_log("CTA策略引擎初始化成功")
 
@@ -1220,3 +1219,89 @@ class CTAAutoEngine(object):
                     pass
         else:
             self.restarted = False
+
+# 数据下载引擎，每天固定时间从数据服务器自动下载策略回测及实盘必要的数据，策略自动重新初始化
+class CTACryptoAutoEngine(object):
+
+    def __init__(self, main_engine:MainEngine, cta_engine:CtaEngine, updating_time_list:list):
+        # download_time:'7:51', generate_time:'8:00:01'
+        super(CTACryptoAutoEngine, self).__init__()
+        self.contract_list = ['BTCUSDT', 'ETHUSDT']
+        self.main_engine = main_engine
+        self.cta_engine = cta_engine
+        self.updating_time_list = updating_time_list
+        self.downloading = False
+        self.updating = False
+        self.updating_needed = False
+        self.download_timer = Thread(target=self.on_download_timer)
+        self.updating_timer = Thread(target=self.on_updating_timer)
+
+    def start(self):
+        self.download_timer.start()
+        self.updating_timer.start()
+
+    def on_download_timer(self):
+        while True:
+            try:
+                self.checkAndDownload()
+            except:
+                self.downloading = False
+                try:
+                    subject = 'CTA_PIVOT 数据下载'
+                    content = f'【未知错误】\n\n{traceback.format_exc()}'
+                    self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{content}')
+                except:
+                    pass
+
+                if self.updating_needed:
+                    self.updating = False
+                    self.checkAndUpdating()
+
+            sleep(60*5)
+
+    def on_updating_timer(self):
+        while True:
+            try:
+                self.checkAndUpdating()
+            except:
+                try:
+                    subject = 'CTA_PIVOT 数据更新'
+                    content = f'【未知错误】\n\n{traceback.format_exc()}'
+                    self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{content}')
+                except:
+                    pass
+
+                if self.updating_needed:
+                    self.updating = False
+                    self.checkAndUpdating()
+            sleep(1)
+
+    def checkAndDownload(self):
+            if not self.downloading:
+                self.downloading = True
+                turtleCryptoDataD = TurtleCryptoDataDownloading()
+                turtleCryptoDataD.download_from_bybit(contract_list=self.contract_list)
+                self.downloading = False
+                if self.updating_needed:
+                    self.updating_needed = False
+                    # 策略重新初始化
+                    self.cta_engine.reinit_strategies()
+
+                    try:
+                        self.main_engine.send_ding_talk(content='CTA_PIVOT 数据更新')
+                    except:
+                        pass
+
+    def checkAndUpdating(self):
+        now = datetime.now()
+        for updating_time in self.updating_time_list:
+            start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {updating_time}', '%Y-%m-%d %H:%M:%S')
+            end_time = start_time + timedelta(seconds=60*5)
+            if now >= start_time and now <= end_time:
+                if not self.updating :
+                    self.updating = True
+                    self.updating_needed = True
+                    self.checkAndDownload()
+                break
+            else:
+                self.updating = False

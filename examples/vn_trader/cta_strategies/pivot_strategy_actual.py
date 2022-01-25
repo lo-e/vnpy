@@ -107,7 +107,10 @@ class PivotStrategy_actual(CtaTemplate):
                  'short_traded2',
                  'long_profit_exit',
                  'short_profit_exit']
-    syncs = []
+    syncs = ['long_traded1',
+             'long_traded2',
+             'short_traded1',
+             'short_traded2']
 
     def __init__(self, cta_engine, strategy_name, vt_symbol, setting):
         """"""
@@ -125,6 +128,9 @@ class PivotStrategy_actual(CtaTemplate):
         """
         Callback when strategy is inited.
         """
+        # 初始化数据
+        self.clear_data()
+
         # 载入历史数据，并采用回放计算的方式初始化策略数值
         if self.trade_mode == TradeMode.ACTUAL:
             self.load_bar(days=2, interval=Interval.MINUTE, callback=self.on_bar)
@@ -470,6 +476,39 @@ class PivotStrategy_actual(CtaTemplate):
             return self.cta_engine.algoTradingEngine.start_algo(setting=dict)
         else:
             return super(PivotStrategy_actual, self).cover(price, volume)
+
+    def clear_data(self):
+        self.bg = CustomBarGenerator(on_bar=self.on_bar,
+                                     window=0,
+                                     on_window_bar=self.on_generate_bar,
+                                     interval=Interval.MINUTE)
+        self.am = ArrayManager(size=self.exit_window + 1)
+
+        self.long_entry3 = 0
+        self.long_volume3 = 0
+        self.long_exit3 = 0
+
+        self.long_entry2 = 0
+        self.long_volume2 = 0
+        self.long_exit2 = 0
+
+        self.long_entry1 = 0
+        self.long_volume1 = 0
+        self.long_exit1 = 0
+
+        self.pivot = 0
+
+        self.short_entry1 = 0
+        self.short_volume1 = 0
+        self.short_exit1 = 0
+
+        self.short_entry2 = 0
+        self.short_volume2 = 0
+        self.short_exit2 = 0
+
+        self.short_entry3 = 0
+        self.short_volume3 = 0
+        self.short_exit3 = 0
 
     def get_tick_price(self):
         contract = self.cta_engine.main_engine.get_contract(vt_symbol=self.vt_symbol)
