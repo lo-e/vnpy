@@ -51,6 +51,7 @@ from vnpy.trader.database import BaseDatabase, get_database
 from vnpy.trader.datafeed import BaseDatafeed, get_datafeed
 from algo_trading import AlgoEngine
 from ..Turtle_crypto.dataservice import TurtleCryptoDataDownloading
+from decimal import Decimal
 
 """ modify by loe """
 # 增加了 POSITION_DB_NAME
@@ -269,9 +270,10 @@ class CtaEngine(BaseEngine):
 
         # Update strategy pos before calling on_trade method
         if trade.direction == Direction.LONG:
-            strategy.pos += trade.volume
+            strategy.pos = float(Decimal(str(strategy.pos)) + Decimal(str(trade.volume)))
+
         else:
-            strategy.pos -= trade.volume
+            strategy.pos = float(Decimal(str(strategy.pos)) - Decimal(str(trade.volume)))
 
         self.call_strategy_func(strategy, strategy.on_trade, trade)
 
