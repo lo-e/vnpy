@@ -183,7 +183,7 @@ class PivotStrategy_actual(CtaTemplate):
 
         if not self.am.inited:
             return
-        
+
         # 只要最新tick
         if self.last_tick and self.last_tick.datetime >= tick.datetime:
                 return
@@ -213,7 +213,7 @@ class PivotStrategy_actual(CtaTemplate):
                 exit_rate_price = self.long_high1 * (1 - self.exit_rate)
                 exit_price = min(exit_rate_price, self.long_entry1)
                 exit_price = max(exit_price, self.long_exit1)
-                if tick.bid_price_1 - 10*self.actual_tick_price <= exit_price:
+                if tick.bid_price_1 <= exit_price:
                     # 止损
                     has_exit = True
                     if self.long_entry_algo1:
@@ -230,7 +230,7 @@ class PivotStrategy_actual(CtaTemplate):
                 exit_rate_price = self.long_high2 * (1 - self.exit_rate)
                 exit_price = min(exit_rate_price, self.long_entry2)
                 exit_price = max(exit_price, self.long_exit2)
-                if tick.bid_price_1 - 10*self.actual_tick_price <= exit_price:
+                if tick.bid_price_1 <= exit_price:
                     # 止损
                     has_exit = True
                     if self.long_entry_algo2:
@@ -250,7 +250,7 @@ class PivotStrategy_actual(CtaTemplate):
                 exit_rate_price = self.short_low1 * (1 + self.exit_rate)
                 exit_price = max(exit_rate_price, self.short_entry1)
                 exit_price = min(exit_price, self.short_exit1)
-                if tick.ask_price_1 + 10*self.actual_tick_price >= exit_price:
+                if tick.ask_price_1 >= exit_price:
                     # 止损
                     has_exit = True
                     if self.short_entry_algo1:
@@ -270,7 +270,7 @@ class PivotStrategy_actual(CtaTemplate):
                 exit_rate_price = self.short_low2 * (1 + self.exit_rate)
                 exit_price = max(exit_rate_price, self.short_entry2)
                 exit_price = min(exit_price, self.short_exit2)
-                if tick.ask_price_1 + 10*self.actual_tick_price >= exit_price:
+                if tick.ask_price_1 >= exit_price:
                     # 止损
                     has_exit = True
                     if self.short_entry_algo2:
@@ -283,23 +283,27 @@ class PivotStrategy_actual(CtaTemplate):
             if not has_exit and not self.long_exit_algo1 and not self.long_exit_algo2 and not self.short_exit_algo1 and not self.short_exit_algo2:
                 has_long_entry = False
                 # 一级多头开仓
-                if not self.long_entry_algo1 and self.long_traded1 < self.long_volume1 and tick.ask_price_1 + 10*self.actual_tick_price >= self.long_entry1:
+                if not self.long_entry_algo1 and self.long_traded1 < self.long_volume1 and tick.ask_price_1 >= self.long_entry1:
                     has_long_entry = True
-                    self.long_entry_algo1 = self.buy(price=tick.last_price + 200*self.actual_tick_price, volume=self.long_volume1)
+                    volume = float(Decimal(str(self.long_volume1)) - Decimal(str(self.long_traded1)))
+                    self.long_entry_algo1 = self.buy(price=tick.last_price + 200*self.actual_tick_price, volume=volume)
 
                 # 二级多头开仓
-                if not self.long_entry_algo2 and self.long_traded2 < self.long_volume2 and tick.ask_price_1 + 10*self.actual_tick_price >= self.long_entry2:
+                if not self.long_entry_algo2 and self.long_traded2 < self.long_volume2 and tick.ask_price_1 >= self.long_entry2:
                     has_long_entry = True
-                    self.long_entry_algo2 = self.buy(price=tick.last_price + 200*self.actual_tick_price, volume=self.long_volume2)
+                    volume = float(Decimal(str(self.long_volume2)) - Decimal(str(self.long_traded2)))
+                    self.long_entry_algo2 = self.buy(price=tick.last_price + 200*self.actual_tick_price, volume=volume)
 
                 if not has_long_entry:
                     # 一级空头开仓
-                    if not self.short_entry_algo1 and self.short_traded1 < self.short_volume1 and tick.bid_price_1 - 10*self.actual_tick_price <= self.short_entry1:
-                        self.short_entry_algo1 = self.short(price=tick.last_price - 200*self.actual_tick_price, volume=self.short_volume1)
+                    if not self.short_entry_algo1 and self.short_traded1 < self.short_volume1 and tick.bid_price_1 <= self.short_entry1:
+                        volume = float(Decimal(str(self.short_volume1)) - Decimal(str(self.short_traded1)))
+                        self.short_entry_algo1 = self.short(price=tick.last_price - 200*self.actual_tick_price, volume=volume)
 
                     # 二级空头开仓
-                    if not self.short_entry_algo2 and self.short_traded2 < self.short_volume2 and tick.bid_price_1 - 10*self.actual_tick_price <= self.short_entry2:
-                        self.short_entry_algo2 = self.short(price=tick.last_price - 200*self.actual_tick_price, volume=self.short_volume2)
+                    if not self.short_entry_algo2 and self.short_traded2 < self.short_volume2 and tick.bid_price_1 <= self.short_entry2:
+                        volume = float(Decimal(str(self.short_volume2)) - Decimal(str(self.short_traded2)))
+                        self.short_entry_algo2 = self.short(price=tick.last_price - 200*self.actual_tick_price, volume=volume)
 
 
         self.put_timer_event()
