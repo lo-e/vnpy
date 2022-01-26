@@ -11,8 +11,7 @@ from vnpy.app.cta_strategy.template import TradeMode
 from vnpy.trader.constant import Interval
 from datetime import datetime, timedelta
 from typing import Callable
-from vnpy.trader.utility import round_to, csv_saving
-from vnpy.trader.constant import Offset
+from vnpy.trader.utility import round_to
 from decimal import Decimal
 
 window_time = ['00:00:00', '08:00:00', '16:00:00']
@@ -184,6 +183,10 @@ class PivotStrategy_actual(CtaTemplate):
 
         if not self.am.inited:
             return
+        
+        # 只要最新tick
+        if self.last_tick and self.last_tick.datetime >= tick.datetime:
+                return
         self.last_tick = tick
 
         next_window_datetime = next_window_bar_datetime(current_datetime=tick.datetime - timedelta(minutes=5))

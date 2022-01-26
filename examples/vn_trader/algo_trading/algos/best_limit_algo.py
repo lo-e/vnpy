@@ -3,11 +3,10 @@ from random import uniform
 from vnpy.trader.constant import Offset, Direction
 from vnpy.trader.object import TradeData, OrderData, TickData
 from vnpy.trader.engine import BaseEngine
-from vnpy.trader.utility import round_to
 from vnpy.trader.constant import Status
 
 from ..template import AlgoTemplate
-
+from decimal import Decimal
 
 class BestLimitAlgo(AlgoTemplate):
     """"""
@@ -68,7 +67,7 @@ class BestLimitAlgo(AlgoTemplate):
 
     def on_trade(self, trade: TradeData):
         """"""
-        self.traded += trade.volume
+        self.traded = float(Decimal(str(self.traded)) + Decimal(str(trade.volume)))
         if hasattr(self.strategy, 'on_algo_trade'):
             self.strategy.on_algo_trade(self, trade)
 
