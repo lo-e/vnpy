@@ -24,6 +24,7 @@ class PivotStrategy_actual(CtaTemplate):
     exit_rate = 0.002
     exit_window = 50
     min_volume = 0.001
+    max_slipper = 10
     best_limit_algo_trading = False
 
     # ======================================
@@ -286,24 +287,28 @@ class PivotStrategy_actual(CtaTemplate):
                 if not self.long_entry_algo1 and self.long_traded1 < self.long_volume1 and tick.ask_price_1 >= self.long_entry1:
                     has_long_entry = True
                     volume = float(Decimal(str(self.long_volume1)) - Decimal(str(self.long_traded1)))
-                    self.long_entry_algo1 = self.buy(price=tick.last_price + 200*self.actual_tick_price, volume=volume)
+                    limit_price = self.long_entry1 + self.max_slipper*self.actual_tick_price
+                    self.long_entry_algo1 = self.buy(price=tick.last_price + 200*self.actual_tick_price, volume=volume, limit_price=limit_price)
 
                 # 二级多头开仓
                 if not self.long_entry_algo2 and self.long_traded2 < self.long_volume2 and tick.ask_price_1 >= self.long_entry2:
                     has_long_entry = True
                     volume = float(Decimal(str(self.long_volume2)) - Decimal(str(self.long_traded2)))
-                    self.long_entry_algo2 = self.buy(price=tick.last_price + 200*self.actual_tick_price, volume=volume)
+                    limit_price = self.long_entry2 + self.max_slipper * self.actual_tick_price
+                    self.long_entry_algo2 = self.buy(price=tick.last_price + 200*self.actual_tick_price, volume=volume, limit_price=limit_price)
 
                 if not has_long_entry:
                     # 一级空头开仓
                     if not self.short_entry_algo1 and self.short_traded1 < self.short_volume1 and tick.bid_price_1 <= self.short_entry1:
                         volume = float(Decimal(str(self.short_volume1)) - Decimal(str(self.short_traded1)))
-                        self.short_entry_algo1 = self.short(price=tick.last_price - 200*self.actual_tick_price, volume=volume)
+                        limit_price = self.short_entry1 - self.max_slipper * self.actual_tick_price
+                        self.short_entry_algo1 = self.short(price=tick.last_price - 200*self.actual_tick_price, volume=volume, limit_price=limit_price)
 
                     # 二级空头开仓
                     if not self.short_entry_algo2 and self.short_traded2 < self.short_volume2 and tick.bid_price_1 <= self.short_entry2:
                         volume = float(Decimal(str(self.short_volume2)) - Decimal(str(self.short_traded2)))
-                        self.short_entry_algo2 = self.short(price=tick.last_price - 200*self.actual_tick_price, volume=volume)
+                        limit_price = self.short_entry2 - self.max_slipper * self.actual_tick_price
+                        self.short_entry_algo2 = self.short(price=tick.last_price - 200*self.actual_tick_price, volume=volume, limit_price=limit_price)
 
 
         self.put_timer_event()
@@ -452,7 +457,7 @@ class PivotStrategy_actual(CtaTemplate):
         self.short_volume2 = round_to(max_unit_loss / (self.short_exit2 - self.short_entry2), self.min_volume)
         self.short_volume3 = round_to(max_unit_loss / (self.short_exit3 - self.short_entry3), self.min_volume)
 
-    def buy(self, price: float, volume: float):
+    def buy(self, price: float, volume: float, limit_price:float=0.0):
         if self.best_limit_algo_trading:
             dict = {'template_name':'BestLimitAlgo',
                     'strategy':self,
@@ -460,12 +465,13 @@ class PivotStrategy_actual(CtaTemplate):
                     'direction':'多',
                     'volume': volume,
                     'offset': '开',
+                    'limit_price':limit_price,
                     'tick':self.last_tick}
             return self.cta_engine.algoTradingEngine.start_algo(setting=dict)
         else:
             return super(PivotStrategy_actual, self).buy(price, volume)
 
-    def sell(self, price: float, volume: float):
+    def sell(self, price: float, volume: float, limit_price:float=0.0):
         if self.best_limit_algo_trading:
             dict = {'template_name':'BestLimitAlgo',
                     'strategy': self,
@@ -473,12 +479,13 @@ class PivotStrategy_actual(CtaTemplate):
                     'direction':'空',
                     'volume': volume,
                     'offset': '平',
+                    'limit_price': limit_price,
                     'tick':self.last_tick}
             return self.cta_engine.algoTradingEngine.start_algo(setting=dict)
         else:
             return super(PivotStrategy_actual, self).sell(price, volume)
 
-    def short(self, price: float, volume: float):
+    def short(self, price: float, volume: float, limit_price:float=0.0):
         if self.best_limit_algo_trading:
             dict = {'template_name':'BestLimitAlgo',
                     'strategy': self,
@@ -486,12 +493,13 @@ class PivotStrategy_actual(CtaTemplate):
                     'direction':'空',
                     'volume': volume,
                     'offset': '开',
+                    'limit_price': limit_price,
                     'tick':self.last_tick}
             return self.cta_engine.algoTradingEngine.start_algo(setting=dict)
         else:
             return super(PivotStrategy_actual, self).short(price, volume)
 
-    def cover(self, price: float, volume: float):
+    def cover(self, price: float, volume: float, limit_price:float=0.0):
         if self.best_limit_algo_trading:
             dict = {'template_name':'BestLimitAlgo',
                     'strategy': self,
@@ -499,6 +507,7 @@ class PivotStrategy_actual(CtaTemplate):
                     'direction':'多',
                     'volume': volume,
                     'offset': '平',
+                    'limit_price': limit_price,
                     'tick':self.last_tick}
             return self.cta_engine.algoTradingEngine.start_algo(setting=dict)
         else:

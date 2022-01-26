@@ -25,6 +25,7 @@ class BestLimitAlgo(AlgoTemplate):
         self.direction = Direction(setting["direction"])
         self.volume = setting["volume"]
         self.offset = Offset(setting["offset"])
+        self.limit_price = setting.get('limit_price', 0.0)
 
         # Variables
         self.vt_orderid = ""
@@ -102,8 +103,11 @@ class BestLimitAlgo(AlgoTemplate):
         #"""
         contract = self.algo_engine.get_contract(self, self.vt_symbol)
         if contract:
-            self.mark_price = self.last_tick.ask_price_1
             order_price = self.last_tick.ask_price_1 - contract.pricetick
+            if self.limit_price and order_price > self.limit_price:
+                self.stop()
+                return
+            self.mark_price = self.last_tick.ask_price_1
         else:
             return
         #"""
@@ -129,8 +133,11 @@ class BestLimitAlgo(AlgoTemplate):
         # """
         contract = self.algo_engine.get_contract(self, self.vt_symbol)
         if contract:
-            self.mark_price = self.last_tick.bid_price_1
             order_price = self.last_tick.bid_price_1 + contract.pricetick
+            if self.limit_price and order_price < self.limit_price:
+                self.stop()
+                return
+            self.mark_price = self.last_tick.bid_price_1
         else:
             return
         # """
