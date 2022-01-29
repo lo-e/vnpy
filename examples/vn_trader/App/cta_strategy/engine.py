@@ -136,7 +136,7 @@ class CtaEngine(BaseEngine):
         # 数据引擎
         self.autoEngine = CTACryptoAutoEngine(main_engine=self.main_engine,
                                               cta_engine=self,
-                                              updating_time_list=['0:00:01', '8:00:01', '16:00:01'])
+                                              updating_time_list=['16:50:01', '08:00:01', '16:00:01'])
 
         # 算法交易引擎启动
         self.algoTradingEngine = AlgoEngine(cta_engine=self,
@@ -1296,14 +1296,18 @@ class CTACryptoAutoEngine(object):
 
     def checkAndUpdating(self):
         now = datetime.now()
+        check = False
         for updating_time in self.updating_time_list:
             start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {updating_time}', '%Y-%m-%d %H:%M:%S')
             end_time = start_time + timedelta(seconds=60*5)
             if now >= start_time and now <= end_time:
-                if not self.updating :
-                    self.updating = True
-                    self.updating_needed = True
-                    self.checkAndDownload()
+                check = True
                 break
-            else:
-                self.updating = False
+
+        if check:
+            if not self.updating:
+                self.updating = True
+                self.updating_needed = True
+                self.checkAndDownload()
+        else:
+            self.updating = False

@@ -105,6 +105,7 @@ class BestLimitAlgo(AlgoTemplate):
         if contract:
             order_price = self.last_tick.ask_price_1 - contract.pricetick
             if self.limit_price and order_price > self.limit_price:
+                print(f'{self.direction.value}\tvolume {self.volume}\ttraded {self.traded} {self.algo_name}停止：委托价格{order_price} > 限制价格{self.limit_price}')
                 self.stop()
                 return
             self.mark_price = self.last_tick.ask_price_1
@@ -135,6 +136,7 @@ class BestLimitAlgo(AlgoTemplate):
         if contract:
             order_price = self.last_tick.bid_price_1 + contract.pricetick
             if self.limit_price and order_price < self.limit_price:
+                print(f'{self.direction.value}\tvolume {self.volume}\ttraded {self.traded} {self.algo_name}停止：委托价格{order_price} < 限制价格{self.limit_price}')
                 self.stop()
                 return
             self.mark_price = self.last_tick.bid_price_1

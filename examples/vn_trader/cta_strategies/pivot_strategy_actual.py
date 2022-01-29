@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from typing import Callable
 from vnpy.trader.utility import round_to
 from decimal import Decimal
+import traceback
 
 window_time = ['00:00:00', '08:00:00', '16:00:00']
 
@@ -176,6 +177,7 @@ class PivotStrategy_actual(CtaTemplate):
         """
         Callback of new tick data update.
         """
+
         if not self.inited:
             return
 
@@ -285,30 +287,38 @@ class PivotStrategy_actual(CtaTemplate):
                 has_long_entry = False
                 # 一级多头开仓
                 if not self.long_entry_algo1 and self.long_traded1 < self.long_volume1 and tick.ask_price_1 >= self.long_entry1:
-                    has_long_entry = True
-                    volume = float(Decimal(str(self.long_volume1)) - Decimal(str(self.long_traded1)))
-                    limit_price = self.long_entry1 + self.max_slipper*self.actual_tick_price
-                    self.long_entry_algo1 = self.buy(price=tick.last_price + 200*self.actual_tick_price, volume=volume, limit_price=limit_price)
+                    # 避免滑点过高的过滤
+                    limit_price = self.long_entry1 + self.max_slipper * self.actual_tick_price
+                    if (tick.ask_price_1 - self.actual_tick_price) <= limit_price:
+                        has_long_entry = True
+                        volume = float(Decimal(str(self.long_volume1)) - Decimal(str(self.long_traded1)))
+                        self.long_entry_algo1 = self.buy(price=tick.last_price + 200*self.actual_tick_price, volume=volume, limit_price=limit_price)
 
                 # 二级多头开仓
                 if not self.long_entry_algo2 and self.long_traded2 < self.long_volume2 and tick.ask_price_1 >= self.long_entry2:
-                    has_long_entry = True
-                    volume = float(Decimal(str(self.long_volume2)) - Decimal(str(self.long_traded2)))
+                    # 避免滑点过高的过滤
                     limit_price = self.long_entry2 + self.max_slipper * self.actual_tick_price
-                    self.long_entry_algo2 = self.buy(price=tick.last_price + 200*self.actual_tick_price, volume=volume, limit_price=limit_price)
+                    if (tick.ask_price_1 - self.actual_tick_price) <= limit_price:
+                        has_long_entry = True
+                        volume = float(Decimal(str(self.long_volume2)) - Decimal(str(self.long_traded2)))
+                        self.long_entry_algo2 = self.buy(price=tick.last_price + 200*self.actual_tick_price, volume=volume, limit_price=limit_price)
 
                 if not has_long_entry:
                     # 一级空头开仓
                     if not self.short_entry_algo1 and self.short_traded1 < self.short_volume1 and tick.bid_price_1 <= self.short_entry1:
-                        volume = float(Decimal(str(self.short_volume1)) - Decimal(str(self.short_traded1)))
+                        # 避免滑点过高的过滤
                         limit_price = self.short_entry1 - self.max_slipper * self.actual_tick_price
-                        self.short_entry_algo1 = self.short(price=tick.last_price - 200*self.actual_tick_price, volume=volume, limit_price=limit_price)
+                        if (tick.bid_price_1 + self.actual_tick_price) >= limit_price:
+                            volume = float(Decimal(str(self.short_volume1)) - Decimal(str(self.short_traded1)))
+                            self.short_entry_algo1 = self.short(price=tick.last_price - 200*self.actual_tick_price, volume=volume, limit_price=limit_price)
 
                     # 二级空头开仓
                     if not self.short_entry_algo2 and self.short_traded2 < self.short_volume2 and tick.bid_price_1 <= self.short_entry2:
-                        volume = float(Decimal(str(self.short_volume2)) - Decimal(str(self.short_traded2)))
+                        # 避免滑点过高的过滤
                         limit_price = self.short_entry2 - self.max_slipper * self.actual_tick_price
-                        self.short_entry_algo2 = self.short(price=tick.last_price - 200*self.actual_tick_price, volume=volume, limit_price=limit_price)
+                        if (tick.bid_price_1 + self.actual_tick_price) >= limit_price:
+                            volume = float(Decimal(str(self.short_volume2)) - Decimal(str(self.short_traded2)))
+                            self.short_entry_algo2 = self.short(price=tick.last_price - 200*self.actual_tick_price, volume=volume, limit_price=limit_price)
 
 
         self.put_timer_event()
@@ -342,7 +352,16 @@ class PivotStrategy_actual(CtaTemplate):
         Callback of new trade data update.
         """
         # 邮件提醒
-        super(PivotStrategy_actual, self).on_trade(trade)
+        super().on_trade(trade)
+
+        """
+        try:
+            # 邮件提醒
+            super().on_trade(trade)
+        except:
+            content = f'【未知错误】\n\n{traceback.format_exc()}'
+            print(content)
+        """
 
     def on_algo_trade(self, algo, trade:TradeData):
         if algo.algo_name == self.long_entry_algo1:
