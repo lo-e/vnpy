@@ -134,7 +134,7 @@ class TurtleEngine(BaseEngine):
         """ modify by loe for Turtle """
         # 数据引擎启动
         if self.turtlePortfolio.is_crypto:
-            self.autoEngine = TurtleCryptoAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='7:51', generate_time='8:00:01')
+            self.autoEngine = TurtleCryptoAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='8:02', generate_time='8:00:01')
         else:
             self.autoEngine = TurtleAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='18:00',reconnect_time_list=['20:00'], check_interval=10 * 60, reload_time=6)
         self.autoEngine.start()
@@ -1259,12 +1259,13 @@ class TurtleCryptoAutoEngine(object):
     def checkAndDownload(self):
         now = datetime.now()
         start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {self.download_time}', '%Y-%m-%d %H:%M')
-        end_time = start_time + timedelta(seconds=20 * 60)
+        end_time = start_time + timedelta(seconds=2 * 60)
         if (now >= start_time and now <= end_time) or self.absolute_generate_needed:
-            if not self.downloading or self.absolute_generate_needed:
+            if not self.downloading:
                 self.downloading = True
                 turtleCryptoDataD = TurtleCryptoDataDownloading()
                 turtleCryptoDataD.download_from_bybit(contract_list=self.contract_list)
+                self.downloading = False
                 if self.absolute_generate_needed:
                     result, complete_msg, back_msg, lost_msg = turtleCryptoDataD.generate_for_bybit(contract_list=self.contract_list)
                     notice_msg = complete_msg + '\n\n' + lost_msg + back_msg
