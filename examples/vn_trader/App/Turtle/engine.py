@@ -1266,6 +1266,7 @@ class TurtleCryptoAutoEngine(object):
                 turtleCryptoDataD = TurtleCryptoDataDownloading()
                 turtleCryptoDataD.download_from_bybit(contract_list=self.contract_list)
                 self.downloading = False
+
                 if self.absolute_generate_needed:
                     result, complete_msg, back_msg, lost_msg = turtleCryptoDataD.generate_for_bybit(contract_list=self.contract_list)
                     notice_msg = complete_msg + '\n\n' + lost_msg + back_msg
@@ -1282,8 +1283,6 @@ class TurtleCryptoAutoEngine(object):
                         self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{notice_msg}')
                     except:
                         pass
-        else:
-            self.downloading = False
 
     def checkAndGenerate(self):
         now = datetime.now()
