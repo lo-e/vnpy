@@ -1234,7 +1234,6 @@ class TurtleCryptoAutoEngine(object):
             try:
                 self.checkAndDownload()
             except:
-                self.downloading = False
                 try:
                     subject = 'TURTLE_Crypto_USDT 数据下载'
                     content = f'【未知错误】\n\n{traceback.format_exc()}'
@@ -1263,9 +1262,12 @@ class TurtleCryptoAutoEngine(object):
         if (now >= start_time and now <= end_time) or self.absolute_generate_needed:
             if not self.downloading:
                 self.downloading = True
-                turtleCryptoDataD = TurtleCryptoDataDownloading()
-                turtleCryptoDataD.download_from_bybit(contract_list=self.contract_list)
-                self.downloading = False
+                try:
+                    turtleCryptoDataD = TurtleCryptoDataDownloading()
+                    turtleCryptoDataD.download_from_bybit(contract_list=self.contract_list)
+                    self.downloading = False
+                except:
+                    self.downloading = False
 
                 if self.absolute_generate_needed:
                     result, complete_msg, back_msg, lost_msg = turtleCryptoDataD.generate_for_bybit(contract_list=self.contract_list)
