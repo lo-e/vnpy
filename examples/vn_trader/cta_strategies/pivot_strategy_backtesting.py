@@ -20,11 +20,9 @@ class PivotStrategy_backtesting(CtaTemplate):
 
     author = "loe"
 
-    capital = 0.0
     exit_rate = 0.002
     exit_window = 50
     min_volume = 0.001
-    best_limit_algo_trading = False
 
     # ======================================
     long_entry3 = 0
@@ -79,11 +77,9 @@ class PivotStrategy_backtesting(CtaTemplate):
     short_low1 = 0
     short_low2 = 0
 
-    parameters = ['capital',
-                  'exit_rate',
+    parameters = ['exit_rate',
                   'exit_window',
-                  'min_volume',
-                  'best_limit_algo_trading']
+                  'min_volume']
 
     variables = ['base_datetime',
                  'long_entry3',
@@ -131,14 +127,7 @@ class PivotStrategy_backtesting(CtaTemplate):
         Callback when strategy is inited.
         """
         # 载入历史数据，并采用回放计算的方式初始化策略数值
-        if self.trade_mode == TradeMode.ACTUAL:
-            self.load_bar(days=2, interval=Interval.MINUTE, callback=self.on_bar)
-
-        elif self.trade_mode == TradeMode.BACKTESTING:
-            self.load_bar(days=2, interval=Interval.MINUTE, callback=self.on_bar)
-
-        else:
-            raise(0)
+        self.load_bar(days=2, interval=Interval.MINUTE, callback=self.on_bar)
 
         self.write_log("策略完成初始化")
         self.put_timer_event()
@@ -503,11 +492,7 @@ class PivotStrategy_backtesting(CtaTemplate):
         self.long_exit2 = (self.long_entry1 + self.long_entry2) / 2
         self.long_exit3 = (self.long_entry2 + self.long_entry3) / 2
 
-        if self.trade_mode == TradeMode.ACTUAL:
-            max_unit_loss = 0.005 * self.capital
-        else:
-            max_unit_loss = 0.005 * self.cta_engine.capital
-
+        max_unit_loss = 0.005 * self.cta_engine.capital
         self.long_volume1 = round_to(max_unit_loss / (self.long_entry1 - self.long_exit1), self.min_volume)
         self.long_volume2 = round_to(max_unit_loss / (self.long_entry2 - self.long_exit2), self.min_volume)
         self.long_volume3 = round_to(max_unit_loss / (self.long_entry3 - self.long_exit3), self.min_volume)
