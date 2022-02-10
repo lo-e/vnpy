@@ -34,5 +34,8 @@ NAME_DISPLAY_MAP = {
 
     "min_volume": "最小委托量",
     "max_volume": "最大委托量",
-    "volume_change": "委托量变化"
+    "volume_change": "委托量变化",
+
+    "grid_max":"止损上限",
+    "grid_min":"止损下限"
 }

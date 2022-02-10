@@ -177,7 +177,8 @@ class AlgoEngine(BaseEngine):
 
     """ modify by loe """
     def on_algo_stop(self, algo_name: str):
-        self.algos.pop(algo_name)
+        if algo_name in self.algos:
+            self.algos.pop(algo_name)
 
     def subscribe(self, algo: AlgoTemplate, vt_symbol: str):
         """"""

@@ -37,9 +37,11 @@ class GridAlgo(AlgoTemplate):
         ],
         "vt_symbol": "",
         "guide_price": 0.0,
-        "grid_count":0,
+        "grid_count": 0,
         "grid_price": 0.0,
         "grid_volume": 0.0,
+        "grid_max":0.0,
+        "grid_min":0.0,
         "interval": 0,
     }
 
@@ -95,6 +97,8 @@ class GridAlgo(AlgoTemplate):
         self.grid_count = setting['grid_count']
         self.grid_price = setting["grid_price"]
         self.grid_volume = setting["grid_volume"]
+        self.grid_max = setting["grid_max"]
+        self.grid_min = setting["grid_min"]
         self.interval = setting["interval"]
         self.mode = Mode(setting['mode'])
 
@@ -116,6 +120,14 @@ class GridAlgo(AlgoTemplate):
         self.est_max_pnl = 0
         self.cancel_orderids = []
 
+        contract = self.algo_engine.main_engine.get_contract(vt_symbol=self.vt_symbol)
+        if contract and contract.pricetick:
+            self.tick_price = contract.pricetick
+        else:
+            self.write_log(f'tick_price无法确认，停止算法')
+            self.stop()
+            return
+
         self.am = ArrayManager(self.gridWindow + 1)
 
         self.subscribe(self.vt_symbol)
@@ -126,17 +138,19 @@ class GridAlgo(AlgoTemplate):
     @classmethod
     def auto_parameters(cls):
         # 自由模式
-        """
+        #"""
         return {'editable': '否',
                 "mode": '自由',
                 "vt_symbol": "BTCUSDT.BYBIT",
-                "guide_price": 35000.0,
+                "guide_price": 25000.0,
                 "grid_count": 1000,
                 "grid_price": 10.0,
-                "grid_volume": 0.01,
+                "grid_volume": 0.001,
+                "grid_max":46000,
+                "grid_min":10000,
                 "interval": 60
                 }
-        """
+        #"""
 
         # 数据库模式
         """
@@ -147,12 +161,14 @@ class GridAlgo(AlgoTemplate):
                 "grid_count": 0,
                 "grid_price": 0.0,
                 "grid_volume": 0.0,
+                "grid_max":0.0,
+                "grid_min":0.0,
                 "interval": 60
                 }
         """
 
         # 自定义模式
-        #"""
+        """
         return {'editable': '否',
                 "mode": '自定义',
                 "vt_symbol": "BTCUSDT.BYBIT",
@@ -160,9 +176,11 @@ class GridAlgo(AlgoTemplate):
                 "grid_count": 1000,
                 "grid_price": 0.0,
                 "grid_volume": 0.001,
+                "grid_max":0.0,
+                "grid_min":0.0,
                 "interval": 60
                 }
-        #"""
+        """
 
     def check_init(self):
         if self.mode == Mode.AUTO:
@@ -290,11 +308,11 @@ class GridAlgo(AlgoTemplate):
             self.check_enable = False
             print(f'now：{datetime.now()}\ttick：{tick.datetime}')
 
-    def get_target_pos(self, tick_price):
+    def get_target_pos(self, the_price):
         grid_price_array = self.grid.index
-        # 网格价格序列中最接近tick_price的值
-        result = min(grid_price_array, key=lambda x: abs(x - tick_price))
-        # 获取最接近 tick_price值的前后下标
+        # 网格价格序列中最接近the_price的值
+        result = min(grid_price_array, key=lambda x: abs(x - the_price))
+        # 获取最接近the_price值的前后下标
         index_result = list(grid_price_array).index(result)
         index_front = index_result - 1
         index_after = index_result + 1
@@ -466,6 +484,19 @@ class GridAlgo(AlgoTemplate):
                             long_price = None
                             long_target = None
 
+            else:
+                # 价格低于gridDown
+                long_price = tick.bid_price_1 - 2 * self.tick_price
+                long_target = grid_pos_array[0]
+                if long_target <= self.pos:
+                    long_price = None
+                    long_target = None
+
+                # 风控，价格低于grid_min附近停止多单
+                if long_price and self.grid_min and long_price <= self.grid_min + 2 * self.grid_price:
+                    long_price = None
+                    long_target = None
+
         # 确定空单目标仓位
         if tick.ask_price_1:
             short_index_array = np.argwhere(grid_price_array > tick.ask_price_1)
@@ -486,6 +517,19 @@ class GridAlgo(AlgoTemplate):
                         if short_price > tick.ask_price_1 + self.grid_price * 20:
                             short_price = None
                             short_target = None
+
+            else:
+                # 价格高于gridUp
+                short_price = tick.ask_price_1 + 2 * self.tick_price
+                short_target = grid_pos_array[-1]
+                if short_target >= self.pos:
+                    short_price = None
+                    short_target = None
+
+                # 风控，价格高于grid_max附近停止空单
+                if short_price  and self.grid_max and short_price >= self.grid_max - 2 * self.grid_price:
+                    short_price = None
+                    short_target = None
 
         if self.mode == Mode.CUSTOM:
             # 自定义模式仓位管理
