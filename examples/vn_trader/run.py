@@ -128,7 +128,7 @@ def main():
     main_engine.add_app(CtaStrategyApp)
     main_engine.add_app(CtaBacktesterApp)
     # main_engine.add_app(SpreadTradingApp)
-    # main_engine.add_app(AlgoTradingApp)
+    main_engine.add_app(AlgoTradingApp)
     # main_engine.add_app(OptionMasterApp)
     # main_engine.add_app(PortfolioStrategyApp)
     # main_engine.add_app(ScriptTraderApp)

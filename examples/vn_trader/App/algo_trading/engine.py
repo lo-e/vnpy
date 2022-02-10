@@ -41,21 +41,14 @@ class AlgoEngine(BaseEngine):
         self.load_algo_template()
         self.register_event()
 
-        self.genus_client: GenusClient = None
-
     def init_engine(self):
         """"""
         self.write_log("算法交易引擎启动")
         self.load_algo_setting()
 
-        if SETTINGS["genus.parent_host"]:
-            self.genus_client = GenusClient(self.main_engine, self.event_engine)
-            self.genus_client.start()
-
     def close(self):
         """"""
-        if self.genus_client:
-            self.genus_client.close()
+        pass
 
     """ modify by loe """
     def load_bar(self, vt_symbol, days, interval, callback):
@@ -162,9 +155,6 @@ class AlgoEngine(BaseEngine):
     def start_algo(self, setting: dict):
         """"""
         template_name: str = setting["template_name"]
-        if template_name.startswith("Genus"):
-            return self.genus_client.start_algo(setting)
-
         algo_template = self.algo_templates[template_name]
 
         algo = algo_template.new(self, setting)
@@ -176,10 +166,6 @@ class AlgoEngine(BaseEngine):
 
     def stop_algo(self, algo_name: str):
         """"""
-        if algo_name.startswith("Genus"):
-            self.genus_client.stop_algo(algo_name)
-            return
-
         algo = self.algos.get(algo_name, None)
         if algo:
             algo.stop()
