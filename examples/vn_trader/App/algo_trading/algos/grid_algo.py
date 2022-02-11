@@ -114,6 +114,7 @@ class GridAlgo(AlgoTemplate):
         self.pos = 0
         self.timer_count = 0
         self.check_enable = False
+        self.cancel_ls_enable = True
         self.tick_error = False
         self.long_orderids = set()
         self.short_orderids = set()
@@ -151,12 +152,12 @@ class GridAlgo(AlgoTemplate):
         return {'editable': '否',
                 "mode": '自由',
                 "vt_symbol": "BTCUSDT.BYBIT",
-                "guide_price": 25000.0,
-                "grid_count": 1000,
-                "grid_price": 10.0,
+                "guide_price": 44050.0,
+                "grid_count": 19,
+                "grid_price": 100.0,
                 "grid_volume": 0.001,
-                "grid_max":46000,
-                "grid_min":10000,
+                "grid_max": 46660,
+                "grid_min": 41439,
                 "interval": 20
                 }
         #"""
@@ -670,6 +671,7 @@ class GridAlgo(AlgoTemplate):
         self.timer_count += 1
         if self.timer_count >= self.interval:
             self.timer_count = 0
+            self.cancel_ls_enable = True
             self.cancel_all()
 
         """
@@ -696,13 +698,13 @@ class GridAlgo(AlgoTemplate):
         if (order.vt_orderid in self.long_orderids or order.vt_orderid in self.short_orderids) and not order.is_active():
             if order.vt_orderid in self.long_orderids:
                 self.long_orderids.remove(order.vt_orderid)
-                if not self.long_orderids:
-                    self.cancel_all()
+                if order.status == Status.PARTTRADED or order.status == Status.ALLTRADED:
+                    self.cancel_short_orders()
 
             if order.vt_orderid in self.short_orderids:
                 self.short_orderids.remove(order.vt_orderid)
-                if not self.short_orderids:
-                    self.cancel_all()
+                if order.status == Status.PARTTRADED or order.status == Status.ALLTRADED:
+                    self.cancel_long_orders()
 
             if order.status == Status.REJECTED:
                 self.reject_order_count += 1
@@ -751,6 +753,26 @@ class GridAlgo(AlgoTemplate):
         self.saveSyncData()
 
     """ modify by loe """
+    # ======================================================
+    def cancel_long_orders(self):
+        if not self.cancel_ls_enable:
+            # 限制一个计时周期的执行频率，避免API返回错误
+            return
+
+        self.cancel_ls_enable = False
+        for vt_orderid in self.long_orderids:
+            self.cancel_order(vt_orderid=vt_orderid)
+
+    def cancel_short_orders(self):
+        if not self.cancel_ls_enable:
+            # 限制一个计时周期的执行频率，避免API返回错误
+            return
+
+        self.cancel_ls_enable = False
+        for vt_orderid in self.short_orderids:
+            self.cancel_order(vt_orderid=vt_orderid)
+
+    """
     def cancel_order(self, vt_orderid: str):
         """"""
         if vt_orderid in self.cancel_orderids:
@@ -760,3 +782,5 @@ class GridAlgo(AlgoTemplate):
             self.cancel_orderids.pop(0)
 
         super().cancel_order(vt_orderid=vt_orderid)
+    """
+    # ======================================================
