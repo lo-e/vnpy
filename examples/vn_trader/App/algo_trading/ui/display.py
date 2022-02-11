@@ -37,5 +37,6 @@ NAME_DISPLAY_MAP = {
     "volume_change": "委托量变化",
 
     "grid_max":"止损上限",
-    "grid_min":"止损下限"
+    "grid_min":"止损下限",
+    "status":"状态"
 }

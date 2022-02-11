@@ -20,6 +20,13 @@ class Mode(Enum):
     DB = "数据库"
     CUSTOM = "自定义"
 
+class GridStatus(Enum):
+    """
+    Mode of Grid Status.
+    """
+    OPEN = "开启"
+    CLOSE = "关闭"
+
 class GridAlgo(AlgoTemplate):
     """"""
 
@@ -48,6 +55,7 @@ class GridAlgo(AlgoTemplate):
     variables = [
         "pos",
         "timer_count",
+        "status",
         "long_orderids",
         "short_orderids",
         "reject_order_count",
@@ -119,6 +127,7 @@ class GridAlgo(AlgoTemplate):
         self.est_max_loss = 0
         self.est_max_pnl = 0
         self.cancel_orderids = []
+        self.status = GridStatus.OPEN
 
         contract = self.algo_engine.main_engine.get_contract(vt_symbol=self.vt_symbol)
         if contract and contract.pricetick:
@@ -148,7 +157,7 @@ class GridAlgo(AlgoTemplate):
                 "grid_volume": 0.001,
                 "grid_max":46000,
                 "grid_min":10000,
-                "interval": 60
+                "interval": 20
                 }
         #"""
 
@@ -463,73 +472,85 @@ class GridAlgo(AlgoTemplate):
 
         grid_price_array = self.grid.index
         grid_pos_array = self.grid.values
-        # 确定多单目标仓位
-        if tick.bid_price_1:
-            long_index_array = np.argwhere(grid_price_array < tick.bid_price_1)
-            if len(long_index_array):
-                long_index_result = long_index_array[-1][-1]
-                long_price = grid_price_array[long_index_result]
-                long_target = grid_pos_array[long_index_result]
-                if long_target <= self.pos:
-                    long_price = None
-                    long_target = None
-                    long_index_array = np.argwhere(grid_pos_array > self.pos)
-                    if len(long_index_array):
-                        long_index_result = long_index_array[-1][-1]
-                        long_price = grid_price_array[long_index_result]
-                        long_target = grid_pos_array[long_index_result]
+        # 止损
+        if self.pos < 0 and (tick.last_price >= self.grid_max - self.grid_price or self.status == GridStatus.CLOSE):
+            long_price = tick.last_price + self.tick_price * 200
+            long_target = 0
+            self.status = GridStatus.CLOSE
 
-                        # 风控，委托买价过低当前价位可能会导致一直拒单
-                        if long_price < tick.bid_price_1 - self.grid_price * 20:
-                            long_price = None
-                            long_target = None
+        if self.pos > 0 and (tick.last_price <= self.grid_min + self.grid_price or self.status == GridStatus.CLOSE):
+            short_price = tick.last_price - self.tick_price * 200
+            short_target = 0
+            self.status = GridStatus.CLOSE
 
-            else:
-                # 价格低于gridDown
-                long_price = tick.bid_price_1 - 2 * self.tick_price
-                long_target = grid_pos_array[0]
-                if long_target <= self.pos:
-                    long_price = None
-                    long_target = None
+        if self.status == GridStatus.OPEN:
+            # 确定多单目标仓位
+            if tick.bid_price_1:
+                long_index_array = np.argwhere(grid_price_array < tick.bid_price_1)
+                if len(long_index_array):
+                    long_index_result = long_index_array[-1][-1]
+                    long_price = grid_price_array[long_index_result]
+                    long_target = grid_pos_array[long_index_result]
+                    if long_target <= self.pos:
+                        long_price = None
+                        long_target = None
+                        long_index_array = np.argwhere(grid_pos_array > self.pos)
+                        if len(long_index_array):
+                            long_index_result = long_index_array[-1][-1]
+                            long_price = grid_price_array[long_index_result]
+                            long_target = grid_pos_array[long_index_result]
 
-                # 风控，价格低于grid_min附近停止多单
-                if long_price and self.grid_min and long_price <= self.grid_min + 2 * self.grid_price:
-                    long_price = None
-                    long_target = None
+                            # 风控，委托买价过低当前价位可能会导致一直拒单
+                            if long_price < tick.bid_price_1 - self.grid_price * 20:
+                                long_price = None
+                                long_target = None
 
-        # 确定空单目标仓位
-        if tick.ask_price_1:
-            short_index_array = np.argwhere(grid_price_array > tick.ask_price_1)
-            if len(short_index_array):
-                short_index_result = short_index_array[0][0]
-                short_price = grid_price_array[short_index_result]
-                short_target = grid_pos_array[short_index_result]
-                if short_target >= self.pos:
-                    short_price = None
-                    short_target = None
-                    short_index_array = np.argwhere(grid_pos_array < self.pos)
-                    if len(short_index_array):
-                        short_index_result = short_index_array[0][0]
-                        short_price = grid_price_array[short_index_result]
-                        short_target = grid_pos_array[short_index_result]
+                else:
+                    # 价格低于gridDown
+                    long_price = tick.bid_price_1 - 2 * self.tick_price
+                    long_target = grid_pos_array[0]
+                    if long_target <= self.pos:
+                        long_price = None
+                        long_target = None
 
-                        # 风控，委托卖价过高当前价位可能会导致一直拒单
-                        if short_price > tick.ask_price_1 + self.grid_price * 20:
-                            short_price = None
-                            short_target = None
+                    # 风控，价格低于grid_min附近停止多单
+                    if long_price and self.grid_min and long_price <= self.grid_min + 2 * self.grid_price:
+                        long_price = None
+                        long_target = None
 
-            else:
-                # 价格高于gridUp
-                short_price = tick.ask_price_1 + 2 * self.tick_price
-                short_target = grid_pos_array[-1]
-                if short_target >= self.pos:
-                    short_price = None
-                    short_target = None
+            # 确定空单目标仓位
+            if tick.ask_price_1:
+                short_index_array = np.argwhere(grid_price_array > tick.ask_price_1)
+                if len(short_index_array):
+                    short_index_result = short_index_array[0][0]
+                    short_price = grid_price_array[short_index_result]
+                    short_target = grid_pos_array[short_index_result]
+                    if short_target >= self.pos:
+                        short_price = None
+                        short_target = None
+                        short_index_array = np.argwhere(grid_pos_array < self.pos)
+                        if len(short_index_array):
+                            short_index_result = short_index_array[0][0]
+                            short_price = grid_price_array[short_index_result]
+                            short_target = grid_pos_array[short_index_result]
 
-                # 风控，价格高于grid_max附近停止空单
-                if short_price  and self.grid_max and short_price >= self.grid_max - 2 * self.grid_price:
-                    short_price = None
-                    short_target = None
+                            # 风控，委托卖价过高当前价位可能会导致一直拒单
+                            if short_price > tick.ask_price_1 + self.grid_price * 20:
+                                short_price = None
+                                short_target = None
+
+                else:
+                    # 价格高于gridUp
+                    short_price = tick.ask_price_1 + 2 * self.tick_price
+                    short_target = grid_pos_array[-1]
+                    if short_target >= self.pos:
+                        short_price = None
+                        short_target = None
+
+                    # 风控，价格高于grid_max附近停止空单
+                    if short_price  and self.grid_max and short_price >= self.grid_max - 2 * self.grid_price:
+                        short_price = None
+                        short_target = None
 
         if self.mode == Mode.CUSTOM:
             # 自定义模式仓位管理
