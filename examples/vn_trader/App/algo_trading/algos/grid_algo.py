@@ -37,6 +37,7 @@ class GridAlgo(AlgoTemplate):
             "是",
             "否"
         ],
+        "algo_name": "",
         "mode": [
             "自由",
             "数据库",
@@ -100,6 +101,7 @@ class GridAlgo(AlgoTemplate):
             self.editable = True
         else:
             self.editable = False
+        self.algo_name = setting["algo_name"]
         self.vt_symbol = setting["vt_symbol"]
         self.guide_price = setting["guide_price"]
         self.grid_count = setting['grid_count']
@@ -149,7 +151,8 @@ class GridAlgo(AlgoTemplate):
     def auto_parameters(cls):
         # 自由模式
         #"""
-        return {'editable': '否',
+        return {"editable": '是',
+                "algo_name": "abcxyz",
                 "mode": '自由',
                 "vt_symbol": "BTCUSDT.BYBIT",
                 "guide_price": 44050.0,

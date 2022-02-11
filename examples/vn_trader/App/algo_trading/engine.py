@@ -159,6 +159,8 @@ class AlgoEngine(BaseEngine):
 
         algo = algo_template.new(self, setting)
         self.loadSyncData(algo=algo)
+        if algo.algo_name in self.algos:
+            return
         algo.start()
 
         self.algos[algo.algo_name] = algo
