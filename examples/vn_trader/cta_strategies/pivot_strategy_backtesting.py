@@ -330,6 +330,8 @@ class PivotStrategy_backtesting(CtaTemplate):
         """ fake """
         dict = {'symbol':self.vt_symbol,
                 'datetime':bar.datetime,
+                'long_entry3': self.long_entry3,
+                'long_exit3': self.long_exit3,
                 'long_entry2':self.long_entry2,
                 'long_exit2':self.long_exit2,
                 'long_entry1':self.long_entry1,
@@ -338,7 +340,9 @@ class PivotStrategy_backtesting(CtaTemplate):
                 'short_exit1': self.short_exit1,
                 'short_entry1':self.short_entry1,
                 'short_exit2': self.short_exit2,
-                'short_entry2':self.short_entry2}
+                'short_entry2':self.short_entry2,
+                'short_exit3': self.short_exit3,
+                'short_entry3': self.short_entry3}
         self.csv_list.append(dict)
         if bar.datetime >= datetime.strptime('2022-01-02 00:00:00', '%Y-%m-%d %H:%M:%S'):
             csv_saving(file_name=f'{self.vt_symbol}.csv', data_list=self.csv_list)
