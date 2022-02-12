@@ -25,6 +25,7 @@ class GridStatus(Enum):
     Mode of Grid Status.
     """
     OPEN = "开启"
+    PREPARE = "准备初始建仓"
     CLOSE = "关闭"
 
 class GridAlgo(AlgoTemplate):
@@ -130,7 +131,7 @@ class GridAlgo(AlgoTemplate):
         self.est_max_loss = 0
         self.est_max_pnl = 0
         self.cancel_orderids = []
-        self.status = GridStatus.OPEN
+        self.status = GridStatus.PREPARE
 
         contract = self.algo_engine.main_engine.get_contract(vt_symbol=self.vt_symbol)
         if contract and contract.pricetick:
@@ -317,6 +318,7 @@ class GridAlgo(AlgoTemplate):
             return
 
         if self.check_enable:
+            self.check_status()
             self.check_long_short_order()
             self.check_enable = False
             print(f'now：{datetime.now()}\ttick：{tick.datetime}')
@@ -487,11 +489,11 @@ class GridAlgo(AlgoTemplate):
             short_target = 0
             self.status = GridStatus.CLOSE
 
-        if self.status == GridStatus.OPEN:
+        if self.status != GridStatus.CLOSE:
             # 确定多单目标仓位
             if tick.bid_price_1:
                 long_index_array = np.argwhere(grid_price_array < tick.bid_price_1)
-                if len(long_index_array):
+                if len(long_index_array) and self.status == GridStatus.OPEN:
                     long_index_result = long_index_array[-1][-1]
                     long_price = grid_price_array[long_index_result]
                     long_target = grid_pos_array[long_index_result]
@@ -509,7 +511,7 @@ class GridAlgo(AlgoTemplate):
                                 long_price = None
                                 long_target = None
 
-                else:
+                elif tick.bid_price_1 <= self.gridDown:
                     # 价格低于gridDown
                     long_price = tick.bid_price_1 - 2 * self.tick_price
                     long_target = grid_pos_array[0]
@@ -522,10 +524,15 @@ class GridAlgo(AlgoTemplate):
                         long_price = None
                         long_target = None
 
+                    # 风控，价格低于gridDown过多停止多单
+                    if long_price and long_price < self.gridDown - self.grid_price:
+                        long_price = None
+                        long_target = None
+
             # 确定空单目标仓位
             if tick.ask_price_1:
                 short_index_array = np.argwhere(grid_price_array > tick.ask_price_1)
-                if len(short_index_array):
+                if len(short_index_array) and self.status == GridStatus.OPEN:
                     short_index_result = short_index_array[0][0]
                     short_price = grid_price_array[short_index_result]
                     short_target = grid_pos_array[short_index_result]
@@ -543,7 +550,7 @@ class GridAlgo(AlgoTemplate):
                                 short_price = None
                                 short_target = None
 
-                else:
+                elif tick.ask_price_1 >= self.gridUp:
                     # 价格高于gridUp
                     short_price = tick.ask_price_1 + 2 * self.tick_price
                     short_target = grid_pos_array[-1]
@@ -555,6 +562,11 @@ class GridAlgo(AlgoTemplate):
                     if short_price  and self.grid_max and short_price >= self.grid_max - 2 * self.grid_price:
                         short_price = None
                         short_target = None
+
+                    # 风控，价格高于gridUp过多停止多单
+                    if short_price and short_price > self.gridUp + self.grid_price:
+                        long_price = None
+                        long_target = None
 
         if self.mode == Mode.CUSTOM:
             # 自定义模式仓位管理
@@ -575,6 +587,12 @@ class GridAlgo(AlgoTemplate):
                       'short_target':short_target}
 
         return long_dict, short_dict
+
+    def check_status(self):
+        if self.status == GridStatus.PREPARE:
+            grid_pos_array = self.grid.values
+            if self.pos >= grid_pos_array[0] or self.pos <= grid_pos_array[-1]:
+                self.status = GridStatus.OPEN
 
     def check_long_short_order(self):
         if not self.last_tick:
