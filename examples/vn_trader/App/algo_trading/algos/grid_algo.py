@@ -170,8 +170,8 @@ class GridAlgo(AlgoTemplate):
         # 自由模式
         #"""
         capital = 1000
-        line_price = 42200
-        grid_width = 2000
+        line_price = 42100
+        grid_width = 735
         if cls.AUTO_FLAG:
             grid_direction = GridDirection.LONG
             cls.AUTO_FLAG = not cls.AUTO_FLAG
@@ -253,8 +253,8 @@ class GridAlgo(AlgoTemplate):
         if self.mode == Mode.AUTO:
             # 网格上下限
             grid_width = decimal.Decimal(str(self.grid_count)) * decimal.Decimal(str(self.grid_price))
-            self.gridUp = decimal.Decimal(str(self.guide_price)) + decimal.Decimal(str(grid_width))
-            self.gridDown = decimal.Decimal(str(self.guide_price)) - decimal.Decimal(str(grid_width))
+            self.gridUp = float(decimal.Decimal(str(self.guide_price)) + decimal.Decimal(str(grid_width)))
+            self.gridDown = float(decimal.Decimal(str(self.guide_price)) - decimal.Decimal(str(grid_width)))
 
         elif self.mode == Mode.DB:
             # 载入历史数据，并采用回放计算的方式初始化策略数值
@@ -265,7 +265,7 @@ class GridAlgo(AlgoTemplate):
 
         elif self.mode == Mode.CUSTOM:
             # 网格上下限
-            self.gridUp = decimal.Decimal(str(self.guide_price)) * decimal.Decimal(str(2))
+            self.gridUp = float(decimal.Decimal(str(self.guide_price)) * decimal.Decimal(str(2)))
             self.gridDown = 0.0
             # 网格的大小
             self.grid_price = float(decimal.Decimal(str(self.guide_price)) / decimal.Decimal(str(self.grid_count)))
@@ -646,6 +646,9 @@ class GridAlgo(AlgoTemplate):
             grid_pos_array = self.grid.values
             if self.pos >= grid_pos_array[0] or self.pos <= grid_pos_array[-1]:
                 self.status = GridStatus.OPEN
+
+        if self.status == GridStatus.OPEN and self.pos == 0:
+            self.status = GridStatus.CLOSE
 
     def check_long_short_order(self):
         if not self.last_tick:
