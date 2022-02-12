@@ -250,6 +250,10 @@ class GridAlgo(AlgoTemplate):
         """
 
     def check_init(self):
+        if self.pos:
+            # 初始化有仓位，状态设为OPEN
+            self.status = GridStatus.OPEN
+
         if self.mode == Mode.AUTO:
             # 网格上下限
             grid_width = decimal.Decimal(str(self.grid_count)) * decimal.Decimal(str(self.grid_price))
