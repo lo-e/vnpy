@@ -39,5 +39,6 @@ NAME_DISPLAY_MAP = {
     "grid_max":"止损上限",
     "grid_min":"止损下限",
     "status":"状态",
-    "algo_name":"算法名称"
+    "algo_name":"算法名称",
+    "grid_direction":"方向"
 }

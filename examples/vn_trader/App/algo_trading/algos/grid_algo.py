@@ -2,7 +2,7 @@ from vnpy.trader.constant import Direction, Offset, Status
 from vnpy.trader.object import TradeData, OrderData, TickData
 from vnpy.trader.engine import BaseEngine
 from ..template import AlgoTemplate
-import math
+from math import floor
 import numpy as np
 import pandas as pd
 import decimal
@@ -12,6 +12,8 @@ from vnpy.trader.object import BarData
 from vnpy.trader.utility import ArrayManager
 from enum import Enum
 from datetime import datetime
+from vnpy.trader.utility import floor_to, ceil_to
+
 class Mode(Enum):
     """
     Mode of Grid Trade.
@@ -28,10 +30,19 @@ class GridStatus(Enum):
     PREPARE = "准备初始建仓"
     CLOSE = "关闭"
 
+class GridDirection(Enum):
+    """
+    Mode of Grid Status.
+    """
+    LONG = "看涨"
+    OPEN = "看涨看跌"
+    SHORT = "看跌"
+
 class GridAlgo(AlgoTemplate):
     """"""
 
     display_name = "Grid 网格"
+    AUTO_FLAG = True
 
     default_setting = {
         "editable": [
@@ -43,6 +54,11 @@ class GridAlgo(AlgoTemplate):
             "自由",
             "数据库",
             "自定义"
+        ],
+        "grid_direction": [
+            "看涨",
+            "看涨看跌",
+            "看跌"
         ],
         "vt_symbol": "",
         "guide_price": 0.0,
@@ -112,6 +128,7 @@ class GridAlgo(AlgoTemplate):
         self.grid_min = setting["grid_min"]
         self.interval = setting["interval"]
         self.mode = Mode(setting['mode'])
+        self.grid_direction = GridDirection(setting['grid_direction'])
 
         # Variables
         self.pos = 0
@@ -152,16 +169,52 @@ class GridAlgo(AlgoTemplate):
     def auto_parameters(cls):
         # 自由模式
         #"""
+        capital = 1000
+        line_price = 42200
+        grid_width = 2000
+        if cls.AUTO_FLAG:
+            grid_direction = GridDirection.LONG
+            cls.AUTO_FLAG = not cls.AUTO_FLAG
+        else:
+            grid_direction = GridDirection.SHORT
+            cls.AUTO_FLAG = not cls.AUTO_FLAG
+
+        if grid_direction == GridDirection.LONG:
+            algo_name = 'grid_long'
+            guide_price = line_price + grid_width
+            grid_max = line_price + 3*grid_width
+            grid_min = line_price - grid_width
+
+        elif grid_direction == GridDirection.OPEN:
+            algo_name = 'grid_open'
+            guide_price = line_price
+            grid_max = line_price + 2*grid_width
+            grid_min = line_price - 2*grid_width
+
+        else:
+            algo_name = 'grid_short'
+            guide_price = line_price - grid_width
+            grid_max = line_price + grid_width
+            grid_min = line_price - 3*grid_width
+
+        est_commision = line_price * 0.00075
+        grid_price = ceil_to(est_commision, 10)
+        grid_count = floor(grid_width / grid_price)
+
+        total_volume = capital / grid_width
+        grid_volume = floor_to(total_volume / grid_count, 0.001)
+
         return {"editable": '是',
-                "algo_name": "abcxyz",
+                "algo_name": algo_name,
                 "mode": '自由',
+                "grid_direction":grid_direction.value,
                 "vt_symbol": "BTCUSDT.BYBIT",
-                "guide_price": 44050.0,
-                "grid_count": 19,
-                "grid_price": 100.0,
-                "grid_volume": 0.001,
-                "grid_max": 46660,
-                "grid_min": 41439,
+                "guide_price": guide_price,
+                "grid_count": grid_count,
+                "grid_price": grid_price,
+                "grid_volume": grid_volume,
+                "grid_max": grid_max,
+                "grid_min": grid_min,
                 "interval": 20
                 }
         #"""
@@ -628,6 +681,10 @@ class GridAlgo(AlgoTemplate):
             else:
                 long_close_volume = distance
 
+            # 看跌网格不允许开多单
+            if self.grid_direction == GridDirection.SHORT:
+                long_open_volume = 0
+
         # 计算空单委托参数
         if short_target:
             distance = float(decimal.Decimal(str(self.pos)) - decimal.Decimal(str(short_target)))
@@ -643,6 +700,10 @@ class GridAlgo(AlgoTemplate):
                 short_close_volume = abs(self.pos)
             else:
                 short_close_volume = distance
+
+            # 看多网格不允许开空单
+            if self.grid_direction == GridDirection.LONG:
+                short_open_volume = 0
 
         long_open_orderid = ''
         long_close_orderid = ''
