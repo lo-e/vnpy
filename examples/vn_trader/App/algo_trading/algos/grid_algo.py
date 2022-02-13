@@ -2,7 +2,7 @@ from vnpy.trader.constant import Direction, Offset, Status
 from vnpy.trader.object import TradeData, OrderData, TickData
 from vnpy.trader.engine import BaseEngine
 from ..template import AlgoTemplate
-from math import floor
+from math import ceil
 import numpy as np
 import pandas as pd
 import decimal
@@ -174,12 +174,22 @@ class GridAlgo(AlgoTemplate):
         capital = 1000
         line_price = 42400
         grid_width = 500
+
         if cls.AUTO_FLAG:
             grid_direction = GridDirection.LONG
             cls.AUTO_FLAG = not cls.AUTO_FLAG
         else:
             grid_direction = GridDirection.SHORT
             cls.AUTO_FLAG = not cls.AUTO_FLAG
+
+        est_commision = line_price * 0.00075
+        grid_price = ceil_to(est_commision, 10)
+        grid_count = ceil(grid_width / grid_price)
+
+        grid_width = grid_price * grid_count
+
+        total_volume = capital / grid_width
+        grid_volume = floor_to(total_volume / grid_count, 0.001)
 
         if grid_direction == GridDirection.LONG:
             algo_name = 'grid_long'
@@ -198,13 +208,6 @@ class GridAlgo(AlgoTemplate):
             guide_price = line_price - grid_width
             grid_max = line_price + grid_width
             grid_min = line_price - 3*grid_width
-
-        est_commision = line_price * 0.00075
-        grid_price = ceil_to(est_commision, 10)
-        grid_count = floor(grid_width / grid_price)
-
-        total_volume = capital / grid_width
-        grid_volume = floor_to(total_volume / grid_count, 0.001)
 
         return {"editable": '是',
                 "algo_name": algo_name,
