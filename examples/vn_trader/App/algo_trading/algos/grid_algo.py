@@ -11,8 +11,10 @@ from vnpy.trader.constant import Interval
 from vnpy.trader.object import BarData
 from vnpy.trader.utility import ArrayManager
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timedelta
 from vnpy.trader.utility import floor_to, ceil_to
+
+window_time = ['00:00:00', '08:00:00', '16:00:00']
 
 class Mode(Enum):
     """
@@ -535,7 +537,13 @@ class GridAlgo(AlgoTemplate):
 
         grid_price_array = self.grid.index
         grid_pos_array = self.grid.values
-        # 止损
+
+        # 资金费率结算前更关闭算法
+        end_time = next_window_bar_datetime(tick.datetime)
+        if tick.datetime >= end_time - timedelta(minutes=3):
+            self.status = GridStatus.CLOSE
+
+        # 止损点或结算前清仓
         if self.pos < 0 and (tick.last_price >= self.grid_max - self.grid_price or self.status == GridStatus.CLOSE):
             long_price = tick.last_price + self.tick_price * 200
             long_target = 0
@@ -873,3 +881,29 @@ class GridAlgo(AlgoTemplate):
         super().cancel_order(vt_orderid=vt_orderid)
     """
     # ======================================================
+
+def next_window_bar_datetime(current_datetime:datetime) -> datetime:
+    current_datetime = without_timezone(current_datetime)
+    the_datetime = current_datetime
+    next_datetime = None
+    n = 0
+    while True:
+        n += 1
+        if next_datetime or n > 2:
+            break
+
+        year = the_datetime.year
+        month = the_datetime.month
+        day = the_datetime.day
+        for x in window_time:
+            temp_datetime = datetime.strptime(f'{year}-{month}-{day} {x}', '%Y-%m-%d %H:%M:%S')
+            if current_datetime <= temp_datetime:
+                next_datetime = temp_datetime
+                break
+        the_datetime += timedelta(days=1)
+
+    return next_datetime
+
+def without_timezone(target:datetime):
+    datetime_str = target.strftime('%Y-%m-%d %H:%M:%S')
+    return datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
