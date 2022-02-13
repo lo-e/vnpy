@@ -172,8 +172,8 @@ class GridAlgo(AlgoTemplate):
         # 自由模式
         #"""
         capital = 1000
-        line_price = 42200
-        grid_width = 1400
+        line_price = 42400
+        grid_width = 500
         if cls.AUTO_FLAG:
             grid_direction = GridDirection.LONG
             cls.AUTO_FLAG = not cls.AUTO_FLAG
@@ -282,7 +282,7 @@ class GridAlgo(AlgoTemplate):
                 self.grid_count = self.grid_count
 
     # 创建网格
-    def creat_grid(self):
+    def create_grid(self):
         if self.guide_price <= 0 or self.grid_count <= 0 or self.grid_price <= 0 or self.grid_volume <= 0:
             self.active = False
             return
@@ -336,7 +336,7 @@ class GridAlgo(AlgoTemplate):
     """ modify by loe """
     def on_start(self):
         self.check_init()
-        self.creat_grid()
+        self.create_grid()
 
         self.put_parameters_event()
         self.put_variables_event()
