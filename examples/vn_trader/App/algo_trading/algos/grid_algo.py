@@ -170,8 +170,8 @@ class GridAlgo(AlgoTemplate):
         # 自由模式
         #"""
         capital = 1000
-        line_price = 42100
-        grid_width = 735
+        line_price = 42200
+        grid_width = 1400
         if cls.AUTO_FLAG:
             grid_direction = GridDirection.LONG
             cls.AUTO_FLAG = not cls.AUTO_FLAG
@@ -286,8 +286,8 @@ class GridAlgo(AlgoTemplate):
             return
 
         # 价格数列
-        grid_price_up = self.guide_price + (self.grid_count + 1) * self.grid_price
-        grid_price_down = self.guide_price - self.grid_count * self.grid_price
+        grid_price_up = decimal.Decimal(str(self.guide_price)) + (decimal.Decimal(str(self.grid_count)) + decimal.Decimal(str(1))) * decimal.Decimal(str(self.grid_price))
+        grid_price_down = decimal.Decimal(str(self.guide_price)) - decimal.Decimal(str(self.grid_count)) * decimal.Decimal(str(self.grid_price))
         if grid_price_down < 0:
             self.active = False
             return
@@ -299,8 +299,8 @@ class GridAlgo(AlgoTemplate):
         grid_price_array_float = np.array(grid_price_array_float)
 
         # 仓位数列
-        grid_pos_up = self.grid_count * self.grid_volume
-        grid_pos_down = (self.grid_count + 1) * self.grid_volume * -1
+        grid_pos_up = decimal.Decimal(str(self.grid_count)) * decimal.Decimal(str(self.grid_volume))
+        grid_pos_down = (decimal.Decimal(str(self.grid_count)) + decimal.Decimal(str(1))) * decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(-1))
         grid_pos_array_decimal = np.arange(decimal.Decimal(str(grid_pos_up)), decimal.Decimal(str(grid_pos_down)), decimal.Decimal(str(-1 * self.grid_volume)))
         grid_pos_array_float = []
         for decimal_value in grid_pos_array_decimal:
