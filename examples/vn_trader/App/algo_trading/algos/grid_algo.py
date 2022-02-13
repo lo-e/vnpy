@@ -673,7 +673,7 @@ class GridAlgo(AlgoTemplate):
         short_close_volume = 0
 
         # 计算多单委托参数
-        if long_target:
+        if long_target != None:
             distance = float(decimal.Decimal(str(long_target)) - decimal.Decimal(str(self.pos)))
             if distance <= 0:
                 # 检查逻辑错误
@@ -693,7 +693,7 @@ class GridAlgo(AlgoTemplate):
                 long_open_volume = 0
 
         # 计算空单委托参数
-        if short_target:
+        if short_target != None:
             distance = float(decimal.Decimal(str(self.pos)) - decimal.Decimal(str(short_target)))
             if distance <= 0:
                 # 检查逻辑错误
