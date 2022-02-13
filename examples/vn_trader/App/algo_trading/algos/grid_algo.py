@@ -540,7 +540,7 @@ class GridAlgo(AlgoTemplate):
 
         # 资金费率结算前更关闭算法
         end_time = next_window_bar_datetime(tick.datetime)
-        if tick.datetime >= end_time - timedelta(minutes=3):
+        if without_timezone(tick.datetime) >= end_time - timedelta(minutes=3):
             self.status = GridStatus.CLOSE
 
         # 止损点或结算前清仓
