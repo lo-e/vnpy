@@ -163,7 +163,7 @@ class GridAlgo(AlgoTemplate):
         self.est_max_loss = 0
         self.est_max_pnl = 0
         self.cancel_orderids = []
-        self.status = GridStatus.PREPARE
+        self.status = GridStatus.OPEN
 
         self.am = ArrayManager(self.gridWindow + 1)
 
@@ -600,9 +600,8 @@ class GridAlgo(AlgoTemplate):
                         long_price = None
                         long_target = None
 
-                    # 风控，价格低于gridDown过多停止多单，前提是其他网格算法非OPEN
-                    """
-                    if long_price and long_price < self.gridDown - self.grid_price:
+                    # 风控，价格低于gridDown过多停止多单，前提是网格组合状态都为PREPARE
+                    if long_price and long_price < self.gridDown - self.grid_price and self.status == GridStatus.PREPARE:
                         other_open = False
                         for algo in self.algo_engine.algos.values():
                             if isinstance(algo, GridAlgo) and algo.algo_name != self.algo_name:
@@ -613,7 +612,6 @@ class GridAlgo(AlgoTemplate):
                         if not other_open:
                             long_price = None
                             long_target = None
-                    """
 
             # 确定空单目标仓位
             if tick.ask_price_1:
@@ -649,9 +647,8 @@ class GridAlgo(AlgoTemplate):
                         short_price = None
                         short_target = None
 
-                    # 风控，价格高于gridUp过多停止多单
-                    """
-                    if short_price and short_price > self.gridUp + self.grid_price:
+                    # 风控，价格低于gridDown过多停止多单，前提是网格组合状态都为PREPARE
+                    if short_price and short_price > self.gridUp + self.grid_price and self.status == GridStatus.PREPARE:
                         other_open = False
                         for algo in self.algo_engine.algos.values():
                             if isinstance(algo, GridAlgo) and algo.algo_name != self.algo_name:
@@ -662,7 +659,6 @@ class GridAlgo(AlgoTemplate):
                         if not other_open:
                             long_price = None
                             long_target = None
-                    """
 
         if self.mode == Mode.CUSTOM:
             # 自定义模式仓位管理
