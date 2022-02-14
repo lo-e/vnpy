@@ -177,8 +177,8 @@ class GridAlgo(AlgoTemplate):
         # 自由模式
         #"""
         capital = 1000
-        line_price = 41900
-        grid_width = 800
+        line_price = 42300
+        grid_width = 1000
         ratio_close = "否"
 
         if cls.AUTO_FLAG:
@@ -601,6 +601,7 @@ class GridAlgo(AlgoTemplate):
                         long_target = None
 
                     # 风控，价格低于gridDown过多停止多单，前提是其他网格算法非OPEN
+                    """
                     if long_price and long_price < self.gridDown - self.grid_price:
                         other_open = False
                         for algo in self.algo_engine.algos.values():
@@ -612,6 +613,7 @@ class GridAlgo(AlgoTemplate):
                         if not other_open:
                             long_price = None
                             long_target = None
+                    """
 
             # 确定空单目标仓位
             if tick.ask_price_1:
@@ -648,9 +650,19 @@ class GridAlgo(AlgoTemplate):
                         short_target = None
 
                     # 风控，价格高于gridUp过多停止多单
+                    """
                     if short_price and short_price > self.gridUp + self.grid_price:
-                        long_price = None
-                        long_target = None
+                        other_open = False
+                        for algo in self.algo_engine.algos.values():
+                            if isinstance(algo, GridAlgo) and algo.algo_name != self.algo_name:
+                                if algo.status == GridStatus.OPEN:
+                                    other_open = True
+                                    break
+
+                        if not other_open:
+                            long_price = None
+                            long_target = None
+                    """
 
         if self.mode == Mode.CUSTOM:
             # 自定义模式仓位管理
