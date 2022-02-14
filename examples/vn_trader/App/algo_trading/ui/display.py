@@ -40,5 +40,6 @@ NAME_DISPLAY_MAP = {
     "grid_min":"止损下限",
     "status":"状态",
     "algo_name":"算法名称",
-    "grid_direction":"方向"
+    "grid_direction":"方向",
+    "ratio_close":"资金费率结算"
 }

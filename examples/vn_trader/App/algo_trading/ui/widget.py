@@ -20,6 +20,7 @@ from ..engine import (
     EVENT_ALGO_SETTING
 )
 from .display import NAME_DISPLAY_MAP
+from enum import Enum
 
 
 class AlgoWidget(QtWidgets.QWidget):
@@ -693,6 +694,8 @@ def to_text(data: dict):
     buf = []
     for key, value in data.items():
         key = NAME_DISPLAY_MAP.get(key, key)
+        if isinstance(value, Enum):
+            value = value.value
         buf.append(f"{key}：{value}")
     text = "，".join(buf)
     return text

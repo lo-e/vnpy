@@ -49,6 +49,7 @@ class AlgoTemplate:
         return {}
 
     """ modify by loe """
+    # ===================================
     def load_bar(
             self,
             days: int,
@@ -62,6 +63,10 @@ class AlgoTemplate:
             callback = self.on_bar
 
         return self.algo_engine.load_bar(self.vt_symbol, days, interval, callback)
+
+    def on_algo_update(self, algo):
+        pass
+    # ===================================
 
     def update_tick(self, tick: TickData):
         """"""

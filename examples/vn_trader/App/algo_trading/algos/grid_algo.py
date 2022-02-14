@@ -30,6 +30,7 @@ class GridStatus(Enum):
     """
     OPEN = "开启"
     PREPARE = "准备初始建仓"
+    WAITINGCLOSE = "等待信号平仓"
     CLOSE = "关闭"
 
 class GridDirection(Enum):
@@ -62,6 +63,10 @@ class GridAlgo(AlgoTemplate):
             "看涨看跌",
             "看跌"
         ],
+        "ratio_close": [
+            "是",
+            "否",
+        ],
         "vt_symbol": "",
         "guide_price": 0.0,
         "grid_count": 0,
@@ -76,6 +81,8 @@ class GridAlgo(AlgoTemplate):
         "pos",
         "timer_count",
         "status",
+        "grid_direction",
+        "ratio_close",
         "long_orderids",
         "short_orderids",
         "reject_order_count",
@@ -131,6 +138,11 @@ class GridAlgo(AlgoTemplate):
         self.interval = setting["interval"]
         self.mode = Mode(setting['mode'])
         self.grid_direction = GridDirection(setting['grid_direction'])
+        ratio_close = setting['ratio_close']
+        if ratio_close == "是":
+            self.ratio_close = True
+        else:
+            self.ratio_close = False
 
         # Variables
         self.pos = 0
@@ -144,6 +156,7 @@ class GridAlgo(AlgoTemplate):
         self.grid = None
         self.bestLimitAlgo_names = set()
         self.reject_order_count = 0
+        self.reject_order_timecounter = 0
         self.gridUp = 0
         self.gridDown = 0
         self.current_pnl = 0
@@ -151,14 +164,6 @@ class GridAlgo(AlgoTemplate):
         self.est_max_pnl = 0
         self.cancel_orderids = []
         self.status = GridStatus.PREPARE
-
-        contract = self.algo_engine.main_engine.get_contract(vt_symbol=self.vt_symbol)
-        if contract and contract.pricetick:
-            self.tick_price = contract.pricetick
-        else:
-            self.write_log(f'tick_price无法确认，停止算法')
-            self.stop()
-            return
 
         self.am = ArrayManager(self.gridWindow + 1)
 
@@ -173,7 +178,8 @@ class GridAlgo(AlgoTemplate):
         #"""
         capital = 1000
         line_price = 42400
-        grid_width = 500
+        grid_width = 700
+        ratio_close = "否"
 
         if cls.AUTO_FLAG:
             grid_direction = GridDirection.LONG
@@ -213,6 +219,7 @@ class GridAlgo(AlgoTemplate):
                 "algo_name": algo_name,
                 "mode": '自由',
                 "grid_direction":grid_direction.value,
+                "ratio_close":ratio_close,
                 "vt_symbol": "BTCUSDT.BYBIT",
                 "guide_price": guide_price,
                 "grid_count": grid_count,
@@ -255,6 +262,14 @@ class GridAlgo(AlgoTemplate):
         """
 
     def check_init(self):
+        contract = self.algo_engine.main_engine.get_contract(vt_symbol=self.vt_symbol)
+        if contract and contract.pricetick:
+            self.tick_price = contract.pricetick
+        else:
+            self.write_log(f'tick_price无法确认，停止算法')
+            self.stop()
+            return
+
         if self.pos:
             # 初始化有仓位，状态设为OPEN
             self.status = GridStatus.OPEN
@@ -541,23 +556,16 @@ class GridAlgo(AlgoTemplate):
         grid_price_array = self.grid.index
         grid_pos_array = self.grid.values
 
-        # 资金费率结算前更关闭算法
-        end_time = next_window_bar_datetime(tick.datetime)
-        if without_timezone(tick.datetime) >= end_time - timedelta(minutes=3):
-            self.status = GridStatus.CLOSE
-
-        # 止损点或结算前清仓
-        if self.pos < 0 and (tick.last_price >= self.grid_max - self.grid_price or self.status == GridStatus.CLOSE):
+        # 结算前清仓
+        if self.pos < 0 and self.status == GridStatus.CLOSE:
             long_price = tick.last_price + self.tick_price * 200
             long_target = 0
-            self.status = GridStatus.CLOSE
 
-        if self.pos > 0 and (tick.last_price <= self.grid_min + self.grid_price or self.status == GridStatus.CLOSE):
+        if self.pos > 0 and self.status == GridStatus.CLOSE:
             short_price = tick.last_price - self.tick_price * 200
             short_target = 0
-            self.status = GridStatus.CLOSE
 
-        if self.status != GridStatus.CLOSE:
+        if self.status == GridStatus.PREPARE or self.status == GridStatus.OPEN:
             # 确定多单目标仓位
             if tick.bid_price_1:
                 long_index_array = np.argwhere(grid_price_array < tick.bid_price_1)
@@ -657,19 +665,35 @@ class GridAlgo(AlgoTemplate):
         return long_dict, short_dict
 
     def check_status(self):
+        # PREPARE初始建仓完成后OPEN
         if self.status == GridStatus.PREPARE:
             grid_pos_array = self.grid.values
             if self.pos >= grid_pos_array[0] or self.pos <= grid_pos_array[-1]:
                 self.status = GridStatus.OPEN
 
+        # 主动CLOSE状态
         if self.status == GridStatus.OPEN and self.pos == 0:
             self.status = GridStatus.CLOSE
+            self.cancel_all()
+            # 向其他网格算法同步状态
+            self.algo_engine.on_algo_update(algo_name=self.algo_name)
+
+        # 资金费率结算前准备清仓
+        end_time = next_window_bar_datetime(self.last_tick.datetime)
+        if self.ratio_close and without_timezone(self.last_tick.datetime) >= end_time - timedelta(minutes=6):
+            if self.status != GridStatus.CLOSE:
+                self.status = GridStatus.WAITINGCLOSE
+                # 向其他网格算法同步状态
+                self.algo_engine.on_algo_update(algo_name=self.algo_name)
 
     def check_long_short_order(self):
         if not self.last_tick:
             return
 
         if self.long_orderids or self.short_orderids:
+            return
+
+        if self.status == GridStatus.WAITINGCLOSE:
             return
 
         long_dict, short_dict = self.get_long_short_target(tick=self.last_tick)
@@ -769,10 +793,19 @@ class GridAlgo(AlgoTemplate):
     def on_timer(self):
         """"""
         self.timer_count += 1
+        # 取消订单周期
         if self.timer_count >= self.interval:
             self.timer_count = 0
             self.cancel_ls_enable = True
             self.cancel_all()
+
+        # 拒单计数周期
+        if self.reject_order_timecounter:
+            self.reject_order_timecounter += 1
+
+            if self.reject_order_timecounter > 60 * 10:
+                self.reject_order_timecounter = 0
+                self.reject_order_count = 0
 
         """
         # 检查最优限价算法
@@ -808,8 +841,13 @@ class GridAlgo(AlgoTemplate):
 
             if order.status == Status.REJECTED:
                 self.reject_order_count += 1
-                # 异常风控
+
+                if not self.reject_order_timecounter:
+                    # 开始计时
+                    self.reject_order_timecounter = 1
+
                 if self.reject_order_count >= 10:
+                    # 异常风控
                     self.stop()
 
             self.check_enable = True
@@ -883,6 +921,15 @@ class GridAlgo(AlgoTemplate):
 
         super().cancel_order(vt_orderid=vt_orderid)
     """
+
+    def on_algo_update(self, algo):
+        if isinstance(algo, GridAlgo):
+            if algo.status == GridStatus.WAITINGCLOSE and self.status != GridStatus.CLOSE:
+                self.status = GridStatus.WAITINGCLOSE
+
+            if algo.status == GridStatus.CLOSE:
+                self.status = GridStatus.CLOSE
+                self.cancel_all()
     # ======================================================
 
 def next_window_bar_datetime(current_datetime:datetime) -> datetime:
