@@ -48,7 +48,7 @@ class AlgoEngine(BaseEngine):
         # 数据引擎
         self.autoEngine = AlgoAutoEngine(main_engine=self.main_engine,
                                          algo_engine=self,
-                                         updating_time_list=['21:46:01', '08:00:01', '16:00:01'])
+                                         updating_time_list=['00:00:01', '08:00:01', '16:00:01'])
 
     def init_engine(self):
         """"""
