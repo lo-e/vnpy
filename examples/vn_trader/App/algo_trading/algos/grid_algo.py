@@ -673,8 +673,7 @@ class GridAlgo(AlgoTemplate):
 
         # 主动CLOSE状态
         if self.status == GridStatus.OPEN and self.pos == 0:
-            self.status = GridStatus.CLOSE
-            self.cancel_all()
+            self.immediate_close()
             # 向其他网格算法同步状态
             self.algo_engine.on_algo_update(algo_name=self.algo_name)
 
@@ -892,6 +891,7 @@ class GridAlgo(AlgoTemplate):
 
     """ modify by loe """
     # ======================================================
+
     def cancel_long_orders(self):
         if not self.cancel_ls_enable:
             # 限制一个计时周期的执行频率，避免API返回错误
@@ -928,8 +928,13 @@ class GridAlgo(AlgoTemplate):
                 self.status = GridStatus.WAITINGCLOSE
 
             if algo.status == GridStatus.CLOSE:
-                self.status = GridStatus.CLOSE
-                self.cancel_all()
+                self.immediate_close()
+
+    def immediate_close(self):
+        self.status = GridStatus.CLOSE
+        self.cancel_all()
+        self.check_enable = True
+
     # ======================================================
 
 def next_window_bar_datetime(current_datetime:datetime) -> datetime:
