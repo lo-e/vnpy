@@ -177,8 +177,8 @@ class GridAlgo(AlgoTemplate):
         # 自由模式
         #"""
         capital = 1000
-        line_price = 42400
-        grid_width = 700
+        line_price = 41900
+        grid_width = 800
         ratio_close = "否"
 
         if cls.AUTO_FLAG:
@@ -600,10 +600,18 @@ class GridAlgo(AlgoTemplate):
                         long_price = None
                         long_target = None
 
-                    # 风控，价格低于gridDown过多停止多单
+                    # 风控，价格低于gridDown过多停止多单，前提是其他网格算法非OPEN
                     if long_price and long_price < self.gridDown - self.grid_price:
-                        long_price = None
-                        long_target = None
+                        other_open = False
+                        for algo in self.algo_engine.algos.values():
+                            if isinstance(algo, GridAlgo) and algo.algo_name != self.algo_name:
+                                if algo.status == GridStatus.OPEN:
+                                    other_open = True
+                                    break
+
+                        if not other_open:
+                            long_price = None
+                            long_target = None
 
             # 确定空单目标仓位
             if tick.ask_price_1:
@@ -849,6 +857,10 @@ class GridAlgo(AlgoTemplate):
                     # 异常风控
                     self.stop()
 
+                    subject = '异常风控'
+                    content = f'拒单次数过多，停止网格{self.algo_name}'
+                    self.send_ding_talk(subject=subject, content=content)
+
             self.check_enable = True
             self.put_variables_event()
             self.saveSyncData()
@@ -934,6 +946,12 @@ class GridAlgo(AlgoTemplate):
         self.status = GridStatus.CLOSE
         self.cancel_all()
         self.check_enable = True
+
+    def send_ding_talk(self, subject:str, content:str):
+        try:
+            self.algo_engine.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{content}')
+        except:
+            pass
 
     # ======================================================
 
