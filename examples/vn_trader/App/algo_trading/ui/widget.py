@@ -167,7 +167,7 @@ class AlgoWidget(QtWidgets.QWidget):
             self.algo_engine.start_algo(setting)
 
     def auto_parameters(self):
-        setting = self.algo_template.auto_parameters()
+        setting = self.algo_template.auto_parameters(algo_engine=self.algo_engine)
         if setting:
             for field_name, tp in self.widgets.items():
                 widget, field_type = tp

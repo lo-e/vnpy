@@ -24,6 +24,7 @@ from datetime import datetime, timedelta
 from threading import Thread
 import traceback
 from time import sleep
+from ..Turtle_crypto.dataservice import TurtleCryptoDataDownloading
 
 class AlgoEngine(BaseEngine):
     """"""
@@ -46,8 +47,8 @@ class AlgoEngine(BaseEngine):
 
         # 数据引擎
         self.autoEngine = AlgoAutoEngine(main_engine=self.main_engine,
-                                         cta_engine=self,
-                                         updating_time_list=['16:50:01', '08:00:01', '16:00:01'])
+                                         algo_engine=self,
+                                         updating_time_list=['21:46:01', '08:00:01', '16:00:01'])
 
     def init_engine(self):
         """"""
@@ -198,6 +199,10 @@ class AlgoEngine(BaseEngine):
         for algo_name, algo in self.algos.items():
             if algo.algo_name != algo_name:
                 algo.on_algo_update(algo=algo)
+
+    def reinit_algos(self):
+        for algo in self.algos.values():
+            algo.reinit()
 
     # ============================
 
@@ -406,11 +411,11 @@ class AlgoEngine(BaseEngine):
 # 数据下载引擎，每天固定时间从数据服务器自动下载策略回测及实盘必要的数据，策略自动重新初始化
 class AlgoAutoEngine(object):
 
-    def __init__(self, main_engine:MainEngine, cta_engine:AlgoEngine, updating_time_list:list):
+    def __init__(self, main_engine:MainEngine, algo_engine:AlgoEngine, updating_time_list:list):
         super(AlgoAutoEngine, self).__init__()
         self.contract_list = ['BTCUSDT', 'ETHUSDT']
         self.main_engine = main_engine
-        self.cta_engine = cta_engine
+        self.algo_engine = algo_engine
         self.updating_time_list = updating_time_list
         self.downloading = False
         self.updating = False
@@ -467,10 +472,10 @@ class AlgoAutoEngine(object):
                 if self.updating_needed:
                     self.updating_needed = False
                     # 策略重新初始化
-                    self.cta_engine.reinit_strategies()
+                    self.algo_engine.reinit_algos()
 
                     try:
-                        self.main_engine.send_ding_talk(content='CTA_PIVOT 数据更新')
+                        self.main_engine.send_ding_talk(content='ALGO_ENGINE 数据更新')
                     except:
                         pass
 

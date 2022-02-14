@@ -13,6 +13,8 @@ from vnpy.trader.utility import ArrayManager
 from enum import Enum
 from datetime import datetime, timedelta
 from vnpy.trader.utility import floor_to, ceil_to
+from vnpy.trader.utility import BarGenerator
+from typing import Callable
 
 window_time = ['00:00:00', '08:00:00', '16:00:00']
 
@@ -171,11 +173,18 @@ class GridAlgo(AlgoTemplate):
         self.put_parameters_event()
         self.put_variables_event()
 
+    def reinit(self):
+        pass
+
     """ modify by loe """
     @classmethod
-    def auto_parameters(cls):
-        # 自由模式
-        #"""
+    def auto_parameters(cls, algo_engine:BaseEngine):
+        """
+        vt_symbol = 'BTCUSDT.BYBIT'
+        generator = GridParametersGenerator(algo_engine=algo_engine, vt_symbol=vt_symbol)
+        generator.generate()
+        """
+
         capital = 1000
         line_price = 42300
         grid_width = 1000
@@ -229,37 +238,6 @@ class GridAlgo(AlgoTemplate):
                 "grid_min": grid_min,
                 "interval": 20
                 }
-        #"""
-
-        # 数据库模式
-        """
-        return {'editable': '否',
-                'mode': '数据库',
-                "vt_symbol": "BTCUSDT.BYBIT",
-                "guide_price": 0.0,
-                "grid_count": 0,
-                "grid_price": 0.0,
-                "grid_volume": 0.0,
-                "grid_max":0.0,
-                "grid_min":0.0,
-                "interval": 60
-                }
-        """
-
-        # 自定义模式
-        """
-        return {'editable': '否',
-                "mode": '自定义',
-                "vt_symbol": "BTCUSDT.BYBIT",
-                "guide_price": 65000.0,
-                "grid_count": 1000,
-                "grid_price": 0.0,
-                "grid_volume": 0.001,
-                "grid_max":0.0,
-                "grid_min":0.0,
-                "interval": 60
-                }
-        """
 
     def check_init(self):
         contract = self.algo_engine.main_engine.get_contract(vt_symbol=self.vt_symbol)
@@ -359,26 +337,6 @@ class GridAlgo(AlgoTemplate):
         self.put_parameters_event()
         self.put_variables_event()
         self.saveSyncData()
-
-    def on_bar(self, bar: BarData):
-        """"""
-        # 保存K线数据
-        self.am.update_bar(bar)
-        if not self.am.inited:
-            return
-
-        # 网格上下限
-        self.gridUp, self.gridDown = self.am.donchian(self.gridWindow)
-        # 网格的基准价格
-        grid_width = float(decimal.Decimal(str(self.gridUp - self.gridDown)) / decimal.Decimal(str(2.0)))
-        self.guide_price = float((decimal.Decimal(str(self.gridUp)) + decimal.Decimal(str(self.gridDown))) / decimal.Decimal(str(2.0)))
-        # 网格的大小
-        self.grid_price = float(decimal.Decimal(str(grid_width)) / decimal.Decimal(str(self.max_grid_count)))
-        if self.grid_price < self.min_grid_price:
-            self.grid_price = self.min_grid_price
-            self.grid_count = int(grid_width / self.grid_price)
-        else:
-            self.grid_count = self.max_grid_count
 
     def on_tick(self, tick: TickData):
         """"""
@@ -988,3 +946,118 @@ def next_window_bar_datetime(current_datetime:datetime) -> datetime:
 def without_timezone(target:datetime):
     datetime_str = target.strftime('%Y-%m-%d %H:%M:%S')
     return datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
+
+class CustomBarGenerator(BarGenerator):
+    def __init__(self,
+                 on_bar: Callable,
+                 window: int = 0,
+                 on_window_bar: Callable = None,
+                 interval: Interval = Interval.MINUTE):
+        super().__init__(on_bar, window, on_window_bar, interval)
+        self.window_start = None
+        self.window_end = None
+        self.next_datetime = None
+        self.window_bar = None
+
+    def update_bar(self, bar: BarData):
+        if not self.window_start:
+            self.window_start = next_window_bar_datetime(current_datetime=bar.datetime)
+            self.window_end = (next_window_bar_datetime(current_datetime=self.window_start + timedelta(minutes=1))) - timedelta(minutes=1)
+            self.next_datetime = self.window_start
+
+        if bar.datetime == self.next_datetime:
+            valid = True
+            self.next_datetime += timedelta(minutes=1)
+
+        elif bar.datetime > self.next_datetime:
+            valid = True
+            msg = f'{self.__class__.__name__}：分钟数据缺失【{self.next_datetime} -- {bar.datetime - timedelta(minutes=1)}】'
+            print(msg)
+            self.next_datetime = bar.datetime + timedelta(minutes=1)
+
+            if not self.window_bar:
+                self.window_start = bar.datetime
+                self.window_end = (next_window_bar_datetime(current_datetime=self.window_start + timedelta(minutes=1))) - timedelta(minutes=1)
+
+            if bar.datetime > self.window_end:
+                # 提前end
+                self.on_window_bar(self.window_bar)
+                self.window_bar = None
+
+                self.window_start = bar.datetime
+                self.window_end = (next_window_bar_datetime(current_datetime=self.window_start + timedelta(minutes=1))) - timedelta(minutes=1)
+
+        else:
+            if not self.window_bar:
+                return
+            else:
+                raise ('出现异常，检查代码！')
+
+        if valid:
+            if bar.datetime == self.window_start:
+                self.window_bar = BarData(gateway_name='',
+                                          symbol=bar.symbol,
+                                          exchange=bar.exchange,
+                                          datetime=self.window_start,
+                                          endDatetime=self.window_end)
+                self.window_bar.open_price = bar.open_price
+                self.window_bar.high_price = bar.high_price
+                self.window_bar.low_price = bar.low_price
+                self.window_bar.close_price = bar.close_price
+            else:
+                if not self.window_bar:
+                    raise ('出现异常，检查代码！')
+
+                self.window_bar.close_price = bar.close_price
+                self.window_bar.high_price = max(self.window_bar.high_price, bar.high_price)
+                self.window_bar.low_price = min(self.window_bar.low_price, bar.low_price)
+
+        if bar.datetime == self.window_end:
+            self.on_window_bar(self.window_bar)
+            self.window_bar = None
+
+            self.window_start = next_window_bar_datetime(current_datetime=bar.datetime)
+            self.window_end = (next_window_bar_datetime(current_datetime=self.window_start + timedelta(minutes=1))) - timedelta(minutes=1)
+
+class GridParametersGenerator(object):
+    def __init__(self, algo_engine:BaseEngine, vt_symbol:str):
+        self.algo_engine = algo_engine
+        self.vt_symbol = vt_symbol
+
+        self.base_time = None
+        self.pivot = 0
+        self.long_entry1 = 0
+        self.long_entry2 = 0
+        self.long_entry3 = 0
+        self.short_entry1 = 0
+        self.short_entry2 = 0
+        self.short_entry3 = 0
+
+    def generate(self):
+        self.bg = CustomBarGenerator(on_bar=None,
+                                     window=0,
+                                     on_window_bar=self.on_generate_bar,
+                                     interval=Interval.MINUTE)
+
+        self.algo_engine.load_bar(self.vt_symbol, 2, Interval.MINUTE, self.on_bar)
+
+    # 分钟数据
+    def on_bar(self, bar: BarData):
+        """"""
+        self.bg.update_bar(bar)
+
+    # 周期数据
+    def on_generate_bar(self, bar: BarData):
+        self.base_time = next_window_bar_datetime(bar.datetime + timedelta(minutes=1))
+
+        high = bar.high_price
+        low = bar.low_price
+        close = bar.close_price
+
+        self.pivot = (high + low + 2 * close) / 4
+        self.long_entry1 = 2 * self.pivot - low
+        self.short_entry1 = 2 * self.pivot - high
+        self.long_entry2 = self.pivot + (self.long_entry1 - self.short_entry1)
+        self.short_entry2 = self.pivot - (self.long_entry1 - self.short_entry1)
+        self.long_entry3 = high - (2 * (low - self.pivot))
+        self.short_entry3 = low - (2 * (high - self.pivot))

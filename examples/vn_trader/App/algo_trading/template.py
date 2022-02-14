@@ -45,7 +45,7 @@ class AlgoTemplate:
 
     """ modify by loe """
     @classmethod
-    def auto_parameters(cls):
+    def auto_parameters(cls, algo_engine:BaseEngine):
         return {}
 
     """ modify by loe """
@@ -65,6 +65,9 @@ class AlgoTemplate:
         return self.algo_engine.load_bar(self.vt_symbol, days, interval, callback)
 
     def on_algo_update(self, algo):
+        pass
+
+    def reinit(self):
         pass
     # ===================================
 
