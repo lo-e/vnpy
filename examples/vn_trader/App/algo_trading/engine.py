@@ -21,6 +21,9 @@ from vnpy.app.cta_strategy.base import (TICK_DB_NAME,
                                         DAILY_DB_NAME,
                                         MINUTE_DB_NAME)
 from datetime import datetime, timedelta
+from threading import Thread
+import traceback
+from time import sleep
 
 class AlgoEngine(BaseEngine):
     """"""
@@ -41,10 +44,18 @@ class AlgoEngine(BaseEngine):
         self.load_algo_template()
         self.register_event()
 
+        # 数据引擎
+        self.autoEngine = AlgoAutoEngine(main_engine=self.main_engine,
+                                         cta_engine=self,
+                                         updating_time_list=['16:50:01', '08:00:01', '16:00:01'])
+
     def init_engine(self):
         """"""
         self.write_log("算法交易引擎启动")
         self.load_algo_setting()
+
+        # 数据引擎启动
+        self.autoEngine.start()
 
     def close(self):
         """"""
@@ -391,3 +402,92 @@ class AlgoEngine(BaseEngine):
         except:
             content = f'算法交易同步数据保存失败！！'
             self.write_log(content)
+
+# 数据下载引擎，每天固定时间从数据服务器自动下载策略回测及实盘必要的数据，策略自动重新初始化
+class AlgoAutoEngine(object):
+
+    def __init__(self, main_engine:MainEngine, cta_engine:AlgoEngine, updating_time_list:list):
+        super(AlgoAutoEngine, self).__init__()
+        self.contract_list = ['BTCUSDT', 'ETHUSDT']
+        self.main_engine = main_engine
+        self.cta_engine = cta_engine
+        self.updating_time_list = updating_time_list
+        self.downloading = False
+        self.updating = False
+        self.updating_needed = False
+        self.download_timer = Thread(target=self.on_download_timer)
+        self.updating_timer = Thread(target=self.on_updating_timer)
+
+    def start(self):
+        self.download_timer.start()
+        self.updating_timer.start()
+
+    def on_download_timer(self):
+        while True:
+            try:
+                self.checkAndDownload()
+            except:
+                self.downloading = False
+                try:
+                    subject = 'ALGO_ENGINE 数据下载'
+                    content = f'【未知错误】\n\n{traceback.format_exc()}'
+                    self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{content}')
+                except:
+                    pass
+
+                if self.updating_needed:
+                    self.updating = False
+                    self.checkAndUpdating()
+
+            sleep(60*60)
+
+    def on_updating_timer(self):
+        while True:
+            try:
+                self.checkAndUpdating()
+            except:
+                try:
+                    subject = 'ALGO_ENGINE 数据更新'
+                    content = f'【未知错误】\n\n{traceback.format_exc()}'
+                    self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{content}')
+                except:
+                    pass
+
+                if self.updating_needed:
+                    self.updating = False
+                    self.checkAndUpdating()
+            sleep(1)
+
+    def checkAndDownload(self):
+            if not self.downloading:
+                self.downloading = True
+                turtleCryptoDataD = TurtleCryptoDataDownloading()
+                turtleCryptoDataD.download_from_bybit(contract_list=self.contract_list)
+                self.downloading = False
+                if self.updating_needed:
+                    self.updating_needed = False
+                    # 策略重新初始化
+                    self.cta_engine.reinit_strategies()
+
+                    try:
+                        self.main_engine.send_ding_talk(content='CTA_PIVOT 数据更新')
+                    except:
+                        pass
+
+    def checkAndUpdating(self):
+        now = datetime.now()
+        check = False
+        for updating_time in self.updating_time_list:
+            start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {updating_time}', '%Y-%m-%d %H:%M:%S')
+            end_time = start_time + timedelta(seconds=60*5)
+            if now >= start_time and now <= end_time:
+                check = True
+                break
+
+        if check:
+            if not self.updating:
+                self.updating = True
+                self.updating_needed = True
+                self.checkAndDownload()
+        else:
+            self.updating = False

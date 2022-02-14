@@ -1226,7 +1226,6 @@ class CTAAutoEngine(object):
 class CTACryptoAutoEngine(object):
 
     def __init__(self, main_engine:MainEngine, cta_engine:CtaEngine, updating_time_list:list):
-        # download_time:'7:51', generate_time:'8:00:01'
         super(CTACryptoAutoEngine, self).__init__()
         self.contract_list = ['BTCUSDT', 'ETHUSDT']
         self.main_engine = main_engine
