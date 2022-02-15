@@ -23,8 +23,8 @@ class Mode(Enum):
     """
     Mode of Grid Trade.
     """
-    AUTO = "日内"
-    CUSTOM = "长周期"
+    DAILY = "日内"
+    LONG = "长周期"
 
 class GridStatus(Enum):
     """
@@ -183,7 +183,7 @@ class GridAlgo(AlgoTemplate):
         # 是否资金费率结算前清仓
         ratio_close = "否"
 
-        #"""
+        """
         line_price = 43900
         grid_width = 2000
 
@@ -192,9 +192,9 @@ class GridAlgo(AlgoTemplate):
         
         grid_count = ceil(grid_width / grid_price)
         grid_width = grid_price * grid_count
-        #"""
-
         """
+
+        #"""
         algo_engine.subscribe(algo=None, vt_symbol=vt_symbol)
         tick = algo_engine.get_tick(algo=None, vt_symbol=vt_symbol)
         if not tick:
@@ -215,7 +215,7 @@ class GridAlgo(AlgoTemplate):
         grid_width = max(abs(generator.long_entry2 - line_price), abs(line_price - generator.short_entry2))
         grid_count = ceil(grid_width / grid_price)
         grid_width = grid_price * grid_count
-        """
+        #"""
 
         # 网格仓位大小
         total_volume = capital / grid_width
@@ -274,13 +274,13 @@ class GridAlgo(AlgoTemplate):
             # 初始化有仓位，状态设为OPEN
             self.status = GridStatus.OPEN
 
-        if self.mode == Mode.AUTO:
+        if self.mode == Mode.DAILY:
             # 网格上下限
             grid_width = decimal.Decimal(str(self.grid_count)) * decimal.Decimal(str(self.grid_price))
             self.gridUp = float(decimal.Decimal(str(self.guide_price)) + decimal.Decimal(str(grid_width)))
             self.gridDown = float(decimal.Decimal(str(self.guide_price)) - decimal.Decimal(str(grid_width)))
 
-        elif self.mode == Mode.CUSTOM:
+        elif self.mode == Mode.LONG:
             # 网格上下限
             self.gridUp = float(decimal.Decimal(str(self.guide_price)) * decimal.Decimal(str(2)))
             self.gridDown = 0.0
@@ -633,7 +633,7 @@ class GridAlgo(AlgoTemplate):
                             long_price = None
                             long_target = None
 
-        if self.mode == Mode.CUSTOM:
+        if self.mode == Mode.LONG:
             # 自定义模式仓位管理
             # 1、初始建仓目标未达成时，多仓委托价格不能高于建仓价位线
             if not self.init_pos_complete:
@@ -872,7 +872,7 @@ class GridAlgo(AlgoTemplate):
             self.current_pnl += actual_volume * self.grid_price
 
         # 自定义模式初始化建仓完成时预估最大准备金和预估最大仓位盈利
-        if self.mode == Mode.CUSTOM and not self.init_pos_complete:
+        if self.mode == Mode.LONG and not self.init_pos_complete:
             price_array = np.argwhere(self.grid.index < self.guide_price * self.init_line)
             if len(price_array):
                 result_index = price_array[-1][-1]
