@@ -286,14 +286,25 @@ class AlgoEngine(BaseEngine):
         req = order.create_cancel_request()
         self.main_engine.cancel_order(req, order.gateway_name)
 
-    def get_tick(self, algo: AlgoTemplate, vt_symbol: str):
+    """ modify by loe """
+    # 新增write_log
+    def get_tick(self, algo: AlgoTemplate, vt_symbol: str, write_log=True):
         """"""
         tick = self.main_engine.get_tick(vt_symbol)
 
-        if not tick:
+        if not tick and write_log:
             self.write_log(f"查询行情失败，找不到行情：{vt_symbol}", algo)
 
         return tick
+
+    """ modify by loe """
+    # 订阅并且获取tick
+    def get_tick_subscribe(self, algo: AlgoTemplate, vt_symbol: str):
+        self.subscribe(algo=None, vt_symbol=vt_symbol)
+        tick = self.get_tick(algo=None, vt_symbol=vt_symbol, write_log=False)
+        if not tick:
+            sleep(1)
+            return self.get_tick(algo=None, vt_symbol=vt_symbol)
 
     def get_contract(self, algo: AlgoTemplate, vt_symbol: str):
         """"""

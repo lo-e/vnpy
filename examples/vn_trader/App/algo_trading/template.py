@@ -45,8 +45,14 @@ class AlgoTemplate:
 
     """ modify by loe """
     @classmethod
+    # 自动生成单个算法参数
     def auto_parameters(cls, algo_engine:BaseEngine):
         return {}
+
+    @classmethod
+    # 一键启动多个算法，返回初始化参数组合
+    def one_start(cls, algo_engine:BaseEngine):
+        return []
 
     """ modify by loe """
     # ===================================

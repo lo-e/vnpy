@@ -139,6 +139,7 @@ class GridAlgo(AlgoTemplate):
         self.interval = setting["interval"]
         self.mode = Mode(setting['mode'])
         self.grid_direction = GridDirection(setting['grid_direction'])
+        # 是否资金费率结算前清仓
         ratio_close = setting['ratio_close']
         if ratio_close == "是":
             self.ratio_close = True
@@ -177,49 +178,13 @@ class GridAlgo(AlgoTemplate):
 
     """ modify by loe """
     @classmethod
+    # 自动生成单个算法参数
     def auto_parameters(cls, algo_engine:BaseEngine):
-        capital = 1000
         vt_symbol = 'BTCUSDT.BYBIT'
-        # 是否资金费率结算前清仓
-        ratio_close = "否"
-
-        """
-        line_price = 43900
-        grid_width = 2000
-
-        est_commision = line_price * 0.00075
-        grid_price = ceil_to(est_commision, 10)
-        
-        grid_count = ceil(grid_width / grid_price)
-        grid_width = grid_price * grid_count
-        """
-
-        #"""
-        algo_engine.subscribe(algo=None, vt_symbol=vt_symbol)
-        tick = algo_engine.get_tick(algo=None, vt_symbol=vt_symbol)
+        capital = 1000
+        tick = algo_engine.get_tick_subscribe(algo=None, vt_symbol=vt_symbol)
         if not tick:
-            sleep(1)
-            tick = algo_engine.get_tick(algo=None, vt_symbol=vt_symbol)
-            if not tick:
-                return
-
-        est_commision = tick.last_price * 0.00075
-        grid_price = ceil_to(est_commision, 10)
-        line_price = round_to(tick.last_price, grid_price)
-
-        # 根据pivot点位设置网格宽度
-        generator = GridParametersGenerator(algo_engine=algo_engine, vt_symbol=vt_symbol)
-        generator.generate()
-        if not generator.pivot:
-            return
-        grid_width = max(abs(generator.long_entry2 - line_price), abs(line_price - generator.short_entry2))
-        grid_count = ceil(grid_width / grid_price)
-        grid_width = grid_price * grid_count
-        #"""
-
-        # 网格仓位大小
-        total_volume = capital / grid_width
-        grid_volume = floor_to(total_volume / grid_count, 0.001)
+            return None
 
         if cls.AUTO_FLAG:
             grid_direction = GridDirection.LONG
@@ -227,30 +192,95 @@ class GridAlgo(AlgoTemplate):
         else:
             grid_direction = GridDirection.SHORT
             cls.AUTO_FLAG = not cls.AUTO_FLAG
+        setting = cls.get_parameters(algo_engine=algo_engine,
+                                     vt_symbol=vt_symbol,
+                                     capital=capital,
+                                     refer_price=tick.last_price,
+                                     grid_direction=grid_direction)
+        return setting
+
+    @classmethod
+    # 一键启动多个算法，返回初始化参数组合
+    def one_start(cls, algo_engine: BaseEngine):
+        vt_symbol = 'BTCUSDT.BYBIT'
+        capital = 1000
+        tick = algo_engine.get_tick_subscribe(algo=None, vt_symbol=vt_symbol)
+        if not tick:
+            return []
+
+        grid_long_setting = cls.get_parameters(algo_engine=algo_engine,
+                                               vt_symbol=vt_symbol,
+                                               capital=capital,
+                                               refer_price=tick.last_price,
+                                               grid_direction=GridDirection.LONG)
+
+        grid_short_setting = cls.get_parameters(algo_engine=algo_engine,
+                                                vt_symbol=vt_symbol,
+                                                capital=capital,
+                                                refer_price=tick.last_price,
+                                                grid_direction=GridDirection.SHORT)
+
+        if grid_long_setting and grid_short_setting:
+            return [grid_long_setting, grid_short_setting]
+        else:
+            return []
+
+    @classmethod
+    # 参数生成
+    def get_parameters(cls, algo_engine:BaseEngine, vt_symbol:str, capital:float, refer_price:float, grid_direction:GridDirection):
+        """
+        line_price = 43900
+        grid_width = 2000
+
+        est_commision = line_price * 0.00075
+        grid_price = ceil_to(est_commision, 10)
+
+        grid_count = ceil(grid_width / grid_price)
+        grid_width = grid_price * grid_count
+        """
+
+        # """
+        est_commision = refer_price * 0.00075
+        grid_price = ceil_to(est_commision, 10)
+        line_price = round_to(refer_price, grid_price)
+
+        # 根据pivot点位设置网格宽度
+        generator = GridParametersGenerator(algo_engine=algo_engine, vt_symbol=vt_symbol)
+        generator.generate()
+        if not generator.pivot:
+            return None
+        grid_width = max(abs(generator.long_entry2 - line_price), abs(line_price - generator.short_entry2))
+        grid_count = ceil(grid_width / grid_price)
+        grid_width = grid_price * grid_count
+        # """
+
+        # 网格仓位大小
+        total_volume = capital / grid_width
+        grid_volume = floor_to(total_volume / grid_count, 0.001)
 
         if grid_direction == GridDirection.LONG:
             algo_name = 'grid_long'
             guide_price = line_price + grid_width
-            grid_max = line_price + 3*grid_width
+            grid_max = line_price + 3 * grid_width
             grid_min = line_price - grid_width
 
         elif grid_direction == GridDirection.OPEN:
             algo_name = 'grid_open'
             guide_price = line_price
-            grid_max = line_price + 2*grid_width
-            grid_min = line_price - 2*grid_width
+            grid_max = line_price + 2 * grid_width
+            grid_min = line_price - 2 * grid_width
 
         else:
             algo_name = 'grid_short'
             guide_price = line_price - grid_width
             grid_max = line_price + grid_width
-            grid_min = line_price - 3*grid_width
+            grid_min = line_price - 3 * grid_width
 
         return {"editable": '是',
                 "algo_name": algo_name,
                 "mode": '日内',
-                "grid_direction":grid_direction.value,
-                "ratio_close":ratio_close,
+                "grid_direction": grid_direction.value,
+                "ratio_close": "否",
                 "vt_symbol": vt_symbol,
                 "guide_price": guide_price,
                 "grid_count": grid_count,

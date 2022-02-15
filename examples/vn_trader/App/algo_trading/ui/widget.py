@@ -69,6 +69,10 @@ class AlgoWidget(QtWidgets.QWidget):
             self.widgets[field_name] = (widget, field_type)
 
         """ modify by loe """
+        one_start_button = QtWidgets.QPushButton("一键启动")
+        one_start_button.clicked.connect(self.one_start)
+        form.addRow(one_start_button)
+
         auto_parameters_button = QtWidgets.QPushButton("参数生成")
         auto_parameters_button.clicked.connect(self.auto_parameters)
         form.addRow(auto_parameters_button)
@@ -93,6 +97,7 @@ class AlgoWidget(QtWidgets.QWidget):
         form.addRow(save_setting_button)
 
         for button in [
+            one_start_button,
             auto_parameters_button,
             start_algo_button,
             load_csv_button,
@@ -163,6 +168,11 @@ class AlgoWidget(QtWidgets.QWidget):
             settings.append(setting)
 
         # Only start algos if no exception/error occured
+        for setting in settings:
+            self.algo_engine.start_algo(setting)
+
+    def one_start(self):
+        settings = self.algo_template.one_start(algo_engine=self.algo_engine)
         for setting in settings:
             self.algo_engine.start_algo(setting)
 
