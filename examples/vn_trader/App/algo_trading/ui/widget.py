@@ -174,6 +174,7 @@ class AlgoWidget(QtWidgets.QWidget):
     def one_start(self):
         settings = self.algo_template.one_start(algo_engine=self.algo_engine)
         for setting in settings:
+            setting['template_name'] = self.template_name
             self.algo_engine.start_algo(setting)
 
     def auto_parameters(self):
