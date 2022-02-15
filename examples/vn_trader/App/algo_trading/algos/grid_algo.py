@@ -177,6 +177,7 @@ class GridAlgo(AlgoTemplate):
         pass
 
     """ modify by loe """
+    # ============================================================
     @classmethod
     # 自动生成单个算法参数
     def auto_parameters(cls, algo_engine:BaseEngine):
@@ -290,6 +291,7 @@ class GridAlgo(AlgoTemplate):
                 "grid_min": grid_min,
                 "interval": 20
                 }
+    # ============================================================
 
     def check_init(self):
         contract = self.algo_engine.main_engine.get_contract(vt_symbol=self.vt_symbol)
