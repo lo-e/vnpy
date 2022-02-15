@@ -186,7 +186,7 @@ class GridAlgo(AlgoTemplate):
         """
 
         capital = 0.2
-        line_price = 43500
+        line_price = 43600
         grid_width = 80
         ratio_close = "否"
 
@@ -842,7 +842,8 @@ class GridAlgo(AlgoTemplate):
 
         # 主动CLOSE状态
         if last_pos and self.pos == 0:
-            self.immediate_close()
+            self.status = GridStatus.CLOSE
+            self.cancel_all()
             # 向其他网格算法同步状态
             self.algo_engine.on_algo_update(algo_name=self.algo_name)
 
@@ -915,6 +916,13 @@ class GridAlgo(AlgoTemplate):
             self.status = GridStatus.CLOSE
             self.cancel_all()
             self.check_enable = True
+
+            subject = 'GRID 触发清仓'
+            if self.grid_direction == GridDirection.LONG:
+                content = '价格下跌'
+            else:
+                content = '价格上涨'
+            self.send_ding_talk(subject=subject, content=content)
 
     def send_ding_talk(self, subject:str, content:str):
         try:
