@@ -12,9 +12,10 @@ from vnpy.trader.object import BarData
 from vnpy.trader.utility import ArrayManager
 from enum import Enum
 from datetime import datetime, timedelta
-from vnpy.trader.utility import floor_to, ceil_to
+from vnpy.trader.utility import round_to, floor_to, ceil_to
 from vnpy.trader.utility import BarGenerator
 from typing import Callable
+from time import sleep
 
 window_time = ['00:00:00', '08:00:00', '16:00:00']
 
@@ -22,9 +23,8 @@ class Mode(Enum):
     """
     Mode of Grid Trade.
     """
-    AUTO = "自由"
-    DB = "数据库"
-    CUSTOM = "自定义"
+    AUTO = "日内"
+    CUSTOM = "长周期"
 
 class GridStatus(Enum):
     """
@@ -56,9 +56,8 @@ class GridAlgo(AlgoTemplate):
         ],
         "algo_name": "",
         "mode": [
-            "自由",
-            "数据库",
-            "自定义"
+            "日内",
+            "长周期"
         ],
         "grid_direction": [
             "看涨",
@@ -179,16 +178,48 @@ class GridAlgo(AlgoTemplate):
     """ modify by loe """
     @classmethod
     def auto_parameters(cls, algo_engine:BaseEngine):
-        """
+        capital = 1000
         vt_symbol = 'BTCUSDT.BYBIT'
+        # 是否资金费率结算前清仓
+        ratio_close = "否"
+
+        #"""
+        line_price = 43900
+        grid_width = 2000
+
+        est_commision = line_price * 0.00075
+        grid_price = ceil_to(est_commision, 10)
+        
+        grid_count = ceil(grid_width / grid_price)
+        grid_width = grid_price * grid_count
+        #"""
+
+        """
+        algo_engine.subscribe(algo=None, vt_symbol=vt_symbol)
+        tick = algo_engine.get_tick(algo=None, vt_symbol=vt_symbol)
+        if not tick:
+            sleep(1)
+            tick = algo_engine.get_tick(algo=None, vt_symbol=vt_symbol)
+            if not tick:
+                return
+
+        est_commision = tick.last_price * 0.00075
+        grid_price = ceil_to(est_commision, 10)
+        line_price = round_to(tick.last_price, grid_price)
+
+        # 根据pivot点位设置网格宽度
         generator = GridParametersGenerator(algo_engine=algo_engine, vt_symbol=vt_symbol)
         generator.generate()
+        if not generator.pivot:
+            return
+        grid_width = max(abs(generator.long_entry2 - line_price), abs(line_price - generator.short_entry2))
+        grid_count = ceil(grid_width / grid_price)
+        grid_width = grid_price * grid_count
         """
 
-        capital = 0.2
-        line_price = 43600
-        grid_width = 80
-        ratio_close = "否"
+        # 网格仓位大小
+        total_volume = capital / grid_width
+        grid_volume = floor_to(total_volume / grid_count, 0.001)
 
         if cls.AUTO_FLAG:
             grid_direction = GridDirection.LONG
@@ -196,15 +227,6 @@ class GridAlgo(AlgoTemplate):
         else:
             grid_direction = GridDirection.SHORT
             cls.AUTO_FLAG = not cls.AUTO_FLAG
-
-        est_commision = line_price * 0.00075
-        grid_price = ceil_to(est_commision, 10)
-        grid_count = ceil(grid_width / grid_price)
-
-        grid_width = grid_price * grid_count
-
-        total_volume = capital / grid_width
-        grid_volume = floor_to(total_volume / grid_count, 0.001)
 
         if grid_direction == GridDirection.LONG:
             algo_name = 'grid_long'
@@ -226,10 +248,10 @@ class GridAlgo(AlgoTemplate):
 
         return {"editable": '是',
                 "algo_name": algo_name,
-                "mode": '自由',
+                "mode": '日内',
                 "grid_direction":grid_direction.value,
                 "ratio_close":ratio_close,
-                "vt_symbol": "BTCUSDT.BYBIT",
+                "vt_symbol": vt_symbol,
                 "guide_price": guide_price,
                 "grid_count": grid_count,
                 "grid_price": grid_price,
@@ -257,13 +279,6 @@ class GridAlgo(AlgoTemplate):
             grid_width = decimal.Decimal(str(self.grid_count)) * decimal.Decimal(str(self.grid_price))
             self.gridUp = float(decimal.Decimal(str(self.guide_price)) + decimal.Decimal(str(grid_width)))
             self.gridDown = float(decimal.Decimal(str(self.guide_price)) - decimal.Decimal(str(grid_width)))
-
-        elif self.mode == Mode.DB:
-            # 载入历史数据，并采用回放计算的方式初始化策略数值
-            initData = self.load_bar(300, interval=Interval.DAILY)
-            for bar in initData:
-                self.on_bar(bar)
-            self.write_log(f'{self.algo_name}\t数据库数据初始化完成')
 
         elif self.mode == Mode.CUSTOM:
             # 网格上下限

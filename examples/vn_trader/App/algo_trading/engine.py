@@ -35,7 +35,11 @@ class AlgoEngine(BaseEngine):
         super().__init__(main_engine, event_engine, APP_NAME)
 
         self.algos = {}
+
         self.symbol_algo_map = {}
+        """ modify by loe """
+        self.subscribe_symbols = set()
+
         self.orderid_algo_map = {}
         self.orderid_offset_map = {}
 
@@ -94,6 +98,8 @@ class AlgoEngine(BaseEngine):
             if not bar.check_valid():
                 raise ('Bar数据校验不通过！！')
 
+            if callback:
+                callback(bar)
             l.append(bar)
         return l
 
@@ -215,16 +221,18 @@ class AlgoEngine(BaseEngine):
             self.write_log(f'订阅行情失败，找不到合约：{vt_symbol}', algo)
             return
 
-        algos = self.symbol_algo_map.setdefault(vt_symbol, set())
-
-        if not algos:
+        """ modify by loe """
+        if vt_symbol not in self.subscribe_symbols:
+            self.subscribe_symbols.add(vt_symbol)
             req = SubscribeRequest(
                 symbol=contract.symbol,
                 exchange=contract.exchange
             )
             self.main_engine.subscribe(req, contract.gateway_name)
 
-        algos.add(algo)
+        if algo:
+            algos = self.symbol_algo_map.setdefault(vt_symbol, set())
+            algos.add(algo)
 
     def send_order(
         self,
