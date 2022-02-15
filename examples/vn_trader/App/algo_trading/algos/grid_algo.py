@@ -185,9 +185,9 @@ class GridAlgo(AlgoTemplate):
         generator.generate()
         """
 
-        capital = 1000
-        line_price = 42300
-        grid_width = 1000
+        capital = 0.2
+        line_price = 43500
+        grid_width = 80
         ratio_close = "否"
 
         if cls.AUTO_FLAG:
@@ -645,12 +645,6 @@ class GridAlgo(AlgoTemplate):
             if self.pos >= grid_pos_array[0] or self.pos <= grid_pos_array[-1]:
                 self.status = GridStatus.OPEN
 
-        # 主动CLOSE状态
-        if self.status == GridStatus.OPEN and self.pos == 0:
-            self.immediate_close()
-            # 向其他网格算法同步状态
-            self.algo_engine.on_algo_update(algo_name=self.algo_name)
-
         # 资金费率结算前准备清仓
         end_time = next_window_bar_datetime(self.last_tick.datetime)
         if self.ratio_close and without_timezone(self.last_tick.datetime) >= end_time - timedelta(minutes=6):
@@ -833,6 +827,8 @@ class GridAlgo(AlgoTemplate):
 
     def on_trade(self, trade: TradeData):
         """"""
+        last_pos = self.pos
+
         # 仓位确定
         if trade.direction == Direction.LONG:
             self.pos = float(decimal.Decimal(str(self.pos)) + decimal.Decimal(str(trade.volume)))
@@ -843,6 +839,12 @@ class GridAlgo(AlgoTemplate):
         contract = self.algo_engine.get_contract(self, self.vt_symbol)
         if contract:
             self.pos = round_to(self.pos, contract.min_volume)
+
+        # 主动CLOSE状态
+        if last_pos and self.pos == 0:
+            self.immediate_close()
+            # 向其他网格算法同步状态
+            self.algo_engine.on_algo_update(algo_name=self.algo_name)
 
         # 计算当前盈利
         trade_offset = self.algo_engine.orderid_offset_map.get(trade.vt_orderid, None)
@@ -909,9 +911,10 @@ class GridAlgo(AlgoTemplate):
                 self.immediate_close()
 
     def immediate_close(self):
-        self.status = GridStatus.CLOSE
-        self.cancel_all()
-        self.check_enable = True
+        if self.status != GridStatus.CLOSE:
+            self.status = GridStatus.CLOSE
+            self.cancel_all()
+            self.check_enable = True
 
     def send_ding_talk(self, subject:str, content:str):
         try:

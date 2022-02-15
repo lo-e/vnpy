@@ -196,9 +196,11 @@ class AlgoEngine(BaseEngine):
             self.algos.pop(algo_name)
 
     def on_algo_update(self, algo_name: str):
-        for algo_name, algo in self.algos.items():
-            if algo.algo_name != algo_name:
-                algo.on_algo_update(algo=algo)
+        if algo_name in self.algos:
+            target_algo = self.algos[algo_name]
+            for algo in self.algos.values():
+                if algo.algo_name != algo_name:
+                    algo.on_algo_update(algo=target_algo)
 
     def reinit_algos(self):
         for algo in self.algos.values():
