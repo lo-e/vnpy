@@ -85,6 +85,7 @@ class GridAlgo(AlgoTemplate):
         "timer_count",
         "status",
         "grid_direction",
+        "max_volume",
         "gridUp",
         "guide_price",
         "gridDown",
@@ -167,6 +168,7 @@ class GridAlgo(AlgoTemplate):
         self.setting_data = {}
         self.cancel_orderids = []
         self.status = GridStatus.OPEN
+        self.max_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))
 
         self.am = ArrayManager(self.gridWindow + 1)
 
@@ -191,6 +193,7 @@ class GridAlgo(AlgoTemplate):
             self.grid_max = setting["grid_max"]
             self.grid_min = setting["grid_min"]
 
+            self.max_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))
             self.new_setting = setting
             self.on_start()
             return True
