@@ -221,8 +221,15 @@ class AlgoEngine(BaseEngine):
                     algo.on_algo_update(algo=target_algo)
 
     def reinit_algos(self):
+        result = True
         for algo in self.algos.values():
-            algo.reinit()
+            algo_result = algo.reinit()
+            if not algo_result:
+                result = False
+                break
+
+        return result
+
 
     # ============================
 
@@ -505,10 +512,15 @@ class AlgoAutoEngine(object):
                 if self.updating_needed:
                     self.updating_needed = False
                     # 策略重新初始化
-                    self.algo_engine.reinit_algos()
+                    result = self.algo_engine.reinit_algos()
+                    subject = 'ALGO_ENGINE 数据更新'
+                    if result:
+                        content = '算法重新初始化成功'
+                    else:
+                        content = '算法重新初始化失败!!'
 
                     try:
-                        self.main_engine.send_ding_talk(content='ALGO_ENGINE 数据更新')
+                        self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{content}')
                     except:
                         pass
 

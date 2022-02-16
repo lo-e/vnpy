@@ -17,6 +17,8 @@ from vnpy.trader.utility import BarGenerator
 from typing import Callable
 from time import sleep
 
+TRADE_SYMBOL = 'BTCUSDT.BYBIT'
+TRADE_CAPITAL = 1000
 window_time = ['00:00:00', '08:00:00', '16:00:00']
 
 class Mode(Enum):
@@ -175,16 +177,34 @@ class GridAlgo(AlgoTemplate):
         self.put_variables_event()
 
     def reinit(self):
-        pass
+        tick = self.algo_engine.get_tick_subscribe(algo=None, vt_symbol=TRADE_SYMBOL)
+        if not tick:
+            return False
+
+        setting = self.__class__.get_parameters(algo_engine=self.algo_engine,
+                                                refer_price=tick.last_price,
+                                                grid_direction=self.grid_direction)
+        if setting:
+            # Parameters
+            self.guide_price = setting["guide_price"]
+            self.grid_count = setting['grid_count']
+            self.grid_price = setting["grid_price"]
+            self.grid_volume = setting["grid_volume"]
+            self.grid_max = setting["grid_max"]
+            self.grid_min = setting["grid_min"]
+
+            self.new_setting = setting
+            self.on_start()
+            return True
+        else:
+            return False
 
     """ modify by loe """
     # ============================================================
     @classmethod
     # 自动生成单个算法参数
     def auto_parameters(cls, algo_engine:BaseEngine):
-        vt_symbol = 'BTCUSDT.BYBIT'
-        capital = 1000
-        tick = algo_engine.get_tick_subscribe(algo=None, vt_symbol=vt_symbol)
+        tick = algo_engine.get_tick_subscribe(algo=None, vt_symbol=TRADE_SYMBOL)
         if not tick:
             return None
 
@@ -195,8 +215,6 @@ class GridAlgo(AlgoTemplate):
             grid_direction = GridDirection.SHORT
             cls.AUTO_FLAG = not cls.AUTO_FLAG
         setting = cls.get_parameters(algo_engine=algo_engine,
-                                     vt_symbol=vt_symbol,
-                                     capital=capital,
                                      refer_price=tick.last_price,
                                      grid_direction=grid_direction)
         return setting
@@ -204,21 +222,15 @@ class GridAlgo(AlgoTemplate):
     @classmethod
     # 一键启动多个算法，返回初始化参数组合
     def one_start(cls, algo_engine: BaseEngine):
-        vt_symbol = 'BTCUSDT.BYBIT'
-        capital = 1000
-        tick = algo_engine.get_tick_subscribe(algo=None, vt_symbol=vt_symbol)
+        tick = algo_engine.get_tick_subscribe(algo=None, vt_symbol=TRADE_SYMBOL)
         if not tick:
             return []
 
         grid_long_setting = cls.get_parameters(algo_engine=algo_engine,
-                                               vt_symbol=vt_symbol,
-                                               capital=capital,
                                                refer_price=tick.last_price,
                                                grid_direction=GridDirection.LONG)
 
         grid_short_setting = cls.get_parameters(algo_engine=algo_engine,
-                                                vt_symbol=vt_symbol,
-                                                capital=capital,
                                                 refer_price=tick.last_price,
                                                 grid_direction=GridDirection.SHORT)
 
@@ -229,19 +241,16 @@ class GridAlgo(AlgoTemplate):
 
     @classmethod
     # 参数生成
-    def get_parameters(cls, algo_engine:BaseEngine, vt_symbol:str, capital:float, refer_price:float, grid_direction:GridDirection):
-        #"""
+    def get_parameters(cls, algo_engine:BaseEngine, refer_price:float, grid_direction:GridDirection):
+        """
         line_price = 44480
         grid_width = 1040
 
         est_commision = line_price * 0.00075
         grid_price = ceil_to(est_commision, 10)
-
-        grid_count = ceil(grid_width / grid_price)
-        grid_width = grid_price * grid_count
-        #"""
-
         """
+
+        #"""
         est_commision = refer_price * 0.00075
         grid_price = ceil_to(est_commision, 10)
         line_price = round_to(refer_price, grid_price)
@@ -252,12 +261,13 @@ class GridAlgo(AlgoTemplate):
         if not generator.pivot:
             return None
         grid_width = max(abs(generator.long_entry2 - line_price), abs(line_price - generator.short_entry2))
+        # """
+
         grid_count = ceil(grid_width / grid_price)
         grid_width = grid_price * grid_count
-        """
 
         # 网格仓位大小
-        total_volume = capital / grid_width
+        total_volume = TRADE_CAPITAL / grid_width
         grid_volume = floor_to(total_volume / grid_count, 0.001)
 
         if grid_direction == GridDirection.LONG:
@@ -283,7 +293,7 @@ class GridAlgo(AlgoTemplate):
                 "mode": '日内',
                 "grid_direction": grid_direction.value,
                 "ratio_close": "否",
-                "vt_symbol": vt_symbol,
+                "vt_symbol": TRADE_SYMBOL,
                 "guide_price": guide_price,
                 "grid_count": grid_count,
                 "grid_price": grid_price,

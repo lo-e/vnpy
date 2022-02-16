@@ -74,7 +74,7 @@ class AlgoTemplate:
         pass
 
     def reinit(self):
-        pass
+        return False
     # ===================================
 
     def update_tick(self, tick: TickData):
