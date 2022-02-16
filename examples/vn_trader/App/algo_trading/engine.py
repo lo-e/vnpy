@@ -324,6 +324,7 @@ class AlgoEngine(BaseEngine):
         if not tick:
             sleep(1)
             return self.get_tick(algo=None, vt_symbol=vt_symbol)
+        return tick
 
     def get_contract(self, algo: AlgoTemplate, vt_symbol: str):
         """"""

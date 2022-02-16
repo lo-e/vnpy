@@ -85,12 +85,10 @@ class GridAlgo(AlgoTemplate):
         "timer_count",
         "status",
         "grid_direction",
-        "ratio_close",
         "gridUp",
         "guide_price",
         "gridDown",
         "reject_order_count",
-        "current_pnl",
         "long_orderids",
         "short_orderids"
     ]
@@ -221,7 +219,7 @@ class GridAlgo(AlgoTemplate):
 
     @classmethod
     # 一键启动多个算法，返回初始化参数组合
-    def one_start(cls, algo_engine: BaseEngine):
+    def one_start(cls, algo_engine:BaseEngine):
         tick = algo_engine.get_tick_subscribe(algo=None, vt_symbol=TRADE_SYMBOL)
         if not tick:
             return []
@@ -256,7 +254,7 @@ class GridAlgo(AlgoTemplate):
         line_price = round_to(refer_price, grid_price)
 
         # 根据pivot点位设置网格宽度
-        generator = GridParametersGenerator(algo_engine=algo_engine, vt_symbol=vt_symbol)
+        generator = GridParametersGenerator(algo_engine=algo_engine, vt_symbol=TRADE_SYMBOL)
         generator.generate()
         if not generator.pivot:
             return None
@@ -416,7 +414,6 @@ class GridAlgo(AlgoTemplate):
             self.check_status()
             self.check_long_short_order()
             self.check_enable = False
-            print(f'now：{datetime.now()}\ttick：{tick.datetime}')
 
     def get_target_pos(self, the_price):
         grid_price_array = self.grid.index
