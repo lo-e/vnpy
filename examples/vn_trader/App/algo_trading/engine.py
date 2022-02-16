@@ -184,6 +184,18 @@ class AlgoEngine(BaseEngine):
         self.algos[algo.algo_name] = algo
         return algo.algo_name
 
+    """ modify by loe """
+    def start_history_algo(self, template_name:str):
+        dbData = self.main_engine.dbQuery(POSITION_DB_NAME, template_name, {})
+        if not dbData:
+            return
+
+        for history_data in dbData:
+            if 'setting_data' in history_data:
+                setting = history_data['setting_data']
+                setting['template_name'] = template_name
+                self.start_algo(setting=setting)
+
     def stop_algo(self, algo_name: str):
         """"""
         algo = self.algos.get(algo_name, None)
@@ -390,7 +402,7 @@ class AlgoEngine(BaseEngine):
             if key in sync_data:
                 algo.__setattr__(key, sync_data[key])
 
-    def saveSyncData(self, algo: AlgoTemplate, syncs: dict):
+    def saveSyncData(self, algo: AlgoTemplate, syncs: list):
         """保存策略的持仓情况到数据库"""
         if not syncs:
             self.dbUpdateCallback()

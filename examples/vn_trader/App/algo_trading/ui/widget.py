@@ -69,9 +69,13 @@ class AlgoWidget(QtWidgets.QWidget):
             self.widgets[field_name] = (widget, field_type)
 
         """ modify by loe """
-        one_start_button = QtWidgets.QPushButton("一键启动")
-        one_start_button.clicked.connect(self.one_start)
-        form.addRow(one_start_button)
+        one_start_real_button = QtWidgets.QPushButton("一键启动【实时行情】")
+        one_start_real_button.clicked.connect(self.one_start_real)
+        form.addRow(one_start_real_button)
+
+        one_start_history_button = QtWidgets.QPushButton("一键启动【历史参数】")
+        one_start_history_button.clicked.connect(self.one_start_history)
+        form.addRow(one_start_history_button)
 
         auto_parameters_button = QtWidgets.QPushButton("参数生成")
         auto_parameters_button.clicked.connect(self.auto_parameters)
@@ -97,7 +101,8 @@ class AlgoWidget(QtWidgets.QWidget):
         form.addRow(save_setting_button)
 
         for button in [
-            one_start_button,
+            one_start_real_button,
+            one_start_history_button,
             auto_parameters_button,
             start_algo_button,
             load_csv_button,
@@ -171,11 +176,14 @@ class AlgoWidget(QtWidgets.QWidget):
         for setting in settings:
             self.algo_engine.start_algo(setting)
 
-    def one_start(self):
+    def one_start_real(self):
         settings = self.algo_template.one_start(algo_engine=self.algo_engine)
         for setting in settings:
             setting['template_name'] = self.template_name
             self.algo_engine.start_algo(setting)
+
+    def one_start_history(self):
+        self.algo_engine.start_history_algo(template_name=self.template_name)
 
     def auto_parameters(self):
         setting = self.algo_template.auto_parameters(algo_engine=self.algo_engine)

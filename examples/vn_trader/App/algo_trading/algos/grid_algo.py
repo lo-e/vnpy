@@ -84,22 +84,21 @@ class GridAlgo(AlgoTemplate):
         "status",
         "grid_direction",
         "ratio_close",
-        "long_orderids",
-        "short_orderids",
-        "reject_order_count",
         "gridUp",
         "guide_price",
         "gridDown",
+        "reject_order_count",
         "current_pnl",
-        "est_max_loss",
-        "est_max_pnl"
+        "long_orderids",
+        "short_orderids"
     ]
 
     syncs = ['pos',
              'current_pnl',
              'init_pos_complete',
              'est_max_loss',
-             'est_max_pnl']
+             'est_max_pnl',
+             'setting_data']
 
     max_grid_count = 10000
     min_grid_price = 2.0
@@ -121,6 +120,7 @@ class GridAlgo(AlgoTemplate):
     ):
         """"""
         super().__init__(algo_engine, algo_name, setting)
+        self.new_setting = setting
 
         # Parameters
         editable_text = setting['editable']
@@ -164,6 +164,7 @@ class GridAlgo(AlgoTemplate):
         self.current_pnl = 0
         self.est_max_loss = 0
         self.est_max_pnl = 0
+        self.setting_data = {}
         self.cancel_orderids = []
         self.status = GridStatus.OPEN
 
@@ -229,18 +230,18 @@ class GridAlgo(AlgoTemplate):
     @classmethod
     # 参数生成
     def get_parameters(cls, algo_engine:BaseEngine, vt_symbol:str, capital:float, refer_price:float, grid_direction:GridDirection):
-        """
-        line_price = 43900
-        grid_width = 2000
+        #"""
+        line_price = 44480
+        grid_width = 1040
 
         est_commision = line_price * 0.00075
         grid_price = ceil_to(est_commision, 10)
 
         grid_count = ceil(grid_width / grid_price)
         grid_width = grid_price * grid_count
-        """
+        #"""
 
-        # """
+        """
         est_commision = refer_price * 0.00075
         grid_price = ceil_to(est_commision, 10)
         line_price = round_to(refer_price, grid_price)
@@ -253,7 +254,7 @@ class GridAlgo(AlgoTemplate):
         grid_width = max(abs(generator.long_entry2 - line_price), abs(line_price - generator.short_entry2))
         grid_count = ceil(grid_width / grid_price)
         grid_width = grid_price * grid_count
-        # """
+        """
 
         # 网格仓位大小
         total_volume = capital / grid_width
@@ -383,6 +384,8 @@ class GridAlgo(AlgoTemplate):
 
         self.put_parameters_event()
         self.put_variables_event()
+
+        self.setting_data = self.new_setting
         self.saveSyncData()
 
     def on_tick(self, tick: TickData):
