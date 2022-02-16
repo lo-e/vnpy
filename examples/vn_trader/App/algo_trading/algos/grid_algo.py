@@ -195,6 +195,7 @@ class GridAlgo(AlgoTemplate):
 
             self.max_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))
             self.new_setting = setting
+            self.status = GridStatus.OPEN
             self.on_start()
             return True
         else:
