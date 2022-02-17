@@ -6,7 +6,6 @@ from math import ceil
 import numpy as np
 import pandas as pd
 import decimal
-from vnpy.trader.utility import round_to
 from vnpy.trader.constant import Interval
 from vnpy.trader.object import BarData
 from vnpy.trader.utility import ArrayManager
@@ -15,7 +14,6 @@ from datetime import datetime, timedelta
 from vnpy.trader.utility import round_to, floor_to, ceil_to
 from vnpy.trader.utility import BarGenerator
 from typing import Callable
-from time import sleep
 
 TRADE_SYMBOL = 'BTCUSDT.BYBIT'
 TRADE_CAPITAL = 1000
@@ -96,10 +94,6 @@ class GridAlgo(AlgoTemplate):
     ]
 
     syncs = ['pos',
-             'current_pnl',
-             'init_pos_complete',
-             'est_max_loss',
-             'est_max_pnl',
              'setting_data']
 
     max_grid_count = 10000
@@ -756,9 +750,13 @@ class GridAlgo(AlgoTemplate):
             else:
                 long_close_volume = distance
 
-            # 看跌网格不允许开多单
             if self.grid_direction == GridDirection.SHORT:
+                # 看跌网格不允许开多单
                 long_open_volume = 0
+
+                # 看跌网格触发停止价格
+                if long_price <= self.stop_price:
+                    long_close_volume = abs(self.pos)
 
         # 计算空单委托参数
         if short_target != None:
@@ -776,9 +774,13 @@ class GridAlgo(AlgoTemplate):
             else:
                 short_close_volume = distance
 
-            # 看多网格不允许开空单
             if self.grid_direction == GridDirection.LONG:
+                # 看多网格不允许开空单
                 short_open_volume = 0
+
+                # 看涨网格触发停止价格
+                if short_price >= self.stop_price:
+                    short_close_volume = abs(self.pos)
 
         long_open_orderid = ''
         long_close_orderid = ''
@@ -997,20 +999,30 @@ class GridAlgo(AlgoTemplate):
             pass
 
     def update_stop_price(self):
-        next_window_datetime = next_window_bar_datetime(current_datetime=self.last_tick.datetime)
-        current_timestamp = self.last_tick.datetime.timestamp()
-        next_window_timestamp = next_window_datetime.timestamp()
-        if next_window_timestamp > current_timestamp:
-            remain_second = next_window_timestamp - current_timestamp
-            total_second = 8 * 60 * 60
+        minute = self.last_tick.datetime.minute
+        if 30 <= minute <= 35:
+            # 根据当前价格和周期内剩余时间计算最大允许的单向波动幅度，避免价格单向极限拉升导致的大幅亏损
+            next_window_datetime = next_window_bar_datetime(current_datetime=self.last_tick.datetime)
+            current_timestamp = self.last_tick.datetime.timestamp()
+            next_window_timestamp = next_window_datetime.timestamp()
+            if next_window_timestamp > current_timestamp:
+                remain_second = next_window_timestamp - current_timestamp
+                total_second = 8 * 60 * 60
 
-            width = abs(self.gridUp - self.guide_price)
-            space = round_to((remain_second / total_second) * width, self.tick_price)
-            if self.grid_direction == GridDirection.LONG:
-                self.stop_price = min((max(self.last_tick.last_price, self.gridDown) + space), self.guide_price)
+                width = abs(self.gridUp - self.guide_price)
+                # 计算可接受的波动幅度
+                space = round_to((remain_second / total_second) * width, self.tick_price)
+                # 设置最小幅度
+                space = max(space, 3*self.grid_price)
+                if self.grid_direction == GridDirection.LONG:
+                    self.stop_price = max(self.last_tick.last_price, self.gridDown) + space
+                    self.stop_price = ceil_to(self.stop_price, self.grid_price)
+                    self.stop_price = min(self.stop_price, self.guide_price)
 
-            elif self.grid_direction == GridDirection.SHORT:
-                self.stop_price = max((min(self.last_tick.last_price, self.gridUp) - space), self.guide_price)
+                elif self.grid_direction == GridDirection.SHORT:
+                    self.stop_price = min(self.last_tick.last_price, self.gridUp) - space
+                    self.stop_price = floor_to(self.stop_price, self.grid_price)
+                    self.stop_price = max(self.stop_price, self.guide_price)
 
     # ======================================================
 

@@ -138,8 +138,8 @@ class AlgoTemplate:
 
     def start(self):
         """"""
-        self.active = True
         self.on_start()
+        self.active = True
         self.put_variables_event()
 
     def stop(self):
