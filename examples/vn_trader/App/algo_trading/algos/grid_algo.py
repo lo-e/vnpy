@@ -165,6 +165,8 @@ class GridAlgo(AlgoTemplate):
         self.status = GridStatus.OPEN
         self.max_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))
         self.stop_price = self.guide_price
+        self.stop_price_hour = 0
+        self.stop_price_updated = False
 
         self.am = ArrayManager(self.gridWindow + 1)
 
@@ -999,8 +1001,16 @@ class GridAlgo(AlgoTemplate):
             pass
 
     def update_stop_price(self):
+        hour = self.last_tick.datetime.hour
         minute = self.last_tick.datetime.minute
-        if 30 <= minute <= 35:
+        if self.stop_price_hour != hour:
+            # 保证一个小时内只更新由此stop_price
+            self.stop_price_hour = hour
+            self.stop_price_updated = False
+
+        if (not self.stop_price_updated) and 30 <= minute <= 35:
+            self.stop_price_updated = True
+
             # 根据当前价格和周期内剩余时间计算最大允许的单向波动幅度，避免价格单向极限拉升导致的大幅亏损
             next_window_datetime = next_window_bar_datetime(current_datetime=self.last_tick.datetime)
             current_timestamp = self.last_tick.datetime.timestamp()
