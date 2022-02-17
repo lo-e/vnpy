@@ -165,8 +165,8 @@ class GridAlgo(AlgoTemplate):
         self.status = GridStatus.OPEN
         self.max_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))
         self.stop_price = self.guide_price
-        self.stop_price_hour = 0
-        self.stop_price_updated = False
+        self.stop_price_timecounter = 0
+        self.stop_price_init = False
 
         self.am = ArrayManager(self.gridWindow + 1)
 
@@ -405,7 +405,6 @@ class GridAlgo(AlgoTemplate):
         # 只要最新tick
         if self.last_tick and self.last_tick.datetime >= tick.datetime:
             return
-        self.last_tick = tick
 
         # 理论上买一价小于卖一价，如果不是，数据可能异常，为了避免taker成交增加手续费成本，不做委托
         if self.last_tick.bid_price_1 >= self.last_tick.ask_price_1:
@@ -414,6 +413,7 @@ class GridAlgo(AlgoTemplate):
                 self.tick_error = True
             return
 
+        self.last_tick = tick
         if self.check_enable:
             self.check_status()
             self.check_long_short_order()
@@ -829,19 +829,25 @@ class GridAlgo(AlgoTemplate):
     def on_timer(self):
         """"""
         self.timer_count += 1
-        # 取消订单周期
+        # 取消订单
         if self.timer_count >= self.interval:
             self.timer_count = 0
             self.cancel_ls_enable = True
             self.cancel_all()
 
-        # 拒单计数周期
+        # 拒单计数
         if self.reject_order_timecounter:
             self.reject_order_timecounter += 1
 
             if self.reject_order_timecounter > 60 * 10:
                 self.reject_order_timecounter = 0
                 self.reject_order_count = 0
+
+        # 停止价格计算
+        self.stop_price_timecounter += 1
+        if self.stop_price_timecounter >= 60 * 30 or (not self.stop_price_init):
+            self.stop_price_timecounter = 0
+            self.update_stop_price()
 
         """
         # 检查最优限价算法
@@ -858,7 +864,6 @@ class GridAlgo(AlgoTemplate):
         """
         self.check_enable = True
         self.tick_error = False
-        self.update_stop_price()
 
         self.put_variables_event()
         self.saveSyncData()
@@ -1001,38 +1006,32 @@ class GridAlgo(AlgoTemplate):
             pass
 
     def update_stop_price(self):
-        hour = self.last_tick.datetime.hour
-        minute = self.last_tick.datetime.minute
-        if self.stop_price_hour != hour:
-            # 保证一个小时内只更新由此stop_price
-            self.stop_price_hour = hour
-            self.stop_price_updated = False
+        if not self.last_tick:
+            return
 
-        if (not self.stop_price_updated) and 30 <= minute <= 35:
-            self.stop_price_updated = True
+        self.stop_price_init = True
+        # 根据当前价格和周期内剩余时间计算最大允许的单向波动幅度，避免价格单向极限拉升导致的大幅亏损
+        next_window_datetime = next_window_bar_datetime(current_datetime=self.last_tick.datetime)
+        current_timestamp = self.last_tick.datetime.timestamp()
+        next_window_timestamp = next_window_datetime.timestamp()
+        if next_window_timestamp > current_timestamp:
+            remain_second = next_window_timestamp - current_timestamp
+            total_second = 8 * 60 * 60
 
-            # 根据当前价格和周期内剩余时间计算最大允许的单向波动幅度，避免价格单向极限拉升导致的大幅亏损
-            next_window_datetime = next_window_bar_datetime(current_datetime=self.last_tick.datetime)
-            current_timestamp = self.last_tick.datetime.timestamp()
-            next_window_timestamp = next_window_datetime.timestamp()
-            if next_window_timestamp > current_timestamp:
-                remain_second = next_window_timestamp - current_timestamp
-                total_second = 8 * 60 * 60
+            width = abs(self.gridUp - self.guide_price)
+            # 计算可接受的波动幅度
+            space = round_to((remain_second / total_second) * width, self.tick_price)
+            # 设置最小幅度
+            space = max(space, 3*self.grid_price)
+            if self.grid_direction == GridDirection.LONG:
+                self.stop_price = max(self.last_tick.last_price, self.gridDown) + space
+                self.stop_price = ceil_to(self.stop_price, self.grid_price)
+                self.stop_price = min(self.stop_price, self.guide_price)
 
-                width = abs(self.gridUp - self.guide_price)
-                # 计算可接受的波动幅度
-                space = round_to((remain_second / total_second) * width, self.tick_price)
-                # 设置最小幅度
-                space = max(space, 3*self.grid_price)
-                if self.grid_direction == GridDirection.LONG:
-                    self.stop_price = max(self.last_tick.last_price, self.gridDown) + space
-                    self.stop_price = ceil_to(self.stop_price, self.grid_price)
-                    self.stop_price = min(self.stop_price, self.guide_price)
-
-                elif self.grid_direction == GridDirection.SHORT:
-                    self.stop_price = min(self.last_tick.last_price, self.gridUp) - space
-                    self.stop_price = floor_to(self.stop_price, self.grid_price)
-                    self.stop_price = max(self.stop_price, self.guide_price)
+            elif self.grid_direction == GridDirection.SHORT:
+                self.stop_price = min(self.last_tick.last_price, self.gridUp) - space
+                self.stop_price = floor_to(self.stop_price, self.grid_price)
+                self.stop_price = max(self.stop_price, self.guide_price)
 
     # ======================================================
 
