@@ -1007,10 +1007,10 @@ class GridAlgo(AlgoTemplate):
             width = abs(self.gridUp - self.guide_price)
             space = round_to((remain_second / total_second) * width, self.tick_price)
             if self.grid_direction == GridDirection.LONG:
-                self.stop_price = min((self.last_tick.last_price + space), self.guide_price)
+                self.stop_price = min((max(self.last_tick.last_price, self.gridDown) + space), self.guide_price)
 
             elif self.grid_direction == GridDirection.SHORT:
-                self.stop_price = max((self.last_tick.last_price - space), self.guide_price)
+                self.stop_price = max((min(self.last_tick.last_price, self.gridUp) - space), self.guide_price)
 
     # ======================================================
 
