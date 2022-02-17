@@ -406,7 +406,6 @@ class GridAlgo(AlgoTemplate):
         if self.last_tick and self.last_tick.datetime >= tick.datetime:
             return
         self.last_tick = tick
-        self.update_stop_price()
 
         # 理论上买一价小于卖一价，如果不是，数据可能异常，为了避免taker成交增加手续费成本，不做委托
         if self.last_tick.bid_price_1 >= self.last_tick.ask_price_1:
@@ -859,6 +858,7 @@ class GridAlgo(AlgoTemplate):
         """
         self.check_enable = True
         self.tick_error = False
+        self.update_stop_price()
 
         self.put_variables_event()
         self.saveSyncData()
