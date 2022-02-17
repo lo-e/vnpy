@@ -41,5 +41,6 @@ NAME_DISPLAY_MAP = {
     "status":"状态",
     "algo_name":"算法名称",
     "grid_direction":"方向",
-    "ratio_close":"资金费率结算"
+    "ratio_close":"资金费率结算",
+    "stop_price":"停止价格"
 }

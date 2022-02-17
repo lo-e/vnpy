@@ -88,6 +88,7 @@ class GridAlgo(AlgoTemplate):
         "max_volume",
         "gridUp",
         "guide_price",
+        "stop_price",
         "gridDown",
         "reject_order_count",
         "long_orderids",
@@ -169,6 +170,7 @@ class GridAlgo(AlgoTemplate):
         self.cancel_orderids = []
         self.status = GridStatus.OPEN
         self.max_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))
+        self.stop_price = self.guide_price
 
         self.am = ArrayManager(self.gridWindow + 1)
 
@@ -194,9 +196,11 @@ class GridAlgo(AlgoTemplate):
             self.grid_min = setting["grid_min"]
 
             self.max_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))
+            self.stop_price = self.guide_price
             self.new_setting = setting
             self.status = GridStatus.OPEN
             self.on_start()
+            self.cancel_all()
             return True
         else:
             return False
@@ -406,6 +410,7 @@ class GridAlgo(AlgoTemplate):
         if self.last_tick and self.last_tick.datetime >= tick.datetime:
             return
         self.last_tick = tick
+        self.update_stop_price()
 
         # 理论上买一价小于卖一价，如果不是，数据可能异常，为了避免taker成交增加手续费成本，不做委托
         if self.last_tick.bid_price_1 >= self.last_tick.ask_price_1:
@@ -990,6 +995,22 @@ class GridAlgo(AlgoTemplate):
             self.algo_engine.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{content}')
         except:
             pass
+
+    def update_stop_price(self):
+        next_window_datetime = next_window_bar_datetime(current_datetime=self.last_tick.datetime)
+        current_timestamp = self.last_tick.datetime.timestamp()
+        next_window_timestamp = next_window_datetime.timestamp()
+        if next_window_timestamp > current_timestamp:
+            remain_second = next_window_timestamp - current_timestamp
+            total_second = 8 * 60 * 60
+
+            width = abs(self.gridUp - self.guide_price)
+            space = round_to((remain_second / total_second) * width, self.tick_price)
+            if self.grid_direction == GridDirection.LONG:
+                self.stop_price = min((self.last_tick.last_price + space), self.guide_price)
+
+            elif self.grid_direction == GridDirection.SHORT:
+                self.stop_price = max((self.last_tick.last_price - space), self.guide_price)
 
     # ======================================================
 
