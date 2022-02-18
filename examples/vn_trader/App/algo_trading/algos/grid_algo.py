@@ -248,7 +248,7 @@ class GridAlgo(AlgoTemplate):
 
         #"""
         est_commision = refer_price * 0.00075
-        grid_price = ceil_to(est_commision, 10)
+        grid_price = ceil_to(est_commision/2.0, 10)
         line_price = round_to(refer_price, grid_price)
 
         # 根据pivot点位设置网格宽度
@@ -256,7 +256,7 @@ class GridAlgo(AlgoTemplate):
         generator.generate()
         if not generator.pivot:
             return None
-        grid_width = max(abs(generator.long_entry2 - line_price), abs(line_price - generator.short_entry2))
+        grid_width = min(abs(generator.long_entry1 - line_price), abs(line_price - generator.short_entry1))
         # """
 
         grid_count = ceil(grid_width / grid_price)
@@ -1151,3 +1151,30 @@ class GridParametersGenerator(object):
         self.short_entry2 = self.pivot - (self.long_entry1 - self.short_entry1)
         self.long_entry3 = high - (2 * (low - self.pivot))
         self.short_entry3 = low - (2 * (high - self.pivot))
+
+class GridArrayManager(object):
+    # 指标数据参数
+    window = 60
+    def __init__(self, algo_engine:BaseEngine, vt_symbol:str):
+        self.algo_engine = algo_engine
+        self.vt_symbol = vt_symbol
+
+        self.datetime = None
+        self.windowAtr = 0
+        self.atr = 0
+        self.am = ArrayManager(self.window + 1)
+
+
+    def generate(self):
+        self.algo_engine.load_bar(self.vt_symbol, 1, Interval.MINUTE, self.on_bar)
+
+    # 分钟数据
+    def on_bar(self, bar: BarData):
+        """"""
+        self.am.update_bar(bar=bar)
+        if not self.am.inited:
+            return
+
+        self.datetime = bar.datetime
+        self.windowAtr = self.am.atr(self.window)
+        self.atr = self.am.atr(1)
