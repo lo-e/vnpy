@@ -16,7 +16,7 @@ from vnpy.trader.utility import BarGenerator
 from typing import Callable
 
 TRADE_SYMBOL = 'BTCUSDT.BYBIT'
-TRADE_CAPITAL = 1000
+TRADE_CAPITAL = 2000
 window_time = ['00:00:00', '08:00:00', '16:00:00']
 
 class Mode(Enum):
@@ -256,7 +256,7 @@ class GridAlgo(AlgoTemplate):
         generator.generate()
         if not generator.pivot:
             return None
-        grid_width = min(abs(generator.long_entry1 - line_price), abs(line_price - generator.short_entry1))
+        grid_width = max(abs(generator.long_entry3 - line_price), abs(line_price - generator.short_entry3))
         # """
 
         grid_count = ceil(grid_width / grid_price)
