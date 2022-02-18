@@ -73,8 +73,6 @@ class GridAlgo(AlgoTemplate):
         "grid_count": 0,
         "grid_price": 0.0,
         "grid_volume": 0.0,
-        "grid_max":0.0,
-        "grid_min":0.0,
         "interval": 0,
     }
 
@@ -130,8 +128,6 @@ class GridAlgo(AlgoTemplate):
         self.grid_count = setting['grid_count']
         self.grid_price = setting["grid_price"]
         self.grid_volume = setting["grid_volume"]
-        self.grid_max = setting["grid_max"]
-        self.grid_min = setting["grid_min"]
         self.interval = setting["interval"]
         self.mode = Mode(setting['mode'])
         self.grid_direction = GridDirection(setting['grid_direction'])
@@ -188,8 +184,6 @@ class GridAlgo(AlgoTemplate):
             self.grid_count = setting['grid_count']
             self.grid_price = setting["grid_price"]
             self.grid_volume = setting["grid_volume"]
-            self.grid_max = setting["grid_max"]
-            self.grid_min = setting["grid_min"]
 
             self.max_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))
             self.stop_price = self.guide_price
@@ -275,20 +269,14 @@ class GridAlgo(AlgoTemplate):
         if grid_direction == GridDirection.LONG:
             algo_name = 'grid_long'
             guide_price = line_price + grid_width
-            grid_max = line_price + 3 * grid_width
-            grid_min = line_price - grid_width
 
         elif grid_direction == GridDirection.OPEN:
             algo_name = 'grid_open'
             guide_price = line_price
-            grid_max = line_price + 2 * grid_width
-            grid_min = line_price - 2 * grid_width
 
         else:
             algo_name = 'grid_short'
             guide_price = line_price - grid_width
-            grid_max = line_price + grid_width
-            grid_min = line_price - 3 * grid_width
 
         return {"editable": '是',
                 "algo_name": algo_name,
@@ -300,8 +288,6 @@ class GridAlgo(AlgoTemplate):
                 "grid_count": grid_count,
                 "grid_price": grid_price,
                 "grid_volume": grid_volume,
-                "grid_max": grid_max,
-                "grid_min": grid_min,
                 "interval": 20
                 }
     # ============================================================
@@ -614,11 +600,6 @@ class GridAlgo(AlgoTemplate):
                         long_price = None
                         long_target = None
 
-                    # 风控，价格低于grid_min附近停止多单
-                    if long_price and self.grid_min and long_price <= self.grid_min + 2 * self.grid_price:
-                        long_price = None
-                        long_target = None
-
                     # 风控，价格低于gridDown过多停止多单，前提是网格组合状态都为PREPARE
                     if long_price and long_price < self.gridDown - self.grid_price and self.status == GridStatus.PREPARE:
                         other_open = False
@@ -658,11 +639,6 @@ class GridAlgo(AlgoTemplate):
                     short_price = tick.ask_price_1 + 2 * self.tick_price
                     short_target = grid_pos_array[-1]
                     if short_target >= self.pos:
-                        short_price = None
-                        short_target = None
-
-                    # 风控，价格高于grid_max附近停止空单
-                    if short_price  and self.grid_max and short_price >= self.grid_max - 2 * self.grid_price:
                         short_price = None
                         short_target = None
 

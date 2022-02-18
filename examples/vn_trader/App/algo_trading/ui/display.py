@@ -36,8 +36,6 @@ NAME_DISPLAY_MAP = {
     "max_volume": "最大委托量",
     "volume_change": "委托量变化",
 
-    "grid_max":"止损上限",
-    "grid_min":"止损下限",
     "status":"状态",
     "algo_name":"算法名称",
     "grid_direction":"方向",
