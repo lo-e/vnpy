@@ -740,15 +740,9 @@ class GridAlgo(AlgoTemplate):
             if self.exit_price1 and self.last_tick.last_price <= self.exit_price1:
                 self.volume_rate = 0.5
 
-            if self.exit_price2 and self.last_tick.last_price <= self.exit_price2:
-                self.volume_rate = 0
-
         elif self.grid_direction == GridDirection.SHORT:
             if self.exit_price1 and self.last_tick.last_price >= self.exit_price1:
                 self.volume_rate = 0.5
-
-            if self.exit_price2 and self.last_tick.last_price >= self.exit_price2:
-                self.volume_rate = 0
 
         # 更新网格
         if last_volume_rate != self.volume_rate:
