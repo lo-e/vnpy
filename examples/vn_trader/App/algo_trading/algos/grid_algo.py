@@ -629,7 +629,7 @@ class GridAlgo(AlgoTemplate):
                                 long_target = None
 
                     # 减仓的情况
-                    if tick.bid_price_1 - long_price > 2 * self.grid_price:
+                    if long_price and tick.bid_price_1 - long_price > 2 * self.grid_price:
                         long_price = tick.bid_price_1 - 10 * self.tick_price
 
                 elif tick.bid_price_1 <= self.gridDown:
@@ -675,7 +675,7 @@ class GridAlgo(AlgoTemplate):
                                 short_target = None
 
                     # 减仓的情况
-                    if short_price - tick.ask_price_1 > 2*self.grid_price:
+                    if short_price and short_price - tick.ask_price_1 > 2*self.grid_price:
                         short_price = tick.ask_price_1 + 10 * self.tick_price
 
                 elif tick.ask_price_1 >= self.gridUp:
