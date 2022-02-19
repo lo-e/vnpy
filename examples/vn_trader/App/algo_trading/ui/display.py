@@ -41,5 +41,7 @@ NAME_DISPLAY_MAP = {
     "grid_direction":"方向",
     "ratio_close":"资金费率结算",
     "stop_price":"停止价格",
-    "stop_price_remain":"更新倒计时"
+    "stop_price_remain":"更新倒计时",
+    "exit_price1":"出场价格1",
+    "exit_price2":"出场价格2"
 }

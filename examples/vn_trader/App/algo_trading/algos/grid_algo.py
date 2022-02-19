@@ -73,6 +73,8 @@ class GridAlgo(AlgoTemplate):
         "grid_count": 0,
         "grid_price": 0.0,
         "grid_volume": 0.0,
+        "exit_price1":0.0,
+        "exit_price2":0.0,
         "interval": 0,
     }
 
@@ -87,6 +89,8 @@ class GridAlgo(AlgoTemplate):
         "stop_price",
         "stop_price_remain",
         "gridDown",
+        "exit_price1",
+        "exit_price2",
         "reject_order_count",
         "long_orderids",
         "short_orderids"
@@ -138,6 +142,8 @@ class GridAlgo(AlgoTemplate):
             self.ratio_close = True
         else:
             self.ratio_close = False
+        self.exit_price1 = setting.get('exit_price1', 0.0)
+        self.exit_price2 = setting.get('exit_price2', 0.0)
 
         # Variables
         self.pos = 0
@@ -247,6 +253,9 @@ class GridAlgo(AlgoTemplate):
 
         est_commision = line_price * 0.00075
         grid_price = ceil_to(est_commision, 10)
+
+        exit_price1 = 0.0
+        exit_price2 = 0.0
         """
 
         #"""
@@ -260,6 +269,18 @@ class GridAlgo(AlgoTemplate):
         if not generator.pivot:
             return None
         grid_width = max(abs(generator.long_entry3 - line_price), abs(line_price - generator.short_entry3))
+        if grid_direction == GridDirection.LONG:
+            exit_price1 = generator.short_entry1
+            exit_price2 = generator.short_entry2
+
+        elif grid_direction == GridDirection.OPEN:
+            exit_price1 = 0.0
+            exit_price2 = 0.0
+
+        else:
+            exit_price1 = generator.long_entry1
+            exit_price2 = generator.long_entry2
+
         # """
 
         grid_count = ceil(grid_width / grid_price)
@@ -276,7 +297,6 @@ class GridAlgo(AlgoTemplate):
         elif grid_direction == GridDirection.OPEN:
             algo_name = 'grid_open'
             guide_price = line_price
-
         else:
             algo_name = 'grid_short'
             guide_price = line_price - grid_width
@@ -291,6 +311,8 @@ class GridAlgo(AlgoTemplate):
                 "grid_count": grid_count,
                 "grid_price": grid_price,
                 "grid_volume": grid_volume,
+                "exit_price1":exit_price1,
+                "exit_price2":exit_price2,
                 "interval": 20
                 }
     # ============================================================
