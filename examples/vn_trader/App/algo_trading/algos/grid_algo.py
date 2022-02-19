@@ -173,6 +173,9 @@ class GridAlgo(AlgoTemplate):
         self.stop_price_remain = ''
         self.stop_price_init = False
 
+        # 仓位管理相关
+        self.volume_rate = 1
+
         self.am = ArrayManager(self.gridWindow + 1)
 
         self.subscribe(self.vt_symbol)
@@ -195,6 +198,7 @@ class GridAlgo(AlgoTemplate):
             self.grid_volume = setting["grid_volume"]
 
             self.max_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))
+            self.volume_rate = 1
             self.stop_price = self.guide_price
             self.new_setting = setting
             self.status = GridStatus.OPEN
@@ -368,9 +372,14 @@ class GridAlgo(AlgoTemplate):
         grid_price_array_float = np.array(grid_price_array_float)
 
         # 仓位数列
-        grid_pos_up = decimal.Decimal(str(self.grid_count)) * decimal.Decimal(str(self.grid_volume))
-        grid_pos_down = (decimal.Decimal(str(self.grid_count)) + decimal.Decimal(str(1))) * decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(-1))
-        grid_pos_array_decimal = np.arange(decimal.Decimal(str(grid_pos_up)), decimal.Decimal(str(grid_pos_down)), decimal.Decimal(str(-1 * self.grid_volume)))
+        total_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))
+        total_volume = total_volume * self.volume_rate
+        grid_volume = floor_to(total_volume / self.grid_count, 0.001)
+        self.max_volume = decimal.Decimal(str(grid_volume)) * decimal.Decimal(str(self.grid_count))
+
+        grid_pos_up = decimal.Decimal(str(self.grid_count)) * decimal.Decimal(str(grid_volume))
+        grid_pos_down = (decimal.Decimal(str(self.grid_count)) + decimal.Decimal(str(1))) * decimal.Decimal(str(grid_volume)) * decimal.Decimal(str(-1))
+        grid_pos_array_decimal = np.arange(decimal.Decimal(str(grid_pos_up)), decimal.Decimal(str(grid_pos_down)), decimal.Decimal(str(-1 * grid_volume)))
         grid_pos_array_float = []
         for decimal_value in grid_pos_array_decimal:
             float_value = float(decimal_value)
@@ -427,6 +436,7 @@ class GridAlgo(AlgoTemplate):
         self.last_tick = tick
         if self.check_enable:
             self.check_status()
+            self.check_exit()
             self.check_long_short_order()
             self.check_enable = False
 
@@ -714,6 +724,26 @@ class GridAlgo(AlgoTemplate):
                 self.status = GridStatus.WAITINGCLOSE
                 # 向其他网格算法同步状态
                 self.algo_engine.on_algo_update(algo_name=self.algo_name)
+
+    def check_exit(self):
+        last_volume_rate = self.volume_rate
+        if self.grid_direction == GridDirection.LONG:
+            if self.exit_price1 and self.last_tick.last_price <= self.exit_price1:
+                self.volume_rate = 0.5
+
+            if self.exit_price2 and self.last_tick.last_price <= self.exit_price2:
+                self.volume_rate = 0
+
+        elif self.grid_direction == GridDirection.SHORT:
+            if self.exit_price1 and self.last_tick.last_price >= self.exit_price1:
+                self.volume_rate = 0.5
+
+            if self.exit_price2 and self.last_tick.last_price >= self.exit_price2:
+                self.volume_rate = 0
+
+        # 更新网格
+        if last_volume_rate != self.volume_rate:
+            self.create_grid()
 
     def check_long_short_order(self):
         if not self.last_tick:
