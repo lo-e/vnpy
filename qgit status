@@ -1,0 +1,42 @@
+[1mdiff --git a/examples/vn_trader/App/algo_trading/algos/grid_algo.py b/examples/vn_trader/App/algo_trading/algos/grid_algo.py[m
+[1mindex afcab3df..795137c3 100644[m
+[1m--- a/examples/vn_trader/App/algo_trading/algos/grid_algo.py[m
+[1m+++ b/examples/vn_trader/App/algo_trading/algos/grid_algo.py[m
+[36m@@ -88,7 +88,8 @@[m [mclass GridAlgo(AlgoTemplate):[m
+         "gridDown",[m
+         "reject_order_count",[m
+         "long_orderids",[m
+[31m-        "short_orderids"[m
+[32m+[m[32m        "short_orderids",[m
+[32m+[m[32m        "stop_price_remain"[m
+     ][m
+ [m
+     syncs = ['pos',[m
+[36m@@ -160,8 +161,10 @@[m [mclass GridAlgo(AlgoTemplate):[m
+         self.cancel_orderids = [][m
+         self.status = GridStatus.OPEN[m
+         self.max_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))[m
+[32m+[m[32m        # 停止价格相关[m
+         self.stop_price = self.guide_price[m
+         self.stop_price_timecounter = 0[m
+[32m+[m[32m        self.stop_price_remain = ''[m
+         self.stop_price_init = False[m
+ [m
+         self.am = ArrayManager(self.gridWindow + 1)[m
+[36m@@ -820,10 +823,15 @@[m [mclass GridAlgo(AlgoTemplate):[m
+                 self.reject_order_count = 0[m
+ [m
+         # 停止价格计算[m
+[32m+[m[32m        cycle_seconds = 60*30[m
+         self.stop_price_timecounter += 1[m
+[31m-        if self.stop_price_timecounter >= 60 * 30 or (not self.stop_price_init):[m
+[32m+[m[32m        if self.stop_price_timecounter >= cycle_seconds or (not self.stop_price_init):[m
+             self.stop_price_timecounter = 0[m
+             self.update_stop_price()[m
+[32m+[m[32m        remain_seconds = cycle_seconds - self.stop_price_timecounter[m
+[32m+[m[32m        minute = int(remain_seconds/60)[m
+[32m+[m[32m        second = int(remain_seconds - minute*60)[m
+[32m+[m[32m        self.stop_price_remain = f'{minute}m {second}s'[m
+ [m
+         """[m
+         # 检查最优限价算法[m

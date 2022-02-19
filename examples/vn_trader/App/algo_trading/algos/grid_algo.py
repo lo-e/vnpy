@@ -85,6 +85,7 @@ class GridAlgo(AlgoTemplate):
         "gridUp",
         "guide_price",
         "stop_price",
+        "stop_price_remain",
         "gridDown",
         "reject_order_count",
         "long_orderids",
@@ -160,8 +161,10 @@ class GridAlgo(AlgoTemplate):
         self.cancel_orderids = []
         self.status = GridStatus.OPEN
         self.max_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))
+        # 停止价格相关
         self.stop_price = self.guide_price
         self.stop_price_timecounter = 0
+        self.stop_price_remain = ''
         self.stop_price_init = False
 
         self.am = ArrayManager(self.gridWindow + 1)
@@ -820,10 +823,15 @@ class GridAlgo(AlgoTemplate):
                 self.reject_order_count = 0
 
         # 停止价格计算
+        cycle_seconds = 60*30
         self.stop_price_timecounter += 1
-        if self.stop_price_timecounter >= 60 * 30 or (not self.stop_price_init):
+        if self.stop_price_timecounter >= cycle_seconds or (not self.stop_price_init):
             self.stop_price_timecounter = 0
             self.update_stop_price()
+        remain_seconds = cycle_seconds - self.stop_price_timecounter
+        minute = int(remain_seconds/60)
+        second = int(remain_seconds - minute*60)
+        self.stop_price_remain = f'{minute}m {second}s'
 
         """
         # 检查最优限价算法
