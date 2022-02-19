@@ -122,6 +122,11 @@ class PivotStrategy_backtesting(CtaTemplate):
         """ fake """
         self.csv_list = []
 
+        """ fake """
+        self.cross_count = 0
+        self.window_count = 0
+        self.cross_enable = False
+
     def on_init(self):
         """
         Callback when strategy is inited.
@@ -158,6 +163,12 @@ class PivotStrategy_backtesting(CtaTemplate):
         """
         Callback of new bar data update.
         """
+        """ fake """
+        if (bar.high_price >= 2*self.long_entry3-self.pivot or bar.low_price <= 2*self.short_entry3-self.pivot) and self.cross_enable:
+            self.cross_enable = False
+            self.cross_count += 1
+            print(f'{bar.datetime}\tcross_count:{self.cross_count}\twindow_count:{self.window_count}')
+
         self.cancel_all()
         self.long_orderid1 = ''
         self.long_orderid2 = ''
@@ -320,6 +331,10 @@ class PivotStrategy_backtesting(CtaTemplate):
 
     # 周期数据源处理逻辑
     def on_generate_bar(self, bar:BarData):
+        """ fake """
+        self.window_count += 1
+        self.cross_enable = True
+
         self.calculate_pivot(bar)
         self.base_datetime = bar.datetime
         self.long_allowed1 = True
