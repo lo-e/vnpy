@@ -84,6 +84,7 @@ class GridAlgo(AlgoTemplate):
         "status",
         "grid_direction",
         "max_volume",
+        "volume_rate",
         "gridUp",
         "guide_price",
         "stop_price",
@@ -372,7 +373,7 @@ class GridAlgo(AlgoTemplate):
         grid_price_array_float = np.array(grid_price_array_float)
 
         # 仓位数列
-        total_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))
+        total_volume = self.grid_volume * self.grid_count
         total_volume = total_volume * self.volume_rate
         grid_volume = floor_to(total_volume / self.grid_count, 0.001)
         self.max_volume = decimal.Decimal(str(grid_volume)) * decimal.Decimal(str(self.grid_count))
