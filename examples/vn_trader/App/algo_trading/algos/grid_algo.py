@@ -201,6 +201,8 @@ class GridAlgo(AlgoTemplate):
             self.grid_count = setting['grid_count']
             self.grid_price = setting["grid_price"]
             self.grid_volume = setting["grid_volume"]
+            self.exit_price1 = setting.get('exit_price1', 0.0)
+            self.exit_price2 = setting.get('exit_price2', 0.0)
 
             self.max_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))
             self.volume_rate = 1
