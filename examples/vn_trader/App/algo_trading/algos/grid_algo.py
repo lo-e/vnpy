@@ -939,6 +939,10 @@ class GridAlgo(AlgoTemplate):
         # 检查仓位
         self.check_position()
         """
+        # 初始化仓位时每秒更新
+        if self.pos_reiniting:
+            self.reinit_pos()
+
         self.check_enable = True
         self.tick_error = False
 
