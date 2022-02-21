@@ -761,15 +761,33 @@ class GridAlgo(AlgoTemplate):
             if self.exit_price1 and self.last_tick.last_price <= self.exit_price1:
                 self.volume_rate = min(self.volume_rate, 0.5)
 
+                if self.exit_price2:
+                    stop_price = self.gridDown + abs(self.exit_price1 - self.exit_price2)
+                    self.stop_price = min(self.stop_price, stop_price)
+                    self.stop_price = min(self.stop_price, self.guide_price)
+
             if self.exit_price2 and self.last_tick.last_price <= self.exit_price2:
                 self.volume_rate = min(self.volume_rate, 0.5*0.5)
+
+                stop_price = self.gridDown
+                self.stop_price = min(self.stop_price, stop_price)
+                self.stop_price = min(self.stop_price, self.guide_price)
 
         elif self.grid_direction == GridDirection.SHORT:
             if self.exit_price1 and self.last_tick.last_price >= self.exit_price1:
                 self.volume_rate = min(self.volume_rate, 0.5)
 
+                if self.exit_price2:
+                    stop_price = self.gridUp - abs(self.exit_price2 - self.exit_price1)
+                    self.stop_price = max(self.stop_price, stop_price)
+                    self.stop_price = max(self.stop_price, self.guide_price)
+
             if self.exit_price2 and self.last_tick.last_price >= self.exit_price2:
                 self.volume_rate = min(self.volume_rate, 0.5*0.5)
+
+                stop_price = self.gridUp
+                self.stop_price = max(self.stop_price, stop_price)
+                self.stop_price = max(self.stop_price, self.guide_price)
 
         # 更新网格
         if last_volume_rate != self.volume_rate:
@@ -1111,14 +1129,16 @@ class GridAlgo(AlgoTemplate):
             # 设置最小幅度
             space = max(space, 3*self.grid_price)
             if self.grid_direction == GridDirection.LONG:
-                self.stop_price = max(self.last_tick.last_price, self.gridDown) + space
-                self.stop_price = ceil_to(self.stop_price, self.grid_price)
-                self.stop_price = min(self.stop_price, self.guide_price)
+                stop_price = max(self.last_tick.last_price, self.gridDown) + space
+                stop_price = ceil_to(stop_price, self.grid_price)
+                stop_price = min(stop_price, self.guide_price)
+                self.stop_price = min(self.stop_price, stop_price)
 
             elif self.grid_direction == GridDirection.SHORT:
-                self.stop_price = min(self.last_tick.last_price, self.gridUp) - space
-                self.stop_price = floor_to(self.stop_price, self.grid_price)
-                self.stop_price = max(self.stop_price, self.guide_price)
+                stop_price = min(self.last_tick.last_price, self.gridUp) - space
+                stop_price = floor_to(stop_price, self.grid_price)
+                stop_price = max(stop_price, self.guide_price)
+                self.stop_price = max(self.stop_price, stop_price)
 
     # ======================================================
 
