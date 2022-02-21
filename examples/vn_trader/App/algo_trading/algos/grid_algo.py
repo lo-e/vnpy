@@ -75,6 +75,8 @@ class GridAlgo(AlgoTemplate):
         "grid_volume": 0.0,
         "exit_price1":0.0,
         "exit_price2":0.0,
+        "exit_price1_reverse":0.0,
+        "exit_price2_reverse":0.0,
         "interval": 0,
     }
 
@@ -147,6 +149,8 @@ class GridAlgo(AlgoTemplate):
             self.ratio_close = False
         self.exit_price1 = setting.get('exit_price1', 0.0)
         self.exit_price2 = setting.get('exit_price2', 0.0)
+        self.exit_price1_reverse = setting.get("exit_price1_reverse", 0.0)
+        self.exit_price2_reverse = setting.get("exit_price2_reverse", 0.0)
 
         # Variables
         self.pos = 0
@@ -204,6 +208,8 @@ class GridAlgo(AlgoTemplate):
             self.grid_volume = setting["grid_volume"]
             self.exit_price1 = setting.get('exit_price1', 0.0)
             self.exit_price2 = setting.get('exit_price2', 0.0)
+            self.exit_price1_reverse = setting.get("exit_price1_reverse", 0.0)
+            self.exit_price2_reverse = setting.get("exit_price2_reverse", 0.0)
 
             self.max_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))
             self.volume_rate = 1
@@ -285,6 +291,9 @@ class GridAlgo(AlgoTemplate):
             exit_price1 = generator.short_entry1
             exit_price2 = generator.short_entry2
 
+            exit_price1_reverse = generator.long_entry1
+            exit_price2_reverse = generator.long_entry2
+
         elif grid_direction == GridDirection.OPEN:
             exit_price1 = 0.0
             exit_price2 = 0.0
@@ -292,6 +301,9 @@ class GridAlgo(AlgoTemplate):
         else:
             exit_price1 = generator.long_entry1
             exit_price2 = generator.long_entry2
+
+            exit_price1_reverse = generator.short_entry1
+            exit_price2_reverse = generator.short_entry2
 
         # """
 
@@ -325,6 +337,8 @@ class GridAlgo(AlgoTemplate):
                 "grid_volume": grid_volume,
                 "exit_price1":exit_price1,
                 "exit_price2":exit_price2,
+                "exit_price1_reverse":exit_price1_reverse,
+                "exit_price2_reverse":exit_price2_reverse,
                 "interval": 20
                 }
     # ============================================================
@@ -761,8 +775,8 @@ class GridAlgo(AlgoTemplate):
             if self.exit_price1 and self.last_tick.last_price <= self.exit_price1:
                 self.volume_rate = min(self.volume_rate, 0.5)
 
-                if self.exit_price2:
-                    stop_price = self.gridDown + abs(self.exit_price1 - self.exit_price2)
+                if self.exit_price1_reverse:
+                    stop_price = self.exit_price1_reverse
                     self.stop_price = min(self.stop_price, stop_price)
                     self.stop_price = min(self.stop_price, self.guide_price)
 
@@ -777,8 +791,8 @@ class GridAlgo(AlgoTemplate):
             if self.exit_price1 and self.last_tick.last_price >= self.exit_price1:
                 self.volume_rate = min(self.volume_rate, 0.5)
 
-                if self.exit_price2:
-                    stop_price = self.gridUp - abs(self.exit_price2 - self.exit_price1)
+                if self.exit_price1_reverse:
+                    stop_price = self.exit_price1_reverse
                     self.stop_price = max(self.stop_price, stop_price)
                     self.stop_price = max(self.stop_price, self.guide_price)
 
