@@ -16,7 +16,7 @@ from vnpy.trader.utility import BarGenerator
 from typing import Callable
 
 TRADE_SYMBOL = 'BTCUSDT.BYBIT'
-TRADE_CAPITAL = 2000
+TRADE_CAPITAL = 100000
 window_time = ['00:00:00', '08:00:00', '16:00:00']
 
 class Mode(Enum):
@@ -258,7 +258,7 @@ class GridAlgo(AlgoTemplate):
         grid_width = 1000
 
         est_commision = line_price * 0.00075
-        grid_price = ceil_to(est_commision/2.0, 10)
+        grid_price = ceil_to(est_commision, 10)
 
         if grid_direction == GridDirection.LONG:
             exit_price = 36900
@@ -288,7 +288,7 @@ class GridAlgo(AlgoTemplate):
         refer_price = generator.pivot
         
         est_commision = refer_price * 0.00075
-        grid_price = ceil_to(est_commision/2.0, 10)
+        grid_price = ceil_to(est_commision, 10)
         line_price = round_to(refer_price, grid_price)
 
         grid_width = max(abs(generator.long_entry3 - line_price)*2, abs(line_price - generator.short_entry3)*2)
@@ -313,8 +313,8 @@ class GridAlgo(AlgoTemplate):
         grid_width = grid_price * grid_count
 
         # 网格仓位大小
-        max_space = max(generator.long_entry1-line_price, generator.long_entry2-generator.long_entry1, line_price-generator.short_entry1, generator.short_entry1-generator.short_entry2)
-        total_volume = (TRADE_CAPITAL * 0.01) / (5 * max_space)
+        max_space = max(generator.long_entry2-line_price, line_price-generator.short_entry2)
+        total_volume = (TRADE_CAPITAL * 0.01) / (2 * max_space)
         grid_volume = floor_to(total_volume / grid_count, 0.001)
         grid_volume = max(grid_volume, 0.001)
         #"""
