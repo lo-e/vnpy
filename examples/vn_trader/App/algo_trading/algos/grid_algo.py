@@ -76,7 +76,7 @@ class GridAlgo(AlgoTemplate):
         "exit_price":0.0,
         "increase_price1":0.0,
         "increase_price2": 0.0,
-        "volume_rate":1.0
+        "volume_rate":1.0,
         "interval": 0
     }
 
