@@ -412,7 +412,7 @@ class PivotStrategy_backtesting(CtaTemplate):
                     self.short_allowed2 = False
 
         # 邮件提醒
-        super(PivotStrategy_backtesting, self).on_trade(trade)
+        super().on_trade(trade)
 
     def on_stop_order(self, stop_order: StopOrder):
         """
