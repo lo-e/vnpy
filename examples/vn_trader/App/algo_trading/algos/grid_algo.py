@@ -253,19 +253,25 @@ class GridAlgo(AlgoTemplate):
     @classmethod
     # 参数生成
     def get_parameters(cls, algo_engine:BaseEngine, refer_price:float, grid_direction:GridDirection):
-        """
-        line_price = 44480
-        grid_width = 1040
+        #"""
+        line_price = 37000
+        grid_width = 1000
 
         est_commision = line_price * 0.00075
-        grid_price = ceil_to(est_commision, 10)
+        grid_price = ceil_to(est_commision/2.0, 10)
 
-        exit_price = 0.0
-        increase_price1 = 0.0
-        increase_price2 = 0.0
-        """
+        if grid_direction == GridDirection.LONG:
+            exit_price = 36900
+            increase_price1 = 37100
+            increase_price2 = 37200
 
+        else:
+            exit_price = 37100
+            increase_price1 = 36900
+            increase_price2 = 36800
         #"""
+
+        """
         est_commision = refer_price * 0.00075
         grid_price = ceil_to(est_commision/2.0, 10)
         line_price = round_to(refer_price, grid_price)
@@ -275,7 +281,7 @@ class GridAlgo(AlgoTemplate):
         generator.generate()
         if not generator.pivot:
             return None
-        grid_width = max(abs(generator.long_entry3 - line_price), abs(line_price - generator.short_entry3))
+        grid_width = max(abs(generator.long_entry3 - line_price)*2, abs(line_price - generator.short_entry3)*2)
         if grid_direction == GridDirection.LONG:
             exit_price = generator.short_entry1
 
@@ -293,7 +299,7 @@ class GridAlgo(AlgoTemplate):
             increase_price1 = generator.short_entry1
             increase_price2 = generator.short_entry2
 
-        # """
+        """
 
         grid_count = ceil(grid_width / grid_price)
         grid_width = grid_price * grid_count
