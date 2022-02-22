@@ -76,7 +76,8 @@ class GridAlgo(AlgoTemplate):
         "exit_price":0.0,
         "increase_price1":0.0,
         "increase_price2": 0.0,
-        "interval": 0,
+        "volume_rate":1.0
+        "interval": 0
     }
 
     variables = [
@@ -97,7 +98,6 @@ class GridAlgo(AlgoTemplate):
     ]
 
     syncs = ['pos',
-             'volume_rate',
              'setting_data']
 
     max_grid_count = 10000
@@ -146,6 +146,7 @@ class GridAlgo(AlgoTemplate):
         self.exit_price = setting.get('exit_price', 0.0)
         self.increase_price1 = setting.get('increase_price1', 0.0)
         self.increase_price2 = setting.get('increase_price2', 0.0)
+        self.volume_rate = setting.get('increase_price2', 1.0)
 
         # Variables
         self.pos = 0
@@ -171,7 +172,6 @@ class GridAlgo(AlgoTemplate):
         self.max_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))
 
         # 仓位管理相关
-        self.volume_rate = 1
         self.pos_reiniting = False
         self.pos_reiniting_target = 0
         self.pos_reiniting_waiting = False
@@ -199,9 +199,9 @@ class GridAlgo(AlgoTemplate):
             self.exit_price = setting.get('exit_price', 0.0)
             self.increase_price1 = setting.get('increase_price1', 0.0)
             self.increase_price2 = setting.get('increase_price2', 0.0)
+            self.volume_rate = setting.get('increase_price2', 1.0)
 
             self.max_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))
-            self.volume_rate = 1
             self.new_setting = setting
             self.status = GridStatus.OPEN
             self.on_start()
@@ -253,7 +253,7 @@ class GridAlgo(AlgoTemplate):
     @classmethod
     # 参数生成
     def get_parameters(cls, algo_engine:BaseEngine, refer_price:float, grid_direction:GridDirection):
-        #"""
+        """
         line_price = 37000
         grid_width = 1000
 
@@ -269,9 +269,16 @@ class GridAlgo(AlgoTemplate):
             exit_price = 37100
             increase_price1 = 36900
             increase_price2 = 36800
-        #"""
 
+        grid_count = ceil(grid_width / grid_price)
+        grid_width = grid_price * grid_count
+
+        # 网格仓位大小
+        total_volume = TRADE_CAPITAL / grid_width
+        grid_volume = floor_to(total_volume / grid_count, 0.001)
         """
+
+        #"""
         est_commision = refer_price * 0.00075
         grid_price = ceil_to(est_commision/2.0, 10)
         line_price = round_to(refer_price, grid_price)
@@ -299,14 +306,15 @@ class GridAlgo(AlgoTemplate):
             increase_price1 = generator.short_entry1
             increase_price2 = generator.short_entry2
 
-        """
-
         grid_count = ceil(grid_width / grid_price)
         grid_width = grid_price * grid_count
 
         # 网格仓位大小
-        total_volume = TRADE_CAPITAL / grid_width
+        max_space = max(generator.long_entry1-generator.pivot, generator.long_entry2-generator.long_entry1)
+        total_volume = (TRADE_CAPITAL * 0.01) / (5 * max_space)
         grid_volume = floor_to(total_volume / grid_count, 0.001)
+        grid_volume = max(grid_volume, 0.001)
+        #"""
 
         if grid_direction == GridDirection.LONG:
             algo_name = 'grid_long'
@@ -332,6 +340,7 @@ class GridAlgo(AlgoTemplate):
                 "exit_price":exit_price,
                 "increase_price1":increase_price1,
                 "increase_price2":increase_price2,
+                "volume_rate":1.0,
                 "interval": 20
                 }
     # ============================================================
@@ -800,6 +809,9 @@ class GridAlgo(AlgoTemplate):
 
         # 更新网格
         if last_volume_rate != self.volume_rate:
+            self.setting_data['volume_rate'] = self.volume_rate
+            self.saveSyncData()
+
             self.create_grid()
             self.reinit_pos()
 
