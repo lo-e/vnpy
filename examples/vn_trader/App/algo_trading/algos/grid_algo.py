@@ -101,7 +101,6 @@ class GridAlgo(AlgoTemplate):
     ]
 
     syncs = ['pos',
-             'volume_rate',
              'setting_data']
 
     max_grid_count = 10000

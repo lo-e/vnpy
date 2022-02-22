@@ -164,7 +164,8 @@ class PivotStrategy_backtesting(CtaTemplate):
         Callback of new bar data update.
         """
         """ fake """
-        if (bar.high_price >= 2*self.long_entry3-self.pivot or bar.low_price <= 2*self.short_entry3-self.pivot) and self.cross_enable:
+        self.bar = bar
+        if (bar.high_price >= (3*(self.long_entry3 - self.pivot) + self.pivot) or bar.low_price <= (self.pivot - 3*(self.pivot - self.short_entry3))) and self.cross_enable:
             self.cross_enable = False
             self.cross_count += 1
             print(f'{bar.datetime}\tcross_count:{self.cross_count}\twindow_count:{self.window_count}')
@@ -334,6 +335,8 @@ class PivotStrategy_backtesting(CtaTemplate):
         """ fake """
         self.window_count += 1
         self.cross_enable = True
+        if bar.datetime >= datetime.strptime('2022-2-21', '%Y-%m-%d'):
+            print(self.window_count)
 
         self.calculate_pivot(bar)
         self.base_datetime = bar.datetime
