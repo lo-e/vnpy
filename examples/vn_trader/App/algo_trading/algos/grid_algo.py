@@ -279,15 +279,18 @@ class GridAlgo(AlgoTemplate):
         """
 
         #"""
-        est_commision = refer_price * 0.00075
-        grid_price = ceil_to(est_commision/2.0, 10)
-        line_price = round_to(refer_price, grid_price)
-
         # 根据pivot点位设置网格宽度
         generator = GridParametersGenerator(algo_engine=algo_engine, vt_symbol=TRADE_SYMBOL)
         generator.generate()
         if not generator.pivot:
             return None
+
+        refer_price = generator.pivot
+        
+        est_commision = refer_price * 0.00075
+        grid_price = ceil_to(est_commision/2.0, 10)
+        line_price = round_to(refer_price, grid_price)
+
         grid_width = max(abs(generator.long_entry3 - line_price)*2, abs(line_price - generator.short_entry3)*2)
         if grid_direction == GridDirection.LONG:
             exit_price = generator.short_entry1
@@ -310,7 +313,7 @@ class GridAlgo(AlgoTemplate):
         grid_width = grid_price * grid_count
 
         # 网格仓位大小
-        max_space = max(generator.long_entry1-generator.pivot, generator.long_entry2-generator.long_entry1)
+        max_space = max(generator.long_entry1-line_price, generator.long_entry2-generator.long_entry1, line_price-generator.short_entry1, generator.short_entry1-generator.short_entry2)
         total_volume = (TRADE_CAPITAL * 0.01) / (5 * max_space)
         grid_volume = floor_to(total_volume / grid_count, 0.001)
         grid_volume = max(grid_volume, 0.001)
