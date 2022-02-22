@@ -1068,12 +1068,15 @@ class GridAlgo(AlgoTemplate):
     """
 
     def on_algo_update(self, algo):
+        return
+        """
         if isinstance(algo, GridAlgo):
             if algo.status == GridStatus.WAITINGCLOSE and self.status != GridStatus.CLOSE:
                 self.status = GridStatus.WAITINGCLOSE
 
             if algo.status == GridStatus.CLOSE:
                 self.immediate_close()
+        """
 
     def immediate_close(self):
         if self.status != GridStatus.CLOSE:
