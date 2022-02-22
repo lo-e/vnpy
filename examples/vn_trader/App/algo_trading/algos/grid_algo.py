@@ -73,10 +73,9 @@ class GridAlgo(AlgoTemplate):
         "grid_count": 0,
         "grid_price": 0.0,
         "grid_volume": 0.0,
-        "exit_price1":0.0,
-        "exit_price2":0.0,
-        "exit_price1_reverse":0.0,
-        "exit_price2_reverse":0.0,
+        "exit_price":0.0,
+        "increase_price1":0.0,
+        "increase_price2": 0.0,
         "interval": 0,
     }
 
@@ -90,11 +89,8 @@ class GridAlgo(AlgoTemplate):
         "volume_rate",
         "gridUp",
         "guide_price",
-        "stop_price",
-        "stop_price_remain",
         "gridDown",
-        "exit_price1",
-        "exit_price2",
+        "exit_price",
         "reject_order_count",
         "long_orderids",
         "short_orderids"
@@ -147,10 +143,9 @@ class GridAlgo(AlgoTemplate):
             self.ratio_close = True
         else:
             self.ratio_close = False
-        self.exit_price1 = setting.get('exit_price1', 0.0)
-        self.exit_price2 = setting.get('exit_price2', 0.0)
-        self.exit_price1_reverse = setting.get("exit_price1_reverse", 0.0)
-        self.exit_price2_reverse = setting.get("exit_price2_reverse", 0.0)
+        self.exit_price = setting.get('exit_price', 0.0)
+        self.increase_price1 = setting.get('increase_price1', 0.0)
+        self.increase_price2 = setting.get('increase_price2', 0.0)
 
         # Variables
         self.pos = 0
@@ -174,11 +169,6 @@ class GridAlgo(AlgoTemplate):
         self.cancel_orderids = []
         self.status = GridStatus.OPEN
         self.max_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))
-        # 停止价格相关
-        self.stop_price = self.guide_price
-        self.stop_price_timecounter = 0
-        self.stop_price_remain = ''
-        self.stop_price_init = False
 
         # 仓位管理相关
         self.volume_rate = 1
@@ -206,14 +196,12 @@ class GridAlgo(AlgoTemplate):
             self.grid_count = setting['grid_count']
             self.grid_price = setting["grid_price"]
             self.grid_volume = setting["grid_volume"]
-            self.exit_price1 = setting.get('exit_price1', 0.0)
-            self.exit_price2 = setting.get('exit_price2', 0.0)
-            self.exit_price1_reverse = setting.get("exit_price1_reverse", 0.0)
-            self.exit_price2_reverse = setting.get("exit_price2_reverse", 0.0)
+            self.exit_price = setting.get('exit_price', 0.0)
+            self.increase_price1 = setting.get('increase_price1', 0.0)
+            self.increase_price2 = setting.get('increase_price2', 0.0)
 
             self.max_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))
             self.volume_rate = 1
-            self.stop_price = self.guide_price
             self.new_setting = setting
             self.status = GridStatus.OPEN
             self.on_start()
@@ -272,8 +260,9 @@ class GridAlgo(AlgoTemplate):
         est_commision = line_price * 0.00075
         grid_price = ceil_to(est_commision, 10)
 
-        exit_price1 = 0.0
-        exit_price2 = 0.0
+        exit_price = 0.0
+        increase_price1 = 0.0
+        increase_price2 = 0.0
         """
 
         #"""
@@ -288,22 +277,21 @@ class GridAlgo(AlgoTemplate):
             return None
         grid_width = max(abs(generator.long_entry3 - line_price), abs(line_price - generator.short_entry3))
         if grid_direction == GridDirection.LONG:
-            exit_price1 = generator.short_entry1
-            exit_price2 = generator.short_entry2
+            exit_price = generator.short_entry1
 
-            exit_price1_reverse = generator.long_entry1
-            exit_price2_reverse = generator.long_entry2
+            increase_price1 = generator.long_entry1
+            increase_price2 = generator.long_entry2
 
         elif grid_direction == GridDirection.OPEN:
-            exit_price1 = 0.0
-            exit_price2 = 0.0
+            exit_price = 0.0
+            increase_price1 = 0.0
+            increase_price2 = 0.0
 
         else:
-            exit_price1 = generator.long_entry1
-            exit_price2 = generator.long_entry2
+            exit_price = generator.long_entry1
 
-            exit_price1_reverse = generator.short_entry1
-            exit_price2_reverse = generator.short_entry2
+            increase_price1 = generator.short_entry1
+            increase_price2 = generator.short_entry2
 
         # """
 
@@ -335,10 +323,9 @@ class GridAlgo(AlgoTemplate):
                 "grid_count": grid_count,
                 "grid_price": grid_price,
                 "grid_volume": grid_volume,
-                "exit_price1":exit_price1,
-                "exit_price2":exit_price2,
-                "exit_price1_reverse":exit_price1_reverse,
-                "exit_price2_reverse":exit_price2_reverse,
+                "exit_price":exit_price,
+                "increase_price1":increase_price1,
+                "increase_price2":increase_price2,
                 "interval": 20
                 }
     # ============================================================
@@ -401,7 +388,11 @@ class GridAlgo(AlgoTemplate):
 
         grid_pos_up = decimal.Decimal(str(self.grid_count)) * decimal.Decimal(str(grid_volume))
         grid_pos_down = (decimal.Decimal(str(self.grid_count)) + decimal.Decimal(str(1))) * decimal.Decimal(str(grid_volume)) * decimal.Decimal(str(-1))
-        grid_pos_array_decimal = np.arange(decimal.Decimal(str(grid_pos_up)), decimal.Decimal(str(grid_pos_down)), decimal.Decimal(str(-1 * grid_volume)))
+        if grid_volume:
+            grid_pos_array_decimal = np.arange(decimal.Decimal(str(grid_pos_up)), decimal.Decimal(str(grid_pos_down)), decimal.Decimal(str(-1 * grid_volume)))
+        else:
+            grid_pos_array_decimal = np.zeros(len(grid_price_array_float))
+
         grid_pos_array_float = []
         for decimal_value in grid_pos_array_decimal:
             float_value = float(decimal_value)
@@ -772,36 +763,34 @@ class GridAlgo(AlgoTemplate):
         last_volume_rate = self.volume_rate
 
         if self.grid_direction == GridDirection.LONG:
-            if self.exit_price1 and self.last_tick.last_price <= self.exit_price1:
-                self.volume_rate = min(self.volume_rate, 0.5)
+            if self.exit_price and self.last_tick.last_price <= self.exit_price:
+                # 止损
+                self.volume_rate = 0.0
 
-                if self.exit_price1_reverse:
-                    stop_price = self.exit_price1_reverse
-                    self.stop_price = min(self.stop_price, stop_price)
-                    self.stop_price = min(self.stop_price, self.guide_price)
+            if self.increase_price1 and self.last_tick.last_price >= self.increase_price1 and self.status != GridStatus.CLOSE:
+                # 加仓
+                self.volume_rate = max(self.volume_rate, 2.0)
+                self.exit_price = self.gridDown
 
-            if self.exit_price2 and self.last_tick.last_price <= self.exit_price2:
-                self.volume_rate = min(self.volume_rate, 0.5*0.5)
-
-                stop_price = self.gridDown
-                self.stop_price = min(self.stop_price, stop_price)
-                self.stop_price = min(self.stop_price, self.guide_price)
+            if self.increase_price2 and self.last_tick.last_price >= self.increase_price2 and self.status != GridStatus.CLOSE:
+                # 加仓
+                self.volume_rate = max(self.volume_rate, 4.0)
+                self.exit_price = self.increase_price1
 
         elif self.grid_direction == GridDirection.SHORT:
-            if self.exit_price1 and self.last_tick.last_price >= self.exit_price1:
-                self.volume_rate = min(self.volume_rate, 0.5)
+            if self.exit_price and self.last_tick.last_price >= self.exit_price:
+                # 止损
+                self.volume_rate = 0.0
 
-                if self.exit_price1_reverse:
-                    stop_price = self.exit_price1_reverse
-                    self.stop_price = max(self.stop_price, stop_price)
-                    self.stop_price = max(self.stop_price, self.guide_price)
+            if self.increase_price1 and self.last_tick.last_price <= self.increase_price1 and self.status != GridStatus.CLOSE:
+                # 加仓
+                self.volume_rate = max(self.volume_rate, 2.0)
+                self.exit_price = self.gridUp
 
-            if self.exit_price2 and self.last_tick.last_price >= self.exit_price2:
-                self.volume_rate = min(self.volume_rate, 0.5*0.5)
-
-                stop_price = self.gridUp
-                self.stop_price = max(self.stop_price, stop_price)
-                self.stop_price = max(self.stop_price, self.guide_price)
+            if self.increase_price2 and self.last_tick.last_price <= self.increase_price2 and self.status != GridStatus.CLOSE:
+                # 加仓
+                self.volume_rate = max(self.volume_rate, 4.0)
+                self.exit_price = self.increase_price1
 
         # 更新网格
         if last_volume_rate != self.volume_rate:
@@ -860,10 +849,6 @@ class GridAlgo(AlgoTemplate):
                 # 看跌网格不允许开多单
                 long_open_volume = 0
 
-                # 看跌网格触发停止价格
-                if long_price <= self.stop_price:
-                    long_close_volume = abs(self.pos)
-
         # 计算空单委托参数
         if short_target != None:
             distance = float(decimal.Decimal(str(self.pos)) - decimal.Decimal(str(short_target)))
@@ -883,10 +868,6 @@ class GridAlgo(AlgoTemplate):
             if self.grid_direction == GridDirection.LONG:
                 # 看多网格不允许开空单
                 short_open_volume = 0
-
-                # 看涨网格触发停止价格
-                if short_price >= self.stop_price:
-                    short_close_volume = abs(self.pos)
 
         long_open_orderid = ''
         long_close_orderid = ''
@@ -947,17 +928,6 @@ class GridAlgo(AlgoTemplate):
             if self.reject_order_timecounter > 60 * 10:
                 self.reject_order_timecounter = 0
                 self.reject_order_count = 0
-
-        # 停止价格计算
-        cycle_seconds = 60*30
-        self.stop_price_timecounter += 1
-        if self.stop_price_timecounter >= cycle_seconds or (not self.stop_price_init):
-            self.stop_price_timecounter = 0
-            self.update_stop_price()
-        remain_seconds = cycle_seconds - self.stop_price_timecounter
-        minute = int(remain_seconds/60)
-        second = int(remain_seconds - minute*60)
-        self.stop_price_remain = f'{minute}m {second}s'
 
         """
         # 检查最优限价算法
@@ -1123,36 +1093,6 @@ class GridAlgo(AlgoTemplate):
             self.algo_engine.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{content}')
         except:
             pass
-
-    def update_stop_price(self):
-        if not self.last_tick:
-            return
-
-        self.stop_price_init = True
-        # 根据当前价格和周期内剩余时间计算最大允许的单向波动幅度，避免价格单向极限拉升导致的大幅亏损
-        next_window_datetime = next_window_bar_datetime(current_datetime=self.last_tick.datetime)
-        current_timestamp = self.last_tick.datetime.timestamp()
-        next_window_timestamp = next_window_datetime.timestamp()
-        if next_window_timestamp > current_timestamp:
-            remain_second = next_window_timestamp - current_timestamp
-            total_second = 8 * 60 * 60
-
-            width = abs(self.gridUp - self.guide_price)
-            # 计算可接受的波动幅度
-            space = round_to((remain_second / total_second) * width, self.tick_price)
-            # 设置最小幅度
-            space = max(space, 3*self.grid_price)
-            if self.grid_direction == GridDirection.LONG:
-                stop_price = max(self.last_tick.last_price, self.gridDown) + space
-                stop_price = ceil_to(stop_price, self.grid_price)
-                stop_price = min(stop_price, self.guide_price)
-                self.stop_price = min(self.stop_price, stop_price)
-
-            elif self.grid_direction == GridDirection.SHORT:
-                stop_price = min(self.last_tick.last_price, self.gridUp) - space
-                stop_price = floor_to(stop_price, self.grid_price)
-                stop_price = max(stop_price, self.guide_price)
-                self.stop_price = max(self.stop_price, stop_price)
 
     # ======================================================
 
