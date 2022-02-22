@@ -146,7 +146,7 @@ class GridAlgo(AlgoTemplate):
         self.exit_price = setting.get('exit_price', 0.0)
         self.increase_price1 = setting.get('increase_price1', 0.0)
         self.increase_price2 = setting.get('increase_price2', 0.0)
-        self.volume_rate = setting.get('increase_price2', 1.0)
+        self.volume_rate = setting.get('volume_rate', 1.0)
 
         # Variables
         self.pos = 0
@@ -199,7 +199,7 @@ class GridAlgo(AlgoTemplate):
             self.exit_price = setting.get('exit_price', 0.0)
             self.increase_price1 = setting.get('increase_price1', 0.0)
             self.increase_price2 = setting.get('increase_price2', 0.0)
-            self.volume_rate = setting.get('increase_price2', 1.0)
+            self.volume_rate = setting.get('volume_rate', 1.0)
 
             self.max_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))
             self.new_setting = setting
