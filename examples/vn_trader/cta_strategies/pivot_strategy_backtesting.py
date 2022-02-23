@@ -441,6 +441,15 @@ class PivotStrategy_backtesting(CtaTemplate):
         self.long_exit2 = (self.long_entry1 + self.long_entry2) / 2
         self.long_exit3 = (self.long_entry2 + self.long_entry3) / 2
 
+        """
+        self.short_exit1 = self.pivot
+        self.short_exit2 = self.short_entry1
+        self.short_exit3 = self.short_entry2
+        self.long_exit1 = self.pivot
+        self.long_exit2 = self.long_entry1
+        self.long_exit3 = self.long_entry2
+        """
+
         max_unit_loss = 0.005 * self.cta_engine.capital
         self.long_volume1 = round_to(max_unit_loss / (self.long_entry1 - self.long_exit1), self.min_volume)
         self.long_volume2 = round_to(max_unit_loss / (self.long_entry2 - self.long_exit2), self.min_volume)
