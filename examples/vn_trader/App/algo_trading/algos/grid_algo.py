@@ -313,7 +313,7 @@ class GridAlgo(AlgoTemplate):
         grid_width = grid_price * grid_count
 
         # 网格仓位大小
-        max_space = max(generator.long_entry2-line_price, line_price-generator.short_entry2)
+        max_space = max(generator.long_entry1-line_price, generator.long_entry2-generator.long_entry1)
         total_volume = (TRADE_CAPITAL * 0.01) / (2 * max_space)
         grid_volume = floor_to(total_volume / grid_count, 0.001)
         grid_volume = max(grid_volume, 0.001)
