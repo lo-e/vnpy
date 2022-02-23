@@ -810,9 +810,15 @@ class GridAlgo(AlgoTemplate):
                 self.volume_rate = max(self.volume_rate, 4.0)
                 self.exit_price = self.increase_price1
 
+        # 更新状态
+        if self.volume_rate == 0 and not self.pos:
+            self.status = GridStatus.CLOSE
+
         # 更新网格
         if last_volume_rate != self.volume_rate:
+            # 同步，下次数据库启动用到
             self.setting_data['volume_rate'] = self.volume_rate
+            self.setting_data['exit_price'] = self.exit_price
             self.saveSyncData()
 
             self.create_grid()
