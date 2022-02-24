@@ -20,8 +20,8 @@ class PivotStrategy_backtesting(CtaTemplate):
 
     author = "loe"
 
-    exit_rate = 0.002
-    exit_window = 50
+    exit_rate = 0.001
+    exit_window = 500
     min_volume = 0.001
 
     # ======================================
