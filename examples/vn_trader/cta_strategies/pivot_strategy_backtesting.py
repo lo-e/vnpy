@@ -176,10 +176,9 @@ class PivotStrategy_backtesting(CtaTemplate):
         self.short_orderid1 = ''
         self.short_orderid2 = ''
 
-        self.bg.update_bar(bar)
-        self.am.update_bar(bar)
-
         if not self.inited:
+            self.bg.update_bar(bar)
+            self.am.update_bar(bar)
             return
 
         if not self.am.inited:
@@ -328,6 +327,8 @@ class PivotStrategy_backtesting(CtaTemplate):
 
                 self.short_orderid2 = self.cover(price=exit_price, volume=abs(self.short_volume2), stop=True)[0]
 
+        self.bg.update_bar(bar)
+        self.am.update_bar(bar)
         self.put_timer_event()
 
     # 周期数据源处理逻辑
