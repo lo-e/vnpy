@@ -129,9 +129,16 @@ class PivotStrategy_backtesting(CtaTemplate):
 
         """ fake """
         self.long_open_price1 = 0
+        self.long_open_trade1 = ''
+
         self.long_open_price2 = 0
+        self.long_open_trade2 = ''
+
         self.short_open_price1 = 0
+        self.short_open_trade1 = ''
+
         self.short_open_price2 = 0
+        self.short_open_trade2 = ''
 
     def on_init(self):
         """
@@ -382,6 +389,8 @@ class PivotStrategy_backtesting(CtaTemplate):
         """
         Callback of new trade data update.
         """
+        """ fake """
+        engine_remove_ids = []
 
         if trade.orderid == self.long_orderid1:
             if trade.offset == Offset.OPEN:
@@ -390,6 +399,7 @@ class PivotStrategy_backtesting(CtaTemplate):
 
                 """ fake """
                 self.long_open_price1 = trade.price
+                self.long_open_trade1 = trade.vt_tradeid
             else:
                 self.long_cross1 = False
                 if self.long_profit_ready1:
@@ -398,8 +408,10 @@ class PivotStrategy_backtesting(CtaTemplate):
                 """ fake """
                 profit = (trade.price - self.long_open_price1) * trade.volume
                 if profit <= -500:
-                    print(f'亏损过大{trade.datetime}\t{self.long_open_price1}\t多\t{trade.price}\t{profit}')
+                    engine_remove_ids = [self.long_open_trade1, trade.vt_tradeid]
+                    print(f'亏损过大{trade.datetime}\t{trade.tradeid}\t{self.long_open_price1}\t多\t{trade.price}\t{profit}')
                 self.long_open_price1 = 0
+                self.long_open_trade1 = ''
 
         if trade.orderid == self.long_orderid2:
             if trade.offset == Offset.OPEN:
@@ -408,6 +420,7 @@ class PivotStrategy_backtesting(CtaTemplate):
 
                 """ fake """
                 self.long_open_price2 = trade.price
+                self.long_open_trade2 = trade.vt_tradeid
             else:
                 self.long_cross2 = False
                 if self.long_profit_ready2:
@@ -416,8 +429,10 @@ class PivotStrategy_backtesting(CtaTemplate):
                 """ fake """
                 profit = (trade.price - self.long_open_price2) * trade.volume
                 if profit <= -500:
-                    print(f'亏损过大{trade.datetime}\t{self.long_open_price2}\t多\t{trade.price}\t{profit}')
+                    engine_remove_ids = [self.long_open_trade2, trade.vt_tradeid]
+                    print(f'亏损过大{trade.datetime}\t{trade.tradeid}\t{self.long_open_price2}\t多\t{trade.price}\t{profit}')
                 self.long_open_price2 = 0
+                self.long_open_trade2 = ''
 
         if trade.orderid == self.short_orderid1:
             if trade.offset == Offset.OPEN:
@@ -426,6 +441,7 @@ class PivotStrategy_backtesting(CtaTemplate):
 
                 """ fake """
                 self.short_open_price1 = trade.price
+                self.short_open_trade1 = trade.vt_tradeid
             else:
                 self.short_cross1 = False
                 if self.short_profit_ready1:
@@ -434,8 +450,10 @@ class PivotStrategy_backtesting(CtaTemplate):
                 """ fake """
                 profit = (self.short_open_price1 - trade.price) * trade.volume
                 if profit <= -500:
-                    print(f'亏损过大{trade.datetime}\t{self.short_open_price1}\t空\t{trade.price}\t{profit}')
+                    engine_remove_ids = [self.short_open_trade1, trade.vt_tradeid]
+                    print(f'亏损过大{trade.datetime}\t{trade.tradeid}\t{self.short_open_price1}\t空\t{trade.price}\t{profit}')
                 self.short_open_price1 = 0
+                self.short_open_trade1 = ''
 
         if trade.orderid == self.short_orderid2:
             if trade.offset == Offset.OPEN:
@@ -444,6 +462,7 @@ class PivotStrategy_backtesting(CtaTemplate):
 
                 """ fake """
                 self.short_open_price2 = trade.price
+                self.short_open_trade2 = trade.vt_tradeid
             else:
                 self.short_cross2 = False
                 if self.short_profit_ready2:
@@ -452,8 +471,16 @@ class PivotStrategy_backtesting(CtaTemplate):
                 """ fake """
                 profit = (self.short_open_price2 - trade.price) * trade.volume
                 if profit <= -500:
-                    print(f'亏损过大{trade.datetime}\t{self.short_open_price2}\t空\t{trade.price}\t{profit}')
+                    engine_remove_ids = [self.short_open_trade2, trade.vt_tradeid]
+                    print(f'亏损过大{trade.datetime}\t{trade.tradeid}\t{self.short_open_price2}\t空\t{trade.price}\t{profit}')
                 self.short_open_price2 = 0
+                self.short_open_trade2 = ''
+
+        """ fake """
+        for trade_id in engine_remove_ids:
+            trade = self.cta_engine.trades[trade_id]
+            self.cta_engine.trades.pop(trade_id)
+            pass
 
         # 邮件提醒
         super().on_trade(trade)
