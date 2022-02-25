@@ -407,7 +407,7 @@ class PivotStrategy_backtesting(CtaTemplate):
 
                 """ fake """
                 profit = (trade.price - self.long_open_price1) * trade.volume
-                if profit <= -500:
+                if profit <= -600:
                     engine_remove_ids = [self.long_open_trade1, trade.vt_tradeid]
                     print(f'亏损过大{trade.datetime}\t{trade.tradeid}\t{self.long_open_price1}\t多\t{trade.price}\t{profit}')
                 self.long_open_price1 = 0
@@ -428,7 +428,7 @@ class PivotStrategy_backtesting(CtaTemplate):
 
                 """ fake """
                 profit = (trade.price - self.long_open_price2) * trade.volume
-                if profit <= -500:
+                if profit <= -600:
                     engine_remove_ids = [self.long_open_trade2, trade.vt_tradeid]
                     print(f'亏损过大{trade.datetime}\t{trade.tradeid}\t{self.long_open_price2}\t多\t{trade.price}\t{profit}')
                 self.long_open_price2 = 0
@@ -449,7 +449,7 @@ class PivotStrategy_backtesting(CtaTemplate):
 
                 """ fake """
                 profit = (self.short_open_price1 - trade.price) * trade.volume
-                if profit <= -500:
+                if profit <= -600:
                     engine_remove_ids = [self.short_open_trade1, trade.vt_tradeid]
                     print(f'亏损过大{trade.datetime}\t{trade.tradeid}\t{self.short_open_price1}\t空\t{trade.price}\t{profit}')
                 self.short_open_price1 = 0
@@ -470,7 +470,7 @@ class PivotStrategy_backtesting(CtaTemplate):
 
                 """ fake """
                 profit = (self.short_open_price2 - trade.price) * trade.volume
-                if profit <= -500:
+                if profit <= -600:
                     engine_remove_ids = [self.short_open_trade2, trade.vt_tradeid]
                     print(f'亏损过大{trade.datetime}\t{trade.tradeid}\t{self.short_open_price2}\t空\t{trade.price}\t{profit}')
                 self.short_open_price2 = 0
