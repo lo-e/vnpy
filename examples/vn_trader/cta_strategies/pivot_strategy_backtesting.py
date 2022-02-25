@@ -127,6 +127,12 @@ class PivotStrategy_backtesting(CtaTemplate):
         self.window_count = 0
         self.cross_enable = False
 
+        """ fake """
+        self.long_open_price1 = 0
+        self.long_open_price2 = 0
+        self.short_open_price1 = 0
+        self.short_open_price2 = 0
+
     def on_init(self):
         """
         Callback when strategy is inited.
@@ -168,7 +174,7 @@ class PivotStrategy_backtesting(CtaTemplate):
         if (bar.high_price >= (3*(self.long_entry3 - self.pivot) + self.pivot) or bar.low_price <= (self.pivot - 3*(self.pivot - self.short_entry3))) and self.cross_enable:
             self.cross_enable = False
             self.cross_count += 1
-            print(f'{bar.datetime}\tcross_count:{self.cross_count}\twindow_count:{self.window_count}')
+            #print(f'{bar.datetime}\tcross_count:{self.cross_count}\twindow_count:{self.window_count}')
 
         self.cancel_all()
         self.long_orderid1 = ''
@@ -176,9 +182,10 @@ class PivotStrategy_backtesting(CtaTemplate):
         self.short_orderid1 = ''
         self.short_orderid2 = ''
 
+        self.bg.update_bar(bar)
+        self.am.update_bar(bar)
+
         if not self.inited:
-            self.bg.update_bar(bar)
-            self.am.update_bar(bar)
             return
 
         if not self.am.inited:
@@ -327,8 +334,6 @@ class PivotStrategy_backtesting(CtaTemplate):
 
                 self.short_orderid2 = self.cover(price=exit_price, volume=abs(self.short_volume2), stop=True)[0]
 
-        self.bg.update_bar(bar)
-        self.am.update_bar(bar)
         self.put_timer_event()
 
     # 周期数据源处理逻辑
@@ -337,7 +342,8 @@ class PivotStrategy_backtesting(CtaTemplate):
         self.window_count += 1
         self.cross_enable = True
         if bar.datetime >= datetime.strptime('2022-2-21', '%Y-%m-%d'):
-            print(self.window_count)
+            #print(self.window_count)
+            pass
 
         self.calculate_pivot(bar)
         self.base_datetime = bar.datetime
@@ -376,41 +382,78 @@ class PivotStrategy_backtesting(CtaTemplate):
         """
         Callback of new trade data update.
         """
+
         if trade.orderid == self.long_orderid1:
             if trade.offset == Offset.OPEN:
                 self.long_cross1 = True
                 #self.long_allowed1 = False
+
+                """ fake """
+                self.long_open_price1 = trade.price
             else:
                 self.long_cross1 = False
                 if self.long_profit_ready1:
                     self.long_allowed1 = False
 
+                """ fake """
+                profit = (trade.price - self.long_open_price1) * trade.volume
+                if profit <= -500:
+                    print(f'亏损过大{trade.datetime}\t{self.long_open_price1}\t多\t{trade.price}\t{profit}')
+                self.long_open_price1 = 0
+
         if trade.orderid == self.long_orderid2:
             if trade.offset == Offset.OPEN:
                 self.long_cross2 = True
                 #self.long_allowed2 = False
+
+                """ fake """
+                self.long_open_price2 = trade.price
             else:
                 self.long_cross2 = False
                 if self.long_profit_ready2:
                     self.long_allowed2 = False
 
+                """ fake """
+                profit = (trade.price - self.long_open_price2) * trade.volume
+                if profit <= -500:
+                    print(f'亏损过大{trade.datetime}\t{self.long_open_price2}\t多\t{trade.price}\t{profit}')
+                self.long_open_price2 = 0
+
         if trade.orderid == self.short_orderid1:
             if trade.offset == Offset.OPEN:
                 self.short_cross1 = True
                 #self.short_allowed1 = False
+
+                """ fake """
+                self.short_open_price1 = trade.price
             else:
                 self.short_cross1 = False
                 if self.short_profit_ready1:
                     self.short_allowed1 = False
 
+                """ fake """
+                profit = (self.short_open_price1 - trade.price) * trade.volume
+                if profit <= -500:
+                    print(f'亏损过大{trade.datetime}\t{self.short_open_price1}\t空\t{trade.price}\t{profit}')
+                self.short_open_price1 = 0
+
         if trade.orderid == self.short_orderid2:
             if trade.offset == Offset.OPEN:
                 self.short_cross2 = True
                 #self.short_allowed2 = False
+
+                """ fake """
+                self.short_open_price2 = trade.price
             else:
                 self.short_cross2 = False
                 if self.short_profit_ready2:
                     self.short_allowed2 = False
+
+                """ fake """
+                profit = (self.short_open_price2 - trade.price) * trade.volume
+                if profit <= -500:
+                    print(f'亏损过大{trade.datetime}\t{self.short_open_price2}\t空\t{trade.price}\t{profit}')
+                self.short_open_price2 = 0
 
         # 邮件提醒
         super().on_trade(trade)
