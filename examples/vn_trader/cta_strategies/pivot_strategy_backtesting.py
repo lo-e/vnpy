@@ -259,8 +259,8 @@ class PivotStrategy_backtesting(CtaTemplate):
                 self.long_high1 = 0
 
                 if self.long_allowed1:
-                    open_price = max(self.long_window_entry, self.long_entry1)
-                    #open_price = self.long_entry1
+                    #open_price = max(self.long_window_entry, self.long_entry1)
+                    open_price = self.long_entry1
                     self.long_orderid1 = self.buy(price=open_price, volume=abs(self.long_volume1), stop=True)[0]
 
             else:
@@ -283,8 +283,8 @@ class PivotStrategy_backtesting(CtaTemplate):
                 self.long_high2 = 0
 
                 if self.long_allowed2:
-                    open_price = max(self.long_window_entry, self.long_entry2)
-                    # open_price = self.long_entry2
+                    #open_price = max(self.long_window_entry, self.long_entry2)
+                    open_price = self.long_entry2
                     self.long_orderid2 = self.buy(price=open_price, volume=abs(self.long_volume2), stop=True)[0]
 
             else:
@@ -307,8 +307,8 @@ class PivotStrategy_backtesting(CtaTemplate):
                 self.short_low1 = 0
 
                 if self.short_allowed1:
-                    open_price = min(self.short_window_entry, self.short_entry1)
-                    # open_price = self.short_entry1
+                    #open_price = min(self.short_window_entry, self.short_entry1)
+                    open_price = self.short_entry1
                     self.short_orderid1 = self.short(price=open_price, volume=abs(self.short_volume1), stop=True)[0]
 
             else:
@@ -334,8 +334,8 @@ class PivotStrategy_backtesting(CtaTemplate):
                 self.short_low2 = 0
 
                 if self.short_allowed2:
-                    open_price = min(self.short_window_entry, self.short_entry2)
-                    # open_price = self.short_entry2
+                    #open_price = min(self.short_window_entry, self.short_entry2)
+                    open_price = self.short_entry2
                     self.short_orderid2 = self.short(price=open_price, volume=abs(self.short_volume2), stop=True)[0]
 
             else:
