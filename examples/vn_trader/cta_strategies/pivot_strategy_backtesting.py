@@ -21,6 +21,7 @@ class PivotStrategy_backtesting(CtaTemplate):
     author = "loe"
 
     exit_rate = 0.001
+    open_window = 10
     exit_window = 500
     min_volume = 0.001
 
@@ -61,6 +62,8 @@ class PivotStrategy_backtesting(CtaTemplate):
     short_allowed2 = False
     short_profit_ready1 = False
     short_profit_ready2 = False
+    long_window_entry = 0
+    short_window_entry = 0
     long_profit_exit = 0
     short_profit_exit = 0
     long_orderid1 = ''
@@ -78,6 +81,7 @@ class PivotStrategy_backtesting(CtaTemplate):
     short_low2 = 0
 
     parameters = ['exit_rate',
+                  'open_window',
                   'exit_window',
                   'min_volume']
 
@@ -106,7 +110,9 @@ class PivotStrategy_backtesting(CtaTemplate):
                  'short_allowed1',
                  'short_allowed2',
                  'long_profit_exit',
-                 'short_profit_exit']
+                 'short_profit_exit',
+                 'long_window_entry',
+                 'short_window_entry']
     syncs = []
 
     def __init__(self, cta_engine, strategy_name, vt_symbol, setting):
@@ -117,7 +123,7 @@ class PivotStrategy_backtesting(CtaTemplate):
                                      window=0,
                                      on_window_bar=self.on_generate_bar,
                                      interval=Interval.MINUTE)
-        self.am = ArrayManager(size=self.exit_window + 1)
+        self.am = ArrayManager(size=max(self.exit_window, self.open_window) + 1)
 
         """ fake """
         self.csv_list = []
@@ -200,6 +206,7 @@ class PivotStrategy_backtesting(CtaTemplate):
 
         # 计算移动止盈价格
         self.short_profit_exit, self.long_profit_exit = self.am.donchian(self.exit_window, False)
+        self.long_window_entry, self.short_window_entry = self.am.donchian(self.open_window, False)
         self.long_profit_ready1 = False
         self.long_profit_ready2 = False
         self.short_profit_ready1 = False
@@ -252,7 +259,9 @@ class PivotStrategy_backtesting(CtaTemplate):
                 self.long_high1 = 0
 
                 if self.long_allowed1:
-                    self.long_orderid1 = self.buy(price=self.long_entry1, volume=abs(self.long_volume1), stop=True)[0]
+                    open_price = max(self.long_window_entry, self.long_entry1)
+                    #open_price = self.long_entry1
+                    self.long_orderid1 = self.buy(price=open_price, volume=abs(self.long_volume1), stop=True)[0]
 
             else:
                 self.long_high1 = max(self.long_high1, bar.high_price)
@@ -274,7 +283,9 @@ class PivotStrategy_backtesting(CtaTemplate):
                 self.long_high2 = 0
 
                 if self.long_allowed2:
-                    self.long_orderid2 = self.buy(price=self.long_entry2, volume=abs(self.long_volume2), stop=True)[0]
+                    open_price = max(self.long_window_entry, self.long_entry2)
+                    # open_price = self.long_entry2
+                    self.long_orderid2 = self.buy(price=open_price, volume=abs(self.long_volume2), stop=True)[0]
 
             else:
                 self.long_high2 = max(self.long_high2, bar.high_price)
@@ -296,7 +307,9 @@ class PivotStrategy_backtesting(CtaTemplate):
                 self.short_low1 = 0
 
                 if self.short_allowed1:
-                    self.short_orderid1 = self.short(price=self.short_entry1, volume=abs(self.short_volume1), stop=True)[0]
+                    open_price = min(self.short_window_entry, self.short_entry1)
+                    # open_price = self.short_entry1
+                    self.short_orderid1 = self.short(price=open_price, volume=abs(self.short_volume1), stop=True)[0]
 
             else:
                 if not self.short_low1:
@@ -321,7 +334,9 @@ class PivotStrategy_backtesting(CtaTemplate):
                 self.short_low2 = 0
 
                 if self.short_allowed2:
-                    self.short_orderid2 = self.short(price=self.short_entry2, volume=abs(self.short_volume2), stop=True)[0]
+                    open_price = min(self.short_window_entry, self.short_entry2)
+                    # open_price = self.short_entry2
+                    self.short_orderid2 = self.short(price=open_price, volume=abs(self.short_volume2), stop=True)[0]
 
             else:
                 if not self.short_low2:
