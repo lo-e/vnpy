@@ -319,7 +319,7 @@ class GridAlgo(AlgoTemplate):
         line_price = round_to(refer_price, grid_price)
 
         if grid_direction == GridDirection.LONG:
-            grid_width = (generator.long_entry3 - generator.pivot)*2 - (line_price - generator.pivot)
+            grid_width = (generator.long_entry3 - generator.pivot)*3 - (line_price - generator.pivot)
             if level == GridLevel.LEVEL_1:
                 exit_price = generator.long_exit1
 
@@ -331,7 +331,7 @@ class GridAlgo(AlgoTemplate):
             exit_price = 0.0
 
         else:
-            grid_width = (generator.pivot - generator.short_entry3) * 2 - (generator.pivot - line_price)
+            grid_width = (generator.pivot - generator.short_entry3)*3 - (generator.pivot - line_price)
             if level == GridLevel.LEVEL_1:
                 exit_price = generator.short_exit1
 
@@ -343,7 +343,7 @@ class GridAlgo(AlgoTemplate):
 
         # 网格仓位大小
         total_volume = (TRADE_CAPITAL * 0.005) / abs(line_price - exit_price)
-        grid_volume = floor_to(total_volume / grid_count, 0.001)
+        grid_volume = round_to(total_volume / grid_count, 0.001)
         grid_volume = max(grid_volume, 0.001)
         #"""
 

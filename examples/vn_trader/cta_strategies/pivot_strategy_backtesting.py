@@ -130,6 +130,7 @@ class PivotStrategy_backtesting(CtaTemplate):
 
         """ fake """
         self.cross_count = 0
+        self.end_cross_count = 0
         self.window_count = 0
         self.cross_enable = False
 
@@ -184,10 +185,11 @@ class PivotStrategy_backtesting(CtaTemplate):
         """
         """ fake """
         self.bar = bar
-        if (bar.high_price >= (3*(self.long_entry3 - self.pivot) + self.pivot) or bar.low_price <= (self.pivot - 3*(self.pivot - self.short_entry3))) and self.cross_enable:
+        if (bar.high_price >= (2*(self.long_entry3 - self.pivot) + self.pivot) or bar.low_price <= (self.pivot - 2*(self.pivot - self.short_entry3))) and self.cross_enable:
             self.cross_enable = False
             self.cross_count += 1
             #print(f'{bar.datetime}\tcross_count:{self.cross_count}\twindow_count:{self.window_count}')
+            pass
 
         self.cancel_all()
         self.long_orderid1 = ''
@@ -363,9 +365,15 @@ class PivotStrategy_backtesting(CtaTemplate):
         """ fake """
         self.window_count += 1
         self.cross_enable = True
-        if bar.datetime >= datetime.strptime('2022-2-21', '%Y-%m-%d'):
-            #print(self.window_count)
+        if bar.datetime >= datetime.strptime('2020-12-31', '%Y-%m-%d'):
+            print(f'all_cross_count:{self.cross_count}\tall_window_count:{self.window_count}')
             pass
+
+        """ fake """
+        if self.pivot:
+            if (self.bar.high_price >= (2*(self.long_entry3 - self.pivot) + self.pivot) or self.bar.low_price <= (self.pivot - 2*(self.pivot - self.short_entry3))):
+                self.end_cross_count += 1
+                print(f'{bar.datetime}\tend_cross_count:{self.end_cross_count}\tcross_count:{self.cross_count}\twindow_count:{self.window_count}')
 
         self.calculate_pivot(bar)
         self.base_datetime = bar.datetime
@@ -391,7 +399,7 @@ class PivotStrategy_backtesting(CtaTemplate):
                 'short_exit3': self.short_exit3,
                 'short_entry3': self.short_entry3}
         self.csv_list.append(dict)
-        if bar.datetime >= datetime.strptime('2022-01-02 00:00:00', '%Y-%m-%d %H:%M:%S'):
+        if bar.datetime >= datetime.strptime('2022-02-26 00:00:00', '%Y-%m-%d %H:%M:%S'):
             csv_saving(file_name=f'{self.vt_symbol}.csv', data_list=self.csv_list)
 
     def on_order(self, order: OrderData):
