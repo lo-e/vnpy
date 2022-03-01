@@ -1149,6 +1149,11 @@ class GridAlgo(AlgoTemplate):
         except:
             pass
 
+    def query_predicted_funding(self):
+        self.algo_engine.query_predicted_funding(callback=self.on_query_predicted_funding)
+
+    def on_query_predicted_funding(self, data:dict):
+        pass
     # ======================================================
 
 def next_window_bar_datetime(current_datetime:datetime) -> datetime:

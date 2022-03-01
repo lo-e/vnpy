@@ -199,6 +199,9 @@ class BybitGateway(BaseGateway):
             self.private_ws_api.stop()
             self.public_ws_api.stop()
 
+    """ modify by loe """
+    def query_predicted_funding(self, symbol:str, callback:Callable):
+        self.rest_api.query_predicted_funding(symbol=symbol, callback=callback)
 
 class BybitInverseRestApi(RestClient):
     """反向合约的REST接口"""
@@ -1527,6 +1530,41 @@ class BybitUsdtRestApi(RestClient):
 
         return history
 
+    """ modify by loe """
+    # =================================================
+    def query_predicted_funding(self, symbol:str, callback:Callable) -> None:
+        """查询预测资金费率"""
+        path_usdt: str = "/v2/private/funding/predicted-funding"
+        data: dict = {
+            "symbol": symbol
+        }
+        self.add_request(
+            "GET",
+            path_usdt,
+            callback=self.on_query_predicted_funding,
+            params=data
+        )
+        self.funding_callback = callback
+
+    def on_query_predicted_funding(self, data: dict, request: Request) -> None:
+        """预测资金费率查询回报"""
+        if self.check_error("查询预测资金费率", data):
+            if self.funding_callback:
+                back_dict = {'error': data.get("ret_msg", '')}
+                self.funding_callback(back_dict)
+            return
+
+        result = data.get("result", None)
+        if result:
+            symbol = request.params.get('symbol', '')
+            rate = result.get('predicted_funding_rate', 0.0)
+            fee = result.get('predicted_funding_fee', 0.0)
+            back_dict = {'symbol':symbol,
+                         'rate':rate,
+                         'fee':fee}
+            if self.funding_callback:
+                self.funding_callback(back_dict)
+    # =================================================
 
 class BybitUsdtPublicWebsocketApi(WebsocketClient):
     """正向合约的行情Websocket接口"""

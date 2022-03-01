@@ -61,6 +61,7 @@ class AlgoEngine(BaseEngine):
 
         # 数据引擎启动
         self.autoEngine.start()
+        self.query_predicted_funding(symbol='BTCUSDT', callback=self.on_query_predicted_funding)
 
     def close(self):
         """"""
@@ -308,6 +309,7 @@ class AlgoEngine(BaseEngine):
         self.main_engine.cancel_order(req, order.gateway_name)
 
     """ modify by loe """
+    # ===============================================
     # 新增write_log
     def get_tick(self, algo: AlgoTemplate, vt_symbol: str, write_log=True):
         """"""
@@ -318,7 +320,6 @@ class AlgoEngine(BaseEngine):
 
         return tick
 
-    """ modify by loe """
     # 订阅并且获取tick
     def get_tick_subscribe(self, algo: AlgoTemplate, vt_symbol: str):
         self.subscribe(algo=None, vt_symbol=vt_symbol)
@@ -327,6 +328,15 @@ class AlgoEngine(BaseEngine):
             sleep(1)
             return self.get_tick(algo=None, vt_symbol=vt_symbol)
         return tick
+
+    def query_predicted_funding(self, symbol, callback):
+        gateway = self.main_engine.get_gateway('BYBIT')
+        if gateway and callback:
+            gateway.query_predicted_funding(symbol=symbol, callback=callback)
+
+    def on_query_predicted_funding(self, data: dict):
+        pass
+    # ===============================================
 
     def get_contract(self, algo: AlgoTemplate, vt_symbol: str):
         """"""
