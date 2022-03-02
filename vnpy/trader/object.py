@@ -270,6 +270,16 @@ class AccountData(BaseData):
         self.available = self.balance - self.frozen
         self.vt_accountid = f"{self.gateway_name}.{self.accountid}"
 
+@dataclass
+class FundingData(BaseData):
+    """
+    Funding data contains information about rate, fee and
+    available.
+    """
+
+    symbol: str
+    rate: float = 0
+    fee: float = 0
 
 @dataclass
 class LogData(BaseData):

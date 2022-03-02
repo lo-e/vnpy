@@ -18,8 +18,11 @@ from vnpy.trader.constant import (
     Offset
 )
 from vnpy.trader.gateway import BaseGateway
+""" modify by loe """
+# 添加了FundingData
 from vnpy.trader.object import (
     AccountData,
+    FundingData,
     BarData,
     CancelRequest,
     ContractData,
@@ -200,8 +203,9 @@ class BybitGateway(BaseGateway):
             self.public_ws_api.stop()
 
     """ modify by loe """
-    def query_predicted_funding(self, symbol:str, callback:Callable):
-        self.rest_api.query_predicted_funding(symbol=symbol, callback=callback)
+    def query_predicted_funding(self, symbol:str):
+        if self.rest_api:
+            self.rest_api.query_predicted_funding(symbol=symbol)
 
 class BybitInverseRestApi(RestClient):
     """反向合约的REST接口"""
@@ -1532,7 +1536,7 @@ class BybitUsdtRestApi(RestClient):
 
     """ modify by loe """
     # =================================================
-    def query_predicted_funding(self, symbol:str, callback:Callable) -> None:
+    def query_predicted_funding(self, symbol:str) -> None:
         """查询预测资金费率"""
         path_usdt: str = "/v2/private/funding/predicted-funding"
         data: dict = {
@@ -1544,26 +1548,21 @@ class BybitUsdtRestApi(RestClient):
             callback=self.on_query_predicted_funding,
             params=data
         )
-        self.funding_callback = callback
 
     def on_query_predicted_funding(self, data: dict, request: Request) -> None:
         """预测资金费率查询回报"""
         if self.check_error("查询预测资金费率", data):
-            if self.funding_callback:
-                back_dict = {'error': data.get("ret_msg", '')}
-                self.funding_callback(back_dict)
             return
 
         result = data.get("result", None)
         if result:
-            symbol = request.params.get('symbol', '')
-            rate = result.get('predicted_funding_rate', 0.0)
-            fee = result.get('predicted_funding_fee', 0.0)
-            back_dict = {'symbol':symbol,
-                         'rate':rate,
-                         'fee':fee}
-            if self.funding_callback:
-                self.funding_callback(back_dict)
+            funding: FundingData = FundingData(
+                symbol=request.params.get('symbol', ''),
+                rate=result.get('predicted_funding_rate', 0.0),
+                fee=result.get('predicted_funding_fee', 0.0),
+                gateway_name=self.gateway_name
+            )
+            self.gateway.on_predicted_funding(funding)
     # =================================================
 
 class BybitUsdtPublicWebsocketApi(WebsocketClient):

@@ -16,13 +16,17 @@ from .event import (
     EVENT_CONTRACT,
     EVENT_LOG,
     EVENT_QUOTE,
+    EVENT_PREDICTED_FUNDING
 )
+""" modify by loe """
+# 添加了FundingData
 from .object import (
     TickData,
     OrderData,
     TradeData,
     PositionData,
     AccountData,
+    FundingData,
     ContractData,
     LogData,
     QuoteData,
@@ -139,6 +143,15 @@ class BaseGateway(ABC):
         """
         self.on_event(EVENT_ACCOUNT, account)
         self.on_event(EVENT_ACCOUNT + account.vt_accountid, account)
+
+    """ modify by loe """
+    def on_predicted_funding(self, funding: FundingData) -> None:
+        """
+        Funding event push.
+        Funding event of a specific funding.symbol is also pushed.
+        """
+        self.on_event(EVENT_PREDICTED_FUNDING, funding)
+        self.on_event(EVENT_PREDICTED_FUNDING + funding.symbol, funding)
 
     def on_quote(self, quote: QuoteData) -> None:
         """

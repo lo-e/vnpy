@@ -14,6 +14,8 @@ from datetime import datetime, timedelta
 from vnpy.trader.utility import round_to, floor_to, ceil_to
 from vnpy.trader.utility import BarGenerator
 from typing import Callable
+from vnpy.trader.event import EVENT_PREDICTED_FUNDING
+from vnpy.event import Event
 
 TRADE_SYMBOL = 'BTCUSDT.BYBIT'
 TRADE_CAPITAL = 100000
@@ -92,6 +94,7 @@ class GridAlgo(AlgoTemplate):
     variables = [
         "pos",
         "pos_reiniting",
+        "predicted_funding",
         "timer_count",
         "status",
         "grid_direction",
@@ -185,8 +188,10 @@ class GridAlgo(AlgoTemplate):
         self.pos_reiniting_waiting = False
 
         self.am = ArrayManager(self.gridWindow + 1)
+        self.predicted_funding = 0.0
 
         self.subscribe(self.vt_symbol)
+        self.algo_engine.event_engine.register(EVENT_PREDICTED_FUNDING, self.on_query_predicted_funding)
         self.put_parameters_event()
         self.put_variables_event()
 
@@ -482,6 +487,7 @@ class GridAlgo(AlgoTemplate):
     def on_start(self):
         self.check_init()
         self.create_grid()
+
         self.pos_reiniting_waiting = True
 
         self.setting_data = self.new_setting
@@ -1149,11 +1155,9 @@ class GridAlgo(AlgoTemplate):
         except:
             pass
 
-    def query_predicted_funding(self):
-        self.algo_engine.query_predicted_funding(callback=self.on_query_predicted_funding)
-
-    def on_query_predicted_funding(self, data:dict):
-        pass
+    def on_query_predicted_funding(self, event: Event):
+        funding_data = event.data
+        self.predicted_funding = funding_data.rate
     # ======================================================
 
 def next_window_bar_datetime(current_datetime:datetime) -> datetime:

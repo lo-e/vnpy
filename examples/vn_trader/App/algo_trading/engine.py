@@ -10,8 +10,10 @@ from vnpy.trader.setting import SETTINGS
 
 from .template import AlgoTemplate
 from .base import (
-    EVENT_ALGO_LOG, EVENT_ALGO_PARAMETERS,
-    EVENT_ALGO_SETTING, EVENT_ALGO_VARIABLES,
+    EVENT_ALGO_LOG,
+    EVENT_ALGO_PARAMETERS,
+    EVENT_ALGO_SETTING,
+    EVENT_ALGO_VARIABLES,
     APP_NAME
 )
 
@@ -39,6 +41,7 @@ class AlgoEngine(BaseEngine):
         self.symbol_algo_map = {}
         """ modify by loe """
         self.subscribe_symbols = set()
+        self.query_funding_time = 0
 
         self.orderid_algo_map = {}
         self.orderid_offset_map = {}
@@ -61,7 +64,6 @@ class AlgoEngine(BaseEngine):
 
         # 数据引擎启动
         self.autoEngine.start()
-        self.query_predicted_funding(symbol='BTCUSDT', callback=self.on_query_predicted_funding)
 
     def close(self):
         """"""
@@ -150,6 +152,12 @@ class AlgoEngine(BaseEngine):
     def process_timer_event(self, event: Event):
         """"""
         # Generate a list of algos first to avoid dict size change
+        # 查询资金费率
+        self.query_funding_time += 1
+        if self.query_funding_time >= 60*60:
+            self.query_funding_time = 0
+            self.query_predicted_funding(symbol='BTCUSD')
+
         algos = list(self.algos.values())
 
         for algo in algos:
@@ -329,13 +337,10 @@ class AlgoEngine(BaseEngine):
             return self.get_tick(algo=None, vt_symbol=vt_symbol)
         return tick
 
-    def query_predicted_funding(self, symbol, callback):
+    def query_predicted_funding(self, symbol):
         gateway = self.main_engine.get_gateway('BYBIT')
-        if gateway and callback:
-            gateway.query_predicted_funding(symbol=symbol, callback=callback)
-
-    def on_query_predicted_funding(self, data: dict):
-        pass
+        if gateway:
+            gateway.query_predicted_funding(symbol=symbol)
     # ===============================================
 
     def get_contract(self, algo: AlgoTemplate, vt_symbol: str):

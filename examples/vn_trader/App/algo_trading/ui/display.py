@@ -44,5 +44,6 @@ NAME_DISPLAY_MAP = {
     "stop_price_remain":"更新倒计时",
     "exit_price1":"出场价格1",
     "exit_price2":"出场价格2",
-    "pos_reiniting":"初始化"
+    "pos_reiniting":"初始化",
+    "predicted_funding":"资金费率"
 }
