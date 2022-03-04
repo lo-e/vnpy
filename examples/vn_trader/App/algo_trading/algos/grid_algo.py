@@ -833,6 +833,10 @@ class GridAlgo(AlgoTemplate):
                 target = min(self.gridDown, price_range[index])
                 volume_rate = round_to((float(target) - self.exit_price) / (self.gridDown - self.exit_price), 0.1)
                 self.volume_rate = min(self.volume_rate, volume_rate)
+
+                if self.volume_rate <= 0.7:
+                    # 设置最大止损
+                    self.volume_rate = 0
             else:
                 self.volume_rate = 1
 
@@ -845,6 +849,10 @@ class GridAlgo(AlgoTemplate):
                 target = min(self.exit_price, price_range[index])
                 volume_rate = round_to((self.exit_price - float(target)) / (self.exit_price - self.gridUp), 0.1)
                 self.volume_rate = min(self.volume_rate, volume_rate)
+
+                if self.volume_rate <= 0.7:
+                    # 设置最大止损
+                    self.volume_rate = 0
             else:
                 self.volume_rate = 1
 
