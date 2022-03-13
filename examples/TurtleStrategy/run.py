@@ -20,8 +20,8 @@ from vnpy.trader.utility import DIR_SYMBOL
 
 def one():
     engine = BacktestingEngine()
-    engine.setPeriod(datetime(2021, 9, 15), datetime(2022, 12, 31))
-    engine.tradingStart = datetime(2022, 1, 1)
+    engine.setPeriod(datetime(2020, 9, 15), datetime(2021, 12, 31))
+    engine.tradingStart = datetime(2021, 1, 1)
     figSavedName = ''
     if figSavedName:
         figSavedName = f'figSaved{DIR_SYMBOL}{figSavedName}'
@@ -51,11 +51,39 @@ def one():
     resultList = []
     totalPnl = 0
     calculateDic = {}
+    symbol_pnl_dict = {}
     for symbol in engine.symbolList:
         tradeList = engine.getTradeData(symbol)
+        print('*'*60)
+
+        open_price_list = []
+        open_direction = None
         for trade in tradeList:
             print('%s\t\t%s %s\t\t%s\t\t%s\t%s@%s' % (trade.dt, trade.symbol, trade.direction.value, trade.offset.value,
                                                       engine.sizeDict[trade.symbol], trade.volume, trade.price))
+
+
+            if trade.offset == Offset.OPEN:
+                if not open_direction:
+                    open_direction = trade.direction
+                elif open_direction != trade.direction:
+                    raise ('成交数据异常！！检查代码')
+
+                open_price_list.append(trade.price)
+            else:
+                mean_open = np.array(open_price_list).mean()
+                if open_direction == Direction.LONG:
+                    pnl = (trade.price - mean_open) * trade.volume
+                else:
+                    pnl = (trade.price - mean_open) * trade.volume * -1
+
+                symbol_pnl_list = symbol_pnl_dict.get(symbol, [])
+                symbol_pnl_list.append(pnl)
+                symbol_pnl_dict[symbol] = symbol_pnl_list
+                print(f'收益：{pnl}')
+                open_price_list = []
+                open_direction = None
+                print('\n')
 
             tOpen = False
             pnl = 0
@@ -114,7 +142,8 @@ def one():
                 dic['totalPnl'] = ''
 
             resultList.append(dic)
-        print('\n\n')
+        print('\n')
+
     if len(resultList):
         fieldNames = ['datetime', 'symbol', 'direction', 'offset', 'size', 'volume', 'price', 'pnl', 'totalPnl']
         # 文件路径
@@ -142,7 +171,12 @@ def one():
                 print('entry\t%s' % signal.result.entry)
             print('lastPnl\t%s' % signal.getLastPnl())
             print('newDominantOpen\t%s' % signal.newDominantOpen)
-            print('\n')
+
+            pnl_array = np.array(symbol_pnl_dict[signal.symbol])
+            pnl_count = pnl_array.size
+            pnl_mean = pnl_array.mean()
+            pnl_std = pnl_array.std()
+            print(f'总开平数量：{pnl_count}\n收益均值：{pnl_mean}\n收益标准差：{pnl_std}\n\n')
     #"""
 
 def two():
