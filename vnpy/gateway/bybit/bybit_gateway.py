@@ -682,6 +682,11 @@ class BybitInverseRestApi(RestClient):
 
         return history
 
+    """ modify by loe """
+    # =================================================
+    def query_predicted_funding(self, symbol: str) -> None:
+        return
+
 
 class BybitInversePublicWebsocketApi(WebsocketClient):
     """反向合约的行情Websocket接口"""
