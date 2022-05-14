@@ -186,8 +186,8 @@ class TurtleStrategyCrypto(CtaTemplate):
                     preCheck = False
 
                 # 上次盈利过滤
-                if self.lastPnl > 0:
-                    preCheck = False
+                # if self.lastPnl > 0:
+                #     preCheck = False
 
                 # 检查是否保证金超限
                 if self.checkBondOver(tick.last_price, current_multiplier):
@@ -210,8 +210,8 @@ class TurtleStrategyCrypto(CtaTemplate):
                 if current_multiplier <= 0:
                     preCheck = False
 
-                if self.lastPnl > 0:
-                    preCheck = False
+                # if self.lastPnl > 0:
+                #     preCheck = False
 
                 if self.checkBondOver(tick.last_price, current_multiplier):
                     preCheck = False
@@ -232,8 +232,8 @@ class TurtleStrategyCrypto(CtaTemplate):
                 if current_multiplier <= 0:
                     preCheck = False
 
-                if self.lastPnl > 0:
-                    preCheck = False
+                # if self.lastPnl > 0:
+                #     preCheck = False
 
                 if self.checkBondOver(tick.last_price, current_multiplier):
                     preCheck = False
@@ -254,8 +254,8 @@ class TurtleStrategyCrypto(CtaTemplate):
                 if current_multiplier <= 0:
                     preCheck = False
 
-                if self.lastPnl > 0:
-                    preCheck = False
+                # if self.lastPnl > 0:
+                #     preCheck = False
 
                 if self.checkBondOver(tick.last_price, current_multiplier):
                     preCheck = False
@@ -287,6 +287,7 @@ class TurtleStrategyCrypto(CtaTemplate):
                 self.put_timer_event()
                 return
 
+        """
         if self.virtualUnit <= 0:
             # 空头开仓加仓
             if tick.last_price <= self.shortEntry1 and self.virtualUnit > -1:
@@ -301,8 +302,8 @@ class TurtleStrategyCrypto(CtaTemplate):
                 if current_multiplier <= 0:
                     preCheck = False
 
-                if self.lastPnl > 0:
-                    preCheck = False
+                # if self.lastPnl > 0:
+                #     preCheck = False
 
                 if self.checkBondOver(tick.last_price, current_multiplier):
                     preCheck = False
@@ -323,8 +324,8 @@ class TurtleStrategyCrypto(CtaTemplate):
                 if current_multiplier <= 0:
                     preCheck = False
 
-                if self.lastPnl > 0:
-                    preCheck = False
+                # if self.lastPnl > 0:
+                #     preCheck = False
 
                 if self.checkBondOver(tick.last_price, current_multiplier):
                     preCheck = False
@@ -345,8 +346,8 @@ class TurtleStrategyCrypto(CtaTemplate):
                 if current_multiplier <= 0:
                     preCheck = False
 
-                if self.lastPnl > 0:
-                    preCheck = False
+                # if self.lastPnl > 0:
+                #     preCheck = False
 
                 if self.checkBondOver(tick.last_price, current_multiplier):
                     preCheck = False
@@ -367,8 +368,8 @@ class TurtleStrategyCrypto(CtaTemplate):
                 if current_multiplier <= 0:
                     preCheck = False
 
-                if self.lastPnl > 0:
-                    preCheck = False
+                # if self.lastPnl > 0:
+                #     preCheck = False
 
                 if self.checkBondOver(tick.last_price, current_multiplier):
                     preCheck = False
@@ -399,6 +400,7 @@ class TurtleStrategyCrypto(CtaTemplate):
 
                 self.put_timer_event()
                 return
+        """
 
         self.put_timer_event()
 
