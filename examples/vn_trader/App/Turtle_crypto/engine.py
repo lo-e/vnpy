@@ -117,7 +117,7 @@ class TurtleEngine(BaseEngine):
         # 组合管理类
         self.turtlePortfolio = None
         # 数据引擎
-        self.autoEngine = TurtleCryptoAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='7:51', generate_time='8:00:01')
+        self.autoEngine = TurtleCryptoAutoEngine(main_engine=self.main_engine, turtle_engine=self, download_time='8:02', generate_time='8:00:01')
 
     def init_engine(self):
         """
@@ -1069,9 +1069,8 @@ class TurtleCryptoAutoEngine(object):
             try:
                 self.checkAndDownload()
             except:
-                self.downloading = False
                 try:
-                    subject = 'TURTLE_Crypto 数据下载'
+                    subject = 'TURTLE_Crypto_USD 数据下载'
                     content = f'【未知错误】\n\n{traceback.format_exc()}'
                     self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{content}')
                 except:
@@ -1084,7 +1083,7 @@ class TurtleCryptoAutoEngine(object):
                 self.checkAndGenerate()
             except:
                 try:
-                    subject = 'TURTLE_Crypto 数据更新'
+                    subject = 'TURTLE_Crypto_USD 数据更新'
                     content = f'【未知错误】\n\n{traceback.format_exc()}'
                     self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{content}')
                 except:
@@ -1094,12 +1093,17 @@ class TurtleCryptoAutoEngine(object):
     def checkAndDownload(self):
         now = datetime.now()
         start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {self.download_time}', '%Y-%m-%d %H:%M')
-        end_time = start_time + timedelta(seconds=20 * 60)
+        end_time = start_time + timedelta(seconds=2 * 60)
         if (now >= start_time and now <= end_time) or self.absolute_generate_needed:
-            if not self.downloading or self.absolute_generate_needed:
+            if not self.downloading:
                 self.downloading = True
-                turtleCryptoDataD = TurtleCryptoDataDownloading()
-                turtleCryptoDataD.download_from_bybit(contract_list=self.contract_list)
+                try:
+                    turtleCryptoDataD = TurtleCryptoDataDownloading()
+                    turtleCryptoDataD.download_from_bybit(contract_list=self.contract_list)
+                    self.downloading = False
+                except:
+                    self.downloading = False
+
                 if self.absolute_generate_needed:
                     result, complete_msg, back_msg, lost_msg = turtleCryptoDataD.generate_for_bybit(contract_list=self.contract_list)
                     notice_msg = complete_msg + '\n\n' + lost_msg + back_msg
@@ -1112,12 +1116,10 @@ class TurtleCryptoAutoEngine(object):
                         notice_msg = f'!!!!!! 策略未完成重新初始化 !!!!!!\n\n{notice_msg}'
 
                     try:
-                        subject = 'TURTLE_Crypto 数据更新'
+                        subject = 'TURTLE_Crypto_USD 数据更新'
                         self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{notice_msg}')
                     except:
                         pass
-        else:
-            self.downloading = False
 
     def checkAndGenerate(self):
         now = datetime.now()
@@ -1128,26 +1130,6 @@ class TurtleCryptoAutoEngine(object):
                 self.generating = True
                 self.turtle_engine.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
                 self.turtle_engine.turtlePortfolio.on_update_today()
-
-                """
-                turtleCryptoDataD = TurtleCryptoDataDownloading()
-                result, complete_msg, back_msg, lost_msg = turtleCryptoDataD.generate_for_bybit(contract_list=self.contract_list)
-                notice_msg = complete_msg + '\n\n' + lost_msg + back_msg
-                print('\n\n' + lost_msg + back_msg)
-                if result:
-                    # 海龟策略重新初始化
-                    self.turtle_engine.reinit_strategies()
-                    notice_msg = f'====== 策略重新初始化成功 ======\n\n{notice_msg}'
-                else:
-                    notice_msg = f'!!!!!! 策略未完成重新初始化 !!!!!!\n\n{notice_msg}'
-
-                try:
-                    subject = 'TURTLE_Crypto 数据更新'
-                    self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{notice_msg}')
-                except:
-                    pass
-                """
-
                 self.absolute_generate_needed = True
                 self.checkAndDownload()
         else:
