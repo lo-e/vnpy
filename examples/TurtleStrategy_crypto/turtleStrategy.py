@@ -332,8 +332,7 @@ class TurtleSignal(object):
                 return
 
         # 没有仓位或者持有空头仓位的时候，可以做空（加仓）
-        # 币本位反向合约只做多
-        """
+        #"""
         if self.unit <= 0:
             if bar.low_price <= self.shortEntry1 and self.unit > -1:
                 self.short(self.shortEntry1, 1)
@@ -346,7 +345,7 @@ class TurtleSignal(object):
             
             if bar.low_price <= self.shortEntry4 and self.unit > -4:
                 self.short(self.shortEntry4, 1)
-        """
+        #"""
             
     #----------------------------------------------------------------------
     def calculateIndicator(self):
