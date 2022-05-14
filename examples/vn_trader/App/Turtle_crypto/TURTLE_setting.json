@@ -6,7 +6,7 @@
         "vt_symbol": "BTCUSD.BYBIT",
         "per_size":1,
         "tick_price":0.5,
-        "bit_value":8000,
+        "bit_value":60000,
         "start": true
     },
 
@@ -16,10 +16,10 @@
         "vt_symbol": "ETHUSD.BYBIT",
         "per_size":1,
         "tick_price":0.05,
-        "bit_value":200,
+        "bit_value":4000,
         "start": true
     }
 ],
     "portfolio": {"name": "turtle_crypto[BTC, ETH]",
-                  "portfolioValue": 20}
+                  "portfolioValue": 60000}
 }

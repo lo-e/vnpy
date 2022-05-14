@@ -125,6 +125,7 @@ def main():
     main_engine.add_gateway(BinanceUsdtGateway)
 
     main_engine.add_app(TurtleApp)
+    main_engine.add_app(TurtleCryptoApp)
     main_engine.add_app(CtaStrategyApp)
     main_engine.add_app(CtaBacktesterApp)
     # main_engine.add_app(SpreadTradingApp)
