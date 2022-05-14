@@ -313,6 +313,11 @@ class BybitInverseRestApi(RestClient):
         data["order_type"] = ORDER_TYPE_VT2BYBIT[req.type]
         data["price"] = req.price
 
+        """ modify by loe """
+        # 增加了CLOSETODAY\CLOSEYESTERDAY
+        if req.offset == Offset.CLOSE or req.offset == Offset.CLOSETODAY or req.offset == Offset.CLOSEYESTERDAY:
+            data["reduce_only"] = True
+
         self.add_request(
             "POST",
             path,
