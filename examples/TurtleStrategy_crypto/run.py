@@ -28,8 +28,8 @@ def one():
             engine = BacktestingEngine()
             #engine.setPeriod(datetime(2015, 9, 1), datetime(2018, 12, 31))
             #engine.tradingStart = datetime(2016, 1, 1)
-            engine.setPeriod(datetime(2019, 9, 1), datetime(2020, 12, 31))
-            engine.tradingStart = datetime(2020, 1, 1)
+            engine.setPeriod(datetime(2021, 9, 1), datetime(2022, 12, 31))
+            engine.tradingStart = datetime(2022, 1, 1)
             figSavedName = ''
             if figSavedName:
                 figSavedName = f'figSaved{DIR_SYMBOL}{figSavedName}'
