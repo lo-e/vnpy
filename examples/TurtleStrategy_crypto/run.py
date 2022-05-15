@@ -15,6 +15,7 @@ from vnpy.app.cta_strategy.base import DAILY_DB_NAME
 import pandas as pd
 from vnpy.trader.constant import Direction, Offset
 from vnpy.trader.utility import DIR_SYMBOL
+import numpy as np
 
 def one():
     pnlList = []
@@ -54,11 +55,49 @@ def one():
             calculateDic = {}
             for symbol in engine.symbolList:
                 tradeList = engine.getTradeData(symbol)
+
+                symbol_size = engine.sizeDict[symbol]
+                open_price_list = []
+                open_volumn_list = []
+                open_direction = None
                 for trade in tradeList:
                     print('%s\t\t%s %s\t\t%s\t\t%s\t%s@%s' % (trade.dt, trade.symbol, trade.direction.value, trade.offset.value,
                                                               engine.sizeDict[trade.symbol], trade.volume, trade.price))
+
+                    if trade.offset == Offset.OPEN:
+                        if not open_direction:
+                            open_direction = trade.direction
+                        elif open_direction != trade.direction:
+                            raise ('成交数据异常！！检查代码')
+
+                        open_price_list.append(trade.price)
+                        open_volumn_list.append(trade.volume)
+                    else:
+                        mean_open = np.array(open_price_list).mean()
+                        pnl_list = []
+                        if open_direction == Direction.LONG:
+                            for i, open_price in enumerate(open_price_list):
+                                open_volumn = open_volumn_list[i]
+                                pnl = (1.0/open_price - 1.0/trade.price) * open_volumn * symbol_size
+                                pnl_list.append(pnl)
+                        else:
+                            for i, open_price in enumerate(open_price_list):
+                                open_volumn = open_volumn_list[i]
+                                pnl = (1.0 / trade.price - 1.0 / open_price) * open_volumn * symbol_size
+                                pnl_list.append(pnl)
+
+
+                        pnl_str = ''
+                        for p in pnl_list:
+                            pnl_str += str(p) + ' '
+                        print(f'收益：{pnl_str}')
+                        print(f'总：{np.array(pnl_list).sum()}')
+                        open_price_list = []
+                        open_volumn_list = []
+                        open_direction = None
+
                     if trade.offset == Offset.CLOSE:
-                        print('.'*2)
+                        print('\n')
 
                     tOpen = False
                     pnl = 0
