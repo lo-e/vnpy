@@ -73,25 +73,39 @@ def one():
                         open_price_list.append(trade.price)
                         open_volumn_list.append(trade.volume)
                     else:
-                        mean_open = np.array(open_price_list).mean()
+                        if trade.volume != np.array(open_volumn_list).sum():
+                            raise ('成交数据异常！！检查代码')
+
                         pnl_list = []
+                        mean_pnl = 0
+                        all_fund = 0
                         if open_direction == Direction.LONG:
                             for i, open_price in enumerate(open_price_list):
                                 open_volumn = open_volumn_list[i]
+                                all_fund += open_price * open_volumn
+
                                 pnl = (1.0/open_price - 1.0/trade.price) * open_volumn * symbol_size
                                 pnl_list.append(pnl)
+
+                            mean_open = all_fund / trade.volume
+                            mean_pnl = (1.0/mean_open - 1.0/trade.price) * trade.volume * symbol_size
                         else:
                             for i, open_price in enumerate(open_price_list):
                                 open_volumn = open_volumn_list[i]
+                                all_fund += open_price * open_volumn
+
                                 pnl = (1.0 / trade.price - 1.0 / open_price) * open_volumn * symbol_size
                                 pnl_list.append(pnl)
 
+                            mean_open = all_fund / trade.volume
+                            mean_pnl = (1.0 / trade.price - 1.0 / mean_open) * trade.volume * symbol_size
 
                         pnl_str = ''
                         for p in pnl_list:
                             pnl_str += str(p) + ' '
                         print(f'收益：{pnl_str}')
                         print(f'总：{np.array(pnl_list).sum()}')
+                        print(f'平均总：{mean_pnl}')
                         open_price_list = []
                         open_volumn_list = []
                         open_direction = None
