@@ -104,7 +104,7 @@ def one():
                         for p in pnl_list:
                             pnl_str += str(p) + ' '
                         print(f'收益：{pnl_str}')
-                        print(f'总：{np.array(pnl_list).sum()}')
+                        print(f'每笔总：{np.array(pnl_list).sum()}')
                         print(f'平均总：{mean_pnl}')
                         open_price_list = []
                         open_volumn_list = []
