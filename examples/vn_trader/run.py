@@ -34,7 +34,8 @@ from vnpy_binance import BinanceUsdtGateway
 # from vnpy_huobi import HuobiUsdtGateway
 from vnpy_okex import OkexGateway
 # from vnpy.gateway.bitmex import BitmexGateway
-from vnpy.gateway.bybit import BybitGateway
+# from vnpy.gateway.bybit import BybitGateway
+from gateway.bybit import BybitGateway
 # from vnpy.gateway.gateios import GateiosGateway
 # from vnpy_deribit import DeribitGateway
 # from vnpy_bitfinex import BitfinexGateway
