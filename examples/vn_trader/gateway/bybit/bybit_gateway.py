@@ -35,7 +35,7 @@ from vnpy.trader.object import (
     TradeData
 )
 from vnpy_rest import Request, RestClient
-from vnpy_websocket import WebsocketClient
+from ..websocket import WebsocketClient
 
 # 中国时区
 CHINA_TZ: timezone = timezone("Asia/Shanghai")
