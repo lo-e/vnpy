@@ -34,7 +34,7 @@ from vnpy.trader.object import (
     TickData,
     TradeData
 )
-from vnpy_rest import Request, RestClient
+from ..rest import Request, RestClient
 from ..websocket import WebsocketClient
 
 # 中国时区
