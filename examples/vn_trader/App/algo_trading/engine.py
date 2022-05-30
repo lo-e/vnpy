@@ -50,7 +50,6 @@ class AlgoEngine(BaseEngine):
         self.algo_settings = {}
 
         self.load_algo_template()
-        self.register_event()
 
         # 数据引擎
         self.autoEngine = AlgoAutoEngine(main_engine=self.main_engine,
@@ -61,6 +60,10 @@ class AlgoEngine(BaseEngine):
         """"""
         self.write_log("算法交易引擎启动")
         self.load_algo_setting()
+
+        """" modify by loe """
+        # 从__init__转移到这
+        self.register_event()
 
         # 数据引擎启动
         self.autoEngine.start()
