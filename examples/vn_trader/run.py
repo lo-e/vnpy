@@ -4,7 +4,7 @@ from vnpy.event import EventEngine
 from vnpy.trader.engine import MainEngine
 from vnpy.trader.ui import MainWindow, create_qapp
 
-from vnpy_ctp import CtpGateway
+# from vnpy_ctp import CtpGateway
 # from vnpy_ctptest import CtptestGateway
 # from vnpy_mini import MiniGateway
 # from vnpy.gateway.minitest import MinitestGateway
@@ -27,12 +27,12 @@ from vnpy_ctp import CtpGateway
 # from vnpy.gateway.mt5 import Mt5Gateway
 # from vnpy_binance import BinanceSpotGateway
 # from vnpy_binance import BinanceInverseGateway
-from vnpy_binance import BinanceUsdtGateway
+# from vnpy_binance import BinanceUsdtGateway
 # from vnpy_huobi import HuobiSpotGateway
 # from vnpy_huobi import HuobiFuturesGateway
 # from vnpy_huobi import HuobiInverseGateway
 # from vnpy_huobi import HuobiUsdtGateway
-from vnpy_okex import OkexGateway
+# from vnpy_okex import OkexGateway
 # from vnpy.gateway.bitmex import BitmexGateway
 # from vnpy.gateway.bybit import BybitGateway
 from gateway.bybit import BybitGateway
@@ -46,9 +46,9 @@ from gateway.bybit import BybitGateway
 # from vnpy_tts import TtsGateway
 # from vnpy.gateway.alpaca import AlpacaGateway
 """ modify by loe """
-from vnpy_ftx import  FtxGateway
-from vnpy_dydx import  DydxGateway
-from vnpy.app.cta_backtester import CtaBacktesterApp
+# from vnpy_ftx import  FtxGateway
+# from vnpy_dydx import  DydxGateway
+# from vnpy.app.cta_backtester import CtaBacktesterApp
 # from vnpy_spreadtrading import SpreadTradingApp
 # from vnpy.app.algo_trading import AlgoTradingApp
 # from vnpy.app.option_master import OptionMasterApp
@@ -67,11 +67,11 @@ from vnpy.app.cta_backtester import CtaBacktesterApp
 
 """ modify by loe """
 # 导入了海归交易
-from App.Turtle import TurtleApp
+# from App.Turtle import TurtleApp
 from App.Turtle_crypto import TurtleCryptoApp
 from App.spread_trading import SpreadTradingApp
-from App.algo_trading import AlgoTradingApp
-from App.cta_strategy import CtaStrategyApp
+# from App.algo_trading import AlgoTradingApp
+# from App.cta_strategy import CtaStrategyApp
 
 def main():
     """"""
@@ -81,7 +81,7 @@ def main():
 
     main_engine = MainEngine(event_engine)
 
-    main_engine.add_gateway(CtpGateway)
+    # main_engine.add_gateway(CtpGateway)
     # main_engine.add_gateway(CtptestGateway)
     # main_engine.add_gateway(MiniGateway)
     # main_engine.add_gateway(MinitestGateway)
@@ -109,7 +109,7 @@ def main():
     # main_engine.add_gateway(HuobiInverseGateway)    
     # main_engine.add_gateway(HuobiUsdtGateway)
     main_engine.add_gateway(BybitGateway)
-    main_engine.add_gateway(OkexGateway)
+    # main_engine.add_gateway(OkexGateway)
     # main_engine.add_gateway(BitmexGateway)
     # main_engine.add_gateway(GateiosGateway)
     # main_engine.add_gateway(DeribitGateway)
@@ -121,16 +121,16 @@ def main():
     # main_engine.add_gateway(TtsGateway)
     # main_engine.add_gateway(AlpacaGateway)
     """ modify by loe """
-    main_engine.add_gateway(FtxGateway)
-    main_engine.add_gateway(DydxGateway)
-    main_engine.add_gateway(BinanceUsdtGateway)
+    # main_engine.add_gateway(FtxGateway)
+    # main_engine.add_gateway(DydxGateway)
+    # main_engine.add_gateway(BinanceUsdtGateway)
 
-    main_engine.add_app(TurtleApp)
+    # main_engine.add_app(TurtleApp)
     main_engine.add_app(TurtleCryptoApp)
-    main_engine.add_app(CtaStrategyApp)
-    main_engine.add_app(CtaBacktesterApp)
+    # main_engine.add_app(CtaStrategyApp)
+    # main_engine.add_app(CtaBacktesterApp)
     # main_engine.add_app(SpreadTradingApp)
-    main_engine.add_app(AlgoTradingApp)
+    # main_engine.add_app(AlgoTradingApp)
     # main_engine.add_app(OptionMasterApp)
     # main_engine.add_app(PortfolioStrategyApp)
     # main_engine.add_app(ScriptTraderApp)
