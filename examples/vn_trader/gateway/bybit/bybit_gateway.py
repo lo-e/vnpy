@@ -735,15 +735,18 @@ class BybitInversePublicWebsocketApi(WebsocketClient):
 
         if self.subscribed:
             for req in self.subscribed.values():
-                self.subscribe(req)
+                """ modify by loe """
+                self.subscribe(req, for_reconnect=True)
 
     def on_disconnected(self) -> None:
         """连接断开回报"""
         self.gateway.write_log("行情Websocket API连接断开")
 
-    def subscribe(self, req: SubscribeRequest) -> None:
+    """ modify by loe """
+    # 增加了for_reconnect参数
+    def subscribe(self, req: SubscribeRequest, for_reconnect: bool=False) -> None:
         """订阅行情"""
-        if req.symbol in self.subscribed:
+        if req.symbol in self.subscribed and not for_reconnect:
             return
 
         # 缓存订阅记录
@@ -1617,16 +1620,17 @@ class BybitUsdtPublicWebsocketApi(WebsocketClient):
 
         if self.subscribed:
             for req in self.subscribed.values():
-                self.subscribe(req)
+                self.subscribe(req, for_reconnect=True)
 
     def on_disconnected(self) -> None:
         """连接断开回报"""
         self.gateway.write_log("行情Websocket API连接断开")
 
-    def subscribe(self, req: SubscribeRequest) -> None:
+    """ modify by loe """
+    # 增加了for_reconnect参数
+    def subscribe(self, req: SubscribeRequest, for_reconnect: bool = False) -> None:
         """订阅行情"""
-
-        if req.symbol in self.subscribed:
+        if req.symbol in self.subscribed and not for_reconnect:
             return
 
         # 缓存订阅记录
