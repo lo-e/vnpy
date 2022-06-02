@@ -37,6 +37,10 @@ from vnpy.trader.object import (
 from ..rest import Request, RestClient
 from ..websocket import WebsocketClient
 
+from vnpy.trader.event import (
+    EVENT_TIMER
+)
+
 # 中国时区
 CHINA_TZ: timezone = timezone("Asia/Shanghai")
 
@@ -170,6 +174,21 @@ class BybitGateway(BaseGateway):
             proxy_host,
             proxy_port
         )
+
+        self.timer_count = 0
+        self.register_event()
+
+    def register_event(self):
+        """"""
+        self.event_engine.register(EVENT_TIMER, self.process_timer_event)
+
+    def process_timer_event(self, event: Any):
+        self.timer_count += 1
+        if self.timer_count >= 60:
+            self.timer_count = 0
+
+            self.private_ws_api.ping()
+            self.public_ws_api.ping()
 
     def subscribe(self, req: SubscribeRequest) -> None:
         """订阅行情"""
@@ -729,6 +748,15 @@ class BybitInversePublicWebsocketApi(WebsocketClient):
         self.init(url, self.proxy_host, self.proxy_port)
         self.start()
 
+    def ping(self):
+        req: dict = {
+            "op": "ping",
+        }
+        self.send_packet(req)
+
+    def on_ping(self, packet: dict):
+        self._connect_id = packet.get('conn_id', '')
+
     def on_connected(self) -> None:
         """连接成功回报"""
         self.gateway.write_log("行情Websocket API连接成功")
@@ -786,6 +814,9 @@ class BybitInversePublicWebsocketApi(WebsocketClient):
             op: str = packet["request"]["op"]
             if op == "auth":
                 self.on_login(packet)
+
+            elif op == 'ping':
+                self.on_ping(packet)
         else:
             channel: str = packet["topic"]
             callback: callable = self.callbacks[channel]
@@ -963,6 +994,12 @@ class BybitInversePrivateWebsocketApi(WebsocketClient):
         }
         self.send_packet(req)
 
+    def ping(self):
+        req: dict = {
+            "op": "ping",
+        }
+        self.send_packet(req)
+
     def subscribe_topic(
         self,
         topic: str,
@@ -976,6 +1013,9 @@ class BybitInversePrivateWebsocketApi(WebsocketClient):
             "args": [topic],
         }
         self.send_packet(req)
+
+    def on_ping(self, packet: dict):
+        self._connect_id = packet.get('conn_id', '')
 
     def on_connected(self) -> None:
         """连接成功回报"""
@@ -992,6 +1032,9 @@ class BybitInversePrivateWebsocketApi(WebsocketClient):
             op: str = packet["request"]["op"]
             if op == "auth":
                 self.on_login(packet)
+
+            elif op == 'ping':
+                self.on_ping(packet)
         else:
             channel: str = packet["topic"]
             callback: callable = self.callbacks[channel]
