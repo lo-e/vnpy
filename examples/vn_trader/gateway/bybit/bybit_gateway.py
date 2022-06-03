@@ -1657,6 +1657,15 @@ class BybitUsdtPublicWebsocketApi(WebsocketClient):
         self.init(url, self.proxy_host, self.proxy_port)
         self.start()
 
+    def ping(self):
+        req: dict = {
+            "op": "ping",
+        }
+        self.send_packet(req)
+
+    def on_ping(self, packet: dict):
+        self._connect_id = packet.get('conn_id', '')
+
     def on_connected(self) -> None:
         """连接成功回报"""
         self.gateway.write_log("行情Websocket API连接成功")
@@ -1713,6 +1722,9 @@ class BybitUsdtPublicWebsocketApi(WebsocketClient):
             op: str = packet["request"]["op"]
             if op == "auth":
                 self.on_login(packet)
+
+            elif op == 'ping':
+                self.on_ping(packet)
         else:
             channel: str = packet["topic"]
             callback: callable = self.callbacks[channel]
@@ -1900,6 +1912,15 @@ class BybitUsdtPrivateWebsocketApi(WebsocketClient):
         }
         self.send_packet(req)
 
+    def ping(self):
+        req: dict = {
+            "op": "ping",
+        }
+        self.send_packet(req)
+
+    def on_ping(self, packet: dict):
+        self._connect_id = packet.get('conn_id', '')
+
     def on_connected(self) -> None:
         """连接成功回报"""
         self.gateway.write_log("交易Websocket API连接成功")
@@ -1915,6 +1936,9 @@ class BybitUsdtPrivateWebsocketApi(WebsocketClient):
             op: str = packet["request"]["op"]
             if op == "auth":
                 self.on_login(packet)
+
+            elif op == 'ping':
+                self.on_ping(packet)
         else:
             channel: str = packet["topic"]
             callback: callable = self.callbacks[channel]
