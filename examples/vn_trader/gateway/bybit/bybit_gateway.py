@@ -850,7 +850,7 @@ class BybitInversePublicWebsocketApi(WebsocketClient):
 
             tick.last_price = float(data["last_price"])
 
-            tick.volume = data["volume_24h"]
+            tick.volume = data.get('volume_24h', 0)
 
             update_time: str = data.get("updated_at", None)
             if update_time:
@@ -865,7 +865,7 @@ class BybitInversePublicWebsocketApi(WebsocketClient):
 
             tick.last_price = float(update["last_price"])
 
-            tick.volume = update["volume_24h"]
+            tick.volume = update.get('volume_24h', 0)
 
             update_time: str = update.get("updated_at", None)
             if update_time:
@@ -1758,7 +1758,7 @@ class BybitUsdtPublicWebsocketApi(WebsocketClient):
 
             tick.last_price = float(data["last_price"])
 
-            tick.volume = int(data["volume_24h_e8"]) / 100000000
+            tick.volume = int(data.get('volume_24h_e8', 0)) / 100000000
 
             tick.datetime = generate_datetime(data["updated_at"])
 
@@ -1770,9 +1770,7 @@ class BybitUsdtPublicWebsocketApi(WebsocketClient):
 
             tick.last_price = float(update["last_price"])
 
-            if update["volume_24h_e8"]:
-
-                tick.volume = int(update["volume_24h_e8"]) / 100000000
+            tick.volume = int(update.get('volume_24h_e8', 0)) / 100000000
 
             tick.datetime = generate_datetime(update["updated_at"])
 
