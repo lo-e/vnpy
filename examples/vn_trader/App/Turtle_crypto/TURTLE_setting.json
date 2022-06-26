@@ -21,5 +21,6 @@
     }
 ],
     "portfolio": {"name": "turtle_crypto[BTC, ETH]",
-                  "portfolioValue": 60000}
+                  "portfolioValue": {"TURTLE_BTC": 0.52,
+                                     "TURTLE_ETH": 4.6}}
 }

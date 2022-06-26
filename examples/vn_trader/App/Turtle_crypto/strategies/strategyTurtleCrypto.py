@@ -189,10 +189,6 @@ class TurtleStrategyCrypto(CtaTemplate):
                 # if self.lastPnl > 0:
                 #     preCheck = False
 
-                # 检查是否保证金超限
-                if self.checkBondOver(tick.last_price, current_multiplier):
-                    preCheck = False
-
                 # 组合仓位管理
                 if preCheck:
                     if self.portfolio.newSignal(self.vt_symbol, Direction.LONG, Offset.OPEN):
@@ -213,9 +209,6 @@ class TurtleStrategyCrypto(CtaTemplate):
                 # if self.lastPnl > 0:
                 #     preCheck = False
 
-                if self.checkBondOver(tick.last_price, current_multiplier):
-                    preCheck = False
-
                 if preCheck:
                     if self.portfolio.newSignal(self.vt_symbol, Direction.LONG, Offset.OPEN):
                         unitChange += 1
@@ -235,9 +228,6 @@ class TurtleStrategyCrypto(CtaTemplate):
                 # if self.lastPnl > 0:
                 #     preCheck = False
 
-                if self.checkBondOver(tick.last_price, current_multiplier):
-                    preCheck = False
-
                 if preCheck:
                     if self.portfolio.newSignal(self.vt_symbol, Direction.LONG, Offset.OPEN):
                         unitChange += 1
@@ -256,9 +246,6 @@ class TurtleStrategyCrypto(CtaTemplate):
 
                 # if self.lastPnl > 0:
                 #     preCheck = False
-
-                if self.checkBondOver(tick.last_price, current_multiplier):
-                    preCheck = False
 
                 if preCheck:
                     if self.portfolio.newSignal(self.vt_symbol, Direction.LONG, Offset.OPEN):
@@ -304,9 +291,6 @@ class TurtleStrategyCrypto(CtaTemplate):
                 # if self.lastPnl > 0:
                 #     preCheck = False
 
-                if self.checkBondOver(tick.last_price, current_multiplier):
-                    preCheck = False
-
                 if preCheck:
                     if self.portfolio.newSignal(self.vt_symbol, Direction.SHORT, Offset.OPEN):
                         unitChange -= 1
@@ -325,9 +309,6 @@ class TurtleStrategyCrypto(CtaTemplate):
 
                 # if self.lastPnl > 0:
                 #     preCheck = False
-
-                if self.checkBondOver(tick.last_price, current_multiplier):
-                    preCheck = False
 
                 if preCheck:
                     if self.portfolio.newSignal(self.vt_symbol, Direction.SHORT, Offset.OPEN):
@@ -348,9 +329,6 @@ class TurtleStrategyCrypto(CtaTemplate):
                 # if self.lastPnl > 0:
                 #     preCheck = False
 
-                if self.checkBondOver(tick.last_price, current_multiplier):
-                    preCheck = False
-
                 if preCheck:
                     if self.portfolio.newSignal(self.vt_symbol, Direction.SHORT, Offset.OPEN):
                         unitChange -= 1
@@ -369,9 +347,6 @@ class TurtleStrategyCrypto(CtaTemplate):
 
                 # if self.lastPnl > 0:
                 #     preCheck = False
-
-                if self.checkBondOver(tick.last_price, current_multiplier):
-                    preCheck = False
 
                 if preCheck:
                     if self.portfolio.newSignal(self.vt_symbol, Direction.SHORT, Offset.OPEN):
@@ -443,7 +418,8 @@ class TurtleStrategyCrypto(CtaTemplate):
     def calMultiplier(self, price, direction:Direction):
         multiplier = 0
         size = self.per_size
-        riskValue = self.portfolio.portfolioValue * 0.01 / self.bit_value
+        fund = self.portfolio.portfolioValue.get(self.strategy_name, 0)
+        riskValue = fund * 0.01
         if self.atrVolatility * size:
             if direction == Direction.LONG:
                 multiplier = riskValue * (price * (price - 2 * self.atrVolatility)) / (size * self.atrVolatility)
@@ -452,7 +428,7 @@ class TurtleStrategyCrypto(CtaTemplate):
 
             multiplier = int(round(multiplier, 0))
         self.multiplierList.append(multiplier)
-        return  multiplier
+        return multiplier
 
     # 计算入场信号指标
     def updateIndicator(self):
@@ -471,15 +447,6 @@ class TurtleStrategyCrypto(CtaTemplate):
 
         self.longStop = 0
         self.shortStop = 0
-
-    # 检查预计交易保证金是否超限
-    def checkBondOver(self, price, multiplier):
-        # 一个unit预计占用保证金不得超过初始资金的20%
-        if self.per_size * multiplier / (price * 20) > self.portfolio.portfolioValue * 0.2 / self.bit_value:
-            self.portfolio.addOverBond(self.vt_symbol, price, self.per_size, multiplier, self.atrVolatility)
-            return True
-        else:
-            return False
 
     # 信号建仓
     def open(self, price, change):
