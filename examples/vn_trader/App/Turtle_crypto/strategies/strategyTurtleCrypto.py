@@ -355,7 +355,7 @@ class TurtleStrategyCrypto(CtaTemplate):
             if action:
                 if unitChange:
                     self.unit += unitChange
-                    # self.short(self.bestLimitOrderPrice(tick, Direction.SHORT, multi=200), current_multiplier * abs(unitChange))
+                    self.short(self.bestLimitOrderPrice(tick, Direction.SHORT, multi=200), current_multiplier * abs(unitChange))
 
                 self.put_timer_event()
                 return
@@ -366,8 +366,8 @@ class TurtleStrategyCrypto(CtaTemplate):
                 if tick.last_price >= shortExit:
                     self.close(tick.last_price)
                     self.portfolio.newSignal(self.vt_symbol, Direction.LONG, Offset.CLOSE)
-                    # if self.pos < 0:
-                    #     self.cover(self.bestLimitOrderPrice(tick, Direction.LONG, multi=200), abs(self.pos))
+                    if self.pos < 0:
+                        self.cover(self.bestLimitOrderPrice(tick, Direction.LONG, multi=200), abs(self.pos))
                     # 平仓后更新最新指标
                     self.updateIndicator()
                     self.hasClose = True
