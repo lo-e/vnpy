@@ -1,3 +1,3 @@
 symbol,size,priceTick,variableCommission,slippage,name,capital
-BTCUSD.BYBIT,1,0.5,0.0008,0.5,BYBIT反向永续,1
-ETHUSD.BYBIT,1,0.05,0.0008,0.05,BYBIT反向永续,15
+BTCUSD.BYBIT,1,0.5,0.0008,0.5,BYBIT反向永续,0.52
+ETHUSD.BYBIT,1,0.05,0.0008,0.05,BYBIT反向永续,9.2
