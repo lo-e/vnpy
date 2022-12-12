@@ -69,8 +69,8 @@ from gateway.bybit import BybitGateway
 # 导入了海归交易
 # from App.Turtle import TurtleApp
 from App.Turtle_crypto import TurtleCryptoApp
-from App.spread_trading import SpreadTradingApp
-# from App.algo_trading import AlgoTradingApp
+# from App.spread_trading import SpreadTradingApp
+from App.algo_trading import AlgoTradingApp
 # from App.cta_strategy import CtaStrategyApp
 
 def main():
@@ -130,7 +130,7 @@ def main():
     # main_engine.add_app(CtaStrategyApp)
     # main_engine.add_app(CtaBacktesterApp)
     # main_engine.add_app(SpreadTradingApp)
-    # main_engine.add_app(AlgoTradingApp)
+    main_engine.add_app(AlgoTradingApp)
     # main_engine.add_app(OptionMasterApp)
     # main_engine.add_app(PortfolioStrategyApp)
     # main_engine.add_app(ScriptTraderApp)
