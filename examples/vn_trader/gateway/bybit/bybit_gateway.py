@@ -51,6 +51,8 @@ REST_HOST = "https://api.bybit.com"
 INVERSE_WEBSOCKET_HOST = "wss://stream.bybit.com/realtime"
 PUBLIC_WEBSOCKET_HOST = "wss://stream.bybit.com/realtime_public"
 PRIVATE_WEBSOCKET_HOST = "wss://stream.bybit.com/realtime_private"
+SPOT_PUBLIC_WEBSOCKET_HOST = "wss://stream.bybit.com/spot/public/v3"
+SPOT_PRIVATE_WEBSOCKET_HOST = "wss://stream.bybit.com/spot/private/v3"
 
 # 模拟盘REST API地址
 TESTNET_REST_HOST = "https://api-testnet.bybit.com"
@@ -59,6 +61,8 @@ TESTNET_REST_HOST = "https://api-testnet.bybit.com"
 TESTNET_INVERSE_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/realtime"
 TESTNET_PUBLIC_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/realtime_public"
 TESTNET_PRIVATE_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/realtime_private"
+TESTNET_SPOT_PUBLIC_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/spot/public/v3"
+TESTNET_SPOT_PRIVATE_WEBSOCKET_HOST = "wss://stream-testnet.bybit.com/spot/private/v3"
 
 # 委托状态映射
 STATUS_BYBIT2VT: Dict[str, Status] = {
