@@ -226,6 +226,7 @@ class BybitGateway(BaseGateway):
         if self.rest_api:
             self.rest_api.query_predicted_funding(symbol=symbol)
 
+
 class BybitInverseRestApi(RestClient):
     """反向合约的REST接口"""
 
@@ -711,7 +712,6 @@ class BybitInverseRestApi(RestClient):
     def query_predicted_funding(self, symbol: str) -> None:
         return
 
-
 class BybitInversePublicWebsocketApi(WebsocketClient):
     """反向合约的行情Websocket接口"""
 
@@ -936,7 +936,6 @@ class BybitInversePublicWebsocketApi(WebsocketClient):
 
         tick.datetime = generate_datetime_2(packet["timestamp_e6"] / 1000000)
         self.gateway.on_tick(copy(tick))
-
 
 class BybitInversePrivateWebsocketApi(WebsocketClient):
     """反向合约的交易Websocket接口"""
@@ -1839,7 +1838,6 @@ class BybitUsdtPublicWebsocketApi(WebsocketClient):
         tick.datetime = generate_datetime_2(int(packet["timestamp_e6"]) / 1000000)
         self.gateway.on_tick(copy(tick))
 
-
 class BybitUsdtPrivateWebsocketApi(WebsocketClient):
     """正向合约的交易Websocket接口"""
 
@@ -2051,13 +2049,11 @@ def generate_timestamp(expire_after: float = 30) -> int:
     """生成时间戳"""
     return int(time.time() * 1000 + expire_after * 1000)
 
-
 def sign(secret: bytes, data: bytes) -> str:
     """生成签名"""
     return hmac.new(
         secret, data, digestmod=hashlib.sha256
     ).hexdigest()
-
 
 def generate_datetime(timestamp: str) -> datetime:
     """生成时间"""
@@ -2074,12 +2070,10 @@ def generate_datetime(timestamp: str) -> datetime:
     dt = utc.localize(dt)
     return dt.astimezone(CHINA_TZ)
 
-
 def generate_datetime_2(timestamp: int) -> datetime:
     """生成时间"""
     dt: datetime = datetime.fromtimestamp(timestamp)
     return CHINA_TZ.localize(dt)
-
 
 def get_float_value(data: dict, key: str) -> float:
     """获取字典中对应键的浮点数值"""
