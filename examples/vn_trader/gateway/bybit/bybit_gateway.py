@@ -74,12 +74,30 @@ STATUS_BYBIT2VT: Dict[str, Status] = {
     "Rejected": Status.REJECTED,
 }
 
+# 委托状态【现货】
+STATUS_BYBIT2VT_SPOT: Dict[str, Status] = {
+    "CREATED": Status.NOTTRADED,
+    "NEW": Status.NOTTRADED,
+    "PARTIALLY_FILLED": Status.PARTTRADED,
+    "FILLED": Status.ALLTRADED,
+    "CANCELED": Status.CANCELLED,
+    "REJECTED": Status.REJECTED,
+}
+
 # 委托类型映射
 ORDER_TYPE_VT2BYBIT: Dict[OrderType, str] = {
     OrderType.LIMIT: "Limit",
     OrderType.MARKET: "Market",
 }
 ORDER_TYPE_BYBIT2VT: Dict[str, OrderType] = {v: k for k, v in ORDER_TYPE_VT2BYBIT.items()}
+
+# 委托类型映射【现货】
+ORDER_TYPE_VT2BYBIT_SPOT: Dict[OrderType, str] = {
+    OrderType.LIMIT: "LIMIT",
+    OrderType.LIMIT_MAKER: "LIMIT_MAKER",
+    OrderType.MARKET: "MARKET",
+}
+ORDER_TYPE_BYBIT2VT_SPOT: Dict[str, OrderType] = {v: k for k, v in ORDER_TYPE_VT2BYBIT_SPOT.items()}
 
 # 买卖方向映射
 DIRECTION_VT2BYBIT: Dict[Direction, str] = {Direction.LONG: "Buy", Direction.SHORT: "Sell"}
@@ -107,6 +125,9 @@ futures_symbols: Set[str] = set()
 
 # USDT永续合约类型列表
 usdt_symbols: Set[str] = set()
+
+# 现货类型列表
+spot_symbols: Set[str] = set()
 
 # 本地委托号缓存集合
 local_orderids: Set[str] = set()
@@ -230,7 +251,7 @@ class BybitGateway(BaseGateway):
         if self.rest_api:
             self.rest_api.query_predicted_funding(symbol=symbol)
 
-
+# ====== 反向合约 ======
 class BybitInverseRestApi(RestClient):
     """反向合约的REST接口"""
 
@@ -1144,7 +1165,7 @@ class BybitInversePrivateWebsocketApi(WebsocketClient):
             )
             self.gateway.on_account(account)
 
-
+# ====== 正向永续合约 ======
 class BybitUsdtRestApi(RestClient):
     """正向合约的REST接口"""
 
@@ -2048,7 +2069,7 @@ class BybitUsdtPrivateWebsocketApi(WebsocketClient):
             )
             self.gateway.on_position(position)
 
-
+# ====== 现货 ======
 class BybitSpotRestApi(RestClient):
     """现货的REST接口"""
 
@@ -2122,13 +2143,13 @@ class BybitSpotRestApi(RestClient):
     def send_order(self, req: OrderRequest) -> str:
         """委托下单"""
         # 检查委托类型是否正确
-        if req.type not in ORDER_TYPE_VT2BYBIT:
+        if req.type not in ORDER_TYPE_VT2BYBIT_SPOT:
             self.gateway.write_log(f"委托失败，不支持的委托类型：{req.type.value}")
             return
 
         # 检查合约代码是否正确并根据合约类型判断下单接口
-        if req.symbol in usdt_symbols:
-            path: str = "/private/linear/order/create"
+        if req.symbol in spot_symbols:
+            path: str = "/spot/v3/private/order"
         else:
             self.gateway.write_log(f"委托失败，找不到该合约代码{req.symbol}")
             return
@@ -2149,7 +2170,7 @@ class BybitSpotRestApi(RestClient):
             "close_on_trigger": False
         }
 
-        data["order_type"] = ORDER_TYPE_VT2BYBIT[req.type]
+        data["order_type"] = ORDER_TYPE_VT2BYBIT_SPOT[req.type]
         data["price"] = req.price
 
         """ modify by loe """
@@ -2211,8 +2232,8 @@ class BybitSpotRestApi(RestClient):
     def cancel_order(self, req: CancelRequest) -> None:
         """委托撤单"""
         # 检查合约代码是否正确并根据合约类型判断撤单接口
-        if req.symbol in usdt_symbols:
-            path: str = "/private/linear/order/cancel"
+        if req.symbol in spot_symbols:
+            path: str = "/spot/v3/private/cancel-order"
         else:
             self.gateway.write_log(f"撤单失败，找不到该合约代码{req.symbol}")
             return
@@ -2221,9 +2242,9 @@ class BybitSpotRestApi(RestClient):
 
         # 检查是否为本地委托号
         if req.orderid in local_orderids:
-            data["order_link_id"] = req.orderid
+            data["orderLinkId"] = req.orderid
         else:
-            data["order_id"] = req.orderid
+            data["orderId"] = req.orderid
 
         self.add_request(
             "POST",
@@ -2261,27 +2282,6 @@ class BybitSpotRestApi(RestClient):
             self.exception_detail(exception_type, exception_value, tb, request)
         )
 
-    def on_query_position(self, data: dict, request: Request) -> None:
-        """持仓查询回报"""
-        if self.check_error("查询持仓", data):
-            return
-
-        data = data["result"]
-
-        for d in data:
-            d = d["data"]
-
-            if d["size"]:
-                position: PositionData = PositionData(
-                    symbol=d["symbol"],
-                    exchange=Exchange.BYBIT,
-                    direction=DIRECTION_BYBIT2VT[d["side"]],
-                    volume=d["size"],
-                    price=d["entry_price"],
-                    gateway_name=self.gateway_name
-                )
-                self.gateway.on_position(position)
-
     def on_query_contract(self, data: dict, request: Request) -> None:
         """合约查询回报"""
         if self.check_error("查询合约", data):
@@ -2293,21 +2293,19 @@ class BybitSpotRestApi(RestClient):
                 symbol=d["name"],
                 exchange=Exchange.BYBIT,
                 name=d["name"],
-                product=Product.FUTURES,
+                product=Product.SPOT,
                 size=1,
-                pricetick=float(d["price_filter"]["tick_size"]),
-                min_volume=d["lot_size_filter"]["min_trading_qty"],
+                pricetick=float(d["minPricePrecision"]),
+                min_volume=float(d["minTradeQty"]),
                 history_data=True,
                 gateway_name=self.gateway_name
             )
 
-            # 缓存正向永续合约信息并推送
-            if d["quote_currency"] == "USDT":
-                usdt_symbols.add(d["name"])
-                self.gateway.on_contract(contract)
+            # 缓存现货交易对信息并推送
+            spot_symbols.add(d["name"])
+            self.gateway.on_contract(contract)
 
         self.gateway.write_log("合约信息查询成功")
-        self.query_position()
         self.query_account()
         self.query_order()
 
@@ -2316,16 +2314,16 @@ class BybitSpotRestApi(RestClient):
         if self.check_error("查询账号", data):
             return
 
-        for key, value in data["result"].items():
-            if key == "USDT":
-                account: AccountData = AccountData(
-                    accountid=key,
-                    balance=value["wallet_balance"],
-                    frozen=value["used_margin"],
-                    gateway_name=self.gateway_name,
-                )
-                self.gateway.on_account(account)
-                self.gateway.write_log(f"{key}资金信息查询成功")
+        for balance_data in data["result"]["balances"]:
+            coin = balance_data["coin"]
+            account: AccountData = AccountData(
+                accountid=coin,
+                balance=balance_data["total"],
+                frozen=balance_data["locked"],
+                gateway_name=self.gateway_name,
+            )
+            self.gateway.on_account(account)
+            self.gateway.write_log(f"{coin}资金信息查询成功")
 
     def on_query_order(self, data: dict, request: Request):
         """未成交委托查询回报"""
@@ -2335,43 +2333,38 @@ class BybitSpotRestApi(RestClient):
         if not data["result"]:
             return
 
-        for d in data["result"]:
-            orderid: str = d["order_link_id"]
+        for d in data["result"]["list"]:
+            orderid: str = d["orderLinkId"]
             if orderid:
                 local_orderids.add(orderid)
             else:
-                orderid: str = d["order_id"]
+                orderid: str = d["orderId"]
 
-            dt: datetime = generate_datetime(d["created_time"])
+            dt: datetime = generate_datetime(d["createTime"])
 
             order: OrderData = OrderData(
                 symbol=d["symbol"],
                 exchange=Exchange.BYBIT,
                 orderid=orderid,
-                type=ORDER_TYPE_BYBIT2VT[d["order_type"]],
+                type=ORDER_TYPE_BYBIT2VT_SPOT[d["orderType"]],
                 direction=DIRECTION_BYBIT2VT[d["side"]],
-                price=d["price"],
-                volume=d["qty"],
-                traded=d["cum_exec_qty"],
-                status=STATUS_BYBIT2VT[d["order_status"]],
+                price=d["orderPrice"],
+                volume=d["orderQty"],
+                traded=d["execQty"],
+                status=STATUS_BYBIT2VT_SPOT[d["status"]],
                 datetime=dt,
                 gateway_name=self.gateway_name
             )
-            offset: bool = d["reduce_only"]
-            if offset:
-                order.offset = Offset.CLOSE
-            else:
-                order.offset = Offset.OPEN
-
+            order.offset = Offset.OPEN
             self.gateway.on_order(order)
 
         self.gateway.write_log(f"{order.symbol}委托信息查询成功")
 
     def query_contract(self) -> None:
-        """查询合约信息"""
+        """查询交易对信息"""
         self.add_request(
             "GET",
-            "/v2/public/symbols",
+            "/spot/v3/public/symbols",
             self.on_query_contract
         )
 
@@ -2390,144 +2383,36 @@ class BybitSpotRestApi(RestClient):
         """查询资金"""
         self.add_request(
             "GET",
-            "/v2/private/wallet/balance",
+            "/spot/v3/private/account",
             self.on_query_account
-        )
-
-    def query_position(self) -> None:
-        """查询持仓"""
-        path_usdt: str = "/private/linear/position/list"
-        self.add_request(
-            "GET",
-            path_usdt,
-            self.on_query_position
         )
 
     def query_order(self) -> None:
         """查询未成交委托"""
-        path_usdt: str = "/private/linear/order/search"
+        path_spot: str = "/spot/v3/private/open-orders"
 
-        for symbol in usdt_symbols:
+        for symbol in spot_symbols:
             params: dict = {
                 "symbol": symbol
             }
 
             self.add_request(
                 "GET",
-                path_usdt,
+                path_spot,
                 callback=self.on_query_order,
                 params=params
             )
 
     def query_history(self, req: HistoryRequest) -> List[BarData]:
         """查询历史数据"""
-        history: list = []
-        count: int = 200
-        start_time: int = int(req.start.timestamp())
-
-        path: str = "/public/linear/kline"
-
-        while True:
-            # 创建查询参数
-            params: dict = {
-                "symbol": req.symbol,
-                "interval": INTERVAL_VT2BYBIT[req.interval],
-                "from": start_time,
-                "limit": count
-            }
-
-            # 从服务器获取响应
-            resp = self.request(
-                "GET",
-                path,
-                params=params
-            )
-
-            # 如果请求失败则终止循环
-            if resp.status_code // 100 != 2:
-                msg = f"获取历史数据失败，状态码：{resp.status_code}，信息：{resp.text}"
-                self.gateway.write_log(msg)
-                break
-            else:
-                data: dict = resp.json()
-
-                ret_code: int = data["ret_code"]
-                if ret_code:
-                    ret_msg: str = data["ret_msg"]
-                    msg = f"获取历史数据出错，错误信息：{ret_msg}"
-                    self.gateway.write_log(msg)
-                    break
-
-                if not data["result"]:
-                    msg = f"获取历史数据为空，开始时间：{start_time}，数量：{count}"
-                    self.gateway.write_log(msg)
-                    break
-
-                buf: list = []
-                for d in data["result"]:
-                    dt: datetime = generate_datetime_2(d["open_time"])
-
-                    bar: BarData = BarData(
-                        symbol=req.symbol,
-                        exchange=req.exchange,
-                        datetime=dt,
-                        interval=req.interval,
-                        volume=float(d["volume"]),
-                        open_price=float(d["open"]),
-                        high_price=float(d["high"]),
-                        low_price=float(d["low"]),
-                        close_price=float(d["close"]),
-                        gateway_name=self.gateway_name
-                    )
-                    buf.append(bar)
-
-                history.extend(buf)
-
-                begin: datetime = buf[0].datetime
-                end: datetime = buf[-1].datetime
-                msg = f"获取历史数据成功，{req.symbol} - {req.interval.value}，{begin} - {end}"
-                self.gateway.write_log(msg)
-
-                # 收到最后数据则结束循环
-                if len(buf) < count:
-                    break
-
-                # 更新开始时间
-                start_time: int = int((bar.datetime + TIMEDELTA_MAP[req.interval]).timestamp())
-
-        return history
+        return
 
     """ modify by loe """
     # =================================================
     def query_predicted_funding(self, symbol:str) -> None:
         """查询预测资金费率"""
-        path_usdt: str = "/v2/private/funding/predicted-funding"
-        data: dict = {
-            "symbol": symbol
-        }
-        self.add_request(
-            "GET",
-            path_usdt,
-            callback=self.on_query_predicted_funding,
-            params=data
-        )
-
-    def on_query_predicted_funding(self, data: dict, request: Request) -> None:
-        """预测资金费率查询回报"""
-        if self.check_error("查询预测资金费率", data):
-            return
-
-        result = data.get("result", None)
-        if result:
-            funding: FundingData = FundingData(
-                symbol=request.params.get('symbol', ''),
-                rate=result.get('predicted_funding_rate', 0.0),
-                fee=result.get('predicted_funding_fee', 0.0),
-                gateway_name=self.gateway_name
-            )
-            self.gateway.on_predicted_funding(funding)
+        return
     # =================================================
-
 
 def generate_timestamp(expire_after: float = 30) -> int:
     """生成时间戳"""

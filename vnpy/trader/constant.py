@@ -59,6 +59,7 @@ class OrderType(Enum):
     Order type.
     """
     LIMIT = "限价"
+    LIMIT_MAKER = "限价_MAKER"
     MARKET = "市价"
     STOP = "STOP"
     FAK = "FAK"
