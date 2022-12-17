@@ -103,6 +103,10 @@ ORDER_TYPE_BYBIT2VT_SPOT: Dict[str, OrderType] = {v: k for k, v in ORDER_TYPE_VT
 DIRECTION_VT2BYBIT: Dict[Direction, str] = {Direction.LONG: "Buy", Direction.SHORT: "Sell"}
 DIRECTION_BYBIT2VT: Dict[str, Direction] = {v: k for k, v in DIRECTION_VT2BYBIT.items()}
 
+# 买卖方向映射【现货】
+DIRECTION_VT2BYBIT_SPOT: Dict[Direction, str] = {Direction.LONG: "BUY", Direction.SHORT: "SELL"}
+DIRECTION_BYBIT2VT_SPOT: Dict[str, Direction] = {v: k for k, v in DIRECTION_VT2BYBIT_SPOT.items()}
+
 # 数据频率映射
 INTERVAL_VT2BYBIT: Dict[Interval, str] = {
     Interval.MINUTE: "1",
@@ -144,7 +148,7 @@ class BybitGateway(BaseGateway):
         "服务器": ["REAL", "TESTNET"],
         "代理地址": "",
         "代理端口": "",
-        "合约模式": ["反向", "正向"]
+        "合约模式": ["反向", "正向", "现货"]
     }
 
     exchanges: List[Exchange] = [Exchange.BYBIT]
@@ -164,10 +168,15 @@ class BybitGateway(BaseGateway):
             self.private_ws_api: "BybitUsdtPrivateWebsocketApi" = BybitUsdtPrivateWebsocketApi(self)
             self.public_ws_api: "BybitUsdtPublicWebsocketApi" = BybitUsdtPublicWebsocketApi(self)
 
-        else:
+        elif setting["合约模式"] == "反向":
             self.rest_api: "BybitInverseRestApi" = BybitInverseRestApi(self)
             self.private_ws_api: "BybitInversePrivateWebsocketApi" = BybitInversePrivateWebsocketApi(self)
             self.public_ws_api: "BybitInversePublicWebsocketApi" = BybitInversePublicWebsocketApi(self)
+
+        else:
+            self.rest_api: "BybitSpotRestApi" = BybitSpotRestApi(self)
+            # self.private_ws_api: "BybitInversePrivateWebsocketApi" = BybitInversePrivateWebsocketApi(self)
+            # self.public_ws_api: "BybitInversePublicWebsocketApi" = BybitInversePublicWebsocketApi(self)
 
         key: str = setting["ID"]
         secret: str = setting["Secret"]
@@ -187,18 +196,18 @@ class BybitGateway(BaseGateway):
             proxy_host,
             proxy_port
         )
-        self.private_ws_api.connect(
-            key,
-            secret,
-            server,
-            proxy_host,
-            proxy_port
-        )
-        self.public_ws_api.connect(
-            server,
-            proxy_host,
-            proxy_port
-        )
+        # self.private_ws_api.connect(
+        #     key,
+        #     secret,
+        #     server,
+        #     proxy_host,
+        #     proxy_port
+        # )
+        # self.public_ws_api.connect(
+        #     server,
+        #     proxy_host,
+        #     proxy_port
+        # )
 
         self.timer_count = 0
         self.register_event()
@@ -2287,7 +2296,7 @@ class BybitSpotRestApi(RestClient):
         if self.check_error("查询合约", data):
             return
 
-        for d in data["result"]:
+        for d in data["result"]["list"]:
             # 提取信息生成合约对象
             contract: ContractData = ContractData(
                 symbol=d["name"],
@@ -2318,8 +2327,8 @@ class BybitSpotRestApi(RestClient):
             coin = balance_data["coin"]
             account: AccountData = AccountData(
                 accountid=coin,
-                balance=balance_data["total"],
-                frozen=balance_data["locked"],
+                balance=float(balance_data["total"]),
+                frozen=float(balance_data["locked"]),
                 gateway_name=self.gateway_name,
             )
             self.gateway.on_account(account)
@@ -2330,7 +2339,7 @@ class BybitSpotRestApi(RestClient):
         if self.check_error("查询委托", data):
             return
 
-        if not data["result"]:
+        if not data["result"]["list"]:
             return
 
         for d in data["result"]["list"]:
@@ -2340,14 +2349,14 @@ class BybitSpotRestApi(RestClient):
             else:
                 orderid: str = d["orderId"]
 
-            dt: datetime = generate_datetime(d["createTime"])
+            dt: datetime = generate_datetime_2(d["createTime"])
 
             order: OrderData = OrderData(
                 symbol=d["symbol"],
                 exchange=Exchange.BYBIT,
                 orderid=orderid,
                 type=ORDER_TYPE_BYBIT2VT_SPOT[d["orderType"]],
-                direction=DIRECTION_BYBIT2VT[d["side"]],
+                direction=DIRECTION_BYBIT2VT_SPOT[d["side"]],
                 price=d["orderPrice"],
                 volume=d["orderQty"],
                 traded=d["execQty"],
@@ -2358,7 +2367,7 @@ class BybitSpotRestApi(RestClient):
             order.offset = Offset.OPEN
             self.gateway.on_order(order)
 
-        self.gateway.write_log(f"{order.symbol}委托信息查询成功")
+        self.gateway.write_log(f"现货委托信息查询成功")
 
     def query_contract(self) -> None:
         """查询交易对信息"""
@@ -2370,9 +2379,9 @@ class BybitSpotRestApi(RestClient):
 
     def check_error(self, name: str, data: dict) -> bool:
         """回报状态检查"""
-        if data["ret_code"]:
-            error_code: int = data["ret_code"]
-            error_msg: str = data["ret_msg"]
+        if data["retCode"]:
+            error_code: int = data["retCode"]
+            error_msg: str = data["retMsg"]
             msg = f"{name}失败，错误代码：{error_code}，信息：{error_msg}"
             self.gateway.write_log(msg)
             return True
@@ -2390,18 +2399,12 @@ class BybitSpotRestApi(RestClient):
     def query_order(self) -> None:
         """查询未成交委托"""
         path_spot: str = "/spot/v3/private/open-orders"
-
-        for symbol in spot_symbols:
-            params: dict = {
-                "symbol": symbol
-            }
-
-            self.add_request(
-                "GET",
-                path_spot,
-                callback=self.on_query_order,
-                params=params
-            )
+        self.add_request(
+            "GET",
+            path_spot,
+            callback=self.on_query_order,
+            params={}
+        )
 
     def query_history(self, req: HistoryRequest) -> List[BarData]:
         """查询历史数据"""
@@ -2441,6 +2444,8 @@ def generate_datetime(timestamp: str) -> datetime:
 
 def generate_datetime_2(timestamp: int) -> datetime:
     """生成时间"""
+    if len(str(timestamp)) >= 10:
+        timestamp = int(str(timestamp)[:10])
     dt: datetime = datetime.fromtimestamp(timestamp)
     return CHINA_TZ.localize(dt)
 
