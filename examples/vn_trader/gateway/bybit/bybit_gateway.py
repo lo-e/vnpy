@@ -2172,20 +2172,13 @@ class BybitSpotRestApi(RestClient):
         data: dict = {
             "symbol": req.symbol,
             "side": DIRECTION_VT2BYBIT[req.direction],
-            "qty": req.volume,
-            "order_link_id": orderid,
-            "time_in_force": "GoodTillCancel",
-            "reduce_only": False,
-            "close_on_trigger": False
+            "orderQty": req.volume,
+            "orderLinkId": orderid,
+            "timeInForce": "GTC"
         }
 
-        data["order_type"] = ORDER_TYPE_VT2BYBIT_SPOT[req.type]
-        data["price"] = req.price
-
-        """ modify by loe """
-        # 增加了CLOSETODAY\CLOSEYESTERDAY
-        if req.offset == Offset.CLOSE or req.offset == Offset.CLOSETODAY or req.offset == Offset.CLOSEYESTERDAY:
-            data["reduce_only"] = True
+        data["orderType"] = ORDER_TYPE_VT2BYBIT_SPOT[req.type]
+        data["orderPrice"] = req.price
 
         self.add_request(
             "POST",
