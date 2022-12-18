@@ -103,6 +103,10 @@ ORDER_TYPE_BYBIT2VT_SPOT: Dict[str, OrderType] = {v: k for k, v in ORDER_TYPE_VT
 DIRECTION_VT2BYBIT: Dict[Direction, str] = {Direction.LONG: "Buy", Direction.SHORT: "Sell"}
 DIRECTION_BYBIT2VT: Dict[str, Direction] = {v: k for k, v in DIRECTION_VT2BYBIT.items()}
 
+# 买卖方向映射【现货】
+DIRECTION_VT2BYBIT_SPOT: Dict[Direction, str] = {Direction.LONG: "BUY", Direction.SHORT: "SELL"}
+DIRECTION_BYBIT2VT_SPOT: Dict[str, Direction] = {v: k for k, v in DIRECTION_VT2BYBIT_SPOT.items()}
+
 # 数据频率映射
 INTERVAL_VT2BYBIT: Dict[Interval, str] = {
     Interval.MINUTE: "1",
@@ -251,8 +255,8 @@ class BybitGateway(BaseGateway):
         if self.rest_api:
             self.rest_api.query_predicted_funding(symbol=symbol)
 
-class BybitSpotRestApi(RestClient):
-    """现货的REST接口"""
+class BybitSpotPublicWebsocketApi(WebsocketClient):
+    """正向合约的行情Websocket接口"""
 
     def __init__(self, gateway: BybitGateway) -> None:
         """构造函数"""
@@ -261,339 +265,213 @@ class BybitSpotRestApi(RestClient):
         self.gateway: BybitGateway = gateway
         self.gateway_name: str = gateway.gateway_name
 
-        self.key: str = ""
-        self.secret: bytes = b""
+        self.callbacks: Dict[str, Callable] = {}
+        self.ticks: Dict[str, TickData] = {}
+        self.subscribed: Dict[str, SubscribeRequest] = {}
 
-        self.order_count: int = 0
-
-    def sign(self, request: Request) -> Request:
-        """生成签名"""
-        request.headers = {"Referer": "vn.py"}
-
-        if request.method == "GET":
-            api_params: dict = request.params
-            if api_params is None:
-                api_params = request.params = {}
-        else:
-            api_params: dict = request.data
-            if api_params is None:
-                api_params = request.data = {}
-
-        api_params["api_key"] = self.key
-        api_params["recv_window"] = 30 * 1000
-        api_params["timestamp"] = generate_timestamp(-5)
-
-        data2sign = "&".join([f"{k}={v}" for k, v in sorted(api_params.items())])
-        signature: str = sign(self.secret, data2sign.encode())
-        api_params["sign"] = signature
-
-        return request
-
-    def new_orderid(self) -> str:
-        """生成本地委托号"""
-        prefix: str = datetime.now().strftime("%Y%m%d-%H%M%S-")
-
-        self.order_count += 1
-        suffix: str = str(self.order_count).rjust(8, "0")
-
-        orderid: str = prefix + suffix
-        return orderid
+        self.symbol_bids: Dict[str, dict] = {}
+        self.symbol_asks: Dict[str, dict] = {}
 
     def connect(
         self,
-        key: str,
-        secret: str,
         server: str,
         proxy_host: str,
-        proxy_port: int,
+        proxy_port: int
     ) -> None:
-        """连接服务器"""
-        self.key = key
-        self.secret = secret.encode()
+        """连接Websocket公共频道"""
+        self.proxy_host = proxy_host
+        self.proxy_port = proxy_port
+        self.server = server
 
-        if server == "REAL":
-            self.init(REST_HOST, proxy_host, proxy_port)
+        if self.server == "REAL":
+            url = SPOT_PUBLIC_WEBSOCKET_HOST
         else:
-            self.init(TESTNET_REST_HOST, proxy_host, proxy_port)
+            url = TESTNET_SPOT_PUBLIC_WEBSOCKET_HOST
 
-        self.start(3)
-        self.gateway.write_log("REST API启动成功")
+        self.init(url, self.proxy_host, self.proxy_port)
+        self.start()
 
-        self.query_contract()
-
-    def send_order(self, req: OrderRequest) -> str:
-        """委托下单"""
-        # 检查委托类型是否正确
-        if req.type not in ORDER_TYPE_VT2BYBIT_SPOT:
-            self.gateway.write_log(f"委托失败，不支持的委托类型：{req.type.value}")
-            return
-
-        # 检查合约代码是否正确并根据合约类型判断下单接口
-        if req.symbol in spot_symbols:
-            path: str = "/spot/v3/private/order"
-        else:
-            self.gateway.write_log(f"委托失败，找不到该合约代码{req.symbol}")
-            return
-
-        # 生成本地委托号
-        orderid: str = self.new_orderid()
-        # 推送提交中事件
-        order: OrderData = req.create_order_data(orderid, self.gateway_name)
-
-        # 生成委托请求
-        data: dict = {
-            "symbol": req.symbol,
-            "side": DIRECTION_VT2BYBIT[req.direction],
-            "qty": req.volume,
-            "order_link_id": orderid,
-            "time_in_force": "GoodTillCancel",
-            "reduce_only": False,
-            "close_on_trigger": False
+    def ping(self):
+        req: dict = {
+            "op": "ping",
         }
+        self.send_packet(req)
 
-        data["order_type"] = ORDER_TYPE_VT2BYBIT_SPOT[req.type]
-        data["price"] = req.price
+    def on_ping(self, packet: dict):
+        self._connect_id = packet.get('conn_id', '')
 
-        """ modify by loe """
-        # 增加了CLOSETODAY\CLOSEYESTERDAY
-        if req.offset == Offset.CLOSE or req.offset == Offset.CLOSETODAY or req.offset == Offset.CLOSEYESTERDAY:
-            data["reduce_only"] = True
+    def on_connected(self) -> None:
+        """连接成功回报"""
+        self.gateway.write_log("行情Websocket API连接成功")
 
-        self.add_request(
-            "POST",
-            path,
-            callback=self.on_send_order,
-            data=data,
-            extra=order,
-            on_failed=self.on_send_order_failed,
-            on_error=self.on_send_order_error,
-        )
+        if self.subscribed:
+            for req in self.subscribed.values():
+                self.subscribe(req, for_reconnect=True)
 
-        self.gateway.on_order(order)
-        return order.vt_orderid
+    def on_disconnected(self) -> None:
+        """连接断开回报"""
+        self.gateway.write_log("行情Websocket API连接断开")
 
-    def on_send_order_failed(
-        self,
-        status_code: int,
-        request: Request
-    ) -> None:
-        """委托下单失败服务器报错回报"""
-        order: OrderData = request.extra
-        order.status = Status.REJECTED
-        self.gateway.on_order(order)
-
-        data: dict = request.response.json()
-        error_msg: str = data["ret_msg"]
-        error_code: int = data["ret_code"]
-        msg = f"委托失败，错误代码:{error_code},  错误信息：{error_msg}"
-        self.gateway.write_log(msg)
-
-    def on_send_order_error(
-        self,
-        exception_type: type,
-        exception_value: Exception,
-        tb,
-        request: Request
-    ) -> None:
-        """委托下单回报函数报错回报"""
-        order: OrderData = request.extra
-        order.status = Status.REJECTED
-        self.gateway.on_order(order)
-
-        if not issubclass(exception_type, ConnectionError):
-            self.on_error(exception_type, exception_value, tb, request)
-
-    def on_send_order(self, data: dict, request: Request) -> None:
-        """委托下单回报"""
-        if self.check_error("委托下单", data):
-            order: OrderData = request.extra
-            order.status = Status.REJECTED
-            self.gateway.on_order(order)
-
-    def cancel_order(self, req: CancelRequest) -> None:
-        """委托撤单"""
-        # 检查合约代码是否正确并根据合约类型判断撤单接口
-        if req.symbol in spot_symbols:
-            path: str = "/spot/v3/private/cancel-order"
-        else:
-            self.gateway.write_log(f"撤单失败，找不到该合约代码{req.symbol}")
+    """ modify by loe """
+    # 增加了for_reconnect参数
+    def subscribe(self, req: SubscribeRequest, for_reconnect: bool = False) -> None:
+        """订阅行情"""
+        if req.symbol in self.subscribed and not for_reconnect:
             return
 
-        data: dict = {"symbol": req.symbol}
+        # 缓存订阅记录
+        self.subscribed[req.symbol] = req
 
-        # 检查是否为本地委托号
-        if req.orderid in local_orderids:
-            data["orderLinkId"] = req.orderid
-        else:
-            data["orderId"] = req.orderid
-
-        self.add_request(
-            "POST",
-            path,
-            data=data,
-            callback=self.on_cancel_order
+        # 创建TICK对象
+        tick: TickData = TickData(
+            symbol=req.symbol,
+            exchange=req.exchange,
+            datetime=datetime.now(),
+            name=req.symbol,
+            gateway_name=self.gateway_name
         )
+        self.ticks[req.symbol] = tick
 
-    def on_cancel_order(self, data: dict, request: Request) -> None:
-        """委托撤单回报"""
-        if self.check_error("委托撤单", data):
-            return
+        # 发送订阅请求
+        self.subscribe_topic(f"instrument_info.100ms.{req.symbol}", self.on_tick)
+        self.subscribe_topic(f"orderbook.40.{req.symbol}", self.on_depth)
 
-    def on_failed(self, status_code: int, request: Request) -> None:
-        """处理请求失败回报"""
-        data: dict = request.response.json()
-        error_msg: str = data["ret_msg"]
-        error_code: int = data["ret_code"]
+    def subscribe_topic(
+        self,
+        topic: str,
+        callback: Callable[[str, dict], Any]
+    ) -> None:
+        """订阅公共频道推送"""
+        self.callbacks[topic] = callback
 
-        msg = f"请求失败，状态码：{request.status}，错误代码：{error_code}, 信息：{error_msg}"
-        self.gateway.write_log(msg)
+        req: dict = {
+            "op": "subscribe",
+            "args": [topic],
+        }
+        self.send_packet(req)
+
+    def on_packet(self, packet: dict) -> None:
+        """推送数据回报"""
+        if "topic" not in packet:
+            op: str = packet["request"]["op"]
+            if op == "auth":
+                self.on_login(packet)
+
+            elif op == 'ping':
+                self.on_ping(packet)
+        else:
+            channel: str = packet["topic"]
+            callback: callable = self.callbacks[channel]
+            callback(packet)
 
     def on_error(
         self,
         exception_type: type,
         exception_value: Exception,
-        tb,
-        request: Request
+        tb
     ) -> None:
         """触发异常回报"""
         msg = f"触发异常，状态码：{exception_type}，信息：{exception_value}"
         self.gateway.write_log(msg)
 
-        sys.stderr.write(
-            self.exception_detail(exception_type, exception_value, tb, request)
-        )
+        sys.stderr.write(self.exception_detail(
+            exception_type, exception_value, tb))
 
-    def on_query_contract(self, data: dict, request: Request) -> None:
-        """合约查询回报"""
-        if self.check_error("查询合约", data):
+    def on_tick(self, packet: dict) -> None:
+        """行情推送回报"""
+        topic: str = packet["topic"]
+        type_: str = packet["type"]
+        data: dict = packet["data"]
+
+        symbol: str = topic.replace("instrument_info.100ms.", "")
+        tick: TickData = self.ticks[symbol]
+
+        if type_ == "snapshot":
+            if not data["last_price"]:           # 过滤最新价为0的数据
+                return
+
+            tick.last_price = float(data["last_price"])
+
+            tick.volume = int(data.get('volume_24h_e8', 0)) / 100000000
+
+            tick.datetime = generate_datetime(data["updated_at"])
+
+        else:
+            update: dict = data["update"][0]
+
+            if "last_price" not in update:      # 过滤最新价为0的数据
+                return
+
+            tick.last_price = float(update["last_price"])
+
+            tick.volume = int(update.get('volume_24h_e8', 0)) / 100000000
+
+            tick.datetime = generate_datetime(update["updated_at"])
+
+        self.gateway.on_tick(copy(tick))
+
+    def on_depth(self, packet: dict) -> None:
+        """盘口推送回报"""
+        topic: str = packet["topic"]
+        type_: str = packet["type"]
+        data: dict = packet["data"]
+        if not data:
             return
 
-        for d in data["result"]:
-            # 提取信息生成合约对象
-            contract: ContractData = ContractData(
-                symbol=d["name"],
-                exchange=Exchange.BYBIT,
-                name=d["name"],
-                product=Product.SPOT,
-                size=1,
-                pricetick=float(d["minPricePrecision"]),
-                min_volume=float(d["minTradeQty"]),
-                history_data=True,
-                gateway_name=self.gateway_name
-            )
+        symbol: str = topic.replace("orderbook.40.", "")
+        tick: TickData = self.ticks[symbol]
+        bids: dict = self.symbol_bids.setdefault(symbol, {})
+        asks: dict = self.symbol_asks.setdefault(symbol, {})
 
-            # 缓存现货交易对信息并推送
-            spot_symbols.add(d["name"])
-            self.gateway.on_contract(contract)
+        if type_ == "snapshot":
 
-        self.gateway.write_log("合约信息查询成功")
-        self.query_account()
-        self.query_order()
+            buf: list = data["order_book"]
 
-    def on_query_account(self, data: dict, request: Request) -> None:
-        """资金查询回报"""
-        if self.check_error("查询账号", data):
-            return
+            for d in buf:
+                price: float = float(d["price"])
 
-        for balance_data in data["result"]["balances"]:
-            coin = balance_data["coin"]
-            account: AccountData = AccountData(
-                accountid=coin,
-                balance=balance_data["total"],
-                frozen=balance_data["locked"],
-                gateway_name=self.gateway_name,
-            )
-            self.gateway.on_account(account)
-            self.gateway.write_log(f"{coin}资金信息查询成功")
+                if d["side"] == "Buy":
+                    bids[price] = d
+                else:
+                    asks[price] = d
+        else:
+            for d in data["delete"]:
+                price: float = float(d["price"])
 
-    def on_query_order(self, data: dict, request: Request):
-        """未成交委托查询回报"""
-        if self.check_error("查询委托", data):
-            return
+                if d["side"] == "Buy":
+                    bids.pop(price)
+                else:
+                    asks.pop(price)
 
-        if not data["result"]:
-            return
+            for d in (data["update"] + data["insert"]):
 
-        for d in data["result"]["list"]:
-            orderid: str = d["orderLinkId"]
-            if orderid:
-                local_orderids.add(orderid)
-            else:
-                orderid: str = d["orderId"]
+                price: float = float(d["price"])
+                if d["side"] == "Buy":
+                    bids[price] = d
+                else:
+                    asks[price] = d
 
-            dt: datetime = generate_datetime(d["createTime"])
+        bid_keys: list = list(bids.keys())
+        bid_keys.sort(reverse=True)
 
-            order: OrderData = OrderData(
-                symbol=d["symbol"],
-                exchange=Exchange.BYBIT,
-                orderid=orderid,
-                type=ORDER_TYPE_BYBIT2VT_SPOT[d["orderType"]],
-                direction=DIRECTION_BYBIT2VT[d["side"]],
-                price=d["orderPrice"],
-                volume=d["orderQty"],
-                traded=d["execQty"],
-                status=STATUS_BYBIT2VT_SPOT[d["status"]],
-                datetime=dt,
-                gateway_name=self.gateway_name
-            )
-            order.offset = Offset.OPEN
-            self.gateway.on_order(order)
+        ask_keys: list = list(asks.keys())
+        ask_keys.sort()
 
-        self.gateway.write_log(f"{order.symbol}委托信息查询成功")
+        for i in range(5):
+            n = i + 1
 
-    def query_contract(self) -> None:
-        """查询交易对信息"""
-        self.add_request(
-            "GET",
-            "/spot/v3/public/symbols",
-            self.on_query_contract
-        )
+            bid_price = bid_keys[i]
+            bid_data = bids[bid_price]
+            ask_price = ask_keys[i]
+            ask_data = asks[ask_price]
 
-    def check_error(self, name: str, data: dict) -> bool:
-        """回报状态检查"""
-        if data["ret_code"]:
-            error_code: int = data["ret_code"]
-            error_msg: str = data["ret_msg"]
-            msg = f"{name}失败，错误代码：{error_code}，信息：{error_msg}"
-            self.gateway.write_log(msg)
-            return True
+            setattr(tick, f"bid_price_{n}", bid_price)
+            setattr(tick, f"bid_volume_{n}", bid_data["size"])
+            setattr(tick, f"ask_price_{n}", ask_price)
+            setattr(tick, f"ask_volume_{n}", ask_data["size"])
 
-        return False
-
-    def query_account(self) -> None:
-        """查询资金"""
-        self.add_request(
-            "GET",
-            "/spot/v3/private/account",
-            self.on_query_account
-        )
-
-    def query_order(self) -> None:
-        """查询未成交委托"""
-        path_spot: str = "/spot/v3/private/open-orders"
-
-        for symbol in spot_symbols:
-            params: dict = {
-                "symbol": symbol
-            }
-
-            self.add_request(
-                "GET",
-                path_spot,
-                callback=self.on_query_order,
-                params=params
-            )
-
-    def query_history(self, req: HistoryRequest) -> List[BarData]:
-        """查询历史数据"""
-        return
-
-    """ modify by loe """
-    # =================================================
-    def query_predicted_funding(self, symbol:str) -> None:
-        """查询预测资金费率"""
-        return
-    # =================================================
+        tick.datetime = generate_datetime_2(int(packet["timestamp_e6"]) / 1000000)
+        self.gateway.on_tick(copy(tick))
 
 
 def generate_timestamp(expire_after: float = 30) -> int:

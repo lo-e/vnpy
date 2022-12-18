@@ -176,7 +176,7 @@ class BybitGateway(BaseGateway):
         else:
             self.rest_api: "BybitSpotRestApi" = BybitSpotRestApi(self)
             # self.private_ws_api: "BybitInversePrivateWebsocketApi" = BybitInversePrivateWebsocketApi(self)
-            # self.public_ws_api: "BybitInversePublicWebsocketApi" = BybitInversePublicWebsocketApi(self)
+            self.public_ws_api: "BybitSpotPublicWebsocketApi" = BybitSpotPublicWebsocketApi(self)
 
         key: str = setting["ID"]
         secret: str = setting["Secret"]
@@ -203,11 +203,11 @@ class BybitGateway(BaseGateway):
         #     proxy_host,
         #     proxy_port
         # )
-        # self.public_ws_api.connect(
-        #     server,
-        #     proxy_host,
-        #     proxy_port
-        # )
+        self.public_ws_api.connect(
+            server,
+            proxy_host,
+            proxy_port
+        )
 
         self.timer_count = 0
         self.register_event()
@@ -2412,6 +2412,208 @@ class BybitSpotRestApi(RestClient):
         """查询预测资金费率"""
         return
     # =================================================
+
+class BybitSpotPublicWebsocketApi(WebsocketClient):
+    """正向合约的行情Websocket接口"""
+
+    def __init__(self, gateway: BybitGateway) -> None:
+        """构造函数"""
+        super().__init__()
+
+        self.gateway: BybitGateway = gateway
+        self.gateway_name: str = gateway.gateway_name
+
+        self.callbacks: Dict[str, Callable] = {}
+        self.ticks: Dict[str, TickData] = {}
+        self.subscribed: Dict[str, SubscribeRequest] = {}
+
+        self.symbol_bids: Dict[str, dict] = {}
+        self.symbol_asks: Dict[str, dict] = {}
+
+    def connect(
+        self,
+        server: str,
+        proxy_host: str,
+        proxy_port: int
+    ) -> None:
+        """连接Websocket公共频道"""
+        self.proxy_host = proxy_host
+        self.proxy_port = proxy_port
+        self.server = server
+
+        if self.server == "REAL":
+            url = SPOT_PUBLIC_WEBSOCKET_HOST
+        else:
+            url = TESTNET_SPOT_PUBLIC_WEBSOCKET_HOST
+
+        self.init(url, self.proxy_host, self.proxy_port)
+        self.start()
+
+    def ping(self):
+        req: dict = {
+            "op": "ping",
+        }
+        self.send_packet(req)
+
+    def on_ping(self, packet: dict):
+        self._connect_id = packet.get('conn_id', '')
+
+    def on_connected(self) -> None:
+        """连接成功回报"""
+        self.gateway.write_log("行情Websocket API连接成功")
+
+        if self.subscribed:
+            for req in self.subscribed.values():
+                self.subscribe(req, for_reconnect=True)
+
+    def on_disconnected(self) -> None:
+        """连接断开回报"""
+        self.gateway.write_log("行情Websocket API连接断开")
+
+    """ modify by loe """
+    # 增加了for_reconnect参数
+    def subscribe(self, req: SubscribeRequest, for_reconnect: bool = False) -> None:
+        """订阅行情"""
+        if req.symbol in self.subscribed and not for_reconnect:
+            return
+
+        # 缓存订阅记录
+        self.subscribed[req.symbol] = req
+
+        # 创建TICK对象
+        tick: TickData = TickData(
+            symbol=req.symbol,
+            exchange=req.exchange,
+            datetime=datetime.now(),
+            name=req.symbol,
+            gateway_name=self.gateway_name
+        )
+        self.ticks[req.symbol] = tick
+
+        # 发送订阅请求
+        self.subscribe_topic(f"trade.{req.symbol}", self.on_tick)
+        self.subscribe_topic(f"orderbook.40.{req.symbol}", self.on_depth)
+
+    def subscribe_topic(
+        self,
+        topic: str,
+        callback: Callable[[str, dict], Any]
+    ) -> None:
+        """订阅公共频道推送"""
+        self.callbacks[topic] = callback
+
+        req: dict = {
+            "op": "subscribe",
+            "args": [topic],
+        }
+        self.send_packet(req)
+
+    def on_packet(self, packet: dict) -> None:
+        """推送数据回报"""
+        if "topic" in packet:
+            channel: str = packet["topic"]
+            callback: callable = self.callbacks[channel]
+            callback(packet)
+
+        elif "op" in packet:
+            op: str = packet["op"]
+            if op == 'pong':
+                self.on_ping(packet)
+
+        else:
+            pass
+
+    def on_error(
+        self,
+        exception_type: type,
+        exception_value: Exception,
+        tb
+    ) -> None:
+        """触发异常回报"""
+        msg = f"触发异常，状态码：{exception_type}，信息：{exception_value}"
+        self.gateway.write_log(msg)
+
+        sys.stderr.write(self.exception_detail(
+            exception_type, exception_value, tb))
+
+    def on_tick(self, packet: dict) -> None:
+        """行情推送回报"""
+        topic: str = packet["topic"]
+        type_: str = packet["type"]
+        data: dict = packet["data"]
+        symbol: str = topic.replace("trade.", "")
+        if not data:
+            return
+
+        if type_ == "delta":
+            price = float(data["p"])
+            if not price:
+                # 过滤最新价为0的数据
+                return
+
+            tick: TickData = self.ticks[symbol]
+            tick.last_price = price
+            tick.volume = float(data.get('q', 0))
+            tick.datetime = generate_datetime_2(data["t"])
+
+            self.gateway.on_tick(copy(tick))
+
+        else:
+            pass
+
+    def on_depth(self, packet: dict) -> None:
+        """盘口推送回报"""
+        topic: str = packet["topic"]
+        type_: str = packet["type"]
+        data: dict = packet["data"]
+        symbol: str = topic.replace("orderbook.40.", "")
+        if not data:
+            return
+
+        if type_ == "delta":
+            bid_list = data['b']
+            ask_list = data['a']
+            if not bid_list or not ask_list:
+                return
+
+            bids: dict = {}
+            asks: dict = {}
+            self.symbol_bids[symbol] = bids
+            self.symbol_asks[symbol] = asks
+
+            for bid in bid_list:
+                price: float = float(bid[0])
+                bids[price] = bid
+
+            for ask in ask_list:
+                price: float = float(ask[0])
+                asks[price] = ask
+
+            bid_keys: list = list(bids.keys())
+            bid_keys.sort(reverse=True)
+
+            ask_keys: list = list(asks.keys())
+            ask_keys.sort()
+
+            tick: TickData = self.ticks[symbol]
+            for i in range(5):
+                n = i + 1
+
+                bid_price = bid_keys[i]
+                bid_data = bids[bid_price]
+                ask_price = ask_keys[i]
+                ask_data = asks[ask_price]
+
+                setattr(tick, f"bid_price_{n}", bid_price)
+                setattr(tick, f"bid_volume_{n}", bid_data[1])
+                setattr(tick, f"ask_price_{n}", ask_price)
+                setattr(tick, f"ask_volume_{n}", ask_data[1])
+
+            tick.datetime = generate_datetime_2(data["t"])
+            self.gateway.on_tick(copy(tick))
+
+        else:
+            pass
 
 def generate_timestamp(expire_after: float = 30) -> int:
     """生成时间戳"""
