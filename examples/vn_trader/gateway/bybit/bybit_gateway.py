@@ -2642,9 +2642,16 @@ def generate_datetime(timestamp: str) -> datetime:
 
 def generate_datetime_2(timestamp: int) -> datetime:
     """生成时间"""
+    micro = 0
     if len(str(timestamp)) >= 10:
+        micro = int(str(timestamp)[10:])
         timestamp = int(str(timestamp)[:10])
     dt: datetime = datetime.fromtimestamp(timestamp)
+
+    if micro:
+        date_str = f'{dt.year}-{dt.month}-{dt.day} {dt.hour}:{dt.minute}:{dt.second}.{micro}'
+        dt = datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S.%f')
+
     return CHINA_TZ.localize(dt)
 
 def get_float_value(data: dict, key: str) -> float:
