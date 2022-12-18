@@ -221,8 +221,11 @@ class BybitGateway(BaseGateway):
         if self.timer_count >= 60:
             self.timer_count = 0
 
-            self.private_ws_api.ping()
-            self.public_ws_api.ping()
+            try:
+                self.private_ws_api.ping()
+                self.public_ws_api.ping()
+            except:
+                pass
 
     def subscribe(self, req: SubscribeRequest) -> None:
         """订阅行情"""
