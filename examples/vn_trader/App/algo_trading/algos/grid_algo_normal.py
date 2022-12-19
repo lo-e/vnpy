@@ -14,9 +14,11 @@ from datetime import datetime, timedelta
 from vnpy.trader.utility import round_to, floor_to, ceil_to
 from vnpy.trader.utility import BarGenerator
 from typing import Callable
+from vnpy.trader.event import EVENT_PREDICTED_FUNDING
+from vnpy.event import Event
 
 TRADE_SYMBOL = 'BTCUSDT.BYBIT'
-TRADE_CAPITAL = 1000
+TRADE_CAPITAL = 100000
 window_time = ['00:00:00', '08:00:00', '16:00:00']
 
 class Mode(Enum):
@@ -43,10 +45,17 @@ class GridDirection(Enum):
     OPEN = "看涨看跌"
     SHORT = "看跌"
 
-class GridAlgoTest(AlgoTemplate):
+class GridLevel(Enum):
+    """
+    LEVEL of Grid.
+    """
+    LEVEL_1 = "LEVEL_1"
+    LEVEL_2 = "LEVEL_2"
+
+class GridAlgo(AlgoTemplate):
     """"""
 
-    display_name = "Grid 网格测试"
+    display_name = "Grid 网格"
     AUTO_FLAG = True
 
     default_setting = {
@@ -64,6 +73,10 @@ class GridAlgoTest(AlgoTemplate):
             "看涨看跌",
             "看跌"
         ],
+        "grid_level":[
+            'LEVEL_1',
+            'LEVEL_2'
+        ],
         "ratio_close": [
             "是",
             "否",
@@ -73,21 +86,24 @@ class GridAlgoTest(AlgoTemplate):
         "grid_count": 0,
         "grid_price": 0.0,
         "grid_volume": 0.0,
-        "grid_max":0.0,
-        "grid_min":0.0,
-        "interval": 0,
+        "exit_price":0.0,
+        "volume_rate":0.0,
+        "interval": 0
     }
 
     variables = [
         "pos",
+        "pos_reiniting",
+        "predicted_funding",
         "timer_count",
         "status",
         "grid_direction",
         "max_volume",
+        "volume_rate",
         "gridUp",
         "guide_price",
-        "stop_price",
         "gridDown",
+        "exit_price",
         "reject_order_count",
         "long_orderids",
         "short_orderids"
@@ -98,6 +114,10 @@ class GridAlgoTest(AlgoTemplate):
 
     max_grid_count = 10000
     min_grid_price = 2.0
+
+    # ****** DB模式参数 ******
+    # 指标数据参数
+    gridWindow = 20
 
     # ****** CUSTOM模式参数 ******
     # 建仓价位线，将历史最高价下跌多少作为安全建仓价位
@@ -126,8 +146,6 @@ class GridAlgoTest(AlgoTemplate):
         self.grid_count = setting['grid_count']
         self.grid_price = setting["grid_price"]
         self.grid_volume = setting["grid_volume"]
-        self.grid_max = setting["grid_max"]
-        self.grid_min = setting["grid_min"]
         self.interval = setting["interval"]
         self.mode = Mode(setting['mode'])
         self.grid_direction = GridDirection(setting['grid_direction'])
@@ -137,6 +155,9 @@ class GridAlgoTest(AlgoTemplate):
             self.ratio_close = True
         else:
             self.ratio_close = False
+        self.exit_price = setting.get('exit_price', 0.0)
+        self.volume_rate = setting.get('volume_rate', 0.0)
+        self.grid_level = GridLevel(setting.get('grid_level', ''))
 
         # Variables
         self.pos = 0
@@ -160,11 +181,17 @@ class GridAlgoTest(AlgoTemplate):
         self.cancel_orderids = []
         self.status = GridStatus.OPEN
         self.max_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))
-        self.stop_price = self.guide_price
-        self.stop_price_timecounter = 0
-        self.stop_price_init = False
+
+        # 仓位管理相关
+        self.pos_reiniting = False
+        self.pos_reiniting_target = 0
+        self.pos_reiniting_waiting = False
+
+        self.am = ArrayManager(self.gridWindow + 1)
+        self.predicted_funding = 0.0
 
         self.subscribe(self.vt_symbol)
+        self.algo_engine.event_engine.register(EVENT_PREDICTED_FUNDING, self.on_query_predicted_funding)
         self.put_parameters_event()
         self.put_variables_event()
 
@@ -175,18 +202,19 @@ class GridAlgoTest(AlgoTemplate):
 
         setting = self.__class__.get_parameters(algo_engine=self.algo_engine,
                                                 refer_price=tick.last_price,
-                                                grid_direction=self.grid_direction)
+                                                grid_direction=self.grid_direction,
+                                                level=self.grid_level)
         if setting:
             # Parameters
             self.guide_price = setting["guide_price"]
             self.grid_count = setting['grid_count']
             self.grid_price = setting["grid_price"]
             self.grid_volume = setting["grid_volume"]
-            self.grid_max = setting["grid_max"]
-            self.grid_min = setting["grid_min"]
+            self.exit_price = setting.get('exit_price', 0.0)
+            self.volume_rate = setting.get('volume_rate', 0.0)
+            self.grid_level = GridLevel(setting.get('grid_level', ''))
 
             self.max_volume = decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(self.grid_count))
-            self.stop_price = self.guide_price
             self.new_setting = setting
             self.status = GridStatus.OPEN
             self.on_start()
@@ -200,10 +228,6 @@ class GridAlgoTest(AlgoTemplate):
     @classmethod
     # 自动生成单个算法参数
     def auto_parameters(cls, algo_engine:BaseEngine):
-        # 指标生成
-        amManager = GridArrayManager(algo_engine=algo_engine, vt_symbol=TRADE_SYMBOL)
-        amManager.generate()
-
         tick = algo_engine.get_tick_subscribe(algo=None, vt_symbol=TRADE_SYMBOL)
         if not tick:
             return None
@@ -216,7 +240,8 @@ class GridAlgoTest(AlgoTemplate):
             cls.AUTO_FLAG = not cls.AUTO_FLAG
         setting = cls.get_parameters(algo_engine=algo_engine,
                                      refer_price=tick.last_price,
-                                     grid_direction=grid_direction)
+                                     grid_direction=grid_direction,
+                                     level=GridLevel.LEVEL_1)
         return setting
 
     @classmethod
@@ -226,42 +251,46 @@ class GridAlgoTest(AlgoTemplate):
         if not tick:
             return []
 
-        grid_long_setting = cls.get_parameters(algo_engine=algo_engine,
-                                               refer_price=tick.last_price,
-                                               grid_direction=GridDirection.LONG)
-
-        grid_short_setting = cls.get_parameters(algo_engine=algo_engine,
+        grid_long_setting1 = cls.get_parameters(algo_engine=algo_engine,
                                                 refer_price=tick.last_price,
-                                                grid_direction=GridDirection.SHORT)
+                                                grid_direction=GridDirection.LONG,
+                                                level=GridLevel.LEVEL_1)
 
-        if grid_long_setting and grid_short_setting:
-            return [grid_long_setting, grid_short_setting]
+        grid_long_setting2 = cls.get_parameters(algo_engine=algo_engine,
+                                                refer_price=tick.last_price,
+                                                grid_direction=GridDirection.LONG,
+                                                level=GridLevel.LEVEL_2)
+
+        grid_short_setting1 = cls.get_parameters(algo_engine=algo_engine,
+                                                 refer_price=tick.last_price,
+                                                 grid_direction=GridDirection.SHORT,
+                                                 level=GridLevel.LEVEL_1)
+
+        grid_short_setting2 = cls.get_parameters(algo_engine=algo_engine,
+                                                 refer_price=tick.last_price,
+                                                 grid_direction=GridDirection.SHORT,
+                                                 level=GridLevel.LEVEL_2)
+
+        if grid_long_setting1 and grid_long_setting2 and grid_short_setting1 and grid_short_setting2:
+            return [grid_long_setting1, grid_long_setting2, grid_short_setting1, grid_short_setting2]
         else:
             return []
 
     @classmethod
     # 参数生成
-    def get_parameters(cls, algo_engine:BaseEngine, refer_price:float, grid_direction:GridDirection):
+    def get_parameters(cls, algo_engine:BaseEngine, refer_price:float, grid_direction:GridDirection, level:GridLevel):
         """
-        line_price = 44480
-        grid_width = 1040
+        line_price = 37000
+        grid_width = 1000
 
         est_commision = line_price * 0.00075
         grid_price = ceil_to(est_commision, 10)
-        """
 
-        #"""
-        est_commision = refer_price * 0.00075
-        grid_price = ceil_to(est_commision, 10)
-        line_price = round_to(refer_price, grid_price)
+        if grid_direction == GridDirection.LONG:
+            exit_price = 36900
 
-        # 根据pivot点位设置网格宽度
-        generator = GridParametersGenerator(algo_engine=algo_engine, vt_symbol=TRADE_SYMBOL)
-        generator.generate()
-        if not generator.pivot:
-            return None
-        grid_width = max(abs(generator.long_entry2 - line_price), abs(line_price - generator.short_entry2))
-        # """
+        else:
+            exit_price = 37100
 
         grid_count = ceil(grid_width / grid_price)
         grid_width = grid_price * grid_count
@@ -269,37 +298,95 @@ class GridAlgoTest(AlgoTemplate):
         # 网格仓位大小
         total_volume = TRADE_CAPITAL / grid_width
         grid_volume = floor_to(total_volume / grid_count, 0.001)
+        """
+
+        #"""
+        # 根据pivot点位设置网格宽度
+        generator = GridParametersGenerator(algo_engine=algo_engine, vt_symbol=TRADE_SYMBOL)
+        generator.generate()
+        if not generator.pivot:
+            return None
+
+        if grid_direction == GridDirection.LONG and level == GridLevel.LEVEL_1:
+            refer_price = generator.long_entry1
+
+        if grid_direction == GridDirection.LONG and level == GridLevel.LEVEL_2:
+            refer_price = generator.long_entry2
+
+        if grid_direction == GridDirection.SHORT and level == GridLevel.LEVEL_1:
+            refer_price = generator.short_entry1
+
+        if grid_direction == GridDirection.SHORT and level == GridLevel.LEVEL_2:
+            refer_price = generator.short_entry2
+        
+        est_commision = refer_price * 0.00075
+        grid_price = ceil_to(est_commision, 10)
+        line_price = round_to(refer_price, grid_price)
 
         if grid_direction == GridDirection.LONG:
-            algo_name = 'grid_long'
+            grid_width = (generator.long_entry3 - generator.pivot)*3 - (line_price - generator.pivot)
+            if level == GridLevel.LEVEL_1:
+                exit_price = generator.long_exit1
+
+            if level == GridLevel.LEVEL_2:
+                exit_price = generator.long_exit2
+
+        elif grid_direction == GridDirection.OPEN:
+            grid_width = 0
+            exit_price = 0.0
+
+        else:
+            grid_width = (generator.pivot - generator.short_entry3)*3 - (generator.pivot - line_price)
+            if level == GridLevel.LEVEL_1:
+                exit_price = generator.short_exit1
+
+            if level == GridLevel.LEVEL_2:
+                exit_price = generator.short_exit2
+
+        grid_count = ceil(grid_width / grid_price)
+        grid_width = grid_price * grid_count
+
+        # 网格仓位大小
+        total_volume = (TRADE_CAPITAL * 0.005) / abs(line_price - exit_price)
+        grid_volume = round_to(total_volume / grid_count, 0.001)
+        grid_volume = max(grid_volume, 0.001)
+        #"""
+
+        if grid_direction == GridDirection.LONG:
+            if level == GridLevel.LEVEL_1:
+                algo_name = 'grid_long1'
+
+            elif level == GridLevel.LEVEL_2:
+                algo_name = 'grid_long2'
+
             guide_price = line_price + grid_width
-            grid_max = line_price + 3 * grid_width
-            grid_min = line_price - grid_width
 
         elif grid_direction == GridDirection.OPEN:
             algo_name = 'grid_open'
             guide_price = line_price
-            grid_max = line_price + 2 * grid_width
-            grid_min = line_price - 2 * grid_width
 
         else:
-            algo_name = 'grid_short'
+            if level == GridLevel.LEVEL_1:
+                algo_name = 'grid_short1'
+
+            if level == GridLevel.LEVEL_2:
+                algo_name = 'grid_short2'
+
             guide_price = line_price - grid_width
-            grid_max = line_price + grid_width
-            grid_min = line_price - 3 * grid_width
 
         return {"editable": '是',
                 "algo_name": algo_name,
                 "mode": '日内',
                 "grid_direction": grid_direction.value,
+                "grid_level": level.value,
                 "ratio_close": "否",
                 "vt_symbol": TRADE_SYMBOL,
                 "guide_price": guide_price,
                 "grid_count": grid_count,
                 "grid_price": grid_price,
                 "grid_volume": grid_volume,
-                "grid_max": grid_max,
-                "grid_min": grid_min,
+                "exit_price":exit_price,
+                "volume_rate":0.0,
                 "interval": 20
                 }
     # ============================================================
@@ -355,9 +442,18 @@ class GridAlgoTest(AlgoTemplate):
         grid_price_array_float = np.array(grid_price_array_float)
 
         # 仓位数列
-        grid_pos_up = decimal.Decimal(str(self.grid_count)) * decimal.Decimal(str(self.grid_volume))
-        grid_pos_down = (decimal.Decimal(str(self.grid_count)) + decimal.Decimal(str(1))) * decimal.Decimal(str(self.grid_volume)) * decimal.Decimal(str(-1))
-        grid_pos_array_decimal = np.arange(decimal.Decimal(str(grid_pos_up)), decimal.Decimal(str(grid_pos_down)), decimal.Decimal(str(-1 * self.grid_volume)))
+        total_volume = self.grid_volume * self.grid_count
+        total_volume = total_volume * self.volume_rate
+        grid_volume = floor_to(total_volume / self.grid_count, 0.001)
+        self.max_volume = decimal.Decimal(str(grid_volume)) * decimal.Decimal(str(self.grid_count))
+
+        grid_pos_up = decimal.Decimal(str(self.grid_count)) * decimal.Decimal(str(grid_volume))
+        grid_pos_down = (decimal.Decimal(str(self.grid_count)) + decimal.Decimal(str(1))) * decimal.Decimal(str(grid_volume)) * decimal.Decimal(str(-1))
+        if grid_volume:
+            grid_pos_array_decimal = np.arange(decimal.Decimal(str(grid_pos_up)), decimal.Decimal(str(grid_pos_down)), decimal.Decimal(str(-1 * grid_volume)))
+        else:
+            grid_pos_array_decimal = np.zeros(len(grid_price_array_float))
+
         grid_pos_array_float = []
         for decimal_value in grid_pos_array_decimal:
             float_value = float(decimal_value)
@@ -392,11 +488,13 @@ class GridAlgoTest(AlgoTemplate):
         self.check_init()
         self.create_grid()
 
-        self.put_parameters_event()
-        self.put_variables_event()
+        self.pos_reiniting_waiting = True
 
         self.setting_data = self.new_setting
         self.saveSyncData()
+
+        self.put_parameters_event()
+        self.put_variables_event()
 
     def on_tick(self, tick: TickData):
         """"""
@@ -412,10 +510,15 @@ class GridAlgoTest(AlgoTemplate):
             return
 
         self.last_tick = tick
+        if self.pos_reiniting_waiting:
+            self.pos_reiniting_waiting = False
+            self.reinit_pos()
+
         if self.check_enable:
-            self.check_status()
-            self.check_long_short_order()
             self.check_enable = False
+            self.check_status()
+            self.check_volume()
+            self.check_long_short_order()
 
     def get_target_pos(self, the_price):
         grid_price_array = self.grid.index
@@ -573,73 +676,115 @@ class GridAlgoTest(AlgoTemplate):
         grid_price_array = self.grid.index
         grid_pos_array = self.grid.values
 
-        # 结算前清仓
-        if self.pos < 0 and self.status == GridStatus.CLOSE:
-            long_price = tick.last_price + self.tick_price * 200
-            long_target = 0
+        # 初始化仓位
+        if self.pos_reiniting:
+            if self.pos_reiniting_target > self.pos:
+                # 多单
+                long_target = self.pos_reiniting_target
+                long_price = tick.bid_price_1 - 2 * self.tick_price
 
-        if self.pos > 0 and self.status == GridStatus.CLOSE:
-            short_price = tick.last_price - self.tick_price * 200
-            short_target = 0
+            elif self.pos_reiniting_target < self.pos:
+                # 空单
+                short_target = self.pos_reiniting_target
+                short_price = tick.ask_price_1 + 2 * self.tick_price
 
-        if self.status == GridStatus.PREPARE or self.status == GridStatus.OPEN:
-            # 确定多单目标仓位
-            if tick.bid_price_1:
-                long_index_array = np.argwhere(grid_price_array < tick.bid_price_1)
-                if len(long_index_array) and self.status == GridStatus.OPEN:
-                    long_index_result = long_index_array[-1][-1]
-                    long_price = grid_price_array[long_index_result]
-                    long_target = grid_pos_array[long_index_result]
-                    if long_target <= self.pos:
-                        long_price = None
-                        long_target = None
-                        long_index_array = np.argwhere(grid_pos_array > self.pos)
-                        if len(long_index_array):
-                            long_index_result = long_index_array[-1][-1]
-                            long_price = grid_price_array[long_index_result]
-                            long_target = grid_pos_array[long_index_result]
+            else:
+                self.pos_reiniting = False
 
-                            # 风控，委托买价过低当前价位可能会导致一直拒单
-                            if long_price < tick.bid_price_1 - self.grid_price * 20:
+        else:
+            # 结算前清仓
+            if self.pos < 0 and self.status == GridStatus.CLOSE:
+                long_price = tick.last_price + self.tick_price * 200
+                long_target = 0
+
+            if self.pos > 0 and self.status == GridStatus.CLOSE:
+                short_price = tick.last_price - self.tick_price * 200
+                short_target = 0
+
+            if self.status == GridStatus.PREPARE or self.status == GridStatus.OPEN:
+                # 确定多单目标仓位
+                if tick.bid_price_1:
+                    long_index_array = np.argwhere(grid_price_array < tick.bid_price_1)
+                    if len(long_index_array) and self.status == GridStatus.OPEN:
+                        long_index_result = long_index_array[-1][-1]
+                        long_price = grid_price_array[long_index_result]
+                        long_target = grid_pos_array[long_index_result]
+                        if long_target <= self.pos:
+                            long_price = None
+                            long_target = None
+                            long_index_array = np.argwhere(grid_pos_array > self.pos)
+                            if len(long_index_array):
+                                long_index_result = long_index_array[-1][-1]
+                                long_price = grid_price_array[long_index_result]
+                                long_target = grid_pos_array[long_index_result]
+
+                                # 风控，委托买价过低当前价位可能会导致一直拒单
+                                if long_price < tick.bid_price_1 - self.grid_price * 20:
+                                    long_price = None
+                                    long_target = None
+
+                    elif tick.bid_price_1 <= self.gridDown:
+                        # 价格低于gridDown
+                        long_price = tick.bid_price_1 - 2 * self.tick_price
+                        long_target = grid_pos_array[0]
+                        if long_target <= self.pos:
+                            long_price = None
+                            long_target = None
+
+                        # 风控，价格低于gridDown过多停止多单，前提是网格组合状态都为PREPARE
+                        if long_price and long_price < self.gridDown - self.grid_price and self.status == GridStatus.PREPARE:
+                            other_open = False
+                            for algo in self.algo_engine.algos.values():
+                                if isinstance(algo, GridAlgo) and algo.algo_name != self.algo_name:
+                                    if algo.status == GridStatus.OPEN:
+                                        other_open = True
+                                        break
+
+                            if not other_open:
                                 long_price = None
                                 long_target = None
 
-                elif tick.bid_price_1 <= self.gridDown:
-                    # 价格低于gridDown
-                    long_price = tick.bid_price_1 - 2 * self.tick_price
-                    long_target = grid_pos_array[0]
-                    if long_target <= self.pos:
-                        long_price = None
-                        long_target = None
+                # 确定空单目标仓位
+                if tick.ask_price_1:
+                    short_index_array = np.argwhere(grid_price_array > tick.ask_price_1)
+                    if len(short_index_array) and self.status == GridStatus.OPEN:
+                        short_index_result = short_index_array[0][0]
+                        short_price = grid_price_array[short_index_result]
+                        short_target = grid_pos_array[short_index_result]
+                        if short_target >= self.pos:
+                            short_price = None
+                            short_target = None
+                            short_index_array = np.argwhere(grid_pos_array < self.pos)
+                            if len(short_index_array):
+                                short_index_result = short_index_array[0][0]
+                                short_price = grid_price_array[short_index_result]
+                                short_target = grid_pos_array[short_index_result]
 
-            # 确定空单目标仓位
-            if tick.ask_price_1:
-                short_index_array = np.argwhere(grid_price_array > tick.ask_price_1)
-                if len(short_index_array) and self.status == GridStatus.OPEN:
-                    short_index_result = short_index_array[0][0]
-                    short_price = grid_price_array[short_index_result]
-                    short_target = grid_pos_array[short_index_result]
-                    if short_target >= self.pos:
-                        short_price = None
-                        short_target = None
-                        short_index_array = np.argwhere(grid_pos_array < self.pos)
-                        if len(short_index_array):
-                            short_index_result = short_index_array[0][0]
-                            short_price = grid_price_array[short_index_result]
-                            short_target = grid_pos_array[short_index_result]
+                                # 风控，委托卖价过高当前价位可能会导致一直拒单
+                                if short_price > tick.ask_price_1 + self.grid_price * 20:
+                                    short_price = None
+                                    short_target = None
 
-                            # 风控，委托卖价过高当前价位可能会导致一直拒单
-                            if short_price > tick.ask_price_1 + self.grid_price * 20:
-                                short_price = None
-                                short_target = None
+                    elif tick.ask_price_1 >= self.gridUp:
+                        # 价格高于gridUp
+                        short_price = tick.ask_price_1 + 2 * self.tick_price
+                        short_target = grid_pos_array[-1]
+                        if short_target >= self.pos:
+                            short_price = None
+                            short_target = None
 
-                elif tick.ask_price_1 >= self.gridUp:
-                    # 价格高于gridUp
-                    short_price = tick.ask_price_1 + 2 * self.tick_price
-                    short_target = grid_pos_array[-1]
-                    if short_target >= self.pos:
-                        short_price = None
-                        short_target = None
+                        # 风控，价格低于gridDown过多停止多单，前提是网格组合状态都为PREPARE
+                        if short_price and short_price > self.gridUp + self.grid_price and self.status == GridStatus.PREPARE:
+                            other_open = False
+                            for algo in self.algo_engine.algos.values():
+                                if isinstance(algo, GridAlgo) and algo.algo_name != self.algo_name:
+                                    if algo.status == GridStatus.OPEN:
+                                        other_open = True
+                                        break
+
+                            if not other_open:
+                                long_price = None
+                                long_target = None
 
         if self.mode == Mode.LONG:
             # 自定义模式仓位管理
@@ -675,6 +820,72 @@ class GridAlgoTest(AlgoTemplate):
                 self.status = GridStatus.WAITINGCLOSE
                 # 向其他网格算法同步状态
                 self.algo_engine.on_algo_update(algo_name=self.algo_name)
+
+    def check_volume(self):
+        last_volume_rate = self.volume_rate
+
+        if self.exit_price and self.grid_direction == GridDirection.LONG:
+            space = (self.gridDown - self.exit_price)/10
+            price_range = np.arange(self.exit_price, self.gridDown + space, space)
+            result_array = np.argwhere(price_range > self.last_tick.last_price)
+            if len(result_array):
+                index = result_array[0][0]
+                target = min(self.gridDown, price_range[index])
+                volume_rate = round_to((float(target) - self.exit_price) / (self.gridDown - self.exit_price), 0.1)
+                self.volume_rate = min(self.volume_rate, volume_rate)
+
+                if self.volume_rate <= 0.7:
+                    # 设置最大止损
+                    self.volume_rate = 0
+            else:
+                self.volume_rate = 1
+
+        elif self.exit_price and self.grid_direction == GridDirection.SHORT:
+            space = (self.exit_price - self.gridUp) / 10
+            price_range = np.arange(self.gridUp, self.exit_price + space, space)
+            result_array = np.argwhere(price_range < self.last_tick.last_price)
+            if len(result_array):
+                index = result_array[-1][-1]
+                target = min(self.exit_price, price_range[index])
+                volume_rate = round_to((self.exit_price - float(target)) / (self.exit_price - self.gridUp), 0.1)
+                self.volume_rate = min(self.volume_rate, volume_rate)
+
+                if self.volume_rate <= 0.7:
+                    # 设置最大止损
+                    self.volume_rate = 0
+            else:
+                self.volume_rate = 1
+
+        # 更新状态
+        if self.volume_rate == 1:
+            self.status = GridStatus.OPEN
+
+        if self.volume_rate == 0 and not self.pos:
+            self.status = GridStatus.CLOSE
+
+        # 更新网格
+        if last_volume_rate != self.volume_rate:
+            # 同步数据库
+            self.setting_data['volume_rate'] = self.volume_rate
+            self.saveSyncData()
+
+            self.create_grid()
+            self.reinit_pos()
+
+    def reinit_pos(self):
+        if not self.last_tick:
+            return
+
+        self.pos_reiniting = True
+
+        grid_price_array = self.grid.index
+        grid_pos_array = self.grid.values
+        idx = (np.abs(grid_price_array - self.last_tick.last_price)).argmin()
+        new_target = grid_pos_array[idx]
+
+        if self.pos_reiniting_target != new_target:
+            self.cancel_all()
+        self.pos_reiniting_target = new_target
 
     def check_long_short_order(self):
         if not self.last_tick:
@@ -717,10 +928,6 @@ class GridAlgoTest(AlgoTemplate):
                 # 看跌网格不允许开多单
                 long_open_volume = 0
 
-                # 看跌网格触发停止价格
-                if long_price <= self.stop_price:
-                    long_close_volume = abs(self.pos)
-
         # 计算空单委托参数
         if short_target != None:
             distance = float(decimal.Decimal(str(self.pos)) - decimal.Decimal(str(short_target)))
@@ -740,10 +947,6 @@ class GridAlgoTest(AlgoTemplate):
             if self.grid_direction == GridDirection.LONG:
                 # 看多网格不允许开空单
                 short_open_volume = 0
-
-                # 看涨网格触发停止价格
-                if short_price >= self.stop_price:
-                    short_close_volume = abs(self.pos)
 
         long_open_orderid = ''
         long_close_orderid = ''
@@ -805,25 +1008,10 @@ class GridAlgoTest(AlgoTemplate):
                 self.reject_order_timecounter = 0
                 self.reject_order_count = 0
 
-        # 停止价格计算
-        self.stop_price_timecounter += 1
-        if self.stop_price_timecounter >= 60 * 30 or (not self.stop_price_init):
-            self.stop_price_timecounter = 0
-            self.update_stop_price()
+        # 初始化仓位时每秒更新
+        if self.pos_reiniting:
+            self.reinit_pos()
 
-        """
-        # 检查最优限价算法
-        complete_algo_names = set()
-        for algo_name in self.bestLimitAlgo_names:
-            algo = self.algo_engine.algos.get(algo_name, None)
-            if not algo:
-                complete_algo_names.add(algo_name)
-        if complete_algo_names:
-            self.bestLimitAlgo_names -= complete_algo_names
-        
-        # 检查仓位
-        self.check_position()
-        """
         self.check_enable = True
         self.tick_error = False
 
@@ -876,6 +1064,11 @@ class GridAlgoTest(AlgoTemplate):
         contract = self.algo_engine.get_contract(self, self.vt_symbol)
         if contract:
             self.pos = round_to(self.pos, contract.min_volume)
+
+        # 确认初始化仓位完成
+        if self.pos == self.pos_reiniting_target:
+            self.pos_reiniting = False
+            self.pos_reiniting_target = 0
 
         # 主动CLOSE状态
         if last_pos and self.pos == 0:
@@ -941,12 +1134,15 @@ class GridAlgoTest(AlgoTemplate):
     """
 
     def on_algo_update(self, algo):
-        if isinstance(algo, GridAlgoTest):
+        return
+        """
+        if isinstance(algo, GridAlgo):
             if algo.status == GridStatus.WAITINGCLOSE and self.status != GridStatus.CLOSE:
                 self.status = GridStatus.WAITINGCLOSE
 
             if algo.status == GridStatus.CLOSE:
                 self.immediate_close()
+        """
 
     def immediate_close(self):
         if self.status != GridStatus.CLOSE:
@@ -967,61 +1163,10 @@ class GridAlgoTest(AlgoTemplate):
         except:
             pass
 
-    def update_stop_price(self):
-        if not self.last_tick:
-            return
-
-        self.stop_price_init = True
-        # 根据当前价格和周期内剩余时间计算最大允许的单向波动幅度，避免价格单向极限拉升导致的大幅亏损
-        next_window_datetime = next_window_bar_datetime(current_datetime=self.last_tick.datetime)
-        current_timestamp = self.last_tick.datetime.timestamp()
-        next_window_timestamp = next_window_datetime.timestamp()
-        if next_window_timestamp > current_timestamp:
-            remain_second = next_window_timestamp - current_timestamp
-            total_second = 8 * 60 * 60
-
-            width = abs(self.gridUp - self.guide_price)
-            # 计算可接受的波动幅度
-            space = round_to((remain_second / total_second) * width, self.tick_price)
-            # 设置最小幅度
-            space = max(space, 3*self.grid_price)
-            if self.grid_direction == GridDirection.LONG:
-                self.stop_price = max(self.last_tick.last_price, self.gridDown) + space
-                self.stop_price = ceil_to(self.stop_price, self.grid_price)
-                self.stop_price = min(self.stop_price, self.guide_price)
-
-            elif self.grid_direction == GridDirection.SHORT:
-                self.stop_price = min(self.last_tick.last_price, self.gridUp) - space
-                self.stop_price = floor_to(self.stop_price, self.grid_price)
-                self.stop_price = max(self.stop_price, self.guide_price)
-
+    def on_query_predicted_funding(self, event: Event):
+        funding_data = event.data
+        self.predicted_funding = funding_data.rate
     # ======================================================
-
-def next_window_bar_datetime(current_datetime:datetime) -> datetime:
-    current_datetime = without_timezone(current_datetime)
-    the_datetime = current_datetime
-    next_datetime = None
-    n = 0
-    while True:
-        n += 1
-        if next_datetime or n > 2:
-            break
-
-        year = the_datetime.year
-        month = the_datetime.month
-        day = the_datetime.day
-        for x in window_time:
-            temp_datetime = datetime.strptime(f'{year}-{month}-{day} {x}', '%Y-%m-%d %H:%M:%S')
-            if current_datetime <= temp_datetime:
-                next_datetime = temp_datetime
-                break
-        the_datetime += timedelta(days=1)
-
-    return next_datetime
-
-def without_timezone(target:datetime):
-    datetime_str = target.strftime('%Y-%m-%d %H:%M:%S')
-    return datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
 
 class CustomBarGenerator(BarGenerator):
     def __init__(self,
@@ -1103,11 +1248,22 @@ class GridParametersGenerator(object):
         self.base_time = None
         self.pivot = 0
         self.long_entry1 = 0
+        self.long_exit1 = 0
+
         self.long_entry2 = 0
+        self.long_exit2 = 0
+
         self.long_entry3 = 0
+        self.long_exit3 = 0
+
         self.short_entry1 = 0
+        self.short_exit1 = 0
+
         self.short_entry2 = 0
+        self.short_exit2 = 0
+
         self.short_entry3 = 0
+        self.short_exit2 = 0
 
     def generate(self):
         self.bg = CustomBarGenerator(on_bar=None,
@@ -1138,6 +1294,13 @@ class GridParametersGenerator(object):
         self.long_entry3 = high - (2 * (low - self.pivot))
         self.short_entry3 = low - (2 * (high - self.pivot))
 
+        self.short_exit1 = (self.pivot + self.short_entry1) / 2
+        self.short_exit2 = (self.short_entry1 + self.short_entry2) / 2
+        self.short_exit3 = (self.short_entry2 + self.short_entry3) / 2
+        self.long_exit1 = (self.pivot + self.long_entry1) / 2
+        self.long_exit2 = (self.long_entry1 + self.long_entry2) / 2
+        self.long_exit3 = (self.long_entry2 + self.long_entry3) / 2
+
 class GridArrayManager(object):
     # 指标数据参数
     window = 60
@@ -1145,6 +1308,9 @@ class GridArrayManager(object):
         self.algo_engine = algo_engine
         self.vt_symbol = vt_symbol
 
+        self.datetime = None
+        self.windowAtr = 0
+        self.atr = 0
         self.am = ArrayManager(self.window + 1)
 
 
@@ -1161,5 +1327,29 @@ class GridArrayManager(object):
         self.datetime = bar.datetime
         self.windowAtr = self.am.atr(self.window)
         self.atr = self.am.atr(1)
-        if self.atr >= 5*self.windowAtr:
-            a = 2
+
+def next_window_bar_datetime(current_datetime:datetime) -> datetime:
+    current_datetime = without_timezone(current_datetime)
+    the_datetime = current_datetime
+    next_datetime = None
+    n = 0
+    while True:
+        n += 1
+        if next_datetime or n > 2:
+            break
+
+        year = the_datetime.year
+        month = the_datetime.month
+        day = the_datetime.day
+        for x in window_time:
+            temp_datetime = datetime.strptime(f'{year}-{month}-{day} {x}', '%Y-%m-%d %H:%M:%S')
+            if current_datetime <= temp_datetime:
+                next_datetime = temp_datetime
+                break
+        the_datetime += timedelta(days=1)
+
+    return next_datetime
+
+def without_timezone(target:datetime):
+    datetime_str = target.strftime('%Y-%m-%d %H:%M:%S')
+    return datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
