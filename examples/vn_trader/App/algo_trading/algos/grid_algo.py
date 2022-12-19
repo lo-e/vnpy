@@ -1168,32 +1168,6 @@ class GridAlgo(AlgoTemplate):
         self.predicted_funding = funding_data.rate
     # ======================================================
 
-def next_window_bar_datetime(current_datetime:datetime) -> datetime:
-    current_datetime = without_timezone(current_datetime)
-    the_datetime = current_datetime
-    next_datetime = None
-    n = 0
-    while True:
-        n += 1
-        if next_datetime or n > 2:
-            break
-
-        year = the_datetime.year
-        month = the_datetime.month
-        day = the_datetime.day
-        for x in window_time:
-            temp_datetime = datetime.strptime(f'{year}-{month}-{day} {x}', '%Y-%m-%d %H:%M:%S')
-            if current_datetime <= temp_datetime:
-                next_datetime = temp_datetime
-                break
-        the_datetime += timedelta(days=1)
-
-    return next_datetime
-
-def without_timezone(target:datetime):
-    datetime_str = target.strftime('%Y-%m-%d %H:%M:%S')
-    return datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
-
 class CustomBarGenerator(BarGenerator):
     def __init__(self,
                  on_bar: Callable,
@@ -1327,7 +1301,6 @@ class GridParametersGenerator(object):
         self.long_exit2 = (self.long_entry1 + self.long_entry2) / 2
         self.long_exit3 = (self.long_entry2 + self.long_entry3) / 2
 
-
 class GridArrayManager(object):
     # 指标数据参数
     window = 60
@@ -1354,3 +1327,29 @@ class GridArrayManager(object):
         self.datetime = bar.datetime
         self.windowAtr = self.am.atr(self.window)
         self.atr = self.am.atr(1)
+
+def next_window_bar_datetime(current_datetime:datetime) -> datetime:
+    current_datetime = without_timezone(current_datetime)
+    the_datetime = current_datetime
+    next_datetime = None
+    n = 0
+    while True:
+        n += 1
+        if next_datetime or n > 2:
+            break
+
+        year = the_datetime.year
+        month = the_datetime.month
+        day = the_datetime.day
+        for x in window_time:
+            temp_datetime = datetime.strptime(f'{year}-{month}-{day} {x}', '%Y-%m-%d %H:%M:%S')
+            if current_datetime <= temp_datetime:
+                next_datetime = temp_datetime
+                break
+        the_datetime += timedelta(days=1)
+
+    return next_datetime
+
+def without_timezone(target:datetime):
+    datetime_str = target.strftime('%Y-%m-%d %H:%M:%S')
+    return datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
