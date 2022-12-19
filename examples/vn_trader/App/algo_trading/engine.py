@@ -112,11 +112,11 @@ class AlgoEngine(BaseEngine):
     def load_algo_template(self):
         """"""
         from .algos.grid_algo import GridAlgo
-        from .algos.grid_algo_test import GridAlgoTest
+        from .algos.grid_algo_normal import GridAlgoNormal
         from .algos.best_limit_algo import BestLimitAlgo
 
         self.add_algo_template(GridAlgo)
-        self.add_algo_template(GridAlgoTest)
+        self.add_algo_template(GridAlgoNormal)
         self.add_algo_template(BestLimitAlgo)
 
     def add_algo_template(self, template: AlgoTemplate):

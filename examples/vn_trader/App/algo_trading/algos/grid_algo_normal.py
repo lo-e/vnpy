@@ -18,44 +18,19 @@ from vnpy.trader.event import EVENT_PREDICTED_FUNDING
 from vnpy.event import Event
 
 TRADE_SYMBOL = 'BTCUSDT.BYBIT'
-TRADE_CAPITAL = 100000
-window_time = ['00:00:00', '08:00:00', '16:00:00']
-
-class Mode(Enum):
-    """
-    Mode of Grid Trade.
-    """
-    DAILY = "日内"
-    LONG = "长周期"
+TRADE_CAPITAL = 100
 
 class GridStatus(Enum):
     """
     Mode of Grid Status.
     """
     OPEN = "开启"
-    PREPARE = "准备初始建仓"
-    WAITINGCLOSE = "等待信号平仓"
     CLOSE = "关闭"
 
-class GridDirection(Enum):
-    """
-    Mode of Grid Status.
-    """
-    LONG = "看涨"
-    OPEN = "看涨看跌"
-    SHORT = "看跌"
-
-class GridLevel(Enum):
-    """
-    LEVEL of Grid.
-    """
-    LEVEL_1 = "LEVEL_1"
-    LEVEL_2 = "LEVEL_2"
-
-class GridAlgo(AlgoTemplate):
+class GridAlgoNormal(AlgoTemplate):
     """"""
 
-    display_name = "Grid 网格"
+    display_name = "Grid 网格【熊市建仓】"
     AUTO_FLAG = True
 
     default_setting = {
@@ -278,7 +253,7 @@ class GridAlgo(AlgoTemplate):
 
     @classmethod
     # 参数生成
-    def get_parameters(cls, algo_engine:BaseEngine, refer_price:float, grid_direction:GridDirection, level:GridLevel):
+    def get_parameters(cls, algo_engine:BaseEngine, refer_price:float, grid_direction:str, level:str):
         """
         line_price = 37000
         grid_width = 1000
