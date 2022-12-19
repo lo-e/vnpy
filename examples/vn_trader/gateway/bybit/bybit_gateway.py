@@ -175,7 +175,7 @@ class BybitGateway(BaseGateway):
 
         else:
             self.rest_api: "BybitSpotRestApi" = BybitSpotRestApi(self)
-            # self.private_ws_api: "BybitInversePrivateWebsocketApi" = BybitInversePrivateWebsocketApi(self)
+            self.private_ws_api: "BybitSpotPrivateWebsocketApi" = BybitSpotPrivateWebsocketApi(self)
             self.public_ws_api: "BybitSpotPublicWebsocketApi" = BybitSpotPublicWebsocketApi(self)
 
         key: str = setting["ID"]
@@ -196,13 +196,13 @@ class BybitGateway(BaseGateway):
             proxy_host,
             proxy_port
         )
-        # self.private_ws_api.connect(
-        #     key,
-        #     secret,
-        #     server,
-        #     proxy_host,
-        #     proxy_port
-        # )
+        self.private_ws_api.connect(
+            key,
+            secret,
+            server,
+            proxy_host,
+            proxy_port
+        )
         self.public_ws_api.connect(
             server,
             proxy_host,
@@ -2600,6 +2600,9 @@ class BybitSpotPublicWebsocketApi(WebsocketClient):
                 n = i + 1
 
                 bid_price = bid_keys[i]
+                if not tick.last_price and i == 0:
+                    # 有成交数据on_tick之前的暂时方案
+                    tick.last_price = bid_price
                 bid_data = bids[bid_price]
                 ask_price = ask_keys[i]
                 ask_data = asks[ask_price]
@@ -2614,6 +2617,205 @@ class BybitSpotPublicWebsocketApi(WebsocketClient):
 
         else:
             pass
+
+class BybitSpotPrivateWebsocketApi(WebsocketClient):
+    """现货的交易Websocket接口"""
+
+    def __init__(self, gateway: BybitGateway) -> None:
+        """构造函数"""
+        super().__init__()
+
+        self.gateway: BybitGateway = gateway
+        self.gateway_name: str = gateway.gateway_name
+
+        self.key: str = ""
+        self.secret: bytes = b""
+        self.server: str = ""
+
+        self.callbacks: Dict[str, Callable] = {}
+        self.ticks: Dict[str, TickData] = {}
+        self.subscribed: Dict[str, SubscribeRequest] = {}
+
+        self.symbol_bids: Dict[str, dict] = {}
+        self.symbol_asks: Dict[str, dict] = {}
+
+    def connect(
+        self,
+        key: str,
+        secret: str,
+        server: str,
+        proxy_host: str,
+        proxy_port: int
+    ) -> None:
+        """连接Websocket私有频道"""
+        self.key = key
+        self.secret = secret.encode()
+        self.proxy_host = proxy_host
+        self.proxy_port = proxy_port
+        self.server = server
+
+        if self.server == "REAL":
+            url = SPOT_PRIVATE_WEBSOCKET_HOST
+        else:
+            url = TESTNET_SPOT_PRIVATE_WEBSOCKET_HOST
+
+        self.init(url, self.proxy_host, self.proxy_port)
+        self.start()
+
+    def login(self) -> None:
+        """用户登录"""
+        expires: int = generate_timestamp(30)
+        msg = f"GET/realtime{int(expires)}"
+        signature: str = sign(self.secret, msg.encode())
+
+        req: dict = {
+            "op": "auth",
+            "args": [self.key, expires, signature]
+        }
+        self.send_packet(req)
+
+    def subscribe_topic(
+        self,
+        topic: str,
+        callback: Callable[[str, dict], Any]
+    ) -> None:
+        """订阅私有频道"""
+        self.callbacks[topic] = callback
+
+        req: dict = {
+            "op": "subscribe",
+            "args": [topic],
+        }
+        self.send_packet(req)
+
+    def ping(self):
+        req: dict = {
+            "op": "ping",
+        }
+        self.send_packet(req)
+
+    def on_ping(self, packet: dict):
+        self._connect_id = packet.get('conn_id', '')
+
+    def on_connected(self) -> None:
+        """连接成功回报"""
+        self.gateway.write_log("交易Websocket API连接成功")
+        self.login()
+
+    def on_disconnected(self) -> None:
+        """连接断开回报"""
+        self.gateway.write_log("交易Websocket API连接断开")
+
+    def on_packet(self, packet: dict) -> None:
+        """推送数据回报"""
+        if "topic" in packet:
+            channel: str = packet["topic"]
+            callback: callable = self.callbacks[channel]
+            callback(packet)
+
+        elif "op" in packet:
+            op: str = packet["op"]
+            if op == "auth":
+                self.on_login(packet)
+
+            elif op == 'pong':
+                self.on_ping(packet)
+
+        else:
+            pass
+
+    def on_error(
+        self,
+        exception_type: type,
+        exception_value: Exception,
+        tb
+    ) -> None:
+        """触发异常回报"""
+        msg = f"触发异常，状态码：{exception_type}，信息：{exception_value}"
+        self.gateway.write_log(msg)
+
+        sys.stderr.write(self.exception_detail(
+            exception_type, exception_value, tb))
+
+    def on_login(self, packet: dict):
+        """用户登录请求回报"""
+        success: bool = packet.get("success", False)
+        if success:
+            self.gateway.write_log("交易Websocket API登录成功")
+
+            self.subscribe_topic("order", self.on_order)
+            self.subscribe_topic("ticketInfo", self.on_trade)
+            self.subscribe_topic("outboundAccountInfo", self.on_account)
+
+        else:
+            self.gateway.write_log("交易Websocket API登录失败")
+
+    def on_account(self, packet: dict) -> None:
+        """资金更新推送"""
+        data_list = packet["data"]
+        for data in data_list:
+            balance_list = data["B"]
+            for d in balance_list:
+                account = AccountData(
+                    accountid=d["a"],
+                    balance=float(d["f"]) + float(d["l"]),
+                    frozen=float(d["l"]),
+                    gateway_name=self.gateway_name,
+                )
+                self.gateway.on_account(account)
+
+    def on_trade(self, packet: dict) -> None:
+        """成交更新推送"""
+        for d in packet["data"]:
+            orderid: str = d["c"]
+            if not orderid:
+                orderid: str = d["o"]
+
+            trade: TradeData = TradeData(
+                symbol=d["s"],
+                exchange=Exchange.BYBIT,
+                orderid=orderid,
+                tradeid=d["T"],
+                direction=DIRECTION_BYBIT2VT_SPOT[d["S"]],
+                price=float(d["p"]),
+                volume=float(d["q"]),
+                datetime=generate_datetime_2(int(d["t"])),
+                gateway_name=self.gateway_name,
+            )
+
+            self.gateway.on_trade(trade)
+
+    def on_order(self, packet: dict) -> None:
+        """委托更新推送"""
+        for d in packet["data"]:
+            orderid: str = d["c"]
+            if orderid:
+                local_orderids.add(orderid)
+            else:
+                orderid: str = d["i"]
+
+            dt: datetime = generate_datetime_2(int(d["E"]))
+
+            type = d["o"]
+            if 'MARKET' in type:
+                type = 'MARKET'
+
+            order: OrderData = OrderData(
+                symbol=d["s"],
+                exchange=Exchange.BYBIT,
+                orderid=orderid,
+                type=ORDER_TYPE_BYBIT2VT_SPOT[type],
+                direction=DIRECTION_BYBIT2VT_SPOT[d["S"]],
+                price=float(d["p"]),
+                volume=float(d["q"]),
+                traded=float(d["z"]),
+                status=STATUS_BYBIT2VT_SPOT[d["X"]],
+                datetime=dt,
+                gateway_name=self.gateway_name
+            )
+            order.offset = Offset.OPEN
+
+            self.gateway.on_order(order)
 
 def generate_timestamp(expire_after: float = 30) -> int:
     """生成时间戳"""
