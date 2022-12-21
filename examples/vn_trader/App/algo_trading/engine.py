@@ -283,7 +283,11 @@ class AlgoEngine(BaseEngine):
             self.write_log(f'委托下单失败，找不到合约：{vt_symbol}', algo)
             return
 
-        volume = round_to(volume, contract.min_volume)
+        if volume < contract.min_volume:
+            self.write_log(f'委托下单失败，委托量未满足交易所最低要求：{vt_symbol} {volume}', algo)
+            return
+        # volume = round_to(volume, contract.min_volume)
+
         if not volume:
             return ""
 

@@ -218,7 +218,7 @@ class BybitGateway(BaseGateway):
 
     def process_timer_event(self, event: Any):
         self.timer_count += 1
-        if self.timer_count >= 60:
+        if self.timer_count >= 20:
             self.timer_count = 0
 
             try:
