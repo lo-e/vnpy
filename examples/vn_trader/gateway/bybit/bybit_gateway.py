@@ -2545,7 +2545,7 @@ class BybitSpotPublicWebsocketApi(WebsocketClient):
         if not data:
             return
 
-        if type_ == "delta":
+        if type_ == "delta" or type_ == "snapshot":
             price = float(data["p"])
             if not price:
                 # 过滤最新价为0的数据
@@ -2570,7 +2570,7 @@ class BybitSpotPublicWebsocketApi(WebsocketClient):
         if not data:
             return
 
-        if type_ == "delta":
+        if type_ == "delta" or type_ == "snapshot":
             bid_list = data['b']
             ask_list = data['a']
             if not bid_list or not ask_list:

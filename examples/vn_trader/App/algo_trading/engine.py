@@ -66,7 +66,7 @@ class AlgoEngine(BaseEngine):
         self.register_event()
 
         # 数据引擎启动
-        self.autoEngine.start()
+        # self.autoEngine.start()
 
     def close(self):
         """"""
@@ -111,11 +111,11 @@ class AlgoEngine(BaseEngine):
 
     def load_algo_template(self):
         """"""
-        from .algos.grid_algo import GridAlgo
+        # from .algos.grid_algo import GridAlgo
         from .algos.grid_algo_normal import GridAlgoNormal
         from .algos.best_limit_algo import BestLimitAlgo
 
-        self.add_algo_template(GridAlgo)
+        # self.add_algo_template(GridAlgo)
         self.add_algo_template(GridAlgoNormal)
         self.add_algo_template(BestLimitAlgo)
 
