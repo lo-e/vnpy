@@ -56,6 +56,7 @@ class GridAlgoNormal(AlgoTemplate):
     ]
 
     syncs = ['pos',
+             'current_pnl',
              'setting_data']
 
     def __init__(
