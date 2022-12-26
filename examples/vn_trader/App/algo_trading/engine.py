@@ -170,19 +170,23 @@ class AlgoEngine(BaseEngine):
         """"""
         trade = event.data
 
-        algo_array = self.orderid_algo_map.get(trade.vt_orderid, None)
-        if algo_array:
-            for algo in algo_array:
-                algo.update_trade(trade)
+        algo_name_array = self.orderid_algo_map.get(trade.vt_orderid, None)
+        if algo_name_array:
+            for algo_name in algo_name_array:
+                algo = self.algos.get(algo_name, None)
+                if algo:
+                    algo.update_trade(trade)
 
     def process_order_event(self, event: Event):
         """"""
         order = event.data
 
-        algo_array = self.orderid_algo_map.get(order.vt_orderid, None)
-        if algo_array:
-            for algo in algo_array:
-                algo.update_order(order)
+        algo_name_array = self.orderid_algo_map.get(order.vt_orderid, None)
+        if algo_name_array:
+            for algo_name in algo_name_array:
+                algo = self.algos.get(algo_name, None)
+                if algo:
+                    algo.update_order(order)
 
     def start_algo(self, setting: dict):
         """"""
@@ -304,11 +308,11 @@ class AlgoEngine(BaseEngine):
         vt_orderid = self.main_engine.send_order(req, contract.gateway_name)
 
         """ modify by loe """
-        algo_array = set()
-        algo_array.add(algo)
+        algo_name_array = set()
+        algo_name_array.add(algo.algo_name)
         if algo.top_algo:
-            algo_array.add(algo.top_algo)
-        self.orderid_algo_map[vt_orderid] = algo_array
+            algo_name_array.add(algo.top_algo.algo_name)
+        self.orderid_algo_map[vt_orderid] = algo_name_array
         self.orderid_offset_map[vt_orderid] = offset
         return vt_orderid
 
