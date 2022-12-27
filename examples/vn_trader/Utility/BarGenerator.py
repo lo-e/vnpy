@@ -5,6 +5,7 @@ from vnpy.trader.object import BarData, TickData
 from vnpy.trader.constant import Exchange, Interval
 from pymongo import MongoClient, ASCENDING
 from vnpy.app.cta_strategy.base import (MINUTE_DB_NAME, HOUR_DB_NAME, MinuteDataBaseName, HourDataBaseName)
+import re
 
 class BarGenerator:
     """
@@ -317,7 +318,9 @@ class MinuterBarProcessor:
 
         if minute_bar:
             end_dt = minute_bar.datetime
-        print(f'{self.vt_symbol} 1m -> {self.window}{self.interval.value} {start_dt} -> {end_dt}')
+
+        interval_ = re.sub("\d", '', self.interval.value)
+        print(f'{self.vt_symbol}\n1m -> {self.window}{interval_}\n{start_dt} -> {end_dt}')
 
 if __name__ == '__main__':
     processor = MinuterBarProcessor(vt_symbol='BTCUSDT.BYBIT', window=1, interval=Interval.HOUR)
