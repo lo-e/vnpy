@@ -296,18 +296,28 @@ class MinuterBarProcessor:
         else:
             window_bar_db = client[HourDataBaseName(self.window)]
         self.window_bar_collection = window_bar_db[self.vt_symbol]
+        self.window_bar_collection.create_index('datetime')
 
         self.bar_generator = BarGenerator(window=self.window, on_window_bar=self.on_window_bar, interval=self.interval)
 
     def on_window_bar(self, bar:BarData):
-        pass
+        self.window_bar_collection.update_many({'datetime': bar.datetime}, {'$set': bar.__dict__}, upsert=True)
 
     def start_work(self):
+        start_dt = None
+        end_dt = None
+        minute_bar = None
         cursor = self.minute_bar_collection.find().sort('datetime', ASCENDING)
         for d in cursor:
             minute_bar = BarData(gateway_name='', symbol='', exchange=None, datetime=None)
             minute_bar.__dict__ = d
+            if not start_dt:
+                start_dt = minute_bar.datetime
             self.bar_generator.update_bar(minute_bar)
+
+        if minute_bar:
+            end_dt = minute_bar.datetime
+        print(f'{self.vt_symbol} 1m -> {self.window}{self.interval.value} {start_dt} -> {end_dt}')
 
 if __name__ == '__main__':
     processor = MinuterBarProcessor(vt_symbol='BTCUSDT.BYBIT', window=1, interval=Interval.HOUR)
