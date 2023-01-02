@@ -601,10 +601,10 @@ class TurtlePortfolio(object):
 
             """ modify by loe """
             # 一个unit预计占用保证金不得超过初始资金的20%
-            size = self.sizeDict[signal.symbol]
-            if price * multiplier * size * 0.1 > self.portfolioValue * 0.2:
-                print('%s\t%s预计保证金超限\tprice：%s\tatr：%s' % (signal.bar.datetime, signal.symbol, price, signal.atrVolatility))
-                return
+            # size = self.sizeDict[signal.symbol]
+            # if price * multiplier * size * 0.1 > self.portfolioValue * 0.2:
+            #     print('%s\t%s预计保证金超限\tprice：%s\tatr：%s' % (signal.bar.datetime, signal.symbol, price, signal.atrVolatility))
+            #     return
                 
             # 买入
             if direction == Direction.LONG:
