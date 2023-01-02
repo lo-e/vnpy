@@ -6,6 +6,7 @@ from vnpy.trader.constant import Exchange, Interval
 from pymongo import MongoClient, ASCENDING
 from vnpy.app.cta_strategy.base import (MINUTE_DB_NAME, HOUR_DB_NAME, MinuteDataBaseName, HourDataBaseName)
 import re
+from datetime import datetime
 
 class BarGenerator:
     """
@@ -280,11 +281,21 @@ class MinuterBarProcessor:
         self,
         vt_symbol: str = '',
         window: int = 0,
-        interval: Interval = Interval.MINUTE
+        interval: Interval = Interval.MINUTE,
+        start_date: str = '',
+        end_date: str = '',
     ):
         self.vt_symbol = vt_symbol
         self.window = window
         self.interval = interval
+        if start_date:
+            self.start_date = datetime.strptime(start_date, '%Y-%m-%d')
+        else:
+            self.start_date = None
+        if end_date:
+            self.end_date = datetime.strptime(end_date, '%Y-%m-%d')
+        else:
+            self.end_date = None
 
         # minute_bar数据库
         client = MongoClient('localhost', 27017)
@@ -308,7 +319,17 @@ class MinuterBarProcessor:
         start_dt = None
         end_dt = None
         minute_bar = None
-        cursor = self.minute_bar_collection.find().sort('datetime', ASCENDING)
+
+        flt = {}
+        flt_data = {}
+        if self.start_date:
+            flt_data['$gte'] = self.start_date
+        if self.end_date:
+            flt_data['$lte'] = self.end_date
+
+        if flt_data:
+            flt['datetime'] = flt_data
+        cursor = self.minute_bar_collection.find(flt).sort('datetime', ASCENDING)
         for d in cursor:
             minute_bar = BarData(gateway_name='', symbol='', exchange=None, datetime=None)
             minute_bar.__dict__ = d
@@ -323,5 +344,5 @@ class MinuterBarProcessor:
         print(f'{self.vt_symbol}\n1m -> {self.window}{interval_}\n{start_dt} -> {end_dt}')
 
 if __name__ == '__main__':
-    processor = MinuterBarProcessor(vt_symbol='BTCUSDT.BYBIT', window=1, interval=Interval.HOUR)
+    processor = MinuterBarProcessor(vt_symbol='ETHUSDT.BYBIT', window=15, interval=Interval.MINUTE, start_date='2022-12-01', end_date='2023-01-31')
     processor.start_work()
