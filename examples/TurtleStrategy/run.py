@@ -58,6 +58,7 @@ def one():
 
         open_price_list = []
         open_direction = None
+        loss_count = 0
         for trade in tradeList:
             print('%s\t\t%s %s\t\t%s\t\t%s\t%s@%s' % (trade.dt, trade.symbol, trade.direction.value, trade.offset.value,
                                                       engine.sizeDict[trade.symbol], trade.volume, trade.price))
@@ -77,10 +78,16 @@ def one():
                 else:
                     pnl = (trade.price - mean_open) * trade.volume * -1
 
+                if pnl <= 0:
+                    loss_count += 1
+                else:
+                    loss_count = 0
+
                 symbol_pnl_list = symbol_pnl_dict.get(symbol, [])
                 symbol_pnl_list.append(pnl)
                 symbol_pnl_dict[symbol] = symbol_pnl_list
                 print(f'收益：{pnl}')
+                print(f'连续亏损次数：{loss_count}')
                 open_price_list = []
                 open_direction = None
                 print('\n')
