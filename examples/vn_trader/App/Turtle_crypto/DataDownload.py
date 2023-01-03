@@ -1,5 +1,6 @@
 from dataservice import TurtleCryptoDataDownloading, Binancetype
 from vnpy.trader.constant import Interval
+from datetime import datetime
 
 if __name__ == '__main__':
     """ 1TOKEN"""
@@ -22,6 +23,7 @@ if __name__ == '__main__':
     else:
         contract_list = ['BTCUSDT', 'ETHUSDT']
     days = 6
+    # days = (datetime.now() - datetime.strptime('2021-07-20', '%Y-%m-%d')).days
     dataDownload = TurtleCryptoDataDownloading()
     dataDownload.download_from_bybit(contract_list=contract_list, days=days)
     result, complete_msg, back_msg, lost_msg = dataDownload.generate_for_bybit(contract_list=contract_list, days=days)
