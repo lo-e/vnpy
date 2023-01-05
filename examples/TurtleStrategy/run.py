@@ -52,13 +52,25 @@ def one():
     totalPnl = 0
     calculateDic = {}
     symbol_pnl_dict = {}
+    # 统计连续亏损所需变量
+    symbol_continuous_pnl_dict = {}
+    continuous_pnl_last_symbol = ''
+    continuous_pnl = 0
     for symbol in engine.symbolList:
+        # 统计连续亏损
+        if continuous_pnl_last_symbol and continuous_pnl_last_symbol != symbol:
+            pnl_dict = symbol_continuous_pnl_dict.setdefault(continuous_pnl_last_symbol, {})
+            pnl_value = pnl_dict.setdefault(continuous_pnl, 0)
+            pnl_value += 1
+            pnl_dict[continuous_pnl] = pnl_value
+        continuous_pnl_last_symbol = symbol
+
         tradeList = engine.getTradeData(symbol)
         print('*'*60)
 
         open_price_list = []
         open_direction = None
-        loss_count = 0
+        continuous_pnl = 0
         for trade in tradeList:
             print('%s\t\t%s %s\t\t%s\t\t%s\t%s@%s' % (trade.dt, trade.symbol, trade.direction.value, trade.offset.value,
                                                       engine.sizeDict[trade.symbol], trade.volume, trade.price))
@@ -78,16 +90,36 @@ def one():
                 else:
                     pnl = (trade.price - mean_open) * trade.volume * -1
 
+                # 统计连续亏损
                 if pnl <= 0:
-                    loss_count += 1
+                    # 亏损
+                    if continuous_pnl <= 0:
+                        continuous_pnl -= 1
+                    else:
+                        pnl_dict = symbol_continuous_pnl_dict.setdefault(symbol, {})
+                        pnl_value = pnl_dict.setdefault(continuous_pnl, 0)
+                        pnl_value += 1
+                        pnl_dict[continuous_pnl] = pnl_value
+
+                        continuous_pnl = -1
+
                 else:
-                    loss_count = 0
+                    # 盈利
+                    if continuous_pnl >= 0:
+                        continuous_pnl += 1
+                    else:
+                        pnl_dict = symbol_continuous_pnl_dict.setdefault(symbol, {})
+                        pnl_value = pnl_dict.setdefault(continuous_pnl, 0)
+                        pnl_value += 1
+                        pnl_dict[continuous_pnl] = pnl_value
+
+                        continuous_pnl = 1
 
                 symbol_pnl_list = symbol_pnl_dict.get(symbol, [])
                 symbol_pnl_list.append(pnl)
                 symbol_pnl_dict[symbol] = symbol_pnl_list
                 print(f'收益：{pnl}')
-                print(f'连续亏损次数：{loss_count}')
+                print(f'连续盈亏次数：{continuous_pnl}')
                 open_price_list = []
                 open_direction = None
                 print('\n')
@@ -151,6 +183,13 @@ def one():
             resultList.append(dic)
         print('\n')
 
+    # 统计连续亏损
+    if continuous_pnl_last_symbol:
+        pnl_dict = symbol_continuous_pnl_dict.setdefault(continuous_pnl_last_symbol, {})
+        pnl_value = pnl_dict.setdefault(continuous_pnl, 0)
+        pnl_value += 1
+        pnl_dict[continuous_pnl] = pnl_value
+
     if len(resultList):
         fieldNames = ['datetime', 'symbol', 'direction', 'offset', 'size', 'volume', 'price', 'pnl', 'totalPnl']
         # 文件路径
@@ -178,6 +217,15 @@ def one():
                 print('entry\t%s' % signal.result.entry)
             print('lastPnl\t%s' % signal.getLastPnl())
             print('newDominantOpen\t%s' % signal.newDominantOpen)
+
+            print('-' * 16)
+            print('连续盈亏：')
+            continuous_pnl_dict = symbol_continuous_pnl_dict.get(signal.symbol)
+            pnl_keys = list(continuous_pnl_dict.keys())
+            pnl_keys = sorted(pnl_keys)
+            for pnl_key in pnl_keys:
+                print(f'{pnl_key} -> {continuous_pnl_dict[pnl_key]}')
+            print('-' * 16)
 
             pnl_array = np.array(symbol_pnl_dict[signal.symbol])
             pnl_count = pnl_array.size
