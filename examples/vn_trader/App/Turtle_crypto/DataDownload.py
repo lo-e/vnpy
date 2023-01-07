@@ -21,7 +21,7 @@ if __name__ == '__main__':
     if mode == '1':
         contract_list = ['BTCUSD', 'ETHUSD']
     else:
-        contract_list = ['BTCUSDT', 'ETHUSDT']
+        contract_list = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT']
     days = 6
     # days = (datetime.now() - datetime.strptime('2021-07-20', '%Y-%m-%d')).days
     dataDownload = TurtleCryptoDataDownloading()
