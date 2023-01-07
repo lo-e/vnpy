@@ -344,5 +344,5 @@ class MinuterBarProcessor:
         print(f'{self.vt_symbol}\n1m -> {self.window}{interval_}\n{start_dt} -> {end_dt}')
 
 if __name__ == '__main__':
-    processor = MinuterBarProcessor(vt_symbol='ETHUSDT.BYBIT', window=15, interval=Interval.MINUTE, start_date='2022-12-01', end_date='2023-01-31')
+    processor = MinuterBarProcessor(vt_symbol='SOLUSDT.BYBIT', window=1, interval=Interval.HOUR, start_date='2023-01-02', end_date='2023-12-31')
     processor.start_work()
