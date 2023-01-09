@@ -2278,16 +2278,20 @@ class BybitSpotRestApi(RestClient):
 
     def on_cancel_order(self, data: dict, request: Request) -> None:
         """委托撤单回报"""
-        if self.check_error("委托撤单", data):
+        request_data = request.data
+        order_id = request_data.get('orderLinkId', '')
+        if not order_id:
+            order_id = request_data.get('orderId', '')
+
+        if self.check_error(f"委托撤单{order_id}", data):
             return
 
         # 已经撤单的委托wsApi不会收到推送，需要手动广播处理
         error_msg: str = data["retMsg"]
         if 'Order has been canceled' in error_msg:
-            request_data = request.data
-            order_id = request_data.get('orderLinkId', '')
-            if not order_id:
-                order_id = request_data.get('orderId', '')
+            """ fake """
+            self.gateway.write_log('Order has been canceled')
+
             if order_id:
                 cached_order = cached_order_dict.get(order_id, None)
                 if cached_order:
