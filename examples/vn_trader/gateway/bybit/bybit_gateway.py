@@ -136,6 +136,10 @@ spot_symbols: Set[str] = set()
 # 本地委托号缓存集合
 local_orderids: Set[str] = set()
 
+# 委托缓存
+cached_order_dict: Dict = {}
+cached_order_ids = []
+
 
 class BybitGateway(BaseGateway):
     """
@@ -2193,8 +2197,19 @@ class BybitSpotRestApi(RestClient):
             on_error=self.on_send_order_error,
         )
 
+        # 缓存order
+        self.cache_order(order)
+
         self.gateway.on_order(order)
         return order.vt_orderid
+
+    def cache_order(self, order:OrderData):
+        cached_order_dict[order.orderid] = order
+        cached_order_ids.append(order.orderid)
+        if len(cached_order_ids) >= 20:
+            pop_id = cached_order_ids[0]
+            cached_order_ids.remove(pop_id)
+            cached_order_dict.pop(pop_id)
 
     def on_send_order_failed(
         self,
@@ -2262,6 +2277,19 @@ class BybitSpotRestApi(RestClient):
         """委托撤单回报"""
         if self.check_error("委托撤单", data):
             return
+
+        # 已经撤单的委托wsApi不会收到推送，需要手动广播处理
+        error_msg: str = data["retMsg"]
+        if 'Order has been canceled' in error_msg:
+            request_data = request.data
+            order_id = request_data.get('orderLinkId', '')
+            if not order_id:
+                order_id = request_data.get('orderId', '')
+            if order_id:
+                cached_order = cached_order_dict.get(order_id, None)
+                if cached_order:
+                    cached_order.status = Status.CANCELLED
+                    self.gateway.on_order(order=cached_order)
 
     def on_failed(self, status_code: int, request: Request) -> None:
         """处理请求失败回报"""
