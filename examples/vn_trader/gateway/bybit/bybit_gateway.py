@@ -2290,7 +2290,7 @@ class BybitSpotRestApi(RestClient):
         error_msg: str = data["retMsg"]
         if 'canceled' in error_msg:
             """ fake """
-            self.gateway.write_log('Order has been canceled')
+            self.gateway.write_log(error_msg)
 
             if order_id:
                 cached_order = cached_order_dict.get(order_id, None)
