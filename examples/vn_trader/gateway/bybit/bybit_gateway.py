@@ -2289,14 +2289,10 @@ class BybitSpotRestApi(RestClient):
         # 已经撤单的委托wsApi不会收到推送，需要手动广播处理
         error_msg: str = data["retMsg"]
         if 'canceled' in error_msg:
-            """ fake """
-            self.gateway.write_log(error_msg)
-
-            if order_id:
-                cached_order = cached_order_dict.get(order_id, None)
-                if cached_order:
-                    cached_order.status = Status.CANCELLED
-                    self.gateway.on_order(order=cached_order)
+            cached_order = cached_order_dict.get(order_id, None)
+            if cached_order:
+                cached_order.status = Status.CANCELLED
+                self.gateway.on_order(order=cached_order)
 
     def on_failed(self, status_code: int, request: Request) -> None:
         """处理请求失败回报"""
