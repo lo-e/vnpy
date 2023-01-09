@@ -262,10 +262,24 @@ class BybitGateway(BaseGateway):
             self.private_ws_api.stop()
             self.public_ws_api.stop()
 
+    def on_order(self, order: OrderData) -> None:
+        # 缓存委托
+        self.cache_order(order)
+
+        super().on_order(order)
+
     """ modify by loe """
     def query_predicted_funding(self, symbol:str):
         if self.rest_api:
             self.rest_api.query_predicted_funding(symbol=symbol)
+
+    def cache_order(self, order:OrderData):
+        cached_order_dict[order.orderid] = order
+        cached_order_ids.append(order.orderid)
+        if len(cached_order_ids) >= 20:
+            pop_id = cached_order_ids[0]
+            cached_order_ids.remove(pop_id)
+            cached_order_dict.pop(pop_id)
 
 # ====== 反向合约 ======
 class BybitInverseRestApi(RestClient):
@@ -2197,19 +2211,8 @@ class BybitSpotRestApi(RestClient):
             on_error=self.on_send_order_error,
         )
 
-        # 缓存order
-        self.cache_order(order)
-
         self.gateway.on_order(order)
         return order.vt_orderid
-
-    def cache_order(self, order:OrderData):
-        cached_order_dict[order.orderid] = order
-        cached_order_ids.append(order.orderid)
-        if len(cached_order_ids) >= 20:
-            pop_id = cached_order_ids[0]
-            cached_order_ids.remove(pop_id)
-            cached_order_dict.pop(pop_id)
 
     def on_send_order_failed(
         self,
