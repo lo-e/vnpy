@@ -40,6 +40,7 @@ from ..websocket import WebsocketClient
 from vnpy.trader.event import (
     EVENT_TIMER
 )
+from collections import OrderedDict
 
 # 中国时区
 CHINA_TZ: timezone = timezone("Asia/Shanghai")
@@ -137,8 +138,7 @@ spot_symbols: Set[str] = set()
 local_orderids: Set[str] = set()
 
 # 委托缓存
-cached_order_dict: Dict = {}
-cached_order_ids = []
+cached_order_dict = OrderedDict()
 
 
 class BybitGateway(BaseGateway):
@@ -275,11 +275,8 @@ class BybitGateway(BaseGateway):
 
     def cache_order(self, order:OrderData):
         cached_order_dict[order.orderid] = order
-        cached_order_ids.append(order.orderid)
-        if len(cached_order_ids) >= 20:
-            pop_id = cached_order_ids[0]
-            cached_order_ids.remove(pop_id)
-            cached_order_dict.pop(pop_id)
+        if len(cached_order_dict) >= 20:
+            cached_order_dict.popitem(last=False)
 
 # ====== 反向合约 ======
 class BybitInverseRestApi(RestClient):
