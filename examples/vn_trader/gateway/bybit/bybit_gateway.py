@@ -2288,7 +2288,7 @@ class BybitSpotRestApi(RestClient):
 
         # 已经撤单的委托wsApi不会收到推送，需要手动广播处理
         error_msg: str = data["retMsg"]
-        if 'Order has been canceled' in error_msg:
+        if 'canceled' in error_msg:
             """ fake """
             self.gateway.write_log('Order has been canceled')
 
