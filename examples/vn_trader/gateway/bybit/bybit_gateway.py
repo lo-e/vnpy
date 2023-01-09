@@ -2283,7 +2283,7 @@ class BybitSpotRestApi(RestClient):
         if not order_id:
             order_id = request_data.get('orderId', '')
 
-        if self.check_error(f"委托撤单{order_id}", data):
+        if not self.check_error(f"委托撤单{order_id}", data):
             return
 
         # 已经撤单的委托wsApi不会收到推送，需要手动广播处理
