@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 import shutil
 import os
 from vnpy.trader.constant import Interval
+from time import sleep
 
 class TurtleCryptoDataDownloading(object):
     def __init__(self):
@@ -35,8 +36,17 @@ class TurtleCryptoDataDownloading(object):
             from_time = datetime(from_date.year, from_date.month, from_date.day)
             while from_time:
                 print(f'下载数据：{from_time}\t{contract}')
-                from_time = bybit_get_bar_data(symbol=contract, interval=interval, from_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"))
-                if from_time:
+                download_failed = False
+                try:
+                    from_time = bybit_get_bar_data(symbol=contract, interval=interval, from_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"))
+                except Exception:
+                    download_failed = True
+                    print('****** 下载中断 ******')
+
+                if download_failed:
+                    sleep(2)
+
+                elif from_time:
                     from_time = from_time + timedelta(minutes=1)
         #"""
 
