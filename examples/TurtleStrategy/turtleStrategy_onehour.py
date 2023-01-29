@@ -29,8 +29,8 @@ CATEGORY_DICT = {'finance':['IF','IC','IH'],
 
 ACTUAL_TRADE = True        # 实盘合约交易
 
-CONTINUOUS_PNL_REQUIRED = 0
-VOLUME_RATE__LIST = [1/8, 1/8, 1/4, 1/2, 1]
+CONTINUOUS_PNL_NEEDED = True
+CONTINUOUS_PNL_REQUIRED = {'BTCUSDT.BYBIT':[2, -1, -2]}
 
 ########################################################################
 class TurtleResult(object):
@@ -594,20 +594,35 @@ class TurtlePortfolio(object):
             """ modify by loe """
             # 根据连续盈亏情况计算仓位
             volume_rate = 0
-            if CONTINUOUS_PNL_REQUIRED > 0:
-                if signal.continuous_pnl_value >= CONTINUOUS_PNL_REQUIRED:
-                    sub = signal.continuous_pnl_value - CONTINUOUS_PNL_REQUIRED
-                    if sub < len(VOLUME_RATE__LIST):
-                        volume_rate = VOLUME_RATE__LIST[sub]
+            if CONTINUOUS_PNL_NEEDED:
+                pnl_required_list = CONTINUOUS_PNL_REQUIRED.get(signal.symbol, [])
+                for pnl_required in pnl_required_list:
+                    if pnl_required > 1:
+                        if signal.continuous_pnl_value == pnl_required - 1:
+                            volume_rate = 1
+                            break
 
-            elif CONTINUOUS_PNL_REQUIRED == 0:
-                volume_rate = 1
+                    elif pnl_required < 0:
+                        if signal.continuous_pnl_value == pnl_required:
+                            volume_rate = 1
+                            break
 
+                # if CONTINUOUS_PNL_REQUIRED > 0:
+                #     if signal.continuous_pnl_value >= CONTINUOUS_PNL_REQUIRED:
+                #         sub = signal.continuous_pnl_value - CONTINUOUS_PNL_REQUIRED
+                #         if sub < len(VOLUME_RATE__LIST):
+                #             volume_rate = VOLUME_RATE__LIST[sub]
+                #
+                # elif CONTINUOUS_PNL_REQUIRED == 0:
+                #     volume_rate = 1
+                #
+                # else:
+                #     if signal.continuous_pnl_value <= CONTINUOUS_PNL_REQUIRED:
+                #         sub = CONTINUOUS_PNL_REQUIRED - signal.continuous_pnl_value
+                #         if sub < len(VOLUME_RATE__LIST):
+                #             volume_rate = VOLUME_RATE__LIST[sub]
             else:
-                if signal.continuous_pnl_value <= CONTINUOUS_PNL_REQUIRED:
-                    sub = CONTINUOUS_PNL_REQUIRED - signal.continuous_pnl_value
-                    if sub < len(VOLUME_RATE__LIST):
-                        volume_rate = VOLUME_RATE__LIST[sub]
+                volume_rate = 1
 
             multiplier = 0
             if signal.atrVolatility * size:
