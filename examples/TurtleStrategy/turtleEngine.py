@@ -17,7 +17,7 @@ from vnpy.trader.constant import Direction, Exchange
 from turtleStrategy_onehour import TurtlePortfolio
 
 from vnpy.app.cta_strategy.base import DAILY_DB_NAME, MINUTE_DB_NAME, HOUR_DB_NAME, MinuteDataBaseName, HourDataBaseName
-
+import pandas as pd
 
 SIZE_DICT = {}
 PRICETICK_DICT = {}
@@ -232,6 +232,9 @@ class BacktestingEngine(object):
         highlevelList = []
         drawdownList = []
         ddPercentList = []
+        drawdownOriginList = []
+        ddOriginPercentList = []
+        dateList = []
         returnList = []
         
         for result in resultList:
@@ -248,18 +251,38 @@ class BacktestingEngine(object):
             
             highlevel = max(highlevel, endBalance)
             highlevelList.append(highlevel)
-            
+
+            dateList.append(result.date)
+
             drawdown = endBalance - highlevel
             drawdownList.append(drawdown)
             ddPercentList.append(drawdown/highlevel*100)
-            
+
+            drawdownOrigin = endBalance - self.portfolioValue
+            drawdownOriginList.append(drawdownOrigin)
+            ddOriginPercentList.append(drawdownOrigin / self.portfolioValue * 100)
+
             totalCommission += result.commission
             totalSlippage += result.slippage
             totalTradeCount += result.tradeCount
             totalNetPnl += result.netPnl
 
-        maxDrawdown = min(drawdownList)
-        maxDdPercent = min(ddPercentList)
+        drawdownSeries = pd.Series(drawdownList, index=dateList)
+        maxDrawdown = drawdownSeries.min()
+        maxDrawdownDate = drawdownSeries.idxmin()
+
+        ddPercentSeries = pd.Series(ddPercentList, index=dateList)
+        maxDdPercent = ddPercentSeries.min()
+        maxDdPercentDate = ddPercentSeries.idxmin()
+
+        drawdownOriginSeries = pd.Series(drawdownOriginList, index=dateList)
+        maxDrawdownOrigin = drawdownOriginSeries.min()
+        maxDrawdownOriginDate = drawdownOriginSeries.idxmin()
+
+        ddOriginPercentSeries = pd.Series(ddOriginPercentList, index=dateList)
+        maxDdPercentOrigin = ddOriginPercentSeries.min()
+        maxDdPercentOriginDate = ddOriginPercentSeries.idxmin()
+
         totalReturn = (endBalance / self.portfolioValue - 1) * 100
         dailyReturn = np.mean(returnList) * 100
         annualizedReturn = dailyReturn * annualDays
@@ -280,7 +303,13 @@ class BacktestingEngine(object):
             'lossDays': lossDays,
             'endBalance': endBalance,
             'maxDrawdown': maxDrawdown,
+            'maxDrawdownDate': maxDrawdownDate,
             'maxDdPercent': maxDdPercent,
+            'maxDdPercentDate': maxDdPercentDate,
+            'maxDrawdownOrigin': maxDrawdownOrigin,
+            'maxDrawdownOriginDate': maxDrawdownOriginDate,
+            'maxDdPercentOrigin': maxDdPercentOrigin,
+            'maxDdPercentOriginDate': maxDdPercentOriginDate,
             'totalNetPnl': totalNetPnl,
             'dailyNetPnl': totalNetPnl/totalDays,
             'totalCommission': totalCommission,
@@ -329,8 +358,10 @@ class BacktestingEngine(object):
         self.output(u'总收益率：\t%s%%' % formatNumber(result['totalReturn']))
         self.output(u'年化收益：\t%s%%' % formatNumber(result['annualizedReturn']))
         self.output(u'总盈亏：\t%s' % formatNumber(result['totalNetPnl']))
-        self.output(u'最大回撤: \t%s' % formatNumber(result['maxDrawdown']))   
-        self.output(u'百分比最大回撤: %s%%' % formatNumber(result['maxDdPercent']))   
+        self.output(u'最大回撤: \t%s\t%s' % (formatNumber(result['maxDrawdown']), result['maxDrawdownDate']))
+        self.output(u'百分比最大回撤: %s%%\t%s' % (formatNumber(result['maxDdPercent']), result['maxDdPercentDate']))
+        self.output(u'最大回撤【本金】: \t%s\t%s' % (formatNumber(result['maxDrawdownOrigin']), result['maxDrawdownOriginDate']))
+        self.output(u'百分比最大回撤【本金】: %s%%\t%s' % (formatNumber(result['maxDdPercentOrigin']), result['maxDdPercentOriginDate']))
         
         self.output(u'总手续费：\t%s' % formatNumber(result['totalCommission']))
         self.output(u'总滑点：\t%s' % formatNumber(result['totalSlippage']))
