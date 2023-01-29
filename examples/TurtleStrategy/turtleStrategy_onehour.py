@@ -29,7 +29,7 @@ CATEGORY_DICT = {'finance':['IF','IC','IH'],
 
 ACTUAL_TRADE = True        # 实盘合约交易
 
-CONTINUOUS_PNL_REQUIRED = -5
+CONTINUOUS_PNL_REQUIRED = 0
 VOLUME_RATE__LIST = [1/8, 1/8, 1/4, 1/2, 1]
 
 ########################################################################
