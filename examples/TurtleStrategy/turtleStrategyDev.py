@@ -29,9 +29,6 @@ CATEGORY_DICT = {'finance':['IF','IC','IH'],
 
 ACTUAL_TRADE = True        # 实盘合约交易
 
-CONTINUOUS_PNL_NEEDED = True
-CONTINUOUS_PNL_REQUIRED = {'BTCUSDT.BYBIT':[2, -1, -2]}
-
 ########################################################################
 class TurtleResult(object):
     """一次完整的开平交易"""
@@ -121,7 +118,6 @@ class TurtleSignal(object):
         self.actualBarList = []         # 实盘交易合约bar数据
         self.newDominantIniting = False # 主力换月初始化状态
         self.newDominantOpen = True     # 主力换月后新主力开仓门槛【原则：原主力有实际同向持仓；门槛一直延续至下一轮信号】
-        self.continuous_pnl_value = 0   # 连续盈亏数
 
     #----------------------------------------------------------------------
     def onBar(self, bar):
@@ -493,21 +489,6 @@ class TurtleSignal(object):
         """ modify by loe """
         self.newDominantOpen = True
 
-        # 统计连续盈亏数
-        last_pnl = self.getLastPnl()
-        if last_pnl <= 0:
-            # 亏损
-            if self.continuous_pnl_value <= 0:
-                self.continuous_pnl_value -= 1
-            else:
-                self.continuous_pnl_value = -1
-        else:
-            # 盈利
-            if self.continuous_pnl_value >= 0:
-                self.continuous_pnl_value += 1
-            else:
-                self.continuous_pnl_value = 1
-
     #----------------------------------------------------------------------
     def getLastPnl(self):
         """获取上一笔交易的盈亏"""
@@ -592,42 +573,9 @@ class TurtlePortfolio(object):
             size = self.sizeDict[signal.symbol]
             riskValue = self.portfolioValue * 0.01
             """ modify by loe """
-            # 根据连续盈亏情况计算仓位
-            volume_rate = 0
-            if CONTINUOUS_PNL_NEEDED:
-                pnl_required_list = CONTINUOUS_PNL_REQUIRED.get(signal.symbol, [])
-                for pnl_required in pnl_required_list:
-                    if pnl_required > 1:
-                        if signal.continuous_pnl_value == pnl_required - 1:
-                            volume_rate = 1
-                            break
-
-                    elif pnl_required < 0:
-                        if signal.continuous_pnl_value == pnl_required:
-                            volume_rate = 1
-                            break
-
-                # if CONTINUOUS_PNL_REQUIRED > 0:
-                #     if signal.continuous_pnl_value >= CONTINUOUS_PNL_REQUIRED:
-                #         sub = signal.continuous_pnl_value - CONTINUOUS_PNL_REQUIRED
-                #         if sub < len(VOLUME_RATE__LIST):
-                #             volume_rate = VOLUME_RATE__LIST[sub]
-                #
-                # elif CONTINUOUS_PNL_REQUIRED == 0:
-                #     volume_rate = 1
-                #
-                # else:
-                #     if signal.continuous_pnl_value <= CONTINUOUS_PNL_REQUIRED:
-                #         sub = CONTINUOUS_PNL_REQUIRED - signal.continuous_pnl_value
-                #         if sub < len(VOLUME_RATE__LIST):
-                #             volume_rate = VOLUME_RATE__LIST[sub]
-            else:
-                volume_rate = 1
-
             multiplier = 0
             if signal.atrVolatility * size:
                 multiplier = riskValue / (signal.atrVolatility * size)
-                multiplier *= volume_rate
 
                 min_volume = self.engine.min_volume_dict[signal.symbol]
                 if min_volume <= 0:
