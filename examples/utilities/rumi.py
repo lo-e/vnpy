@@ -32,7 +32,7 @@ class Rumi(object):
             slow_array: np.ndarray = self.am.wma(n=self.slow_window, array=True)
             diff_array: np.ndarray = fast_array - slow_array
             rumi_array: np.ndarray = talib.SMA(diff_array, self.rumi_window)
-            self.rma = rumi_array[len(rumi_array)-20:]
+            self.rma = rumi_array[len(rumi_array)-self.show_window:]
             self.generate_signal()
 
     def generate_signal(self) -> None:
@@ -49,6 +49,7 @@ class Rumi(object):
             if last_direction == 0:
                 # 初始方向
                 last_direction = current_direction
+                index += 1
                 continue
 
             if current_direction == 0:

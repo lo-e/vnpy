@@ -87,7 +87,7 @@ class TurtleSignal(object):
         #self.am = ArrayManager(60)
         self.atrAm = ArrayManager(self.atrWindow+1)     # K线容器
         #self.atrAm = ArrayManager(60)
-        self.rumi = Rumi() # rumi指标
+        self.rumi = Rumi(fast_window=7, slow_window=14, rumi_window=3, show_window=90) # rumi指标
         
         self.atrVolatility = 0          # ATR波动率
         self.entryUp = 0                # 入场通道
@@ -315,7 +315,7 @@ class TurtleSignal(object):
             return
         
         # rumi指标判断
-        if self.rumi.cross_count >= 3 and self.rumi.crossing_direction != Direction.NET:
+        if self.rumi.cross_count >= 12 and self.rumi.crossing_direction != Direction.NET:
             a = 2
         
         # 优先检查平仓
