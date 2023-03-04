@@ -346,6 +346,6 @@ class MinuterBarProcessor:
 if __name__ == '__main__':
     symbol_list = ['BTCUSDT.BYBIT', 'ETHUSDT.BYBIT', 'SOLUSDT.BYBIT', 'GALAUSDT.BYBIT', 'AVAXUSDT.BYBIT', 'XRPUSDT.BYBIT']
     for symbol in symbol_list:
-        processor = MinuterBarProcessor(vt_symbol=symbol, window=1, interval=Interval.HOUR, start_date='2023-01-20', end_date='2023-12-31')
+        processor = MinuterBarProcessor(vt_symbol=symbol, window=15, interval=Interval.MINUTE, start_date='2021-01-01', end_date='2023-12-31')
         processor.start_work()
         print('\n')
