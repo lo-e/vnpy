@@ -64,6 +64,8 @@ class MultiSymbol(object):
         self.datetime_bar_dic = OrderedDict()
         self.datetime_direction_dic = OrderedDict()
         self.datetime_result_dict = OrderedDict()
+        self.trade_count = 0
+        self.total_pnl = 0
 
     # 获取数据库名称
     def get_db_name(self, interval: Interval, window: int):
@@ -227,14 +229,76 @@ class MultiSymbol(object):
             }
             
         # 测试数据
-        for the_datetime, result_dic in self.datetime_result_dict.items():
-            direction_dic = self.datetime_direction_dic[the_datetime]
+        # for the_datetime, result_dic in self.datetime_result_dict.items():
+        #     direction_dic = self.datetime_direction_dic[the_datetime]
+        #     direction_long = direction_dic['long']
+        #     direction_short = direction_dic['short']
+        #     print(f'\n{the_datetime}')
+        #     print(f'上涨数量：{len(direction_long)}\t下跌数量：{len(direction_short)}')
+        #     print(f'------ 原始数据 ------')
+        #     bar_dic = self.datetime_bar_dic[the_datetime]
+        #     for symbol, bar_data in bar_dic.items():
+        #         change_data = direction_long.get(symbol, {})
+        #         if not change_data:
+        #             change_data = direction_short.get(symbol, {})
+        #         if not change_data:
+        #             exit('检查数据！')
+        #         change = change_data['change']
+        #         print(f'{symbol}\t{bar_data.open_price}\t{bar_data.close_price}\t{change}%')
+
+        #     print(f'------ LONG ------')
+        #     long_result_dic = result_dic['long']
+        #     for symbol, result_data in long_result_dic.items():
+        #         change = result_data['change']
+        #         market = result_data['market']
+        #         bar = self.datetime_bar_dic[the_datetime][symbol]
+        #         print(f'{symbol}\t{bar.open_price}\t{bar.close_price}\t{change}%\t市场平均：{market}%')
+
+        #     print(f'------ SHORT ------')
+        #     short_result_dic = result_dic['short']
+        #     for symbol, result_data in short_result_dic.items():
+        #         change = result_data['change']
+        #         market = result_data['market']
+        #         bar = self.datetime_bar_dic[the_datetime][symbol]
+        #         print(f'{symbol}\t{bar.open_price}\t{bar.close_price}\t{change}%\t市场平均：{market}%')
+
+
+    # 回测
+    def backtesting(self):
+        self.trade_count = 0
+        self.total_pnl = 0
+        last_datetime = None
+        last_traded = False
+
+        for the_datetime, _ in self.datetime_result_dict.items():
+            if not last_datetime:
+                last_datetime = the_datetime
+                continue
+            
+            last_result_data = self.datetime_result_dict[last_datetime]
+            last_long = last_result_data['long']
+            last_short = last_result_data['short']
+            if not len(last_long) or not len(last_short):
+                if last_traded:
+                    last_traded = False
+                else:
+                    last_datetime = the_datetime
+                    continue
+            else:
+                self.trade_count += 1
+                last_traded = True
+                
+
+            # =============================================================================
+
+            # 前原始数据
+            print(f'\n= {last_datetime} =')
+            direction_dic = self.datetime_direction_dic[last_datetime]
             direction_long = direction_dic['long']
             direction_short = direction_dic['short']
-            print(f'\n{the_datetime}')
             print(f'上涨数量：{len(direction_long)}\t下跌数量：{len(direction_short)}')
-            print(f'------ 原始数据 ------')
-            bar_dic = self.datetime_bar_dic[the_datetime]
+            print(f'- 原始数据 -')
+            bar_dic = self.datetime_bar_dic[last_datetime]
             for symbol, bar_data in bar_dic.items():
                 change_data = direction_long.get(symbol, {})
                 if not change_data:
@@ -244,50 +308,73 @@ class MultiSymbol(object):
                 change = change_data['change']
                 print(f'{symbol}\t{bar_data.open_price}\t{bar_data.close_price}\t{change}%')
 
-            print(f'------ LONG ------')
-            long_result_dic = result_dic['long']
-            for symbol, result_data in long_result_dic.items():
-                change = result_data['change']
-                market = result_data['market']
-                bar = self.datetime_bar_dic[the_datetime][symbol]
+            # 前交易信号
+            print(f'- LONG -')
+            for symbol, last_long_result_data in last_long.items():
+                change = last_long_result_data['change']
+                market = last_long_result_data['market']
+                bar = self.datetime_bar_dic[last_datetime][symbol]
                 print(f'{symbol}\t{bar.open_price}\t{bar.close_price}\t{change}%\t市场平均：{market}%')
 
-            print(f'------ SHORT ------')
-            short_result_dic = result_dic['short']
-            for symbol, result_data in short_result_dic.items():
-                change = result_data['change']
-                market = result_data['market']
-                bar = self.datetime_bar_dic[the_datetime][symbol]
+            print(f'- SHORT -')
+            for symbol, last_short_result_data in last_short.items():
+                change = last_short_result_data['change']
+                market = last_short_result_data['market']
+                bar = self.datetime_bar_dic[last_datetime][symbol]
                 print(f'{symbol}\t{bar.open_price}\t{bar.close_price}\t{change}%\t市场平均：{market}%')
 
+            # =============================================================================
 
-    # 回测
-    def backtesting(self):
-        last_result_data = None
-        for the_datetime, result_data in self.datetime_result_dict.items():
-            long_result_dic = result_data["long"]
-            short_result_dic = result_data["short"]
-            print(f"{the_datetime}")
-            print("做多：")
-            for symbol in long_result_dic.keys():
-                print(f"{symbol}")
+            print(f'\n= {the_datetime} =')
+            print(f'\n盈亏')
+            current_direction_dic = self.datetime_direction_dic[the_datetime]
+            current_direction_long = current_direction_dic['long']
+            current_direction_short = current_direction_dic['short']
+            long_pnl = 0
+            short_pnl = 0
+            # 做多
+            print(f'- LONG -')
+            for symbol in last_long.keys():
+                bar_data = self.datetime_bar_dic[the_datetime][symbol]
+                change_data = current_direction_long.get(symbol, {})
+                if not change_data:
+                    change_data = current_direction_short.get(symbol, {})
+                if not change_data:
+                    exit('检查数据！')
+                change = change_data['change']
+                long_pnl += change
+                print(f'{symbol}\t{bar_data.open_price}\t{bar_data.close_price}\t{change}%')
 
-            print("------------")
-            print("做空：")
-            for symbol in short_result_dic.keys():
-                print(f"{symbol}")
-            print("\n\n")
+            long_pnl = long_pnl / len(last_long) if len(last_long) else 0
+            print(f'** {long_pnl} **')
 
-            if not last_result_data:
-                last_result_data = result_data
-                continue
+            # 做空
+            print(f'\n- SHORT -')
+            for symbol in last_short.keys():
+                bar_data = self.datetime_bar_dic[the_datetime][symbol]
+                change_data = current_direction_long.get(symbol, {})
+                if not change_data:
+                    change_data = current_direction_short.get(symbol, {})
+                if not change_data:
+                    exit('检查数据！')
+                change = change_data['change']
+                short_pnl -= change
+                print(f'{symbol}\t{bar_data.open_price}\t{bar_data.close_price}\t{change}%')
 
-            current_price_change = self.datetime_direction_dic[the_datetime]
+            short_pnl = short_pnl / len(last_short) if len(last_short) else 0
+            print(f'** {short_pnl} **')
+            print(f'\n========================================================================')
 
+            # 盈亏统计
+            if last_traded:
+                self.total_pnl += long_pnl + short_pnl
+
+            # 时间更新
+            last_datetime = the_datetime
 
 if __name__ == "__main__":
     engine = MultiSymbol(
-        start=datetime.now() - timedelta(days=20),
+        start=datetime.now() - timedelta(days=10),
         end=datetime.now() - timedelta(days=1),
         interval=Interval.HOUR,
         window=1,
@@ -295,5 +382,8 @@ if __name__ == "__main__":
     engine.load_data()
     engine.process_data()
     engine.generate_result()
-    # engine.backtesting()
-    print(len(engine.datetime_direction_dic))
+    engine.backtesting()
+    
+    datetime_list = list(engine.datetime_bar_dic.keys())
+    print(f'{datetime_list[0]} - {datetime_list[-1]}')
+    print(f'\n总周期数：{len(engine.datetime_bar_dic)}\n交易的次数：{engine.trade_count}\n总盈亏：{engine.total_pnl}')
