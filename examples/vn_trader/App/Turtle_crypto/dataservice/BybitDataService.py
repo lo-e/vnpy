@@ -1,4 +1,4 @@
-#-- coding: utf-8 --
+# -- coding: utf-8 --
 
 import requests
 import time
@@ -6,70 +6,84 @@ import os
 import csv
 from datetime import datetime, timedelta
 from vnpy.trader.utility import DIR_SYMBOL
-
-""" modify by loe """
 import socket
+from enum import Enum
+from vnpy.trader.object import ContractData, Exchange, Product
+from typing import Set
 
 hostname = socket.gethostname()
-main_url = 'https://api.bybit.com'
+main_url = "https://api.bybit.com"
+
+
+class BybitSymbolType(Enum):
+    """
+    产品类型
+    """
+
+    SPOT = "现货"
+    USDT = "USDT永续合约"
+    USDC = "USDC永续合约"
+    SWAP = "反向永续合约"
+    FUTURE = "反向交割合约"
+
 
 # ====== 获取bar数据 ======
 # symbol：'BTCUSD'
 # interval：'1', '3', '5', '15', '30', '60', '120', '240', '360', '720', 'D', 'M', 'W', 'Y'
 # from：'%Y-%m-%d %H:%M:%S'
 # limit：<= 200
-def bybit_get_bar_data(symbol:str, interval:str, from_time:str, limit:int=200):
+def bybit_get_bar_data(symbol: str, interval: str, from_time: str, limit: int = 200):
     timeArray = time.strptime(from_time, "%Y-%m-%d %H:%M:%S")
     timeStamp = int(time.mktime(timeArray))
-    if 'USDT' in symbol:
-        url = f'{main_url}/public/linear/kline?symbol={symbol}&interval={interval}&from={timeStamp}&limit={limit}'
+    if "USDT" in symbol:
+        url = f"{main_url}/public/linear/kline?symbol={symbol}&interval={interval}&from={timeStamp}&limit={limit}"
     else:
-        url = f'{main_url}/v2/public/kline/list?symbol={symbol}&interval={interval}&from={timeStamp}&limit={limit}'
+        url = f"{main_url}/v2/public/kline/list?symbol={symbol}&interval={interval}&from={timeStamp}&limit={limit}"
     resp = requests.get(url, headers={}, params={})
     data = resp.json()
-    bar_data = data.get('result', [])
+    bar_data = data.get("result", [])
     if not bar_data:
         bar_data = []
 
     # 数据整理
     result_list = []
-    since = ''
-    until = ''
+    since = ""
+    until = ""
     for dic in bar_data:
         # 转换时间戳
-        the_timestamp = dic['open_time']
+        the_timestamp = dic["open_time"]
         datetime_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(the_timestamp))
         if not since:
             since = time.strftime("%Y-%m-%d-%H%M%S", time.localtime(the_timestamp))
         until = time.strftime("%Y-%m-%d-%H%M%S", time.localtime(the_timestamp))
 
-        if 'open_time' in dic:
-            dic.pop('open_time')
-        if 'interval' in dic:
-            dic.pop('interval')
-        if 'turnover' in dic:
-            dic.pop('turnover')
-        if 'id' in dic:
-            dic.pop('id')
-        if 'period' in dic:
-            dic.pop('period')
-        if 'start_at' in dic:
-            dic.pop('start_at')
-        dic['datetime'] = datetime_str
+        if "open_time" in dic:
+            dic.pop("open_time")
+        if "interval" in dic:
+            dic.pop("interval")
+        if "turnover" in dic:
+            dic.pop("turnover")
+        if "id" in dic:
+            dic.pop("id")
+        if "period" in dic:
+            dic.pop("period")
+        if "start_at" in dic:
+            dic.pop("start_at")
+        dic["datetime"] = datetime_str
         result_list.append(dic)
 
     if not len(result_list):
         return None
 
     # 写入csv
-    contract = f'BYBIT.{symbol}'
+    contract = f"BYBIT.{symbol}"
     csv_path = get_csv_path()
-    dir_path = csv_path + f'{contract}{DIR_SYMBOL}{interval}{DIR_SYMBOL}'
+    dir_path = csv_path + f"{contract}{DIR_SYMBOL}{interval}{DIR_SYMBOL}"
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
-    file_path = dir_path + f'{since}__{until}.csv'
-    field_names = ['datetime', 'symbol', 'open', 'high', 'low', 'close', 'volume']
-    with open(file_path, 'w') as f:
+    file_path = dir_path + f"{since}__{until}.csv"
+    field_names = ["datetime", "symbol", "open", "high", "low", "close", "volume"]
+    with open(file_path, "w") as f:
         writer = csv.DictWriter(f, fieldnames=field_names)
         writer.writeheader()
         # 写入csv文件
@@ -77,15 +91,86 @@ def bybit_get_bar_data(symbol:str, interval:str, from_time:str, limit:int=200):
 
     return datetime.strptime(until, "%Y-%m-%d-%H%M%S")
 
+
+def bybit_get_symbol_list(type: BybitSymbolType):
+    symbol_list: Set[str] = set()
+
+    if type == BybitSymbolType.SPOT:
+        # 现货
+        url = f"{main_url}/spot/v3/public/symbols"
+
+    elif (
+        type == BybitSymbolType.USDT
+        or type == BybitSymbolType.USDC
+        or type == BybitSymbolType.SWAP
+        or type == BybitSymbolType.FUTURE
+    ):
+        # 合约
+        url = f"{main_url}/v2/public/symbols"
+
+    resp = requests.get(url, headers={}, params={})
+    data = resp.json()
+    if type == BybitSymbolType.SPOT:
+        data = data.get("result", {})
+        data = data.get("list", [])
+    else:
+        data = data.get("result", [])
+    for d in data:
+        # contract: ContractData = ContractData(
+        #     symbol=d["name"],
+        #     exchange=Exchange.BYBIT,
+        #     name=d["name"],
+        #     product=Product.FUTURES,
+        #     size=1,
+        #     pricetick=float(d["price_filter"]["tick_size"]),
+        #     min_volume=d["lot_size_filter"]["min_trading_qty"],
+        #     history_data=True,
+        #     gateway_name='BYBIT'
+        # )
+        if type == BybitSymbolType.SPOT:
+            # 现货
+            symbol_list.add(d["name"])
+
+        elif (
+            type == BybitSymbolType.SWAP
+            and d["name"] == d["alias"]
+            and d["quote_currency"] != "USDT"
+        ):
+            # 反向永续合约
+            symbol_list.add(d["name"])
+
+        elif type == BybitSymbolType.FUTURE and d["name"] != d["alias"]:
+            # 反向交割合约
+            symbol_list.add(d["name"])
+
+        elif type == BybitSymbolType.USDT and d["quote_currency"] == "USDT":
+            # 正向USDT永续合约
+            symbol_list.add(d["name"])
+
+        elif type == BybitSymbolType.USDC and d["quote_currency"] == "USDC":
+            # 正向USDC永续合约
+            symbol_list.add(d["name"])
+
+    return symbol_list
+
+
 def get_csv_path():
     path = os.path.abspath(__file__)
     file_name = path.split(DIR_SYMBOL)[-1]
-    csv_path = path.rstrip(file_name) + f'CSVs{DIR_SYMBOL}'
+    csv_path = path.rstrip(file_name) + f"CSVs{DIR_SYMBOL}"
     return csv_path
 
-if __name__ == '__main__':
-    symbol = 'BTCUSD'
-    interval = '1'
-    from_time = (datetime.now() - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
-    bybit_get_bar_data(symbol=symbol, interval=interval, from_time=from_time)
-    print('completed！')
+
+if __name__ == "__main__":
+    # 获取Bar数据
+    # symbol = 'BTCUSD'
+    # interval = '1'
+    # from_time = (datetime.now() - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
+    # bybit_get_bar_data(symbol=symbol, interval=interval, from_time=from_time)
+    # print('completed！')
+
+    # 获取交易对列表
+    symbol_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
+    for symbol in symbol_list:
+        print(symbol)
+
