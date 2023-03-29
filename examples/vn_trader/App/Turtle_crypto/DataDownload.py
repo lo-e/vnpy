@@ -1,4 +1,4 @@
-from dataservice import TurtleCryptoDataDownloading, Binancetype
+from dataservice import TurtleCryptoDataDownloading, Binancetype, bybit_get_symbol_list, BybitSymbolType
 from vnpy.trader.constant import Interval
 from datetime import datetime
 
@@ -17,11 +17,13 @@ if __name__ == '__main__':
 
     """ BYBIT """
     #"""
-    mode = input('选择模式【反向：1  正向：2】')
+    mode = input('选择模式【反向：1  正向：2 接口获取：3】')
     if mode == '1':
         contract_list = ['BTCUSD', 'ETHUSD']
-    else:
+    elif mode == '2':
         contract_list = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'GALAUSDT', 'AVAXUSDT', 'XRPUSDT']
+    else:
+        contract_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
     days = 6
     # days = (datetime.now() - datetime.strptime('2023-01-09', '%Y-%m-%d')).days
     dataDownload = TurtleCryptoDataDownloading()
