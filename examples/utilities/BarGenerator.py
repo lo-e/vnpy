@@ -8,6 +8,11 @@ from vnpy.app.cta_strategy.base import (MINUTE_DB_NAME, HOUR_DB_NAME, MinuteData
 import re
 from datetime import datetime
 
+# 将上一级目录添加到模块搜索路径中
+import sys
+sys.path.append('..')  
+from vn_trader.App.Turtle_crypto.dataservice.BybitDataService import bybit_get_symbol_list, BybitSymbolType
+
 class BarGenerator:
     """
     For:
@@ -345,6 +350,7 @@ class MinuterBarProcessor:
 
 if __name__ == '__main__':
     symbol_list = ['BTCUSDT.BYBIT', 'ETHUSDT.BYBIT', 'SOLUSDT.BYBIT', 'GALAUSDT.BYBIT', 'AVAXUSDT.BYBIT', 'XRPUSDT.BYBIT']
+    # symbol_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
     for symbol in symbol_list:
         processor = MinuterBarProcessor(vt_symbol=symbol, window=1, interval=Interval.HOUR, start_date='2023-01-20', end_date='2023-12-31')
         processor.start_work()
