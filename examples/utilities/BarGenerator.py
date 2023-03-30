@@ -348,10 +348,17 @@ class MinuterBarProcessor:
         interval_ = re.sub("\d", '', self.interval.value)
         print(f'{self.vt_symbol}\n1m -> {self.window}{interval_}\n{start_dt} -> {end_dt}')
 
+def get_full_symbol(symbol_list):
+    full_symbol_list = []
+    for symbol in symbol_list:
+        full_symbol = f"{symbol}.{Exchange.BYBIT.value}"
+        full_symbol_list.append(full_symbol)
+    return full_symbol_list
+
 if __name__ == '__main__':
     symbol_list = ['BTCUSDT.BYBIT', 'ETHUSDT.BYBIT', 'SOLUSDT.BYBIT', 'GALAUSDT.BYBIT', 'AVAXUSDT.BYBIT', 'XRPUSDT.BYBIT']
-    # symbol_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
+    symbol_list = get_full_symbol(bybit_get_symbol_list(type=BybitSymbolType.USDT))
     for symbol in symbol_list:
-        processor = MinuterBarProcessor(vt_symbol=symbol, window=1, interval=Interval.HOUR, start_date='2023-01-20', end_date='2023-12-31')
+        processor = MinuterBarProcessor(vt_symbol=symbol, window=1, interval=Interval.HOUR, start_date='2023-02-20', end_date='2023-12-31')
         processor.start_work()
         print('\n')

@@ -388,6 +388,6 @@ if __name__ == "__main__":
     engine.generate_result()
     engine.backtesting()
     
-    datetime_list = list(engine.datetime_bar_dic.keys())
-    print(f'{datetime_list[0]} - {datetime_list[-1]}')
-    print(f'\n总周期数：{len(engine.datetime_bar_dic)}\n交易的次数：{engine.trade_count}\n总盈亏：{engine.total_pnl}')
+    # datetime_list = list(engine.datetime_bar_dic.keys())
+    # print(f'{datetime_list[0]} - {datetime_list[-1]}')
+    # print(f'\n总周期数：{len(engine.datetime_bar_dic)}\n交易的次数：{engine.trade_count}\n总盈亏：{engine.total_pnl}')
