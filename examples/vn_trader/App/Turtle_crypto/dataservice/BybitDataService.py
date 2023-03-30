@@ -129,6 +129,11 @@ def bybit_get_symbol_list(type: BybitSymbolType):
         # )
         if type == BybitSymbolType.SPOT:
             # 现货
+
+            # 筛选现货交易对的报价货币
+            if d["quoteCoin"] != "USDT":
+                continue
+
             symbol_list.add(d["name"])
 
         elif (
@@ -151,6 +156,7 @@ def bybit_get_symbol_list(type: BybitSymbolType):
             # 正向USDC永续合约
             symbol_list.add(d["name"])
 
+    symbol_list = sorted(list(symbol_list))
     return symbol_list
 
 
@@ -170,7 +176,23 @@ if __name__ == "__main__":
     # print('completed！')
 
     # 获取交易对列表
-    symbol_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
-    for symbol in symbol_list:
+    spot_symbol_list = bybit_get_symbol_list(type=BybitSymbolType.SPOT)
+    usdt_symbol_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
+
+    spot_only_list = []
+    for spot_symbol in spot_symbol_list:
+        if spot_symbol not in usdt_symbol_list:
+            spot_only_list.append(spot_symbol)
+
+    usdt_only_list = []
+    for usdt_symbol in usdt_symbol_list:
+        if usdt_symbol not in spot_symbol_list:
+            usdt_only_list.append(usdt_symbol)
+
+    print(f"====== 现货独享交易 ======")
+    for symbol in spot_only_list:
         print(symbol)
 
+    print(f"====== USDT永续独享交易 ======")
+    for symbol in usdt_only_list:
+        print(symbol)

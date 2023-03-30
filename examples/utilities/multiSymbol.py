@@ -21,14 +21,18 @@ from vnpy.trader.object import BarData
 from vnpy.trader.utility import round_to
 from collections import OrderedDict
 
-SYMBOL_LIST = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "GALAUSDT", "AVAXUSDT", "XRPUSDT"]
-EXCHANGE = "BYBIT"
-
+# 将上一级目录添加到模块搜索路径中
+import sys
+sys.path.append('..')  
+from vn_trader.App.Turtle_crypto.dataservice.BybitDataService import bybit_get_symbol_list, BybitSymbolType
 
 def get_full_symbol():
     full_symbol_list = []
-    for symbo in SYMBOL_LIST:
-        full_symbol = symbo + f".{EXCHANGE}"
+
+    symbol_list = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "GALAUSDT", "AVAXUSDT", "XRPUSDT"]
+    symbol_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
+    for symbol in symbol_list:
+        full_symbol = f"{symbol}.{Exchange.BYBIT.value}"
         full_symbol_list.append(full_symbol)
     return full_symbol_list
 
