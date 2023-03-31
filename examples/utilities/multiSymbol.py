@@ -22,6 +22,8 @@ from vnpy.trader.object import BarData
 from vnpy.trader.utility import round_to
 from collections import OrderedDict
 import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
 
 # 将上一级目录添加到模块搜索路径中
 import sys
@@ -76,6 +78,8 @@ class MultiSymbol(object):
         self.filter_datetime_bar_dic = OrderedDict()
         self.datetime_direction_dic = OrderedDict()
         self.datetime_result_dict = OrderedDict()
+        self.pnl_dict = OrderedDict()
+        self.exceed_pnl_dic = OrderedDict()
         self.trade_count = 0
         self.total_pnl = 0
 
@@ -134,7 +138,7 @@ class MultiSymbol(object):
 
             # 选择交易量靠前的标的
             datetime_df = pd.DataFrame(df_data_list)
-            datetime_df = datetime_df.sort_values(by='volume', ascending=False)
+            datetime_df = datetime_df.sort_values(by="volume", ascending=False)
             head = int(len(datetime_df) / 3)
             datetime_df = datetime_df.head(head)
             for _, row in datetime_df.iterrows():
@@ -396,6 +400,7 @@ class MultiSymbol(object):
                 )
 
             long_pnl = long_pnl / len(last_long) if len(last_long) else 0
+            long_pnl = round_to(long_pnl, 0.001)
             print(f"** {long_pnl} **")
 
             # 做空
@@ -412,14 +417,22 @@ class MultiSymbol(object):
                 )
 
             short_pnl = short_pnl / len(last_short) if len(last_short) else 0
+            short_pnl = round_to(short_pnl, 0.001)
             print(f"** {short_pnl} **")
             print(
                 f"\n========================================================================"
             )
 
-            # 盈亏统计
             if last_traded:
+                # 周期盈亏
+                if abs(long_pnl + short_pnl) >= 2:
+                    self.exceed_pnl_dic[the_datetime.strftime('%Y-%m-%d %H:%M')] = {'long':long_pnl, 'short':short_pnl}
+
+                # 盈亏统计
                 self.total_pnl += long_pnl + short_pnl
+
+                # 用于绘制收益曲线
+                self.pnl_dict[the_datetime.strftime('%Y-%m-%d %H:%M')] = self.total_pnl
 
             # 时间更新
             last_datetime = the_datetime
@@ -437,8 +450,23 @@ if __name__ == "__main__":
     engine.generate_result()
     engine.backtesting()
 
+    # 概述
     datetime_list = list(engine.datetime_bar_dic.keys())
     print(f"{datetime_list[0]} - {datetime_list[-1]}")
     print(
         f"\n总周期数：{len(engine.datetime_bar_dic)}\n交易的次数：{engine.trade_count}\n总盈亏：{engine.total_pnl}"
     )
+    print(f'\n-- 周期盈亏幅度提示 --')
+    for dt, pnl_data in engine.exceed_pnl_dic.items():
+        long_ = pnl_data['long']
+        short_ = pnl_data['short']
+        total_ = long_+ short_
+        print(f'{dt}\t多：{long_}\t空：{short_}\t总：{total_}')
+
+    # 绘制收益曲线
+    x = list(engine.pnl_dict.keys())
+    y = list(engine.pnl_dict.values())
+    plt.figure(figsize=(20, 10), dpi=100)
+    plt.plot(x, y)
+    plt.xticks(x[::int(len(x) / 5)])
+    plt.show()
