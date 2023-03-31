@@ -36,13 +36,13 @@ class BarGenerator:
         self.on_bar: Callable = on_bar
 
         self.interval: Interval = interval
-        self.interval_count: int = 0
 
         self.hour_bar: BarData = None
 
         self.window: int = window
         self.window_bar: BarData = None
         self.on_window_bar: Callable = on_window_bar
+        self.window_start = False
 
         self.last_tick: TickData = None
 
@@ -150,8 +150,14 @@ class BarGenerator:
 
         # Check if window bar completed
         if not (bar.datetime.minute + 1) % self.window:
-            self.on_window_bar(self.window_bar)
-            self.window_bar = None
+            if self.window_start:
+                self.on_window_bar(self.window_bar)
+                self.window_bar = None
+
+            else:
+                # 初始周期
+                self.window_start = True
+                self.window_bar = None
 
     def update_bar_hour_window(self, bar: BarData) -> None:
         """"""
@@ -262,11 +268,14 @@ class BarGenerator:
             self.window_bar.turnover += bar.turnover
             self.window_bar.open_interest = bar.open_interest
 
-            self.interval_count += 1
-            if not self.interval_count % self.window:
-                self.interval_count = 0
-                self.on_window_bar(self.window_bar)
-                self.window_bar = None
+            if not (bar.datetime.hour + 1) % self.window:
+                if self.window_start:
+                    self.on_window_bar(self.window_bar)
+                    self.window_bar = None
+                else:
+                    # 初始周期
+                    self.window_start = True
+                    self.window_bar = None
 
     def generate(self) -> Optional[BarData]:
         """
@@ -359,6 +368,6 @@ if __name__ == '__main__':
     symbol_list = ['BTCUSDT.BYBIT', 'ETHUSDT.BYBIT', 'SOLUSDT.BYBIT', 'GALAUSDT.BYBIT', 'AVAXUSDT.BYBIT', 'XRPUSDT.BYBIT']
     symbol_list = get_full_symbol(bybit_get_symbol_list(type=BybitSymbolType.USDT))
     for symbol in symbol_list:
-        processor = MinuterBarProcessor(vt_symbol=symbol, window=1, interval=Interval.HOUR, start_date='2023-02-20', end_date='2023-12-31')
+        processor = MinuterBarProcessor(vt_symbol=symbol, window=2, interval=Interval.HOUR, start_date='2023-02-20', end_date='2023-12-31')
         processor.start_work()
         print('\n')

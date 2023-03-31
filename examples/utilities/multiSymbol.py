@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
 from lzma import FILTER_DELTA
-from pymongo import MongoClient
+from pymongo import MongoClient, ASCENDING
 from vnpy.app.cta_strategy.base import (
     DAILY_DB_NAME,
     MINUTE_DB_NAME,
@@ -94,17 +94,23 @@ class MultiSymbol(object):
 
     # 导入数据
     def load_data(self):
+        temporary_datetime_bar_dic = {}
         for symbol in self.full_symbol_list:
             flt = {"datetime": {"$gte": self.start, "$lte": self.end}}
 
             collection = self.dataBase[symbol]
-            cursor = collection.find(flt).sort("datetime")
+            cursor = collection.find(flt).sort("datetime", ASCENDING)
             for d in cursor:
                 bar = BarData(gateway_name="", symbol="", exchange="", datetime=None)
                 bar.__dict__ = d
-                bar_dic = self.datetime_bar_dic.get(bar.datetime, {})
+                bar_dic = temporary_datetime_bar_dic.get(bar.datetime, {})
                 bar_dic[bar.symbol] = bar
-                self.datetime_bar_dic[bar.datetime] = bar_dic
+                temporary_datetime_bar_dic[bar.datetime] = bar_dic
+
+        # 日期排序
+        datetime_list = sorted(list(temporary_datetime_bar_dic.keys()))
+        for dt in datetime_list:
+            self.datetime_bar_dic[dt] = temporary_datetime_bar_dic[dt]
 
         # 测试数据
         # for the_datetime, bar_dic in self.datetime_bar_dic.items():
@@ -421,7 +427,7 @@ class MultiSymbol(object):
 
 if __name__ == "__main__":
     engine = MultiSymbol(
-        start=datetime.now() - timedelta(days=5),
+        start=datetime.now() - timedelta(days=32),
         end=datetime.now() - timedelta(days=0),
         interval=Interval.HOUR,
         window=1,
