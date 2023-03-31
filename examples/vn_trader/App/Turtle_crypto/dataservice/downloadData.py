@@ -21,7 +21,7 @@ class TurtleCryptoDataDownloading(object):
     def __init__(self):
         pass
 
-    def download_from_bybit(self, contract_list, days=1):
+    def download_from_bybit(self, contract_list, days=1, to_date:datetime=datetime.now() + timedelta(days=2)):
         #"""
         # 先删除原有文件夹，包括其中所有内容
         csv_path = get_csv_path()
@@ -34,7 +34,11 @@ class TurtleCryptoDataDownloading(object):
 
         for contract in contract_list:
             from_time = datetime(from_date.year, from_date.month, from_date.day)
+            to_time = datetime(to_date.year, to_date.month, to_date.day)
             while from_time:
+                if from_time >= to_time:
+                    break
+
                 print(f'下载数据：{from_time}\t{contract}')
                 download_failed = False
                 try:

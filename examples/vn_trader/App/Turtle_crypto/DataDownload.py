@@ -24,12 +24,14 @@ if __name__ == '__main__':
         contract_list = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'GALAUSDT', 'AVAXUSDT', 'XRPUSDT']
     else:
         contract_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
-    days = 6
+    days = 100
     # days = (datetime.now() - datetime.strptime('2023-01-09', '%Y-%m-%d')).days
+    to_date = datetime.strptime('2023-03-02', '%Y-%m-%d')
+
     dataDownload = TurtleCryptoDataDownloading()
-    dataDownload.download_from_bybit(contract_list=contract_list, days=days)
-    result, complete_msg, back_msg, lost_msg = dataDownload.generate_for_bybit(contract_list=contract_list, days=days)
-    print('\n\n' + lost_msg + back_msg)
+    dataDownload.download_from_bybit(contract_list=contract_list, days=days, to_date=to_date)
+    # result, complete_msg, back_msg, lost_msg = dataDownload.generate_for_bybit(contract_list=contract_list, days=days)
+    # print('\n\n' + lost_msg + back_msg)
     #"""
 
     """ OKEX """
