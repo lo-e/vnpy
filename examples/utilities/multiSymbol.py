@@ -386,14 +386,24 @@ class MultiSymbol(object):
             print(f"\n盈亏")
             long_pnl = 0
             short_pnl = 0
+            stop_line = 200
             # 做多
             print(f"- LONG -")
             for symbol in last_long.keys():
                 bar_data = self.datetime_bar_dic[the_datetime][symbol]
-                price_change = (
+
+                close_price_change = (
                     (bar_data.close_price - bar_data.open_price) / bar_data.open_price
                 ) * 100
-                price_change = round_to(price_change, 0.001)
+                worst_price_change = (
+                    (bar_data.low_price - bar_data.open_price) / bar_data.open_price
+                ) * 100
+
+                price_change = close_price_change
+                if worst_price_change <= -stop_line:
+                    # 触及止损
+                    price_change = -stop_line
+
                 long_pnl += price_change
                 print(
                     f"{symbol}\t{bar_data.open_price}\t{bar_data.close_price}\t{price_change}%"
@@ -407,10 +417,19 @@ class MultiSymbol(object):
             print(f"\n- SHORT -")
             for symbol in last_short.keys():
                 bar_data = self.datetime_bar_dic[the_datetime][symbol]
-                price_change = (
+
+                close_price_change = (
                     (bar_data.close_price - bar_data.open_price) / bar_data.open_price
                 ) * 100
-                price_change = round_to(price_change, 0.001)
+                worst_price_change = (
+                    (bar_data.high_price - bar_data.open_price) / bar_data.open_price
+                ) * 100
+
+                price_change = close_price_change
+                if worst_price_change >= stop_line:
+                    # 触及止损
+                    price_change = stop_line
+
                 short_pnl -= price_change
                 print(
                     f"{symbol}\t{bar_data.open_price}\t{bar_data.close_price}\t{price_change}%"
