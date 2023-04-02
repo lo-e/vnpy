@@ -1,6 +1,6 @@
 from dataservice import TurtleCryptoDataDownloading, Binancetype, bybit_get_symbol_list, BybitSymbolType
 from vnpy.trader.constant import Interval
-from datetime import datetime
+from datetime import datetime, timedelta
 
 if __name__ == '__main__':
     """ 1TOKEN"""
@@ -24,14 +24,15 @@ if __name__ == '__main__':
         contract_list = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'GALAUSDT', 'AVAXUSDT', 'XRPUSDT']
     else:
         contract_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
-    days = 100
+    days = 6
+    to_date = datetime.now() + timedelta(days=2)
     # days = (datetime.now() - datetime.strptime('2023-01-09', '%Y-%m-%d')).days
-    to_date = datetime.strptime('2023-03-02', '%Y-%m-%d')
+    # to_date = datetime.strptime('2023-03-02', '%Y-%m-%d')
 
     dataDownload = TurtleCryptoDataDownloading()
     dataDownload.download_from_bybit(contract_list=contract_list, days=days, to_date=to_date)
-    # result, complete_msg, back_msg, lost_msg = dataDownload.generate_for_bybit(contract_list=contract_list, days=days)
-    # print('\n\n' + lost_msg + back_msg)
+    result, complete_msg, back_msg, lost_msg = dataDownload.generate_for_bybit(contract_list=contract_list, days=days)
+    print('\n\n' + lost_msg + back_msg)
     #"""
 
     """ OKEX """

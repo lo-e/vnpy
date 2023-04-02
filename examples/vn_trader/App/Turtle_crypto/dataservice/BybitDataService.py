@@ -189,10 +189,14 @@ if __name__ == "__main__":
         if usdt_symbol not in spot_symbol_list:
             usdt_only_list.append(usdt_symbol)
 
-    print(f"====== 现货独享交易 ======")
-    for symbol in spot_only_list:
+    print(f"====== USDT永续交易 ======")
+    for symbol in usdt_symbol_list:
         print(symbol)
 
-    print(f"====== USDT永续独享交易 ======")
-    for symbol in usdt_only_list:
-        print(symbol)
+    # print(f"====== 现货独享交易 ======")
+    # for symbol in spot_only_list:
+    #     print(symbol)
+
+    # print(f"====== USDT永续独享交易 ======")
+    # for symbol in usdt_only_list:
+    #     print(symbol)

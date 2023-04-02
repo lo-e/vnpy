@@ -62,11 +62,19 @@ class MultiSymbol(object):
         end: datetime = datetime.now(),
         interval: Interval = Interval.MINUTE,
         window: int = 1,
+        stop_line: int = 200,
+        maker_trade: bool = False,
     ):
         # 设置标的、起始时间
         self.full_symbol_list = get_full_symbol()
         self.start = start
         self.end = end
+
+        # 设置严格止损线%
+        self.stop_line = stop_line
+
+        # 设置是否限定maker成交
+        self.maker_trade = maker_trade
 
         # 根据周期设置确定数据库
         mc = MongoClient()
@@ -386,11 +394,17 @@ class MultiSymbol(object):
             print(f"\n盈亏")
             long_pnl = 0
             short_pnl = 0
-            stop_line = 200
+
             # 做多
             print(f"- LONG -")
             for symbol in last_long.keys():
                 bar_data = self.datetime_bar_dic[the_datetime][symbol]
+                if not bar_data:
+                    exit("检查数据！")
+
+                maker_success = (
+                    True if bar_data.low_price < bar_data.open_price else False
+                )
 
                 close_price_change = (
                     (bar_data.close_price - bar_data.open_price) / bar_data.open_price
@@ -400,13 +414,14 @@ class MultiSymbol(object):
                 ) * 100
 
                 price_change = close_price_change
-                if worst_price_change <= -stop_line:
+                if worst_price_change <= -self.stop_line:
                     # 触及止损
-                    price_change = -stop_line
+                    price_change = -self.stop_line
 
-                long_pnl += price_change
+                if (self.maker_trade and maker_success) or not self.maker_trade:
+                    long_pnl += price_change
                 print(
-                    f"{symbol}\t{bar_data.open_price}\t{bar_data.close_price}\t{price_change}%"
+                    f"{symbol}\t{bar_data.open_price}\t{bar_data.high_price}\t{bar_data.low_price}\t{bar_data.close_price}\t{price_change}%\t{maker_success}"
                 )
 
             long_pnl = long_pnl / len(last_long) if len(last_long) else 0
@@ -417,6 +432,12 @@ class MultiSymbol(object):
             print(f"\n- SHORT -")
             for symbol in last_short.keys():
                 bar_data = self.datetime_bar_dic[the_datetime][symbol]
+                if not bar_data:
+                    exit("检查数据！")
+
+                maker_success = (
+                    True if bar_data.high_price > bar_data.open_price else False
+                )
 
                 close_price_change = (
                     (bar_data.close_price - bar_data.open_price) / bar_data.open_price
@@ -426,13 +447,14 @@ class MultiSymbol(object):
                 ) * 100
 
                 price_change = close_price_change
-                if worst_price_change >= stop_line:
+                if worst_price_change >= self.stop_line:
                     # 触及止损
-                    price_change = stop_line
+                    price_change = self.stop_line
 
-                short_pnl -= price_change
+                if (self.maker_trade and maker_success) or not self.maker_trade:
+                    short_pnl -= price_change
                 print(
-                    f"{symbol}\t{bar_data.open_price}\t{bar_data.close_price}\t{price_change}%"
+                    f"{symbol}\t{bar_data.open_price}\t{bar_data.high_price}\t{bar_data.low_price}\t{bar_data.close_price}\t{price_change}%\t{maker_success}"
                 )
 
             short_pnl = short_pnl / len(last_short) if len(last_short) else 0
@@ -444,14 +466,19 @@ class MultiSymbol(object):
 
             if last_traded:
                 # 周期盈亏
-                if abs(long_pnl + short_pnl) >= 2:
-                    self.exceed_pnl_dic[the_datetime.strftime('%Y-%m-%d %H:%M')] = {'long':long_pnl, 'short':short_pnl}
+                cycle_pnl = (long_pnl + short_pnl) / 2
+                if abs(cycle_pnl) >= 2:
+                    self.exceed_pnl_dic[the_datetime.strftime("%Y-%m-%d %H:%M")] = {
+                        "long": long_pnl,
+                        "short": short_pnl,
+                        "total": cycle_pnl,
+                    }
 
                 # 盈亏统计
-                self.total_pnl += long_pnl + short_pnl
+                self.total_pnl += cycle_pnl
 
                 # 用于绘制收益曲线
-                self.pnl_dict[the_datetime.strftime('%Y-%m-%d %H:%M')] = self.total_pnl
+                self.pnl_dict[the_datetime.strftime("%Y-%m-%d %H:%M")] = self.total_pnl
 
             # 时间更新
             last_datetime = the_datetime
@@ -463,6 +490,8 @@ if __name__ == "__main__":
         end=datetime.now() - timedelta(days=0),
         interval=Interval.HOUR,
         window=1,
+        stop_line=2,
+        maker_trade=False,
     )
     engine.load_data()
     engine.process_data()
@@ -473,19 +502,19 @@ if __name__ == "__main__":
     datetime_list = list(engine.datetime_bar_dic.keys())
     print(f"{datetime_list[0]} - {datetime_list[-1]}")
     print(
-        f"\n总周期数：{len(engine.datetime_bar_dic)}\n交易的次数：{engine.trade_count}\n总盈亏：{engine.total_pnl}"
+        f"\n总周期数：{len(engine.datetime_bar_dic)}\n交易的次数：{engine.trade_count}\nMaker手续费：{engine.trade_count*0.02}\n总盈亏：{engine.total_pnl}"
     )
-    print(f'\n-- 周期盈亏幅度提示 --')
+    print(f"\n-- 周期盈亏幅度提示 --")
     for dt, pnl_data in engine.exceed_pnl_dic.items():
-        long_ = pnl_data['long']
-        short_ = pnl_data['short']
-        total_ = long_+ short_
-        print(f'{dt}\t多：{long_}\t空：{short_}\t总：{total_}')
+        long_ = pnl_data["long"]
+        short_ = pnl_data["short"]
+        total_ = pnl_data["total"]
+        print(f"{dt}\t多：{long_}\t空：{short_}\t总：{total_}")
 
     # 绘制收益曲线
     x = list(engine.pnl_dict.keys())
     y = list(engine.pnl_dict.values())
     plt.figure(figsize=(20, 10), dpi=100)
     plt.plot(x, y)
-    plt.xticks(x[::int(len(x) / 5)])
+    plt.xticks(x[:: int(len(x) / 5)])
     plt.show()
