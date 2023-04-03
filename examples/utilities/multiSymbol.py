@@ -486,12 +486,12 @@ class MultiSymbol(object):
 
 if __name__ == "__main__":
     engine = MultiSymbol(
-        start=datetime.now() - timedelta(days=32),
-        end=datetime.now() - timedelta(days=0),
+        start=datetime.now() - timedelta(days=6),
+        end=datetime.now() - timedelta(days=1),
         interval=Interval.HOUR,
         window=1,
         stop_line=2,
-        maker_trade=False,
+        maker_trade=True,
     )
     engine.load_data()
     engine.process_data()
