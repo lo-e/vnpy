@@ -60,8 +60,6 @@ class MultiSymbol(object):
         self,
         start: datetime = datetime.now(),
         end: datetime = datetime.now(),
-        interval: Interval = Interval.MINUTE,
-        window: int = 1,
         stop_line: int = 200,
         maker_trade: bool = False,
     ):
@@ -77,12 +75,11 @@ class MultiSymbol(object):
         self.maker_trade = maker_trade
 
         # 根据周期设置确定数据库
-        mc = MongoClient()
-        db_name = self.get_db_name(interval=interval, window=window)
-        self.dataBase = mc[db_name]
+        self.mc = MongoClient()
 
         # 查询处理后的数据保存对象
         self.datetime_bar_dic = OrderedDict()
+        self.minute5_bar_dic = OrderedDict()
         self.filter_datetime_bar_dic = OrderedDict()
         self.datetime_direction_dic = OrderedDict()
         self.datetime_result_dict = OrderedDict()
@@ -103,14 +100,21 @@ class MultiSymbol(object):
             db_name = DAILY_DB_NAME
 
         return db_name
-
+    
     # 导入数据
     def load_data(self):
+        self.datetime_bar_dic = self.load_db_data(interval=Interval.HOUR, window=1)
+        self.minute5_bar_dic = self.load_db_data(interval=Interval.MINUTE, window=5)
+
+    def load_db_data(self, interval:Interval, window:int):
         temporary_datetime_bar_dic = {}
+        result_datetime_bar_dic = {}
         for symbol in self.full_symbol_list:
             flt = {"datetime": {"$gte": self.start, "$lte": self.end}}
 
-            collection = self.dataBase[symbol]
+            db_name = self.get_db_name(interval=interval, window=window)
+            dataBase = self.mc[db_name]
+            collection = dataBase[symbol]
             cursor = collection.find(flt).sort("datetime", ASCENDING)
             for d in cursor:
                 bar = BarData(gateway_name="", symbol="", exchange="", datetime=None)
@@ -122,13 +126,15 @@ class MultiSymbol(object):
         # 日期排序
         datetime_list = sorted(list(temporary_datetime_bar_dic.keys()))
         for dt in datetime_list:
-            self.datetime_bar_dic[dt] = temporary_datetime_bar_dic[dt]
+            result_datetime_bar_dic[dt] = temporary_datetime_bar_dic[dt]
 
         # 测试数据
         # for the_datetime, bar_dic in self.datetime_bar_dic.items():
         #     print(f'\n{the_datetime}')
         #     for symbol, bar_data in bar_dic.items():
         #         print(f'{symbol}\t{bar_data.open_price}\t{bar_data.high_price}\t{bar_data.low_price}\t{bar_data.close_price}')
+    
+        return result_datetime_bar_dic
 
     # 指定某个属性给数据排序并筛选
     def filter_data(self):
@@ -490,10 +496,8 @@ class MultiSymbol(object):
 
 if __name__ == "__main__":
     engine = MultiSymbol(
-        start=datetime.now() - timedelta(days=10),
+        start=datetime.now() - timedelta(days=100),
         end=datetime.now() - timedelta(days=2),
-        interval=Interval.HOUR,
-        window=1,
         stop_line=2,
         maker_trade=False,
     )
