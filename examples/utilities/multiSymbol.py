@@ -215,48 +215,52 @@ class MultiSymbol(object):
             elif len(short_dic) >= (len(long_dic) + len(short_dic)) * 0.8:
                 market_direction = Direction.SHORT
 
-            # 上涨的平均幅度
-            long_changes = []
-            for _, long_data in long_dic.items():
-                long_changes.append(long_data["change"])
-            long_change_everage = (
-                sum(long_changes) / len(long_changes) if len(long_changes) else 0
-            )
+            market_average_change = 0
+            # 市场多时，平均幅度为上涨的平均幅度
+            if market_direction == Direction.LONG:
+                long_changes = []
+                for _, long_data in long_dic.items():
+                    long_changes.append(long_data["change"])
+                market_average_change = (
+                    sum(long_changes) / len(long_changes) if len(long_changes) else 0
+                )
 
-            # 下跌的平均幅度
-            short_changes = []
-            for _, short_data in short_dic.items():
-                short_changes.append(short_data["change"])
-            short_change_everage = (
-                sum(short_changes) / len(short_changes) if len(short_changes) else 0
-            )
+            # 市场空时，平均幅度为下跌的平均幅度
+            if market_direction == Direction.SHORT:
+                short_changes = []
+                for _, short_data in short_dic.items():
+                    short_changes.append(short_data["change"])
+                market_average_change = (
+                    sum(short_changes) / len(short_changes) if len(short_changes) else 0
+                )
 
-            # 根据各标的相对大盘的价格走势筛选出有多空趋势的标的
             long_result_dic = {}
             short_result_dic = {}
+
+            # 根据各标的相对大盘的价格走势筛选出有多空趋势的标的
             if market_direction == Direction.LONG:
                 # 大盘上涨时
                 # 【上涨幅度过大】的标的判断有上涨趋势
                 # 【上涨幅度过小】或者【逆市场下跌】的标的判断有下跌趋势
                 for symbol, long_data in long_dic.items():
                     change = long_data["change"]
-                    if change > long_change_everage * 2:
+                    if change > market_average_change * 2:
                         short_result_dic[symbol] = {
                             "change": change,
-                            "market": long_change_everage,
+                            "market": market_average_change,
                         }
 
-                    if change <= long_change_everage * 0.5:
+                    if change <= market_average_change * 0.5:
                         short_result_dic[symbol] = {
                             "change": change,
-                            "market": long_change_everage,
+                            "market": market_average_change,
                         }
 
                 for symbol, short_data in short_dic.items():
                     change = short_data["change"]
                     long_result_dic[symbol] = {
                         "change": change,
-                        "market": long_change_everage,
+                        "market": market_average_change,
                     }
 
             elif market_direction == Direction.SHORT:
@@ -265,23 +269,23 @@ class MultiSymbol(object):
                 # 【下跌幅度过小】或者【逆市场上涨】的标的判断有上涨趋势
                 for symbol, short_data in short_dic.items():
                     change = short_data["change"]
-                    if change < short_change_everage * 2:
+                    if change < market_average_change * 2:
                         long_result_dic[symbol] = {
                             "change": change,
-                            "market": short_change_everage,
+                            "market": market_average_change,
                         }
 
-                    if change >= short_change_everage * 0.5:
+                    if change >= market_average_change * 0.5:
                         long_result_dic[symbol] = {
                             "change": change,
-                            "market": short_change_everage,
+                            "market": market_average_change,
                         }
 
                 for symbol, long_data in long_dic.items():
                     change = long_data["change"]
                     short_result_dic[symbol] = {
                         "change": change,
-                        "market": short_change_everage,
+                        "market": market_average_change,
                     }
 
             self.datetime_result_dict[the_datetime] = {
@@ -486,12 +490,12 @@ class MultiSymbol(object):
 
 if __name__ == "__main__":
     engine = MultiSymbol(
-        start=datetime.now() - timedelta(days=6),
-        end=datetime.now() - timedelta(days=1),
+        start=datetime.now() - timedelta(days=10),
+        end=datetime.now() - timedelta(days=2),
         interval=Interval.HOUR,
         window=1,
         stop_line=2,
-        maker_trade=True,
+        maker_trade=False,
     )
     engine.load_data()
     engine.process_data()
