@@ -7,11 +7,6 @@ from datetime import  datetime
 from pymongo import MongoClient, ASCENDING
 from vnpy.trader.object import BarData
 
-# 导入上级目录使用sys模块
-import sys
-sys.path.append("..")
-from utilities.rumi import Rumi
-
 """ modify by loe """
 import re
 from vnpy.app.cta_strategy.base import (DAILY_DB_NAME, DOMINANT_DB_NAME)
@@ -87,7 +82,6 @@ class TurtleSignal(object):
         #self.am = ArrayManager(60)
         self.atrAm = ArrayManager(self.atrWindow+1)     # K线容器
         #self.atrAm = ArrayManager(60)
-        self.rumi = Rumi(fast_window=7, slow_window=14, rumi_window=3, show_window=99) # rumi指标
         
         self.atrVolatility = 0          # ATR波动率
         self.entryUp = 0                # 入场通道
@@ -272,8 +266,7 @@ class TurtleSignal(object):
         self.am.update_bar(bar)
         """ modify by loe """
         self.atrAm.update_bar(bar)
-        self.rumi.update_bar(bar)
-        if not self.am.inited or not self.atrAm.inited or not self.rumi.inited:
+        if not self.am.inited or not self.atrAm.inited:
             return
 
         self.generateSignal(bar)
@@ -313,10 +306,6 @@ class TurtleSignal(object):
         # 如果指标尚未初始化，则忽略
         if not self.longEntry1:
             return
-        
-        # rumi指标判断
-        if self.rumi.cross_count >= 12 and self.rumi.crossing_direction != Direction.NET:
-            a = 2
         
         # 优先检查平仓
         if self.unit > 0:
