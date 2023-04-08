@@ -20,8 +20,8 @@ from vnpy.trader.utility import DIR_SYMBOL
 
 def one():
     engine = BacktestingEngine()
-    engine.setPeriod(datetime(2022, 9, 15), datetime(2023, 12, 31))
-    engine.tradingStart = datetime(2023, 1, 1)
+    engine.setPeriod(datetime(2021, 9, 15), datetime(2023, 12, 31))
+    engine.tradingStart = datetime(2022, 1, 1)
     figSavedName = ''
     if figSavedName:
         figSavedName = f'figSaved{DIR_SYMBOL}{figSavedName}'
@@ -71,6 +71,7 @@ def one():
         open_price_list = []
         open_direction = None
         continuous_pnl = 0
+        atr_rate = 0
         for trade in tradeList:
             print('%s\t\t%s %s\t\t%s\t\t%s\t%s@%s' % (trade.dt, trade.symbol, trade.direction.value, trade.offset.value,
                                                       engine.sizeDict[trade.symbol], trade.volume, trade.price))
@@ -83,6 +84,8 @@ def one():
                     raise ('成交数据异常！！检查代码')
 
                 open_price_list.append(trade.price)
+                if len(open_price_list) >= 2:
+                    atr_rate = ((abs(open_price_list[0] - open_price_list[1]) * 2) / open_price_list[0]) * 100
             else:
                 mean_open = np.array(open_price_list).mean()
                 if open_direction == Direction.LONG:
@@ -118,10 +121,12 @@ def one():
                 symbol_pnl_list = symbol_pnl_dict.get(symbol, [])
                 symbol_pnl_list.append(pnl)
                 symbol_pnl_dict[symbol] = symbol_pnl_list
+                print(f'ATR比率：{atr_rate}%')
                 print(f'收益：{pnl}')
                 print(f'连续盈亏次数：{continuous_pnl}')
                 open_price_list = []
                 open_direction = None
+                atr_rate = 0
                 print('\n')
 
             tOpen = False
