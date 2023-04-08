@@ -78,9 +78,9 @@ class MultiSymbol(object):
         self.mc = MongoClient()
 
         # 查询处理后的数据保存对象
-        self.datetime_bar_dic = OrderedDict()
+        self.hour1_bar_dic = OrderedDict()
         self.minute5_bar_dic = OrderedDict()
-        self.filter_datetime_bar_dic = OrderedDict()
+        self.filter_hour1_bar_dic = OrderedDict()
         self.datetime_direction_dic = OrderedDict()
         self.datetime_result_dict = OrderedDict()
         self.pnl_dict = OrderedDict()
@@ -100,13 +100,13 @@ class MultiSymbol(object):
             db_name = DAILY_DB_NAME
 
         return db_name
-    
+
     # 导入数据
     def load_data(self):
-        self.datetime_bar_dic = self.load_db_data(interval=Interval.HOUR, window=1)
+        self.hour1_bar_dic = self.load_db_data(interval=Interval.HOUR, window=1)
         self.minute5_bar_dic = self.load_db_data(interval=Interval.MINUTE, window=5)
 
-    def load_db_data(self, interval:Interval, window:int):
+    def load_db_data(self, interval: Interval, window: int):
         temporary_datetime_bar_dic = {}
         result_datetime_bar_dic = {}
         for symbol in self.full_symbol_list:
@@ -129,17 +129,17 @@ class MultiSymbol(object):
             result_datetime_bar_dic[dt] = temporary_datetime_bar_dic[dt]
 
         # 测试数据
-        # for the_datetime, bar_dic in self.datetime_bar_dic.items():
+        # for the_datetime, bar_dic in self.result_datetime_bar_dic.items():
         #     print(f'\n{the_datetime}')
         #     for symbol, bar_data in bar_dic.items():
         #         print(f'{symbol}\t{bar_data.open_price}\t{bar_data.high_price}\t{bar_data.low_price}\t{bar_data.close_price}')
-    
+
         return result_datetime_bar_dic
 
     # 指定某个属性给数据排序并筛选
     def filter_data(self):
-        self.filter_datetime_bar_dic = {}
-        for _, bar_dic in self.datetime_bar_dic.items():
+        self.filter_hour1_bar_dic = {}
+        for _, bar_dic in self.hour1_bar_dic.items():
             df_data_list = []
             for _, bar in bar_dic.items():
                 # 过滤掉稳定币
@@ -160,11 +160,9 @@ class MultiSymbol(object):
                     gateway_name="", symbol="", exchange="", datetime=None
                 )
                 filter_bar.__dict__ = dict(row)
-                filter_bar_dic = self.filter_datetime_bar_dic.get(
-                    filter_bar.datetime, {}
-                )
+                filter_bar_dic = self.filter_hour1_bar_dic.get(filter_bar.datetime, {})
                 filter_bar_dic[filter_bar.symbol] = filter_bar
-                self.filter_datetime_bar_dic[filter_bar.datetime] = filter_bar_dic
+                self.filter_hour1_bar_dic[filter_bar.datetime] = filter_bar_dic
 
     # 数据处理
     def process_data(self):
@@ -172,7 +170,7 @@ class MultiSymbol(object):
         self.filter_data()
 
         self.datetime_direction_dic = {}
-        for the_datetime, bar_dic in self.filter_datetime_bar_dic.items():
+        for the_datetime, bar_dic in self.filter_hour1_bar_dic.items():
             long_dic = {}
             short_dic = {}
             for symbol, bar in bar_dic.items():
@@ -243,6 +241,46 @@ class MultiSymbol(object):
             long_result_dic = {}
             short_result_dic = {}
 
+            # 分析前五分钟行情
+            next_hour_datetime = the_datetime + timedelta(hours=1)
+            for symbol, _ in long_dic.items():
+                next_minute5_bar = self.minute5_bar_dic[next_hour_datetime][symbol]
+                if next_minute5_bar.open_price >= next_minute5_bar.high_price:
+                    # 持续下跌
+                    short_result_dic[symbol] = {
+                        "change": 100,
+                        "market": market_average_change,
+                    }
+
+                    next_hour1_bar = self.hour1_bar_dic[next_hour_datetime][symbol]
+                    price_change = (
+                        (next_hour1_bar.close_price - next_minute5_bar.close_price) / next_minute5_bar.close_price
+                    ) * 100
+                    price_change = round_to(price_change, 0.001)
+                    pnl = False
+                    if price_change < 0:
+                        pnl = True
+                    a = 2
+
+            for symbol, _ in short_dic.items():
+                next_minute5_bar = self.minute5_bar_dic[next_hour_datetime][symbol]
+                if next_minute5_bar.open_price <= next_minute5_bar.low_price:
+                    # 持续上涨
+                    long_result_dic[symbol] = {
+                        "change": 100,
+                        "market": market_average_change,
+                    }
+
+                    next_hour1_bar = self.hour1_bar_dic[next_hour_datetime][symbol]
+                    price_change = (
+                        (next_hour1_bar.close_price - next_minute5_bar.close_price) / next_minute5_bar.close_price
+                    ) * 100
+                    price_change = round_to(price_change, 0.001)
+                    pnl = False
+                    if price_change > 0:
+                        pnl = True
+                    a = 2
+
             # 根据各标的相对大盘的价格走势筛选出有多空趋势的标的
             if market_direction == Direction.LONG:
                 # 大盘上涨时
@@ -307,7 +345,7 @@ class MultiSymbol(object):
         #     print(f'\n{the_datetime}')
         #     print(f'上涨数量：{len(direction_long)}\t下跌数量：{len(direction_short)}')
         #     print(f'------ 原始数据 ------')
-        #     bar_dic = self.datetime_bar_dic[the_datetime]
+        #     bar_dic = self.hour1_bar_dic[the_datetime]
         #     for symbol, bar_data in bar_dic.items():
         #         change_data = direction_long.get(symbol, {})
         #         if not change_data:
@@ -322,7 +360,7 @@ class MultiSymbol(object):
         #     for symbol, result_data in long_result_dic.items():
         #         change = result_data['change']
         #         market = result_data['market']
-        #         bar = self.datetime_bar_dic[the_datetime][symbol]
+        #         bar = self.hour1_bar_dic[the_datetime][symbol]
         #         print(f'{symbol}\t{bar.open_price}\t{bar.close_price}\t{change}%\t市场平均：{market}%')
 
         #     print(f'------ SHORT ------')
@@ -330,7 +368,7 @@ class MultiSymbol(object):
         #     for symbol, result_data in short_result_dic.items():
         #         change = result_data['change']
         #         market = result_data['market']
-        #         bar = self.datetime_bar_dic[the_datetime][symbol]
+        #         bar = self.hour1_bar_dic[the_datetime][symbol]
         #         print(f'{symbol}\t{bar.open_price}\t{bar.close_price}\t{change}%\t市场平均：{market}%')
 
     # 回测
@@ -367,7 +405,7 @@ class MultiSymbol(object):
             direction_short = direction_dic["short"]
             print(f"上涨数量：{len(direction_long)}\t下跌数量：{len(direction_short)}")
             print(f"- 原始数据 -")
-            bar_dic = self.filter_datetime_bar_dic[last_datetime]
+            bar_dic = self.filter_hour1_bar_dic[last_datetime]
             for symbol, bar_data in bar_dic.items():
                 change_data = direction_long.get(symbol, {})
                 if not change_data:
@@ -384,7 +422,7 @@ class MultiSymbol(object):
             for symbol, last_long_result_data in last_long.items():
                 change = last_long_result_data["change"]
                 market = last_long_result_data["market"]
-                bar = self.datetime_bar_dic[last_datetime][symbol]
+                bar = self.hour1_bar_dic[last_datetime][symbol]
                 print(
                     f"{symbol}\t{bar.open_price}\t{bar.close_price}\t{change}%\t市场平均：{market}%"
                 )
@@ -393,7 +431,7 @@ class MultiSymbol(object):
             for symbol, last_short_result_data in last_short.items():
                 change = last_short_result_data["change"]
                 market = last_short_result_data["market"]
-                bar = self.datetime_bar_dic[last_datetime][symbol]
+                bar = self.hour1_bar_dic[last_datetime][symbol]
                 print(
                     f"{symbol}\t{bar.open_price}\t{bar.close_price}\t{change}%\t市场平均：{market}%"
                 )
@@ -408,7 +446,7 @@ class MultiSymbol(object):
             # 做多
             print(f"- LONG -")
             for symbol in last_long.keys():
-                bar_data = self.datetime_bar_dic[the_datetime][symbol]
+                bar_data = self.hour1_bar_dic[the_datetime][symbol]
                 if not bar_data:
                     exit("检查数据！")
 
@@ -441,7 +479,7 @@ class MultiSymbol(object):
             # 做空
             print(f"\n- SHORT -")
             for symbol in last_short.keys():
-                bar_data = self.datetime_bar_dic[the_datetime][symbol]
+                bar_data = self.hour1_bar_dic[the_datetime][symbol]
                 if not bar_data:
                     exit("检查数据！")
 
@@ -495,9 +533,13 @@ class MultiSymbol(object):
 
 
 if __name__ == "__main__":
+    # start = datetime.now() - timedelta(days=100)
+    # end = datetime.now() - timedelta(days=2)
+    start = datetime(2023, 3, 31)
+    end = datetime(2023, 4, 1)
     engine = MultiSymbol(
-        start=datetime.now() - timedelta(days=100),
-        end=datetime.now() - timedelta(days=2),
+        start=start,
+        end=end,
         stop_line=2,
         maker_trade=False,
     )
@@ -507,10 +549,10 @@ if __name__ == "__main__":
     engine.backtesting()
 
     # 概述
-    datetime_list = list(engine.datetime_bar_dic.keys())
+    datetime_list = list(engine.hour1_bar_dic.keys())
     print(f"{datetime_list[0]} - {datetime_list[-1]}")
     print(
-        f"\n总周期数：{len(engine.datetime_bar_dic)}\n交易的次数：{engine.trade_count}\nMaker手续费：{engine.trade_count*0.02}\n总盈亏：{engine.total_pnl}"
+        f"\n总周期数：{len(engine.hour1_bar_dic)}\n交易的次数：{engine.trade_count}\nMaker手续费：{engine.trade_count*0.02}\n总盈亏：{engine.total_pnl}"
     )
     print(f"\n-- 周期盈亏幅度提示 --")
     for dt, pnl_data in engine.exceed_pnl_dic.items():
