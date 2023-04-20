@@ -2873,9 +2873,11 @@ def generate_datetime(timestamp: str) -> datetime:
 def generate_datetime_2(timestamp: int) -> datetime:
     """生成时间"""
     micro = 0
-    if len(str(timestamp)) >= 10:
-        micro = int(str(timestamp)[10:])
-        timestamp = int(str(timestamp)[:10])
+    timestamp_str = str(timestamp)
+    timestamp_str = timestamp_str.replace(".", "")
+    if len(timestamp_str) >= 10:
+        micro = int(timestamp_str[10:])
+        timestamp = int(timestamp_str[:10])
     dt: datetime = datetime.fromtimestamp(timestamp)
 
     if micro:

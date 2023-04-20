@@ -12,7 +12,7 @@ from asyncio import (
 )
 
 from aiohttp import ClientSession, ClientWebSocketResponse
-
+from time import sleep
 
 class WebsocketClient:
     """
@@ -209,6 +209,7 @@ class WebsocketClient:
 def start_event_loop(loop: AbstractEventLoop) -> AbstractEventLoop:
     """启动事件循环"""
     # 如果事件循环未运行，则创建后台线程来运行
+    sleep(0.1)
     if not loop.is_running():
         thread = Thread(target=run_event_loop, args=(loop,))
         thread.daemon = True
