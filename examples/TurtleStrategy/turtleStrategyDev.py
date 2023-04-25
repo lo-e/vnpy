@@ -3,12 +3,13 @@
 from collections import defaultdict
 from vnpy.trader.constant import Direction, Offset, Exchange
 from vnpy.trader.utility import ArrayManager
-from datetime import  datetime, timedelta
+from datetime import  datetime
 from pymongo import MongoClient, ASCENDING
 from vnpy.trader.object import BarData
+
+""" modify by loe """
 import re
 from vnpy.app.cta_strategy.base import (DAILY_DB_NAME, DOMINANT_DB_NAME)
-from collections import OrderedDict
 
 MAX_PRODUCT_POS = 4         # 单品种最大持仓
 MAX_CATEGORY_POS = 6        # 高度关联最大持仓
@@ -81,19 +82,8 @@ class TurtleSignal(object):
         #self.am = ArrayManager(60)
         self.atrAm = ArrayManager(self.atrWindow+1)     # K线容器
         #self.atrAm = ArrayManager(60)
-
-        self.dailyRSIDirection = 99
-        self.dailyRSIWindow = 9
-        self.dailyRSIUp = 75
-        self.dailyRSIDown = 25
-        self.dailyAm = ArrayManager(self.dailyRSIWindow + 1)
-
-        self.client = MongoClient('localhost', 27017)
-        self.dailyDb = self.client[DAILY_DB_NAME]
-        self.dailyBarDict = OrderedDict()
         
         self.atrVolatility = 0          # ATR波动率
-        self.atrRate = 0                # ATR与价格比率
         self.entryUp = 0                # 入场通道
         self.entryDown = 0
         self.exitUp = 0                 # 出场通道
@@ -129,22 +119,15 @@ class TurtleSignal(object):
         self.newDominantIniting = False # 主力换月初始化状态
         self.newDominantOpen = True     # 主力换月后新主力开仓门槛【原则：原主力有实际同向持仓；门槛一直延续至下一轮信号】
 
+    #----------------------------------------------------------------------
     def onBar(self, bar):
-        if not self.bar:
-            firstDt = bar.datetime
-            self.loadDailyBar(fromDt=datetime(firstDt.year, firstDt.month, firstDt.day) - timedelta(days=6))
-
-        if self.bar and self.bar.datetime.hour == 7 and bar.datetime.hour == 8:
-            if self.dailyRSIDirection == 99:
-                # 过滤第一天
-                self.dailyRSIDirection = 0
-
-            else:
-                lastDt = self.bar.datetime - timedelta(days=1)
-                self.updateDaily(dt=datetime(lastDt.year, lastDt.month, lastDt.day, hour=8))
-
+        """ modify by loe """
         actualBar = None
         if ACTUAL_TRADE and not self.is_crypto and not self.newDominantIniting:
+            # 获取数据库
+            if not self.client:
+                self.client = MongoClient('localhost', 27017)
+
             # 获取主力合约列表
             if not self.symbolDominantData:
                 startSymbol = re.sub("\d", "", self.symbol)
@@ -289,6 +272,8 @@ class TurtleSignal(object):
         self.generateSignal(bar)
         self.calculateIndicator()
 
+    # ----------------------------------------------------------------------
+    """ modify by loe """
     def getActualBar(self, date):
         i = 0
         get = False
@@ -312,34 +297,7 @@ class TurtleSignal(object):
         self.actualBarList = self.actualBarList[i + 1:]
         return theBar
 
-    def loadDailyBar(self, fromDt:datetime):
-        flt = {'datetime':{'$gte':fromDt}} 
-        collection = self.dailyDb[self.symbol]
-        cursor = collection.find(flt).sort('datetime')
-        
-        for d in cursor:
-            exchange = Exchange.BYBIT
-            bar = BarData(gateway_name = '', symbol = '', exchange = exchange, datetime = None, endDatetime = None)
-            bar.__dict__ = d
-            self.dailyBarDict[bar.datetime] = bar
-
-    def updateDaily(self, dt:datetime):
-        targetBar = self.dailyBarDict.get(dt, None)
-        if not targetBar:
-            exit(f'获取Daily数据出错！')
-        self.dailyAm.update_bar(targetBar)
-        if self.dailyAm.inited:
-            rsi = self.dailyAm.rsi(self.dailyRSIWindow)
-            if rsi >= self.dailyRSIUp:
-                self.dailyRSIDirection = 1
-
-            elif rsi <= self.dailyRSIDown:
-                self.dailyRSIDirection = -1
-
-            else:
-                self.dailyRSIDirection = 0
-            
-
+    #----------------------------------------------------------------------
     def generateSignal(self, bar):
         """
         判断交易信号
@@ -366,44 +324,42 @@ class TurtleSignal(object):
                 self.cover(shortExit)
                 return
 
-        # 增加ATR比率作为过滤条件
-        if self.atrRate <= 0.5:
-            # 没有仓位或者持有多头仓位的时候，可以做多（加仓）
-            if self.unit >= 0 and self.dailyRSIDirection == 1:
-                trade = False
-                
-                if bar.high_price >= self.longEntry1 and self.unit < 1:
-                    self.buy(self.longEntry1, 1)
-                    trade = True
-                
-                if bar.high_price >= self.longEntry2 and self.unit < 2:
-                    self.buy(self.longEntry2, 1)
-                    trade = True
-                
-                if bar.high_price >= self.longEntry3 and self.unit < 3:
-                    self.buy(self.longEntry3, 1)
-                    trade = True
-                
-                if bar.high_price >= self.longEntry4 and self.unit < 4:
-                    self.buy(self.longEntry4, 1)
-                    trade = True
-                
-                if trade:
-                    return
+        # 没有仓位或者持有多头仓位的时候，可以做多（加仓）
+        if self.unit >= 0:
+            trade = False
+            
+            if bar.high_price >= self.longEntry1 and self.unit < 1:
+                self.buy(self.longEntry1, 1)
+                trade = True
+            
+            if bar.high_price >= self.longEntry2 and self.unit < 2:
+                self.buy(self.longEntry2, 1)
+                trade = True
+            
+            if bar.high_price >= self.longEntry3 and self.unit < 3:
+                self.buy(self.longEntry3, 1)
+                trade = True
+            
+            if bar.high_price >= self.longEntry4 and self.unit < 4:
+                self.buy(self.longEntry4, 1)
+                trade = True
+            
+            if trade:
+                return
 
-            # 没有仓位或者持有空头仓位的时候，可以做空（加仓）
-            if self.unit <= 0 and self.dailyRSIDirection == -1:
-                if bar.low_price <= self.shortEntry1 and self.unit > -1:
-                    self.short(self.shortEntry1, 1)
-                
-                if bar.low_price <= self.shortEntry2 and self.unit > -2:
-                    self.short(self.shortEntry2, 1)
-                
-                if bar.low_price <= self.shortEntry3 and self.unit > -3:
-                    self.short(self.shortEntry3, 1)
-                
-                if bar.low_price <= self.shortEntry4 and self.unit > -4:
-                    self.short(self.shortEntry4, 1)
+        # 没有仓位或者持有空头仓位的时候，可以做空（加仓）
+        if self.unit <= 0:
+            if bar.low_price <= self.shortEntry1 and self.unit > -1:
+                self.short(self.shortEntry1, 1)
+            
+            if bar.low_price <= self.shortEntry2 and self.unit > -2:
+                self.short(self.shortEntry2, 1)
+            
+            if bar.low_price <= self.shortEntry3 and self.unit > -3:
+                self.short(self.shortEntry3, 1)
+            
+            if bar.low_price <= self.shortEntry4 and self.unit > -4:
+                self.short(self.shortEntry4, 1)
             
     #----------------------------------------------------------------------
     def calculateIndicator(self):
@@ -419,8 +375,6 @@ class TurtleSignal(object):
             #self.atrVolatility = self.am.atr(self.atrWindow)
             """ modify by loe """
             self.atrVolatility = self.atrAm.atr(self.atrWindow)
-            sma = self.am.sma(self.entryWindow)
-            self.atrRate = (self.atrVolatility / sma) * 100
             
             self.longEntry1 = self.entryUp
             self.longEntry2 = self.entryUp + self.atrVolatility * 0.5
@@ -592,7 +546,7 @@ class TurtlePortfolio(object):
         self.sizeDict = sizeDict
         
         for symbol in symbolList:
-            signal1 = TurtleSignal(self, symbol, 20, 20, 15, True)
+            signal1 = TurtleSignal(self, symbol, 20, 10, 15, True)
             """ modify by loe """
             #signal2 = TurtleSignal(self, symbol, 5500, 20, 20, False)
 
