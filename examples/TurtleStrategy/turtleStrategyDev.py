@@ -8,6 +8,14 @@ from pymongo import MongoClient, ASCENDING
 from vnpy.trader.object import BarData
 import re
 from vnpy.app.cta_strategy.base import DAILY_DB_NAME, DOMINANT_DB_NAME
+from enum import Enum
+from vnpy.trader.utility import round_to, floor_to, ceil_to
+
+
+class PHASE_STEP(Enum):
+    PHASE_STEP_ONE = "第一仓位，全仓"
+    PHASE_STEP_TWO = "第二仓位，50% / 30%"
+    PHASE_STEP_THREE = "第三仓位，15%"
 
 
 ########################################################################
@@ -19,16 +27,27 @@ class AISignal(object):
         self.symbol = symbol  # 合约代码
         self.direction = direction  # 交易方向
         self.ma_window = ma_window  # 均线参数
-        self.unit_value = self.portfolio.portfolioValue * 0.5 * 0.01 # 最小持仓价值
-        self.symbol_min_volume = self.portfolio.engine.min_volume_dict[self.symbol] # 合约最小交易数量
-        
+        self.unit_value = self.portfolio.portfolioValue * 0.5 * 0.01  # 最小持仓价值
+        self.symbol_min_volume = self.portfolio.engine.min_volume_dict[
+            self.symbol
+        ]  # 合约最小交易数量
+        self.symbol_price_tick = self.portfolio.engine.priceTickDict[
+            self.symbol
+        ]  # 合约最小价格变动
+        if not self.symbol_min_volume or not self.symbol_price_tick:
+            exit("检查代码！")
+
+        self.calculate_phase_positions(self.portfolio.portfolioValue)  # 马丁格尔倍数仓位管理
+        self.current_phase = 0  # 当前仓位所在阶段
+        self.current_phase_step = PHASE_STEP.PHASE_STEP_ONE  # 当前仓位阶段减仓位
+
         # 变量
-        self.bar:BarData = None  # 最新K线
+        self.bar: BarData = None  # 最新K线
         self.am = ArrayManager(self.ma_window + 1)  # K线容器
-        self.position = 0 # 持仓量
+        self.position = 0  # 持仓量
         self.position_price = 0  # 持仓均价
-        self.position_reduce_price = 0 # 减仓价格
-        self.position_increase_price = 0 # 加仓价格
+        self.position_reduce_price = 0  # 减仓价格
+        self.position_increase_price = 0  # 加仓价格
         self.ma_price = 0  # 均线价格
 
     # ----------------------------------------------------------------------
@@ -40,22 +59,155 @@ class AISignal(object):
         if not self.am.inited:
             return
 
-        self.generateSignal(bar)
-        self.calculateIndicator()
+        self.generate_signal(bar)
+        self.calculate_indicator()
 
     # ----------------------------------------------------------------------
-    def generateSignal(self, bar):
+    def calculate_phase_positions(self, portfolio_value):
+        self.phase_position_values = []
+        init_rate = 0.5 * 0.01  # 初始仓位比率
+        init_position = portfolio_value * init_rate
+        total_phase_count = 10
+        for i in range(total_phase_count):
+            phase_position = init_position * (2 ** (i + 1) - 1)
+            self.phase_position_values.append(phase_position)
+
+    def get_current_phase(self):
+        current_position_value = abs(self.position) * self.position_price
+        for i in range(len(self.phase_position_values)):
+            phase_positon_value = self.phase_position_values[i]
+            if current_position_value <= phase_positon_value * 1.1:
+                return i
+        return len(self.phase_position_values) - 1
+
+    def generate_signal(self, bar):
         """
         判断交易信号
         要注意在任何一个数据点：buy/sell/short/cover只允许执行一类动作
         """
+        # 当前仓位阶段
+        self.current_phase = self.get_current_phase()
+        phase_position_value = self.phase_position_values[self.current_phase]
+
         # 检查减仓
         if self.position_reduce_price:
+            # 减仓后的目标仓位价值
+            target_position_value = abs(self.position) * self.position_price
+
+            # 是否达到目标价位
+            reduce_price_cross = False
             if self.direction == Direction.LONG:
-                pass
+                if (
+                    self.ma_price >= self.position_reduce_price
+                    and bar.low_price < self.position_reduce_price
+                    and bar.high_price >= self.position_reduce_price
+                ):
+                    reduce_price_cross = True
 
             if self.direction == Direction.SHORT:
-                pass
+                if (
+                    self.ma_price <= self.position_reduce_price
+                    and bar.high_price > self.position_reduce_price
+                    and bar.low_price <= self.position_reduce_price
+                ):
+                    reduce_price_cross = True
+
+            if reduce_price_cross:
+                """价格满足减仓条件"""
+                if phase_position_value >= self.portfolio.portfolioValue:
+                    # 超过100%组合本金，分三个阶段减仓
+                    if self.current_phase_step == PHASE_STEP.PHASE_STEP_ONE:
+                        # 减仓
+                        self.current_phase_step = PHASE_STEP.PHASE_STEP_TWO
+                        target_position_value = phase_position_value * 0.5
+
+                    elif self.current_phase_step == PHASE_STEP.PHASE_STEP_TWO:
+                        # 减仓
+                        self.current_phase_step = PHASE_STEP.PHASE_STEP_THREE
+                        target_position_value = phase_position_value * 0.85
+
+                    elif self.current_phase_step == PHASE_STEP.PHASE_STEP_THREE:
+                        # 平仓
+                        self.current_phase_step = PHASE_STEP.PHASE_STEP_ONE
+                        self.position_price = self.position_reduce_price
+                        target_position_value = self.unit_value
+
+                    else:
+                        exit("检查代码！")
+
+                elif phase_position_value >= self.portfolio.portfolioValue * 0.3:
+                    # 超过30%组合本金，分两个阶段减仓
+                    if self.current_phase_step == PHASE_STEP.PHASE_STEP_ONE:
+                        # 减仓
+                        self.current_phase_step = PHASE_STEP.PHASE_STEP_TWO
+                        target_position_value = phase_position_value * 0.3
+
+                    elif self.current_phase_step == PHASE_STEP.PHASE_STEP_TWO:
+                        # 平仓
+                        self.current_phase_step = PHASE_STEP.PHASE_STEP_ONE
+                        self.position_price = self.position_reduce_price
+                        target_position_value = self.unit_value
+
+                    else:
+                        exit("检查代码！")
+
+                else:
+                    # 低于30%组合本金，一次性减仓
+                    self.current_phase_step = PHASE_STEP.PHASE_STEP_ONE
+                    self.position_price = self.position_reduce_price
+                    target_position_value = self.unit_value
+
+                # 计算减仓的合约数量
+                changed_volume = (target_position_value / self.position_price) - abs(
+                    self.position
+                )
+                changed_volume = floor_to(changed_volume, self.symbol_min_volume)
+                target_position = abs(self.position) + changed_volume
+
+                if changed_volume:
+                    # 当前持仓数量更新、发起订单
+                    if self.direction == Direction.LONG:
+                        self.position = target_position
+                        if changed_volume > 0:
+                            # 加仓
+                            self.newSignal(
+                                Direction.LONG,
+                                Offset.OPEN,
+                                self.position_reduce_price,
+                                abs(changed_volume),
+                            )
+
+                        elif changed_volume < 0:
+                            # 平仓
+                            self.newSignal(
+                                Direction.SHORT,
+                                Offset.CLOSE,
+                                self.position_reduce_price,
+                                abs(changed_volume),
+                            )
+
+                    if self.direction == Direction.SHORT:
+                        self.position = target_position * -1
+                        if changed_volume > 0:
+                            # 加仓
+                            self.newSignal(
+                                Direction.SHORT,
+                                Offset.OPEN,
+                                self.position_reduce_price,
+                                abs(changed_volume),
+                            )
+
+                        elif changed_volume < 0:
+                            # 平仓
+                            self.newSignal(
+                                Direction.LONG,
+                                Offset.CLOSE,
+                                self.position_reduce_price,
+                                abs(changed_volume),
+                            )
+
+                    # 减仓操作后停止后续加仓判断
+                    return
 
         # 检查加仓
         if self.position_increase_price:
@@ -66,114 +218,94 @@ class AISignal(object):
                 pass
 
     # ----------------------------------------------------------------------
-    def calculateIndicator(self):
+    def calculate_indicator(self):
         """计算入场指标"""
-        
+
+        # 当前仓位阶段
+        self.current_phase = self.get_current_phase()
+        phase_position_value = self.phase_position_values[self.current_phase]
+
         # 均线价格
         self.ma_price = self.am.sma(self.ma_window)
 
-        # 减仓价格
-        if (self.position - self.symbol_min_volume) * self.position_price > self.unit_value:
+        if self.position_price:
+            # ====== 减仓价格 ======
             if self.direction == Direction.LONG:
-                self.position_increase_price = self.position_price * (1 + 0.01)
+                if phase_position_value >= self.portfolio.portfolioValue:
+                    # 超过100%组合本金，分三个阶段减仓
+                    if self.current_phase_step == PHASE_STEP.PHASE_STEP_ONE:
+                        self.position_reduce_price = self.position_price * (1 + 0.01)
+
+                    elif self.current_phase_step == PHASE_STEP.PHASE_STEP_TWO:
+                        self.position_reduce_price = self.position_price * (1 + 0.02)
+
+                    elif self.current_phase_step == PHASE_STEP.PHASE_STEP_THREE:
+                        self.position_reduce_price = self.position_price * (1 + 0.03)
+
+                elif phase_position_value >= self.portfolio.portfolioValue * 0.3:
+                    # 超过30%组合本金，分两个阶段减仓
+                    if self.current_phase_step == PHASE_STEP.PHASE_STEP_ONE:
+                        self.position_reduce_price = self.position_price * (1 + 0.01)
+
+                    elif self.current_phase_step == PHASE_STEP.PHASE_STEP_TWO:
+                        self.position_reduce_price = self.position_price * (1 + 0.03)
+
+                else:
+                    # 低于30%组合本金，一次性减仓
+                    self.position_reduce_price = self.position_price * (1 + 0.01)
 
             elif self.direction == Direction.SHORT:
-                self.position_increase_price = self.position_price * (1 - 0.01)
+                if phase_position_value >= self.portfolio.portfolioValue:
+                    # 超过100%组合本金，分三个阶段减仓
+                    if self.current_phase_step == PHASE_STEP.PHASE_STEP_ONE:
+                        self.position_reduce_price = self.position_price * (1 - 0.01)
 
-        # 加仓价格
-        if self.direction == Direction.LONG:
+                    elif self.current_phase_step == PHASE_STEP.PHASE_STEP_TWO:
+                        self.position_reduce_price = self.position_price * (1 - 0.02)
+
+                    elif self.current_phase_step == PHASE_STEP.PHASE_STEP_THREE:
+                        self.position_reduce_price = self.position_price * (1 - 0.03)
+
+                elif phase_position_value >= self.portfolio.portfolioValue * 0.3:
+                    # 超过30%组合本金，分两个阶段减仓
+                    if self.current_phase_step == PHASE_STEP.PHASE_STEP_ONE:
+                        self.position_reduce_price = self.position_price * (1 - 0.01)
+
+                    elif self.current_phase_step == PHASE_STEP.PHASE_STEP_TWO:
+                        self.position_reduce_price = self.position_price * (1 - 0.03)
+
+                else:
+                    # 低于30%组合本金，一次性减仓
+                    self.position_reduce_price = self.position_price * (1 - 0.01)
+
+            self.position_reduce_price = round_to(self.position_reduce_price, self.symbol_price_tick)
+
+            # ====== 加仓价格 ======
             if self.direction == Direction.LONG:
-                self.position_reduce_price = self.position_price * (1 - 0.02)
+                if self.current_phase == 0:
+                    self.position_increase_price = self.position_price * (1 - 0.02)
+
+                elif self.current_phase == 1:
+                    self.position_increase_price = self.position_price * (1 - 0.04)
+
+                else:
+                    self.position_increase_price = self.position_price * (1 - 0.08)
 
             elif self.direction == Direction.SHORT:
-                self.position_reduce_price = self.position_price * (1 + 0.02)
+                if self.current_phase == 0:
+                    self.position_increase_price = self.position_price * (1 + 0.02)
+
+                elif self.current_phase == 1:
+                    self.position_increase_price = self.position_price * (1 + 0.04)
+
+                else:
+                    self.position_increase_price = self.position_price * (1 + 0.08)
+
+            self.position_increase_price = round_to(self.position_increase_price, self.symbol_price_tick)
 
     # ----------------------------------------------------------------------
     def newSignal(self, direction, offset, price, volume):
         self.portfolio.newSignal(self, direction, offset, price, volume)
-
-    # ----------------------------------------------------------------------
-    def buy(self, price, volume):
-        """买入开仓"""
-        price = self.calculateTradePrice(Direction.LONG, price)
-        # 对价格四舍五入
-        priceTick = self.portfolio.engine.priceTickDict[self.symbol]
-        price = int(round(price / priceTick, 0)) * priceTick
-
-        self.open(price, volume)
-        self.newSignal(Direction.LONG, Offset.OPEN, price, volume)
-
-        # 以最后一次加仓价格，加上两倍N计算止损
-        self.longStop = price - self.atrVolatility * 2
-        """ modify by loe """
-        self.priceHigh = price
-        self.priceLow = price
-
-    # ----------------------------------------------------------------------
-    def sell(self, price):
-        """卖出平仓"""
-        price = self.calculateTradePrice(Direction.SHORT, price)
-        # 对价格四舍五入
-        priceTick = self.portfolio.engine.priceTickDict[self.symbol]
-        price = int(round(price / priceTick, 0)) * priceTick
-
-        volume = abs(self.unit)
-
-        self.close(price)
-        self.newSignal(Direction.SHORT, Offset.CLOSE, price, volume)
-
-    # ----------------------------------------------------------------------
-    def short(self, price, volume):
-        """卖出开仓"""
-        price = self.calculateTradePrice(Direction.SHORT, price)
-        # 对价格四舍五入
-        priceTick = self.portfolio.engine.priceTickDict[self.symbol]
-        price = int(round(price / priceTick, 0)) * priceTick
-
-        self.open(price, -volume)
-        self.newSignal(Direction.SHORT, Offset.OPEN, price, volume)
-
-        # 以最后一次加仓价格，加上两倍N计算止损
-        self.shortStop = price + self.atrVolatility * 2
-        """ modify by loe """
-        self.priceHigh = price
-        self.priceLow = price
-
-    # ----------------------------------------------------------------------
-    def cover(self, price):
-        """买入平仓"""
-        price = self.calculateTradePrice(Direction.LONG, price)
-        # 对价格四舍五入
-        priceTick = self.portfolio.engine.priceTickDict[self.symbol]
-        price = int(round(price / priceTick, 0)) * priceTick
-
-        volume = abs(self.unit)
-
-        self.close(price)
-        self.newSignal(Direction.LONG, Offset.CLOSE, price, volume)
-
-    # ----------------------------------------------------------------------
-    def open(self, price, change):
-        """开仓"""
-        self.unit += change
-
-    # ----------------------------------------------------------------------
-    def close(self, price):
-        """平仓"""
-        self.unit = 0
-
-    # ----------------------------------------------------------------------
-    def calculateTradePrice(self, direction, price):
-        """计算成交价格"""
-        # 买入时，停止单成交的最优价格不能低于当前K线开盘价
-        if direction == Direction.LONG:
-            tradePrice = max(self.bar.open_price, price)
-            
-        # 卖出时，停止单成交的最优价格不能高于当前K线开盘价
-        else:
-            tradePrice = min(self.bar.open_price, price)
-
-        return tradePrice
 
 
 ########################################################################
