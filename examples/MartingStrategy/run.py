@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import copy
 
-from turtleEngine import BacktestingEngine
+from martingEngine import BacktestingEngine
 from csv import DictReader
 import csv
 import os
@@ -45,166 +45,8 @@ def one():
     engine.loadData()
     engine.runBacktesting()
     engine.showResult(figSavedName)
-    print(u"\n最大占用保证金：%s\t持仓单位：%s" % (engine.portfolio.maxBond[0], engine.portfolio.maxBond[1]))
 
-    #"""
-    resultList = []
-    totalPnl = 0
-    calculateDic = {}
-    symbol_pnl_dict = {}
-    # 统计连续亏损所需变量
-    symbol_continuous_pnl_dict = {}
-    continuous_pnl_last_symbol = ''
-    continuous_pnl = 0
-    for symbol in engine.symbolList:
-        # 统计连续亏损
-        if continuous_pnl_last_symbol and continuous_pnl_last_symbol != symbol:
-            pnl_dict = symbol_continuous_pnl_dict.setdefault(continuous_pnl_last_symbol, {})
-            pnl_value = pnl_dict.setdefault(continuous_pnl, 0)
-            pnl_value += 1
-            pnl_dict[continuous_pnl] = pnl_value
-        continuous_pnl_last_symbol = symbol
-
-        tradeList = engine.getTradeData(symbol)
-        print('*'*60)
-
-        open_price_list = []
-        open_direction = None
-        continuous_pnl = 0
-        atr_rate = 0
-        for trade in tradeList:
-            print('%s\t\t%s %s\t\t%s\t\t%s\t%s@%s' % (trade.dt, trade.symbol, trade.direction.value, trade.offset.value,
-                                                      engine.sizeDict[trade.symbol], trade.volume, trade.price))
-
-
-            if trade.offset == Offset.OPEN:
-                if not open_direction:
-                    open_direction = trade.direction
-                elif open_direction != trade.direction:
-                    raise ('成交数据异常！！检查代码')
-
-                open_price_list.append(trade.price)
-                if len(open_price_list) >= 2:
-                    atr_rate = ((abs(open_price_list[0] - open_price_list[1]) * 2) / open_price_list[0]) * 100
-            else:
-                mean_open = np.array(open_price_list).mean()
-                if open_direction == Direction.LONG:
-                    pnl = (trade.price - mean_open) * trade.volume
-                else:
-                    pnl = (trade.price - mean_open) * trade.volume * -1
-
-                # 统计连续亏损
-                if pnl <= 0:
-                    # 亏损
-                    if continuous_pnl <= 0:
-                        continuous_pnl -= 1
-                    else:
-                        pnl_dict = symbol_continuous_pnl_dict.setdefault(symbol, {})
-                        pnl_value = pnl_dict.setdefault(continuous_pnl, 0)
-                        pnl_value += 1
-                        pnl_dict[continuous_pnl] = pnl_value
-
-                        continuous_pnl = -1
-
-                else:
-                    # 盈利
-                    if continuous_pnl >= 0:
-                        continuous_pnl += 1
-                    else:
-                        pnl_dict = symbol_continuous_pnl_dict.setdefault(symbol, {})
-                        pnl_value = pnl_dict.setdefault(continuous_pnl, 0)
-                        pnl_value += 1
-                        pnl_dict[continuous_pnl] = pnl_value
-
-                        continuous_pnl = 1
-
-                symbol_pnl_list = symbol_pnl_dict.get(symbol, [])
-                symbol_pnl_list.append(pnl)
-                symbol_pnl_dict[symbol] = symbol_pnl_list
-                print(f'ATR比率：{atr_rate}%')
-                print(f'收益：{pnl}')
-                print(f'连续盈亏次数：{continuous_pnl}')
-                open_price_list = []
-                open_direction = None
-                atr_rate = 0
-                print('\n')
-
-            tOpen = False
-            pnl = 0
-            offset = ''
-            direction = 0
-
-            symbolDic = calculateDic.get(trade.symbol, {})
-
-            if trade.offset == Offset.OPEN:
-                offset = '开仓'
-                tOpen = True
-            elif trade.offset == Offset.CLOSE:
-                offset = '平仓'
-                tOpen = False
-
-            if trade.direction == Direction.LONG:
-                direction = '多'
-                if tOpen:
-                    symbolDic['direction'] = 1
-            elif trade.direction == Direction.SHORT:
-                direction = '空'
-                if tOpen:
-                    symbolDic['direction'] = -1
-
-            if trade.volume:
-                if tOpen:
-                    symbolDic['size'] = engine.sizeDict[trade.symbol]
-                    vol = symbolDic.get('volume', 0)
-                    pri = symbolDic.get('price', 0)
-                    pri = vol*pri + trade.volume*trade.price
-
-                    vol += trade.volume
-                    symbolDic['volume'] = vol
-                    pri = pri / vol
-                    symbolDic['price'] = pri
-                    calculateDic[trade.symbol] = symbolDic
-                else:
-                    if symbolDic['volume'] != trade.volume:
-                        raise('平仓数量有误！')
-                    pnl = symbolDic['direction'] * (trade.price - symbolDic['price']) * trade.volume * symbolDic['size']
-                    totalPnl += pnl
-                    calculateDic[trade.symbol] = {}
-
-            dic = {'datetime':trade.dt,
-                   'symbol':trade.symbol,
-                   'direction':direction,
-                   'offset':offset,
-                   'size':engine.sizeDict[trade.symbol],
-                   'volume':trade.volume,
-                   'price':trade.price}
-            if pnl:
-                dic['pnl'] = str(pnl)
-                dic['totalPnl'] = str(totalPnl)
-            else:
-                dic['pnl'] = ''
-                dic['totalPnl'] = ''
-
-            resultList.append(dic)
-        print('\n')
-
-    # 统计连续亏损
-    if continuous_pnl_last_symbol:
-        pnl_dict = symbol_continuous_pnl_dict.setdefault(continuous_pnl_last_symbol, {})
-        pnl_value = pnl_dict.setdefault(continuous_pnl, 0)
-        pnl_value += 1
-        pnl_dict[continuous_pnl] = pnl_value
-
-    if len(resultList):
-        fieldNames = ['datetime', 'symbol', 'direction', 'offset', 'size', 'volume', 'price', 'pnl', 'totalPnl']
-        # 文件路径
-        filePath = 'result.csv'
-        with open(filePath, 'w') as f:
-            writer = csv.DictWriter(f, fieldnames=fieldNames)
-            writer.writeheader()
-            # 写入csv文件
-            writer.writerows(resultList)
-
+    """
     folio = engine.portfolio
     signalDic = folio.signalDict
     for s, signalList in signalDic.items():
@@ -231,13 +73,7 @@ def one():
             for pnl_key in pnl_keys:
                 print(f'{pnl_key} -> {continuous_pnl_dict[pnl_key]}')
             print('-' * 16)
-
-            pnl_array = np.array(symbol_pnl_dict[signal.symbol])
-            pnl_count = pnl_array.size
-            pnl_mean = pnl_array.mean()
-            pnl_std = pnl_array.std()
-            print(f'总开平数量：{pnl_count}\n收益均值：{pnl_mean}\n收益标准差：{pnl_std}\n\n')
-    #"""
+    """
 
 def two():
     filename = 'setting.csv'

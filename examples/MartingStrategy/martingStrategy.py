@@ -19,7 +19,7 @@ class PHASE_STEP(Enum):
 
 
 ########################################################################
-class AISignal(object):
+class MartingSignal(object):
     # ----------------------------------------------------------------------
     def __init__(self, portfolio, symbol, direction, ma_window):
         # 常量
@@ -445,7 +445,7 @@ class AISignal(object):
         self.portfolio.newSignal(self, direction, offset, price, volume)
 
 
-class TurtlePortfolio(object):
+class MartingPortfolio(object):
     def __init__(self, engine):
         self.engine = engine
         self.portfolioValue = 0  # 组合市值
@@ -454,7 +454,6 @@ class TurtlePortfolio(object):
         self.posDict = {}  # 合约持仓量字典
         self.signalPosDict = {}  # 策略持仓量字典
         self.sizeDict = {}  # 合约大小字典
-        self.maxBond = [0, 0]
 
     def init(self, portfolioValue, symbolList, sizeDict):
         """"""
@@ -462,8 +461,8 @@ class TurtlePortfolio(object):
         self.sizeDict = sizeDict
 
         for symbol in symbolList:
-            signal1 = AISignal(self, symbol, Direction.LONG, 9)
-            signal2 = AISignal(self, symbol, Direction.SHORT, 9)
+            signal1 = MartingSignal(self, symbol, Direction.LONG, 9)
+            signal2 = MartingSignal(self, symbol, Direction.SHORT, 9)
 
             l = self.signalDict[symbol]
             l.append(signal1)

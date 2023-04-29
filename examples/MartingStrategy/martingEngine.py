@@ -13,7 +13,7 @@ from pymongo import MongoClient
 from vnpy.trader.object import BarData
 from vnpy.trader.constant import Direction, Exchange
 
-from turtleStrategy import TurtlePortfolio
+from martingStrategy import MartingPortfolio
 
 from vnpy.app.cta_strategy.base import DAILY_DB_NAME, MINUTE_DB_NAME, HOUR_DB_NAME, MinuteDataBaseName, HourDataBaseName
 import pandas as pd
@@ -86,7 +86,7 @@ class BacktestingEngine(object):
                 FIXED_COMMISSION_DICT[d['symbol']] = float(d['fixedCommission'])
                 SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
             
-        self.portfolio = TurtlePortfolio(self)
+        self.portfolio = MartingPortfolio(self)
         self.portfolio.init(portfolioValue, self.symbolList, SIZE_DICT)
         """ modify by loe """
         self.portfolio.tradingStart = self.tradingStart
@@ -111,7 +111,7 @@ class BacktestingEngine(object):
         FIXED_COMMISSION_DICT[d['symbol']] = float(d['fixedCommission'])
         SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
 
-        self.portfolio = TurtlePortfolio(self)
+        self.portfolio = MartingPortfolio(self)
         self.portfolio.init(portfolioValue, self.symbolList, SIZE_DICT)
 
         """ modify by loe """
@@ -139,7 +139,7 @@ class BacktestingEngine(object):
             FIXED_COMMISSION_DICT[d['symbol']] = float(d['fixedCommission'])
             SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
 
-        self.portfolio = TurtlePortfolio(self)
+        self.portfolio = MartingPortfolio(self)
         self.portfolio.init(portfolioValue, self.symbolList, SIZE_DICT)
 
         """ modify by loe """
