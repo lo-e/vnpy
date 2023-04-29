@@ -1,0 +1,2 @@
+symbol,size,priceTick,variableCommission,fixedCommission,slippage,name,is_crypto,min_volume
+EOSUSDT.BYBIT,1,0.001,0.0001,0,1,Bybit永续/EOSUSDT,true,0.1

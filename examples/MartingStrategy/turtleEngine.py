@@ -13,8 +13,8 @@ from pymongo import MongoClient
 from vnpy.trader.object import BarData
 from vnpy.trader.constant import Direction, Exchange
 
-from turtleStrategy import TurtlePortfolio
-# from turtleStrategyDev import TurtlePortfolio
+# from turtleStrategy import TurtlePortfolio
+from turtleStrategyDev import TurtlePortfolio
 
 from vnpy.app.cta_strategy.base import DAILY_DB_NAME, MINUTE_DB_NAME, HOUR_DB_NAME, MinuteDataBaseName, HourDataBaseName
 import pandas as pd
@@ -153,7 +153,7 @@ class BacktestingEngine(object):
     def loadData(self):
         """加载数据"""
         mc = MongoClient()
-        db = mc[DAILY_DB_NAME]
+        db = mc[MinuteDataBaseName(5)]
 
         """ modify by loe """
         dataDict = {}
