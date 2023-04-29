@@ -50,7 +50,7 @@ class AISignal(object):
         self.current_phase_step = PHASE_STEP.PHASE_STEP_ONE  # 当前仓位阶段减仓状态
 
     # ----------------------------------------------------------------------
-    def onBar(self, bar):
+    def on_bar(self, bar):
         if not bar.check_valid():
             raise ("Bar数据校验不通过！！")
         self.bar = bar
@@ -71,7 +71,9 @@ class AISignal(object):
             self.phase_position_values.append(phase_position)
 
     def get_current_phase(self):
-        current_phase_position_value = abs(self.phase_position_volume) * self.position_price
+        current_phase_position_value = (
+            abs(self.phase_position_volume) * self.position_price
+        )
         for i in range(len(self.phase_position_values)):
             phase_positon_value = self.phase_position_values[i]
             if current_phase_position_value <= phase_positon_value * 1.1:
@@ -86,6 +88,49 @@ class AISignal(object):
         # 当前仓位阶段
         current_phase = self.get_current_phase()
         phase_position_value = self.phase_position_values[current_phase]
+
+        # 初始化仓位
+        if not self.position:
+            # 成交价格
+            trade_price = round_to(bar.close_price, self.symbol_price_tick)
+
+            # 初始化阶段减仓状态
+            self.current_phase_step = PHASE_STEP.PHASE_STEP_ONE
+
+            # 初始化持仓价格
+            self.position_price = trade_price
+
+            # 初始化持仓合约数量
+            init_volume = self.unit_value / self.position_price
+            init_volume = round_to(init_volume, self.symbol_min_volume)
+
+            # 初始化阶段持仓合约数量
+            self.phase_position_volume = init_volume
+
+            # 当前持仓数量更新、发起订单
+            if self.direction == Direction.LONG:
+                self.position = init_volume
+                self.newSignal(
+                    Direction.LONG,
+                    Offset.OPEN,
+                    trade_price,
+                    abs(init_volume),
+                )
+
+            elif self.direction == Direction.SHORT:
+                self.position = init_volume * -1
+                self.newSignal(
+                    Direction.SHORT,
+                    Offset.OPEN,
+                    trade_price,
+                    abs(init_volume),
+                )
+            
+            else:
+                exit("检查代码！")
+
+            # 初始化后停止后续判断
+            return
 
         # 检查减仓
         if self.position_reduce_price:
@@ -166,8 +211,8 @@ class AISignal(object):
                 changed_volume = (target_position_value / self.position_price) - abs(
                     self.position
                 )
-                changed_volume = floor_to(changed_volume, self.symbol_min_volume)
-                
+                changed_volume = round_to(changed_volume, self.symbol_min_volume)
+
                 # 目标仓位合约数量
                 target_position = abs(self.position) + changed_volume
 
@@ -200,7 +245,7 @@ class AISignal(object):
                                 abs(changed_volume),
                             )
 
-                    if self.direction == Direction.SHORT:
+                    elif self.direction == Direction.SHORT:
                         self.position = target_position * -1
                         if changed_volume > 0:
                             # 加仓
@@ -219,6 +264,8 @@ class AISignal(object):
                                 trade_price,
                                 abs(changed_volume),
                             )
+                    else:
+                        exit("检查代码！")
 
                     # 减仓操作后停止后续加仓判断
                     return
@@ -254,19 +301,19 @@ class AISignal(object):
 
                 # 加仓后的目标仓位价值
                 next_phase = current_phase + 1
-                next_phase = min(len(self.phase_position_values)-1, next_phase)
+                next_phase = min(len(self.phase_position_values) - 1, next_phase)
                 target_position_value = self.phase_position_values[next_phase]
 
                 # 计算加仓的合约数量
                 changed_volume = (target_position_value / self.position_price) - abs(
                     self.position
                 )
-                changed_volume = ceil_to(changed_volume, self.symbol_min_volume)
+                changed_volume = round_to(changed_volume, self.symbol_min_volume)
 
                 # 目标仓位合约数量
                 target_position = abs(self.position) + changed_volume
-                
-                # 平仓后更新阶段仓位合约数量
+
+                # 加仓后更新阶段仓位合约数量
                 self.phase_position_volume = target_position
 
                 # 成交价格
@@ -294,7 +341,7 @@ class AISignal(object):
                                 abs(changed_volume),
                             )
 
-                    if self.direction == Direction.SHORT:
+                    elif self.direction == Direction.SHORT:
                         self.position = target_position * -1
                         if changed_volume > 0:
                             # 加仓
@@ -313,6 +360,9 @@ class AISignal(object):
                                 trade_price,
                                 abs(changed_volume),
                             )
+                    
+                    else:
+                        exit("检查代码！")
 
     def calculate_indicator(self):
         """计算入场指标"""
@@ -398,29 +448,17 @@ class AISignal(object):
     def newSignal(self, direction, offset, price, volume):
         self.portfolio.newSignal(self, direction, offset, price, volume)
 
+
 class TurtlePortfolio(object):
     def __init__(self, engine):
         self.engine = engine
-
-        self.signalDict = defaultdict(list)
-
-        self.unitDict = {}  # 每个品种的持仓情况
-        self.totalLong = 0  # 总的多头持仓
-        self.totalShort = 0  # 总的空头持仓
-        self.categoryLongUnitDict = defaultdict(int)  # 高度关联品种多头持仓情况
-        self.categoryShortUnitDict = defaultdict(int)  # 高度关联品种空头持仓情况
-        self.maxBond = []  # 历史占用保证金的最大值
-        self.tradingStart = None  # 开始交易日期
-
-        self.tradingDict = {}  # 交易中的信号字典
-
-        self.sizeDict = {}  # 合约大小字典
-        self.multiplierDict = {}  # 按照波动幅度计算的委托量单位字典
-        self.posDict = {}  # 真实持仓量字典
-
         self.portfolioValue = 0  # 组合市值
+        self.signalDict = defaultdict(list)
+        self.tradingDict = {}  # 交易中的信号字典
+        self.posDict = {}  # 合约持仓量字典
+        self.signalPosDict = {}  # 策略持仓量字典
+        self.sizeDict = {}  # 合约大小字典
 
-    # ----------------------------------------------------------------------
     def init(self, portfolioValue, symbolList, sizeDict):
         """"""
         self.portfolioValue = portfolioValue
@@ -434,96 +472,49 @@ class TurtlePortfolio(object):
             l.append(signal1)
             l.append(signal2)
 
-            self.unitDict[symbol] = 0
-            self.posDict[symbol] = 0
-
-    # ----------------------------------------------------------------------
     def onBar(self, bar):
-        """"""
         for signal in self.signalDict[bar.symbol]:
-            signal.onBar(bar)
+            signal.on_bar(bar)
 
-    # ----------------------------------------------------------------------
     def newSignal(self, signal, direction, offset, price, volume):
-        """对交易信号进行过滤，符合条件的才发单执行"""
-        unit = self.unitDict[signal.symbol]
+        # 策略当前持仓数量
+        signal_key = f"{signal.symbol}_{signal.direction.value}"
+        signal_current_pos = self.signalPosDict.get(signal_key, 0)
 
-        # 如果当前无仓位，则重新根据波动幅度计算委托量单位
-        if not unit:
-            size = self.sizeDict[signal.symbol]
-            riskValue = self.portfolioValue * 0.01
-            """ modify by loe """
-            multiplier = 0
-            if signal.atrVolatility * size:
-                multiplier = riskValue / (signal.atrVolatility * size)
-
-                min_volume = self.engine.min_volume_dict[signal.symbol]
-                if min_volume <= 0:
-                    raise ("策略最小交易数量设置错误！！")
-                multiplier = round(multiplier / min_volume, 0) * min_volume
-
-            self.multiplierDict[signal.symbol] = multiplier
-        else:
-            multiplier = self.multiplierDict[signal.symbol]
-
-        # 过滤虚假开仓
-        if multiplier == 0:
-            return
+        # 合约当前持仓数量
+        symbol_current_pos = self.posDict.get(signal.symbol, 0)
 
         # 平仓
         if offset != Offset.OPEN:
             if direction == Direction.LONG:
-                # 必须有空头持仓
-                if unit >= 0:
-                    return
+                # 策略必须有空头持仓且平仓数量不能超过空头持仓
+                if signal_current_pos >= 0 or volume > abs(signal_current_pos):
+                    exit("检查代码！")
 
-                # 平仓数量不能超过空头持仓
-                volume = min(volume, abs(unit))
+            elif direction == Direction.SHORT:
+                # 策略必须有多头持仓且平仓数量不能超过多头持仓
+                if signal_current_pos <= 0 or volume > abs(signal_current_pos):
+                    exit("检查代码！")
+
             else:
-                if unit <= 0:
-                    return
-
-                volume = min(volume, abs(unit))
+                exit("检查代码！")
 
         # 获取当前交易中的信号，如果不是本信号，则忽略
-        currentSignal = self.tradingDict.get(signal.symbol, None)
-        if currentSignal and currentSignal is not signal:
-            return
+        currentSignal = self.tradingDict.get(signal_key, None)
+        if not currentSignal:
+            self.tradingDict[signal_key] = signal
 
-        # 开仓则缓存该信号的交易状态
-        if offset == Offset.OPEN:
-            self.tradingDict[signal.symbol] = signal
-        # 平仓则清除该信号
-        else:
-            self.tradingDict.pop(signal.symbol)
+        elif currentSignal is not signal:
+            exit("检查代码！")
 
-        self.sendOrder(signal.symbol, direction, offset, price, volume, multiplier)
-
-    # ----------------------------------------------------------------------
-    def sendOrder(self, symbol, direction, offset, price, volume, multiplier):
-        """"""
-
-        # 计算合约持仓
+        # 保存合约持仓数量
         if direction == Direction.LONG:
-            self.unitDict[symbol] += volume
-            self.posDict[symbol] += volume * multiplier
+            self.signalPosDict[signal_key] = signal_current_pos + volume
+            self.posDict[signal.symbol] = symbol_current_pos + volume
 
         else:
-            self.unitDict[symbol] -= volume
-            self.posDict[symbol] -= volume * multiplier
-
-        # 计算总持仓、类别持仓
-        self.totalLong = 0
-        self.totalShort = 0
-        self.categoryLongUnitDict = defaultdict(int)
-        self.categoryShortUnitDict = defaultdict(int)
-
-        for theSymbol, unit in self.unitDict.items():
-            # 总持仓
-            if unit > 0:
-                self.totalLong += unit
-            elif unit < 0:
-                self.totalShort += unit
+            self.signalPosDict[signal_key] = signal_current_pos - volume
+            self.posDict[signal.symbol] = symbol_current_pos - volume
 
         # 向回测引擎中发单记录
-        self.engine.sendOrder(symbol, direction, offset, price, volume * multiplier)
+        self.engine.sendOrder(signal.symbol, direction, offset, price, volume)
