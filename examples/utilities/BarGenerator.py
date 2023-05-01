@@ -365,9 +365,13 @@ def get_full_symbol(symbol_list):
     return full_symbol_list
 
 if __name__ == '__main__':
-    symbol_list = ['BTCUSDT.BYBIT', 'ETHUSDT.BYBIT', 'SOLUSDT.BYBIT', 'GALAUSDT.BYBIT', 'AVAXUSDT.BYBIT', 'XRPUSDT.BYBIT']
+    # symbol_list = ['BTCUSDT.BYBIT', 'ETHUSDT.BYBIT']
+    symbol_list = ['SHIB1000USDT', 'AAVEUSDT', 'ADAUSDT', 'APEUSDT', 'ATOMUSDT', 'AVAXUSDT', 'BCHUSDT', 'CHZUSDT', 'CRVUSDT', 'DOGEUSDT', 'DOTUSDT', 'EOSUSDT', 'ETCUSDT', 'FILUSDT', 'LINKUSDT', 'LTCUSDT', 'MATICUSDT', 'NEARUSDT', 'SANDUSDT', 'SOLUSDT', 'SUSHIUSDT', 'UNIUSDT', 'XRPUSDT']
     # symbol_list = get_full_symbol(bybit_get_symbol_list(type=BybitSymbolType.USDT))
+    
+    auto_exchange = "BYBIT"
+    symbol_list = [x + f".{auto_exchange}" for x in symbol_list]
     for symbol in symbol_list:
-        processor = MinuterBarProcessor(vt_symbol=symbol, window=1, interval=Interval.HOUR, start_date='2022-12-20', end_date='2023-12-31')
+        processor = MinuterBarProcessor(vt_symbol=symbol, window=5, interval=Interval.MINUTE, start_date='2023-3-31', end_date='2023-12-31')
         processor.start_work()
         print('\n')

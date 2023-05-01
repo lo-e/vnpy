@@ -10,7 +10,7 @@ import re
 from vnpy.app.cta_strategy.base import DAILY_DB_NAME, DOMINANT_DB_NAME
 from enum import Enum
 from vnpy.trader.utility import round_to, floor_to, ceil_to
-
+from vnpy.trader.utility import DIR_SYMBOL
 
 class PHASE_STEP(Enum):
     PHASE_STEP_ONE = "第一仓位，全仓"
@@ -27,7 +27,7 @@ class MartingSignal(object):
         self.symbol = symbol  # 合约代码
         self.direction = direction  # 交易方向
         self.ma_window = ma_window  # 均线参数
-        self.unit_value = self.portfolio.portfolioValue * 0.5 * 0.01  # 最小持仓价值
+        self.unit_value = self.portfolio.portfolioValue * 0.412 * 0.01  # 最小持仓价值
         self.symbol_min_volume = self.portfolio.engine.min_volume_dict[
             self.symbol
         ]  # 合约最小交易数量
@@ -453,6 +453,7 @@ class MartingPortfolio(object):
         self.tradingDict = {}  # 交易中的信号字典
         self.posDict = {}  # 合约持仓量字典
         self.signalPosDict = {}  # 策略持仓量字典
+        self.signalTradesDict = {}  # 策略成交订单字典
         self.sizeDict = {}  # 合约大小字典
 
     def init(self, portfolioValue, symbolList, sizeDict):
@@ -511,6 +512,20 @@ class MartingPortfolio(object):
         else:
             self.signalPosDict[signal_key] = signal_current_pos - volume
             self.posDict[signal.symbol] = symbol_current_pos - volume
+
+        # 保存成交数据
+        signal_trades_list = self.signalTradesDict.get(signal_key, [])
+        trade_data = {"datetime":signal.bar.datetime,
+                      "symbol":signal.symbol,
+                      "direction":direction,
+                      "offset":offset,
+                      "volume":volume,
+                      "price":price,
+                      "signal_position":round_to(signal.position, signal.symbol_min_volume),
+                      "signal_position_price":round_to(signal.position_price, signal.symbol_price_tick),
+                      "signal_position_value":round_to(signal.position * signal.position_price, 1)}
+        signal_trades_list.append(trade_data)
+        self.signalTradesDict[signal_key] = signal_trades_list
 
         # 向回测引擎中发单记录
         self.engine.sendOrder(signal.symbol, direction, offset, price, volume)

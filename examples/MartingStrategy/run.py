@@ -20,31 +20,88 @@ from vnpy.trader.utility import DIR_SYMBOL
 
 def one():
     engine = BacktestingEngine()
-    engine.setPeriod(datetime(2023, 4, 1), datetime(2023, 12, 31))
-    engine.tradingStart = datetime(2022, 1, 1)
-    figSavedName = ''
+    engine.setPeriod(datetime(2022, 1, 1), datetime(2023, 4, 29))
+    figSavedName = ""
     if figSavedName:
-        figSavedName = f'figSaved{DIR_SYMBOL}{figSavedName}'
+        figSavedName = f"figSaved{DIR_SYMBOL}{figSavedName}"
 
-    filename = 'setting.csv'
+    filename = "setting.csv"
     symbolList = []
-    with open(filename, errors='ignore') as f:
+    with open(filename, errors="ignore") as f:
         r = DictReader(f)
         for d in r:
-            #"""
-            is_crypto = d['is_crypto'] == 'true'
+            # """
+            is_crypto = d["is_crypto"] == "true"
             if not is_crypto:
-                symbol = re.sub("\d", "", d['symbol'])
-                symbol = symbol + '99'
-                d['symbol'] = symbol
-            #"""
+                symbol = re.sub("\d", "", d["symbol"])
+                symbol = symbol + "99"
+                d["symbol"] = symbol
+            # """
             symbolList.append(d)
     if not symbolList:
         return
-    engine.initListPortfolio(symbolList, 60000)
+    engine.initListPortfolio(symbolList, 100000)
     engine.loadData()
     engine.runBacktesting()
     engine.showResult(figSavedName)
+
+    # 输出并保存交易数据
+    symbol_trade_dic = {}
+    for symbol in engine.symbolList:
+        symbol_trade_list = symbol_trade_dic.get(symbol, [])
+        trade_data_list = engine.getTradeData(symbol)
+        print(f"\n****** {symbol} ******")
+        for trade in trade_data_list:
+            print(
+                "%s\t%s\t%s\t%s\t%s\t%s"
+                % (
+                    trade.symbol,
+                    trade.dt,
+                    trade.direction.value,
+                    trade.offset.value,
+                    trade.volume,
+                    trade.price,
+                )
+            )
+            trade_data = {
+                "symbol": trade.symbol,
+                "datetime": trade.dt,
+                "direction": trade.direction.value,
+                "offset": trade.offset.value,
+                "volume": trade.volume,
+                "price": trade.price,
+            }
+            symbol_trade_list.append(trade_data)
+        symbol_trade_dic[symbol] = symbol_trade_list
+
+    symbol_trade_dir_path = f"symbol_trades{DIR_SYMBOL}"
+    if not os.path.exists(symbol_trade_dir_path):
+        os.makedirs(symbol_trade_dir_path)
+    for symbol, trade_list in symbol_trade_dic.items():
+        if len(trade_list):
+            fieldNames = ["datetime", "symbol", "direction", "offset", "volume", "price"]
+            # 文件路径
+            filePath = f"{symbol_trade_dir_path}{symbol}.csv"
+            with open(filePath, "w") as f:
+                writer = csv.DictWriter(f, fieldnames=fieldNames)
+                writer.writeheader()
+                # 写入csv文件
+                writer.writerows(trade_list)
+
+    # 保存信号交易数据
+    signal_trade_dir_path = f"signal_trades{DIR_SYMBOL}"
+    if not os.path.exists(signal_trade_dir_path):
+        os.makedirs(signal_trade_dir_path)
+    for signal_key, trade_list in engine.portfolio.signalTradesDict.items():
+        if len(trade_list):
+            fieldNames = ["datetime", "symbol", "direction", "offset", "volume", "price", "signal_position", "signal_position_price", "signal_position_value"]
+            # 文件路径
+            filePath = f"{signal_trade_dir_path}{signal_key}.csv"
+            with open(filePath, "w") as f:
+                writer = csv.DictWriter(f, fieldnames=fieldNames)
+                writer.writeheader()
+                # 写入csv文件
+                writer.writerows(trade_list)
 
     """
     folio = engine.portfolio
@@ -75,11 +132,12 @@ def one():
             print('-' * 16)
     """
 
+
 def two():
-    filename = 'setting.csv'
+    filename = "setting.csv"
     count = 0
     resultList = []
-    with open(filename, errors='ignore') as f:
+    with open(filename, errors="ignore") as f:
         r = DictReader(f)
         for d in r:
             engine = BacktestingEngine()
@@ -94,61 +152,87 @@ def two():
                 continue
 
             timeseries, result = engine.calculateResult()
-            print(u'Sharpe Ratio：\t%s' % result['sharpeRatio'])
+            print("Sharpe Ratio：\t%s" % result["sharpeRatio"])
             count += 1
-            print(u'count：\t%s\n' % count)
+            print("count：\t%s\n" % count)
 
             temp = d.copy()
-            temp.pop('is_crypto')
-            temp.pop('min_volume')
-            temp['sharpeRatio'] = result['sharpeRatio']
-            temp['totalReturn'] = result['totalReturn']
-            temp['annualizedReturn'] = result['annualizedReturn']
-            temp['maxDrawdown'] = result['maxDrawdown']
-            temp['maxDdPercent'] = result['maxDdPercent']
+            temp.pop("is_crypto")
+            temp.pop("min_volume")
+            temp["sharpeRatio"] = result["sharpeRatio"]
+            temp["totalReturn"] = result["totalReturn"]
+            temp["annualizedReturn"] = result["annualizedReturn"]
+            temp["maxDrawdown"] = result["maxDrawdown"]
+            temp["maxDdPercent"] = result["maxDdPercent"]
             resultList.append(temp)
 
     if len(resultList):
-        fieldNames = ['symbol', 'size', 'priceTick', 'variableCommission', 'fixedCommission', 'slippage', 'name', 'sharpeRatio', 'totalReturn', 'annualizedReturn', 'maxDrawdown', 'maxDdPercent']
+        fieldNames = [
+            "symbol",
+            "size",
+            "priceTick",
+            "variableCommission",
+            "fixedCommission",
+            "slippage",
+            "name",
+            "sharpeRatio",
+            "totalReturn",
+            "annualizedReturn",
+            "maxDrawdown",
+            "maxDdPercent",
+        ]
         # 文件路径
-        filePath = 'result.csv'
-        with open(filePath, 'w') as f:
+        filePath = "result.csv"
+        with open(filePath, "w") as f:
             writer = csv.DictWriter(f, fieldnames=fieldNames)
             writer.writeheader()
             # 写入csv文件
             writer.writerows(resultList)
 
+
 def three():
     resultDic = OrderedDict()
-    dirPath = 'resultList'
+    dirPath = "resultList"
     for root, subdirs, files in os.walk(dirPath):
         for theFile in files:
-            filePath = f'{root}{DIR_SYMBOL}{theFile}'
+            filePath = f"{root}{DIR_SYMBOL}{theFile}"
             with open(filePath) as f:
                 r = DictReader(f)
                 for d in r:
-                    symbol = d['symbol']
+                    symbol = d["symbol"]
                     if not symbol in resultDic:
                         resultDic[symbol] = d
                     else:
                         hisResult = resultDic[symbol]
-                        hisResult['result'] = str(float(hisResult['result']) + float(d['result']))
+                        hisResult["result"] = str(
+                            float(hisResult["result"]) + float(d["result"])
+                        )
 
     resultList = resultDic.values()
     if len(resultList):
-        fieldNames = ['symbol', 'size', 'priceTick', 'variableCommission', 'fixedCommission', 'slippage', 'name', 'result']
+        fieldNames = [
+            "symbol",
+            "size",
+            "priceTick",
+            "variableCommission",
+            "fixedCommission",
+            "slippage",
+            "name",
+            "result",
+        ]
         # 文件路径
-        filePath = f'resultList{DIR_SYMBOL}result_all.csv'
-        with open(filePath, 'w') as f:
+        filePath = f"resultList{DIR_SYMBOL}result_all.csv"
+        with open(filePath, "w") as f:
             writer = csv.DictWriter(f, fieldnames=fieldNames)
             writer.writeheader()
             # 写入csv文件
             writer.writerows(resultList)
 
+
 def four():
-    filename = 'setting.csv'
+    filename = "setting.csv"
     symbolList = []
-    with open(filename, errors='ignore') as f:
+    with open(filename, errors="ignore") as f:
         r = DictReader(f)
         for d in r:
             symbolList.append(d)
@@ -170,33 +254,91 @@ def four():
             continue
 
         timeseries, result = engine.calculateResult()
-        dic = {'symbolList':engine.symbolList,
-               'sharpe':result['sharpeRatio'],
-               'totalPnl':result['totalReturn'],
-               'annualizedPnl':result['annualizedReturn']}
+        dic = {
+            "symbolList": engine.symbolList,
+            "sharpe": result["sharpeRatio"],
+            "totalPnl": result["totalReturn"],
+            "annualizedPnl": result["annualizedReturn"],
+        }
         resultList.append(dic)
 
         count += 1
-        print(u'count：\t%s\n' % count)
+        print("count：\t%s\n" % count)
 
     if len(resultList):
-        fieldNames = ['symbolList', 'sharpe', 'totalPnl', 'annualizedPnl']
+        fieldNames = ["symbolList", "sharpe", "totalPnl", "annualizedPnl"]
         # 文件路径
-        filePath = 'result.csv'
-        with open(filePath, 'w') as f:
+        filePath = "result.csv"
+        with open(filePath, "w") as f:
             writer = csv.DictWriter(f, fieldnames=fieldNames)
             writer.writeheader()
             # 写入csv文件
             writer.writerows(resultList)
 
-    print('='*20)
-    print('组合数：%s' % count)
+    print("=" * 20)
+    print("组合数：%s" % count)
+
 
 # 年度成交量排名
 def volumeSorted():
     startDt = datetime(2010, 1, 1)
     endDt = datetime(2010, 12, 31)
-    underlyingList = ['RB', 'CU', 'NI', 'ZN', 'RU', 'AL', 'HC', 'J', 'I', 'PP', 'AP', 'TA', 'A', 'AG', 'AU', 'B', 'BB', 'BU', 'C', 'CF', 'CS', 'CY', 'EG', 'FB', 'FG', 'FU', 'JD', 'JM', 'JR', 'L', 'LR', 'M', 'MA', 'OI', 'P', 'PB', 'PM', 'RI', 'RM', 'RS', 'SC', 'SF', 'SM', 'SN', 'SP', 'SR', 'V', 'WH', 'WR', 'Y', 'ZC', 'IF', 'IC', 'IH']
+    underlyingList = [
+        "RB",
+        "CU",
+        "NI",
+        "ZN",
+        "RU",
+        "AL",
+        "HC",
+        "J",
+        "I",
+        "PP",
+        "AP",
+        "TA",
+        "A",
+        "AG",
+        "AU",
+        "B",
+        "BB",
+        "BU",
+        "C",
+        "CF",
+        "CS",
+        "CY",
+        "EG",
+        "FB",
+        "FG",
+        "FU",
+        "JD",
+        "JM",
+        "JR",
+        "L",
+        "LR",
+        "M",
+        "MA",
+        "OI",
+        "P",
+        "PB",
+        "PM",
+        "RI",
+        "RM",
+        "RS",
+        "SC",
+        "SF",
+        "SM",
+        "SN",
+        "SP",
+        "SR",
+        "V",
+        "WH",
+        "WR",
+        "Y",
+        "ZC",
+        "IF",
+        "IC",
+        "IH",
+    ]
 
     volumeDic = {}
     # 数据库
@@ -204,33 +346,36 @@ def volumeSorted():
     db = mc[DAILY_DB_NAME]
     for underlyingSymbol in underlyingList:
         totalVolume = 0
-        symbol = underlyingSymbol + '99'
+        symbol = underlyingSymbol + "99"
         cl = db[symbol]
-        cl.ensure_index([('datetime', ASCENDING)], unique=True)
-        flt = {'datetime': {'$gte': startDt,
-                            '$lte': endDt}}
+        cl.ensure_index([("datetime", ASCENDING)], unique=True)
+        flt = {"datetime": {"$gte": startDt, "$lte": endDt}}
 
-        cursor = cl.find(flt).sort('datetime')
+        cursor = cl.find(flt).sort("datetime")
         for d in cursor:
-            totalVolume += d['volume']
+            totalVolume += d["volume"]
         volumeDic[underlyingSymbol] = totalVolume
-    resultDic = {'volume':volumeDic}
-    df = pd.DataFrame(resultDic).sort_values('volume', ascending=False)
+    resultDic = {"volume": volumeDic}
+    df = pd.DataFrame(resultDic).sort_values("volume", ascending=False)
     print(df.head(10))
+
 
 # 随机组合，l是数组，n是组合的元素数量
 def combine(l, n):
     answers = []
     one = [0] * n
-    def next_c(li = 0, ni = 0):
+
+    def next_c(li=0, ni=0):
         if ni == n:
             answers.append(copy.copy(one))
             return
         for lj in range(li, len(l)):
             one[ni] = l[lj]
             next_c(lj + 1, ni + 1)
+
     next_c()
     return answers
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     one()
