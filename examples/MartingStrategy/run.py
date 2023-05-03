@@ -20,7 +20,7 @@ from vnpy.trader.utility import DIR_SYMBOL
 
 def one():
     engine = BacktestingEngine()
-    engine.setPeriod(datetime(2022, 1, 1), datetime(2023, 4, 29))
+    engine.setPeriod(datetime(2022, 2, 1), datetime(2022, 2, 10))
     figSavedName = ""
     if figSavedName:
         figSavedName = f"figSaved{DIR_SYMBOL}{figSavedName}"

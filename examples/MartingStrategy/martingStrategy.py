@@ -83,6 +83,11 @@ class MartingSignal(object):
         判断交易信号
         要注意在任何一个数据点：buy/sell/short/cover只允许执行一类动作
         """
+        # fake
+        # if self.symbol == "AVAXUSDT.BYBIT" and self.direction == Direction.SHORT:
+        #     if self.bar.datetime >= datetime.strptime("2022-02-06 23:00:00", "%Y-%m-%d %H:%M:%S"):
+        #         a = 2
+
         # 当前仓位阶段
         current_phase = self.get_current_phase()
         phase_position_value = self.phase_position_values[current_phase]
@@ -172,7 +177,7 @@ class MartingSignal(object):
                     elif self.current_phase_step == PHASE_STEP.PHASE_STEP_TWO:
                         # 减仓
                         self.current_phase_step = PHASE_STEP.PHASE_STEP_THREE
-                        target_position_value = phase_position_value * 0.85
+                        target_position_value = phase_position_value * 0.15
 
                     elif self.current_phase_step == PHASE_STEP.PHASE_STEP_THREE:
                         # 平仓
