@@ -1,0 +1,66 @@
+{
+  "ai_trader_1": {
+    "EOSUSDT_多": [
+      {
+        "datetime": "2023-04-19",
+        "direction": 1,
+        "price_before": 1.23467119,
+        "value_before": 2892.09,
+        "price_after": 1.19028344,
+        "value_after": 6199.0
+      },
+      {
+        "datetime": "2023-04-19",
+        "direction": 1,
+        "price_before": 1.19028344,
+        "value_before": 6199.0,
+        "price_after": 1.11975143,
+        "value_after": 36987.29
+      },
+      {
+        "datetime": "2023-04-20",
+        "direction": 1,
+        "price_before": 1.11975143,
+        "value_before": 36987.29,
+        "price_after": 1.09488765,
+        "value_after": 72297.29
+      },
+      {
+        "datetime": "2023-04-21",
+        "direction": 1,
+        "price_before": 1.09488765,
+        "value_before": 72297.29,
+        "price_after": 1.06314678,
+        "value_after": 167752.34
+      },
+      {
+        "datetime": "2023-04-26",
+        "direction": 1,
+        "price_before": 1.06314678,
+        "value_before": 65902.87,
+        "price_after": 1.0159213,
+        "value_after": 306300.27
+      }
+    ],
+    "CRVUSDT_多": [
+      {
+        "datetime": "",
+        "direction": 1,
+        "price_before": 0.92709121,
+        "value_before": 5911.32,
+        "price_after": 0.89417286,
+        "value_after": 24806.95
+      }
+    ],
+    "1000SHIBUSDT_多": [
+      {
+        "datetime": "",
+        "direction": 1,
+        "price_before": 0.01020703,
+        "value_before": 18663.89,
+        "price_after": 0.01003238,
+        "value_after": 36703.79
+      }
+    ]
+  }
+}
