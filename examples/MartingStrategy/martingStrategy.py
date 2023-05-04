@@ -63,7 +63,7 @@ class MartingSignal(object):
 
     def calculate_phase_positions(self, portfolio_value):
         self.phase_position_values = []
-        total_phase_count = 10
+        total_phase_count = 20
         for i in range(total_phase_count):
             phase_position = self.unit_value * (2 ** (i + 1) - 1)
             self.phase_position_values.append(phase_position)
@@ -84,8 +84,8 @@ class MartingSignal(object):
         要注意在任何一个数据点：buy/sell/short/cover只允许执行一类动作
         """
         # fake
-        # if self.symbol == "AVAXUSDT.BYBIT" and self.direction == Direction.SHORT:
-        #     if self.bar.datetime >= datetime.strptime("2022-02-06 23:00:00", "%Y-%m-%d %H:%M:%S"):
+        # if self.symbol == "SOLUSDT.BYBIT" and self.direction == Direction.LONG:
+        #     if self.bar.datetime >= datetime.strptime("2022-01-23 05:10:00", "%Y-%m-%d %H:%M:%S"):
         #         a = 2
 
         # 当前仓位阶段
