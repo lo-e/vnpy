@@ -40,8 +40,8 @@ examples/spread_backtesting/result.csv
 
 # Folder
 examples/vn_trader/App/Turtle_crypto/dataservice/CSVs/
-examples\MartingStrategy\signal_trades/
-examples\MartingStrategy\symbol_trades/
+examples/MartingStrategy/signal_trades/
+examples/MartingStrategy/symbol_trades/
 
 # Misc
 .DS_Store
