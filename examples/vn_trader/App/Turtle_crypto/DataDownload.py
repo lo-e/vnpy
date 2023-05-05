@@ -22,15 +22,15 @@ if __name__ == '__main__':
         contract_list = ['BTCUSD', 'ETHUSD']
     elif mode == '2':
         contract_list = ['BTCUSDT', 'ETHUSDT']
-        # contract_list = ['SHIB1000USDT', 'AAVEUSDT', 'ADAUSDT', 'APEUSDT', 'ATOMUSDT', 'AVAXUSDT', 'BCHUSDT', 'CHZUSDT', 'CRVUSDT', 'DOGEUSDT', 'DOTUSDT', 'EOSUSDT', 'ETCUSDT', 'FILUSDT', 'LINKUSDT', 'LTCUSDT', 'MATICUSDT', 'NEARUSDT', 'SANDUSDT', 'SOLUSDT', 'SUSHIUSDT', 'UNIUSDT', 'XRPUSDT']
+        # contract_list = ['SHIB1000USDT', 'AAVEUSDT', 'ADAUSDT', 'APEUSDT', 'ATOMUSDT', 'AVAXUSDT', 'BCHUSDT', 'BNBUSDT', 'BTCUSDT', 'CHZUSDT', 'CRVUSDT', 'DOGEUSDT', 'DOTUSDT', 'EOSUSDT', 'ETCUSDT', 'FILUSDT', 'LINKUSDT', 'LTCUSDT', 'MATICUSDT', 'NEARUSDT', 'SANDUSDT', 'SOLUSDT', 'SUSHIUSDT', 'UNIUSDT', 'XRPUSDT']
     else:
         contract_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
 
     days = 6
     to_date = datetime.now() + timedelta(days=2)
 
-    # days = (datetime.now() - datetime.strptime('2017-01-09', '%Y-%m-%d')).days
-    # to_date = datetime.strptime('2022-01-02', '%Y-%m-%d')
+    # days = (datetime.now() - datetime.strptime('2021-01-09', '%Y-%m-%d')).days
+    # to_date = datetime.strptime('2023-12-31', '%Y-%m-%d')
 
     dataDownload = TurtleCryptoDataDownloading()
     dataDownload.download_from_bybit(contract_list=contract_list, days=days, to_date=to_date)
