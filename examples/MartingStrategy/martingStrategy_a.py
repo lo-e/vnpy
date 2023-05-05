@@ -1,5 +1,6 @@
 # encoding: UTF-8
 
+# ====== 版本A ======
 from collections import defaultdict
 from vnpy.trader.constant import Direction, Offset, Exchange
 from vnpy.trader.utility import ArrayManager
