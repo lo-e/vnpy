@@ -20,7 +20,7 @@ from vnpy.trader.utility import DIR_SYMBOL
 
 def one():
     engine = BacktestingEngine()
-    engine.setPeriod(datetime(2022, 1, 1), datetime(2023, 4, 29))
+    engine.setPeriod(datetime(2021, 12, 2), datetime(2022, 1, 2))
     figSavedName = ""
     if figSavedName:
         figSavedName = f"figSaved{DIR_SYMBOL}{figSavedName}"
@@ -50,19 +50,19 @@ def one():
     for symbol in engine.symbolList:
         symbol_trade_list = symbol_trade_dic.get(symbol, [])
         trade_data_list = engine.getTradeData(symbol)
-        print(f"\n****** {symbol} ******")
+        # print(f"\n****** {symbol} ******")
         for trade in trade_data_list:
-            print(
-                "%s\t%s\t%s\t%s\t%s\t%s"
-                % (
-                    trade.symbol,
-                    trade.dt,
-                    trade.direction.value,
-                    trade.offset.value,
-                    trade.volume,
-                    trade.price,
-                )
-            )
+            # print(
+            #     "%s\t%s\t%s\t%s\t%s\t%s"
+            #     % (
+            #         trade.symbol,
+            #         trade.dt,
+            #         trade.direction.value,
+            #         trade.offset.value,
+            #         trade.volume,
+            #         trade.price,
+            #     )
+            # )
             trade_data = {
                 "symbol": trade.symbol,
                 "datetime": trade.dt,
@@ -103,34 +103,16 @@ def one():
                 # 写入csv文件
                 writer.writerows(trade_list)
 
-    """
-    folio = engine.portfolio
-    signalDic = folio.signalDict
-    for s, signalList in signalDic.items():
-        print('*' * 6 + s + '*' * 6)
-        for signal in signalList:
-            print('currentSymbol\t%s' % signal.bar.vt_symbol)
-            print('datetime\t%s' % signal.bar.datetime)
-            print('ATR\t%s' % signal.atrVolatility)
-            print('multiplier\t%s' % engine.portfolio.multiplierDict[signal.symbol])
-            print('virtualUnit\t%s' % signal.unit)
-            print('unit\t%s' % engine.portfolio.unitDict[signal.symbol])
-            print('longStop\t%s' % signal.longStop)
-            print('shortStop\t%s' % signal.shortStop)
-            if signal.result:
-                print('entry\t%s' % signal.result.entry)
-            print('lastPnl\t%s' % signal.getLastPnl())
-            print('newDominantOpen\t%s' % signal.newDominantOpen)
-
-            print('-' * 16)
-            print('连续盈亏：')
-            continuous_pnl_dict = symbol_continuous_pnl_dict.get(signal.symbol)
-            pnl_keys = list(continuous_pnl_dict.keys())
-            pnl_keys = sorted(pnl_keys)
-            for pnl_key in pnl_keys:
-                print(f'{pnl_key} -> {continuous_pnl_dict[pnl_key]}')
-            print('-' * 16)
-    """
+    # 输出
+    print(f"\n****** 趋势追踪列表 ******")
+    for trending_data in engine.portfolio.trending_history:
+        dt = trending_data["datetime"]
+        signal = trending_data["signal"]
+        trending = trending_data["trending"]
+        trending_desc = "加仓" if trending else "平仓"
+        print(f"{dt}\t{signal}\t{trending_desc}")
+        if not trending:
+            print(f"\n")
 
 
 def two():

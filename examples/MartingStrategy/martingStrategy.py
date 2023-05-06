@@ -1,6 +1,7 @@
 # encoding: UTF-8
 
 from collections import defaultdict
+from rsa import sign
 from vnpy.trader.constant import Direction, Offset, Exchange
 from vnpy.trader.utility import ArrayManager
 from datetime import datetime
@@ -35,6 +36,7 @@ class MartingSignal(object):
             exit("检查代码！")
 
         # 变量
+        self.inited = False # 是否完成初始建仓
         self.bar: BarData = None  # 最新K线
         self.am = ArrayManager(self.ma_window + 1)  # K线容器
         self.position = 0  # 持仓量
@@ -43,7 +45,7 @@ class MartingSignal(object):
         self.position_increase_price = 0  # 加仓价格
         self.ma_price = 0  # 均线价格
         self.calculate_phase_positions(self.portfolio.portfolioValue)  # 马丁格尔倍数仓位管理
-        self.phase_position_volume = 0
+        self.phase_position_volume = 0 # 阶段仓位的初始持仓数量
         self.current_phase_step = PHASE_STEP.PHASE_STEP_ONE  # 当前仓位阶段减仓状态
 
     def on_bar(self, bar):
@@ -59,7 +61,7 @@ class MartingSignal(object):
 
     def calculate_phase_positions(self, portfolio_value):
         self.phase_position_values = []
-        total_phase_count = 20
+        total_phase_count = 3
         for i in range(total_phase_count):
             phase_position = self.unit_value * (2 ** (i + 1) - 1)
             self.phase_position_values.append(phase_position)
@@ -86,7 +88,6 @@ class MartingSignal(object):
 
         # 当前仓位阶段
         current_phase = self.get_current_phase()
-        phase_position_value = self.phase_position_values[current_phase]
 
         # 初始化仓位
         if not self.position:
@@ -128,6 +129,9 @@ class MartingSignal(object):
             else:
                 exit("检查代码！")
 
+            # 完成初始建仓
+            self.inited = True
+
             # 初始化后停止后续判断
             return
 
@@ -157,57 +161,14 @@ class MartingSignal(object):
             if reduce_price_cross:
                 """价格满足减仓条件"""
 
-                # 是否平仓
-                is_close = False
+                if self == self.portfolio.trending_signal:
+                    # 组合策略取消趋势追踪
+                    self.portfolio.update_trending(self, False)
 
-                # 减仓后的目标仓位价值
-                target_position_value = abs(self.position) * self.position_price
-
-                if phase_position_value >= self.portfolio.portfolioValue:
-                    # 超过100%组合本金，分三个阶段减仓
-                    if self.current_phase_step == PHASE_STEP.PHASE_STEP_ONE:
-                        # 减仓
-                        self.current_phase_step = PHASE_STEP.PHASE_STEP_TWO
-                        target_position_value = phase_position_value * 0.5
-
-                    elif self.current_phase_step == PHASE_STEP.PHASE_STEP_TWO:
-                        # 减仓
-                        self.current_phase_step = PHASE_STEP.PHASE_STEP_THREE
-                        target_position_value = phase_position_value * 0.15
-
-                    elif self.current_phase_step == PHASE_STEP.PHASE_STEP_THREE:
-                        # 平仓
-                        self.current_phase_step = PHASE_STEP.PHASE_STEP_ONE
-                        self.position_price = trade_price
-                        target_position_value = self.unit_value
-                        is_close = True
-
-                    else:
-                        exit("检查代码！")
-
-                elif phase_position_value >= self.portfolio.portfolioValue * 0.3:
-                    # 超过30%组合本金，分两个阶段减仓
-                    if self.current_phase_step == PHASE_STEP.PHASE_STEP_ONE:
-                        # 减仓
-                        self.current_phase_step = PHASE_STEP.PHASE_STEP_TWO
-                        target_position_value = phase_position_value * 0.3
-
-                    elif self.current_phase_step == PHASE_STEP.PHASE_STEP_TWO:
-                        # 平仓
-                        self.current_phase_step = PHASE_STEP.PHASE_STEP_ONE
-                        self.position_price = trade_price
-                        target_position_value = self.unit_value
-                        is_close = True
-
-                    else:
-                        exit("检查代码！")
-
-                else:
-                    # 低于30%组合本金，一次性减仓
-                    self.current_phase_step = PHASE_STEP.PHASE_STEP_ONE
-                    self.position_price = trade_price
-                    target_position_value = self.unit_value
-                    is_close = True
+                # 平仓
+                self.current_phase_step = PHASE_STEP.PHASE_STEP_ONE
+                self.position_price = trade_price
+                target_position_value = self.unit_value
 
                 # 计算减仓的合约数量
                 changed_volume = (target_position_value / self.position_price) - abs(
@@ -218,9 +179,8 @@ class MartingSignal(object):
                 # 目标仓位合约数量
                 target_position = abs(self.position) + changed_volume
 
-                if is_close:
-                    # 平仓后更新阶段仓位合约数量
-                    self.phase_position_volume = target_position
+                # 平仓后更新阶段仓位合约数量
+                self.phase_position_volume = target_position
 
                 if changed_volume:
                     # 当前持仓数量更新、发起订单
@@ -298,23 +258,56 @@ class MartingSignal(object):
                 # 加仓后重置减仓状态
                 self.current_phase_step = PHASE_STEP.PHASE_STEP_ONE
 
+                # 加仓的合约数量
+                changed_volume = 0
+
                 # 加仓后的目标仓位价值
                 next_phase = current_phase + 1
-                next_phase = min(len(self.phase_position_values) - 1, next_phase)
-                target_position_value = self.phase_position_values[next_phase]
+                if next_phase >= len(self.phase_position_values):
+                    # ====== 趋势行情 ======
 
-                # 计算加仓的合约数量
-                changed_volume = ((target_position_value - abs(self.position) * self.position_price)) / trade_price
-                changed_volume = round_to(changed_volume, self.symbol_min_volume)
+                    if (not self.portfolio.trending_signal and self == self.portfolio.next_trending_signal) or (self == self.portfolio.trending_signal):
+                        # 新的趋势策略信号
+                        self.portfolio.update_trending(self, True)
+
+                    else:
+                        # 策略组合中并非最佳趋势信号
+                        return
+                    
+                    # 当前持仓价值
+                    current_position_value = abs(self.position) * self.position_price
+
+                    # 更新持仓价格
+                    if self.direction == Direction.LONG:
+                        self.position_price = trade_price * (1 + 0.01)
+                    
+                    elif self.direction == Direction.SHORT:
+                        self.position_price = trade_price * (1 - 0.01)
+
+                    # 计算加仓的合约数量
+                    # current_position_value + changed_volume * trade_price = (abs(self.position) + changed_volume) * self.position_price
+                    # current_position_value + changed_volume * trade_price = abs(self.position) * self.position_price + changed_volume * self.position_price
+                    # changed_volume * (trade_price - self.position_price) = abs(self.position) * self.position_price - current_position_value
+                    changed_volume = (abs(self.position) * self.position_price - current_position_value) / (trade_price - self.position_price)
+
+                else:
+                    # ====== 震荡行情 ======
+
+                    # 目标持仓价值
+                    target_position_value = self.phase_position_values[next_phase]
+
+                    # 计算加仓的合约数量
+                    changed_volume = ((target_position_value - abs(self.position) * self.position_price)) / trade_price
+                    changed_volume = round_to(changed_volume, self.symbol_min_volume)
+
+                    # 更新持仓价格
+                    self.position_price = (changed_volume * trade_price + abs(self.position) * self.position_price) / (abs(self.position) + changed_volume)
 
                 # 目标仓位合约数量
                 target_position = abs(self.position) + changed_volume
 
                 # 加仓后更新阶段仓位合约数量
                 self.phase_position_volume = target_position
-
-                # 更新持仓价格
-                self.position_price = (changed_volume * trade_price + abs(self.position) * self.position_price) / (abs(self.position) + changed_volume)
 
                 if changed_volume:
                     # 当前持仓数量更新、发起订单
@@ -366,7 +359,6 @@ class MartingSignal(object):
 
         # 当前仓位阶段
         current_phase = self.get_current_phase()
-        phase_position_value = self.phase_position_values[current_phase]
 
         # 均线价格
         self.ma_price = self.am.sma(self.ma_window)
@@ -374,52 +366,10 @@ class MartingSignal(object):
         if self.position_price:
             # ====== 减仓价格 ======
             if self.direction == Direction.LONG:
-                if phase_position_value >= self.portfolio.portfolioValue:
-                    # 超过100%组合本金，分三个阶段减仓
-                    if self.current_phase_step == PHASE_STEP.PHASE_STEP_ONE:
-                        self.position_reduce_price = self.position_price * (1 + 0.01)
-
-                    elif self.current_phase_step == PHASE_STEP.PHASE_STEP_TWO:
-                        self.position_reduce_price = self.position_price * (1 + 0.02)
-
-                    elif self.current_phase_step == PHASE_STEP.PHASE_STEP_THREE:
-                        self.position_reduce_price = self.position_price * (1 + 0.03)
-
-                elif phase_position_value >= self.portfolio.portfolioValue * 0.3:
-                    # 超过30%组合本金，分两个阶段减仓
-                    if self.current_phase_step == PHASE_STEP.PHASE_STEP_ONE:
-                        self.position_reduce_price = self.position_price * (1 + 0.01)
-
-                    elif self.current_phase_step == PHASE_STEP.PHASE_STEP_TWO:
-                        self.position_reduce_price = self.position_price * (1 + 0.03)
-
-                else:
-                    # 低于30%组合本金，一次性减仓
-                    self.position_reduce_price = self.position_price * (1 + 0.01)
+                self.position_reduce_price = self.position_price * (1 + 0.01)
 
             elif self.direction == Direction.SHORT:
-                if phase_position_value >= self.portfolio.portfolioValue:
-                    # 超过100%组合本金，分三个阶段减仓
-                    if self.current_phase_step == PHASE_STEP.PHASE_STEP_ONE:
-                        self.position_reduce_price = self.position_price * (1 - 0.01)
-
-                    elif self.current_phase_step == PHASE_STEP.PHASE_STEP_TWO:
-                        self.position_reduce_price = self.position_price * (1 - 0.02)
-
-                    elif self.current_phase_step == PHASE_STEP.PHASE_STEP_THREE:
-                        self.position_reduce_price = self.position_price * (1 - 0.03)
-
-                elif phase_position_value >= self.portfolio.portfolioValue * 0.3:
-                    # 超过30%组合本金，分两个阶段减仓
-                    if self.current_phase_step == PHASE_STEP.PHASE_STEP_ONE:
-                        self.position_reduce_price = self.position_price * (1 - 0.01)
-
-                    elif self.current_phase_step == PHASE_STEP.PHASE_STEP_TWO:
-                        self.position_reduce_price = self.position_price * (1 - 0.03)
-
-                else:
-                    # 低于30%组合本金，一次性减仓
-                    self.position_reduce_price = self.position_price * (1 - 0.01)
+                self.position_reduce_price = self.position_price * (1 - 0.01)
 
             # ====== 加仓价格 ======
             if self.direction == Direction.LONG:
@@ -445,6 +395,23 @@ class MartingSignal(object):
     def newSignal(self, direction, offset, price, volume):
         self.portfolio.newSignal(self, direction, offset, price, volume)
 
+    def get_current_status(self):
+        # 当前仓位阶段
+        current_phase = self.get_current_phase()
+
+        # 判断是否准备好下一仓位阶段是趋势追踪
+        trending_ready = False
+        if current_phase >= len(self.phase_position_values) - 1:
+            trending_ready = True
+
+        # 基于MA的当前盈亏
+        direction_value = 1 if self.direction == Direction.LONG else (-1 if self.direction == Direction.SHORT else 0)
+        ma_pnl = ((self.ma_price / self.position_price) - 1) * direction_value
+
+        return {"trending_ready":trending_ready,
+                "ma_pnl":ma_pnl}
+
+
 class MartingPortfolio(object):
     def __init__(self, engine):
         self.engine = engine
@@ -455,9 +422,13 @@ class MartingPortfolio(object):
         self.signalPosDict = {}  # 策略持仓量字典
         self.signalTradesDict = {}  # 策略成交订单字典
         self.sizeDict = {}  # 合约大小字典
+        self.trending_signal = None # 正在追踪的趋势策略信号
+        self.next_trending_signal = None # 根据盈亏幅度确定下一个追踪的趋势策略信号
+        self.trending_update_dict = {} # 趋势策略信号的更新先缓存在这里，在on_daily完成更新
+        self.trending_history = [] # 缓存追踪过的趋势策略
+        self.dt = None # 当前回测时间
 
     def init(self, portfolioValue, symbolList, sizeDict):
-        """"""
         self.portfolioValue = portfolioValue
         self.sizeDict = sizeDict
 
@@ -470,8 +441,57 @@ class MartingPortfolio(object):
             l.append(signal2)
 
     def onBar(self, bar):
+        if not self.dt or self.dt != bar.datetime:
+            self.dt = bar.datetime
+            self.on_daily()
+
         for signal in self.signalDict[bar.symbol]:
             signal.on_bar(bar)
+
+    def on_daily(self):
+        # 更新当前的趋势信号
+        if self.trending_update_dict:
+            signal = self.trending_update_dict["signal"]
+            trending = self.trending_update_dict["trending"]
+            if trending:
+                # 同时只允许一个正在追踪的趋势策略信号
+                if self.trending_signal and self.trending_signal != signal:
+                    exit("检查代码！")
+                self.trending_signal = signal
+
+            else:
+                # 取消追踪的趋势策略信号必须与当前一致
+                if not self.trending_signal or self.trending_signal != signal:
+                    exit("检查代码！")
+                self.trending_signal = None
+            
+            # 缓存趋势追踪记录
+            signal_key = f"{signal.symbol}_{signal.direction.value}"
+            data = {"datetime":self.dt,
+                    "signal":signal_key,
+                    "trending":trending}
+            self.trending_history.append(data)
+            
+            # 清空趋势更新缓存字典
+            self.trending_update_dict = {}
+
+        # 筛选出跌幅最大的下一个趋势的信号
+        self.next_trending_signal = None
+        min_pnl = 0
+        for _, signal_list in self.signalDict.items():
+            for signal in signal_list:
+                if signal.inited and signal != self.trending_signal:
+                    status = signal.get_current_status()
+                    trending_ready = status["trending_ready"]
+                    ma_pnl = status["ma_pnl"]
+                    if trending_ready and ma_pnl < 0 and ma_pnl < min_pnl:
+                        min_pnl = ma_pnl
+                        self.next_trending_signal = signal
+        
+    def update_trending(self, signal, trending):
+        # ====== 趋势策略信号的开仓/平仓都会调用这个方法，先缓存更新内容，在on_daily完成更新 ======
+        self.trending_update_dict = {"signal":signal,
+                                     "trending":trending}
 
     def newSignal(self, signal, direction, offset, price, volume):
         # 策略当前持仓数量
