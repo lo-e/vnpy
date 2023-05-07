@@ -12,14 +12,16 @@ from vnpy.app.cta_strategy.base import DAILY_DB_NAME, DOMINANT_DB_NAME
 from enum import Enum
 from vnpy.trader.utility import round_to, floor_to, ceil_to
 from vnpy.trader.utility import DIR_SYMBOL
+import numpy as np
 
 class MartingSignal(object):
-    def __init__(self, portfolio, symbol, direction, ma_window):
+    def __init__(self, portfolio, symbol, direction, ma_window, rsi_window):
         # 常量
         self.portfolio = portfolio  # 投资组合
         self.symbol = symbol  # 合约代码
         self.direction = direction  # 交易方向
         self.ma_window = ma_window  # 均线参数
+        self.rsi_window = rsi_window  # RSI参数
         self.unit_value = self.portfolio.portfolioValue * 0.412 * 0.01  # 最小持仓价值
         self.symbol_min_volume = self.portfolio.engine.min_volume_dict[
             self.symbol
@@ -33,12 +35,13 @@ class MartingSignal(object):
         # 变量
         self.inited = False # 是否完成初始建仓
         self.bar: BarData = None  # 最新K线
-        self.am = ArrayManager(self.ma_window + 1)  # K线容器
+        self.am = ArrayManager(max(self.ma_window, self.rsi_window+11) + 1)  # K线容器
         self.position = 0  # 持仓量
         self.position_price = 0  # 持仓均价
         self.position_reduce_price = 0  # 减仓价格
         self.position_increase_price = 0  # 加仓价格
         self.ma_price = 0  # 均线价格
+        self.rsi_array = []
         self.calculate_phase_positions(self.portfolio.portfolioValue)  # 马丁格尔倍数仓位管理
         self.phase_position_volume = 0 # 阶段仓位的初始持仓数量
         self.trending_step = 0  # 追踪趋势的程度
@@ -356,6 +359,13 @@ class MartingSignal(object):
         # 均线价格
         self.ma_price = self.am.sma(self.ma_window)
 
+        # RSI指标
+        self.rsi_array = []
+        rsi_result = self.am.rsi(self.rsi_window, True)
+        for rsi in rsi_result:
+            if not np.isnan(rsi):
+                self.rsi_array.append(rsi)
+
         if self.position_price:
             # ====== 减仓价格 ======
             if self.direction == Direction.LONG:
@@ -426,8 +436,8 @@ class MartingPortfolio(object):
         self.sizeDict = sizeDict
 
         for symbol in symbolList:
-            signal1 = MartingSignal(self, symbol, Direction.LONG, 9)
-            signal2 = MartingSignal(self, symbol, Direction.SHORT, 9)
+            signal1 = MartingSignal(self, symbol, Direction.LONG, 9, 14)
+            signal2 = MartingSignal(self, symbol, Direction.SHORT, 9, 14)
 
             l = self.signalDict[symbol]
             l.append(signal1)
