@@ -82,8 +82,8 @@ class MartingSignal(object):
         要注意在任何一个数据点：buy/sell/short/cover只允许执行一类动作
         """
         # fake
-        # if self.symbol == "SOLUSDT.BYBIT" and self.direction == Direction.LONG:
-        #     if self.bar.datetime >= datetime.strptime("2022-01-23 05:10:00", "%Y-%m-%d %H:%M:%S"):
+        # if self.symbol == "EOSUSDT.BYBIT" and self.direction == Direction.LONG:
+        #     if self.bar.datetime >= datetime.strptime("2023-04-22 23:35:00", "%Y-%m-%d %H:%M:%S"):
         #         a = 2
 
         # 当前仓位阶段
