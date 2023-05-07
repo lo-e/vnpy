@@ -40,6 +40,14 @@
         "value_before": 65902.87,
         "price_after": 1.0159213,
         "value_after": 306300.27
+      },
+      {
+        "datetime": "2023-04-29",
+        "direction": 1,
+        "price_before": 1.0159213,
+        "value_before": 51304.03,
+        "price_after": 1.00146065,
+        "value_after": 101147.53
       }
     ],
     "CRVUSDT_多": [
@@ -60,6 +68,14 @@
         "value_before": 18663.89,
         "price_after": 0.01003238,
         "value_after": 36703.79
+      },
+      {
+        "datetime": "2023-05-04",
+        "direction": 1,
+        "price_before": 0.01003238,
+        "value_before": 18344.54,
+        "price_after": 0.00967626,
+        "value_after": 34131.24
       }
     ]
   }

@@ -68,5 +68,5 @@ def calculate_increace_info(trader:str, symbol:str):
 
 if __name__ == "__main__":
     trader = "ai_trader_1"
-    symbol = "EOSUSDT_多"
+    symbol = "1000SHIBUSDT_多"
     calculate_increace_info(trader=trader, symbol=symbol)
