@@ -20,7 +20,7 @@ from vnpy.trader.utility import DIR_SYMBOL
 
 def one():
     engine = BacktestingEngine()
-    engine.setPeriod(datetime(2023, 4, 2), datetime(2023, 5, 2))
+    engine.setPeriod(datetime(2021, 10, 2), datetime(2023, 5, 2))
     figSavedName = ""
     if figSavedName:
         figSavedName = f"figSaved{DIR_SYMBOL}{figSavedName}"
@@ -105,14 +105,32 @@ def one():
 
     # 输出
     print(f"\n****** 趋势追踪列表 ******")
+    continuous_open = 0
+    continuous_open_dict = {}
     for trending_data in engine.portfolio.trending_history:
         dt = trending_data["datetime"]
         signal = trending_data["signal"]
+        position_value = trending_data["position_value"]
         trending = trending_data["trending"]
         trending_desc = "加仓" if trending else "平仓"
-        print(f"{dt}\t{signal}\t{trending_desc}")
-        if not trending:
+        print(f"{dt}\t{signal}\t{position_value}\t{trending_desc}")
+        if trending:
+            continuous_open += 1
+
+        else:
+            continuous_key = str(continuous_open)
+            count = continuous_open_dict.get(continuous_key, 0)
+            count += 1
+            continuous_open_dict[continuous_key] = count
+            continuous_open = 0
             print(f"\n")
+
+    print(f"\n****** 趋势追踪连续统计 ******")
+    continuous_keys = list(continuous_open_dict.keys())
+    continuous_keys = sorted(continuous_keys)
+    for continuous_key in continuous_keys:
+        count = continuous_open_dict[continuous_key]
+        print(f"{continuous_key}\t{count}")
 
 
 def two():

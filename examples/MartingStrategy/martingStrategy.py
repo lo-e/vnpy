@@ -13,11 +13,6 @@ from enum import Enum
 from vnpy.trader.utility import round_to, floor_to, ceil_to
 from vnpy.trader.utility import DIR_SYMBOL
 
-class PHASE_STEP(Enum):
-    PHASE_STEP_ONE = "第一仓位，全仓"
-    PHASE_STEP_TWO = "第二仓位，50% / 30%"
-    PHASE_STEP_THREE = "第三仓位，15%"
-
 class MartingSignal(object):
     def __init__(self, portfolio, symbol, direction, ma_window):
         # 常量
@@ -46,7 +41,7 @@ class MartingSignal(object):
         self.ma_price = 0  # 均线价格
         self.calculate_phase_positions(self.portfolio.portfolioValue)  # 马丁格尔倍数仓位管理
         self.phase_position_volume = 0 # 阶段仓位的初始持仓数量
-        self.current_phase_step = PHASE_STEP.PHASE_STEP_ONE  # 当前仓位阶段减仓状态
+        self.trending_step = 0  # 追踪趋势的程度
 
     def on_bar(self, bar):
         if not bar.check_valid():
@@ -82,8 +77,8 @@ class MartingSignal(object):
         要注意在任何一个数据点：buy/sell/short/cover只允许执行一类动作
         """
         # fake
-        # if self.symbol == "EOSUSDT.BYBIT" and self.direction == Direction.LONG:
-        #     if self.bar.datetime >= datetime.strptime("2023-04-22 23:35:00", "%Y-%m-%d %H:%M:%S"):
+        # if self.symbol == "AVAXUSDT.BYBIT" and self.direction == Direction.LONG:
+        #     if self.bar.datetime >= datetime.strptime("2022-05-06 00:40:00", "%Y-%m-%d %H:%M:%S"):
         #         a = 2
 
         # 当前仓位阶段
@@ -93,9 +88,6 @@ class MartingSignal(object):
         if not self.position:
             # 成交价格
             trade_price = round_to(bar.close_price, self.symbol_price_tick)
-
-            # 初始化阶段减仓状态
-            self.current_phase_step = PHASE_STEP.PHASE_STEP_ONE
 
             # 初始化持仓价格
             self.position_price = trade_price
@@ -166,7 +158,6 @@ class MartingSignal(object):
                     self.portfolio.update_trending(self, False)
 
                 # 平仓
-                self.current_phase_step = PHASE_STEP.PHASE_STEP_ONE
                 self.position_price = trade_price
                 target_position_value = self.unit_value
 
@@ -254,9 +245,6 @@ class MartingSignal(object):
 
             if increase_price_cross:
                 """价格满足加仓条件"""
-
-                # 加仓后重置减仓状态
-                self.current_phase_step = PHASE_STEP.PHASE_STEP_ONE
 
                 # 加仓的合约数量
                 changed_volume = 0
@@ -467,8 +455,13 @@ class MartingPortfolio(object):
             
             # 缓存趋势追踪记录
             signal_key = f"{signal.symbol}_{signal.direction.value}"
+
+            # 趋势策略当前持仓价值
+            position_value = round_to(signal.position * signal.position_price, 1)
+
             data = {"datetime":self.dt,
                     "signal":signal_key,
+                    "position_value":position_value,
                     "trending":trending}
             self.trending_history.append(data)
             
