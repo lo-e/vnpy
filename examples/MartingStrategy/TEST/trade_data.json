@@ -76,6 +76,14 @@
         "value_before": 18344.54,
         "price_after": 0.00967626,
         "value_after": 34131.24
+      },
+      {
+        "datetime": "2023-05-06",
+        "direction": 1,
+        "price_before": 0.00967626,
+        "value_before": 34131.24,
+        "price_after": 0.00954505,
+        "value_after": 68030.6
       }
     ]
   }
