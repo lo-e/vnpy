@@ -153,6 +153,9 @@ class MartingSignal(object):
             if reduce_price_cross:
                 """价格满足减仓条件"""
 
+                # 初始化趋势追踪程度
+                self.trending_step = 0
+
                 if self == self.portfolio.trending_signal:
                     # 组合策略取消趋势追踪
                     self.portfolio.update_trending(self, False)
@@ -257,6 +260,7 @@ class MartingSignal(object):
                     if (not self.portfolio.trending_signal and self == self.portfolio.next_trending_signal) or (self == self.portfolio.trending_signal):
                         # 新的趋势策略信号
                         self.portfolio.update_trending(self, True)
+                        self.trending_step += 1
 
                     else:
                         # 策略组合中并非最佳趋势信号
@@ -266,11 +270,12 @@ class MartingSignal(object):
                     current_position_value = abs(self.position) * self.position_price
 
                     # 更新持仓价格
+                    price_rate = 0.01
                     if self.direction == Direction.LONG:
-                        self.position_price = trade_price * (1 + 0.01)
+                        self.position_price = trade_price * (1 + price_rate)
                     
                     elif self.direction == Direction.SHORT:
-                        self.position_price = trade_price * (1 - 0.01)
+                        self.position_price = trade_price * (1 - price_rate)
 
                     # 计算加仓的合约数量
                     # current_position_value + changed_volume * trade_price = (abs(self.position) + changed_volume) * self.position_price
