@@ -14,6 +14,7 @@ from vnpy.trader.utility import round_to, floor_to, ceil_to
 from vnpy.trader.utility import DIR_SYMBOL
 import numpy as np
 
+
 class MartingSignal(object):
     def __init__(self, portfolio, symbol, direction, ma_window, rsi_window):
         # 常量
@@ -33,9 +34,9 @@ class MartingSignal(object):
             exit("检查代码！")
 
         # 变量
-        self.inited = False # 是否完成初始建仓
+        self.inited = False  # 是否完成初始建仓
         self.bar: BarData = None  # 最新K线
-        self.am = ArrayManager(max(self.ma_window, self.rsi_window+11) + 1)  # K线容器
+        self.am = ArrayManager(max(self.ma_window, self.rsi_window + 11) + 1)  # K线容器
         self.position = 0  # 持仓量
         self.position_price = 0  # 持仓均价
         self.position_reduce_price = 0  # 减仓价格
@@ -43,7 +44,7 @@ class MartingSignal(object):
         self.ma_price = 0  # 均线价格
         self.rsi_array = []
         self.calculate_phase_positions(self.portfolio.portfolioValue)  # 马丁格尔倍数仓位管理
-        self.phase_position_volume = 0 # 阶段仓位的初始持仓数量
+        self.phase_position_volume = 0  # 阶段仓位的初始持仓数量
         self.trending_step = 0  # 追踪趋势的程度
 
     def on_bar(self, bar):
@@ -120,7 +121,7 @@ class MartingSignal(object):
                     trade_price,
                     abs(init_volume),
                 )
-            
+
             else:
                 exit("检查代码！")
 
@@ -234,16 +235,32 @@ class MartingSignal(object):
             # 是否达到目标价位
             increase_price_cross = False
             if self.direction == Direction.LONG:
+                # 根据RSI判断是否超卖
+                rsi_cross = False
+                for rsi in self.rsi_array:
+                    if rsi <= 25:
+                        rsi_cross = True
+                        break
+
                 if (
-                    self.ma_price <= self.position_increase_price
+                    rsi_cross
+                    and self.ma_price <= self.position_increase_price
                     and bar.high_price > trade_price
                     and bar.low_price <= trade_price
                 ):
                     increase_price_cross = True
 
             if self.direction == Direction.SHORT:
+                # 根据RSI判断是否超买
+                rsi_cross = False
+                for rsi in self.rsi_array:
+                    if rsi >= 75:
+                        rsi_cross = True
+                        break
+
                 if (
-                    self.ma_price >= self.position_increase_price
+                    rsi_cross
+                    and self.ma_price >= self.position_increase_price
                     and bar.low_price < trade_price
                     and bar.high_price >= trade_price
                 ):
@@ -260,7 +277,10 @@ class MartingSignal(object):
                 if next_phase >= len(self.phase_position_values):
                     # ====== 趋势行情 ======
 
-                    if (not self.portfolio.trending_signal and self == self.portfolio.next_trending_signal) or (self == self.portfolio.trending_signal):
+                    if (
+                        not self.portfolio.trending_signal
+                        and self == self.portfolio.next_trending_signal
+                    ) or (self == self.portfolio.trending_signal):
                         # 新的趋势策略信号
                         self.portfolio.update_trending(self, True)
                         self.trending_step += 1
@@ -268,7 +288,7 @@ class MartingSignal(object):
                     else:
                         # 策略组合中并非最佳趋势信号
                         return
-                    
+
                     # 当前持仓价值
                     current_position_value = abs(self.position) * self.position_price
 
@@ -276,7 +296,7 @@ class MartingSignal(object):
                     price_rate = 0.01
                     if self.direction == Direction.LONG:
                         self.position_price = trade_price * (1 + price_rate)
-                    
+
                     elif self.direction == Direction.SHORT:
                         self.position_price = trade_price * (1 - price_rate)
 
@@ -284,7 +304,10 @@ class MartingSignal(object):
                     # current_position_value + changed_volume * trade_price = (abs(self.position) + changed_volume) * self.position_price
                     # current_position_value + changed_volume * trade_price = abs(self.position) * self.position_price + changed_volume * self.position_price
                     # changed_volume * (trade_price - self.position_price) = abs(self.position) * self.position_price - current_position_value
-                    changed_volume = (abs(self.position) * self.position_price - current_position_value) / (trade_price - self.position_price)
+                    changed_volume = (
+                        abs(self.position) * self.position_price
+                        - current_position_value
+                    ) / (trade_price - self.position_price)
 
                 else:
                     # ====== 震荡行情 ======
@@ -293,11 +316,19 @@ class MartingSignal(object):
                     target_position_value = self.phase_position_values[next_phase]
 
                     # 计算加仓的合约数量
-                    changed_volume = ((target_position_value - abs(self.position) * self.position_price)) / trade_price
+                    changed_volume = (
+                        (
+                            target_position_value
+                            - abs(self.position) * self.position_price
+                        )
+                    ) / trade_price
                     changed_volume = round_to(changed_volume, self.symbol_min_volume)
 
                     # 更新持仓价格
-                    self.position_price = (changed_volume * trade_price + abs(self.position) * self.position_price) / (abs(self.position) + changed_volume)
+                    self.position_price = (
+                        changed_volume * trade_price
+                        + abs(self.position) * self.position_price
+                    ) / (abs(self.position) + changed_volume)
 
                 # 目标仓位合约数量
                 target_position = abs(self.position) + changed_volume
@@ -346,7 +377,7 @@ class MartingSignal(object):
                                 trade_price,
                                 abs(changed_volume),
                             )
-                    
+
                     else:
                         exit("检查代码！")
 
@@ -408,11 +439,14 @@ class MartingSignal(object):
             trending_ready = True
 
         # 基于MA的当前盈亏
-        direction_value = 1 if self.direction == Direction.LONG else (-1 if self.direction == Direction.SHORT else 0)
+        direction_value = (
+            1
+            if self.direction == Direction.LONG
+            else (-1 if self.direction == Direction.SHORT else 0)
+        )
         ma_pnl = ((self.ma_price / self.position_price) - 1) * direction_value
 
-        return {"trending_ready":trending_ready,
-                "ma_pnl":ma_pnl}
+        return {"trending_ready": trending_ready, "ma_pnl": ma_pnl}
 
 
 class MartingPortfolio(object):
@@ -425,11 +459,11 @@ class MartingPortfolio(object):
         self.signalPosDict = {}  # 策略持仓量字典
         self.signalTradesDict = {}  # 策略成交订单字典
         self.sizeDict = {}  # 合约大小字典
-        self.trending_signal = None # 正在追踪的趋势策略信号
-        self.next_trending_signal = None # 根据盈亏幅度确定下一个追踪的趋势策略信号
-        self.trending_update_dict = {} # 趋势策略信号的更新先缓存在这里，在on_daily完成更新
-        self.trending_history = [] # 缓存追踪过的趋势策略
-        self.dt = None # 当前回测时间
+        self.trending_signal = None  # 正在追踪的趋势策略信号
+        self.next_trending_signal = None  # 根据盈亏幅度确定下一个追踪的趋势策略信号
+        self.trending_update_dict = {}  # 趋势策略信号的更新先缓存在这里，在on_daily完成更新
+        self.trending_history = []  # 缓存追踪过的趋势策略
+        self.dt = None  # 当前回测时间
 
     def init(self, portfolioValue, symbolList, sizeDict):
         self.portfolioValue = portfolioValue
@@ -467,19 +501,21 @@ class MartingPortfolio(object):
                 if not self.trending_signal or self.trending_signal != signal:
                     exit("检查代码！")
                 self.trending_signal = None
-            
+
             # 缓存趋势追踪记录
             signal_key = f"{signal.symbol}_{signal.direction.value}"
 
             # 趋势策略当前持仓价值
             position_value = round_to(signal.position * signal.position_price, 1)
 
-            data = {"datetime":self.dt,
-                    "signal":signal_key,
-                    "position_value":position_value,
-                    "trending":trending}
+            data = {
+                "datetime": self.dt,
+                "signal": signal_key,
+                "position_value": position_value,
+                "trending": trending,
+            }
             self.trending_history.append(data)
-            
+
             # 清空趋势更新缓存字典
             self.trending_update_dict = {}
 
@@ -495,11 +531,10 @@ class MartingPortfolio(object):
                     if trending_ready and ma_pnl < 0 and ma_pnl < min_pnl:
                         min_pnl = ma_pnl
                         self.next_trending_signal = signal
-        
+
     def update_trending(self, signal, trending):
         # ====== 趋势策略信号的开仓/平仓都会调用这个方法，先缓存更新内容，在on_daily完成更新 ======
-        self.trending_update_dict = {"signal":signal,
-                                     "trending":trending}
+        self.trending_update_dict = {"signal": signal, "trending": trending}
 
     def newSignal(self, signal, direction, offset, price, volume):
         # 策略当前持仓数量
@@ -543,15 +578,21 @@ class MartingPortfolio(object):
 
         # 保存成交数据
         signal_trades_list = self.signalTradesDict.get(signal_key, [])
-        trade_data = {"datetime":signal.bar.datetime,
-                      "symbol":signal.symbol,
-                      "direction":direction,
-                      "offset":offset,
-                      "volume":volume,
-                      "price":price,
-                      "signal_position":round_to(signal.position, signal.symbol_min_volume),
-                      "signal_position_price":round_to(signal.position_price, signal.symbol_price_tick),
-                      "signal_position_value":round_to(signal.position * signal.position_price, 1)}
+        trade_data = {
+            "datetime": signal.bar.datetime,
+            "symbol": signal.symbol,
+            "direction": direction,
+            "offset": offset,
+            "volume": volume,
+            "price": price,
+            "signal_position": round_to(signal.position, signal.symbol_min_volume),
+            "signal_position_price": round_to(
+                signal.position_price, signal.symbol_price_tick
+            ),
+            "signal_position_value": round_to(
+                signal.position * signal.position_price, 1
+            ),
+        }
         signal_trades_list.append(trade_data)
         self.signalTradesDict[signal_key] = signal_trades_list
 
