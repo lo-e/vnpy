@@ -505,12 +505,16 @@ class MartingPortfolio(object):
             # 缓存趋势追踪记录
             signal_key = f"{signal.symbol}_{signal.direction.value}"
 
+            # 趋势策略当前持仓均价
+            position_price = signal.position_price
+
             # 趋势策略当前持仓价值
             position_value = round_to(signal.position * signal.position_price, 1)
 
             data = {
                 "datetime": self.dt,
                 "signal": signal_key,
+                "position_price":position_price,
                 "position_value": position_value,
                 "trending": trending,
             }

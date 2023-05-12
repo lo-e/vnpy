@@ -20,7 +20,7 @@ from vnpy.trader.utility import DIR_SYMBOL
 
 def one():
     engine = BacktestingEngine()
-    engine.setPeriod(datetime(2021, 10, 2), datetime(2021, 11, 2))
+    engine.setPeriod(datetime(2023, 2, 2), datetime(2023, 3, 2))
     figSavedName = ""
     if figSavedName:
         figSavedName = f"figSaved{DIR_SYMBOL}{figSavedName}"
@@ -103,17 +103,18 @@ def one():
                 # 写入csv文件
                 writer.writerows(trade_list)
 
-    # 输出
+    # 输出趋势追踪列表
     print(f"\n****** 趋势追踪列表 ******")
     continuous_open = 0
     continuous_open_dict = {}
     for trending_data in engine.portfolio.trending_history:
         dt = trending_data["datetime"]
         signal = trending_data["signal"]
+        position_price = trending_data["position_price"]
         position_value = trending_data["position_value"]
         trending = trending_data["trending"]
         trending_desc = "加仓" if trending else "平仓"
-        print(f"{dt}\t{signal}\t{position_value}\t{trending_desc}")
+        print(f"{dt}\t{signal}\t均价：{position_price}\t价值：{position_value}\t{trending_desc}")
         if trending:
             continuous_open += 1
 
