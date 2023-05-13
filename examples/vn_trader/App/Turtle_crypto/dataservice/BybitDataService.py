@@ -10,6 +10,7 @@ import socket
 from enum import Enum
 from vnpy.trader.object import ContractData, Exchange, Product
 from typing import Set
+import pandas as pd
 
 hostname = socket.gethostname()
 main_url = "https://api.bybit.com"
@@ -91,9 +92,27 @@ def bybit_get_bar_data(symbol: str, interval: str, from_time: str, limit: int = 
 
     return datetime.strptime(until, "%Y-%m-%d-%H%M%S")
 
+def bybit_get_latest_price(symbol: str):
+    from_time = datetime.now() - timedelta(hours=1)
+    from_time = from_time.strftime("%Y-%m-%d %H:%M:%S")
+    timeArray = time.strptime(from_time, "%Y-%m-%d %H:%M:%S")
+    timeStamp = int(time.mktime(timeArray))
+    if "USDT" in symbol:
+        url = f"{main_url}/public/linear/kline?symbol={symbol}&interval=1&from={timeStamp}&limit=100"
+    else:
+        url = f"{main_url}/v2/public/kline/list?symbol={symbol}&interval=1&from={timeStamp}&limit=100"
+    resp = requests.get(url, headers={}, params={})
+    data = resp.json()
+    bar_data = data.get("result", [])
+    latest_price = 0
+    if bar_data:
+        latest_bar = bar_data[-1]
+        latest_price = latest_bar["close"]
+    return latest_price
 
-def bybit_get_symbol_list(type: BybitSymbolType):
+def bybit_get_symbol_list(type: BybitSymbolType, need_data:bool=False):
     symbol_list: Set[str] = set()
+    symbol_data_dict = {}
 
     if type == BybitSymbolType.SPOT:
         # 现货
@@ -127,6 +146,7 @@ def bybit_get_symbol_list(type: BybitSymbolType):
         #     history_data=True,
         #     gateway_name='BYBIT'
         # )
+        symbol = ""
         if type == BybitSymbolType.SPOT:
             # 现货
 
@@ -134,7 +154,9 @@ def bybit_get_symbol_list(type: BybitSymbolType):
             if d["quoteCoin"] != "USDT":
                 continue
 
-            symbol_list.add(d["name"])
+            symbol = d["name"]
+            symbol_list.add(symbol)
+            symbol_data_dict[symbol] = d
 
         elif (
             type == BybitSymbolType.SWAP
@@ -142,23 +164,74 @@ def bybit_get_symbol_list(type: BybitSymbolType):
             and d["quote_currency"] != "USDT"
         ):
             # 反向永续合约
-            symbol_list.add(d["name"])
+            symbol = d["name"]
+            symbol_list.add(symbol)
+            symbol_data_dict[symbol] = d
 
         elif type == BybitSymbolType.FUTURE and d["name"] != d["alias"]:
             # 反向交割合约
-            symbol_list.add(d["name"])
+            symbol = d["name"]
+            symbol_list.add(symbol)
+            symbol_data_dict[symbol] = d
 
         elif type == BybitSymbolType.USDT and d["quote_currency"] == "USDT":
             # 正向USDT永续合约
-            symbol_list.add(d["name"])
+            symbol = d["name"]
+            symbol_list.add(symbol)
+            symbol_data_dict[symbol] = d
 
         elif type == BybitSymbolType.USDC and d["quote_currency"] == "USDC":
             # 正向USDC永续合约
-            symbol_list.add(d["name"])
+            symbol = d["name"]
+            symbol_list.add(symbol)
+            symbol_data_dict[symbol] = d
 
     symbol_list = sorted(list(symbol_list))
-    return symbol_list
 
+    if need_data:
+        return symbol_list, symbol_data_dict
+
+    else:
+        return symbol_list
+
+def bybit_get_min_value(filter:float):
+    # 获取交易对最小交易价值
+    usdt_symbol_list, data = bybit_get_symbol_list(type=BybitSymbolType.USDT, need_data=True)
+    print(f"\n所有USDT永续交易对：{len(usdt_symbol_list)}\n")
+    
+    print(f"满足筛选条件的交易对")
+    count = 0
+    rusult_list = []
+
+    for symbol in usdt_symbol_list:
+        d = data[symbol]
+        # 最小交易数量
+        min_volume = d["lot_size_filter"]["min_trading_qty"]
+        # 获取最新的价格
+        price = bybit_get_latest_price(symbol=symbol)
+        # 最小交易价值
+        value = min_volume * price
+        if value <= filter:
+            print(f"{symbol}\t\t最新价格：{price}\t\t最小交易数量：{min_volume}\t\t价值：{value}")
+            count += 1
+            rusult_list.append({"symbol":symbol,
+                                "price":price,
+                                "min_volume":min_volume,
+                                "value":value})
+    print(f"总计：{count}")
+
+    # 写入CSV
+    csv_path = get_csv_path()
+    # csv文件路径
+    dir_path = csv_path + f"min_value{DIR_SYMBOL}"
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+    csv_file_path = f"{dir_path}filter_{filter}.csv"
+    results_sorted = pd.DataFrame(rusult_list)
+    results_sorted = results_sorted.sort_values("symbol", ascending=False)
+    results_sorted.to_csv(csv_file_path, index=False)
+
+    return rusult_list
 
 def get_csv_path():
     path = os.path.abspath(__file__)
@@ -168,13 +241,16 @@ def get_csv_path():
 
 
 if __name__ == "__main__":
+    """
     # 获取Bar数据
-    # symbol = 'BTCUSD'
-    # interval = '1'
-    # from_time = (datetime.now() - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
-    # bybit_get_bar_data(symbol=symbol, interval=interval, from_time=from_time)
-    # print('completed！')
+    symbol = 'BTCUSD'
+    interval = '1'
+    from_time = (datetime.now() - timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
+    bybit_get_bar_data(symbol=symbol, interval=interval, from_time=from_time)
+    print('completed！')
+    """
 
+    """
     # 获取交易对列表
     spot_symbol_list = bybit_get_symbol_list(type=BybitSymbolType.SPOT)
     usdt_symbol_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
@@ -200,3 +276,7 @@ if __name__ == "__main__":
     # print(f"====== USDT永续独享交易 ======")
     # for symbol in usdt_only_list:
     #     print(symbol)
+    """
+
+    # 获取所有USDT永续合约最小交易价值，并筛选
+    bybit_get_min_value(filter=0.5)
