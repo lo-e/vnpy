@@ -1,17 +1,29 @@
-#-- coding: utf-8 --
+# -- coding: utf-8 --
 
 from typing import Callable, Optional
 from vnpy.trader.object import BarData, TickData
 from vnpy.trader.constant import Exchange, Interval
 from pymongo import MongoClient, ASCENDING
-from vnpy.app.cta_strategy.base import (MINUTE_DB_NAME, HOUR_DB_NAME, MinuteDataBaseName, HourDataBaseName)
+from vnpy.app.cta_strategy.base import (
+    MINUTE_DB_NAME,
+    HOUR_DB_NAME,
+    MinuteDataBaseName,
+    HourDataBaseName,
+)
 import re
 from datetime import datetime
+from time import sleep
+from threading import Thread
 
 # 将上一级目录添加到模块搜索路径中
 import sys
-sys.path.append('..')  
-from vn_trader.App.Turtle_crypto.dataservice.BybitDataService import bybit_get_symbol_list, BybitSymbolType
+
+sys.path.append("..")
+from vn_trader.App.Turtle_crypto.dataservice.BybitDataService import (
+    bybit_get_symbol_list,
+    BybitSymbolType,
+)
+
 
 class BarGenerator:
     """
@@ -29,7 +41,7 @@ class BarGenerator:
         on_bar: Callable = None,
         window: int = 0,
         on_window_bar: Callable = None,
-        interval: Interval = Interval.MINUTE
+        interval: Interval = Interval.MINUTE,
     ):
         """Constructor"""
         self.bar: BarData = None
@@ -62,13 +74,10 @@ class BarGenerator:
 
         if not self.bar:
             new_minute = True
-        elif (
-            (self.bar.datetime.minute != tick.datetime.minute)
-            or (self.bar.datetime.hour != tick.datetime.hour)
+        elif (self.bar.datetime.minute != tick.datetime.minute) or (
+            self.bar.datetime.hour != tick.datetime.hour
         ):
-            self.bar.datetime = self.bar.datetime.replace(
-                second=0, microsecond=0
-            )
+            self.bar.datetime = self.bar.datetime.replace(second=0, microsecond=0)
             self.on_bar(self.bar)
 
             new_minute = True
@@ -84,7 +93,7 @@ class BarGenerator:
                 high_price=tick.last_price,
                 low_price=tick.last_price,
                 close_price=tick.last_price,
-                open_interest=tick.open_interest
+                open_interest=tick.open_interest,
             )
         else:
             self.bar.high_price = max(self.bar.high_price, tick.last_price)
@@ -129,18 +138,12 @@ class BarGenerator:
                 gateway_name=bar.gateway_name,
                 open_price=bar.open_price,
                 high_price=bar.high_price,
-                low_price=bar.low_price
+                low_price=bar.low_price,
             )
         # Otherwise, update high/low price into window bar
         else:
-            self.window_bar.high_price = max(
-                self.window_bar.high_price,
-                bar.high_price
-            )
-            self.window_bar.low_price = min(
-                self.window_bar.low_price,
-                bar.low_price
-            )
+            self.window_bar.high_price = max(self.window_bar.high_price, bar.high_price)
+            self.window_bar.low_price = min(self.window_bar.low_price, bar.low_price)
 
         # Update close price/volume/turnover into window bar
         self.window_bar.close_price = bar.close_price
@@ -175,7 +178,7 @@ class BarGenerator:
                 close_price=bar.close_price,
                 volume=bar.volume,
                 turnover=bar.turnover,
-                open_interest=bar.open_interest
+                open_interest=bar.open_interest,
             )
             return
 
@@ -183,14 +186,8 @@ class BarGenerator:
 
         # If minute is 59, update minute bar into window bar and push
         if bar.datetime.minute == 59:
-            self.hour_bar.high_price = max(
-                self.hour_bar.high_price,
-                bar.high_price
-            )
-            self.hour_bar.low_price = min(
-                self.hour_bar.low_price,
-                bar.low_price
-            )
+            self.hour_bar.high_price = max(self.hour_bar.high_price, bar.high_price)
+            self.hour_bar.low_price = min(self.hour_bar.low_price, bar.low_price)
 
             self.hour_bar.close_price = bar.close_price
             self.hour_bar.volume += bar.volume
@@ -216,18 +213,12 @@ class BarGenerator:
                 close_price=bar.close_price,
                 volume=bar.volume,
                 turnover=bar.turnover,
-                open_interest=bar.open_interest
+                open_interest=bar.open_interest,
             )
         # Otherwise only update minute bar
         else:
-            self.hour_bar.high_price = max(
-                self.hour_bar.high_price,
-                bar.high_price
-            )
-            self.hour_bar.low_price = min(
-                self.hour_bar.low_price,
-                bar.low_price
-            )
+            self.hour_bar.high_price = max(self.hour_bar.high_price, bar.high_price)
+            self.hour_bar.low_price = min(self.hour_bar.low_price, bar.low_price)
 
             self.hour_bar.close_price = bar.close_price
             self.hour_bar.volume += bar.volume
@@ -251,16 +242,14 @@ class BarGenerator:
                     gateway_name=bar.gateway_name,
                     open_price=bar.open_price,
                     high_price=bar.high_price,
-                    low_price=bar.low_price
+                    low_price=bar.low_price,
                 )
             else:
                 self.window_bar.high_price = max(
-                    self.window_bar.high_price,
-                    bar.high_price
+                    self.window_bar.high_price, bar.high_price
                 )
                 self.window_bar.low_price = min(
-                    self.window_bar.low_price,
-                    bar.low_price
+                    self.window_bar.low_price, bar.low_price
                 )
 
             self.window_bar.close_price = bar.close_price
@@ -290,46 +279,52 @@ class BarGenerator:
         self.bar = None
         return bar
 
-class MinuterBarProcessor:
+
+class MinuteBarProcessor:
     def __init__(
         self,
-        vt_symbol: str = '',
+        symbol: str = "",
         window: int = 0,
         interval: Interval = Interval.MINUTE,
-        start_date: str = '',
-        end_date: str = '',
+        start_date: str = "",
+        end_date: str = "",
     ):
-        self.vt_symbol = vt_symbol
+        self.symbol = symbol
         self.window = window
         self.interval = interval
         if start_date:
-            self.start_date = datetime.strptime(start_date, '%Y-%m-%d')
+            self.start_date = datetime.strptime(start_date, "%Y-%m-%d")
         else:
             self.start_date = None
         if end_date:
-            self.end_date = datetime.strptime(end_date, '%Y-%m-%d')
+            self.end_date = datetime.strptime(end_date, "%Y-%m-%d")
         else:
             self.end_date = None
 
         # minute_bar数据库
-        client = MongoClient('localhost', 27017)
+        client = MongoClient("localhost", 27017)
         minute_bar_db = client[MINUTE_DB_NAME]
-        self.minute_bar_collection = minute_bar_db[self.vt_symbol]
+        self.minute_bar_collection = minute_bar_db[self.symbol]
 
         # window_bar数据库
         if self.interval == Interval.MINUTE:
             window_bar_db = client[MinuteDataBaseName(self.window)]
         else:
             window_bar_db = client[HourDataBaseName(self.window)]
-        self.window_bar_collection = window_bar_db[self.vt_symbol]
-        self.window_bar_collection.create_index('datetime')
+        self.window_bar_collection = window_bar_db[self.symbol]
+        self.window_bar_collection.create_index("datetime")
 
-        self.bar_generator = BarGenerator(window=self.window, on_window_bar=self.on_window_bar, interval=self.interval)
+        self.bar_generator = BarGenerator(
+            window=self.window, on_window_bar=self.on_window_bar, interval=self.interval
+        )
 
-    def on_window_bar(self, bar:BarData):
-        self.window_bar_collection.update_many({'datetime': bar.datetime}, {'$set': bar.__dict__}, upsert=True)
+    def on_window_bar(self, bar: BarData):
+        self.window_bar_collection.update_many(
+            {"datetime": bar.datetime}, {"$set": bar.__dict__}, upsert=True
+        )
 
-    def start_work(self):
+    def start(self):
+        print(f"{self.symbol}开始")
         start_dt = None
         end_dt = None
         minute_bar = None
@@ -337,15 +332,17 @@ class MinuterBarProcessor:
         flt = {}
         flt_data = {}
         if self.start_date:
-            flt_data['$gte'] = self.start_date
+            flt_data["$gte"] = self.start_date
         if self.end_date:
-            flt_data['$lte'] = self.end_date
+            flt_data["$lte"] = self.end_date
 
         if flt_data:
-            flt['datetime'] = flt_data
-        cursor = self.minute_bar_collection.find(flt).sort('datetime', ASCENDING)
+            flt["datetime"] = flt_data
+        cursor = self.minute_bar_collection.find(flt).sort("datetime", ASCENDING)
         for d in cursor:
-            minute_bar = BarData(gateway_name='', symbol='', exchange=None, datetime=None)
+            minute_bar = BarData(
+                gateway_name="", symbol="", exchange=None, datetime=None
+            )
             minute_bar.__dict__ = d
             if not start_dt:
                 start_dt = minute_bar.datetime
@@ -354,8 +351,94 @@ class MinuterBarProcessor:
         if minute_bar:
             end_dt = minute_bar.datetime
 
-        interval_ = re.sub("\d", '', self.interval.value)
-        print(f'{self.vt_symbol}\n1m -> {self.window}{interval_}\n{start_dt} -> {end_dt}')
+        interval_ = re.sub("\d", "", self.interval.value)
+        print(f"\n{self.symbol}\n1m -> {self.window}{interval_}\n{start_dt} -> {end_dt}")
+
+
+class MultiThreadsMinuteBarProcessor:
+    def __init__(
+        self,
+        symbol_list: list = [],
+        window: int = 0,
+        interval: Interval = Interval.MINUTE,
+        start_date: str = "",
+        end_date: str = "",
+    ):
+        self.symbol_list = symbol_list
+        self.window = window
+        self.interval = interval
+        self.start_date = start_date
+        self.end_date = end_date
+        self.threads = []
+
+    def remove_thread(self, thread):
+        if thread in self.threads:
+            self.threads.remove(thread)
+
+    def start(self):
+        # 多线程获取数据
+        for symbol in self.symbol_list:
+            while len(self.threads) >= 10:
+                sleep(2)
+            thread = ProcessorThread(
+                engine=self,
+                symbol=symbol,
+                window=self.window,
+                interval=self.interval,
+                start_date=self.start_date,
+                end_date=self.end_date,
+            )
+            self.threads.append(thread)
+            thread.start()
+
+
+class ProcessorThread(object):
+    def __init__(
+        self,
+        engine,
+        symbol: str = "",
+        window: int = 0,
+        interval: Interval = Interval.MINUTE,
+        start_date: str = "",
+        end_date: str = "",
+    ):
+        self.engine = engine
+        self.symbol = symbol
+        self.window = window
+        self.interval = interval
+        self.start_date = start_date
+        self.end_date = end_date
+
+        self.thread = Thread(target=self.run)
+        self.active = False
+
+    def run(self):
+        processor = MinuteBarProcessor(
+            symbol=self.symbol,
+            window=self.window,
+            interval=self.interval,
+            start_date=self.start_date,
+            end_date=self.end_date,
+        )
+        processor.start()
+
+        # 终止线程
+        self.close()
+
+    def start(self) -> None:
+        if self.active:
+            return
+
+        self.active = True
+        self.thread.start()
+
+    def close(self) -> None:
+        if not self.active:
+            return
+
+        self.active = False
+        self.engine.remove_thread(self)
+
 
 def get_full_symbol(symbol_list):
     full_symbol_list = []
@@ -364,14 +447,19 @@ def get_full_symbol(symbol_list):
         full_symbol_list.append(full_symbol)
     return full_symbol_list
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # symbol_list = ['BTCUSDT', 'ETHUSDT']
-    symbol_list = ['SHIB1000USDT', 'AAVEUSDT', 'ADAUSDT', 'APEUSDT', 'ATOMUSDT', 'AVAXUSDT', 'BCHUSDT', 'BNBUSDT', 'BTCUSDT', 'CHZUSDT', 'CRVUSDT', 'DOGEUSDT', 'DOTUSDT', 'EOSUSDT', 'ETCUSDT', 'FILUSDT', 'LINKUSDT', 'LTCUSDT', 'MATICUSDT', 'NEARUSDT', 'SANDUSDT', 'SOLUSDT', 'SUSHIUSDT', 'UNIUSDT', 'XRPUSDT']
-    # symbol_list = get_full_symbol(bybit_get_symbol_list(type=BybitSymbolType.USDT))
+    # symbol_list = ['SHIB1000USDT', 'AAVEUSDT', 'ADAUSDT', 'APEUSDT', 'ATOMUSDT', 'AVAXUSDT', 'BCHUSDT', 'BNBUSDT', 'BTCUSDT', 'CHZUSDT', 'CRVUSDT', 'DOGEUSDT', 'DOTUSDT', 'EOSUSDT', 'ETCUSDT', 'FILUSDT', 'LINKUSDT', 'LTCUSDT', 'MATICUSDT', 'NEARUSDT', 'SANDUSDT', 'SOLUSDT', 'SUSHIUSDT', 'UNIUSDT', 'XRPUSDT']
+    symbol_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
+    exchange = "BYBIT"
+    symbol_list = [f"{symbol}.{exchange}" for symbol in symbol_list]
     
-    auto_exchange = "BYBIT"
-    symbol_list = [x + f".{auto_exchange}" for x in symbol_list]
-    for symbol in symbol_list:
-        processor = MinuterBarProcessor(vt_symbol=symbol, window=5, interval=Interval.MINUTE, start_date='2023-3-20', end_date='2023-12-31')
-        processor.start_work()
-        print('\n')
+    processor = MultiThreadsMinuteBarProcessor(
+        symbol_list=symbol_list,
+        window=5,
+        interval=Interval.MINUTE,
+        start_date="2020-1-1",
+        end_date="2023-12-31",
+    )
+    processor.start()
