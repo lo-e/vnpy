@@ -20,7 +20,7 @@ from vnpy.trader.utility import DIR_SYMBOL
 
 def one():
     engine = BacktestingEngine()
-    engine.setPeriod(datetime(2023, 2, 2), datetime(2023, 3, 2))
+    engine.setPeriod(datetime(2023, 5, 1), datetime(2023, 6, 1))
     figSavedName = ""
     if figSavedName:
         figSavedName = f"figSaved{DIR_SYMBOL}{figSavedName}"
@@ -30,13 +30,6 @@ def one():
     with open(filename, errors="ignore") as f:
         r = DictReader(f)
         for d in r:
-            # """
-            is_crypto = d["is_crypto"] == "true"
-            if not is_crypto:
-                symbol = re.sub("\d", "", d["symbol"])
-                symbol = symbol + "99"
-                d["symbol"] = symbol
-            # """
             symbolList.append(d)
     if not symbolList:
         return
@@ -74,6 +67,7 @@ def one():
             symbol_trade_list.append(trade_data)
         symbol_trade_dic[symbol] = symbol_trade_list
 
+    # 保存合约交易数据
     symbol_trade_dir_path = f"symbol_trades{DIR_SYMBOL}"
     if not os.path.exists(symbol_trade_dir_path):
         os.makedirs(symbol_trade_dir_path)

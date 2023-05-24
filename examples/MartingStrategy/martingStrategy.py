@@ -458,16 +458,14 @@ class MartingPortfolio(object):
         self.posDict = {}  # 合约持仓量字典
         self.signalPosDict = {}  # 策略持仓量字典
         self.signalTradesDict = {}  # 策略成交订单字典
-        self.sizeDict = {}  # 合约大小字典
         self.trending_signal = None  # 正在追踪的趋势策略信号
         self.next_trending_signal = None  # 根据盈亏幅度确定下一个追踪的趋势策略信号
         self.trending_update_dict = {}  # 趋势策略信号的更新先缓存在这里，在on_daily完成更新
         self.trending_history = []  # 缓存追踪过的趋势策略
         self.dt = None  # 当前回测时间
 
-    def init(self, portfolioValue, symbolList, sizeDict):
+    def init(self, portfolioValue, symbolList):
         self.portfolioValue = portfolioValue
-        self.sizeDict = sizeDict
 
         for symbol in symbolList:
             signal1 = MartingSignal(self, symbol, Direction.LONG, 9, 14)

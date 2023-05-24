@@ -18,31 +18,22 @@ from martingStrategy import MartingPortfolio
 from vnpy.app.cta_strategy.base import DAILY_DB_NAME, MINUTE_DB_NAME, HOUR_DB_NAME, MinuteDataBaseName, HourDataBaseName
 import pandas as pd
 
-SIZE_DICT = {}
 PRICETICK_DICT = {}
 VARIABLE_COMMISSION_DICT = {}
-FIXED_COMMISSION_DICT = {}
 SLIPPAGE_DICT = {}
-
-
 
 ########################################################################
 class BacktestingEngine(object):
     """组合类CTA策略回测引擎"""
-
-    #----------------------------------------------------------------------
     def __init__(self):
         """Constructor"""
         self.portfolio = None
         
         # 合约配置信息
         self.symbolList = []
-        self.sizeDict = {}                  # 合约大小字典
-        self.is_crypto_dict = {}            # 是否为数字货币合约
         self.min_volume_dict = {}           # 最低交易数量【商品为整数、数字货币带小数】
         self.priceTickDict = {}             # 最小价格变动字典
         self.variableCommissionDict = {}    # 变动手续费字典
-        self.fixedCommissionDict = {}       # 固定手续费字典
         self.slippageDict = {}              # 滑点成本字典
         
         self.portfolioValue = 0
@@ -59,96 +50,30 @@ class BacktestingEngine(object):
         """ modify by loe """
         self.tradingStart = None
     
-    #----------------------------------------------------------------------
     def setPeriod(self, startDt, endDt):
         """设置回测周期"""
         self.startDt = startDt
         self.endDt = endDt
     
-    #----------------------------------------------------------------------
-    def initPortfolio(self, filename, portfolioValue=10000000):
-        """初始化投资组合"""
-        self.portfolioValue = portfolioValue
-        
-        with open(filename) as f:
-            r = DictReader(f)
-            for d in r:
-                self.symbolList.append(d['symbol'])
-
-                """ modify by loe """
-                self.sizeDict[d['symbol']] = int(d['size'])
-                self.priceTickDict[d['symbol']] = float(d['priceTick'])
-                self.is_crypto_dict[d['symbol']] = d['is_crypto'] == 'true'
-                self.min_volume_dict[d['symbol']] = float(d['min_volume'])
-                SIZE_DICT[d['symbol']] = int(d['size'])
-                PRICETICK_DICT[d['symbol']] = float(d['priceTick'])
-                VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
-                FIXED_COMMISSION_DICT[d['symbol']] = float(d['fixedCommission'])
-                SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
-            
-        self.portfolio = MartingPortfolio(self)
-        self.portfolio.init(portfolioValue, self.symbolList, SIZE_DICT)
-        """ modify by loe """
-        self.portfolio.tradingStart = self.tradingStart
-        
-        self.output(u'投资组合的合约代码%s' %(self.symbolList))
-        self.output(u'投资组合的初始价值%s' %(portfolioValue))
-
-    # ----------------------------------------------------------------------
-    """ modify by loe """
-    def initSinglePortfolio(self, d, portfolioValue=10000000):
-        """初始化投资组合"""
-        self.portfolioValue = portfolioValue
-        self.symbolList.append(d['symbol'])
-
-        self.sizeDict[d['symbol']] = int(d['size'])
-        self.priceTickDict[d['symbol']] = float(d['priceTick'])
-        self.is_crypto_dict[d['symbol']] = d['is_crypto'] == 'true'
-        self.min_volume_dict[d['symbol']] = float(d['min_volume'])
-        SIZE_DICT[d['symbol']] = int(d['size'])
-        PRICETICK_DICT[d['symbol']] = float(d['priceTick'])
-        VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
-        FIXED_COMMISSION_DICT[d['symbol']] = float(d['fixedCommission'])
-        SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
-
-        self.portfolio = MartingPortfolio(self)
-        self.portfolio.init(portfolioValue, self.symbolList, SIZE_DICT)
-
-        """ modify by loe """
-        self.portfolio.tradingStart = self.tradingStart
-
-        self.output(u'投资组合的合约代码%s' % (self.symbolList))
-        self.output(u'投资组合的初始价值%s' % (portfolioValue))
-
-    # ----------------------------------------------------------------------
-    """ modify by loe """
     def initListPortfolio(self, l, portfolioValue=10000000):
         """初始化投资组合"""
         self.portfolioValue = portfolioValue
 
         for d in l:
             self.symbolList.append(d['symbol'])
-
-            self.sizeDict[d['symbol']] = int(d['size'])
             self.priceTickDict[d['symbol']] = float(d['priceTick'])
-            self.is_crypto_dict[d['symbol']] = d['is_crypto'] == 'true'
             self.min_volume_dict[d['symbol']] = float(d['min_volume'])
-            SIZE_DICT[d['symbol']] = int(d['size'])
             PRICETICK_DICT[d['symbol']] = float(d['priceTick'])
             VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
-            FIXED_COMMISSION_DICT[d['symbol']] = float(d['fixedCommission'])
             SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
 
         self.portfolio = MartingPortfolio(self)
-        self.portfolio.init(portfolioValue, self.symbolList, SIZE_DICT)
-
-        """ modify by loe """
+        self.portfolio.init(portfolioValue, self.symbolList)
         self.portfolio.tradingStart = self.tradingStart
 
         self.output(u'投资组合的合约代码%s' % (self.symbolList))
         self.output(u'投资组合的初始价值%s' % (portfolioValue))
     
-    #----------------------------------------------------------------------
     def loadData(self):
         """加载数据"""
         mc = MongoClient()
@@ -179,7 +104,6 @@ class BacktestingEngine(object):
         
         self.output(u'全部数据加载完成')
     
-    #----------------------------------------------------------------------
     def runBacktesting(self):
         """运行回测"""
         self.output(u'开始回放K线数据')
@@ -202,7 +126,6 @@ class BacktestingEngine(object):
         
         self.output(u'K线数据回放结束')
     
-    #----------------------------------------------------------------------
     def calculateResult(self, annualDays=240):
         """计算结果"""
         self.output(u'开始统计回测结果')
@@ -336,8 +259,6 @@ class BacktestingEngine(object):
         
         return timeseries, result
     
-    #----------------------------------------------------------------------
-    """ modify by loe """
     def showResult(self, figSavedPath=''):
         """显示回测结果"""
         timeseries, result = self.calculateResult()
@@ -399,7 +320,6 @@ class BacktestingEngine(object):
         
         plt.show()        
     
-    #----------------------------------------------------------------------
     def sendOrder(self, symbol, direction, offset, price, volume):
         """记录交易数据（由portfolio调用）"""
         # 记录成交数据
@@ -410,12 +330,10 @@ class BacktestingEngine(object):
         
         self.result.updateTrade(trade)
 
-    #----------------------------------------------------------------------
     def output(self, content):
         """输出信息"""
         print(content)
     
-    #----------------------------------------------------------------------
     def getTradeData(self, symbol=''):
         """获取交易数据"""
         tradeList = []
@@ -496,24 +414,20 @@ class DailyResult(object):
         """计算当日交易盈亏"""
         for symbol, l in self.tradeDict.items():
             close = self.closeDict[symbol]
-            size = SIZE_DICT[symbol]
 
             slippage = SLIPPAGE_DICT[symbol] * PRICETICK_DICT[symbol]
             variableCommission = VARIABLE_COMMISSION_DICT[symbol]
-            fixedCommission = FIXED_COMMISSION_DICT[symbol]
             
             for trade in l:
                 if trade.direction == Direction.LONG:
                     side = 1
                 else:
                     side = -1
-
-                """ modify by loe """
-                commissionCost = (trade.volume * fixedCommission + trade.volume * size * trade.price * variableCommission)
-                slippageCost = trade.volume * size * slippage
+                commissionCost = trade.volume * trade.price * variableCommission
+                slippageCost = trade.volume * slippage
 
                 if close:
-                    pnl = (close - trade.price) * trade.volume * side * size
+                    pnl = (close - trade.price) * trade.volume * side
                     self.commission += commissionCost
                     self.slippage += slippageCost
                     self.tradingPnl += pnl
@@ -522,26 +436,20 @@ class DailyResult(object):
                     print('%s\t%s volume：%s\t计算当日交易盈亏数据缺失' % (self.date, symbol, trade.volume))
                     print('*' * 20 + '\n')
     
-    #----------------------------------------------------------------------
     def calculateHoldingPnl(self):
         """计算当日持仓盈亏"""
         for symbol, pos in self.posDict.items():
             previousClose = self.previousCloseDict.get(symbol, 0)
             close = self.closeDict.get(symbol, 0)
-            #close = self.closeDict[symbol]
-            size = SIZE_DICT[symbol]
-
-            """ modify by loe """
             if close:
                 if previousClose:
-                    pnl = (close - previousClose) * pos * size
+                    pnl = (close - previousClose) * pos
                     self.holdingPnl += pnl
             elif pos:
                 print('*'*20)
                 print('%s\t%s pos：%s\t计算当日持仓盈亏数据缺失' % (self.date, symbol, pos))
                 print('*'*20 + '\n')
 
-    #----------------------------------------------------------------------
     def calculatePnl(self):
         """计算总盈亏"""
         self.calculateHoldingPnl()

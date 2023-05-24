@@ -228,7 +228,39 @@ def bybit_get_min_value(filter:float):
         os.makedirs(dir_path)
     csv_file_path = f"{dir_path}filter_{filter}.csv"
     results_sorted = pd.DataFrame(rusult_list)
-    results_sorted = results_sorted.sort_values("symbol", ascending=False)
+    results_sorted = results_sorted.sort_values("symbol", ascending=True)
+    results_sorted.to_csv(csv_file_path, index=False)
+
+    return rusult_list
+
+def bybit_marting_setting():
+    # 获取交易对最小交易价值
+    usdt_symbol_list, data = bybit_get_symbol_list(type=BybitSymbolType.USDT, need_data=True)
+    print(f"\n所有USDT永续交易对：{len(usdt_symbol_list)}\n")
+
+    rusult_list = []
+    for symbol in usdt_symbol_list:
+        d = data[symbol]
+
+        # 最小价格变动
+        price_tick = d["price_filter"]["min_price"]
+
+        # 最小交易数量
+        min_volume = d["lot_size_filter"]["min_trading_qty"]
+
+        rusult_list.append({"symbol":f"{symbol}.BYBIT",
+                            "priceTick":price_tick,
+                            "variableCommission":0.0001,
+                            "slippage":1,
+                            "min_volume":min_volume})
+
+    # 写入CSV
+    csv_path = get_csv_path()
+    if not os.path.exists(csv_path):
+        os.makedirs(csv_path)
+    csv_file_path = f"{csv_path}marting_setting.csv"
+    results_sorted = pd.DataFrame(rusult_list)
+    results_sorted = results_sorted.sort_values("symbol", ascending=True)
     results_sorted.to_csv(csv_file_path, index=False)
 
     return rusult_list
@@ -238,7 +270,6 @@ def get_csv_path():
     file_name = path.split(DIR_SYMBOL)[-1]
     csv_path = path.rstrip(file_name) + f"CSVs{DIR_SYMBOL}"
     return csv_path
-
 
 if __name__ == "__main__":
     """
@@ -250,7 +281,7 @@ if __name__ == "__main__":
     print('completed！')
     """
 
-    #"""
+    """
     # 获取交易对列表
     spot_symbol_list = bybit_get_symbol_list(type=BybitSymbolType.SPOT)
     usdt_symbol_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
@@ -277,9 +308,10 @@ if __name__ == "__main__":
     # print(f"====== USDT永续独享交易 ======")
     # for symbol in usdt_only_list:
     #     print(symbol)
-    #"""
+    """
 
-    """
-    # 获取所有USDT永续合约最小交易价值，并筛选
+    # # 获取所有USDT永续合约最小交易价值，并筛选
     bybit_get_min_value(filter=0.5)
-    """
+
+    # 生成马丁策略回测参数
+    # bybit_marting_setting()
