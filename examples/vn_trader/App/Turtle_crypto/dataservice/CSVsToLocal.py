@@ -110,12 +110,14 @@ class CSVs1TokenBarLocalEngine(object):
             print(u'总数据量：', totalCount, '\n')
 
 class CSVsBybitBarLocalEngine(object):
-    def __init__(self, duration:str):
+    def __init__(self, duration:str, contract:str):
         super(CSVsBybitBarLocalEngine, self).__init__()
         # 周期
         self.duration = duration
         # 项目路径
-        self.walkingDir = get_csv_path()
+        csv_path = get_csv_path()
+        contract = f"BYBIT.{contract}"
+        self.walkingDir = csv_path + f"{contract}{DIR_SYMBOL}{duration}"
         # 获取数据库
         self.client = pymongo.MongoClient('localhost', 27017)
 
@@ -196,7 +198,8 @@ class CSVsBybitBarLocalEngine(object):
                         print('*'*60, '\n')
 
         # 打印进程
-        print('所有数据导入完成')
+        
+        print(f"所有数据导入完成：{datetime.datetime.now()}")
         if totalCount:
             sub = time() - totalStartTime
             print('总用时：', sub, 's')

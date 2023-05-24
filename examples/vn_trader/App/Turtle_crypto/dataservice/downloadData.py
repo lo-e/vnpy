@@ -16,48 +16,34 @@ import shutil
 import os
 from vnpy.trader.constant import Interval
 from time import sleep
+from threading import Thread
+from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
+from pymongo import MongoClient, ASCENDING, DESCENDING
+
+# client = MongoClient("localhost", 27017)
 
 class TurtleCryptoDataDownloading(object):
     def __init__(self):
+        self.threads = []
         pass
 
-    def download_from_bybit(self, contract_list, days=1, to_date:datetime=datetime.now() + timedelta(days=2)):
-        #"""
+    def remove_thread(self, thread):
+        if thread in self.threads:
+            self.threads.remove(thread)
+
+    def download_from_bybit(self, contract_list, days=1, to_date:datetime=datetime.now() + timedelta(days=2), from_data_base:bool=False):
         # 先删除原有文件夹，包括其中所有内容
         csv_path = get_csv_path()
         if os.path.exists(csv_path):
             shutil.rmtree(csv_path)
 
-        # 获取bar数据
-        interval = '1'
-        from_date = datetime.now() - timedelta(days=days)
-
+        # 多线程获取数据
         for contract in contract_list:
-            from_time = datetime(from_date.year, from_date.month, from_date.day)
-            to_time = datetime(to_date.year, to_date.month, to_date.day)
-            while from_time:
-                if from_time >= to_time:
-                    break
-
-                print(f'下载数据：{from_time}\t{contract}')
-                download_failed = False
-                try:
-                    from_time = bybit_get_bar_data(symbol=contract, interval=interval, from_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"))
-                except Exception:
-                    download_failed = True
-                    print('****** 下载中断 ******')
-
-                if download_failed:
-                    sleep(2)
-
-                elif from_time:
-                    from_time = from_time + timedelta(minutes=1)
-        #"""
-
-        # 1m数据入数据库
-        print('\n====== 1m数据入数据库 ======')
-        engine = CSVsBybitBarLocalEngine(duration='1')
-        engine.startWork()
+            while len(self.threads) >= 10:
+                sleep(2)
+            thread = DownloadThread(self, contract=contract, interval='1', days=days, to_date=to_date, from_data_base=from_data_base)
+            self.threads.append(thread)
+            thread.start()
 
     def download_from_okex(self, contract_list, days=1):
         #"""
@@ -201,3 +187,77 @@ class TurtleCryptoDataDownloading(object):
             lost_msg += l_msg + '\n\n'
 
         return result, complete_msg, back_msg, lost_msg
+    
+class DownloadThread(object):
+    def __init__(self, engine, contract, interval, days=1, to_date:datetime=datetime.now() + timedelta(days=2), from_data_base:bool=False):
+        self.engine = engine
+        self.contract = contract
+        self.interval = interval
+        self.days = days
+        self.to_date = to_date
+        self.from_data_base = from_data_base
+
+        self.thread = Thread(target=self.run)
+        self.active = False
+
+    def run(self):
+        # 获取bar数据
+        print(f"====== {self.contract}开始下载 ======")
+        from_date = datetime.now() - timedelta(days=self.days)
+        if self.from_data_base:
+            client = MongoClient("localhost", 27017)
+            db = client[MINUTE_DB_NAME]
+            symbol = self.contract + ".BYBIT"
+            collection = db[symbol]
+            start_data = collection.find_one(sort=[('datetime', ASCENDING)])
+            db_start_dt = start_data['datetime'] if start_data else None
+            end_data = collection.find_one(sort=[('datetime', DESCENDING)])
+            db_end_dt = end_data['datetime'] if end_data else None
+            
+            print(f"{self.contract}数据库起止时间\t{db_start_dt}\t{db_end_dt}")
+            if db_end_dt:
+                from_date = max(from_date, db_end_dt)
+
+        from_time = datetime(from_date.year, from_date.month, from_date.day)
+        to_time = datetime(self.to_date.year, self.to_date.month, self.to_date.day)
+        while from_time:
+            if from_time >= to_time:
+                break
+
+            print(f'下载数据：{from_time}\t{self.contract}')
+            download_failed = False
+            try:
+                from_time = bybit_get_bar_data(symbol=self.contract, interval=self.interval, from_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"))
+            except Exception:
+                download_failed = True
+                print('****** 下载中断 ******')
+
+            if download_failed:
+                sleep(2)
+
+            elif from_time:
+                from_time = from_time + timedelta(minutes=1)
+
+        # 1m数据入数据库
+        print('\n====== 1m数据入数据库 ======')
+        engine = CSVsBybitBarLocalEngine(duration='1', contract=self.contract)
+        engine.startWork()
+
+        # 终止线程
+        self.close()
+
+    def start(self) -> None:
+        if self.active:
+            return
+        
+        self.active = True
+        self.thread.start()
+
+    def close(self) -> None:
+        if not self.active:
+            return
+
+        self.active = False
+        self.engine.remove_thread(self)
+
+        

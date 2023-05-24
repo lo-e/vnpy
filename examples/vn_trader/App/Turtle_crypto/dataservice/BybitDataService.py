@@ -250,7 +250,7 @@ if __name__ == "__main__":
     print('completed！')
     """
 
-    """
+    #"""
     # 获取交易对列表
     spot_symbol_list = bybit_get_symbol_list(type=BybitSymbolType.SPOT)
     usdt_symbol_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
@@ -268,6 +268,7 @@ if __name__ == "__main__":
     print(f"====== USDT永续交易 ======")
     for symbol in usdt_symbol_list:
         print(symbol)
+    print(f"总计：{len(usdt_symbol_list)}")
 
     # print(f"====== 现货独享交易 ======")
     # for symbol in spot_only_list:
@@ -276,7 +277,9 @@ if __name__ == "__main__":
     # print(f"====== USDT永续独享交易 ======")
     # for symbol in usdt_only_list:
     #     print(symbol)
-    """
+    #"""
 
+    """
     # 获取所有USDT永续合约最小交易价值，并筛选
     bybit_get_min_value(filter=0.5)
+    """

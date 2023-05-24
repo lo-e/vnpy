@@ -25,17 +25,24 @@ if __name__ == '__main__':
         # contract_list = ['SHIB1000USDT', 'AAVEUSDT', 'ADAUSDT', 'APEUSDT', 'ATOMUSDT', 'AVAXUSDT', 'BCHUSDT', 'BNBUSDT', 'BTCUSDT', 'CHZUSDT', 'CRVUSDT', 'DOGEUSDT', 'DOTUSDT', 'EOSUSDT', 'ETCUSDT', 'FILUSDT', 'LINKUSDT', 'LTCUSDT', 'MATICUSDT', 'NEARUSDT', 'SANDUSDT', 'SOLUSDT', 'SUSHIUSDT', 'UNIUSDT', 'XRPUSDT']
     else:
         contract_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
+        for symbol in contract_list:
+            print(symbol)
+        print(f"即将下载总计：{len(contract_list)}")
 
-    days = 6
-    to_date = datetime.now() + timedelta(days=2)
+    # 起止日期
+    # days = 6
+    # to_date = datetime.now() + timedelta(days=2)
+    days = (datetime.now() - datetime.strptime('2020-01-01', '%Y-%m-%d')).days
+    to_date = datetime.strptime('2023-12-31', '%Y-%m-%d')
 
-    # days = (datetime.now() - datetime.strptime('2021-01-09', '%Y-%m-%d')).days
-    # to_date = datetime.strptime('2023-12-31', '%Y-%m-%d')
+    # 是否从数据库最新数据日期开始
+    from_data_base = True
 
+    # 开始下载
     dataDownload = TurtleCryptoDataDownloading()
-    dataDownload.download_from_bybit(contract_list=contract_list, days=days, to_date=to_date)
-    result, complete_msg, back_msg, lost_msg = dataDownload.generate_for_bybit(contract_list=contract_list, days=days)
-    print('\n\n' + lost_msg + back_msg)
+    dataDownload.download_from_bybit(contract_list=contract_list, days=days, to_date=to_date, from_data_base=from_data_base)
+    # result, complete_msg, back_msg, lost_msg = dataDownload.generate_for_bybit(contract_list=contract_list, days=days)
+    # print('\n\n' + lost_msg + back_msg)
     #"""
 
     """ OKEX """
