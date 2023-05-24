@@ -452,9 +452,9 @@ if __name__ == "__main__":
     # symbol_list = ['BTCUSDT', 'ETHUSDT']
     # symbol_list = ['SHIB1000USDT', 'AAVEUSDT', 'ADAUSDT', 'APEUSDT', 'ATOMUSDT', 'AVAXUSDT', 'BCHUSDT', 'BNBUSDT', 'BTCUSDT', 'CHZUSDT', 'CRVUSDT', 'DOGEUSDT', 'DOTUSDT', 'EOSUSDT', 'ETCUSDT', 'FILUSDT', 'LINKUSDT', 'LTCUSDT', 'MATICUSDT', 'NEARUSDT', 'SANDUSDT', 'SOLUSDT', 'SUSHIUSDT', 'UNIUSDT', 'XRPUSDT']
     symbol_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
+
     exchange = "BYBIT"
     symbol_list = [f"{symbol}.{exchange}" for symbol in symbol_list]
-    
     processor = MultiThreadsMinuteBarProcessor(
         symbol_list=symbol_list,
         window=5,
