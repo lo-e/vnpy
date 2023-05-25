@@ -17,10 +17,11 @@ from vnpy.app.cta_strategy.base import DAILY_DB_NAME
 import pandas as pd
 from vnpy.trader.constant import Direction, Offset
 from vnpy.trader.utility import DIR_SYMBOL
+import shutil
 
 def one():
     engine = BacktestingEngine()
-    engine.setPeriod(datetime(2023, 5, 1), datetime(2023, 5, 2))
+    engine.setPeriod(datetime(2023, 5, 1), datetime(2023, 5, 25))
     figSavedName = ""
     if figSavedName:
         figSavedName = f"figSaved{DIR_SYMBOL}{figSavedName}"
@@ -69,7 +70,11 @@ def one():
 
     # 保存合约交易数据
     symbol_trade_dir_path = f"symbol_trades{DIR_SYMBOL}"
-    if not os.path.exists(symbol_trade_dir_path):
+    # 先删除原有文件夹，包括其中所有内容
+    if os.path.exists(symbol_trade_dir_path):
+        shutil.rmtree(symbol_trade_dir_path)
+        os.makedirs(symbol_trade_dir_path)
+    else:
         os.makedirs(symbol_trade_dir_path)
     for symbol, trade_list in symbol_trade_dic.items():
         if len(trade_list):
@@ -84,7 +89,11 @@ def one():
 
     # 保存信号交易数据
     signal_trade_dir_path = f"signal_trades{DIR_SYMBOL}"
-    if not os.path.exists(signal_trade_dir_path):
+    # 先删除原有文件夹，包括其中所有内容
+    if os.path.exists(signal_trade_dir_path):
+        shutil.rmtree(signal_trade_dir_path)
+        os.makedirs(signal_trade_dir_path)
+    else:
         os.makedirs(signal_trade_dir_path)
     for signal_key, trade_list in engine.portfolio.signalTradesDict.items():
         if len(trade_list):
