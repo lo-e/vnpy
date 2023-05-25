@@ -115,9 +115,12 @@ def one():
         signal = trending_data["signal"]
         position_price = trending_data["position_price"]
         position_value = trending_data["position_value"]
+        max_loss_value = trending_data["max_loss_value"]
+        max_loss_rate = trending_data["max_loss_rate"]
+
         trending = trending_data["trending"]
         trending_desc = "加仓" if trending else "平仓"
-        print(f"{dt}\t{signal}\t均价：{position_price}\t价值：{position_value}\t{trending_desc}")
+        print(f"{dt}\t{signal}\t均价：{position_price}\t价值：{position_value}\t最大亏损：{max_loss_value} {max_loss_rate}\t{trending_desc}")
         if trending:
             continuous_open += 1
 
