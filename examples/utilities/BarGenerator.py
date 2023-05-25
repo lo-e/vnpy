@@ -3,7 +3,7 @@
 from typing import Callable, Optional
 from vnpy.trader.object import BarData, TickData
 from vnpy.trader.constant import Exchange, Interval
-from pymongo import MongoClient, ASCENDING
+from pymongo import MongoClient, ASCENDING, DESCENDING
 from vnpy.app.cta_strategy.base import (
     MINUTE_DB_NAME,
     HOUR_DB_NAME,
@@ -11,7 +11,7 @@ from vnpy.app.cta_strategy.base import (
     HourDataBaseName,
 )
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from time import sleep
 from threading import Thread
 
@@ -288,14 +288,17 @@ class MinuteBarProcessor:
         interval: Interval = Interval.MINUTE,
         start_date: str = "",
         end_date: str = "",
+        from_data_base: bool = False,
     ):
         self.symbol = symbol
         self.window = window
         self.interval = interval
+
         if start_date:
             self.start_date = datetime.strptime(start_date, "%Y-%m-%d")
         else:
             self.start_date = None
+
         if end_date:
             self.end_date = datetime.strptime(end_date, "%Y-%m-%d")
         else:
@@ -313,6 +316,24 @@ class MinuteBarProcessor:
             window_bar_db = client[HourDataBaseName(self.window)]
         self.window_bar_collection = window_bar_db[self.symbol]
         self.window_bar_collection.create_index("datetime")
+
+        # 根据数据库最新数据决定起始时间
+        if from_data_base:
+            start_data = self.window_bar_collection.find_one(
+                sort=[("datetime", ASCENDING)]
+            )
+            db_start_dt = start_data["datetime"] if start_data else None
+            end_data = self.window_bar_collection.find_one(
+                sort=[("datetime", DESCENDING)]
+            )
+            db_end_dt = end_data["datetime"] if end_data else None
+            print(f"{self.symbol}数据库起止时间\t{db_start_dt}\t{db_end_dt}")
+            if db_end_dt:
+                db_end_dt = db_end_dt - timedelta(days=1)
+                db_end_dt = datetime(db_end_dt.year, db_end_dt.month, db_end_dt.day)
+                self.start_date = (
+                    max(self.start_date, db_end_dt) if self.start_date else db_end_dt
+                )
 
         self.bar_generator = BarGenerator(
             window=self.window, on_window_bar=self.on_window_bar, interval=self.interval
@@ -352,7 +373,9 @@ class MinuteBarProcessor:
             end_dt = minute_bar.datetime
 
         interval_ = re.sub("\d", "", self.interval.value)
-        print(f"\n{self.symbol}\n1m -> {self.window}{interval_}\n{start_dt} -> {end_dt}")
+        print(
+            f"{self.symbol}\n1m -> {self.window}{interval_}\n{start_dt} -> {end_dt}\n\n"
+        )
 
 
 class MultiThreadsMinuteBarProcessor:
@@ -363,12 +386,14 @@ class MultiThreadsMinuteBarProcessor:
         interval: Interval = Interval.MINUTE,
         start_date: str = "",
         end_date: str = "",
+        from_data_base: bool = False,
     ):
         self.symbol_list = symbol_list
         self.window = window
         self.interval = interval
         self.start_date = start_date
         self.end_date = end_date
+        self.from_data_base = from_data_base
         self.threads = []
 
     def remove_thread(self, thread):
@@ -387,6 +412,7 @@ class MultiThreadsMinuteBarProcessor:
                 interval=self.interval,
                 start_date=self.start_date,
                 end_date=self.end_date,
+                from_data_base=self.from_data_base,
             )
             self.threads.append(thread)
             thread.start()
@@ -401,6 +427,7 @@ class ProcessorThread(object):
         interval: Interval = Interval.MINUTE,
         start_date: str = "",
         end_date: str = "",
+        from_data_base: bool = False,
     ):
         self.engine = engine
         self.symbol = symbol
@@ -408,6 +435,7 @@ class ProcessorThread(object):
         self.interval = interval
         self.start_date = start_date
         self.end_date = end_date
+        self.from_data_base = from_data_base
 
         self.thread = Thread(target=self.run)
         self.active = False
@@ -419,6 +447,7 @@ class ProcessorThread(object):
             interval=self.interval,
             start_date=self.start_date,
             end_date=self.end_date,
+            from_data_base=self.from_data_base,
         )
         processor.start()
 
@@ -461,5 +490,6 @@ if __name__ == "__main__":
         interval=Interval.MINUTE,
         start_date="2020-1-1",
         end_date="2023-12-31",
+        from_data_base=True,
     )
     processor.start()
