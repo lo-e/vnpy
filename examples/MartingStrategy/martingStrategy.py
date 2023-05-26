@@ -318,45 +318,53 @@ class MartingSignal(object):
                 # 加仓的合约数量
                 changed_volume = 0
 
-                # 加仓后的目标仓位价值
+                # 下一持仓阶段
                 next_phase = current_phase + 1
+
                 if next_phase >= len(self.phase_position_values):
                     # ====== 趋势行情 ======
 
+                    # 在策略组合中并满足趋势追踪条件
                     if (self.trending_step < self.trending_top_step) and ((not self.portfolio.latest_trending_signal and self == self.portfolio.next_trending_signal) or (
                         self in self.portfolio.trending_signal_list
                     )):
+                        # 当前持仓价值
+                        current_position_value = abs(self.position) * self.position_price
+
+                        # 更新持仓价格
+                        price_rate = 0.01
+                        if self.direction == Direction.LONG:
+                            target_positon_price = trade_price * (1 + price_rate)
+
+                        elif self.direction == Direction.SHORT:
+                            target_positon_price = trade_price * (1 - price_rate)
+                        
+                        else:
+                            exit("检查代码！")
+
+                        # 计算加仓的合约数量
+                        # current_position_value + changed_volume * trade_price = (abs(self.position) + changed_volume) * self.position_price
+                        # current_position_value + changed_volume * trade_price = abs(self.position) * self.position_price + changed_volume * self.position_price
+                        # changed_volume * (trade_price - self.position_price) = abs(self.position) * self.position_price - current_position_value
+                        changed_volume = (
+                            abs(self.position) * target_positon_price
+                            - current_position_value
+                        ) / (trade_price - target_positon_price)
+
+                        # 目标持仓价值过高，停止加仓
+                        trending_value = (abs(self.position) + changed_volume) * target_positon_price
+                        if trending_value > self.portfolio.portfolioValue * 3:
+                            return
+
+                        # 更新持仓价格
+                        self.position_price = target_positon_price
+
                         # 新的趋势策略信号
                         self.portfolio.update_trending(self, True)
                         self.trending_step += 1
 
-                        # 追踪等级达到设定高度后开始计时持仓时间，超时未平仓开始追踪下一个合约
+                        # 趋势追踪等开始计时持仓时间，超时未平仓开始追踪下一个合约
                         self.trending_start_time = self.bar.datetime
-
-                    else:
-                        # 在策略组合中并未满足趋势追踪条件
-                        return
-
-                    # 当前持仓价值
-                    current_position_value = abs(self.position) * self.position_price
-
-                    # 更新持仓价格
-                    price_rate = 0.01
-                    # price_rate = 0.01 * self.trending_step
-                    if self.direction == Direction.LONG:
-                        self.position_price = trade_price * (1 + price_rate)
-
-                    elif self.direction == Direction.SHORT:
-                        self.position_price = trade_price * (1 - price_rate)
-
-                    # 计算加仓的合约数量
-                    # current_position_value + changed_volume * trade_price = (abs(self.position) + changed_volume) * self.position_price
-                    # current_position_value + changed_volume * trade_price = abs(self.position) * self.position_price + changed_volume * self.position_price
-                    # changed_volume * (trade_price - self.position_price) = abs(self.position) * self.position_price - current_position_value
-                    changed_volume = (
-                        abs(self.position) * self.position_price
-                        - current_position_value
-                    ) / (trade_price - self.position_price)
 
                 else:
                     # ====== 震荡行情 ======
@@ -479,7 +487,7 @@ class MartingSignal(object):
         # 计算趋势追踪最高等级后持仓时间
         if self.trending_start_time:
             time_diff = (self.bar.datetime - self.trending_start_time).total_seconds()
-            if time_diff >= 1 * 24 * 60 * 60:
+            if time_diff >= 3 * 24 * 60 * 60:
                 # 超时继续追踪下一个策略信号
                 self.portfolio.trending_timeout(self)
                 self.trending_start_time = None
@@ -575,7 +583,7 @@ class MartingPortfolio(object):
             position_price = signal.position_price
 
             # 趋势策略当前持仓价值
-            position_value = round_to(signal.position * signal.position_price, 1)
+            position_value = abs(round_to(signal.position * signal.position_price, 1))
 
             data = {
                 "datetime": self.dt,
