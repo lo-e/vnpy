@@ -23,7 +23,7 @@ class MartingSignal(object):
         self.direction = direction  # 交易方向
         self.ma_window = ma_window  # 均线参数
         self.rsi_window = rsi_window  # RSI参数
-        self.unit_value = self.portfolio.portfolioValue * 0.412 * 0.01  # 最小持仓价值
+        self.unit_value = self.portfolio.portfolioValue * 0.5 * 0.01  # 最小持仓价值
         self.symbol_min_volume = self.portfolio.engine.min_volume_dict[
             self.symbol
         ]  # 合约最小交易数量
@@ -342,6 +342,7 @@ class MartingSignal(object):
 
                     # 更新持仓价格
                     price_rate = 0.01
+                    # price_rate = 0.01 * self.trending_step
                     if self.direction == Direction.LONG:
                         self.position_price = trade_price * (1 + price_rate)
 
