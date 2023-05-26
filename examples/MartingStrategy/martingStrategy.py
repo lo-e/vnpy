@@ -116,7 +116,7 @@ class MartingSignal(object):
         """
         # fake
         if self.symbol == "CHZUSDT.BYBIT" and self.direction == Direction.LONG:
-            if self.bar.datetime >= datetime.strptime("2023-05-11 09:05:00", "%Y-%m-%d %H:%M:%S"):
+            if self.bar.datetime >= datetime.strptime("2023-05-12 20:05:00", "%Y-%m-%d %H:%M:%S"):
                 a = 2
 
         # 当前仓位阶段
