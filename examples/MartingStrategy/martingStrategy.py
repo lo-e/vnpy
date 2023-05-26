@@ -496,7 +496,7 @@ class MartingPortfolio(object):
         self.trending_signal = None  # 正在追踪的趋势策略信号
         self.next_trending_signal = None  # 根据盈亏幅度确定下一个追踪的趋势策略信号
         self.trending_update_dict = {}  # 趋势策略信号的更新先缓存在这里，在on_daily完成更新
-        self.trending_history = []  # 缓存追踪过的趋势策略
+        self.trending_history_dict = {}  # 缓存追踪过的趋势策略
         self.dt = None  # 当前回测时间
 
     def init(self, portfolioValue, symbolList):
@@ -555,7 +555,9 @@ class MartingPortfolio(object):
                 "max_loss_rate":max_loss_rate,
                 "trending": trending,
             }
-            self.trending_history.append(data)
+            signal_trending_list = self.trending_history_dict.get(signal_key, [])
+            signal_trending_list.append(data)
+            self.trending_history_dict[signal_key] = signal_trending_list
 
             # 清空趋势更新缓存字典
             self.trending_update_dict = {}
