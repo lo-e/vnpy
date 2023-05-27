@@ -97,7 +97,7 @@ def one():
         os.makedirs(signal_trade_dir_path)
     for signal_key, trade_list in engine.portfolio.signalTradesDict.items():
         if len(trade_list):
-            fieldNames = ["datetime", "symbol", "direction", "offset", "volume", "price", "signal_position", "signal_position_price", "signal_position_value"]
+            fieldNames = ["datetime", "symbol", "direction", "offset", "volume", "price", "signal_position", "signal_position_price", "signal_position_value", "max_loss_value", "max_loss_rate"]
             # 文件路径
             filePath = f"{signal_trade_dir_path}{signal_key}.csv"
             with open(filePath, "w") as f:

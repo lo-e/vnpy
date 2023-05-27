@@ -498,6 +498,8 @@ class MartingPortfolio(object):
             "signal_position_value": round_to(
                 abs(signal.position) * signal.position_price, 1
             ),
+            "max_loss_value":signal.max_loss_value,
+            "max_loss_rate":signal.max_loss_rate,
         }
         signal_trades_list.append(trade_data)
         self.signalTradesDict[signal_key] = signal_trades_list
