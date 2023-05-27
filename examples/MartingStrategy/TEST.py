@@ -1,6 +1,12 @@
-def calculate_phase_loss(phase_count:int):
+def calculate_phase_loss(phase_count:int, increase_type:int=1):
     phase_value_list = [500.0, 1500.0, 3500.0, 7500.0, 15500.0, 31500.0, 63500.0, 127500.0, 255500.0, 511500.0, 1023500.0, 2047500.0]
-    increase_rate_list = [0.01 * 2**i for i in range(len(phase_value_list))]
+    if increase_type == 0:
+        increase_rate_list = [0.01 * 2*i for i in range(len(phase_value_list))]
+
+    elif increase_type == 1:
+        increase_rate_list = [0.01 * 2**i for i in range(len(phase_value_list))]
+    else:
+        exit("检查代码！")
     init_price = 100
 
     value_before = phase_value_list[0]
@@ -35,4 +41,4 @@ def calculate_phase_loss(phase_count:int):
     print(f"\n\n============\n总共经历{phase_count}个阶段加仓\n初始持仓价值：{phase_value_list[0]}\t初始持仓价格：{init_price}\n最后持仓价值：{value_before}\t最后持仓价格：{price_before}\n价格变化：{price_changed}")
 
 if __name__ == "__main__":
-    calculate_phase_loss(phase_count=8)
+    calculate_phase_loss(phase_count=6, increase_type=1)
