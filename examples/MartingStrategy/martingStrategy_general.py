@@ -186,10 +186,6 @@ class MartingSignal(object):
             if reduce_price_cross:
                 """价格满足减仓条件"""
 
-                # 初始化仓位最大亏损
-                self.max_loss_value = 0
-                self.max_loss_rate = ""
-
                 # 平仓
                 self.position_price = trade_price
                 target_position_value = self.unit_value
@@ -253,6 +249,10 @@ class MartingSignal(object):
                     # 减仓操作后停止后续加仓判断
                     return
 
+                # 初始化仓位最大亏损
+                self.max_loss_value = 0
+                self.max_loss_rate = ""
+                
         # 检查加仓
         if self.position_increase_price:
             # ====== fake ======
