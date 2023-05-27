@@ -97,6 +97,19 @@ def one():
         os.makedirs(signal_trade_dir_path)
     for signal_key, trade_list in engine.portfolio.signalTradesDict.items():
         if len(trade_list):
+            # ====== fake ======
+            print(f"\n{signal_key} 最大亏损提示")
+            for trade_data in trade_list:
+                max_loss_value_ = trade_data["max_loss_value"]
+                if max_loss_value_ <= -10000:
+                    dt_ = trade_data["datetime"]
+                    symbol_ = trade_data["symbol"]
+                    direction_ = trade_data["direction"]
+                    offset_ = trade_data["offset"]
+                    signal_position_value_ = trade_data["signal_position_value"]
+                    max_loss_rate_ = trade_data["max_loss_rate"]
+                    print(f"{dt_}\t{symbol_}\t{direction_}\t{offset_}\t{signal_position_value_}\t{max_loss_value_}\t{max_loss_rate_}")
+
             fieldNames = ["datetime", "symbol", "direction", "offset", "volume", "price", "signal_position", "signal_position_price", "signal_position_value", "max_loss_value", "max_loss_rate"]
             # 文件路径
             filePath = f"{signal_trade_dir_path}{signal_key}.csv"

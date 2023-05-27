@@ -401,7 +401,8 @@ class MartingSignal(object):
                 self.position_reduce_price = self.position_price * (1 - reduce_rate)
 
             # ====== 加仓价格 ======
-            increase_rate = (current_phase + 1) * 0.02
+            increase_rate = 0.01 * 2**(current_phase + 1)
+            increase_rate = min(increase_rate, 0.32)
             if self.direction == Direction.LONG:
                 self.position_increase_price = self.position_price * (1 - increase_rate)
 
