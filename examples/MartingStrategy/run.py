@@ -98,10 +98,13 @@ def one():
     for signal_key, trade_list in engine.portfolio.signalTradesDict.items():
         if len(trade_list):
             # ====== fake ======
-            print(f"\n{signal_key} 最大亏损提示")
+            loss_tips = False
             for trade_data in trade_list:
                 max_loss_value_ = trade_data["max_loss_value"]
                 if max_loss_value_ <= -10000:
+                    if not loss_tips:
+                        print(f"\n{signal_key} 最大亏损提示")
+                        loss_tips = True
                     dt_ = trade_data["datetime"]
                     symbol_ = trade_data["symbol"]
                     direction_ = trade_data["direction"]
