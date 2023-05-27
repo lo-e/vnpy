@@ -31,7 +31,6 @@ class MartingSignal(object):
         ]  # 合约最小价格变动
         if not self.symbol_min_volume or not self.symbol_price_tick:
             exit("检查代码！")
-        self.trending_top_step = 2 # 趋势追踪最高等级
 
         # 变量
         self.inited = False  # 是否完成初始建仓
@@ -47,8 +46,6 @@ class MartingSignal(object):
         self.rsi_array = []
         self.calculate_phase_positions(self.portfolio.portfolioValue)  # 马丁格尔倍数仓位管理
         self.phase_position_volume = 0  # 阶段仓位的初始持仓数量
-        self.trending_step = 0  # 追踪趋势的等级
-        self.trending_start_time = None # 趋势追踪开始时间
 
     def on_bar(self, bar):
         if not bar.check_valid():
@@ -61,11 +58,10 @@ class MartingSignal(object):
         self.calculate_max_loss()
         self.generate_signal(bar)
         self.calculate_indicator()
-        self.processing()
 
     def calculate_phase_positions(self, portfolio_value):
         self.phase_position_values = []
-        total_phase_count = 3
+        total_phase_count = 20
         for i in range(total_phase_count):
             phase_position = self.unit_value * (2 ** (i + 1) - 1)
             self.phase_position_values.append(phase_position)
@@ -113,7 +109,7 @@ class MartingSignal(object):
         判断交易信号
         要注意在任何一个数据点：buy/sell/short/cover只允许执行一类动作
         """
-        # fake
+        # ====== fake ======
         if self.symbol == "CHZUSDT.BYBIT" and self.direction == Direction.LONG:
             if self.bar.datetime >= datetime.strptime("2023-05-12 20:05:00", "%Y-%m-%d %H:%M:%S"):
                 a = 2
@@ -190,16 +186,6 @@ class MartingSignal(object):
             if reduce_price_cross:
                 """价格满足减仓条件"""
 
-                # 初始化趋势追踪等级
-                self.trending_step = 0
-
-                # 初始化趋势追踪开始时间
-                self.trending_start_time = None
-
-                if self in self.portfolio.trending_signal_list:
-                    # 组合策略取消趋势追踪
-                    self.portfolio.update_trending(self, False)
-
                 # 初始化仓位最大亏损
                 self.max_loss_value = 0
                 self.max_loss_rate = ""
@@ -269,7 +255,7 @@ class MartingSignal(object):
 
         # 检查加仓
         if self.position_increase_price:
-            # fake
+            # ====== fake ======
             if self.symbol == "SANDUSDT.BYBIT" and self.direction == Direction.LONG:
                 if self.bar.datetime >= datetime.strptime("2023-05-24 23:00:00", "%Y-%m-%d %H:%M:%S"):
                     a = 2
@@ -320,71 +306,23 @@ class MartingSignal(object):
                 # 下一持仓阶段
                 next_phase = current_phase + 1
 
-                if next_phase >= len(self.phase_position_values):
-                    # ====== 趋势行情 ======
+                # 目标持仓价值
+                target_position_value = self.phase_position_values[next_phase]
 
-                    # 在策略组合中并满足趋势追踪条件
-                    if (self.trending_step < self.trending_top_step) and ((not self.portfolio.latest_trending_signal and self == self.portfolio.next_trending_signal) or (
-                        self in self.portfolio.trending_signal_list
-                    )):
-                        # 当前持仓价值
-                        current_position_value = abs(self.position) * self.position_price
+                # 计算加仓的合约数量
+                changed_volume = (
+                    (
+                        target_position_value
+                        - abs(self.position) * self.position_price
+                    )
+                ) / trade_price
+                changed_volume = round_to(changed_volume, self.symbol_min_volume)
 
-                        # 更新持仓价格
-                        price_rate = 0.01
-                        if self.direction == Direction.LONG:
-                            target_positon_price = trade_price * (1 + price_rate)
-
-                        elif self.direction == Direction.SHORT:
-                            target_positon_price = trade_price * (1 - price_rate)
-                        
-                        else:
-                            exit("检查代码！")
-
-                        # 计算加仓的合约数量
-                        # current_position_value + changed_volume * trade_price = (abs(self.position) + changed_volume) * self.position_price
-                        # current_position_value + changed_volume * trade_price = abs(self.position) * self.position_price + changed_volume * self.position_price
-                        # changed_volume * (trade_price - self.position_price) = abs(self.position) * self.position_price - current_position_value
-                        changed_volume = (
-                            abs(self.position) * target_positon_price
-                            - current_position_value
-                        ) / (trade_price - target_positon_price)
-
-                        # 目标持仓价值过高，停止加仓
-                        trending_value = (abs(self.position) + changed_volume) * target_positon_price
-                        if trending_value > self.portfolio.portfolioValue * 3:
-                            return
-
-                        # 更新持仓价格
-                        self.position_price = target_positon_price
-
-                        # 新的趋势策略信号
-                        self.portfolio.update_trending(self, True)
-                        self.trending_step += 1
-
-                        # 趋势追踪等开始计时持仓时间，超时未平仓开始追踪下一个合约
-                        self.trending_start_time = self.bar.datetime
-
-                else:
-                    # ====== 震荡行情 ======
-
-                    # 目标持仓价值
-                    target_position_value = self.phase_position_values[next_phase]
-
-                    # 计算加仓的合约数量
-                    changed_volume = (
-                        (
-                            target_position_value
-                            - abs(self.position) * self.position_price
-                        )
-                    ) / trade_price
-                    changed_volume = round_to(changed_volume, self.symbol_min_volume)
-
-                    # 更新持仓价格
-                    self.position_price = (
-                        changed_volume * trade_price
-                        + abs(self.position) * self.position_price
-                    ) / (abs(self.position) + changed_volume)
+                # 更新持仓价格
+                self.position_price = (
+                    changed_volume * trade_price
+                    + abs(self.position) * self.position_price
+                ) / (abs(self.position) + changed_volume)
 
                 # 目标仓位合约数量
                 target_position = abs(self.position) + changed_volume
@@ -455,61 +393,23 @@ class MartingSignal(object):
 
         if self.position_price:
             # ====== 减仓价格 ======
+            reduce_rate = 0.01
             if self.direction == Direction.LONG:
-                self.position_reduce_price = self.position_price * (1 + 0.01)
+                self.position_reduce_price = self.position_price * (1 + reduce_rate)
 
             elif self.direction == Direction.SHORT:
-                self.position_reduce_price = self.position_price * (1 - 0.01)
+                self.position_reduce_price = self.position_price * (1 - reduce_rate)
 
             # ====== 加仓价格 ======
+            increase_rate = (current_phase + 1) * 0.02
             if self.direction == Direction.LONG:
-                if current_phase == 0:
-                    self.position_increase_price = self.position_price * (1 - 0.02)
-
-                elif current_phase == 1:
-                    self.position_increase_price = self.position_price * (1 - 0.04)
-
-                else:
-                    self.position_increase_price = self.position_price * (1 - 0.08)
+                self.position_increase_price = self.position_price * (1 - increase_rate)
 
             elif self.direction == Direction.SHORT:
-                if current_phase == 0:
-                    self.position_increase_price = self.position_price * (1 + 0.02)
-
-                elif current_phase == 1:
-                    self.position_increase_price = self.position_price * (1 + 0.04)
-
-                else:
-                    self.position_increase_price = self.position_price * (1 + 0.08)
-
-    def processing(self):
-        # 计算趋势追踪最高等级后持仓时间
-        if self.trending_start_time:
-            time_diff = (self.bar.datetime - self.trending_start_time).total_seconds()
-            if time_diff >= 3 * 24 * 60 * 60:
-                # 超时继续追踪下一个策略信号
-                self.portfolio.trending_timeout(self)
-                self.trending_start_time = None
+                self.position_increase_price = self.position_price * (1 + increase_rate)
 
     def newSignal(self, direction, offset, price, volume):
         self.portfolio.newSignal(self, direction, offset, price, volume)
-
-    def get_current_status(self):
-        # 判断是否准备好下一仓位阶段是趋势追踪
-        trending_ready = False
-        current_phase = self.get_current_phase()
-        if current_phase >= len(self.phase_position_values) - 1:
-            trending_ready = True
-
-        # 基于MA的当前盈亏
-        direction_value = (
-            1
-            if self.direction == Direction.LONG
-            else (-1 if self.direction == Direction.SHORT else 0)
-        )
-        ma_pnl = ((self.ma_price / self.position_price) - 1) * direction_value
-
-        return {"trending_ready": trending_ready, "ma_pnl": ma_pnl}
 
 
 class MartingPortfolio(object):
@@ -521,13 +421,8 @@ class MartingPortfolio(object):
         self.posDict = {}  # 合约持仓量字典
         self.signalPosDict = {}  # 策略持仓量字典
         self.signalTradesDict = {}  # 策略成交订单字典
-        self.trending_signal_list = []  # 正在追踪的趋势策略信号列表
-        self.latest_trending_signal = None # 最新追踪的趋势策略信号
-        self.trending_timeout_signal_list = [] # 最新周期的持仓超时信号列表
-        self.next_trending_signal = None  # 根据盈亏幅度确定下一个追踪的趋势策略信号
-        self.trending_update_list = []  # 趋势策略信号的更新先缓存在这里，在on_daily完成更新
-        self.trending_history_dict = {}  # 缓存追踪过的趋势策略
         self.dt = None  # 当前回测时间
+        self.trending_open = False
 
     def init(self, portfolioValue, symbolList):
         self.portfolioValue = portfolioValue
@@ -543,97 +438,9 @@ class MartingPortfolio(object):
     def onBar(self, bar):
         if not self.dt or self.dt != bar.datetime:
             self.dt = bar.datetime
-            self.on_daily()
 
         for signal in self.signalDict[bar.symbol]:
             signal.on_bar(bar)
-
-    def on_daily(self):
-        # 更新当前的趋势信号
-        for trending_update_data in self.trending_update_list:
-            signal = trending_update_data["signal"]
-            trending = trending_update_data["trending"]
-            max_loss_value = trending_update_data["max_loss_value"]
-            max_loss_rate = trending_update_data["max_loss_rate"]
-            if trending:
-                # 记录最新追踪的趋势策略信号，并且有且只有一个
-                if signal not in self.trending_signal_list:
-                    if self.latest_trending_signal or signal != self.next_trending_signal:
-                        exit("检查代码！")
-                    self.latest_trending_signal = signal
-                
-                    # 添加到趋势追踪列表
-                    self.trending_signal_list.append(signal)
-
-            else:
-                # 取消追踪的趋势策略信号必须在当前列表中
-                if signal not in self.trending_signal_list:
-                    exit("检查代码！")
-                self.trending_signal_list.remove(signal)
-
-                # 如果是最新追踪的策略信号，取消最新追踪
-                if signal == self.latest_trending_signal:
-                    self.latest_trending_signal = None
-
-            # 缓存趋势追踪记录
-            signal_key = f"{signal.symbol}_{signal.direction.value}"
-
-            # 趋势策略当前持仓均价
-            position_price = signal.position_price
-
-            # 趋势策略当前持仓价值
-            position_value = abs(round_to(signal.position * signal.position_price, 1))
-
-            data = {
-                "datetime": self.dt,
-                "signal": signal_key,
-                "position_price": position_price,
-                "position_value": position_value,
-                "max_loss_value": max_loss_value,
-                "max_loss_rate": max_loss_rate,
-                "trending": trending,
-            }
-            signal_trending_list = self.trending_history_dict.get(signal_key, [])
-            signal_trending_list.append(data)
-            self.trending_history_dict[signal_key] = signal_trending_list
-
-            # 清空趋势更新缓存字典
-            self.trending_update_list = []
-
-        # 最新追踪趋势策略信号持仓超时
-        for signal in self.trending_timeout_signal_list:
-            if signal == self.latest_trending_signal:
-                self.latest_trending_signal = None
-        self.trending_timeout_signal_list = []
-
-        # 筛选出跌幅最大的下一个趋势的信号
-        self.next_trending_signal = None
-        min_pnl = 0
-        for _, signal_list in self.signalDict.items():
-            for signal in signal_list:
-                if signal.inited and signal not in self.trending_signal_list:
-                    status = signal.get_current_status()
-                    trending_ready = status["trending_ready"]
-                    ma_pnl = status["ma_pnl"]
-                    if trending_ready and ma_pnl < 0 and ma_pnl < min_pnl:
-                        min_pnl = ma_pnl
-                        self.next_trending_signal = signal
-
-    def update_trending(self, signal, trending):
-        # ====== 趋势策略信号的开仓/平仓都会调用这个方法，先缓存更新内容，在on_daily完成更新 ======
-        max_loss_value = signal.max_loss_value
-        max_loss_rate = signal.max_loss_rate
-        trending_data = {
-            "signal": signal,
-            "trending": trending,
-            "max_loss_value": max_loss_value,
-            "max_loss_rate": max_loss_rate,
-        }
-        self.trending_update_list.append(trending_data)
-
-    def trending_timeout(self, signal):
-        # 趋势追踪持仓超时信号
-        self.trending_timeout_signal_list.append(signal)
 
     def newSignal(self, signal, direction, offset, price, volume):
         # 策略当前持仓数量
@@ -689,7 +496,7 @@ class MartingPortfolio(object):
                 signal.position_price, signal.symbol_price_tick
             ),
             "signal_position_value": round_to(
-                signal.position * signal.position_price, 1
+                abs(signal.position) * signal.position_price, 1
             ),
         }
         signal_trades_list.append(trade_data)

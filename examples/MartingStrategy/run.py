@@ -106,40 +106,41 @@ def one():
                 # 写入csv文件
                 writer.writerows(trade_list)
 
-    # 输出趋势追踪列表
-    print(f"\n****** 趋势追踪列表 ******")
-    continuous_open_dict = {}
-    for signal_key, trending_list in engine.portfolio.trending_history_dict.items():
-        print("\n")
-        continuous_open = 0
-        for trending_data in trending_list:
-            dt = trending_data["datetime"]
-            signal = trending_data["signal"]
-            position_price = trending_data["position_price"]
-            position_value = trending_data["position_value"]
-            max_loss_value = trending_data["max_loss_value"]
-            max_loss_rate = trending_data["max_loss_rate"]
+    if engine.portfolio.trending_open:
+        # 输出趋势追踪列表
+        print(f"\n****** 趋势追踪列表 ******")
+        continuous_open_dict = {}
+        for signal_key, trending_list in engine.portfolio.trending_history_dict.items():
+            print("\n")
+            continuous_open = 0
+            for trending_data in trending_list:
+                dt = trending_data["datetime"]
+                signal = trending_data["signal"]
+                position_price = trending_data["position_price"]
+                position_value = trending_data["position_value"]
+                max_loss_value = trending_data["max_loss_value"]
+                max_loss_rate = trending_data["max_loss_rate"]
 
-            trending = trending_data["trending"]
-            trending_desc = "加仓" if trending else "平仓"
-            print(f"{dt}\t{signal}\t均价：{position_price}\t价值：{position_value}\t最大亏损：{max_loss_value} {max_loss_rate}\t{trending_desc}")
-            if trending:
-                continuous_open += 1
+                trending = trending_data["trending"]
+                trending_desc = "加仓" if trending else "平仓"
+                print(f"{dt}\t{signal}\t均价：{position_price}\t价值：{position_value}\t最大亏损：{max_loss_value} {max_loss_rate}\t{trending_desc}")
+                if trending:
+                    continuous_open += 1
 
-            else:
-                continuous_key = str(continuous_open)
-                count = continuous_open_dict.get(continuous_key, 0)
-                count += 1
-                continuous_open_dict[continuous_key] = count
-                continuous_open = 0
-                print(f"\n")
+                else:
+                    continuous_key = str(continuous_open)
+                    count = continuous_open_dict.get(continuous_key, 0)
+                    count += 1
+                    continuous_open_dict[continuous_key] = count
+                    continuous_open = 0
+                    print(f"\n")
 
-    print(f"\n****** 趋势追踪连续统计 ******")
-    continuous_keys = list(continuous_open_dict.keys())
-    continuous_keys = sorted(continuous_keys)
-    for continuous_key in continuous_keys:
-        count = continuous_open_dict[continuous_key]
-        print(f"{continuous_key}\t{count}")
+        print(f"\n****** 趋势追踪连续统计 ******")
+        continuous_keys = list(continuous_open_dict.keys())
+        continuous_keys = sorted(continuous_keys)
+        for continuous_key in continuous_keys:
+            count = continuous_open_dict[continuous_key]
+            print(f"{continuous_key}\t{count}")
 
 
 def two():

@@ -528,6 +528,7 @@ class MartingPortfolio(object):
         self.trending_update_list = []  # 趋势策略信号的更新先缓存在这里，在on_daily完成更新
         self.trending_history_dict = {}  # 缓存追踪过的趋势策略
         self.dt = None  # 当前回测时间
+        self.trending_open = True
 
     def init(self, portfolioValue, symbolList):
         self.portfolioValue = portfolioValue
@@ -689,7 +690,7 @@ class MartingPortfolio(object):
                 signal.position_price, signal.symbol_price_tick
             ),
             "signal_position_value": round_to(
-                signal.position * signal.position_price, 1
+                abs(signal.position) * signal.position_price, 1
             ),
         }
         signal_trades_list.append(trade_data)
