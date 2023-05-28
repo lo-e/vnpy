@@ -19,7 +19,6 @@ from vnpy.trader.constant import Direction, Offset
 from vnpy.trader.utility import DIR_SYMBOL
 import shutil
 
-
 def one():
     engine = BacktestingEngine()
     start_dt = datetime(2022, 1, 1)
