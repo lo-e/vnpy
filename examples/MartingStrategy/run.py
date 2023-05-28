@@ -22,7 +22,7 @@ import shutil
 
 def one():
     engine = BacktestingEngine()
-    engine.setPeriod(datetime(2023, 5, 1), datetime(2023, 5, 27))
+    engine.setPeriod(datetime(2022, 1, 1), datetime(2023, 5, 27))
     figSavedName = ""
     if figSavedName:
         figSavedName = f"figSaved{DIR_SYMBOL}{figSavedName}"
