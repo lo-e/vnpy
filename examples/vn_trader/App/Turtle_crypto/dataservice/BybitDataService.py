@@ -11,6 +11,8 @@ from enum import Enum
 from vnpy.trader.object import ContractData, Exchange, Product
 from typing import Set
 import pandas as pd
+from pymongo import MongoClient, ASCENDING, DESCENDING
+from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 
 hostname = socket.gethostname()
 main_url = "https://api.bybit.com"
@@ -92,6 +94,7 @@ def bybit_get_bar_data(symbol: str, interval: str, from_time: str, limit: int = 
 
     return datetime.strptime(until, "%Y-%m-%d-%H%M%S")
 
+
 def bybit_get_latest_price(symbol: str):
     from_time = datetime.now() - timedelta(hours=1)
     from_time = from_time.strftime("%Y-%m-%d %H:%M:%S")
@@ -110,7 +113,8 @@ def bybit_get_latest_price(symbol: str):
         latest_price = latest_bar["close"]
     return latest_price
 
-def bybit_get_symbol_list(type: BybitSymbolType, need_data:bool=False):
+
+def bybit_get_symbol_list(type: BybitSymbolType, need_data: bool = False):
     symbol_list: Set[str] = set()
     symbol_data_dict = {}
 
@@ -194,11 +198,14 @@ def bybit_get_symbol_list(type: BybitSymbolType, need_data:bool=False):
     else:
         return symbol_list
 
-def bybit_get_min_value(filter:float):
+
+def bybit_get_min_value(filter: float):
     # 获取交易对最小交易价值
-    usdt_symbol_list, data = bybit_get_symbol_list(type=BybitSymbolType.USDT, need_data=True)
+    usdt_symbol_list, data = bybit_get_symbol_list(
+        type=BybitSymbolType.USDT, need_data=True
+    )
     print(f"\n所有USDT永续交易对：{len(usdt_symbol_list)}\n")
-    
+
     print(f"满足筛选条件的交易对")
     count = 0
     rusult_list = []
@@ -214,10 +221,14 @@ def bybit_get_min_value(filter:float):
         if value <= filter:
             print(f"{symbol}\t\t最新价格：{price}\t\t最小交易数量：{min_volume}\t\t价值：{value}")
             count += 1
-            rusult_list.append({"symbol":symbol,
-                                "price":price,
-                                "min_volume":min_volume,
-                                "value":value})
+            rusult_list.append(
+                {
+                    "symbol": symbol,
+                    "price": price,
+                    "min_volume": min_volume,
+                    "value": value,
+                }
+            )
     print(f"总计：{count}")
 
     # 写入CSV
@@ -233,14 +244,20 @@ def bybit_get_min_value(filter:float):
 
     return rusult_list
 
+
 def bybit_marting_setting():
     # 获取交易对最小交易价值
-    usdt_symbol_list, data = bybit_get_symbol_list(type=BybitSymbolType.USDT, need_data=True)
+    usdt_symbol_list, data = bybit_get_symbol_list(
+        type=BybitSymbolType.USDT, need_data=True
+    )
     print(f"\n所有USDT永续交易对：{len(usdt_symbol_list)}\n")
 
     rusult_list = []
     for symbol in usdt_symbol_list:
         d = data[symbol]
+
+        # 交易所合约
+        full_symbol = f"{symbol}.BYBIT"
 
         # 最小价格变动
         price_tick = d["price_filter"]["min_price"]
@@ -248,11 +265,22 @@ def bybit_marting_setting():
         # 最小交易数量
         min_volume = d["lot_size_filter"]["min_trading_qty"]
 
-        rusult_list.append({"symbol":f"{symbol}.BYBIT",
-                            "priceTick":price_tick,
-                            "variableCommission":0.0001,
-                            "slippage":1,
-                            "min_volume":min_volume})
+        # 数据起始日期
+        client = MongoClient("localhost", 27017)
+        db = client[MINUTE_DB_NAME]
+        collection = db[full_symbol]
+        start_data = collection.find_one(sort=[("datetime", ASCENDING)])
+        db_start_dt = start_data["datetime"] if start_data else None
+        rusult_list.append(
+            {
+                "symbol": full_symbol,
+                "priceTick": price_tick,
+                "variableCommission": 0.0001,
+                "slippage": 1,
+                "min_volume": min_volume,
+                "start_dt": db_start_dt,
+            }
+        )
 
     # 写入CSV
     csv_path = get_csv_path()
@@ -260,16 +288,18 @@ def bybit_marting_setting():
         os.makedirs(csv_path)
     csv_file_path = f"{csv_path}marting_setting.csv"
     results_sorted = pd.DataFrame(rusult_list)
-    results_sorted = results_sorted.sort_values("symbol", ascending=True)
+    results_sorted = results_sorted.sort_values("start_dt", ascending=True)
     results_sorted.to_csv(csv_file_path, index=False)
 
     return rusult_list
+
 
 def get_csv_path():
     path = os.path.abspath(__file__)
     file_name = path.split(DIR_SYMBOL)[-1]
     csv_path = path.rstrip(file_name) + f"CSVs{DIR_SYMBOL}"
     return csv_path
+
 
 if __name__ == "__main__":
     """
@@ -311,7 +341,7 @@ if __name__ == "__main__":
     """
 
     # # 获取所有USDT永续合约最小交易价值，并筛选
-    bybit_get_min_value(filter=0.5)
+    # bybit_get_min_value(filter=0.5)
 
     # 生成马丁策略回测参数
-    # bybit_marting_setting()
+    bybit_marting_setting()
