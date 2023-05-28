@@ -1,5 +1,5 @@
 ====== bybit【ai_trader】 ======
-symbol,priceTick,variableCommission,slippage,min_volume
+symbol,priceTick,variableCommission,slippage,min_volume,start_dt
 SHIB1000USDT.BYBIT,0.000001,0.0001,1,10.0,2021-10-20 15:09:00
 AAVEUSDT.BYBIT,0.01,0.0001,1,0.01,2021-05-13 17:21:00
 ADAUSDT.BYBIT,0.0001,0.0001,1,1.0,2021-03-18 15:53:00
