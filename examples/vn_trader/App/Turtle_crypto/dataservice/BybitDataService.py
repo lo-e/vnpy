@@ -205,28 +205,43 @@ def bybit_get_min_value(filter: float):
         type=BybitSymbolType.USDT, need_data=True
     )
     print(f"\n所有USDT永续交易对：{len(usdt_symbol_list)}\n")
-
     print(f"满足筛选条件的交易对")
     count = 0
     rusult_list = []
-
     for symbol in usdt_symbol_list:
         d = data[symbol]
+
+        # 交易所合约
+        full_symbol = f"{symbol}.BYBIT"
+
         # 最小交易数量
         min_volume = d["lot_size_filter"]["min_trading_qty"]
+
+        # 数据库获取起始日期
+        client = MongoClient("localhost", 27017)
+        db = client[MINUTE_DB_NAME]
+        collection = db[full_symbol]
+        start_data = collection.find_one(sort=[("datetime", ASCENDING)])
+        db_start_dt = start_data["datetime"] if start_data else None
+        end_data = collection.find_one(sort=[("datetime", DESCENDING)])
+
         # 获取最新的价格
-        price = bybit_get_latest_price(symbol=symbol)
+        # price = bybit_get_latest_price(symbol=symbol) # 接口获取实时最新价格
+        price = end_data["close_price"] if end_data else None  # 数据库获取最新价格
+
         # 最小交易价值
         value = min_volume * price
+
         if value <= filter:
             print(f"{symbol}\t\t最新价格：{price}\t\t最小交易数量：{min_volume}\t\t价值：{value}")
             count += 1
             rusult_list.append(
                 {
-                    "symbol": symbol,
+                    "symbol": full_symbol,
                     "price": price,
                     "min_volume": min_volume,
                     "value": value,
+                    "start_dt": db_start_dt,
                 }
             )
     print(f"总计：{count}")
@@ -239,19 +254,20 @@ def bybit_get_min_value(filter: float):
         os.makedirs(dir_path)
     csv_file_path = f"{dir_path}filter_{filter}.csv"
     results_sorted = pd.DataFrame(rusult_list)
-    results_sorted = results_sorted.sort_values("symbol", ascending=True)
+    results_sorted = results_sorted.sort_values("start_dt", ascending=True)
     results_sorted.to_csv(csv_file_path, index=False)
 
     return rusult_list
 
 
-def bybit_marting_setting():
+def bybit_marting_setting(min_value_filter: float = 0):
     # 获取交易对最小交易价值
     usdt_symbol_list, data = bybit_get_symbol_list(
         type=BybitSymbolType.USDT, need_data=True
     )
-    print(f"\n所有USDT永续交易对：{len(usdt_symbol_list)}\n")
+    print(f"\n所有USDT永续交易对：{len(usdt_symbol_list)}")
 
+    filter_count = 0
     rusult_list = []
     for symbol in usdt_symbol_list:
         d = data[symbol]
@@ -265,28 +281,61 @@ def bybit_marting_setting():
         # 最小交易数量
         min_volume = d["lot_size_filter"]["min_trading_qty"]
 
-        # 数据起始日期
+        # 数据库起始日期
         client = MongoClient("localhost", 27017)
         db = client[MINUTE_DB_NAME]
         collection = db[full_symbol]
         start_data = collection.find_one(sort=[("datetime", ASCENDING)])
         db_start_dt = start_data["datetime"] if start_data else None
-        rusult_list.append(
-            {
-                "symbol": full_symbol,
-                "priceTick": price_tick,
-                "variableCommission": 0.0001,
-                "slippage": 1,
-                "min_volume": min_volume,
-                "start_dt": db_start_dt,
-            }
-        )
+
+        if min_value_filter:
+            # 最新的价格
+            # latest_price = bybit_get_latest_price(symbol=symbol) # 接口获取实时最新价格
+            end_data = collection.find_one(sort=[("datetime", DESCENDING)])  # 数据库获取最新价格
+            latest_price = end_data["close_price"] if end_data else None
+
+            # 最小交易价值
+            latest_min_value = min_volume * latest_price
+
+            if latest_min_value <= min_value_filter:
+                # print(f"{symbol}\t\t最新价格：{latest_price}\t\t最小交易数量：{min_volume}\t\t价值：{value}")
+                filter_count += 1
+                rusult_list.append(
+                    {
+                        "symbol": full_symbol,
+                        "priceTick": price_tick,
+                        "variableCommission": 0.0001,
+                        "slippage": 1,
+                        "min_volume": min_volume,
+                        "latest_price": latest_price,
+                        "latest_min_value": latest_min_value,
+                        "start_dt": db_start_dt,
+                    }
+                )
+
+        else:
+            rusult_list.append(
+                {
+                    "symbol": full_symbol,
+                    "priceTick": price_tick,
+                    "variableCommission": 0.0001,
+                    "slippage": 1,
+                    "min_volume": min_volume,
+                    "start_dt": db_start_dt,
+                }
+            )
+
+    if min_value_filter:
+        print(f"满足筛选条件的交易对：{filter_count}")
 
     # 写入CSV
     csv_path = get_csv_path()
     if not os.path.exists(csv_path):
         os.makedirs(csv_path)
-    csv_file_path = f"{csv_path}marting_setting.csv"
+    if min_value_filter:
+        csv_file_path = f"{csv_path}marting_setting_filter_{min_value_filter}.csv"
+    else:
+        csv_file_path = f"{csv_path}marting_setting.csv"
     results_sorted = pd.DataFrame(rusult_list)
     results_sorted = results_sorted.sort_values("start_dt", ascending=True)
     results_sorted.to_csv(csv_file_path, index=False)
@@ -344,4 +393,4 @@ if __name__ == "__main__":
     # bybit_get_min_value(filter=0.5)
 
     # 生成马丁策略回测参数
-    bybit_marting_setting()
+    bybit_marting_setting(min_value_filter=0.5)
