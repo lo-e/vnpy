@@ -19,9 +19,10 @@ from vnpy.trader.constant import Direction, Offset
 from vnpy.trader.utility import DIR_SYMBOL
 import shutil
 
+
 def one():
     engine = BacktestingEngine()
-    engine.setPeriod(datetime(2023, 5, 1), datetime(2023, 5, 25))
+    engine.setPeriod(datetime(2023, 5, 1), datetime(2023, 5, 27))
     figSavedName = ""
     if figSavedName:
         figSavedName = f"figSaved{DIR_SYMBOL}{figSavedName}"
@@ -78,7 +79,14 @@ def one():
         os.makedirs(symbol_trade_dir_path)
     for symbol, trade_list in symbol_trade_dic.items():
         if len(trade_list):
-            fieldNames = ["datetime", "symbol", "direction", "offset", "volume", "price"]
+            fieldNames = [
+                "datetime",
+                "symbol",
+                "direction",
+                "offset",
+                "volume",
+                "price",
+            ]
             # 文件路径
             filePath = f"{symbol_trade_dir_path}{symbol}.csv"
             with open(filePath, "w") as f:
@@ -98,6 +106,7 @@ def one():
     for signal_key, trade_list in engine.portfolio.signalTradesDict.items():
         if len(trade_list):
             # ====== fake ======
+            """
             loss_tips = False
             for trade_data in trade_list:
                 max_loss_value_ = trade_data["max_loss_value"]
@@ -111,9 +120,24 @@ def one():
                     offset_ = trade_data["offset"]
                     signal_position_value_ = trade_data["signal_position_value"]
                     max_loss_rate_ = trade_data["max_loss_rate"]
-                    print(f"{dt_}\t{symbol_}\t{direction_}\t{offset_}\t{signal_position_value_}\t{max_loss_value_}\t{max_loss_rate_}")
+                    print(
+                        f"{dt_}\t{symbol_}\t{direction_}\t{offset_}\t{signal_position_value_}\t{max_loss_value_}\t{max_loss_rate_}"
+                    )
+            """
 
-            fieldNames = ["datetime", "symbol", "direction", "offset", "volume", "price", "signal_position", "signal_position_price", "signal_position_value", "max_loss_value", "max_loss_rate"]
+            fieldNames = [
+                "datetime",
+                "symbol",
+                "direction",
+                "offset",
+                "volume",
+                "price",
+                "signal_position",
+                "signal_position_price",
+                "signal_position_value",
+                "max_loss_value",
+                "max_loss_rate",
+            ]
             # 文件路径
             filePath = f"{signal_trade_dir_path}{signal_key}.csv"
             with open(filePath, "w") as f:
@@ -125,21 +149,17 @@ def one():
     if engine.portfolio.trending_open:
         # 输出趋势追踪列表
         print(f"\n****** 趋势追踪列表 ******")
+        step_required = 3
         continuous_open_dict = {}
+        continuous_saved_list = []
         for signal_key, trending_list in engine.portfolio.trending_history_dict.items():
-            print("\n")
             continuous_open = 0
+            continuous_cached_list = []
             for trending_data in trending_list:
-                dt = trending_data["datetime"]
-                signal = trending_data["signal"]
-                position_price = trending_data["position_price"]
-                position_value = trending_data["position_value"]
-                max_loss_value = trending_data["max_loss_value"]
-                max_loss_rate = trending_data["max_loss_rate"]
-
                 trending = trending_data["trending"]
                 trending_desc = "加仓" if trending else "平仓"
-                print(f"{dt}\t{signal}\t均价：{position_price}\t价值：{position_value}\t最大亏损：{max_loss_value} {max_loss_rate}\t{trending_desc}")
+                trending_data["trending"] = trending_desc
+                continuous_cached_list.append(trending_data)
                 if trending:
                     continuous_open += 1
 
@@ -148,8 +168,27 @@ def one():
                     count = continuous_open_dict.get(continuous_key, 0)
                     count += 1
                     continuous_open_dict[continuous_key] = count
+
+                    # 将指定趋势强度的追踪记录添加到将要保存的列表
+                    if len(continuous_cached_list) >= step_required + 1:
+                        # 空数据作为分割线
+                        continuous_cached_list.append(
+                            {
+                                "datetime": "",
+                                "signal": "",
+                                "position_price": "",
+                                "position_value": "",
+                                "max_loss_value": "",
+                                "max_loss_rate": "",
+                                "trending": "",
+                            }
+                        )
+                        continuous_saved_list = (
+                            continuous_saved_list + continuous_cached_list
+                        )
+
                     continuous_open = 0
-                    print(f"\n")
+                    continuous_cached_list = []
 
         print(f"\n****** 趋势追踪连续统计 ******")
         continuous_keys = list(continuous_open_dict.keys())
@@ -157,6 +196,26 @@ def one():
         for continuous_key in continuous_keys:
             count = continuous_open_dict[continuous_key]
             print(f"{continuous_key}\t{count}")
+
+        # 趋势追踪列表保存到csv
+        trending_dir_path = f"trending_continuous{DIR_SYMBOL}"
+        if not os.path.exists(trending_dir_path):
+            os.makedirs(trending_dir_path)
+        filePath = f"{trending_dir_path}required_{step_required}.csv"
+        fieldNames = [
+            "datetime",
+            "signal",
+            "position_price",
+            "position_value",
+            "max_loss_value",
+            "max_loss_rate",
+            "trending",
+        ]
+        with open(filePath, "w") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldNames)
+            writer.writeheader()
+            # 写入csv文件
+            writer.writerows(continuous_saved_list)
 
 
 def two():
