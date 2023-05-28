@@ -22,7 +22,9 @@ import shutil
 
 def one():
     engine = BacktestingEngine()
-    engine.setPeriod(datetime(2022, 1, 1), datetime(2023, 5, 27))
+    start_dt = datetime(2022, 1, 1)
+    end_dt = datetime(2023, 5, 27)
+    engine.setPeriod(start_dt, end_dt)
     figSavedName = ""
     if figSavedName:
         figSavedName = f"figSaved{DIR_SYMBOL}{figSavedName}"
@@ -151,7 +153,7 @@ def one():
         print(f"\n****** 趋势追踪列表 ******")
         step_required = 3
         continuous_open_dict = {}
-        continuous_saved_list = []
+        continuous_saved_dict = {}
         for signal_key, trending_list in engine.portfolio.trending_history_dict.items():
             continuous_open = 0
             continuous_cached_list = []
@@ -183,9 +185,11 @@ def one():
                                 "trending": "",
                             }
                         )
-                        continuous_saved_list = (
-                            continuous_saved_list + continuous_cached_list
+                        signal_continuous_saved_list = continuous_saved_dict.get(signal_key, [])
+                        signal_continuous_saved_list = (
+                            signal_continuous_saved_list + continuous_cached_list
                         )
+                        continuous_saved_dict[signal_key] = signal_continuous_saved_list
 
                     continuous_open = 0
                     continuous_cached_list = []
@@ -198,24 +202,28 @@ def one():
             print(f"{continuous_key}\t{count}")
 
         # 趋势追踪列表保存到csv
-        trending_dir_path = f"trending_continuous{DIR_SYMBOL}"
-        if not os.path.exists(trending_dir_path):
-            os.makedirs(trending_dir_path)
-        filePath = f"{trending_dir_path}required_{step_required}.csv"
-        fieldNames = [
-            "datetime",
-            "signal",
-            "position_price",
-            "position_value",
-            "max_loss_value",
-            "max_loss_rate",
-            "trending",
-        ]
-        with open(filePath, "w") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldNames)
-            writer.writeheader()
-            # 写入csv文件
-            writer.writerows(continuous_saved_list)
+        for signal, signal_continuous_saved_list in continuous_saved_dict.items():
+            trending_dir_path = f"trending_continuous{DIR_SYMBOL}{signal}{DIR_SYMBOL}"
+            if not os.path.exists(trending_dir_path):
+                os.makedirs(trending_dir_path)
+
+            start_dt_str = start_dt.strftime("%Y-%m-%d")
+            end_dt_str = end_dt.strftime("%Y-%m-%d")
+            filePath = f"{trending_dir_path}{signal}_{start_dt_str}_{end_dt_str}.csv"
+            fieldNames = [
+                "datetime",
+                "signal",
+                "position_price",
+                "position_value",
+                "max_loss_value",
+                "max_loss_rate",
+                "trending",
+            ]
+            with open(filePath, "w") as f:
+                writer = csv.DictWriter(f, fieldnames=fieldNames)
+                writer.writeheader()
+                # 写入csv文件
+                writer.writerows(signal_continuous_saved_list)
 
 
 def two():
