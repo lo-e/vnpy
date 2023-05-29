@@ -201,14 +201,14 @@ def one():
             print(f"{continuous_key}\t{count}")
 
         # 趋势追踪列表保存到csv
+        start_dt_str = start_dt.strftime("%Y-%m-%d")
+        end_dt_str = end_dt.strftime("%Y-%m-%d")
+        trending_dir_path = f"trending_continuous{DIR_SYMBOL}{start_dt_str}_{end_dt_str}{DIR_SYMBOL}"
         for signal, signal_continuous_saved_list in continuous_saved_dict.items():
-            trending_dir_path = f"trending_continuous{DIR_SYMBOL}{signal}{DIR_SYMBOL}"
             if not os.path.exists(trending_dir_path):
                 os.makedirs(trending_dir_path)
 
-            start_dt_str = start_dt.strftime("%Y-%m-%d")
-            end_dt_str = end_dt.strftime("%Y-%m-%d")
-            filePath = f"{trending_dir_path}{signal}_{start_dt_str}_{end_dt_str}.csv"
+            filePath = f"{trending_dir_path}{signal}.csv"
             fieldNames = [
                 "datetime",
                 "signal",
