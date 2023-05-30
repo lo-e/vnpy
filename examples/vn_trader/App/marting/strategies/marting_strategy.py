@@ -4,7 +4,7 @@
 使用马丁式加仓的趋势追踪策略
 """
 
-from vnpy.trader.constant import (Direction, Offset)
+from vnpy.trader.constant import Direction, Offset
 from vnpy.app.cta_strategy.template import CtaTemplate
 from vnpy.trader.utility import ArrayManager
 from vnpy.app.cta_strategy.base import *
@@ -15,40 +15,33 @@ import csv
 import os
 from vnpy.trader.object import BarData
 
-class MartingStrategy(CtaTemplate):
-    """ 马丁策略 """
-    className = 'MartingStrategy'
-    author = u'loe'
 
-    # 常量
-    direction:Direction = Direction.NET  # 交易方向
+class MartingStrategy(CtaTemplate):
+    """马丁策略"""
+
+    className = "MartingStrategy"
+    author = "loe"
+
+    # 策略参数
     ma_window = 9  # 均线参数
     rsi_window = 14  # RSI参数
 
-    # 策略参数
-
-    # 策略变量
-    
     # 参数列表，保存了参数的名称
-    parameters = ['strategy_name',
-                 'vt_symbol',
-                 'entryWindow',
-                 'exitWindow',
-                 'atrWindow']
-
+    parameters = ["strategy_name", "vt_symbol", "direction", "ma_window", "rsi_window"]
 
     # 变量列表，保存了变量的名称
-    variables = ['hasClose']
-    
+    variables = ["direction"]
+
     # 同步列表，保存了需要保存到数据库的变量名称
-    syncs =    ['pos']
+    syncs = ["pos"]
 
     def __init__(self, ctaEngine, martingPortfolio, setting):
-        super(MartingStrategy, self).__init__(cta_engine=ctaEngine, strategy_name='', vt_symbol='', setting=setting)
-
         self.portfolio = martingPortfolio
+        self.direction: Direction = Direction.NET  # 交易方向
         self.unit_value = self.portfolio.portfolioValue * 0.5 * 0.01  # 最小持仓价值
-        self.am = ArrayManager(max(self.ma_window, self.rsi_window + 11) + 1)  # K线容器
+        self.symbol_min_volume:float = 0.0
+        self.symbol_price_tick:float = 0.0
+        self.am = ArrayManager(max(self.ma_window, self.rsi_window + 12))  # K线容器
         self.bar: BarData = None  # 最新K线
         self.position_price = 0  # 持仓均价
         self.position_reduce_price = 0  # 减仓价格
@@ -56,40 +49,44 @@ class MartingStrategy(CtaTemplate):
         self.max_loss_value = 0  # 当前持仓最大亏损价值
         self.max_loss_rate = ""  # 当前持仓最大亏损比率
         self.ma_price = 0  # 均线价格
-        self.rsi_array = []
-        self.calculate_phase_positions(self.portfolio.portfolioValue)  # 马丁格尔倍数仓位管理
-        self.phase_position_volume = 0  # 阶段仓位的初始持仓数量
+        self.rsi_array = []  # 指定周期内的RSI列表
         self.trending_step = 0  # 追踪趋势的等级
-        
+        self.calculate_phase_positions(self.portfolio.portfolioValue)  # 马丁格尔倍数仓位管理
+
+        super(MartingStrategy, self).__init__(
+            cta_engine=ctaEngine, strategy_name="", vt_symbol="", setting=setting
+        )
+
+    def calculate_phase_positions(self, portfolio_value):
+        self.phase_position_values = []
+        total_phase_count = 3
+        for i in range(total_phase_count):
+            phase_position = self.unit_value * (2 ** (i + 1) - 1)
+            self.phase_position_values.append(phase_position)
+
     def on_init(self):
-        """初始化策略（必须由用户继承实现）"""
-        self.hasClose = False
-        self.barDbName = DAILY_DB_NAME
+        pass
+    
         # 载入历史数据，并采用回放计算的方式初始化策略数值
-        initData = self.load_bar(300, interval=Interval.DAILY)
-        for bar in initData:
-            self.on_bar(bar)
-        self.write_log(f'{self.strategy_name}\t策略初始化')
+        # initData = self.load_bar(300, interval=Interval.DAILY)
+        # for bar in initData:
+        #     self.on_bar(bar)
+        # self.write_log(f"{self.strategy_name}\t策略初始化")
 
     def on_start(self):
-        """启动策略（必须由用户继承实现）"""
-        self.write_log(f'{self.strategy_name}\t策略启动')
+        contract = self.cta_engine.main_engine.get_contract(self.vt_symbol)
+        if not contract:
+            return False
+        
+        self.symbol_min_volume = contract.min_volume
+        self.symbol_price_tick = contract.pricetick
+        return True
 
     def on_stop(self):
         """停止策略（必须由用户继承实现）"""
-        self.write_log(f'{self.strategy_name}\t策略停止')
+        self.write_log(f"{self.strategy_name}\t策略停止")
 
     def on_tick(self, tick):
-        """收到行情TICK推送（必须由用户继承实现）"""
-        """
-        # 保存tick数据到数据库
-        if datetime.time(7, 50) <= (tick.datetime + timedelta(hours=8)).time() <= datetime.time(8, 2):
-            self.saveTick(tick)
-        """
-
-        """ fake """
-        #self.write_log(f'【real：{datetime.datetime.now()}】\t【tick：{tick.datetime + timedelta(hours=8)}】\t{tick.symbol}')
-
         if not self.trading:
             return
 
@@ -108,7 +105,9 @@ class MartingStrategy(CtaTemplate):
             # 多头开仓加仓
             if tick.last_price >= self.longEntry1 and self.virtualUnit < 1:
                 action = True
-                current_multiplier = self.calMultiplier(tick.last_price, direction=Direction.LONG)
+                current_multiplier = self.calMultiplier(
+                    tick.last_price, direction=Direction.LONG
+                )
 
                 # 信号建仓
                 self.open(tick.last_price, 1)
@@ -127,12 +126,16 @@ class MartingStrategy(CtaTemplate):
 
                 # 组合仓位管理
                 if preCheck:
-                    if self.portfolio.newSignal(self.vt_symbol, Direction.LONG, Offset.OPEN):
+                    if self.portfolio.newSignal(
+                        self.vt_symbol, Direction.LONG, Offset.OPEN
+                    ):
                         unitChange += 1
 
             if tick.last_price >= self.longEntry2 and self.virtualUnit < 2:
                 action = True
-                current_multiplier = self.calMultiplier(tick.last_price, direction=Direction.LONG)
+                current_multiplier = self.calMultiplier(
+                    tick.last_price, direction=Direction.LONG
+                )
 
                 self.open(tick.last_price, 1)
 
@@ -146,12 +149,16 @@ class MartingStrategy(CtaTemplate):
                 #     preCheck = False
 
                 if preCheck:
-                    if self.portfolio.newSignal(self.vt_symbol, Direction.LONG, Offset.OPEN):
+                    if self.portfolio.newSignal(
+                        self.vt_symbol, Direction.LONG, Offset.OPEN
+                    ):
                         unitChange += 1
 
             if tick.last_price >= self.longEntry3 and self.virtualUnit < 3:
                 action = True
-                current_multiplier = self.calMultiplier(tick.last_price, direction=Direction.LONG)
+                current_multiplier = self.calMultiplier(
+                    tick.last_price, direction=Direction.LONG
+                )
 
                 self.open(tick.last_price, 1)
 
@@ -165,12 +172,16 @@ class MartingStrategy(CtaTemplate):
                 #     preCheck = False
 
                 if preCheck:
-                    if self.portfolio.newSignal(self.vt_symbol, Direction.LONG, Offset.OPEN):
+                    if self.portfolio.newSignal(
+                        self.vt_symbol, Direction.LONG, Offset.OPEN
+                    ):
                         unitChange += 1
 
             if tick.last_price >= self.longEntry4 and self.virtualUnit < 4:
                 action = True
-                current_multiplier = self.calMultiplier(tick.last_price, direction=Direction.LONG)
+                current_multiplier = self.calMultiplier(
+                    tick.last_price, direction=Direction.LONG
+                )
 
                 self.open(tick.last_price, 1)
 
@@ -184,13 +195,18 @@ class MartingStrategy(CtaTemplate):
                 #     preCheck = False
 
                 if preCheck:
-                    if self.portfolio.newSignal(self.vt_symbol, Direction.LONG, Offset.OPEN):
+                    if self.portfolio.newSignal(
+                        self.vt_symbol, Direction.LONG, Offset.OPEN
+                    ):
                         unitChange += 1
 
             if action:
                 if unitChange:
                     self.unit += unitChange
-                    self.buy(self.bestLimitOrderPrice(tick, Direction.LONG, multi=200), current_multiplier*abs(unitChange))
+                    self.buy(
+                        self.bestLimitOrderPrice(tick, Direction.LONG, multi=200),
+                        current_multiplier * abs(unitChange),
+                    )
 
                 self.put_timer_event()
                 return
@@ -200,9 +216,14 @@ class MartingStrategy(CtaTemplate):
                 longExit = max(self.longStop, self.exitDown)
                 if tick.last_price <= longExit:
                     self.close(tick.last_price)
-                    self.portfolio.newSignal(self.vt_symbol, Direction.SHORT, Offset.CLOSE)
+                    self.portfolio.newSignal(
+                        self.vt_symbol, Direction.SHORT, Offset.CLOSE
+                    )
                     if self.pos > 0:
-                        self.sell(self.bestLimitOrderPrice(tick, Direction.SHORT, multi=200), abs(self.pos))
+                        self.sell(
+                            self.bestLimitOrderPrice(tick, Direction.SHORT, multi=200),
+                            abs(self.pos),
+                        )
                     # 平仓后更新最新指标
                     self.updateIndicator()
                     self.hasClose = True
@@ -214,7 +235,9 @@ class MartingStrategy(CtaTemplate):
             # 空头开仓加仓
             if tick.last_price <= self.shortEntry1 and self.virtualUnit > -1:
                 action = True
-                current_multiplier = self.calMultiplier(tick.last_price, direction=Direction.SHORT)
+                current_multiplier = self.calMultiplier(
+                    tick.last_price, direction=Direction.SHORT
+                )
 
                 self.open(tick.last_price, -1)
 
@@ -228,12 +251,16 @@ class MartingStrategy(CtaTemplate):
                 #     preCheck = False
 
                 if preCheck:
-                    if self.portfolio.newSignal(self.vt_symbol, Direction.SHORT, Offset.OPEN):
+                    if self.portfolio.newSignal(
+                        self.vt_symbol, Direction.SHORT, Offset.OPEN
+                    ):
                         unitChange -= 1
 
             if tick.last_price <= self.shortEntry2 and self.virtualUnit > -2:
                 action = True
-                current_multiplier = self.calMultiplier(tick.last_price, direction=Direction.SHORT)
+                current_multiplier = self.calMultiplier(
+                    tick.last_price, direction=Direction.SHORT
+                )
 
                 self.open(tick.last_price, -1)
 
@@ -247,12 +274,16 @@ class MartingStrategy(CtaTemplate):
                 #     preCheck = False
 
                 if preCheck:
-                    if self.portfolio.newSignal(self.vt_symbol, Direction.SHORT, Offset.OPEN):
+                    if self.portfolio.newSignal(
+                        self.vt_symbol, Direction.SHORT, Offset.OPEN
+                    ):
                         unitChange -= 1
 
             if tick.last_price <= self.shortEntry3 and self.virtualUnit > -3:
                 action = True
-                current_multiplier = self.calMultiplier(tick.last_price, direction=Direction.SHORT)
+                current_multiplier = self.calMultiplier(
+                    tick.last_price, direction=Direction.SHORT
+                )
 
                 self.open(tick.last_price, -1)
 
@@ -266,12 +297,16 @@ class MartingStrategy(CtaTemplate):
                 #     preCheck = False
 
                 if preCheck:
-                    if self.portfolio.newSignal(self.vt_symbol, Direction.SHORT, Offset.OPEN):
+                    if self.portfolio.newSignal(
+                        self.vt_symbol, Direction.SHORT, Offset.OPEN
+                    ):
                         unitChange -= 1
 
             if tick.last_price <= self.shortEntry4 and self.virtualUnit > -4:
                 action = True
-                current_multiplier = self.calMultiplier(tick.last_price, direction=Direction.SHORT)
+                current_multiplier = self.calMultiplier(
+                    tick.last_price, direction=Direction.SHORT
+                )
 
                 self.open(tick.last_price, -1)
 
@@ -285,13 +320,18 @@ class MartingStrategy(CtaTemplate):
                 #     preCheck = False
 
                 if preCheck:
-                    if self.portfolio.newSignal(self.vt_symbol, Direction.SHORT, Offset.OPEN):
+                    if self.portfolio.newSignal(
+                        self.vt_symbol, Direction.SHORT, Offset.OPEN
+                    ):
                         unitChange -= 1
 
             if action:
                 if unitChange:
                     self.unit += unitChange
-                    self.short(self.bestLimitOrderPrice(tick, Direction.SHORT, multi=200), current_multiplier * abs(unitChange))
+                    self.short(
+                        self.bestLimitOrderPrice(tick, Direction.SHORT, multi=200),
+                        current_multiplier * abs(unitChange),
+                    )
 
                 self.put_timer_event()
                 return
@@ -301,9 +341,14 @@ class MartingStrategy(CtaTemplate):
                 shortExit = min(self.shortStop, self.exitUp)
                 if tick.last_price >= shortExit:
                     self.close(tick.last_price)
-                    self.portfolio.newSignal(self.vt_symbol, Direction.LONG, Offset.CLOSE)
+                    self.portfolio.newSignal(
+                        self.vt_symbol, Direction.LONG, Offset.CLOSE
+                    )
                     if self.pos < 0:
-                        self.cover(self.bestLimitOrderPrice(tick, Direction.LONG, multi=200), abs(self.pos))
+                        self.cover(
+                            self.bestLimitOrderPrice(tick, Direction.LONG, multi=200),
+                            abs(self.pos),
+                        )
                     # 平仓后更新最新指标
                     self.updateIndicator()
                     self.hasClose = True
@@ -320,7 +365,7 @@ class MartingStrategy(CtaTemplate):
         self.atrAm.update_bar(bar)
         if not self.am.inited or not self.atrAm.inited:
             return
-        
+
         # 计算指标数值
         self.entryUp, self.entryDown = self.am.donchian(self.entryWindow)
         self.exitUp, self.exitDown = self.am.donchian(self.exitWindow)
@@ -328,7 +373,7 @@ class MartingStrategy(CtaTemplate):
         # 判断是否要更新交易信号
         if self.virtualUnit == 0:
             self.updateIndicator()
-    
+
         # 发出状态更新事件
         self.put_timer_event()
 
@@ -342,14 +387,22 @@ class MartingStrategy(CtaTemplate):
         super(TurtleStrategyCrypto, self).on_trade(trade)
 
     # 计算交易单位N
-    def calMultiplier(self, price, direction:Direction):
+    def calMultiplier(self, price, direction: Direction):
         multiplier = 0
         riskValue = self.portfolio.portfolioValue * 0.01
         if self.atrVolatility:
             if direction == Direction.LONG:
-                multiplier = riskValue * (price * (price - 2 * self.atrVolatility)) / self.atrVolatility
+                multiplier = (
+                    riskValue
+                    * (price * (price - 2 * self.atrVolatility))
+                    / self.atrVolatility
+                )
             elif direction == Direction.SHORT:
-                multiplier = riskValue * (price * (price + 2 * self.atrVolatility)) / self.atrVolatility
+                multiplier = (
+                    riskValue
+                    * (price * (price + 2 * self.atrVolatility))
+                    / self.atrVolatility
+                )
 
             multiplier = int(round(multiplier, 0))
         self.multiplierList.append(multiplier)
@@ -375,10 +428,10 @@ class MartingStrategy(CtaTemplate):
 
     # 信号建仓
     def open(self, price, change):
-        cost = self.virtualUnit * self.entry                 # 计算之前的开仓成本
-        cost += change * price                               # 加上新仓位的成本
-        self.virtualUnit += change                           # 更新信号持仓
-        self.entry = cost / self.virtualUnit                 # 计算新的平均开仓成本
+        cost = self.virtualUnit * self.entry  # 计算之前的开仓成本
+        cost += change * price  # 加上新仓位的成本
+        self.virtualUnit += change  # 更新信号持仓
+        self.entry = cost / self.virtualUnit  # 计算新的平均开仓成本
 
     # 信号平仓
     def close(self, price):

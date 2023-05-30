@@ -39,7 +39,6 @@ class CtaTemplate(ABC):
     syncs = []
     max_bond_dic = defaultdict(int) #{'date':date, 'pos':pos, 'bond':bond}
     trade_mode = None
-    tick_price:float = 1.0
 
     mongoClient = None
     timer_event_cross = False
@@ -66,11 +65,6 @@ class CtaTemplate(ABC):
         self.inited = False
         self.trading = False
         self.pos = 0
-
-        """ modify by loe """
-        self.parameters = copy(self.parameters)
-        if 'tick_price' not in self.parameters:
-            self.parameters.insert(0, "tick_price")
 
         self.variables = copy(self.variables)
         if 'inited' not in self.variables:

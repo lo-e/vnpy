@@ -589,7 +589,7 @@ class MartingEngine(BaseEngine):
                 self.write_log(f"{strategy_name}已经完成初始化，禁止重复操作")
                 continue
 
-            self.write_log(f"{strategy_name}开始执行初始化")
+            self.write_log(f"马丁策略{strategy_name}开始执行初始化")
 
             # Call on_init function of strategy
             self.call_strategy_func(strategy, strategy.on_init)
@@ -606,7 +606,7 @@ class MartingEngine(BaseEngine):
             # Put event to update init completed status.
             strategy.inited = True
             self.put_strategy_event(strategy)
-            self.write_log(f"{strategy_name}初始化完成")
+            self.write_log(f"马丁策略{strategy_name}初始化完成")
         
         self.init_thread = None
 
@@ -623,10 +623,15 @@ class MartingEngine(BaseEngine):
             self.write_log(f"{strategy_name}已经启动，请勿重复操作")
             return
 
-        self.call_strategy_func(strategy, strategy.on_start)
+        result = strategy.on_start()
+        # self.call_strategy_func(strategy, strategy.on_start)
+        if not result:
+            self.write_log(f"策略{strategy.strategy_name}启动失败，检查策略on_start代码")
+            return
+        
         strategy.trading = True
-
         self.put_strategy_event(strategy)
+        self.write_log(f"马丁策略{strategy_name}启动")
 
     def stop_strategy(self, strategy_name: str):
         """
@@ -913,15 +918,15 @@ class MartingEngine(BaseEngine):
             if isinstance(back_data, dict):
                 result = back_data.get('result', False)
                 if result:
-                    content = f'马丁组合{self.martingPortfolio.name}\t数据保存成功'
+                    content = f'马丁组合{self.martingPortfolio.name}同步数据保存成功'
                 else:
-                    content = f'马丁组合{self.martingPortfolio.name}\t数据保存失败'
+                    content = f'马丁组合{self.martingPortfolio.name}同步数据保存失败'
                 self.write_log(content)
             else:
-                content = f'马丁组合{self.martingPortfolio.name}\t数据保存失败'
+                content = f'马丁组合{self.martingPortfolio.name}同步数据保存失败'
                 self.write_log(content)
         except:
-            content = f'马丁组合{self.martingPortfolio.name}\t数据保存失败'
+            content = f'马丁组合{self.martingPortfolio.name}同步数据保存失败'
             self.write_log(content)
 
     def loadPortfolioSyncData(self):
@@ -1018,7 +1023,7 @@ class MartingEngine(BaseEngine):
                 self.call_strategy_func(strategy, strategy.on_init)
                 strategy.trading = temp
                 self.put_strategy_event(strategy)
-                self.write_log(f"{strategy_name} 重新初始化完成")
+                self.write_log(f"{strategy_name}重新初始化完成")
 
     def reinit_strategie(self, strategy_name):
         strategy = self.strategies[strategy_name]
@@ -1028,7 +1033,7 @@ class MartingEngine(BaseEngine):
             self.call_strategy_func(strategy, strategy.on_init)
             strategy.trading = temp
             self.put_strategy_event(strategy)
-            self.write_log(f"{strategy_name} 重新初始化完成")
+            self.write_log(f"{strategy_name}重新初始化完成")
 
 """ modify by loe """
 # 数据下载引擎，每天固定时间从数据服务器自动下载策略回测及实盘必要的数据，并自动结合订阅下载的数据合成DailyBar，策略自动重新初始化

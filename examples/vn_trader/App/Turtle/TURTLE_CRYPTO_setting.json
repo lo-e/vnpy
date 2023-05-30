@@ -3,7 +3,7 @@
     {
         "strategy_name": "TURTLE_CRYPTO_BTCUSDT",
         "class_name": "TurtleStrategy",
-        "vt_symbol": "BTCUSDT",
+        "vt_symbol": "BTCUSDT.BYBIT",
         "last_symbol":"",
         "per_size":1,
         "tick_price":0.5,
@@ -15,7 +15,7 @@
     {
         "strategy_name": "TURTLE_CRYPTO_ETHUSDT",
         "class_name": "TurtleStrategy",
-        "vt_symbol": "ETHUSDT",
+        "vt_symbol": "ETHUSDT.BYBIT",
         "last_symbol":"",
         "per_size":1,
         "tick_price":0.05,
@@ -24,7 +24,7 @@
         "start": true
     }
 ],
-    "portfolio": {"name": "turtle_crypto[BTCUSDT, ETHUSDT]",
+    "portfolio": {"name": "TURTLE_CRYPTO[BTCUSDT, ETHUSDT]",
                   "portfolioValue": 60000,
                   "is_crypto": true}
 }

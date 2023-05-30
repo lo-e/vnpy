@@ -20,7 +20,7 @@
         "start": true
     }
 ],
-    "portfolio": {"name": "turtle_crypto[BTC, ETH]",
+    "portfolio": {"name": "TURTLE_CRYPTO[BTC, ETH]",
                   "portfolioValue": {"TURTLE_BTC": 0.52,
                                      "TURTLE_ETH": 9.2}}
 }
