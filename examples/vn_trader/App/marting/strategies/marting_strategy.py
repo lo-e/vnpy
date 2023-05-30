@@ -1,10 +1,8 @@
 # encoding: UTF-8
 
 """
-单标的海龟交易策略，实现了完整海龟策略中的信号部分。
+使用马丁式加仓的趋势追踪策略
 """
-
-from __future__ import division
 
 from vnpy.trader.constant import (Direction, Offset)
 from vnpy.app.cta_strategy.template import CtaTemplate
@@ -15,43 +13,21 @@ from datetime import timedelta
 from vnpy.trader.constant import Interval
 import csv
 import os
+from vnpy.trader.object import BarData
 
 class MartingStrategy(CtaTemplate):
     """ 马丁策略 """
     className = 'MartingStrategy'
     author = u'loe'
 
+    # 常量
+    direction:Direction = Direction.NET  # 交易方向
+    ma_window = 9  # 均线参数
+    rsi_window = 14  # RSI参数
+
     # 策略参数
-    entryWindow = 20                    # 入场通道窗口
-    exitWindow = 10                     # 出场通道窗口
-    atrWindow = 15                      # 计算ATR波动率的窗口
 
     # 策略变量
-    hasClose = False                    # 当前交易日平仓tag，执行平仓的交易日不进行后续任何开平交易
-
-    entryUp = 0                         # 入场通道上轨
-    entryDown = 0                       # 入场通道下轨
-    exitUp = 0                          # 出场通道上轨
-    exitDown = 0                        # 出场通道下轨
-    atrVolatility = 0                   # ATR波动率
-    
-    longEntry1 = 0                      # 多头入场价格
-    longEntry2 = 0
-    longEntry3 = 0
-    longEntry4 = 0
-    shortEntry1 = 0                     # 空头入场价格
-    shortEntry2 = 0
-    shortEntry3 = 0
-    shortEntry4 = 0
-    longStop = 0                        # 多头止损价格
-    shortStop = 0                       # 空头止损价格
-
-    multiplier = 0                      # unit大小
-    multiplierList = []                 # 每次开仓的unit大小集合
-    virtualUnit = 0                     # 信号仓位
-    unit = 0                            # 实际持有仓位
-    entry = 0                           # 当前持仓成本（不考虑滑点）
-    lastPnl = 0                         # 上一次盈利（不考虑滑点和手续费）
     
     # 参数列表，保存了参数的名称
     parameters = ['strategy_name',
@@ -62,56 +38,28 @@ class MartingStrategy(CtaTemplate):
 
 
     # 变量列表，保存了变量的名称
-    variables = ['hasClose',
-               'entryUp',
-               'entryDown',
-               'exitUp',
-               'exitDown',
-               'atrVolatility',
-               'longEntry1',
-               'longEntry2',
-               'longEntry3',
-               'longEntry4',
-               'shortEntry1',
-               'shortEntry2',
-               'shortEntry3',
-               'shortEntry4',
-               'longStop',
-               'shortStop',
-               'multiplier',
-               'multiplierList',
-               'virtualUnit',
-               'unit',
-               'entry',
-               'lastPnl']
+    variables = ['hasClose']
     
     # 同步列表，保存了需要保存到数据库的变量名称
-    syncs =    ['pos',
-                'atrVolatility',
-                'longEntry1',
-                'longEntry2',
-                'longEntry3',
-                'longEntry4',
-                'shortEntry1',
-                'shortEntry2',
-                'shortEntry3',
-                'shortEntry4',
-                'longStop',
-                'shortStop',
-                'multiplier',
-                'multiplierList',
-                'virtualUnit',
-                'unit',
-                'entry',
-                'lastPnl']
+    syncs =    ['pos']
 
     def __init__(self, ctaEngine, martingPortfolio, setting):
-        """Constructor"""
         super(MartingStrategy, self).__init__(cta_engine=ctaEngine, strategy_name='', vt_symbol='', setting=setting)
 
         self.portfolio = martingPortfolio
-        self.am = ArrayManager(self.entryWindow+1)
-        self.atrAm = ArrayManager(self.atrWindow+1)
+        self.unit_value = self.portfolio.portfolioValue * 0.5 * 0.01  # 最小持仓价值
+        self.am = ArrayManager(max(self.ma_window, self.rsi_window + 11) + 1)  # K线容器
+        self.bar: BarData = None  # 最新K线
+        self.position_price = 0  # 持仓均价
+        self.position_reduce_price = 0  # 减仓价格
+        self.position_increase_price = 0  # 加仓价格
+        self.max_loss_value = 0  # 当前持仓最大亏损价值
+        self.max_loss_rate = ""  # 当前持仓最大亏损比率
+        self.ma_price = 0  # 均线价格
+        self.rsi_array = []
+        self.calculate_phase_positions(self.portfolio.portfolioValue)  # 马丁格尔倍数仓位管理
+        self.phase_position_volume = 0  # 阶段仓位的初始持仓数量
+        self.trending_step = 0  # 追踪趋势的等级
         
     def on_init(self):
         """初始化策略（必须由用户继承实现）"""

@@ -35,7 +35,7 @@ class MartingSignal(object):
         # 变量
         self.inited = False  # 是否完成初始建仓
         self.bar: BarData = None  # 最新K线
-        self.am = ArrayManager(max(self.ma_window, self.rsi_window + 11) + 1)  # K线容器
+        self.am = ArrayManager(max(self.ma_window, self.rsi_window + 12))  # K线容器
         self.position = 0  # 持仓量
         self.position_price = 0  # 持仓均价
         self.position_reduce_price = 0  # 减仓价格
