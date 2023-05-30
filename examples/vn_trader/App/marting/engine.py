@@ -17,24 +17,30 @@ from vnpy.trader.object import (
     LogData,
     TickData,
     BarData,
-    ContractData
+    ContractData,
 )
 from vnpy.trader.event import (
-    EVENT_TICK, 
-    EVENT_ORDER, 
+    EVENT_TICK,
+    EVENT_ORDER,
     EVENT_TRADE,
     EVENT_POSITION,
-    EVENT_TIMER
+    EVENT_TIMER,
 )
 from vnpy.trader.constant import (
-    Direction, 
-    OrderType, 
-    Interval, 
-    Exchange, 
-    Offset, 
-    Status
+    Direction,
+    OrderType,
+    Interval,
+    Exchange,
+    Offset,
+    Status,
 )
-from vnpy.trader.utility import load_json, load_json_path, save_json, extract_vt_symbol, round_to
+from vnpy.trader.utility import (
+    load_json,
+    load_json_path,
+    save_json,
+    extract_vt_symbol,
+    round_to,
+)
 
 from .base import APP_NAME
 from vnpy.app.cta_strategy.base import (
@@ -46,7 +52,7 @@ from vnpy.app.cta_strategy.base import (
     StopOrderStatus,
     STOPORDER_PREFIX,
     POSITION_DB_NAME,
-    PORTFOLIO_DB_NAME
+    PORTFOLIO_DB_NAME,
 )
 from vnpy.app.cta_strategy.template import CtaTemplate
 from vnpy.trader.converter import OffsetConverter
@@ -61,12 +67,15 @@ STOP_STATUS_MAP = {
     Status.PARTTRADED: StopOrderStatus.TRIGGERED,
     Status.ALLTRADED: StopOrderStatus.TRIGGERED,
     Status.CANCELLED: StopOrderStatus.CANCELLED,
-    Status.REJECTED: StopOrderStatus.CANCELLED
+    Status.REJECTED: StopOrderStatus.CANCELLED,
 }
 
-from vnpy.app.cta_strategy.base import (TICK_DB_NAME,
-                                        DAILY_DB_NAME,
-                                        MINUTE_DB_NAME)
+from vnpy.app.cta_strategy.base import (
+    TICK_DB_NAME,
+    DAILY_DB_NAME,
+    MINUTE_DB_NAME,
+    MinuteDataBaseName,
+)
 from .base import EVENT_MARTING_PORTFOLIO
 
 
@@ -75,46 +84,51 @@ class MartingEngine(BaseEngine):
 
     engine_type = EngineType.LIVE  # live trading engine
 
-    setting_filename = 'MARTING_setting.json'
+    setting_filename = "MARTING_setting.json"
 
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
         """"""
-        super(MartingEngine, self).__init__(
-            main_engine, event_engine, APP_NAME)
+        super(MartingEngine, self).__init__(main_engine, event_engine, APP_NAME)
 
-        self.classes = {}           # class_name: stategy_class
-        self.strategies = {}        # strategy_name: strategy
+        self.classes = {}  # class_name: stategy_class
+        self.strategies = {}  # strategy_name: strategy
 
-        self.symbol_strategy_map = defaultdict(
-            list)                   # vt_symbol: strategy list
+        self.symbol_strategy_map = defaultdict(list)  # vt_symbol: strategy list
         self.orderid_strategy_map = {}  # vt_orderid: strategy
-        self.strategy_orderid_map = defaultdict(
-            set)                    # strategy_name: orderid list
+        self.strategy_orderid_map = defaultdict(set)  # strategy_name: orderid list
 
-        self.stop_order_count = 0   # for generating stop_orderid
-        self.stop_orders = {}       # stop_orderid: stop_order
+        self.stop_order_count = 0  # for generating stop_orderid
+        self.stop_orders = {}  # stop_orderid: stop_order
 
         self.init_thread = None
         self.init_queue = Queue()
 
-        self.vt_tradeids = set()    # for filtering duplicate trade
+        self.vt_tradeids = set()  # for filtering duplicate trade
 
         self.offset_converter = OffsetConverter(self.main_engine)
 
         # 当前日期【指的是市场交易日期，不是日历日期】
         now_hour = datetime.now().hour
         if now_hour >= 8:
-            self.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            self.today = datetime.now().replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
         else:
-            self.today = (datetime.now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+            self.today = (datetime.now() - timedelta(days=1)).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
         # 组合管理类
         self.martingPortfolio = None
         # 数据引擎
-        self.autoEngine = MartingAutoEngine(main_engine=self.main_engine, marting_engine=self, download_time='8:02', generate_time='8:00:01')
+        self.autoEngine = MartingAutoEngine(
+            main_engine=self.main_engine,
+            marting_engine=self,
+            download_time="8:02",
+            generate_time="8:00:01",
+        )
 
     def init_engine(self):
-        """
-        """
+        """ """
         self.load_strategy_class()
         self.load_strategy_setting()
         self.register_event()
@@ -135,7 +149,7 @@ class MartingEngine(BaseEngine):
         self.event_engine.register(EVENT_POSITION, self.process_position_event)
         self.event_engine.register(EVENT_TIMER, self.process_timer_event)
 
-    def process_timer_event(self, event:Event):
+    def process_timer_event(self, event: Event):
         for strategy in self.strategies.values():
             if strategy.inited:
                 self.call_strategy_func(strategy, strategy.on_timer)
@@ -157,7 +171,7 @@ class MartingEngine(BaseEngine):
     def process_order_event(self, event: Event):
         """"""
         order = event.data
-        
+
         self.offset_converter.update_order(order)
 
         strategy = self.orderid_strategy_map.get(order.vt_orderid, None)
@@ -182,7 +196,7 @@ class MartingEngine(BaseEngine):
                 status=STOP_STATUS_MAP[order.status],
                 vt_orderids=[order.vt_orderid],
             )
-            self.call_strategy_func(strategy, strategy.on_stop_order, so)  
+            self.call_strategy_func(strategy, strategy.on_stop_order, so)
 
         # Call strategy on_order function
         self.call_strategy_func(strategy, strategy.on_order, order)
@@ -223,10 +237,12 @@ class MartingEngine(BaseEngine):
                 continue
 
             long_triggered = (
-                stop_order.direction == Direction.LONG and tick.last_price >= stop_order.price
+                stop_order.direction == Direction.LONG
+                and tick.last_price >= stop_order.price
             )
             short_triggered = (
-                stop_order.direction == Direction.SHORT and tick.last_price <= stop_order.price
+                stop_order.direction == Direction.SHORT
+                and tick.last_price <= stop_order.price
             )
 
             if long_triggered or short_triggered:
@@ -245,17 +261,17 @@ class MartingEngine(BaseEngine):
                         price = tick.limit_down
                     else:
                         price = tick.bid_price_5
-                
+
                 contract = self.main_engine.get_contract(stop_order.vt_symbol)
 
                 vt_orderids = self.send_limit_order(
-                    strategy, 
+                    strategy,
                     contract,
-                    stop_order.direction, 
-                    stop_order.offset, 
-                    price, 
+                    stop_order.direction,
+                    stop_order.offset,
+                    price,
                     stop_order.volume,
-                    stop_order.lock
+                    stop_order.lock,
                 )
 
                 # Update stop order status if placed successfully
@@ -263,7 +279,9 @@ class MartingEngine(BaseEngine):
                     # Remove from relation map.
                     self.stop_orders.pop(stop_order.stop_orderid)
 
-                    strategy_vt_orderids = self.strategy_orderid_map[strategy.strategy_name]
+                    strategy_vt_orderids = self.strategy_orderid_map[
+                        strategy.strategy_name
+                    ]
                     if stop_order.stop_orderid in strategy_vt_orderids:
                         strategy_vt_orderids.remove(stop_order.stop_orderid)
 
@@ -285,7 +303,7 @@ class MartingEngine(BaseEngine):
         price: float,
         volume: float,
         type: OrderType,
-        lock: bool
+        lock: bool,
     ):
         """
         Send a new order to server.
@@ -308,18 +326,17 @@ class MartingEngine(BaseEngine):
         vt_orderids = []
 
         for req in req_list:
-            vt_orderid = self.main_engine.send_order(
-                req, contract.gateway_name)
+            vt_orderid = self.main_engine.send_order(req, contract.gateway_name)
             vt_orderids.append(vt_orderid)
 
             self.offset_converter.update_order_request(req, vt_orderid)
-            
+
             # Save relationship between orderid and strategy.
             self.orderid_strategy_map[vt_orderid] = strategy
             self.strategy_orderid_map[strategy.strategy_name].add(vt_orderid)
 
         return vt_orderids
-    
+
     def send_limit_order(
         self,
         strategy: CtaTemplate,
@@ -328,22 +345,15 @@ class MartingEngine(BaseEngine):
         offset: Offset,
         price: float,
         volume: float,
-        lock: bool
+        lock: bool,
     ):
         """
         Send a limit order to server.
         """
         return self.send_server_order(
-            strategy,
-            contract,
-            direction,
-            offset,
-            price,
-            volume,
-            OrderType.LIMIT,
-            lock
+            strategy, contract, direction, offset, price, volume, OrderType.LIMIT, lock
         )
-    
+
     def send_server_stop_order(
         self,
         strategy: CtaTemplate,
@@ -352,23 +362,16 @@ class MartingEngine(BaseEngine):
         offset: Offset,
         price: float,
         volume: float,
-        lock: bool
+        lock: bool,
     ):
         """
         Send a stop order to server.
-        
-        Should only be used if stop order supported 
+
+        Should only be used if stop order supported
         on the trading server.
         """
         return self.send_server_order(
-            strategy,
-            contract,
-            direction,
-            offset,
-            price,
-            volume,
-            OrderType.STOP,
-            lock
+            strategy, contract, direction, offset, price, volume, OrderType.STOP, lock
         )
 
     def send_local_stop_order(
@@ -378,7 +381,7 @@ class MartingEngine(BaseEngine):
         offset: Offset,
         price: float,
         volume: float,
-        lock: bool
+        lock: bool,
     ):
         """
         Create a new local stop order.
@@ -394,7 +397,7 @@ class MartingEngine(BaseEngine):
             volume=volume,
             stop_orderid=stop_orderid,
             strategy_name=strategy.strategy_name,
-            lock=lock
+            lock=lock,
         )
 
         self.stop_orders[stop_orderid] = stop_order
@@ -449,40 +452,44 @@ class MartingEngine(BaseEngine):
         price: float,
         volume: float,
         stop: bool,
-        lock: bool
+        lock: bool,
     ):
-        """
-        """
+        """ """
         contract = self.main_engine.get_contract(strategy.vt_symbol)
         if not contract:
             self.write_log(f"委托失败，找不到合约：{strategy.vt_symbol}", strategy)
             return ""
-        
+
         # Round order price and volume to nearest incremental value
         price = round_to(price, contract.pricetick)
         volume = round_to(volume, contract.min_volume)
-        
+
         if stop:
             if contract.stop_supported:
-                return self.send_server_stop_order(strategy, contract, direction, offset, price, volume, lock)
+                return self.send_server_stop_order(
+                    strategy, contract, direction, offset, price, volume, lock
+                )
             else:
-                return self.send_local_stop_order(strategy, direction, offset, price, volume, lock)
+                return self.send_local_stop_order(
+                    strategy, direction, offset, price, volume, lock
+                )
         else:
-            return self.send_limit_order(strategy, contract, direction, offset, price, volume, lock)
+            return self.send_limit_order(
+                strategy, contract, direction, offset, price, volume, lock
+            )
 
     def send_symbol_order(
-            self,
-            strategy: CtaTemplate,
-            vt_symbol:str,
-            direction: Direction,
-            offset: Offset,
-            price: float,
-            volume: float,
-            stop: bool,
-            lock: bool
+        self,
+        strategy: CtaTemplate,
+        vt_symbol: str,
+        direction: Direction,
+        offset: Offset,
+        price: float,
+        volume: float,
+        stop: bool,
+        lock: bool,
     ):
-        """
-        """
+        """ """
         contract = self.main_engine.get_contract(vt_symbol)
         if not contract:
             self.write_log(f"委托失败，找不到合约：{vt_symbol}", strategy)
@@ -494,15 +501,20 @@ class MartingEngine(BaseEngine):
 
         if stop:
             if contract.stop_supported:
-                return self.send_server_stop_order(strategy, contract, direction, offset, price, volume, lock)
+                return self.send_server_stop_order(
+                    strategy, contract, direction, offset, price, volume, lock
+                )
             else:
-                return self.send_local_stop_order(strategy, direction, offset, price, volume, lock)
+                return self.send_local_stop_order(
+                    strategy, direction, offset, price, volume, lock
+                )
         else:
-            return self.send_limit_order(strategy, contract, direction, offset, price, volume, lock)
+            return self.send_limit_order(
+                strategy, contract, direction, offset, price, volume, lock
+            )
 
     def cancel_order(self, strategy: CtaTemplate, vt_orderid: str):
-        """
-        """
+        """ """
         if vt_orderid.startswith(STOPORDER_PREFIX):
             self.cancel_local_stop_order(strategy, vt_orderid)
         else:
@@ -524,10 +536,7 @@ class MartingEngine(BaseEngine):
         return self.engine_type
 
     def load_tick(
-        self, 
-        vt_symbol: str,
-        days: int,
-        callback: Callable[[TickData], None]
+        self, vt_symbol: str, days: int, callback: Callable[[TickData], None]
     ):
         """"""
         symbol, exchange = extract_vt_symbol(vt_symbol)
@@ -570,7 +579,7 @@ class MartingEngine(BaseEngine):
     def init_strategy(self, strategy_name: str):
         """
         Init a strategy.
-        """ 
+        """
         self.init_queue.put(strategy_name)
 
         if not self.init_thread:
@@ -598,7 +607,8 @@ class MartingEngine(BaseEngine):
             contract = self.main_engine.get_contract(strategy.vt_symbol)
             if contract:
                 req = SubscribeRequest(
-                    symbol=contract.symbol, exchange=contract.exchange)
+                    symbol=contract.symbol, exchange=contract.exchange
+                )
                 self.main_engine.subscribe(req, contract.gateway_name)
             else:
                 self.write_log(f"行情订阅失败，找不到合约{strategy.vt_symbol}", strategy)
@@ -607,7 +617,7 @@ class MartingEngine(BaseEngine):
             strategy.inited = True
             self.put_strategy_event(strategy)
             self.write_log(f"马丁策略{strategy_name}初始化完成")
-        
+
         self.init_thread = None
 
     def start_strategy(self, strategy_name: str):
@@ -628,7 +638,7 @@ class MartingEngine(BaseEngine):
         if not result:
             self.write_log(f"策略{strategy.strategy_name}启动失败，检查策略on_start代码")
             return
-        
+
         strategy.trading = True
         self.put_strategy_event(strategy)
         self.write_log(f"马丁策略{strategy_name}启动")
@@ -658,8 +668,7 @@ class MartingEngine(BaseEngine):
         Load strategy class from source code.
         """
         path1 = Path(__file__).parent.joinpath("strategies")
-        self.load_strategy_class_from_folder(
-            path1, "App.marting.strategies")
+        self.load_strategy_class_from_folder(path1, "App.marting.strategies")
 
     def load_strategy_class_from_folder(self, path: Path, module_name: str = ""):
         """
@@ -669,7 +678,8 @@ class MartingEngine(BaseEngine):
             for filename in filenames:
                 if filename.endswith(".py"):
                     strategy_module_name = ".".join(
-                        [module_name, filename.replace(".py", "")])
+                        [module_name, filename.replace(".py", "")]
+                    )
                     self.load_strategy_class_from_module(strategy_module_name)
 
     def load_strategy_class_from_module(self, module_name: str):
@@ -681,7 +691,11 @@ class MartingEngine(BaseEngine):
 
             for name in dir(module):
                 value = getattr(module, name)
-                if (isinstance(value, type) and issubclass(value, CtaTemplate) and value is not CtaTemplate):
+                if (
+                    isinstance(value, type)
+                    and issubclass(value, CtaTemplate)
+                    and value is not CtaTemplate
+                ):
                     self.classes[value.__name__] = value
         except:  # noqa
             msg = f"策略文件{module_name}加载失败，触发异常：\n{traceback.format_exc()}"
@@ -694,20 +708,17 @@ class MartingEngine(BaseEngine):
         return list(self.classes.keys())
 
     def init_all_strategies(self):
-        """
-        """
+        """ """
         for strategy_name in self.strategies.keys():
             self.init_strategy(strategy_name)
 
     def start_all_strategies(self):
-        """
-        """
+        """ """
         for strategy_name in self.strategies.keys():
             self.start_strategy(strategy_name)
 
     def stop_all_strategies(self):
-        """
-        """
+        """ """
         for strategy_name in self.strategies.keys():
             self.stop_strategy(strategy_name)
 
@@ -747,8 +758,7 @@ class MartingEngine(BaseEngine):
         self.event_engine.put(event)
 
         # 输出日志内容
-        print(f'{log.time}\t{log.gateway_name}\t{log.msg}')
-
+        print(f"{log.time}\t{log.gateway_name}\t{log.msg}")
 
     def send_email(self, msg: str, strategy: CtaTemplate = None):
         """
@@ -761,33 +771,33 @@ class MartingEngine(BaseEngine):
 
         self.main_engine.send_email(subject, msg)
 
-    def load_bar(self, vt_symbol, days, interval, callback):
+    def load_bar(self, vt_symbol, start_dt, interval, window, callback):
         if interval == Interval.DAILY:
             dbName = DAILY_DB_NAME
+
         elif interval == Interval.MINUTE:
-            dbName = MINUTE_DB_NAME
+            dbName = MinuteDataBaseName(window)
+
         else:
             dbName = TICK_DB_NAME
-
-        startDate = self.today - timedelta(days)
-        d = {'datetime': {'$gte': startDate}}
+            
+        d = {"datetime": {"$gte": start_dt}}
         collectionName = vt_symbol.upper()
-        barData = self.main_engine.dbQuery(dbName, collectionName, d, 'datetime')
+        barData = self.main_engine.dbQuery(dbName, collectionName, d, "datetime")
 
         l = []
         for d in barData:
-            gateway_name = d['gateway_name']
-            symbol = d['symbol']
-            exchange = Exchange.RQ
-            theDatetime = d['datetime']
-            endDatetime = None
-
-            bar = BarData(gateway_name=gateway_name, symbol=symbol, exchange=exchange, datetime=theDatetime,
-                          endDatetime=endDatetime)
+            bar = BarData(
+                gateway_name="",
+                symbol="",
+                exchange=Exchange.BYBIT,
+                datetime=None,
+                endDatetime=None,
+            )
             bar.__dict__ = d
             # 检查Bar数据是否有效
             if not bar.check_valid():
-                raise ('Bar数据校验不通过！！')
+                raise ("Bar数据校验不通过！！")
 
             l.append(bar)
         return l
@@ -802,13 +812,13 @@ class MartingEngine(BaseEngine):
         l = load_json_path(file_path)
 
         # 马丁组合初始化
-        folioSetting = l.get('portfolio', None)
+        folioSetting = l.get("portfolio", None)
         self.martingPortfolio = MartingPortfolio(self, folioSetting)
         self.loadPortfolioSyncData()
         self.martingPortfolio.on_update_today()
 
         # 马丁策略初始化
-        signalList = l.get('signal', None)
+        signalList = l.get("signal", None)
         for setting in signalList:
             self.add_strategy(setting)
 
@@ -817,12 +827,12 @@ class MartingEngine(BaseEngine):
         添加策略
         """
         try:
-            name = setting['strategy_name']
-            class_name = setting['class_name']
-            start = setting['start']
+            name = setting["strategy_name"]
+            class_name = setting["class_name"]
+            start = setting["start"]
         except Exception:
             msg = traceback.format_exc()
-            self.write_log(f'载入策略出错：{msg}')
+            self.write_log(f"载入策略出错：{msg}")
             return
 
         if not start:
@@ -831,12 +841,12 @@ class MartingEngine(BaseEngine):
         # 获取策略类
         strategy_class = self.classes.get(class_name, None)
         if not strategy_class:
-            self.write_log(f'找不到策略类：{class_name}')
+            self.write_log(f"找不到策略类：{class_name}")
             return
 
         # 防止策略重名
         if name in self.strategies:
-            self.write_log(f'策略实例重名：{name}')
+            self.write_log(f"策略实例重名：{name}")
             return
 
         # 创建策略实例
@@ -855,9 +865,10 @@ class MartingEngine(BaseEngine):
 
     def loadSyncData(self, strategy):
         """从数据库载入策略的持仓情况"""
-        flt = {'strategy_name': strategy.strategy_name,
-               'vt_symbol': strategy.vt_symbol}
-        syncData = self.main_engine.dbQuery(POSITION_DB_NAME, strategy.__class__.__name__, flt)
+        flt = {"strategy_name": strategy.strategy_name, "vt_symbol": strategy.vt_symbol}
+        syncData = self.main_engine.dbQuery(
+            POSITION_DB_NAME, strategy.__class__.__name__, flt
+        )
 
         if not syncData:
             return
@@ -870,31 +881,36 @@ class MartingEngine(BaseEngine):
 
     def saveSyncData(self, strategy):
         """保存策略的持仓情况到数据库"""
-        flt = {'strategy_name': strategy.strategy_name,
-               'vt_symbol': strategy.vt_symbol}
+        flt = {"strategy_name": strategy.strategy_name, "vt_symbol": strategy.vt_symbol}
 
         d = copy(flt)
         for key in strategy.syncs:
             d[key] = strategy.__getattribute__(key)
 
-        self.main_engine.dbUpdate(POSITION_DB_NAME, strategy.__class__.__name__,
-                                 d, flt, True, callback=self.strategyDbUpdateCallback)
+        self.main_engine.dbUpdate(
+            POSITION_DB_NAME,
+            strategy.__class__.__name__,
+            d,
+            flt,
+            True,
+            callback=self.strategyDbUpdateCallback,
+        )
 
     def strategyDbUpdateCallback(self, back_data=None):
         try:
             if isinstance(back_data, dict):
-                result = back_data.get('result', False)
-                strategy_name = back_data.get('strategy_name', '')
+                result = back_data.get("result", False)
+                strategy_name = back_data.get("strategy_name", "")
                 if result:
-                    content = f'马丁策略{strategy_name}同步数据保存成功'
+                    content = f"马丁策略{strategy_name}同步数据保存成功"
                 else:
-                    content = f'马丁策略{strategy_name}同步数据保存失败！！'
+                    content = f"马丁策略{strategy_name}同步数据保存失败！！"
                 self.write_log(content)
             else:
-                content = f'马丁策略同步数据保存失败！！'
+                content = f"马丁策略同步数据保存失败！！"
                 self.write_log(content)
         except:
-            content = f'马丁策略同步数据保存失败！！'
+            content = f"马丁策略同步数据保存失败！！"
             self.write_log(content)
 
     def savePortfolioSyncData(self):
@@ -906,8 +922,14 @@ class MartingEngine(BaseEngine):
         for key in self.martingPortfolio.syncList:
             d[key] = self.martingPortfolio.__getattribute__(key)
 
-        self.main_engine.dbUpdate(PORTFOLIO_DB_NAME, self.martingPortfolio.name,
-                                 d, {}, True, callback=self.portfolioDbUpdateCallback)
+        self.main_engine.dbUpdate(
+            PORTFOLIO_DB_NAME,
+            self.martingPortfolio.name,
+            d,
+            {},
+            True,
+            callback=self.portfolioDbUpdateCallback,
+        )
 
         # 刷新Portfolio组件UI
         event = Event(type=EVENT_MARTING_PORTFOLIO, data=self.get_portfolio_variables())
@@ -916,22 +938,24 @@ class MartingEngine(BaseEngine):
     def portfolioDbUpdateCallback(self, back_data=None):
         try:
             if isinstance(back_data, dict):
-                result = back_data.get('result', False)
+                result = back_data.get("result", False)
                 if result:
-                    content = f'马丁组合{self.martingPortfolio.name}同步数据保存成功'
+                    content = f"马丁组合{self.martingPortfolio.name}同步数据保存成功"
                 else:
-                    content = f'马丁组合{self.martingPortfolio.name}同步数据保存失败'
+                    content = f"马丁组合{self.martingPortfolio.name}同步数据保存失败"
                 self.write_log(content)
             else:
-                content = f'马丁组合{self.martingPortfolio.name}同步数据保存失败'
+                content = f"马丁组合{self.martingPortfolio.name}同步数据保存失败"
                 self.write_log(content)
         except:
-            content = f'马丁组合{self.martingPortfolio.name}同步数据保存失败'
+            content = f"马丁组合{self.martingPortfolio.name}同步数据保存失败"
             self.write_log(content)
 
     def loadPortfolioSyncData(self):
         """从数据库载入策略的持仓情况"""
-        syncData = self.main_engine.dbQuery(PORTFOLIO_DB_NAME, self.martingPortfolio.name, {})
+        syncData = self.main_engine.dbQuery(
+            PORTFOLIO_DB_NAME, self.martingPortfolio.name, {}
+        )
 
         if not syncData:
             return
@@ -943,15 +967,15 @@ class MartingEngine(BaseEngine):
                 self.martingPortfolio.__setattr__(key, d[key])
 
     def initPortfolio(self):
-        """ 初始化海龟组合 """
+        """初始化海龟组合"""
         self.init_all_strategies()
 
     def startPortfolio(self):
-        """ 启动海龟组合 """
+        """启动海龟组合"""
         self.start_all_strategies()
 
     def stopPortfolio(self):
-        """ 停止海龟组合 """
+        """停止海龟组合"""
         self.stop_all_strategies()
 
     def get_strategy_parameters(self, strategy_name):
@@ -967,7 +991,7 @@ class MartingEngine(BaseEngine):
 
             return paramDict
         else:
-            self.write_log(f'策略实例不存在：{strategy_name}')
+            self.write_log(f"策略实例不存在：{strategy_name}")
             return None
 
     def get_strategy_variables(self, strategy_name):
@@ -981,7 +1005,7 @@ class MartingEngine(BaseEngine):
 
             return varDict
         else:
-            self.write_log(f'策略实例不存在：{strategy_name}')
+            self.write_log(f"策略实例不存在：{strategy_name}")
             return None
 
     def get_portfolio_variables(self):
@@ -1013,6 +1037,7 @@ class MartingEngine(BaseEngine):
         return 0
 
     """ modify by loe """
+
     # 新的DailyBar更新后需要自动重新初始化策略
     def reinit_strategies(self):
         for strategy_name in self.strategies.keys():
@@ -1035,15 +1060,23 @@ class MartingEngine(BaseEngine):
             self.put_strategy_event(strategy)
             self.write_log(f"{strategy_name}重新初始化完成")
 
+
 """ modify by loe """
+
+
 # 数据下载引擎，每天固定时间从数据服务器自动下载策略回测及实盘必要的数据，并自动结合订阅下载的数据合成DailyBar，策略自动重新初始化
 class MartingAutoEngine(object):
-
-    def __init__(self, main_engine:MainEngine, marting_engine:MartingEngine, download_time:str, generate_time:str):
+    def __init__(
+        self,
+        main_engine: MainEngine,
+        marting_engine: MartingEngine,
+        download_time: str,
+        generate_time: str,
+    ):
         # download_time:'7:51', generate_time:'8:00:01'
         super(MartingAutoEngine, self).__init__()
-        #self.contract_list = ['okef/btc.usd.q', 'okef/eth.usd.q', 'okef/eos.usd.q']
-        self.contract_list = ['BTCUSD', 'ETHUSD']
+        # self.contract_list = ['okef/btc.usd.q', 'okef/eth.usd.q', 'okef/eos.usd.q']
+        self.contract_list = ["BTCUSD", "ETHUSD"]
         self.main_engine = main_engine
         self.marting_engine = marting_engine
         self.download_time = download_time
@@ -1064,9 +1097,11 @@ class MartingAutoEngine(object):
                 self.checkAndDownload()
             except:
                 try:
-                    subject = '马丁策略数据下载'
-                    content = f'【未知错误】\n\n{traceback.format_exc()}'
-                    self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{content}')
+                    subject = "马丁策略数据下载"
+                    content = f"【未知错误】\n\n{traceback.format_exc()}"
+                    self.main_engine.send_ding_talk(
+                        content=f"主题\n============\n{subject}\n\n内容\n============\n{content}"
+                    )
                 except:
                     pass
             sleep(60)
@@ -1077,16 +1112,18 @@ class MartingAutoEngine(object):
                 self.checkAndGenerate()
             except:
                 try:
-                    subject = '马丁策略数据更新'
-                    content = f'【未知错误】\n\n{traceback.format_exc()}'
-                    self.main_engine.send_ding_talk(content=f'主题\n============\n{subject}\n\n内容\n============\n{content}')
+                    subject = "马丁策略数据更新"
+                    content = f"【未知错误】\n\n{traceback.format_exc()}"
+                    self.main_engine.send_ding_talk(
+                        content=f"主题\n============\n{subject}\n\n内容\n============\n{content}"
+                    )
                 except:
                     pass
             sleep(1)
 
     def checkAndDownload(self):
         pass
-        
+
         """
         now = datetime.now()
         start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {self.download_time}', '%Y-%m-%d %H:%M')
@@ -1121,12 +1158,17 @@ class MartingAutoEngine(object):
 
     def checkAndGenerate(self):
         now = datetime.now()
-        start_time = datetime.strptime(f'{now.year}-{now.month}-{now.day} {self.generate_time}', '%Y-%m-%d %H:%M:%S')
+        start_time = datetime.strptime(
+            f"{now.year}-{now.month}-{now.day} {self.generate_time}",
+            "%Y-%m-%d %H:%M:%S",
+        )
         end_time = start_time + timedelta(seconds=10)
         if now >= start_time and now <= end_time:
             if not self.generating:
                 self.generating = True
-                self.marting_engine.today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+                self.marting_engine.today = datetime.now().replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                )
                 self.marting_engine.martingPortfolio.on_update_today()
                 self.absolute_generate_needed = True
                 self.checkAndDownload()
