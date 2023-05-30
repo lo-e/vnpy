@@ -1,23 +1,50 @@
 {
   "signal": [
     {
-      "strategy_name": "MARTING_BTC",
+      "strategy_name": "MARTING_BTC_多",
       "class_name": "MartingStrategy",
       "vt_symbol": "BTCUSDT.BYBIT",
+      "direction": "多",
       "start": true
     },
 
     {
-      "strategy_name": "MARTING_TRX",
+      "strategy_name": "MARTING_BTC_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "BTCUSDT.BYBIT",
+      "direction": "空",
+      "start": true
+    },
+
+    {
+      "strategy_name": "MARTING_TRX_多",
       "class_name": "MartingStrategy",
       "vt_symbol": "TRXUSDT.BYBIT",
+      "direction": "多",
       "start": true
     },
 
     {
-      "strategy_name": "MARTING_SHIB",
+      "strategy_name": "MARTING_TRX_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "TRXUSDT.BYBIT",
+      "direction": "空",
+      "start": true
+    },
+
+    {
+      "strategy_name": "MARTING_SHIB_多",
       "class_name": "MartingStrategy",
       "vt_symbol": "SHIB1000USDT.BYBIT",
+      "direction": "多",
+      "start": true
+    },
+
+    {
+      "strategy_name": "MARTING_SHIB_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "SHIB1000USDT.BYBIT",
+      "direction": "空",
       "start": true
     }
   ],

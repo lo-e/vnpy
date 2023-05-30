@@ -886,7 +886,7 @@ class MartingEngine(BaseEngine):
                 result = back_data.get('result', False)
                 strategy_name = back_data.get('strategy_name', '')
                 if result:
-                    content = f'马丁策略{strategy_name}同步数据保存成功。'
+                    content = f'马丁策略{strategy_name}同步数据保存成功'
                 else:
                     content = f'马丁策略{strategy_name}同步数据保存失败！！'
                 self.write_log(content)

@@ -266,19 +266,6 @@ class BarGenerator:
                     self.window_start = True
                     self.window_bar = None
 
-    def generate(self) -> Optional[BarData]:
-        """
-        Generate the bar data and call callback immediately.
-        """
-        bar = self.bar
-
-        if self.bar:
-            bar.datetime = bar.datetime.replace(second=0, microsecond=0)
-            self.on_bar(bar)
-
-        self.bar = None
-        return bar
-
 
 class MinuteBarProcessor:
     def __init__(

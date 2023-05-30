@@ -27,10 +27,10 @@ class MartingStrategy(CtaTemplate):
     rsi_window = 14  # RSI参数
 
     # 参数列表，保存了参数的名称
-    parameters = ["strategy_name", "vt_symbol", "direction", "ma_window", "rsi_window"]
+    parameters = ["strategy_name", "vt_symbol", "direction", "ma_window", "rsi_window", "unit_value"]
 
     # 变量列表，保存了变量的名称
-    variables = ["direction"]
+    variables = ["symbol_price_tick", "symbol_min_volume", "position_price", "ma_price", "position_reduce_price", "position_increase_price", "max_loss_value", "max_loss_rate", "trending_step"]
 
     # 同步列表，保存了需要保存到数据库的变量名称
     syncs = ["pos"]
@@ -44,18 +44,22 @@ class MartingStrategy(CtaTemplate):
         self.am = ArrayManager(max(self.ma_window, self.rsi_window + 12))  # K线容器
         self.bar: BarData = None  # 最新K线
         self.position_price = 0  # 持仓均价
+        self.ma_price = 0  # 均线价格
         self.position_reduce_price = 0  # 减仓价格
         self.position_increase_price = 0  # 加仓价格
         self.max_loss_value = 0  # 当前持仓最大亏损价值
         self.max_loss_rate = ""  # 当前持仓最大亏损比率
-        self.ma_price = 0  # 均线价格
         self.rsi_array = []  # 指定周期内的RSI列表
         self.trending_step = 0  # 追踪趋势的等级
         self.calculate_phase_positions(self.portfolio.portfolioValue)  # 马丁格尔倍数仓位管理
 
+        # 完成setting.json参数的配置
         super(MartingStrategy, self).__init__(
             cta_engine=ctaEngine, strategy_name="", vt_symbol="", setting=setting
         )
+
+        # 对setting.json特殊字段处理
+        self.direction = Direction.LONG if self.direction == "多" else (Direction.SHORT if self.direction == "空" else Direction.NET)
 
     def calculate_phase_positions(self, portfolio_value):
         self.phase_position_values = []
@@ -66,7 +70,7 @@ class MartingStrategy(CtaTemplate):
 
     def on_init(self):
         pass
-    
+
         # 载入历史数据，并采用回放计算的方式初始化策略数值
         # initData = self.load_bar(300, interval=Interval.DAILY)
         # for bar in initData:
@@ -74,8 +78,13 @@ class MartingStrategy(CtaTemplate):
         # self.write_log(f"{self.strategy_name}\t策略初始化")
 
     def on_start(self):
+        # 交易合约缺失
         contract = self.cta_engine.main_engine.get_contract(self.vt_symbol)
         if not contract:
+            return False
+
+        # 交易方向设置错误
+        if self.direction != Direction.LONG and self.direction != Direction.SHORT:
             return False
         
         self.symbol_min_volume = contract.min_volume
