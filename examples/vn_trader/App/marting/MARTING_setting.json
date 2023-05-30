@@ -1,0 +1,21 @@
+{
+    "signal": [
+    {
+        "strategy_name": "MARTING_TRX",
+        "class_name": "MartingStrategy",
+        "vt_symbol": "TRXUSDT.BYBIT",
+        "per_size":1,
+        "start": true
+    },
+
+    {
+        "strategy_name": "MARTING_SHIB",
+        "class_name": "MartingStrategy",
+        "vt_symbol": "SHIB1000USDT.BYBIT",
+        "per_size":1,
+        "start": true
+    }
+],
+    "portfolio": {"name": "marting",
+                  "portfolioValue": 100000}
+}
