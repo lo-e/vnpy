@@ -263,11 +263,6 @@ class MartingSignal(object):
                 
         # 检查加仓
         if self.position_increase_price:
-            # fake
-            if self.symbol == "SANDUSDT.BYBIT" and self.direction == Direction.LONG:
-                if self.bar.datetime >= datetime.strptime("2023-05-24 23:00:00", "%Y-%m-%d %H:%M:%S"):
-                    a = 2
-                    
             # 成交价格
             trade_price = round_to(self.ma_price, self.symbol_price_tick)
 
@@ -418,6 +413,11 @@ class MartingSignal(object):
 
                     else:
                         exit("检查代码！")
+                    
+                    # 加仓需要变更最大亏损比率，基于加仓后的持仓价值
+                    self.max_loss_rate = (self.max_loss_value / (abs(self.position) * self.position_price)) * 100
+                    self.max_loss_rate = round_to(self.max_loss_rate, 0.01)
+                    self.max_loss_rate = f"{self.max_loss_rate}%"
 
     def calculate_indicator(self):
         """计算入场指标"""

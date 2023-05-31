@@ -14,7 +14,7 @@ import csv
 import os
 from vnpy.trader.object import BarData
 from vnpy.trader.utility import round_to, floor_to, ceil_to
-
+import numpy as np
 
 class MartingStrategy(CtaTemplate):
     """马丁策略"""
@@ -631,7 +631,7 @@ class MartingBacktesting(object):
             init_volume = self.unit_value / self.position_price
             init_volume = round_to(init_volume, self.symbol_min_volume)
 
-            # 当前持仓数量更新、发起订单
+            # 当前持仓数量更新
             if self.direction == Direction.LONG:
                 self.position = init_volume
 
@@ -687,7 +687,7 @@ class MartingBacktesting(object):
                 target_position = abs(self.position) + changed_volume
 
                 if changed_volume:
-                    # 当前持仓数量更新、发起订单
+                    # 当前持仓数量更新
                     if self.direction == Direction.LONG:
                         self.position = target_position
 
@@ -706,13 +706,6 @@ class MartingBacktesting(object):
 
         # 检查加仓
         if self.position_increase_price:
-            # fake
-            if self.symbol == "SANDUSDT.BYBIT" and self.direction == Direction.LONG:
-                if self.bar.datetime >= datetime.strptime(
-                    "2023-05-24 23:00:00", "%Y-%m-%d %H:%M:%S"
-                ):
-                    a = 2
-
             # 成交价格
             trade_price = round_to(self.ma_price, self.symbol_price_tick)
 
@@ -816,49 +809,20 @@ class MartingBacktesting(object):
                 target_position = abs(self.position) + changed_volume
 
                 if changed_volume:
-                    # 当前持仓数量更新、发起订单
+                    # 当前持仓数量更新
                     if self.direction == Direction.LONG:
                         self.position = target_position
-                        if changed_volume > 0:
-                            # 加仓
-                            self.newSignal(
-                                Direction.LONG,
-                                Offset.OPEN,
-                                trade_price,
-                                abs(changed_volume),
-                            )
-
-                        elif changed_volume < 0:
-                            # 平仓
-                            self.newSignal(
-                                Direction.SHORT,
-                                Offset.CLOSE,
-                                trade_price,
-                                abs(changed_volume),
-                            )
 
                     elif self.direction == Direction.SHORT:
                         self.position = target_position * -1
-                        if changed_volume > 0:
-                            # 加仓
-                            self.newSignal(
-                                Direction.SHORT,
-                                Offset.OPEN,
-                                trade_price,
-                                abs(changed_volume),
-                            )
-
-                        elif changed_volume < 0:
-                            # 平仓
-                            self.newSignal(
-                                Direction.LONG,
-                                Offset.CLOSE,
-                                trade_price,
-                                abs(changed_volume),
-                            )
 
                     else:
                         exit("检查代码！")
+                    
+                    # 加仓需要变更最大亏损比率，基于加仓后的持仓价值
+                    self.max_loss_rate = (self.max_loss_value / (abs(self.position) * self.position_price)) * 100
+                    self.max_loss_rate = round_to(self.max_loss_rate, 0.01)
+                    self.max_loss_rate = f"{self.max_loss_rate}%"
 
     def calculate_indicator(self):
         """计算入场指标"""
@@ -904,6 +868,3 @@ class MartingBacktesting(object):
 
                 else:
                     self.position_increase_price = self.position_price * (1 + 0.08)
-
-    def newSignal(self, direction, offset, price, volume):
-        self.portfolio.newSignal(self, direction, offset, price, volume)
