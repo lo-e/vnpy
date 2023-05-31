@@ -16,7 +16,7 @@ from vnpy.trader.object import BarData
 from vnpy.trader.utility import round_to, floor_to, ceil_to
 import numpy as np
 from threading import Thread
-
+from utilities.BarGenerator import BarGenerator
 
 class MartingStrategy(CtaTemplate):
     """马丁策略"""
@@ -79,7 +79,7 @@ class MartingStrategy(CtaTemplate):
         self.max_loss_rate = ""  # 当前持仓最大亏损比率
         self.rsi_array = []  # 指定周期内的RSI列表
         self.trending_step = 0  # 追踪趋势的等级
-        # self.bar_generator = BarGenerator(on_bar=self.on_bar)
+        self.bar_generator = BarGenerator(on_bar=self.on_bar)
         self.calculate_phase_positions()  # 马丁格尔倍数仓位管理
 
         # 完成setting.json参数的配置

@@ -19,11 +19,10 @@ from threading import Thread
 import sys
 
 sys.path.append("..")
-from vn_trader.App.Turtle_crypto.dataservice.BybitDataService import (
+from App.Turtle_crypto.dataservice.BybitDataService import (
     bybit_get_symbol_list,
     BybitSymbolType,
 )
-
 
 class BarGenerator:
     """
