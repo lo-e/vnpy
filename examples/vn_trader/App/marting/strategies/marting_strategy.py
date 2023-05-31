@@ -16,6 +16,7 @@ from vnpy.trader.object import BarData
 from vnpy.trader.utility import round_to, floor_to, ceil_to
 import numpy as np
 
+
 class MartingStrategy(CtaTemplate):
     """马丁策略"""
 
@@ -23,6 +24,7 @@ class MartingStrategy(CtaTemplate):
     author = "loe"
 
     # 策略参数
+    interval_window = 5 # 数据的时间周期5分钟
     ma_window = 9  # 均线参数
     rsi_window = 14  # RSI参数
 
@@ -50,7 +52,7 @@ class MartingStrategy(CtaTemplate):
     ]
 
     # 同步列表，保存了需要保存到数据库的变量名称
-    syncs = ["pos", "backtesting_to"]
+    syncs = ["pos", "backtesting_to", "backtesting_status"]
 
     def __init__(self, ctaEngine, martingPortfolio, setting):
         self.portfolio = martingPortfolio
@@ -59,6 +61,7 @@ class MartingStrategy(CtaTemplate):
             "2022-01-01 00:00:00", "%Y-%m-%d %H:%M:%S"
         )
         self.backtesting_to = None
+        self.backtesting_status = {}
 
         self.direction: Direction = Direction.NET  # 交易方向
         self.unit_value = self.portfolio.portfolioValue * 0.5 * 0.01  # 最小持仓价值
@@ -116,27 +119,34 @@ class MartingStrategy(CtaTemplate):
         self.backtesting_marting()
 
         return True
-    
+
     def backtesting_marting(self):
-        if not self.backtesting:
-            self.backtesting = MartingBacktesting(
-                vt_symbol=self.vt_symbol,
-                direction=self.direction,
-                ma_window=self.ma_window,
-                rsi_window=self.rsi_window,
-                symbol_min_volume=self.symbol_min_volume,
-                symbol_price_tick=self.symbol_price_tick,
-            )
+        backtestint_start = (
+            self.backtesting_to + timedelta(minutes=self.interval_window)
+            if self.backtesting_to
+            else None
+        )
+        
+        self.backtesting = MartingBacktesting(
+            vt_symbol=self.vt_symbol,
+            direction=self.direction,
+            ma_window=self.ma_window,
+            rsi_window=self.rsi_window,
+            symbol_min_volume=self.symbol_min_volume,
+            symbol_price_tick=self.symbol_price_tick,
+            init_status=self.backtesting_status,
+            start_dt=backtestint_start,
+        )
 
         # 载入历史数据获取回测参数
         if self.backtesting_to:
-            start_dt = self.backtesting_to + timedelta(minutes=5)
+            start_dt = self.backtesting_to - timedelta(days=1)
 
         elif self.backtesting_from:
             start_dt = self.backtesting_from
 
         else:
-            exit("检查代码！")
+            raise ("检查代码！")
 
         backtesting_data = self.cta_engine.load_bar(
             vt_symbol=self.vt_symbol,
@@ -145,11 +155,21 @@ class MartingStrategy(CtaTemplate):
             window=5,
             callback=None,
         )
-        
+
         # 剔除最后一个Bar数据，保证数据的准确性
         backtesting_data = backtesting_data[0:-1]
         for bar in backtesting_data:
             self.backtesting.on_bar(bar)
+
+        # 回测完成保存回测状态
+        status = {}
+        for name in self.backtesting.syncs:
+            status[name] = self.backtesting.__getattribute__(name)
+        self.backtesting_status = status
+        self.backtesting_to = backtesting_data[-1].datetime
+
+        # 同步到数据库
+        self.put_timer_event()
 
     def on_stop(self):
         self.write_log(f"{self.strategy_name}\t策略停止")
@@ -281,8 +301,8 @@ class MartingStrategy(CtaTemplate):
 
             # 止损平仓
             if self.virtualUnit > 0:
-                longExit = max(self.longStop, self.exitDown)
-                if tick.last_price <= longExit:
+                longraise = max(self.longStop, self.raiseDown)
+                if tick.last_price <= longraise:
                     self.close(tick.last_price)
                     self.portfolio.newSignal(
                         self.vt_symbol, Direction.SHORT, Offset.CLOSE
@@ -406,8 +426,8 @@ class MartingStrategy(CtaTemplate):
 
             # 止损平仓
             if self.virtualUnit < 0:
-                shortExit = min(self.shortStop, self.exitUp)
-                if tick.last_price >= shortExit:
+                shortraise = min(self.shortStop, self.raiseUp)
+                if tick.last_price >= shortraise:
                     self.close(tick.last_price)
                     self.portfolio.newSignal(
                         self.vt_symbol, Direction.LONG, Offset.CLOSE
@@ -438,7 +458,7 @@ class MartingStrategy(CtaTemplate):
 
         # 计算指标数值
         self.entryUp, self.entryDown = self.am.donchian(self.entryWindow)
-        self.exitUp, self.exitDown = self.am.donchian(self.exitWindow)
+        self.raiseUp, self.raiseDown = self.am.donchian(self.raiseWindow)
 
         # 判断是否要更新交易信号
         if self.virtualUnit == 0:
@@ -516,25 +536,32 @@ class MartingStrategy(CtaTemplate):
 class MartingBacktesting(object):
     def __init__(
         self,
-        vt_symbol,
-        direction,
-        ma_window,
-        rsi_window,
-        symbol_min_volume,
-        symbol_price_tick,
+        vt_symbol: str,
+        direction: Direction,
+        ma_window: int,
+        rsi_window: int,
+        symbol_min_volume: float,
+        symbol_price_tick: float,
+        init_status: dict,
+        start_dt: datetime,
     ):
         # 常量
+        self.unit_value = 1000000 * 0.5 * 0.01  # 最小持仓价值
         self.vt_symbol = vt_symbol  # 合约代码
         self.direction = direction  # 交易方向
         self.ma_window = ma_window  # 均线参数
         self.rsi_window = rsi_window  # RSI参数
-        self.unit_value = 1000000 * 0.5 * 0.01  # 最小持仓价值
         self.symbol_min_volume = symbol_min_volume  # 合约最小交易数量
         self.symbol_price_tick = symbol_price_tick  # 合约最小价格变动
+        self.init_status = init_status  # 回测初始状态
+        self.start_dt = start_dt  # 回测开始时间
         if not self.symbol_min_volume or not self.symbol_price_tick:
-            exit("检查代码！")
+            raise ("检查代码！")
 
         # 变量
+        self.start = (
+            False if self.init_status else True
+        )  # 开始回测开关，当有初始状态时，回测Bar数据需要从start_dt开始
         self.bar: BarData = None  # 最新K线
         self.am = ArrayManager(max(self.ma_window, self.rsi_window + 12))  # K线容器
         self.position = 0  # 持仓量
@@ -548,6 +575,13 @@ class MartingBacktesting(object):
         self.trending_step = 0  # 追踪趋势的等级
         self.calculate_phase_positions()  # 马丁格尔倍数仓位管理
 
+        # 同步保存到数据库的变量
+        self.syncs = ["position", "position_price", "position_reduce_price", "position_increase_price", "max_loss_value", "max_loss_rate", "ma_price", "rsi_array", "trending_step"]
+
+        # 初始化状态
+        for name, value in self.init_status.items():
+            self.__setattr__(name, value)
+
     def on_bar(self, bar):
         if not bar.check_valid():
             raise ("Bar数据校验不通过！！")
@@ -555,6 +589,23 @@ class MartingBacktesting(object):
         self.am.update_bar(bar)
         if not self.am.inited:
             return
+
+        # 检查是否可以开始回测
+        if not self.start:
+            if not self.start_dt:
+                raise ("回测有初始状态，但没有开始时间！")
+
+            if bar.datetime < self.start_dt:
+                # 未达到开始时间
+                return
+
+            elif bar.datetime == self.start_dt:
+                # 开始回测
+                self.start = True
+
+            else:
+                # 开始回测时间的Bar数据缺失
+                raise ("开始回测时间的Bar数据缺失！")
 
         self.calculate_max_loss()
         self.generate_signal(bar)
@@ -568,9 +619,7 @@ class MartingBacktesting(object):
             self.phase_position_values.append(phase_position)
 
     def get_current_phase(self):
-        current_phase_position_value = (
-            abs(self.position) * self.position_price
-        )
+        current_phase_position_value = abs(self.position) * self.position_price
         for i in range(len(self.phase_position_values)):
             phase_positon_value = self.phase_position_values[i]
             if current_phase_position_value <= phase_positon_value * 1.1:
@@ -603,7 +652,7 @@ class MartingBacktesting(object):
                 self.max_loss_rate = f"{self.max_loss_rate}%"
 
         else:
-            exit("检查代码！")
+            raise ("检查代码！")
 
     def generate_signal(self, bar):
         """
@@ -611,7 +660,7 @@ class MartingBacktesting(object):
         要注意在任何一个数据点：buy/sell/short/cover只允许执行一类动作
         """
         # fake
-        if self.vt_symbol== "BTCUSDT.BYBIT" and self.direction == Direction.LONG:
+        if self.vt_symbol == "BTCUSDT.BYBIT" and self.direction == Direction.LONG:
             if self.bar.datetime >= datetime.strptime(
                 "2022-01-12 20:05:00", "%Y-%m-%d %H:%M:%S"
             ):
@@ -640,7 +689,7 @@ class MartingBacktesting(object):
                 self.position = init_volume * -1
 
             else:
-                exit("检查代码！")
+                raise ("检查代码！")
 
             # 初始化后停止后续判断
             return
@@ -696,7 +745,7 @@ class MartingBacktesting(object):
                         self.position = target_position * -1
 
                     else:
-                        exit("检查代码！")
+                        raise ("检查代码！")
 
                 # 初始化仓位最大亏损
                 self.max_loss_value = 0
@@ -768,7 +817,7 @@ class MartingBacktesting(object):
                         target_positon_price = trade_price * (1 - price_rate)
 
                     else:
-                        exit("检查代码！")
+                        raise ("检查代码！")
 
                     # 计算加仓的合约数量
                     # current_position_value + changed_volume * trade_price = (abs(self.position) + changed_volume) * self.position_price
@@ -818,10 +867,12 @@ class MartingBacktesting(object):
                         self.position = target_position * -1
 
                     else:
-                        exit("检查代码！")
-                    
+                        raise ("检查代码！")
+
                     # 加仓需要变更最大亏损比率，基于加仓后的持仓价值
-                    self.max_loss_rate = (self.max_loss_value / (abs(self.position) * self.position_price)) * 100
+                    self.max_loss_rate = (
+                        self.max_loss_value / (abs(self.position) * self.position_price)
+                    ) * 100
                     self.max_loss_rate = round_to(self.max_loss_rate, 0.01)
                     self.max_loss_rate = f"{self.max_loss_rate}%"
 
