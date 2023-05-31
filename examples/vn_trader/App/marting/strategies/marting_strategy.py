@@ -15,6 +15,7 @@ import os
 from vnpy.trader.object import BarData
 from vnpy.trader.utility import round_to, floor_to, ceil_to
 import numpy as np
+from threading import Thread
 
 
 class MartingStrategy(CtaTemplate):
@@ -24,7 +25,7 @@ class MartingStrategy(CtaTemplate):
     author = "loe"
 
     # 策略参数
-    interval_window = 5 # 数据的时间周期5分钟
+    interval_window = 5  # 数据的时间周期5分钟
     ma_window = 9  # 均线参数
     rsi_window = 14  # RSI参数
 
@@ -40,6 +41,7 @@ class MartingStrategy(CtaTemplate):
 
     # 变量列表，保存了变量的名称
     variables = [
+        "is_backtesting",
         "symbol_price_tick",
         "symbol_min_volume",
         "position_price",
@@ -52,7 +54,7 @@ class MartingStrategy(CtaTemplate):
     ]
 
     # 同步列表，保存了需要保存到数据库的变量名称
-    syncs = ["pos", "backtesting_to", "backtesting_status"]
+    syncs = ["backtesting_to", "backtesting_status"]
 
     def __init__(self, ctaEngine, martingPortfolio, setting):
         self.portfolio = martingPortfolio
@@ -62,12 +64,12 @@ class MartingStrategy(CtaTemplate):
         )
         self.backtesting_to = None
         self.backtesting_status = {}
+        self.is_backtesting = False
 
         self.direction: Direction = Direction.NET  # 交易方向
         self.unit_value = self.portfolio.portfolioValue * 0.5 * 0.01  # 最小持仓价值
         self.symbol_min_volume: float = 0.0
         self.symbol_price_tick: float = 0.0
-        self.am = ArrayManager(max(self.ma_window, self.rsi_window + 12))  # K线容器
         self.bar: BarData = None  # 最新K线
         self.position_price = 0  # 持仓均价
         self.ma_price = 0  # 均线价格
@@ -77,6 +79,7 @@ class MartingStrategy(CtaTemplate):
         self.max_loss_rate = ""  # 当前持仓最大亏损比率
         self.rsi_array = []  # 指定周期内的RSI列表
         self.trending_step = 0  # 追踪趋势的等级
+        # self.bar_generator = BarGenerator(on_bar=self.on_bar)
         self.calculate_phase_positions()  # 马丁格尔倍数仓位管理
 
         # 完成setting.json参数的配置
@@ -116,9 +119,14 @@ class MartingStrategy(CtaTemplate):
         self.symbol_price_tick = contract.pricetick
 
         # 回测数据
-        self.backtesting_marting()
-
+        self.start_backtesting()
         return True
+
+    def start_backtesting(self):
+        self.write_log(f"开启回测线程")
+        self.is_backtesting = True
+        thread = Thread(target=self.backtesting_marting)
+        thread.start()
 
     def backtesting_marting(self):
         backtestint_start = (
@@ -126,7 +134,7 @@ class MartingStrategy(CtaTemplate):
             if self.backtesting_to
             else None
         )
-        
+
         self.backtesting = MartingBacktesting(
             vt_symbol=self.vt_symbol,
             direction=self.direction,
@@ -168,7 +176,11 @@ class MartingStrategy(CtaTemplate):
         self.backtesting_status = status
         self.backtesting_to = backtesting_data[-1].datetime
 
-        # 同步到数据库
+        # 结束回测
+        self.is_backtesting = False
+        self.write_log(f"回测结束：{self.backtesting_to}")
+
+        # 策略状态更新
         self.put_timer_event()
 
     def on_stop(self):
@@ -178,293 +190,14 @@ class MartingStrategy(CtaTemplate):
         if not self.trading:
             return
 
-        # 撮合信号与交易
-        if not self.am.inited or not self.atrAm.inited:
-            return
-
-        # 当前交易日有过平仓交易，停止一切后续开平操作
-        if self.hasClose:
-            return
-
-        unitChange = 0
-        action = False
-
-        if self.virtualUnit >= 0:
-            # 多头开仓加仓
-            if tick.last_price >= self.longEntry1 and self.virtualUnit < 1:
-                action = True
-                current_multiplier = self.calMultiplier(
-                    tick.last_price, direction=Direction.LONG
-                )
-
-                # 信号建仓
-                self.open(tick.last_price, 1)
-
-                # 先手动更新最大止损，如果有真实交易会在onTrade再次更新
-                self.longStop = tick.last_price - 2 * self.atrVolatility
-
-                preCheck = True
-                # 过滤虚假开仓
-                if current_multiplier <= 0:
-                    preCheck = False
-
-                # 上次盈利过滤
-                # if self.lastPnl > 0:
-                #     preCheck = False
-
-                # 组合仓位管理
-                if preCheck:
-                    if self.portfolio.newSignal(
-                        self.vt_symbol, Direction.LONG, Offset.OPEN
-                    ):
-                        unitChange += 1
-
-            if tick.last_price >= self.longEntry2 and self.virtualUnit < 2:
-                action = True
-                current_multiplier = self.calMultiplier(
-                    tick.last_price, direction=Direction.LONG
-                )
-
-                self.open(tick.last_price, 1)
-
-                self.longStop = tick.last_price - 2 * self.atrVolatility
-
-                preCheck = True
-                if current_multiplier <= 0:
-                    preCheck = False
-
-                # if self.lastPnl > 0:
-                #     preCheck = False
-
-                if preCheck:
-                    if self.portfolio.newSignal(
-                        self.vt_symbol, Direction.LONG, Offset.OPEN
-                    ):
-                        unitChange += 1
-
-            if tick.last_price >= self.longEntry3 and self.virtualUnit < 3:
-                action = True
-                current_multiplier = self.calMultiplier(
-                    tick.last_price, direction=Direction.LONG
-                )
-
-                self.open(tick.last_price, 1)
-
-                self.longStop = tick.last_price - 2 * self.atrVolatility
-
-                preCheck = True
-                if current_multiplier <= 0:
-                    preCheck = False
-
-                # if self.lastPnl > 0:
-                #     preCheck = False
-
-                if preCheck:
-                    if self.portfolio.newSignal(
-                        self.vt_symbol, Direction.LONG, Offset.OPEN
-                    ):
-                        unitChange += 1
-
-            if tick.last_price >= self.longEntry4 and self.virtualUnit < 4:
-                action = True
-                current_multiplier = self.calMultiplier(
-                    tick.last_price, direction=Direction.LONG
-                )
-
-                self.open(tick.last_price, 1)
-
-                self.longStop = tick.last_price - 2 * self.atrVolatility
-
-                preCheck = True
-                if current_multiplier <= 0:
-                    preCheck = False
-
-                # if self.lastPnl > 0:
-                #     preCheck = False
-
-                if preCheck:
-                    if self.portfolio.newSignal(
-                        self.vt_symbol, Direction.LONG, Offset.OPEN
-                    ):
-                        unitChange += 1
-
-            if action:
-                if unitChange:
-                    self.unit += unitChange
-                    self.buy(
-                        self.bestLimitOrderPrice(tick, Direction.LONG, multi=200),
-                        current_multiplier * abs(unitChange),
-                    )
-
-                self.put_timer_event()
-                return
-
-            # 止损平仓
-            if self.virtualUnit > 0:
-                longraise = max(self.longStop, self.raiseDown)
-                if tick.last_price <= longraise:
-                    self.close(tick.last_price)
-                    self.portfolio.newSignal(
-                        self.vt_symbol, Direction.SHORT, Offset.CLOSE
-                    )
-                    if self.pos > 0:
-                        self.sell(
-                            self.bestLimitOrderPrice(tick, Direction.SHORT, multi=200),
-                            abs(self.pos),
-                        )
-                    # 平仓后更新最新指标
-                    self.updateIndicator()
-                    self.hasClose = True
-
-                self.put_timer_event()
-                return
-
-        if self.virtualUnit <= 0:
-            # 空头开仓加仓
-            if tick.last_price <= self.shortEntry1 and self.virtualUnit > -1:
-                action = True
-                current_multiplier = self.calMultiplier(
-                    tick.last_price, direction=Direction.SHORT
-                )
-
-                self.open(tick.last_price, -1)
-
-                self.shortStop = tick.last_price + 2 * self.atrVolatility
-
-                preCheck = True
-                if current_multiplier <= 0:
-                    preCheck = False
-
-                # if self.lastPnl > 0:
-                #     preCheck = False
-
-                if preCheck:
-                    if self.portfolio.newSignal(
-                        self.vt_symbol, Direction.SHORT, Offset.OPEN
-                    ):
-                        unitChange -= 1
-
-            if tick.last_price <= self.shortEntry2 and self.virtualUnit > -2:
-                action = True
-                current_multiplier = self.calMultiplier(
-                    tick.last_price, direction=Direction.SHORT
-                )
-
-                self.open(tick.last_price, -1)
-
-                self.shortStop = tick.last_price + 2 * self.atrVolatility
-
-                preCheck = True
-                if current_multiplier <= 0:
-                    preCheck = False
-
-                # if self.lastPnl > 0:
-                #     preCheck = False
-
-                if preCheck:
-                    if self.portfolio.newSignal(
-                        self.vt_symbol, Direction.SHORT, Offset.OPEN
-                    ):
-                        unitChange -= 1
-
-            if tick.last_price <= self.shortEntry3 and self.virtualUnit > -3:
-                action = True
-                current_multiplier = self.calMultiplier(
-                    tick.last_price, direction=Direction.SHORT
-                )
-
-                self.open(tick.last_price, -1)
-
-                self.shortStop = tick.last_price + 2 * self.atrVolatility
-
-                preCheck = True
-                if current_multiplier <= 0:
-                    preCheck = False
-
-                # if self.lastPnl > 0:
-                #     preCheck = False
-
-                if preCheck:
-                    if self.portfolio.newSignal(
-                        self.vt_symbol, Direction.SHORT, Offset.OPEN
-                    ):
-                        unitChange -= 1
-
-            if tick.last_price <= self.shortEntry4 and self.virtualUnit > -4:
-                action = True
-                current_multiplier = self.calMultiplier(
-                    tick.last_price, direction=Direction.SHORT
-                )
-
-                self.open(tick.last_price, -1)
-
-                self.shortStop = tick.last_price + 2 * self.atrVolatility
-
-                preCheck = True
-                if current_multiplier <= 0:
-                    preCheck = False
-
-                # if self.lastPnl > 0:
-                #     preCheck = False
-
-                if preCheck:
-                    if self.portfolio.newSignal(
-                        self.vt_symbol, Direction.SHORT, Offset.OPEN
-                    ):
-                        unitChange -= 1
-
-            if action:
-                if unitChange:
-                    self.unit += unitChange
-                    self.short(
-                        self.bestLimitOrderPrice(tick, Direction.SHORT, multi=200),
-                        current_multiplier * abs(unitChange),
-                    )
-
-                self.put_timer_event()
-                return
-
-            # 止损平仓
-            if self.virtualUnit < 0:
-                shortraise = min(self.shortStop, self.raiseUp)
-                if tick.last_price >= shortraise:
-                    self.close(tick.last_price)
-                    self.portfolio.newSignal(
-                        self.vt_symbol, Direction.LONG, Offset.CLOSE
-                    )
-                    if self.pos < 0:
-                        self.cover(
-                            self.bestLimitOrderPrice(tick, Direction.LONG, multi=200),
-                            abs(self.pos),
-                        )
-                    # 平仓后更新最新指标
-                    self.updateIndicator()
-                    self.hasClose = True
-
-                self.put_timer_event()
-                return
-
+        # 策略状态更新
         self.put_timer_event()
 
     def on_bar(self, bar):
         """收到Bar推送（必须由用户继承实现）"""
         return
 
-        # 保存K线数据
-        self.am.update_bar(bar)
-        self.atrAm.update_bar(bar)
-        if not self.am.inited or not self.atrAm.inited:
-            return
-
-        # 计算指标数值
-        self.entryUp, self.entryDown = self.am.donchian(self.entryWindow)
-        self.raiseUp, self.raiseDown = self.am.donchian(self.raiseWindow)
-
-        # 判断是否要更新交易信号
-        if self.virtualUnit == 0:
-            self.updateIndicator()
-
-        # 发出状态更新事件
+        # 策略状态更新
         self.put_timer_event()
 
     def on_order(self, order):
@@ -576,7 +309,17 @@ class MartingBacktesting(object):
         self.calculate_phase_positions()  # 马丁格尔倍数仓位管理
 
         # 同步保存到数据库的变量
-        self.syncs = ["position", "position_price", "position_reduce_price", "position_increase_price", "max_loss_value", "max_loss_rate", "ma_price", "rsi_array", "trending_step"]
+        self.syncs = [
+            "position",
+            "position_price",
+            "position_reduce_price",
+            "position_increase_price",
+            "max_loss_value",
+            "max_loss_rate",
+            "ma_price",
+            "rsi_array",
+            "trending_step",
+        ]
 
         # 初始化状态
         for name, value in self.init_status.items():
