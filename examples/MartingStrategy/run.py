@@ -36,7 +36,7 @@ def one():
             symbolList.append(d)
     if not symbolList:
         return
-    engine.initListPortfolio(symbolList, 100000)
+    engine.initListPortfolio(symbolList, 1000000)
     engine.loadData()
     engine.runBacktesting()
     engine.showResult(figSavedName)

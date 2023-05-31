@@ -13,6 +13,7 @@ from vnpy.trader.constant import Interval
 import csv
 import os
 from vnpy.trader.object import BarData
+from vnpy.trader.utility import round_to, floor_to, ceil_to
 
 
 class MartingStrategy(CtaTemplate):
@@ -514,7 +515,6 @@ class MartingStrategy(CtaTemplate):
 class MartingBacktesting(object):
     def __init__(
         self,
-        portfolio_value,
         vt_symbol,
         direction,
         ma_window,
@@ -527,14 +527,13 @@ class MartingBacktesting(object):
         self.direction = direction  # 交易方向
         self.ma_window = ma_window  # 均线参数
         self.rsi_window = rsi_window  # RSI参数
-        self.unit_value = portfolio_value * 0.5 * 0.01  # 最小持仓价值
+        self.unit_value = 1000000 * 0.5 * 0.01  # 最小持仓价值
         self.symbol_min_volume = symbol_min_volume  # 合约最小交易数量
         self.symbol_price_tick = symbol_price_tick  # 合约最小价格变动
         if not self.symbol_min_volume or not self.symbol_price_tick:
             exit("检查代码！")
 
         # 变量
-        self.inited = False  # 是否完成初始建仓
         self.bar: BarData = None  # 最新K线
         self.am = ArrayManager(max(self.ma_window, self.rsi_window + 12))  # K线容器
         self.position = 0  # 持仓量
@@ -611,7 +610,7 @@ class MartingBacktesting(object):
         要注意在任何一个数据点：buy/sell/short/cover只允许执行一类动作
         """
         # fake
-        if self.symbol == "CHZUSDT.BYBIT" and self.direction == Direction.LONG:
+        if self.vt_symbol== "CHZUSDT.BYBIT" and self.direction == Direction.LONG:
             if self.bar.datetime >= datetime.strptime(
                 "2023-05-12 20:05:00", "%Y-%m-%d %H:%M:%S"
             ):
@@ -635,27 +634,12 @@ class MartingBacktesting(object):
             # 当前持仓数量更新、发起订单
             if self.direction == Direction.LONG:
                 self.position = init_volume
-                self.newSignal(
-                    Direction.LONG,
-                    Offset.OPEN,
-                    trade_price,
-                    abs(init_volume),
-                )
 
             elif self.direction == Direction.SHORT:
                 self.position = init_volume * -1
-                self.newSignal(
-                    Direction.SHORT,
-                    Offset.OPEN,
-                    trade_price,
-                    abs(init_volume),
-                )
 
             else:
                 exit("检查代码！")
-
-            # 完成初始建仓
-            self.inited = True
 
             # 初始化后停止后续判断
             return
@@ -706,43 +690,10 @@ class MartingBacktesting(object):
                     # 当前持仓数量更新、发起订单
                     if self.direction == Direction.LONG:
                         self.position = target_position
-                        if changed_volume > 0:
-                            # 加仓
-                            self.newSignal(
-                                Direction.LONG,
-                                Offset.OPEN,
-                                trade_price,
-                                abs(changed_volume),
-                            )
-
-                        elif changed_volume < 0:
-                            # 平仓
-                            self.newSignal(
-                                Direction.SHORT,
-                                Offset.CLOSE,
-                                trade_price,
-                                abs(changed_volume),
-                            )
 
                     elif self.direction == Direction.SHORT:
                         self.position = target_position * -1
-                        if changed_volume > 0:
-                            # 加仓
-                            self.newSignal(
-                                Direction.SHORT,
-                                Offset.OPEN,
-                                trade_price,
-                                abs(changed_volume),
-                            )
 
-                        elif changed_volume < 0:
-                            # 平仓
-                            self.newSignal(
-                                Direction.LONG,
-                                Offset.CLOSE,
-                                trade_price,
-                                abs(changed_volume),
-                            )
                     else:
                         exit("检查代码！")
 
