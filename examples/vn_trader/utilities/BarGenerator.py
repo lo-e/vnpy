@@ -14,6 +14,7 @@ import re
 from datetime import datetime, timedelta
 from time import sleep
 from threading import Thread
+from copy import copy
 
 # 将上一级目录添加到模块搜索路径中
 import sys
@@ -23,6 +24,7 @@ from App.Turtle_crypto.dataservice.BybitDataService import (
     bybit_get_symbol_list,
     BybitSymbolType,
 )
+
 
 class BarGenerator:
     """
@@ -45,6 +47,7 @@ class BarGenerator:
         """Constructor"""
         self.bar: BarData = None
         self.on_bar: Callable = on_bar
+        self.bar_start = False
 
         self.interval: Interval = interval
 
@@ -61,6 +64,8 @@ class BarGenerator:
         """
         Update new tick data into generator.
         """
+        tick = copy(tick)
+        tick.datetime = tick.datetime.replace(microsecond=0)
         new_minute = False
 
         # Filter tick data with 0 last price
@@ -73,13 +78,19 @@ class BarGenerator:
 
         if not self.bar:
             new_minute = True
+
         elif (self.bar.datetime.minute != tick.datetime.minute) or (
             self.bar.datetime.hour != tick.datetime.hour
         ):
-            self.bar.datetime = self.bar.datetime.replace(second=0, microsecond=0)
-            self.on_bar(self.bar)
+            if self.bar_start:
+                self.bar.datetime = self.bar.datetime.replace(second=0, microsecond=0)
+                self.on_bar(self.bar)
+                new_minute = True
 
-            new_minute = True
+            else:
+                # 初始周期
+                self.bar_start = True
+                new_minute = True
 
         if new_minute:
             self.bar = BarData(

@@ -18,6 +18,7 @@ import numpy as np
 from threading import Thread
 from utilities.BarGenerator import BarGenerator
 
+
 class MartingStrategy(CtaTemplate):
     """马丁策略"""
 
@@ -79,7 +80,14 @@ class MartingStrategy(CtaTemplate):
         self.max_loss_rate = ""  # 当前持仓最大亏损比率
         self.rsi_array = []  # 指定周期内的RSI列表
         self.trending_step = 0  # 追踪趋势的等级
-        self.bar_generator = BarGenerator(on_bar=self.on_bar)
+        self.window_bar_generator = BarGenerator(
+            window=self.interval_window,
+            on_window_bar=self.on_bar,
+            interval=Interval.MINUTE,
+        )  # 5分钟Bar生成工具
+        self.minute_bar_generator = BarGenerator(
+            on_bar=self.window_bar_generator.update_bar
+        )  # 1分钟Bar生成工具
         self.calculate_phase_positions()  # 马丁格尔倍数仓位管理
 
         # 完成setting.json参数的配置
@@ -189,6 +197,7 @@ class MartingStrategy(CtaTemplate):
     def on_tick(self, tick):
         if not self.trading:
             return
+        self.minute_bar_generator.update_tick(tick=tick)
 
         # 策略状态更新
         self.put_timer_event()
@@ -207,63 +216,7 @@ class MartingStrategy(CtaTemplate):
     def on_trade(self, trade):
         """成交推送"""
         # 邮件提醒
-        super(TurtleStrategyCrypto, self).on_trade(trade)
-
-    # 计算交易单位N
-    def calMultiplier(self, price, direction: Direction):
-        multiplier = 0
-        riskValue = self.portfolio.portfolioValue * 0.01
-        if self.atrVolatility:
-            if direction == Direction.LONG:
-                multiplier = (
-                    riskValue
-                    * (price * (price - 2 * self.atrVolatility))
-                    / self.atrVolatility
-                )
-            elif direction == Direction.SHORT:
-                multiplier = (
-                    riskValue
-                    * (price * (price + 2 * self.atrVolatility))
-                    / self.atrVolatility
-                )
-
-            multiplier = int(round(multiplier, 0))
-        self.multiplierList.append(multiplier)
-        return multiplier
-
-    # 计算入场信号指标
-    def updateIndicator(self):
-        # 计算atr
-        self.atrVolatility = self.atrAm.atr(self.atrWindow)
-
-        self.longEntry1 = self.entryUp
-        self.longEntry2 = self.longEntry1 + 0.5 * self.atrVolatility
-        self.longEntry3 = self.longEntry2 + 0.5 * self.atrVolatility
-        self.longEntry4 = self.longEntry3 + 0.5 * self.atrVolatility
-
-        self.shortEntry1 = self.entryDown
-        self.shortEntry2 = self.shortEntry1 - 0.5 * self.atrVolatility
-        self.shortEntry3 = self.shortEntry2 - 0.5 * self.atrVolatility
-        self.shortEntry4 = self.shortEntry3 - 0.5 * self.atrVolatility
-
-        self.longStop = 0
-        self.shortStop = 0
-
-    # 信号建仓
-    def open(self, price, change):
-        cost = self.virtualUnit * self.entry  # 计算之前的开仓成本
-        cost += change * price  # 加上新仓位的成本
-        self.virtualUnit += change  # 更新信号持仓
-        self.entry = cost / self.virtualUnit  # 计算新的平均开仓成本
-
-    # 信号平仓
-    def close(self, price):
-        self.lastPnl = (price - self.entry) * self.virtualUnit
-
-        self.virtualUnit = 0
-        self.unit = 0
-        self.entry = 0
-        self.multiplierList = []
+        super(MartingStrategy, self).on_trade(trade)
 
 
 class MartingBacktesting(object):
