@@ -44,9 +44,9 @@ class MartingSignal(object):
         self.max_loss_rate = ""  # 当前持仓最大亏损比率
         self.ma_price = 0  # 均线价格
         self.rsi_array = []
-        self.calculate_phase_positions()  # 马丁格尔倍数仓位管理
         self.phase_position_volume = 0  # 阶段仓位的初始持仓数量
         self.trending_step = 0  # 追踪趋势的等级
+        self.calculate_phase_positions()  # 马丁格尔倍数仓位管理
 
     def on_bar(self, bar):
         if not bar.check_valid():

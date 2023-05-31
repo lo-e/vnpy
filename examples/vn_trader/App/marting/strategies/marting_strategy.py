@@ -98,10 +98,28 @@ class MartingStrategy(CtaTemplate):
     def on_init(self):
         self.write_log(f"{self.strategy_name}\t策略初始化")
 
+    def on_start(self):
+        # 交易合约缺失
+        contract = self.cta_engine.main_engine.get_contract(self.vt_symbol)
+        if not contract:
+            return False
+
+        # 交易方向设置错误
+        if self.direction != Direction.LONG and self.direction != Direction.SHORT:
+            return False
+
+        # 设置必要的合约相关参数
+        self.symbol_min_volume = contract.min_volume
+        self.symbol_price_tick = contract.pricetick
+
+        # 回测数据
+        self.backtesting_marting()
+
+        return True
+    
     def backtesting_marting(self):
         if not self.backtesting:
             self.backtesting = MartingBacktesting(
-                portfolio_value=self.portfolio.portfolioValue,
                 vt_symbol=self.vt_symbol,
                 direction=self.direction,
                 ma_window=self.ma_window,
@@ -128,27 +146,10 @@ class MartingStrategy(CtaTemplate):
             callback=None,
         )
         
+        # 剔除最后一个Bar数据，保证数据的准确性
+        backtesting_data = backtesting_data[0:-1]
         for bar in backtesting_data:
             self.backtesting.on_bar(bar)
-
-    def on_start(self):
-        # 交易合约缺失
-        contract = self.cta_engine.main_engine.get_contract(self.vt_symbol)
-        if not contract:
-            return False
-
-        # 交易方向设置错误
-        if self.direction != Direction.LONG and self.direction != Direction.SHORT:
-            return False
-
-        # 设置必要的合约相关参数
-        self.symbol_min_volume = contract.min_volume
-        self.symbol_price_tick = contract.pricetick
-
-        # 回测数据
-        self.backtesting_marting()
-
-        return True
 
     def on_stop(self):
         self.write_log(f"{self.strategy_name}\t策略停止")
@@ -544,8 +545,8 @@ class MartingBacktesting(object):
         self.max_loss_rate = ""  # 当前持仓最大亏损比率
         self.ma_price = 0  # 均线价格
         self.rsi_array = []
-        self.calculate_phase_positions()  # 马丁格尔倍数仓位管理
         self.trending_step = 0  # 追踪趋势的等级
+        self.calculate_phase_positions()  # 马丁格尔倍数仓位管理
 
     def on_bar(self, bar):
         if not bar.check_valid():
@@ -610,9 +611,9 @@ class MartingBacktesting(object):
         要注意在任何一个数据点：buy/sell/short/cover只允许执行一类动作
         """
         # fake
-        if self.vt_symbol== "CHZUSDT.BYBIT" and self.direction == Direction.LONG:
+        if self.vt_symbol== "BTCUSDT.BYBIT" and self.direction == Direction.LONG:
             if self.bar.datetime >= datetime.strptime(
-                "2023-05-12 20:05:00", "%Y-%m-%d %H:%M:%S"
+                "2022-01-12 20:05:00", "%Y-%m-%d %H:%M:%S"
             ):
                 a = 2
 
