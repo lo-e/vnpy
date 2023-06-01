@@ -18,6 +18,7 @@ import numpy as np
 from threading import Thread
 from utilities.BarGenerator import BarGenerator
 from App.marting.martingPortfolio import BAR_DOWNLOAD_GENERATE_COMPLETE
+from vnpy.event import Event
 
 class MartingStrategy(CtaTemplate):
     """马丁策略"""
@@ -112,7 +113,7 @@ class MartingStrategy(CtaTemplate):
         )
 
         # 监听事件
-        self.cta_engine.event_engine.register(BAR_DOWNLOAD_GENERATE_COMPLETE, self.start_backtesting)
+        self.cta_engine.event_engine.register(BAR_DOWNLOAD_GENERATE_COMPLETE, self.portfolio_download_generate_complete)
 
     def calculate_phase_positions(self):
         self.phase_position_values = []
@@ -141,6 +142,11 @@ class MartingStrategy(CtaTemplate):
         # 回测数据
         self.start_backtesting()
         return True
+
+    def portfolio_download_generate_complete(self, event: Event):\
+        # 回测数据
+        if self.trading:
+            self.start_backtesting()
 
     def start_backtesting(self):
         if not self.is_backtesting:
