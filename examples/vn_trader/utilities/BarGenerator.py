@@ -326,11 +326,7 @@ class MinuteBarProcessor:
             db_end_dt = end_data["datetime"] if end_data else None
             print(f"{self.symbol}数据库起止时间\t{db_start_dt}\t{db_end_dt}")
             if db_end_dt:
-                db_end_dt = db_end_dt - timedelta(days=1)
-                db_end_dt = datetime(db_end_dt.year, db_end_dt.month, db_end_dt.day)
-                self.start_date = (
-                    max(self.start_date, db_end_dt) if self.start_date else db_end_dt
-                )
+                self.start_date = db_end_dt - timedelta(minutes=self.window*10)
 
         self.bar_generator = BarGenerator(
             window=self.window, on_window_bar=self.on_window_bar, interval=self.interval
@@ -392,6 +388,7 @@ class MultiThreadsMinuteBarProcessor:
         self.end_date = end_date
         self.from_data_base = from_data_base
         self.threads = []
+        self.loading_complete = True
 
     def remove_thread(self, thread):
         if thread in self.threads:
@@ -399,6 +396,7 @@ class MultiThreadsMinuteBarProcessor:
 
     def start(self):
         # 多线程获取数据
+        self.loading_complete = False
         for symbol in self.symbol_list:
             while len(self.threads) >= 10:
                 sleep(2)
@@ -413,6 +411,9 @@ class MultiThreadsMinuteBarProcessor:
             )
             self.threads.append(thread)
             thread.start()
+        
+        # 所有合约装载完成
+        self.loading_complete = True
 
 
 class ProcessorThread(object):
