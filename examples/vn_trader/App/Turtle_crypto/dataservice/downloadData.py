@@ -203,7 +203,8 @@ class DownloadThread(object):
     def run(self):
         # 获取bar数据
         print(f"====== {self.contract}开始下载 ======")
-        from_date = datetime.now() - timedelta(days=self.days)
+        from_time = datetime.now() - timedelta(days=self.days)
+        from_time = datetime(from_time.year, from_time.month, from_time.day)
         if self.from_data_base:
             client = MongoClient("localhost", 27017)
             db = client[MINUTE_DB_NAME]
@@ -216,9 +217,8 @@ class DownloadThread(object):
             
             print(f"{self.contract}数据库起止时间\t{db_start_dt}\t{db_end_dt}")
             if db_end_dt:
-                from_date = max(from_date, db_end_dt)
+                from_time = db_end_dt - timedelta(minutes=10)
 
-        from_time = datetime(from_date.year, from_date.month, from_date.day)
         to_time = datetime(self.to_date.year, self.to_date.month, self.to_date.day)
         while from_time:
             if from_time >= to_time:

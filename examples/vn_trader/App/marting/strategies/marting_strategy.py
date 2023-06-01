@@ -18,7 +18,6 @@ import numpy as np
 from threading import Thread
 from utilities.BarGenerator import BarGenerator
 
-
 class MartingStrategy(CtaTemplate):
     """马丁策略"""
 
@@ -58,7 +57,10 @@ class MartingStrategy(CtaTemplate):
     syncs = ["backtesting_to", "backtesting_status"]
 
     def __init__(self, ctaEngine, martingPortfolio, setting):
+        # 组合管理引擎
         self.portfolio = martingPortfolio
+
+        # 回测相关
         self.backtesting = None
         self.backtesting_from = datetime.strptime(
             "2022-01-01 00:00:00", "%Y-%m-%d %H:%M:%S"
@@ -67,6 +69,7 @@ class MartingStrategy(CtaTemplate):
         self.backtesting_status = {}
         self.is_backtesting = False
 
+        # 策略变量
         self.direction: Direction = Direction.NET  # 交易方向
         self.unit_value = self.portfolio.portfolioValue * 0.5 * 0.01  # 最小持仓价值
         self.symbol_min_volume: float = 0.0
@@ -88,7 +91,8 @@ class MartingStrategy(CtaTemplate):
         self.minute_bar_generator = BarGenerator(
             on_bar=self.window_bar_generator.update_bar
         )  # 1分钟Bar生成工具
-        self.calculate_phase_positions()  # 马丁格尔倍数仓位管理
+        self.window_bar_list = []  # 基于实时Tick数据生成的周期Bar数据列表
+        self.calculate_phase_positions()  # 马丁格尔仓位管理
 
         # 完成setting.json参数的配置
         super(MartingStrategy, self).__init__(
@@ -197,27 +201,34 @@ class MartingStrategy(CtaTemplate):
     def on_tick(self, tick):
         if not self.trading:
             return
+
+        # 给分钟Bar生成器推送数据
         self.minute_bar_generator.update_tick(tick=tick)
 
         # 策略状态更新
         self.put_timer_event()
 
     def on_bar(self, bar):
-        """收到Bar推送（必须由用户继承实现）"""
-        return
+        """基于实时Tick数据生成的周期Bar数据推送"""
+        # 保存到列表
+        self.window_bar_list.append(bar)
+        if len(self.window_bar_list) > 10:
+            self.window_bar_list.pop(0)
+
+        # 打开组合引擎数据下载开关
+        self.portfolio.download_enable = True
 
         # 策略状态更新
         self.put_timer_event()
 
     def on_order(self, order):
-        """收到委托变化推送（必须由用户继承实现）"""
+        """委托推送"""
         pass
 
     def on_trade(self, trade):
         """成交推送"""
         # 邮件提醒
         super(MartingStrategy, self).on_trade(trade)
-
 
 class MartingBacktesting(object):
     def __init__(

@@ -118,7 +118,7 @@ class MartingEngine(BaseEngine):
                 hour=0, minute=0, second=0, microsecond=0
             )
         # 组合管理类
-        self.martingPortfolio = None
+        self.martingPortfolio:MartingPortfolio = None
         # 数据引擎
         self.autoEngine = MartingAutoEngine(
             main_engine=self.main_engine,
@@ -150,6 +150,10 @@ class MartingEngine(BaseEngine):
         self.event_engine.register(EVENT_TIMER, self.process_timer_event)
 
     def process_timer_event(self, event: Event):
+        # 马丁组合推送
+        self.martingPortfolio.on_timer()
+
+        # 马丁策略推送
         for strategy in self.strategies.values():
             if strategy.inited:
                 self.call_strategy_func(strategy, strategy.on_timer)
@@ -746,6 +750,17 @@ class MartingEngine(BaseEngine):
         event2 = Event(EVENT_CTA_STRATEGY + strategy_name, data)
         self.event_engine.put(event2)
 
+    def put_portfolio_event(self):
+        """
+        Put an event to update portfolio status.
+        """
+        # 保存portfolio数据到数据库
+        self.savePortfolioSyncData()
+        
+        # 刷新Portfolio组件UI
+        event = Event(type=EVENT_MARTING_PORTFOLIO, data=self.get_portfolio_variables())
+        self.event_engine.put(event)
+
     def write_log(self, msg: str, strategy: CtaTemplate = None):
         """
         Create cta engine log event.
@@ -819,8 +834,14 @@ class MartingEngine(BaseEngine):
 
         # 马丁策略初始化
         signalList = l.get("signal", None)
+        symbol_set = set()
         for setting in signalList:
+            symbol_set.add(setting["vt_symbol"])
             self.add_strategy(setting)
+
+        # 马丁组合策略合约列表
+        self.martingPortfolio.strategy_symbols = list(symbol_set)
+        
 
     def add_strategy(self, setting):
         """
@@ -930,10 +951,6 @@ class MartingEngine(BaseEngine):
             True,
             callback=self.portfolioDbUpdateCallback,
         )
-
-        # 刷新Portfolio组件UI
-        event = Event(type=EVENT_MARTING_PORTFOLIO, data=self.get_portfolio_variables())
-        self.event_engine.put(event)
 
     def portfolioDbUpdateCallback(self, back_data=None):
         try:
