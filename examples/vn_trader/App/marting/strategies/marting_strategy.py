@@ -215,9 +215,6 @@ class MartingStrategy(CtaTemplate):
         if len(self.window_bar_list) > 10:
             self.window_bar_list.pop(0)
 
-        # 打开组合引擎数据下载开关
-        self.portfolio.download_enable = True
-
         # 策略状态更新
         self.put_timer_event()
 
