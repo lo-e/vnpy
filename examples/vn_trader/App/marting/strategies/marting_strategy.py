@@ -17,6 +17,7 @@ from vnpy.trader.utility import round_to, floor_to, ceil_to
 import numpy as np
 from threading import Thread
 from utilities.BarGenerator import BarGenerator
+from App.marting.martingPortfolio import BAR_DOWNLOAD_GENERATE_COMPLETE
 
 class MartingStrategy(CtaTemplate):
     """马丁策略"""
@@ -110,6 +111,9 @@ class MartingStrategy(CtaTemplate):
             else (Direction.SHORT if self.direction == "空" else Direction.NET)
         )
 
+        # 监听事件
+        self.cta_engine.event_engine.register(BAR_DOWNLOAD_GENERATE_COMPLETE, self.start_backtesting)
+
     def calculate_phase_positions(self):
         self.phase_position_values = []
         total_phase_count = 3
@@ -139,10 +143,11 @@ class MartingStrategy(CtaTemplate):
         return True
 
     def start_backtesting(self):
-        self.write_log(f"开启回测线程")
-        self.is_backtesting = True
-        thread = Thread(target=self.backtesting_marting)
-        thread.start()
+        if not self.is_backtesting:
+            self.write_log(f"开启回测线程")
+            self.is_backtesting = True
+            thread = Thread(target=self.backtesting_marting)
+            thread.start()
 
     def backtesting_marting(self):
         backtestint_start = (

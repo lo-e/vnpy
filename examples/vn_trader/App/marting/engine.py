@@ -118,7 +118,7 @@ class MartingEngine(BaseEngine):
                 hour=0, minute=0, second=0, microsecond=0
             )
         # 组合管理类
-        self.martingPortfolio:MartingPortfolio = None
+        self.martingPortfolio: MartingPortfolio = None
         # 数据引擎
         self.autoEngine = MartingAutoEngine(
             main_engine=self.main_engine,
@@ -756,7 +756,7 @@ class MartingEngine(BaseEngine):
         """
         # 保存portfolio数据到数据库
         self.savePortfolioSyncData()
-        
+
         # 刷新Portfolio组件UI
         event = Event(type=EVENT_MARTING_PORTFOLIO, data=self.get_portfolio_variables())
         self.event_engine.put(event)
@@ -795,7 +795,7 @@ class MartingEngine(BaseEngine):
 
         else:
             dbName = TICK_DB_NAME
-            
+
         d = {"datetime": {"$gte": start_dt}}
         collectionName = vt_symbol.upper()
         barData = self.main_engine.dbQuery(dbName, collectionName, d, "datetime")
@@ -841,7 +841,6 @@ class MartingEngine(BaseEngine):
 
         # 马丁组合策略合约列表
         self.martingPortfolio.strategy_symbols = list(symbol_set)
-        
 
     def add_strategy(self, setting):
         """

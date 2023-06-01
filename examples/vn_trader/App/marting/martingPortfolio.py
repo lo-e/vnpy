@@ -10,9 +10,9 @@ from time import time
 from threading import Thread
 from utilities.BarGenerator import MultiThreadsMinuteBarProcessor
 from vnpy.trader.constant import Interval
+from vnpy.event import Event
 
-MAX_PRODUCT_POS = 4  # 单品种最大持仓
-MAX_DIRECTION_POS = 12  # 单方向最大持仓
+BAR_DOWNLOAD_GENERATE_COMPLETE = "eDataComplete"
 
 
 class MartingPortfolio(object):
@@ -26,7 +26,14 @@ class MartingPortfolio(object):
     today = None
 
     paramList = ["name", "portfolioValue"]
-    varList = ["today", "is_downloading", "downloading_cost", "downloading_wait", "is_generating", "generating_cost"]
+    varList = [
+        "today",
+        "is_downloading",
+        "downloading_cost",
+        "downloading_wait",
+        "is_generating",
+        "generating_cost",
+    ]
     syncList = ["today"]
 
     def __init__(self, engine, setting):
@@ -37,8 +44,8 @@ class MartingPortfolio(object):
         self.download_engine = TurtleCryptoDataDownloading()  # 数据下载引擎
         self.is_downloading = False  # 是否正在下载
         self.downloading_wait = 10000  # 数据下载等待时间（秒）
-        self.downloading_cost = 0 # 下载更新一次花费的时间
-        self.downloading_time = 0 # 下载开始的时间戳
+        self.downloading_cost = 0  # 下载更新一次花费的时间
+        self.downloading_time = 0  # 下载开始的时间戳
 
         # window_bar合成相关
         self.bar_generate_engine = MultiThreadsMinuteBarProcessor(
@@ -50,11 +57,12 @@ class MartingPortfolio(object):
             from_data_base=True,
         )
         self.is_generating = False  # 是否正在合成
-        self.generating_cost = 0 # 合成更新一次花费的时间
-        self.generating_time = 0 # 合成开始的时间戳
+        self.generating_cost = 0  # 合成更新一次花费的时间
+        self.generating_time = 0  # 合成开始的时间戳
 
-        # 策略合约列表
-        self.strategy_symbols = []
+        self.backtesting_count_down = 10  # 通知策略回测倒计时（秒）
+        self.backtesting_preparing = False  # 准备通知策略回测，倒计时的开关
+        self.strategy_symbols = []  # 策略合约列表
 
         # 设置参数
         if setting:
@@ -69,8 +77,22 @@ class MartingPortfolio(object):
         self.engine.savePortfolioSyncData()
 
     def on_timer(self):
+        # 通知策略回测
+        if self.backtesting_preparing:
+            self.backtesting_count_down -= 1
+            if self.backtesting_count_down <= 0:
+                self.backtesting_count_down = 10
+                self.backtesting_preparing = False
+                event = Event(BAR_DOWNLOAD_GENERATE_COMPLETE)
+                self.engine.event_engine.put(event)
+
         # 合成结束
         if self.bar_generate_engine.loading_complete:
+            if self.is_generating:
+                # 准备通知策略回测
+                self.backtesting_count_down = 10
+                self.backtesting_preparing = True
+
             self.is_generating = False
             self.generating_time = 0
 
@@ -91,7 +113,7 @@ class MartingPortfolio(object):
             self.is_downloading = False
             self.downloading_wait += 1
             self.downloading_time = 0
-        
+
         # 下载花费时间计算
         if self.is_downloading:
             self.downloading_cost = int(time() - self.downloading_time)
