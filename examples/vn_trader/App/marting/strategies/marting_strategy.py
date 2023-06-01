@@ -68,6 +68,8 @@ class MartingStrategy(CtaTemplate):
         self.backtesting_to = None
         self.backtesting_status = {}
         self.is_backtesting = False
+        self.strategy_to = None
+        self.strategy_status = {}
 
         # 策略变量
         self.direction: Direction = Direction.NET  # 交易方向
@@ -175,18 +177,47 @@ class MartingStrategy(CtaTemplate):
             window=5,
             callback=None,
         )
+        if len(backtesting_data) < 100:
+            raise ("回测数据缺失！")
 
         # 剔除最后一个Bar数据，保证数据的准确性
         backtesting_data = backtesting_data[0:-1]
+
+        # 开始历史数据回测
         for bar in backtesting_data:
             self.backtesting.on_bar(bar)
 
-        # 回测完成保存回测状态
-        status = {}
-        for name in self.backtesting.syncs:
-            status[name] = self.backtesting.__getattribute__(name)
-        self.backtesting_status = status
-        self.backtesting_to = backtesting_data[-1].datetime
+        # 历史数据回测完成保存回测状态
+        if self.backtesting.start:
+            status = {}
+            for name in self.backtesting.syncs:
+                status[name] = self.backtesting.__getattribute__(name)
+            self.backtesting_status = status
+            self.backtesting_to = backtesting_data[-1].datetime
+            self.strategy_status = status
+            self.strategy_to = backtesting_data[-1].datetime
+
+        # 实时数据
+        strategy_data = []
+        last_bar = backtesting_data[-1]
+        next_bar_dt = last_bar.datetime + timedelta(minutes=self.interval_window)
+        for i in range(len(self.window_bar_list)):
+            bar = self.window_bar_list[i]
+            if bar.datetime == next_bar_dt:
+                strategy_data = self.window_bar_list[i:]
+                break
+        
+        # 开始实时数据回测
+        for bar in strategy_data:
+            self.backtesting.on_bar(bar)
+
+        # 实时数据回测完成保存策略状态
+        if self.backtesting.start:
+            status = {}
+            for name in self.backtesting.syncs:
+                status[name] = self.backtesting.__getattribute__(name)
+            self.strategy_status = status
+            self.strategy_to = strategy_data[-1].datetime
 
         # 结束回测
         self.is_backtesting = False
@@ -205,6 +236,8 @@ class MartingStrategy(CtaTemplate):
         # 给分钟Bar生成器推送数据
         self.minute_bar_generator.update_tick(tick=tick)
 
+        # 当前策略状态更新至最新时满足交易条件
+
         # 策略状态更新
         self.put_timer_event()
 
@@ -214,6 +247,9 @@ class MartingStrategy(CtaTemplate):
         self.window_bar_list.append(bar)
         if len(self.window_bar_list) > 10:
             self.window_bar_list.pop(0)
+
+        # 回测数据
+        self.start_backtesting()
 
         # 策略状态更新
         self.put_timer_event()
