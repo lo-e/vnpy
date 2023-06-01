@@ -926,7 +926,7 @@ class MartingEngine(BaseEngine):
                     content = f"马丁策略{strategy_name}同步数据保存成功"
                 else:
                     content = f"马丁策略{strategy_name}同步数据保存失败！！"
-                self.write_log(content)
+                    self.write_log(content)
             else:
                 content = f"马丁策略同步数据保存失败！！"
                 self.write_log(content)
@@ -960,7 +960,7 @@ class MartingEngine(BaseEngine):
                     content = f"马丁组合{self.martingPortfolio.name}同步数据保存成功"
                 else:
                     content = f"马丁组合{self.martingPortfolio.name}同步数据保存失败"
-                self.write_log(content)
+                    self.write_log(content)
             else:
                 content = f"马丁组合{self.martingPortfolio.name}同步数据保存失败"
                 self.write_log(content)
