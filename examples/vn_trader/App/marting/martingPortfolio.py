@@ -69,9 +69,6 @@ class MartingPortfolio(object):
         self.engine.savePortfolioSyncData()
 
     def on_timer(self):
-        # fake
-        # self.strategy_symbols = ['SHIB1000USDT.BYBIT', 'AAVEUSDT.BYBIT', 'ADAUSDT.BYBIT', 'APEUSDT.BYBIT', 'ATOMUSDT.BYBIT', 'AVAXUSDT.BYBIT', 'BCHUSDT.BYBIT', 'BNBUSDT.BYBIT', 'BTCUSDT.BYBIT', 'CHZUSDT.BYBIT', 'CRVUSDT.BYBIT', 'DOGEUSDT.BYBIT', 'DOTUSDT.BYBIT', 'EOSUSDT.BYBIT', 'ETCUSDT.BYBIT', 'FILUSDT.BYBIT', 'LINKUSDT.BYBIT', 'LTCUSDT.BYBIT', 'MATICUSDT.BYBIT', 'NEARUSDT.BYBIT', 'SANDUSDT.BYBIT', 'SOLUSDT.BYBIT', 'SUSHIUSDT.BYBIT', 'UNIUSDT.BYBIT', 'XRPUSDT.BYBIT']
-        
         # 合成结束
         if self.bar_generate_engine.loading_complete:
             self.is_generating = False

@@ -67,10 +67,10 @@ class MartingStrategy(CtaTemplate):
         self.backtesting_from = datetime.strptime(
             "2022-01-01 00:00:00", "%Y-%m-%d %H:%M:%S"
         )
-        self.backtesting_to = None
+        self.backtesting_to:datetime = None
         self.backtesting_status = {}
         self.is_backtesting = False
-        self.strategy_to = None
+        self.strategy_to:datetime = None
         self.strategy_status = {}
 
         # 策略变量
@@ -242,6 +242,8 @@ class MartingStrategy(CtaTemplate):
         self.minute_bar_generator.update_tick(tick=tick)
 
         # 当前策略状态更新至最新时满足交易条件
+        if self.strategy_to and self.strategy_to + timedelta(minutes=self.interval_window) <= tick.datetime <= self.strategy_to + timedelta(minutes=self.interval_window*3):
+            pass
 
         # 策略状态更新
         self.put_timer_event()
