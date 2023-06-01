@@ -205,7 +205,7 @@ class MartingStrategy(CtaTemplate):
         next_bar_dt = last_bar.datetime + timedelta(minutes=self.interval_window)
         for i in range(len(self.window_bar_list)):
             bar = self.window_bar_list[i]
-            if bar.datetime.replace(tzinfo=None) == next_bar_dt:
+            if bar.datetime == next_bar_dt:
                 strategy_data = self.window_bar_list[i:]
                 break
         
@@ -234,6 +234,9 @@ class MartingStrategy(CtaTemplate):
     def on_tick(self, tick):
         if not self.trading:
             return
+        
+        # 去除时区，避免不必要的麻烦
+        tick.datetime = tick.datetime.replace(tzinfo=None)
 
         # 给分钟Bar生成器推送数据
         self.minute_bar_generator.update_tick(tick=tick)
