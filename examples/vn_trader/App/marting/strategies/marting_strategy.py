@@ -44,6 +44,8 @@ class MartingStrategy(CtaTemplate):
         "is_backtesting",
         "symbol_price_tick",
         "symbol_min_volume",
+        "backtesting_to",
+        "strategy_to",
         "position_price",
         "ma_price",
         "position_reduce_price",
@@ -203,7 +205,7 @@ class MartingStrategy(CtaTemplate):
         next_bar_dt = last_bar.datetime + timedelta(minutes=self.interval_window)
         for i in range(len(self.window_bar_list)):
             bar = self.window_bar_list[i]
-            if bar.datetime == next_bar_dt:
+            if bar.datetime.replace(tzinfo=None) == next_bar_dt:
                 strategy_data = self.window_bar_list[i:]
                 break
         
@@ -212,7 +214,7 @@ class MartingStrategy(CtaTemplate):
             self.backtesting.on_bar(bar)
 
         # 实时数据回测完成保存策略状态
-        if self.backtesting.start:
+        if strategy_data and self.backtesting.start:
             status = {}
             for name in self.backtesting.syncs:
                 status[name] = self.backtesting.__getattribute__(name)
