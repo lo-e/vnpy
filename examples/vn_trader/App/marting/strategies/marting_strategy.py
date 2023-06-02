@@ -57,6 +57,12 @@ class MartingStrategy(CtaTemplate):
         "position_price",
         "position_close_price",
         "trending_step",
+        "strategy_position_price",
+        "strategy_position_reduce_price",
+        "strategy_position_increase_price",
+        "strategy_max_loss_value",
+        "strategy_max_loss_rate",
+        "strategy_trending_step"
     ]
 
     # 同步列表，保存了需要保存到数据库的变量名称
@@ -77,6 +83,14 @@ class MartingStrategy(CtaTemplate):
         self.strategy_to: datetime = None
         self.strategy_status = {}
 
+        # 回测结果相关
+        self.strategy_position_price = 0 # 持仓均价
+        self.strategy_position_reduce_price = 0 # 平仓价格
+        self.strategy_position_increase_price = 0 # 加仓价格
+        self.strategy_max_loss_value = 0 # 最大亏损价值
+        self.strategy_max_loss_rate = 0 # 最大亏损比率
+        self.strategy_trending_step = 0 # 趋势追踪等级
+
         # 策略参数
         self.init_value_rate = 0 # 初始持仓价值占组合价值比率
         self.bottom_step = 0 # 趋势追踪最低等级
@@ -90,7 +104,7 @@ class MartingStrategy(CtaTemplate):
         self.bar: BarData = None  # 最新K线
         self.position_price = 0  # 持仓均价
         self.position_close_price = 0 # 平仓价格
-        self.trending_step = 0  # 追踪趋势的等级
+        self.trending_step = 0  # 趋势追踪等级
         self.tick_trade_enable = False  # Tick数据时间在回测后的指定范围内允许交易
         self.close_ready = False # 平仓准备
         self.open_target_volume = 0 # 建仓加仓后持仓数量
@@ -210,14 +224,13 @@ class MartingStrategy(CtaTemplate):
             self.backtesting.on_bar(bar)
 
         # 历史数据回测完成保存回测状态
-        if self.backtesting.start:
-            status = {}
-            for name in self.backtesting.syncs:
-                status[name] = self.backtesting.__getattribute__(name)
-            self.backtesting_status = status
-            self.backtesting_to = backtesting_data[-1].datetime
-            self.strategy_status = status
-            self.strategy_to = backtesting_data[-1].datetime
+        status = {}
+        for name in self.backtesting.syncs:
+            status[name] = self.backtesting.__getattribute__(name)
+        self.backtesting_status = status
+        self.backtesting_to = backtesting_data[-1].datetime
+        self.strategy_status = status
+        self.strategy_to = backtesting_data[-1].datetime
 
         # 实时数据
         strategy_data = []
@@ -234,12 +247,20 @@ class MartingStrategy(CtaTemplate):
             self.backtesting.on_bar(bar)
 
         # 实时数据回测完成保存策略状态
-        if strategy_data and self.backtesting.start:
+        if strategy_data:
             status = {}
             for name in self.backtesting.syncs:
                 status[name] = self.backtesting.__getattribute__(name)
             self.strategy_status = status
             self.strategy_to = strategy_data[-1].datetime
+
+        # 回测结果
+        self.strategy_position_price = self.strategy_status["position_price"]
+        self.strategy_position_reduce_price = self.strategy_status["position_reduce_price"]
+        self.strategy_position_increase_price = self.strategy_status["position_increase_price"]
+        self.strategy_max_loss_value = self.strategy_status["max_loss_value"]
+        self.strategy_max_loss_rate = self.strategy_status["max_loss_rate"]
+        self.strategy_trending_step = self.strategy_status["trending_step"]
 
         # 结束回测
         self.is_backtesting = False
