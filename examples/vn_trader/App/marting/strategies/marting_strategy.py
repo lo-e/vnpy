@@ -20,6 +20,7 @@ from utilities.BarGenerator import BarGenerator
 from App.marting.martingPortfolio import BAR_DOWNLOAD_GENERATE_COMPLETE
 from vnpy.event import Event
 
+
 class MartingStrategy(CtaTemplate):
     """马丁策略"""
 
@@ -39,6 +40,9 @@ class MartingStrategy(CtaTemplate):
         "ma_window",
         "rsi_window",
         "unit_value",
+        "init_value_rate",
+        "bottom_step",
+        "top_step"
     ]
 
     # 变量列表，保存了变量的名称
@@ -48,6 +52,8 @@ class MartingStrategy(CtaTemplate):
         "symbol_min_volume",
         "backtesting_to",
         "strategy_to",
+        "tick_trade_enable",
+        "order_check_wait",
         "position_price",
         "ma_price",
         "position_reduce_price",
@@ -69,11 +75,16 @@ class MartingStrategy(CtaTemplate):
         self.backtesting_from = datetime.strptime(
             "2022-01-01 00:00:00", "%Y-%m-%d %H:%M:%S"
         )
-        self.backtesting_to:datetime = None
+        self.backtesting_to: datetime = None
         self.backtesting_status = {}
         self.is_backtesting = False
-        self.strategy_to:datetime = None
+        self.strategy_to: datetime = None
         self.strategy_status = {}
+
+        # 策略参数
+        self.init_value_rate = 0 # 初始持仓价值占组合价值比率
+        self.bottom_step = 0 # 趋势追踪最低等级
+        self.top_step = 0 # 趋势追踪最高等级
 
         # 策略变量
         self.direction: Direction = Direction.NET  # 交易方向
@@ -83,12 +94,17 @@ class MartingStrategy(CtaTemplate):
         self.bar: BarData = None  # 最新K线
         self.position_price = 0  # 持仓均价
         self.ma_price = 0  # 均线价格
-        self.position_reduce_price = 0  # 减仓价格
-        self.position_increase_price = 0  # 加仓价格
         self.max_loss_value = 0  # 当前持仓最大亏损价值
         self.max_loss_rate = ""  # 当前持仓最大亏损比率
-        self.rsi_array = []  # 指定周期内的RSI列表
         self.trending_step = 0  # 追踪趋势的等级
+        self.tick_trade_enable = False  # Tick数据时间在回测后的指定范围内允许交易
+        self.close_price = 0 # 平仓价格
+        self.close_ready = False # 平仓准备
+        self.open_target_volume = 0 # 建仓加仓后持仓数量
+        self.order_check_wait = 0 # 检查Order状态的等待时间
+        self.rsi_array = []  # 指定周期内的RSI列表
+        self.window_bar_list = []  # 基于实时Tick数据生成的周期Bar数据列表
+
         self.window_bar_generator = BarGenerator(
             window=self.interval_window,
             on_window_bar=self.on_bar,
@@ -97,7 +113,6 @@ class MartingStrategy(CtaTemplate):
         self.minute_bar_generator = BarGenerator(
             on_bar=self.window_bar_generator.update_bar
         )  # 1分钟Bar生成工具
-        self.window_bar_list = []  # 基于实时Tick数据生成的周期Bar数据列表
         self.calculate_phase_positions()  # 马丁格尔仓位管理
 
         # 完成setting.json参数的配置
@@ -113,7 +128,9 @@ class MartingStrategy(CtaTemplate):
         )
 
         # 监听事件
-        self.cta_engine.event_engine.register(BAR_DOWNLOAD_GENERATE_COMPLETE, self.portfolio_download_generate_complete)
+        self.cta_engine.event_engine.register(
+            BAR_DOWNLOAD_GENERATE_COMPLETE, self.portfolio_download_generate_complete
+        )
 
     def calculate_phase_positions(self):
         self.phase_position_values = []
@@ -143,8 +160,7 @@ class MartingStrategy(CtaTemplate):
         self.start_backtesting()
         return True
 
-    def portfolio_download_generate_complete(self, event: Event):\
-        # 回测数据
+    def portfolio_download_generate_complete(self, event: Event):  # 回测数据
         if self.trading:
             self.start_backtesting()
 
@@ -219,7 +235,7 @@ class MartingStrategy(CtaTemplate):
             if bar.datetime == next_bar_dt:
                 strategy_data = self.window_bar_list[i:]
                 break
-        
+
         # 开始实时数据回测
         for bar in strategy_data:
             self.backtesting.on_bar(bar)
@@ -236,16 +252,20 @@ class MartingStrategy(CtaTemplate):
         self.is_backtesting = False
         self.write_log(f"回测结束：{self.backtesting_to}")
 
+    def on_timer(self):
+        self.order_check_wait += 1
+        if self.order_check_wait >= 10:
+            self.order_check_wait = 0
+            self.check_order()
+
         # 策略状态更新
         self.put_timer_event()
-
-    def on_stop(self):
-        self.write_log(f"{self.strategy_name}\t策略停止")
+        super().on_timer()
 
     def on_tick(self, tick):
         if not self.trading:
             return
-        
+
         # 去除时区，避免不必要的麻烦
         tick.datetime = tick.datetime.replace(tzinfo=None)
 
@@ -253,11 +273,127 @@ class MartingStrategy(CtaTemplate):
         self.minute_bar_generator.update_tick(tick=tick)
 
         # 当前策略状态更新至最新时满足交易条件
-        if self.strategy_to and self.strategy_to + timedelta(minutes=self.interval_window) <= tick.datetime <= self.strategy_to + timedelta(minutes=self.interval_window*3):
-            pass
+        if self.strategy_to and self.strategy_to + timedelta(
+            minutes=self.interval_window
+        ) <= tick.datetime <= self.strategy_to + timedelta(
+            minutes=self.interval_window * 3
+        ):
+            # Tick允许交易
+            self.tick_trade_enable = True
+            
+            # 策略成交价格
+            strategy_ma_price = self.strategy_status["ma_price"]
+            trade_price = round_to(strategy_ma_price, self.symbol_price_tick)
+            if not strategy_ma_price:
+                raise (f"均线价格异常")
 
-        # 策略状态更新
-        self.put_timer_event()
+            if self.pos and not self.close_ready:
+                # ====== 检查平仓 ======
+                if not self.close_price:
+                    raise (f"平仓价格异常")
+                
+                # 是否达到目标价位
+                if self.direction == Direction.LONG:
+                    if (
+                        strategy_ma_price >= self.close_price
+                        and tick.last_price < trade_price
+                    ):
+                        self.close_ready = True
+
+                if self.direction == Direction.SHORT:
+                    if (
+                        strategy_ma_price <= self.close_price
+                        and tick.last_price > trade_price
+                    ):
+                        self.close_ready = True
+
+            if not self.open_target_volume and not self.close_ready:
+                # ====== 检查建仓加仓 ======
+                # 下一趋势追踪等级需要满足指定范围
+                strategy_next_trending_step = self.strategy_status["next_trending_step"]
+                strategy_rsi_array = self.strategy_status["rsi_array"]
+                strategy_position_increase_price = self.strategy_status["position_increase_price"]
+                if not strategy_position_increase_price:
+                    raise (f"建仓加仓价格异常")
+                
+                if self.bottom_step <= strategy_next_trending_step <= self.top_step:
+                    # 是否达到目标价位
+                    open_enable = False
+                    if self.direction == Direction.LONG:
+                        # 根据RSI判断是否超卖
+                        rsi_cross = False
+                        for rsi in strategy_rsi_array:
+                            if rsi <= 25:
+                                rsi_cross = True
+                                break
+
+                        if (
+                            rsi_cross
+                            and strategy_ma_price <= strategy_position_increase_price
+                            and tick.last_price > trade_price
+                        ):
+                            open_enable = True
+
+                    elif self.direction == Direction.SHORT:
+                        # 根据RSI判断是否超买
+                        rsi_cross = False
+                        for rsi in strategy_rsi_array:
+                            if rsi >= 75:
+                                rsi_cross = True
+                                break
+
+                        if (
+                            rsi_cross
+                            and strategy_ma_price >= strategy_position_increase_price
+                            and tick.last_price < trade_price
+                        ):
+                            open_enable = True
+                    
+                    else:
+                        raise ("检查代码！")
+                    
+                    if open_enable:
+                        # 当前持仓价值
+                        current_position_value = abs(self.pos) * self.position_price
+
+                        # 加仓的数量
+                        changed_volume = 0
+
+                        if strategy_next_trending_step == self.bottom_step:
+                            # 初始建仓
+                            target_value = self.portfolio.portfolioValue * self.init_value_rate
+                            changed_volume = (target_value - current_position_value) / trade_price
+
+                        else:
+                            # 加仓
+                            if self.pos:
+                                # 更新持仓价格
+                                price_rate = 0.01
+                                if self.direction == Direction.LONG:
+                                    target_positon_price = trade_price * (1 + price_rate)
+
+                                elif self.direction == Direction.SHORT:
+                                    target_positon_price = trade_price * (1 - price_rate)
+
+                                else:
+                                    raise ("检查代码！")
+                                
+                                # 仓位
+                                changed_volume = (
+                                    abs(self.pos) * target_positon_price
+                                    - current_position_value
+                                ) / (trade_price - target_positon_price)
+
+                            else:
+                                target_value = (self.portfolio.portfolioValue * self.init_value_rate) * (strategy_next_trending_step - self.bottom_step) * 10
+                                changed_volume = target_value / trade_price
+
+                        # 加仓后的目标持仓数量
+                        self.open_target_volume = changed_volume + abs(self.pos) if changed_volume > 0 else 0
+
+        else:
+            # Tick不允许交易
+            self.tick_trade_enable = False
 
     def on_bar(self, bar):
         """基于实时Tick数据生成的周期Bar数据推送"""
@@ -269,8 +405,15 @@ class MartingStrategy(CtaTemplate):
         # 回测数据
         self.start_backtesting()
 
-        # 策略状态更新
-        self.put_timer_event()
+    def check_order(self):
+        """ 根据加减仓相关变量发出订单 """
+        if self.close_ready:
+            # 平仓
+            pass
+
+        elif self.open_target_volume:
+            # 建仓加仓
+            pass
 
     def on_order(self, order):
         """委托推送"""
@@ -280,6 +423,9 @@ class MartingStrategy(CtaTemplate):
         """成交推送"""
         # 邮件提醒
         super(MartingStrategy, self).on_trade(trade)
+
+    def on_stop(self):
+        self.write_log(f"{self.strategy_name}\t策略停止")
 
 class MartingBacktesting(object):
     def __init__(
@@ -320,7 +466,8 @@ class MartingBacktesting(object):
         self.max_loss_rate = ""  # 当前持仓最大亏损比率
         self.ma_price = 0  # 均线价格
         self.rsi_array = []
-        self.trending_step = 0  # 追踪趋势的等级
+        self.trending_step = 0  # 趋势追踪等级
+        self.next_trending_step = 0 # 下一个趋势追踪等级
         self.calculate_phase_positions()  # 马丁格尔倍数仓位管理
 
         # 同步保存到数据库的变量
@@ -334,6 +481,7 @@ class MartingBacktesting(object):
             "ma_price",
             "rsi_array",
             "trending_step",
+            "next_trending_step",
         ]
 
         # 初始化状态
@@ -639,6 +787,14 @@ class MartingBacktesting(object):
 
         # 当前仓位阶段
         current_phase = self.get_current_phase()
+
+        # 下一趋势等级
+        next_phase = current_phase + 1
+        if next_phase >= len(self.phase_position_values):
+            self.next_trending_step = self.trending_step + 1
+
+        else:
+            self.next_trending_step = 0
 
         # 均线价格
         self.ma_price = self.am.sma(self.ma_window)
