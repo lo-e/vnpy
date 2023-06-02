@@ -62,6 +62,7 @@ class MartingStrategy(CtaTemplate):
         "strategy_position_increase_price",
         "strategy_max_loss_value",
         "strategy_max_loss_rate",
+        "strategy_current_pnl_rate",
         "strategy_trending_step"
     ]
 
@@ -88,7 +89,8 @@ class MartingStrategy(CtaTemplate):
         self.strategy_position_reduce_price = 0 # 平仓价格
         self.strategy_position_increase_price = 0 # 加仓价格
         self.strategy_max_loss_value = 0 # 最大亏损价值
-        self.strategy_max_loss_rate = 0 # 最大亏损比率
+        self.strategy_max_loss_rate = "" # 最大亏损比率
+        self.strategy_current_pnl_rate = "" # 当前亏损比率【基于Tick数据实时计算】
         self.strategy_trending_step = 0 # 趋势追踪等级
 
         # 策略参数
@@ -285,6 +287,18 @@ class MartingStrategy(CtaTemplate):
 
         # 给分钟Bar生成器推送数据
         self.minute_bar_generator.update_tick(tick=tick)
+
+        # 计算当前回测盈亏比率
+        if self.strategy_position_price:
+            if self.direction == Direction.LONG:
+                direction_value = 1
+            else:
+                direction_value = -1
+            self.strategy_current_pnl_rate = (
+                (tick.last_price / self.strategy_position_price) - 1
+            ) * 100 * direction_value
+            self.strategy_current_pnl_rate = round_to(self.strategy_current_pnl_rate, 0.01)
+            self.strategy_current_pnl_rate = f"{self.strategy_current_pnl_rate}%"
 
         # 当前策略状态更新至最新时满足交易条件
         if self.strategy_to and self.strategy_to + timedelta(
