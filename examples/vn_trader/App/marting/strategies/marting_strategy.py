@@ -171,6 +171,7 @@ class MartingStrategy(CtaTemplate):
         )
 
         self.backtesting = MartingBacktesting(
+            strategy=self,
             vt_symbol=self.vt_symbol,
             direction=self.direction,
             ma_window=self.ma_window,
@@ -183,23 +184,23 @@ class MartingStrategy(CtaTemplate):
 
         # 载入历史数据获取回测参数
         if self.backtesting_to:
-            start_dt = self.backtesting_to - timedelta(days=1)
+            data_from = self.backtesting_to - timedelta(days=1)
 
         elif self.backtesting_from:
-            start_dt = self.backtesting_from
+            data_from = self.backtesting_from
 
         else:
-            raise ("检查代码！")
+            self.raise_error("检查代码！")
 
         backtesting_data = self.cta_engine.load_bar(
             vt_symbol=self.vt_symbol,
-            start_dt=start_dt,
+            data_from=data_from,
             interval=Interval.MINUTE,
             window=5,
             callback=None,
         )
         if len(backtesting_data) < 100:
-            raise ("回测数据缺失！")
+            self.raise_error("回测数据缺失！")
 
         # 剔除最后一个Bar数据，保证数据的准确性
         backtesting_data = backtesting_data[0:-1]
@@ -277,12 +278,12 @@ class MartingStrategy(CtaTemplate):
             strategy_ma_price = self.strategy_status["ma_price"]
             trade_price = round_to(strategy_ma_price, self.symbol_price_tick)
             if not strategy_ma_price:
-                raise (f"均线价格异常")
+                self.raise_error(f"均线价格异常")
 
             if self.pos and not self.close_ready:
                 # ====== 检查平仓 ======
                 if not self.position_close_price:
-                    raise (f"平仓价格异常")
+                    self.raise_error(f"平仓价格异常")
                 
                 # 是否达到目标价位
                 if self.direction == Direction.LONG:
@@ -309,7 +310,7 @@ class MartingStrategy(CtaTemplate):
                 strategy_rsi_array = self.strategy_status["rsi_array"]
                 strategy_position_increase_price = self.strategy_status["position_increase_price"]
                 if not strategy_position_increase_price:
-                    raise (f"建仓加仓价格异常")
+                    self.raise_error(f"建仓加仓价格异常")
                 
                 if self.bottom_step <= strategy_next_trending_step <= self.top_step and strategy_next_trending_step > self.trending_step:
                     # 是否达到目标价位
@@ -345,7 +346,7 @@ class MartingStrategy(CtaTemplate):
                             open_enable = True
                     
                     else:
-                        raise ("检查代码！")
+                        self.raise_error("检查代码！")
                     
                     if open_enable:
                         # 当前持仓价值
@@ -371,7 +372,7 @@ class MartingStrategy(CtaTemplate):
                                     target_positon_price = trade_price * (1 - price_rate)
 
                                 else:
-                                    raise ("检查代码！")
+                                    self.raise_error("检查代码！")
                                 
                                 changed_volume = (
                                     abs(self.pos) * target_positon_price
@@ -424,9 +425,15 @@ class MartingStrategy(CtaTemplate):
     def on_stop(self):
         self.write_log(f"{self.strategy_name}\t策略停止")
 
+    def raise_error(self, content):
+        # 推送钉钉消息
+        self.cta_engine.main_engine.send_ding_talk(content)
+        raise(content)
+
 class MartingBacktesting(object):
     def __init__(
         self,
+        strategy:MartingStrategy,
         vt_symbol: str,
         direction: Direction,
         ma_window: int,
@@ -438,6 +445,7 @@ class MartingBacktesting(object):
     ):
         # 常量
         self.unit_value = 1000000 * 0.5 * 0.01  # 最小持仓价值
+        self.strategy = strategy # 实盘策略
         self.vt_symbol = vt_symbol  # 合约代码
         self.direction = direction  # 交易方向
         self.ma_window = ma_window  # 均线参数
@@ -447,7 +455,7 @@ class MartingBacktesting(object):
         self.init_status = init_status  # 回测初始状态
         self.start_dt = start_dt  # 回测开始时间
         if not self.symbol_min_volume or not self.symbol_price_tick:
-            raise ("检查代码！")
+            self.strategy.raise_error("检查代码！")
 
         # 变量
         self.start = (
@@ -487,7 +495,7 @@ class MartingBacktesting(object):
 
     def on_bar(self, bar):
         if not bar.check_valid():
-            raise ("Bar数据校验不通过！！")
+            self.strategy.raise_error("Bar数据校验不通过！！")
         self.bar = bar
         self.am.update_bar(bar)
         if not self.am.inited:
@@ -496,7 +504,7 @@ class MartingBacktesting(object):
         # 检查是否可以开始回测
         if not self.start:
             if not self.start_dt:
-                raise ("回测有初始状态，但没有开始时间！")
+                self.strategy.raise_error("回测有初始状态，但没有开始时间！")
 
             if bar.datetime < self.start_dt:
                 # 未达到开始时间
@@ -508,7 +516,7 @@ class MartingBacktesting(object):
 
             else:
                 # 开始回测时间的Bar数据缺失
-                raise ("开始回测时间的Bar数据缺失！")
+                self.strategy.raise_error("开始回测时间的Bar数据缺失！")
 
         self.calculate_max_loss()
         self.generate_signal(bar)
@@ -555,7 +563,7 @@ class MartingBacktesting(object):
                 self.max_loss_rate = f"{self.max_loss_rate}%"
 
         else:
-            raise ("检查代码！")
+            self.strategy.raise_error("检查代码！")
 
     def generate_signal(self, bar):
         """
@@ -592,7 +600,7 @@ class MartingBacktesting(object):
                 self.position = init_volume * -1
 
             else:
-                raise ("检查代码！")
+                self.strategy.raise_error("检查代码！")
 
             # 初始化后停止后续判断
             return
@@ -648,7 +656,7 @@ class MartingBacktesting(object):
                         self.position = target_position * -1
 
                     else:
-                        raise ("检查代码！")
+                        self.strategy.raise_error("检查代码！")
 
                 # 初始化仓位最大亏损
                 self.max_loss_value = 0
@@ -720,7 +728,7 @@ class MartingBacktesting(object):
                         target_positon_price = trade_price * (1 - price_rate)
 
                     else:
-                        raise ("检查代码！")
+                        self.strategy.raise_error("检查代码！")
 
                     # 计算加仓的合约数量
                     # current_position_value + changed_volume * trade_price = (abs(self.position) + changed_volume) * self.position_price
@@ -770,7 +778,7 @@ class MartingBacktesting(object):
                         self.position = target_position * -1
 
                     else:
-                        raise ("检查代码！")
+                        self.strategy.raise_error("检查代码！")
 
                     # 加仓需要变更最大亏损比率，基于加仓后的持仓价值
                     self.max_loss_rate = (

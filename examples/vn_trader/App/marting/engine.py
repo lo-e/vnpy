@@ -786,7 +786,7 @@ class MartingEngine(BaseEngine):
 
         self.main_engine.send_email(subject, msg)
 
-    def load_bar(self, vt_symbol, start_dt, interval, window, callback):
+    def load_bar(self, vt_symbol, data_from, interval, window, callback):
         if interval == Interval.DAILY:
             dbName = DAILY_DB_NAME
 
@@ -796,7 +796,7 @@ class MartingEngine(BaseEngine):
         else:
             dbName = TICK_DB_NAME
 
-        d = {"datetime": {"$gte": start_dt}}
+        d = {"datetime": {"$gte": data_from}}
         collectionName = vt_symbol.upper()
         barData = self.main_engine.dbQuery(dbName, collectionName, d, "datetime")
 
