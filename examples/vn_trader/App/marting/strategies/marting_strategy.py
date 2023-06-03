@@ -276,7 +276,7 @@ class MartingStrategy(CtaTemplate):
 
     def on_timer(self):
         self.order_check_wait += 1
-        if self.order_check_wait >= 10:
+        if self.order_check_wait >= 6:
             self.order_check_wait = 0
             self.check_order()
 
