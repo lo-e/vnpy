@@ -461,6 +461,10 @@ class MartingStrategy(CtaTemplate):
 
     def on_trade(self, trade):
         """成交推送"""
+        # 检查目标持仓是否执行完成
+        if abs(self.pos) == self.target_volume:
+            self.target_volume = -1
+
         # 邮件提醒
         super(MartingStrategy, self).on_trade(trade)
 
