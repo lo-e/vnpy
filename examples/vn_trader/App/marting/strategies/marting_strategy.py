@@ -575,7 +575,7 @@ class MartingStrategy(CtaTemplate):
                 self.position_close_price = self.position_price * (1 - 0.01)
                 
         else:
-            # 重置
+            # 重置持仓价值、持仓均价、平仓价格
             self.position_value = 0
             self.position_price = 0
             self.position_close_price = 0
