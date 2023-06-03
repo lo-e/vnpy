@@ -55,6 +55,7 @@ class MartingStrategy(CtaTemplate):
         "strategy_to",
         "tick_trade_enable",
         "order_check_wait",
+        "position_value",
         "position_price",
         "position_close_price",
         "trending_step",
@@ -69,7 +70,13 @@ class MartingStrategy(CtaTemplate):
     ]
 
     # 同步列表，保存了需要保存到数据库的变量名称
-    syncs = ["backtesting_to", "backtesting_status"]
+    syncs = [
+        "backtesting_to",
+        "backtesting_status",
+        "position_value",
+        "position_price",
+        "position_close_price",
+    ]
 
     def __init__(self, ctaEngine, martingPortfolio, setting):
         # 组合管理引擎
@@ -107,6 +114,7 @@ class MartingStrategy(CtaTemplate):
         self.symbol_min_volume: float = 0.0
         self.symbol_price_tick: float = 0.0
         self.bar: BarData = None  # 最新K线
+        self.position_value = 0  # 持仓价值
         self.position_price = 0  # 持仓均价
         self.position_close_price = 0  # 平仓价格
         self.trending_step = 0  # 趋势追踪等级
@@ -123,7 +131,6 @@ class MartingStrategy(CtaTemplate):
         self.minute_bar_generator = BarGenerator(
             on_bar=self.window_bar_generator.update_bar
         )  # 1分钟Bar生成工具
-        self.calculate_phase_positions()  # 马丁格尔仓位管理
 
         # 完成setting.json参数的配置
         super(MartingStrategy, self).__init__(
@@ -141,13 +148,6 @@ class MartingStrategy(CtaTemplate):
         self.cta_engine.event_engine.register(
             BAR_DOWNLOAD_GENERATE_COMPLETE, self.portfolio_download_generate_complete
         )
-
-    def calculate_phase_positions(self):
-        self.phase_position_values = []
-        total_phase_count = 3
-        for i in range(total_phase_count):
-            phase_position = self.unit_value * (2 ** (i + 1) - 1)
-            self.phase_position_values.append(phase_position)
 
     def on_init(self):
         self.write_log(f"{self.strategy_name}\t策略初始化")
@@ -489,37 +489,50 @@ class MartingStrategy(CtaTemplate):
         self.start_backtesting()
 
     def check_order(self):
+        """根据目标仓位发出订单"""
         if not self.trading or not self.tick:
             return
-        
+
         # 先取消现有的活动订单
         vt_orderids = self.cta_engine.strategy_orderid_map[self.strategy_name]
         if vt_orderids:
             self.cancel_all()
             return
-        
-        """根据目标仓位发出订单"""
+
+        # 发出订单
         if self.target_volume >= 0:
             # 建仓加仓
             changed_volume = self.target_volume - abs(self.pos)
             if self.direction == Direction.LONG:
                 if changed_volume > 0:
                     # 加仓
-                    super().buy(self.tick.last_price + self.symbol_price_tick*100, abs(changed_volume))
-                
+                    super().buy(
+                        self.tick.last_price + self.symbol_price_tick * 100,
+                        abs(changed_volume),
+                    )
+
                 elif changed_volume < 0:
                     # 平仓
-                    super().sell(self.tick.last_price - self.symbol_price_tick*100, abs(changed_volume))
+                    super().sell(
+                        self.tick.last_price - self.symbol_price_tick * 100,
+                        abs(changed_volume),
+                    )
 
             elif self.direction == Direction.SHORT:
                 if changed_volume > 0:
                     # 加仓
-                    super().short(self.tick.last_price - self.symbol_price_tick*100, abs(changed_volume))
-                
+                    super().short(
+                        self.tick.last_price - self.symbol_price_tick * 100,
+                        abs(changed_volume),
+                    )
+
                 elif changed_volume < 0:
                     # 平仓
-                    super().cover(self.tick.last_price + self.symbol_price_tick*100, abs(changed_volume))
-        
+                    super().cover(
+                        self.tick.last_price + self.symbol_price_tick * 100,
+                        abs(changed_volume),
+                    )
+
     def on_order(self, order):
         """委托推送"""
         pass
@@ -529,6 +542,22 @@ class MartingStrategy(CtaTemplate):
         # 检查目标持仓是否执行完成
         if abs(self.pos) == self.target_volume:
             self.target_volume = -1
+
+        # 更新持仓价值、持仓均价、平仓价格
+        trade_price = trade.price
+        trade_volume = trade.volume
+        if trade.offset == Offset.OPEN:
+            self.position_value += trade_price * trade_volume
+
+        else:
+            self.position_value -= trade_price * trade_volume
+
+        self.position_price = self.position_value / abs(self.pos)
+        if self.direction == Direction.LONG:
+            self.position_close_price = self.position_price * (1 + 0.01)
+
+        elif self.direction == Direction.SHORT:
+            self.position_close_price = self.position_price * (1 - 0.01)
 
         # 邮件提醒
         super(MartingStrategy, self).on_trade(trade)
