@@ -334,6 +334,7 @@ class MartingSignal(object):
                         abs(self.position) * target_positon_price
                         - current_position_value
                     ) / (trade_price - target_positon_price)
+                    changed_volume = round_to(changed_volume, self.symbol_min_volume)
 
                     # 更新持仓价格
                     self.position_price = target_positon_price

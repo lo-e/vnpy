@@ -57,6 +57,7 @@ class MartingStrategy(CtaTemplate):
         "position_price",
         "position_close_price",
         "trending_step",
+        "target_volume",
         "strategy_position_price",
         "strategy_position_reduce_price",
         "strategy_position_increase_price",
@@ -108,8 +109,7 @@ class MartingStrategy(CtaTemplate):
         self.position_close_price = 0 # 平仓价格
         self.trending_step = 0  # 趋势追踪等级
         self.tick_trade_enable = False  # Tick数据时间在回测后的指定范围内允许交易
-        self.close_ready = False # 平仓准备
-        self.open_target_volume = 0 # 建仓加仓后持仓数量
+        self.target_volume = -1 # 目标持仓
         self.order_check_wait = 0 # 检查Order状态的等待时间
         self.window_bar_list = []  # 基于实时Tick数据生成的周期Bar数据列表
 
@@ -308,6 +308,10 @@ class MartingStrategy(CtaTemplate):
         ):
             # Tick允许交易
             self.tick_trade_enable = True
+
+            # 有正在执行的开平仓操作，不进行后续判断
+            if self.target_volume >= 0:
+                return
             
             # 策略成交价格
             strategy_ma_price = self.strategy_status["ma_price"]
@@ -315,7 +319,7 @@ class MartingStrategy(CtaTemplate):
             if not strategy_ma_price:
                 self.raise_error(f"均线价格异常")
 
-            if self.pos and not self.close_ready:
+            if self.pos:
                 # ====== 检查平仓 ======
                 if not self.position_close_price:
                     self.raise_error(f"平仓价格异常")
@@ -326,19 +330,19 @@ class MartingStrategy(CtaTemplate):
                         strategy_ma_price >= self.position_close_price
                         and tick.last_price < trade_price
                     ):
-                        self.close_ready = True
+                        self.target_volume = 0
 
                 if self.direction == Direction.SHORT:
                     if (
                         strategy_ma_price <= self.position_close_price
                         and tick.last_price > trade_price
                     ):
-                        self.close_ready = True
+                        self.target_volume = 0
 
                 # 重置趋势追踪等级
                 self.trending_step = 0
 
-            if not self.open_target_volume and not self.close_ready:
+            if self.target_volume < 0:
                 # ====== 检查建仓加仓 ======
                 # 下一趋势追踪等级需要满足指定范围
                 strategy_next_trending_step = self.strategy_status["next_trending_step"]
@@ -394,6 +398,7 @@ class MartingStrategy(CtaTemplate):
                             # 初始建仓
                             target_value = self.portfolio.portfolioValue * self.init_value_rate
                             changed_volume = (target_value - current_position_value) / trade_price
+                            changed_volume = round_to(changed_volume, self.symbol_min_volume)
 
                         else:
                             # 加仓
@@ -413,17 +418,23 @@ class MartingStrategy(CtaTemplate):
                                     abs(self.pos) * target_positon_price
                                     - current_position_value
                                 ) / (trade_price - target_positon_price)
+                                changed_volume = round_to(changed_volume, self.symbol_min_volume)
 
                             else:
                                 target_value = (self.portfolio.portfolioValue * self.init_value_rate) * (strategy_next_trending_step - self.bottom_step) * 10
                                 changed_volume = target_value / trade_price
+                                changed_volume = round_to(changed_volume, self.symbol_min_volume)
 
                         # 加仓后的目标持仓数量
-                        self.open_target_volume = changed_volume + abs(self.pos) if changed_volume > 0 else 0
+                        self.target_volume = changed_volume + abs(self.pos) if changed_volume > 0 else -1
 
                         # 确定趋势追踪等级
                         self.trending_step = strategy_next_trending_step
 
+            # 有正在执行的开平仓操作，立即发出订单
+            if self.target_volume >= 0:
+                self.order_check_wait = 0
+                self.check_order()
         else:
             # Tick不允许交易
             self.tick_trade_enable = False
@@ -439,12 +450,8 @@ class MartingStrategy(CtaTemplate):
         self.start_backtesting()
 
     def check_order(self):
-        """ 根据加减仓相关变量发出订单 """
-        if self.close_ready:
-            # 平仓
-            pass
-
-        elif self.open_target_volume:
+        """ 根据目标仓位发出订单 """
+        if self.target_volume >= 0:
             # 建仓加仓
             pass
 
@@ -773,6 +780,7 @@ class MartingBacktesting(object):
                         abs(self.position) * target_positon_price
                         - current_position_value
                     ) / (trade_price - target_positon_price)
+                    changed_volume = round_to(changed_volume, self.symbol_min_volume)
 
                     # 更新持仓价格
                     self.position_price = target_positon_price
