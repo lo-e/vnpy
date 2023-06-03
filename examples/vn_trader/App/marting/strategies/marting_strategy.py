@@ -543,21 +543,42 @@ class MartingStrategy(CtaTemplate):
         if abs(self.pos) == self.target_volume:
             self.target_volume = -1
 
-        # 更新持仓价值、持仓均价、平仓价格
-        trade_price = trade.price
-        trade_volume = trade.volume
-        if trade.offset == Offset.OPEN:
-            self.position_value += trade_price * trade_volume
+        if self.pos:
+            trade_price = trade.price
+            trade_volume = trade.volume
+            if self.direction == Direction.LONG:
+                if trade.direction == Direction.LONG:
+                    # 加仓后的持仓价值
+                    self.position_value += trade_price * trade_volume
 
+                else:
+                    # 平仓后的持仓价值
+                    self.position_value -= trade_price * trade_volume
+
+            elif self.direction == Direction.SHORT:
+                if trade.direction == Direction.SHORT:
+                    # 加仓后的持仓价值
+                    self.position_value += trade_price * trade_volume
+
+                else:
+                    # 平仓后的持仓价值
+                    self.position_value -= trade_price * trade_volume
+
+            # 持仓均价
+            self.position_price = self.position_value / abs(self.pos)
+
+            # 平仓价格
+            if self.direction == Direction.LONG:
+                self.position_close_price = self.position_price * (1 + 0.01)
+
+            elif self.direction == Direction.SHORT:
+                self.position_close_price = self.position_price * (1 - 0.01)
+                
         else:
-            self.position_value -= trade_price * trade_volume
-
-        self.position_price = self.position_value / abs(self.pos)
-        if self.direction == Direction.LONG:
-            self.position_close_price = self.position_price * (1 + 0.01)
-
-        elif self.direction == Direction.SHORT:
-            self.position_close_price = self.position_price * (1 - 0.01)
+            # 重置
+            self.position_value = 0
+            self.position_price = 0
+            self.position_close_price = 0
 
         # 邮件提醒
         super(MartingStrategy, self).on_trade(trade)
