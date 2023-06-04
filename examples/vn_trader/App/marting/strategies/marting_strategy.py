@@ -79,6 +79,9 @@ class MartingStrategy(CtaTemplate):
     ]
 
     def __init__(self, ctaEngine, martingPortfolio, setting):
+        # fake
+        self.fake_number = 0
+
         # 组合管理引擎
         self.portfolio = martingPortfolio
 
@@ -498,6 +501,19 @@ class MartingStrategy(CtaTemplate):
         if vt_orderids:
             self.cancel_all()
             return
+        
+        # fake
+        self.fake_number += 1
+        if self.fake_number == 1 or self.fake_number == 5:
+            super().buy(
+                self.tick.last_price + self.symbol_price_tick * 100,
+                0.01,
+            )
+        elif self.pos and self.fake_number == 7:
+            super().sell(
+                self.tick.last_price - self.symbol_price_tick * 100,
+                0.01,
+            )
 
         # 发出订单
         if self.target_volume >= 0:
@@ -546,34 +562,38 @@ class MartingStrategy(CtaTemplate):
         if self.pos:
             trade_price = trade.price
             trade_volume = trade.volume
+            is_open = False
             if self.direction == Direction.LONG:
                 if trade.direction == Direction.LONG:
                     # 加仓后的持仓价值
                     self.position_value += trade_price * trade_volume
+                    is_open = True
 
                 else:
                     # 平仓后的持仓价值
-                    self.position_value -= trade_price * trade_volume
+                    self.position_value = self.position_price * abs(self.pos)
 
             elif self.direction == Direction.SHORT:
                 if trade.direction == Direction.SHORT:
                     # 加仓后的持仓价值
                     self.position_value += trade_price * trade_volume
+                    is_open = True
 
                 else:
                     # 平仓后的持仓价值
-                    self.position_value -= trade_price * trade_volume
+                    self.position_value = self.position_price * abs(self.pos)
 
-            # 持仓均价
-            self.position_price = self.position_value / abs(self.pos)
+            if is_open:
+                # 持仓均价
+                self.position_price = self.position_value / abs(self.pos)
 
-            # 平仓价格
-            if self.direction == Direction.LONG:
-                self.position_close_price = self.position_price * (1 + 0.01)
+                # 平仓价格
+                if self.direction == Direction.LONG:
+                    self.position_close_price = self.position_price * (1 + 0.01)
 
-            elif self.direction == Direction.SHORT:
-                self.position_close_price = self.position_price * (1 - 0.01)
-                
+                elif self.direction == Direction.SHORT:
+                    self.position_close_price = self.position_price * (1 - 0.01)
+
         else:
             # 重置持仓价值、持仓均价、平仓价格
             self.position_value = 0
