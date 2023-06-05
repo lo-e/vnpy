@@ -425,7 +425,7 @@ class MartingStrategy(CtaTemplate):
                         else:
                             # 加仓
                             if self.pos:
-                                # 更新持仓价格
+                                # 目标持仓价格
                                 price_rate = 0.01
                                 if self.direction == Direction.LONG:
                                     target_positon_price = trade_price * (
@@ -450,12 +450,10 @@ class MartingStrategy(CtaTemplate):
 
                             else:
                                 target_value = (
-                                    (
-                                        self.portfolio.portfolioValue
-                                        * self.init_value_rate
-                                    )
-                                    * (strategy_next_trending_step - self.bottom_step)
-                                    * 10
+                                    self.portfolio.portfolioValue * self.init_value_rate
+                                ) * (
+                                    10
+                                    ** (strategy_next_trending_step - self.bottom_step)
                                 )
                                 changed_volume = target_value / trade_price
                                 changed_volume = round_to(
