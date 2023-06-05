@@ -353,6 +353,9 @@ class MartingStrategy(CtaTemplate):
                 # 重置趋势追踪等级
                 self.trending_step = 0
 
+                # 策略组合更新
+                self.portfolio.trending_top = False
+
             if self.target_volume < 0:
                 # ====== 检查建仓加仓 ======
                 # 下一趋势追踪等级需要满足指定范围
@@ -367,6 +370,7 @@ class MartingStrategy(CtaTemplate):
                 if (
                     self.bottom_step <= strategy_next_trending_step <= self.top_step
                     and strategy_next_trending_step > self.trending_step
+                    and not self.portfolio.trending_top
                 ):
                     # 是否达到目标价位
                     open_enable = False
@@ -467,6 +471,10 @@ class MartingStrategy(CtaTemplate):
 
                         # 确定趋势追踪等级
                         self.trending_step = strategy_next_trending_step
+
+                        # 策略组合更新
+                        if self.trending_step >= self.top_step:
+                            self.portfolio.trending_top = True
 
             # 有正在执行的开平仓操作，立即发出订单
             if self.target_volume >= 0:

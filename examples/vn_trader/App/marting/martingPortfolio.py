@@ -34,7 +34,7 @@ class MartingPortfolio(object):
         "is_generating",
         "generating_cost",
     ]
-    syncList = ["today"]
+    syncList = ["today", "trending_top"]
 
     def __init__(self, engine, setting):
         self.engine = engine
@@ -60,9 +60,13 @@ class MartingPortfolio(object):
         self.generating_cost = 0  # 合成更新一次花费的时间
         self.generating_time = 0  # 合成开始的时间戳
 
+        # 回测相关
         self.backtesting_count_down = 10  # 通知策略回测倒计时（秒）
         self.backtesting_preparing = False  # 准备通知策略回测，倒计时的开关
+
+        # 其它
         self.strategy_symbols = []  # 策略合约列表
+        self.trending_top = False # 策略组合中是否有策略已经达到趋势追踪最高级别
 
         # 设置参数
         if setting:
