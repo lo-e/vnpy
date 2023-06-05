@@ -358,7 +358,7 @@ class MartingStrategy(CtaTemplate):
 
             if self.target_volume < 0:
                 # ====== 检查建仓加仓 ======
-                # 下一趋势追踪等级需要满足指定范围
+                strategy_trending_step = self.strategy_status["trending_step"]
                 strategy_next_trending_step = self.strategy_status["next_trending_step"]
                 strategy_rsi_array = self.strategy_status["rsi_array"]
                 strategy_position_increase_price = self.strategy_status[
@@ -367,13 +367,16 @@ class MartingStrategy(CtaTemplate):
                 if not strategy_position_increase_price:
                     self.raise_error(f"建仓加仓价格异常")
 
+                # 下一实盘趋势追踪等级
+                next_trending_step = 0
+
+                # 回测下一趋势追踪等级满足指定条件
                 if (
                     self.bottom_step <= strategy_next_trending_step <= self.top_step
                     and strategy_next_trending_step > self.trending_step
                     and not self.portfolio.trending_top
                 ):
                     # 是否达到目标价位
-                    open_enable = False
                     if self.direction == Direction.LONG:
                         # 根据RSI判断是否超卖
                         rsi_cross = False
@@ -387,7 +390,7 @@ class MartingStrategy(CtaTemplate):
                             and strategy_ma_price <= strategy_position_increase_price
                             and tick.last_price > trade_price
                         ):
-                            open_enable = True
+                            next_trending_step = strategy_next_trending_step
 
                     elif self.direction == Direction.SHORT:
                         # 根据RSI判断是否超买
@@ -402,79 +405,96 @@ class MartingStrategy(CtaTemplate):
                             and strategy_ma_price >= strategy_position_increase_price
                             and tick.last_price < trade_price
                         ):
-                            open_enable = True
+                            next_trending_step = strategy_next_trending_step
 
                     else:
                         self.raise_error("检查代码！")
+                
+                # 回测当前趋势追踪等级比当前实盘的高
+                if not next_trending_step:
+                    tick_price_cross = False
+                    if self.bottom_step <= strategy_trending_step <= self.top_step and self.strategy_trending_step > self.trending_step and not self.portfolio.trending_top:
+                        # 判断当前回测持仓盈亏是否满足指定条件
+                        strategy_position_price = self.strategy_status["position_price"]
+                        tick_price_cross = False
+                        if self.direction == Direction.LONG and tick.last_price < strategy_position_price * (1 - 0.01):
+                            tick_price_cross = True
+                        
+                        elif self.direction == Direction.SHORT and tick.last_price > strategy_position_price * (1 + 0.01):
+                            tick_price_cross = True
+                        
+                        if tick_price_cross:
+                            next_trending_step = strategy_trending_step
 
-                    if open_enable:
-                        # 当前持仓价值
-                        current_position_value = abs(self.pos) * self.position_price
+                if next_trending_step:
+                    # 当前持仓价值
+                    current_position_value = abs(self.pos) * self.position_price
 
-                        # 加仓的数量
-                        changed_volume = 0
+                    # 加仓的数量
+                    changed_volume = 0
 
-                        if strategy_next_trending_step == self.bottom_step:
-                            # 初始建仓
-                            target_value = (
-                                self.portfolio.portfolioValue * self.init_value_rate
-                            )
+                    if next_trending_step == self.bottom_step:
+                        # 初始建仓
+                        target_value = (
+                            self.portfolio.portfolioValue * self.init_value_rate
+                        )
+                        changed_volume = (
+                            target_value - current_position_value
+                        ) / trade_price
+                        changed_volume = round_to(
+                            changed_volume, self.symbol_min_volume
+                        )
+
+                    else:
+                        # 加仓
+                        if self.pos:
+                            # 目标持仓价格
+                            price_rate = 0.01
+                            if self.direction == Direction.LONG:
+                                target_positon_price = trade_price * (
+                                    1 + price_rate
+                                )
+
+                            elif self.direction == Direction.SHORT:
+                                target_positon_price = trade_price * (
+                                    1 - price_rate
+                                )
+
+                            else:
+                                self.raise_error("检查代码！")
+
                             changed_volume = (
-                                target_value - current_position_value
-                            ) / trade_price
+                                abs(self.pos) * target_positon_price
+                                - current_position_value
+                            ) / (trade_price - target_positon_price)
                             changed_volume = round_to(
                                 changed_volume, self.symbol_min_volume
                             )
 
                         else:
-                            # 加仓
-                            if self.pos:
-                                # 目标持仓价格
-                                price_rate = 0.01
-                                if self.direction == Direction.LONG:
-                                    target_positon_price = trade_price * (
-                                        1 + price_rate
-                                    )
+                            target_value = (
+                                self.portfolio.portfolioValue * self.init_value_rate
+                            ) * (
+                                10
+                                ** (next_trending_step - self.bottom_step)
+                            )
+                            changed_volume = target_value / trade_price
+                            changed_volume = round_to(
+                                changed_volume, self.symbol_min_volume
+                            )
 
-                                elif self.direction == Direction.SHORT:
-                                    target_positon_price = trade_price * (
-                                        1 - price_rate
-                                    )
+                    # 加仓后的目标持仓数量
+                    self.target_volume = (
+                        changed_volume + abs(self.pos) if changed_volume > 0 else -1
+                    )
 
-                                else:
-                                    self.raise_error("检查代码！")
+                    # 确定趋势追踪等级
+                    self.trending_step = next_trending_step
 
-                                changed_volume = (
-                                    abs(self.pos) * target_positon_price
-                                    - current_position_value
-                                ) / (trade_price - target_positon_price)
-                                changed_volume = round_to(
-                                    changed_volume, self.symbol_min_volume
-                                )
+                    # 策略组合更新
+                    if self.trending_step >= self.top_step:
+                        self.portfolio.trending_top = True
 
-                            else:
-                                target_value = (
-                                    self.portfolio.portfolioValue * self.init_value_rate
-                                ) * (
-                                    10
-                                    ** (strategy_next_trending_step - self.bottom_step)
-                                )
-                                changed_volume = target_value / trade_price
-                                changed_volume = round_to(
-                                    changed_volume, self.symbol_min_volume
-                                )
-
-                        # 加仓后的目标持仓数量
-                        self.target_volume = (
-                            changed_volume + abs(self.pos) if changed_volume > 0 else -1
-                        )
-
-                        # 确定趋势追踪等级
-                        self.trending_step = strategy_next_trending_step
-
-                        # 策略组合更新
-                        if self.trending_step >= self.top_step:
-                            self.portfolio.trending_top = True
 
             # 有正在执行的开平仓操作，立即发出订单
             if self.target_volume >= 0:
