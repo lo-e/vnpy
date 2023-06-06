@@ -84,7 +84,7 @@ class MartingEngine(BaseEngine):
 
     engine_type = EngineType.LIVE  # live trading engine
 
-    setting_filename = "MARTING_setting.json"
+    setting_filename = "marting_setting.json"
 
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
         """"""
