@@ -73,7 +73,7 @@ def calculate_phase_loss(phase_count: int, increase_type: int = 1):
 
 
 # 分析trending_continuous下的趋势追踪结果
-def analyse_trending_continuous(by_month:bool=False):
+def analyse_trending_continuous(by_month: bool = False, target_dir: str = ""):
     # 趋势追踪程度
     continuous_open_dict = {}
     continuous_open_symbol_dict = {}
@@ -86,12 +86,18 @@ def analyse_trending_continuous(by_month:bool=False):
     main_dir_path = path.rstrip(file_name) + f"trending_continuous{DIR_SYMBOL}"
     for root, _, files in os.walk(main_dir_path):
         if DIR_SYMBOL in root:
-            dirName = root.split(DIR_SYMBOL)[-1]
-            start_end = dirName.split("_")
-            if dirName:
+            dir_name = root.split(DIR_SYMBOL)[-1]
+            if target_dir and dir_name and dir_name != target_dir:
+                continue
+
+            start_end = dir_name.split("_")
+            if start_end and len(start_end) == 2:
                 start = start_end[0]
                 end = start_end[1]
                 print(f"\n====== 起止日期：{start} - {end} ======")
+                
+            else:
+                continue
 
         for theFile in files:
             # 排除不合法文件
@@ -172,7 +178,6 @@ def analyse_trending_continuous(by_month:bool=False):
         count = continuous_open_dict[continuous_key]
         print(f"{continuous_key}\t{count}")
 
-    
     if by_month:
         month_keys = list(month_open_symbol_dict.keys())
         month_keys = sorted(month_keys)
@@ -186,7 +191,7 @@ def analyse_trending_continuous(by_month:bool=False):
             # 信号连续趋势追踪统计
             symbol_open_dict = month_symbol_open_dict[month]
             output_symbol_open_result(symbol_open_dict)
-    
+
     else:
         # 连续趋势追踪信号统计
         output_open_symbol_result(continuous_open_symbol_dict)
@@ -194,7 +199,8 @@ def analyse_trending_continuous(by_month:bool=False):
         # 信号连续趋势追踪统计
         output_symbol_open_result(continuous_symbol_open_dict)
 
-def output_open_symbol_result(open_symbol_dict:dict):
+
+def output_open_symbol_result(open_symbol_dict: dict):
     continuous_keys = list(open_symbol_dict.keys())
     continuous_keys = sorted(continuous_keys)
     for continuous_key in continuous_keys:
@@ -222,7 +228,8 @@ def output_open_symbol_result(open_symbol_dict:dict):
             #         f"{dt}\t{signal}\t{position_price}\t{position_value}\t{max_loss_value}\t{max_loss_rate}\t{trending}"
             #     )
 
-def output_symbol_open_result(symbol_open_dict:dict):
+
+def output_symbol_open_result(symbol_open_dict: dict):
     all_symbol_set = set()
     setting_file_path = "setting.csv"
     with open(setting_file_path, "r") as f:
@@ -264,9 +271,10 @@ def output_symbol_open_result(symbol_open_dict:dict):
     for symbol in max_4_symbol_set:
         print(symbol)
 
+
 if __name__ == "__main__":
     # 计算每个加仓阶段的亏损状态
     # calculate_phase_loss(phase_count=6, increase_type=1)
 
     # 分析trending_continuous下的趋势追踪结果
-    analyse_trending_continuous(by_month=True)
+    analyse_trending_continuous(by_month=True, target_dir="2022-01-01_2023-05-27")
