@@ -293,6 +293,8 @@ def bybit_marting_setting(min_value_filter: float = 0):
             # latest_price = bybit_get_latest_price(symbol=symbol) # 接口获取实时最新价格
             end_data = collection.find_one(sort=[("datetime", DESCENDING)])  # 数据库获取最新价格
             latest_price = end_data["close_price"] if end_data else None
+            if not latest_price:
+                continue
 
             # 最小交易价值
             latest_min_value = min_volume * latest_price

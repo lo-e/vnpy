@@ -3,6 +3,19 @@ from vnpy.trader.utility import DIR_SYMBOL
 import csv
 import pandas as pd
 from datetime import datetime
+from pymongo import MongoClient, ASCENDING, DESCENDING
+from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
+from copy import copy
+import json
+import io
+# 将上一级目录添加到模块搜索路径中
+import sys
+
+sys.path.append("..")
+from vn_trader.App.Turtle_crypto.dataservice.BybitDataService import (
+    bybit_get_symbol_list,
+    BybitSymbolType,
+)
 
 
 # 计算每个加仓阶段的亏损状态
@@ -73,7 +86,9 @@ def calculate_phase_loss(phase_count: int, increase_type: int = 1):
 
 
 # 分析trending_continuous下的趋势追踪结果
-def analyse_trending_continuous(by_month: bool = False, target_dir: str = ""):
+def analyse_trending_continuous(
+    by_month: bool = False, target_dir: str = "", for_trade_setting: bool = False
+):
     # 趋势追踪程度
     continuous_open_dict = {}
     continuous_open_symbol_dict = {}
@@ -95,7 +110,7 @@ def analyse_trending_continuous(by_month: bool = False, target_dir: str = ""):
                 start = start_end[0]
                 end = start_end[1]
                 print(f"\n====== 起止日期：{start} - {end} ======")
-                
+
             else:
                 continue
 
@@ -199,6 +214,22 @@ def analyse_trending_continuous(by_month: bool = False, target_dir: str = ""):
         # 信号连续趋势追踪统计
         output_symbol_open_result(continuous_symbol_open_dict)
 
+    # 生成实盘setting.json
+    if for_trade_setting:
+        all_symbol_set = set()
+        setting_file_path = "setting.csv"
+        with open(setting_file_path, "r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                all_symbol_set.add(row["symbol"])
+
+        # 添加最大连续趋势追踪2的合约
+        max_2_symbol_set = all_symbol_set - set(list(continuous_symbol_open_dict.keys()))
+        total_dict = copy(continuous_symbol_open_dict)
+        for max_2_symbol in max_2_symbol_set:
+            total_dict[max_2_symbol] = {"2":[]}
+        generate_setting(total_dict)
+
 
 def output_open_symbol_result(open_symbol_dict: dict):
     continuous_keys = list(open_symbol_dict.keys())
@@ -272,9 +303,123 @@ def output_symbol_open_result(symbol_open_dict: dict):
         print(symbol)
 
 
+def generate_setting(symbol_open_dict: dict):
+    # 获取合约最小交易价值
+    symbol_min_value_dict = {}
+    usdt_symbol_list, data = bybit_get_symbol_list(
+        type=BybitSymbolType.USDT, need_data=True
+    )
+    for symbol in usdt_symbol_list:
+        d = data[symbol]
+
+        # 交易所合约
+        full_symbol = f"{symbol}.BYBIT"
+
+        # 最小交易数量
+        min_volume = d["lot_size_filter"]["min_trading_qty"]
+
+        # 数据库获取起始日期
+        client = MongoClient("localhost", 27017)
+        db = client[MINUTE_DB_NAME]
+        collection = db[full_symbol]
+        end_data = collection.find_one(sort=[("datetime", DESCENDING)])
+        if end_data:
+            # 获取最新的价格
+            price = end_data["close_price"] if end_data else None  # 数据库获取最新价格
+
+            # 最小交易价值
+            value = min_volume * price
+
+            # 存入字典
+            symbol_min_value_dict[full_symbol] = value
+
+    # 获取合约最大连续追踪等级
+    symbol_max_open_dict = {}
+    for symbol, data in symbol_open_dict.items():
+        continuous_open_list = list(data.keys())
+        max_open = max(continuous_open_list)
+        symbol_max_open_dict[symbol] = max_open
+
+    # 生成setting参数
+    portfolioValue = 100
+    setting_dict = {
+        "signal": [],
+        "portfolio": {"name": "MARTING", "portfolioValue": portfolioValue},
+    }
+    max_leverage = 10
+    strategy_min_value = 1
+    strategy_max_value = portfolioValue * max_leverage
+    strategy_trending_value_list = []
+    v = strategy_min_value
+    while v <= strategy_max_value:
+        strategy_trending_value_list.append(v)
+        v *= 10
+
+    symbol_setting_list = []
+    result_symbol_count = 0
+    for symbol, max_open in symbol_max_open_dict.items():
+        # 趋势追踪最高等级
+        top_step = max(int(max_open), 4)
+        # 根据最小交易量决定的趋势追踪最大次数
+        step_length = 0
+        # 初始趋势追踪的持仓价值
+        init_value = 0
+        # 合约最小交易量
+        min_value = symbol_min_value_dict.get(symbol, 0)
+        if min_value:
+            for i in range(len(strategy_trending_value_list)):
+                v = strategy_trending_value_list[i]
+                if min_value * 2 <= v:
+                    init_value = v
+                    step_length = len(strategy_trending_value_list) - i
+                    if step_length > top_step:
+                        step_length = top_step
+                        init_value = strategy_trending_value_list[len(strategy_trending_value_list) - step_length]
+                    break
+
+        if step_length:
+            init_value_rate = init_value / portfolioValue
+            bottom_step = top_step - (step_length - 1)
+            pure_symbol = symbol[:symbol.index('USDT')] 
+            data_long = {
+                "strategy_name": f"MARTING_{pure_symbol}_多",
+                "class_name": "MartingStrategy",
+                "vt_symbol": symbol,
+                "direction": "多",
+                "init_value_rate": init_value_rate,
+                "bottom_step": bottom_step,
+                "top_step": top_step,
+                "start": True
+                }
+            symbol_setting_list.append(data_long)
+
+            data_short = {
+                "strategy_name": f"MARTING_{pure_symbol}_空",
+                "class_name": "MartingStrategy",
+                "vt_symbol": symbol,
+                "direction": "空",
+                "init_value_rate": init_value_rate,
+                "bottom_step": bottom_step,
+                "top_step": top_step,
+                "start": True
+                }
+            symbol_setting_list.append(data_short)
+            result_symbol_count += 1
+    
+    # 完成setting参数
+    setting_dict["signal"] = symbol_setting_list
+
+    # 保存到json文件
+    json_file = "MARTING_setting.json"
+    with io.open(json_file, "w", encoding='utf-8') as file:
+        file.write(json.dumps(setting_dict, ensure_ascii=False))
+    print(f"\n生成的实盘参数已保存到{json_file}\n总计合约数：{len(symbol_open_dict)}\n成功生成实盘参数合约数：{result_symbol_count}")
+
 if __name__ == "__main__":
     # 计算每个加仓阶段的亏损状态
     # calculate_phase_loss(phase_count=6, increase_type=1)
 
-    # 分析trending_continuous下的趋势追踪结果
-    analyse_trending_continuous(by_month=True, target_dir="2022-01-01_2023-05-27")
+    # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
+    analyse_trending_continuous(
+        by_month=False, target_dir="2022-01-01_2023-05-27", for_trade_setting=True
+    )
