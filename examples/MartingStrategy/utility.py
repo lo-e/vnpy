@@ -410,7 +410,7 @@ def generate_setting(symbol_open_dict: dict):
     setting_dict["signal"] = symbol_setting_list
 
     # 保存到json文件
-    json_file = "MARTING_setting.json"
+    json_file = "trade_setting.json"
     with io.open(json_file, "w", encoding='utf-8') as file:
         file.write(json.dumps(setting_dict, ensure_ascii=False))
     print(f"\n生成的实盘参数已保存到{json_file}\n总计合约数：{len(symbol_open_dict)}\n成功生成实盘参数合约数：{result_symbol_count}")
