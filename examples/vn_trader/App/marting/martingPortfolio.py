@@ -11,6 +11,9 @@ from threading import Thread
 from utilities.BarGenerator import MultiThreadsMinuteBarProcessor
 from vnpy.trader.constant import Interval
 from vnpy.event import Event
+import os
+import json
+from pathlib import Path
 
 BAR_DOWNLOAD_GENERATE_COMPLETE = "eDataComplete"
 
@@ -63,10 +66,16 @@ class MartingPortfolio(object):
         # 回测相关
         self.backtesting_count_down = 10  # 通知策略回测倒计时（秒）
         self.backtesting_preparing = False  # 准备通知策略回测，倒计时的开关
+        self.backtesting_saved_count_down = 60  # 保存策略回测历史倒计时（秒）
+        self.backtesting_saved_preparing = False  # 准备保存策略回测历史，倒计时的开关
 
         # 其它
         self.strategy_symbols = []  # 策略合约列表
-        self.trending_top = False # 策略组合中是否有策略已经达到趋势追踪最高级别
+        self.trending_top = False  # 策略组合中是否有策略已经达到趋势追踪最高级别
+
+        # 策略回测历史
+        self.strategys_backtesting_history = {}
+        self.load_backtesting_history()
 
         # 设置参数
         if setting:
@@ -81,6 +90,14 @@ class MartingPortfolio(object):
         self.engine.savePortfolioSyncData()
 
     def on_timer(self):
+        # 保存策略回测历史
+        if self.backtesting_saved_preparing:
+            self.backtesting_saved_count_down -= 1
+            if self.backtesting_saved_count_down <= 0:
+                self.backtesting_saved_count_down = 60
+                self.backtesting_saved_preparing = False
+                self.save_backtesting_history()
+
         # 通知策略回测
         if self.backtesting_preparing:
             self.backtesting_count_down -= 1
@@ -89,6 +106,10 @@ class MartingPortfolio(object):
                 self.backtesting_preparing = False
                 event = Event(BAR_DOWNLOAD_GENERATE_COMPLETE)
                 self.engine.event_engine.put(event)
+
+                # 准备保存策略回测历史
+                self.backtesting_saved_preparing = True
+                self.backtesting_saved_count_down = 60
 
         # 合成结束
         if self.bar_generate_engine.loading_complete:
@@ -145,3 +166,36 @@ class MartingPortfolio(object):
     def generate_window_bar(self):
         self.bar_generate_engine.symbol_list = self.strategy_symbols
         self.bar_generate_engine.start()
+
+    def get_backtesting_history_file_path(self):
+        dir = os.path.dirname(os.path.realpath(__file__))
+        file_path = Path(dir)
+        file_path = file_path.joinpath("backtesting_history.json")
+        return file_path
+
+    def load_backtesting_history(self):
+        # 从json文件获取策略回测历史
+        history_data = {}
+        json_file = self.get_backtesting_history_file_path()
+        if json_file.exists():
+            with open(json_file, mode="r", encoding="UTF-8") as f:
+                history_data = json.load(f)
+        if history_data:
+            self.strategys_backtesting_history = history_data
+
+    def save_backtesting_history(self):
+        # 策略历史数据回测保存到json文件中
+        for _, strategy in self.engine.strategies.items():
+            strategy_backtesting_data = {
+                "backtesting_status": strategy.backtesting_status,
+                "backtesting_to": strategy.backtesting_to.strftime("%Y-%m-%d %H:%M:%S"),
+            }
+            self.strategys_backtesting_history[
+                f"{strategy.strategy_name}"
+            ] = strategy_backtesting_data
+
+        json_file = self.get_backtesting_history_file_path()
+        with open(json_file, "w", encoding="utf-8") as file:
+            file.write(
+                json.dumps(self.strategys_backtesting_history, ensure_ascii=False)
+            )

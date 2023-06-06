@@ -10,8 +10,6 @@ from vnpy.trader.utility import ArrayManager
 from vnpy.app.cta_strategy.base import *
 from datetime import datetime, timedelta
 from vnpy.trader.constant import Interval
-import csv
-import os
 from vnpy.trader.object import BarData, TickData
 from vnpy.trader.utility import round_to, floor_to, ceil_to
 import numpy as np
@@ -150,6 +148,13 @@ class MartingStrategy(CtaTemplate):
         )
 
     def on_init(self):
+        # 回测历史记录如果数据库没有记录，从json文件中获取
+        if not self.backtesting_status or not self.backtesting_to:
+            backtesting_history = self.portfolio.strategys_backtesting_history.get(self.strategy_name, {})
+            if backtesting_history:
+                self.backtesting_status = backtesting_history["backtesting_status"]
+                self.backtesting_to = datetime.strptime(backtesting_history["backtesting_to"], "%Y-%m-%d %H:%M:%S")
+
         self.write_log(f"{self.strategy_name}\t策略初始化")
 
     def on_start(self):
