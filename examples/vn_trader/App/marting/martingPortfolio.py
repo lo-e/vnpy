@@ -186,13 +186,14 @@ class MartingPortfolio(object):
     def save_backtesting_history(self):
         # 策略历史数据回测保存到json文件中
         for _, strategy in self.engine.strategies.items():
-            strategy_backtesting_data = {
-                "backtesting_status": strategy.backtesting_status,
-                "backtesting_to": strategy.backtesting_to.strftime("%Y-%m-%d %H:%M:%S"),
-            }
-            self.strategys_backtesting_history[
-                f"{strategy.strategy_name}"
-            ] = strategy_backtesting_data
+            if strategy.backtesting_status and strategy.backtesting_to:
+                strategy_backtesting_data = {
+                    "backtesting_status": strategy.backtesting_status,
+                    "backtesting_to": strategy.backtesting_to.strftime("%Y-%m-%d %H:%M:%S"),
+                }
+                self.strategys_backtesting_history[
+                    f"{strategy.strategy_name}"
+                ] = strategy_backtesting_data
 
         json_file = self.get_backtesting_history_file_path()
         with open(json_file, "w", encoding="utf-8") as file:
