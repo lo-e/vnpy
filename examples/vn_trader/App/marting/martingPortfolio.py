@@ -45,6 +45,7 @@ class MartingPortfolio(object):
 
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()  # 数据下载引擎
+        self.downloading_trigger = False # 开启下载线程
         self.is_downloading = False  # 是否正在下载
         self.downloading_wait = 10000  # 数据下载等待时间（秒）
         self.downloading_cost = 0  # 下载更新一次花费的时间
@@ -125,8 +126,15 @@ class MartingPortfolio(object):
         if self.is_generating:
             self.generating_cost = int(time() - self.generating_time)
 
-        # 下载结束
-        if not len(self.download_engine.threads):
+        # 下载开始
+        if len(self.download_engine.threads):
+            if self.downloading_trigger:
+                self.downloading_trigger = False
+                self.is_downloading = True
+                self.downloading_wait = 0
+                self.downloading_time = time()
+
+        elif not self.downloading_trigger and self.download_engine.loading_complete:
             if self.is_downloading:
                 # 刚结束下载，开始生成window_bar
                 self.is_generating = True
@@ -144,11 +152,8 @@ class MartingPortfolio(object):
             self.downloading_cost = int(time() - self.downloading_time)
 
         # 每隔设定的时间开始下载
-        if self.downloading_wait >= 5 * 60 and not self.is_generating:
-            self.is_downloading = True
-            self.downloading_wait = 0
-            self.downloading_time = time()
-
+        if self.downloading_wait >= 5 * 60 and not self.downloading_trigger and not self.is_downloading and not self.is_generating:
+            self.downloading_trigger = True
             thread = Thread(target=self.download_data)
             thread.start()
 

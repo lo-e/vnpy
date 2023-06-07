@@ -25,6 +25,7 @@ from pymongo import MongoClient, ASCENDING, DESCENDING
 class TurtleCryptoDataDownloading(object):
     def __init__(self):
         self.threads = []
+        self.loading_complete = True
         pass
 
     def remove_thread(self, thread):
@@ -38,12 +39,14 @@ class TurtleCryptoDataDownloading(object):
             shutil.rmtree(csv_path)
 
         # 多线程获取数据
+        self.loading_complete = False
         for contract in contract_list:
             while len(self.threads) >= 10:
                 sleep(2)
             thread = DownloadThread(self, contract=contract, interval='1', days=days, to_date=to_date, from_data_base=from_data_base)
             self.threads.append(thread)
             thread.start()
+        self.loading_complete = True
 
     def download_from_okex(self, contract_list, days=1):
         #"""
