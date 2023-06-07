@@ -252,7 +252,7 @@ def one():
         # 保存到json
         with open(backtesting_history_json, "w", encoding="utf-8") as file:
             file.write(json.dumps(backtesting_data, ensure_ascii=False))
-        print(f"已保存回测历史到{start_dt_str}_{end_dt_str}.json\t总数：{len(backtesting_data)}")
+        print(f"\n已保存回测历史到{start_dt_str}_{end_dt_str}.json\t总数：{len(backtesting_data)}")
 
 
 def two():
