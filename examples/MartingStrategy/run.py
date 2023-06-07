@@ -244,7 +244,7 @@ def one():
         for _, signal_list in engine.portfolio.signalDict.items():
             for signal in signal_list:
                 symbol = signal.symbol
-                pure_symbol = symbol.split(".")[0]
+                pure_symbol = symbol[:symbol.index('USDT')] 
                 direction = signal.direction
                 signal_key = f"MARTING_{pure_symbol}_{direction.value}"
                 backtesting_data[signal_key] = signal.saved_sync_data
