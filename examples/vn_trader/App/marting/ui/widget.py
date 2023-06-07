@@ -101,23 +101,23 @@ class CtaStrategyManager(QtWidgets.QGroupBox):
         buttonStop.clicked.connect(self.stop)
         buttonReinit.clicked.connect(self.reinit)
 
-        hbox1 = QtWidgets.QHBoxLayout()
-        hbox1.addWidget(buttonInit)
-        hbox1.addWidget(buttonStart)
-        hbox1.addWidget(buttonStop)
-        hbox1.addWidget(buttonReinit)
-        hbox1.addStretch()
+        # hbox1 = QtWidgets.QHBoxLayout()
+        # hbox1.addWidget(buttonInit)
+        # hbox1.addWidget(buttonStart)
+        # hbox1.addWidget(buttonStop)
+        # hbox1.addWidget(buttonReinit)
+        # hbox1.addStretch()
 
         hbox2 = QtWidgets.QHBoxLayout()
         hbox2.addWidget(self.paramMonitor)
 
-        hbox3 = QtWidgets.QHBoxLayout()
-        hbox3.addWidget(self.varMonitor)
+        # hbox3 = QtWidgets.QHBoxLayout()
+        # hbox3.addWidget(self.varMonitor)
 
         vbox = QtWidgets.QVBoxLayout()
-        vbox.addLayout(hbox1)
+        # vbox.addLayout(hbox1)
         vbox.addLayout(hbox2)
-        vbox.addLayout(hbox3)
+        # vbox.addLayout(hbox3)
 
         self.setLayout(vbox)
 

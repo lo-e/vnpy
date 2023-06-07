@@ -38,7 +38,6 @@ class MartingStrategy(CtaTemplate):
         "direction",
         "ma_window",
         "rsi_window",
-        "unit_value",
         "init_value_rate",
         "bottom_step",
         "top_step",
@@ -46,6 +45,10 @@ class MartingStrategy(CtaTemplate):
 
     # 变量列表，保存了变量的名称
     variables = [
+        "strategy_name",
+        "init_value_rate",
+        "bottom_step",
+        "top_step",
         "is_backtesting",
         "symbol_price_tick",
         "symbol_min_volume",
@@ -108,7 +111,6 @@ class MartingStrategy(CtaTemplate):
         # 策略变量
         self.tick: TickData = None
         self.direction: Direction = Direction.NET  # 交易方向
-        self.unit_value = self.portfolio.portfolioValue * 0.5 * 0.01  # 最小持仓价值
         self.symbol_min_volume: float = 0.0
         self.symbol_price_tick: float = 0.0
         self.bar: BarData = None  # 最新K线
