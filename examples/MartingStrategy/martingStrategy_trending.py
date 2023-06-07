@@ -14,6 +14,7 @@ from vnpy.trader.utility import round_to, floor_to, ceil_to
 from vnpy.trader.utility import DIR_SYMBOL
 import numpy as np
 
+
 class MartingSignal(object):
     def __init__(self, portfolio, symbol, direction, ma_window, rsi_window):
         # 常量
@@ -46,7 +47,23 @@ class MartingSignal(object):
         self.rsi_array = []
         self.phase_position_volume = 0  # 阶段仓位的初始持仓数量
         self.trending_step = 0  # 追踪趋势的等级
+        self.next_trending_step = 0  # 下一个趋势追踪等级
         self.calculate_phase_positions()  # 马丁格尔倍数仓位管理
+
+        # 保存到backtesting_history.json的变量
+        self.syncs = [
+            "position",
+            "position_price",
+            "position_reduce_price",
+            "position_increase_price",
+            "max_loss_value",
+            "max_loss_rate",
+            "ma_price",
+            "rsi_array",
+            "trending_step",
+            "next_trending_step",
+        ]
+        self.saved_sync_data = {}
 
     def on_bar(self, bar):
         if not bar.check_valid():
@@ -59,6 +76,7 @@ class MartingSignal(object):
         self.calculate_max_loss()
         self.generate_signal(bar)
         self.calculate_indicator()
+        self.save_sync_data()
 
     def calculate_phase_positions(self):
         self.phase_position_values = []
@@ -112,7 +130,9 @@ class MartingSignal(object):
         """
         # fake
         if self.symbol == "CHZUSDT.BYBIT" and self.direction == Direction.LONG:
-            if self.bar.datetime >= datetime.strptime("2023-05-12 20:05:00", "%Y-%m-%d %H:%M:%S"):
+            if self.bar.datetime >= datetime.strptime(
+                "2023-05-12 20:05:00", "%Y-%m-%d %H:%M:%S"
+            ):
                 a = 2
 
         # 当前仓位阶段
@@ -253,14 +273,14 @@ class MartingSignal(object):
                             )
                     else:
                         exit("检查代码！")
-                
+
                 # 初始化仓位最大亏损
                 self.max_loss_value = 0
                 self.max_loss_rate = ""
 
                 # 减仓操作后停止后续加仓判断
                 return
-                
+
         # 检查加仓
         if self.position_increase_price:
             # 成交价格
@@ -311,7 +331,7 @@ class MartingSignal(object):
 
                 if next_phase >= len(self.phase_position_values):
                     # ====== 趋势行情 ======
-                    
+
                     # 当前持仓价值
                     current_position_value = abs(self.position) * self.position_price
 
@@ -322,7 +342,7 @@ class MartingSignal(object):
 
                     elif self.direction == Direction.SHORT:
                         target_positon_price = trade_price * (1 - price_rate)
-                    
+
                     else:
                         exit("检查代码！")
 
@@ -414,9 +434,11 @@ class MartingSignal(object):
 
                     else:
                         exit("检查代码！")
-                    
+
                     # 加仓需要变更最大亏损比率，基于加仓后的持仓价值
-                    self.max_loss_rate = (self.max_loss_value / (abs(self.position) * self.position_price)) * 100
+                    self.max_loss_rate = (
+                        self.max_loss_value / (abs(self.position) * self.position_price)
+                    ) * 100
                     self.max_loss_rate = round_to(self.max_loss_rate, 0.01)
                     self.max_loss_rate = f"{self.max_loss_rate}%"
 
@@ -425,6 +447,14 @@ class MartingSignal(object):
 
         # 当前仓位阶段
         current_phase = self.get_current_phase()
+
+        # 下一趋势等级
+        next_phase = current_phase + 1
+        if next_phase >= len(self.phase_position_values):
+            self.next_trending_step = self.trending_step + 1
+
+        else:
+            self.next_trending_step = 0
 
         # 均线价格
         self.ma_price = self.am.sma(self.ma_window)
@@ -464,6 +494,12 @@ class MartingSignal(object):
 
                 else:
                     self.position_increase_price = self.position_price * (1 + 0.08)
+
+    def save_sync_data(self):
+        status = {}
+        for name in self.syncs:
+            status[name] = self.__getattribute__(name)
+        self.saved_sync_data = {"backtesting_status": status, "backtesting_to": self.bar.datetime.strftime("%Y-%m-%d %H:%M:%S")}
 
     def newSignal(self, direction, offset, price, volume):
         self.portfolio.newSignal(self, direction, offset, price, volume)
@@ -615,8 +651,8 @@ class MartingPortfolio(object):
             "signal_position_value": round_to(
                 abs(signal.position) * signal.position_price, 1
             ),
-            "max_loss_value":signal.max_loss_value,
-            "max_loss_rate":signal.max_loss_rate,
+            "max_loss_value": signal.max_loss_value,
+            "max_loss_rate": signal.max_loss_rate,
         }
         signal_trades_list.append(trade_data)
         self.signalTradesDict[signal_key] = signal_trades_list

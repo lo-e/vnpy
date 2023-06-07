@@ -1,11 +1,9 @@
 # encoding: UTF-8
 
 from datetime import datetime
-
 import numpy as np
 import matplotlib.pyplot as plt
 import copy
-
 from martingEngine import BacktestingEngine
 from csv import DictReader
 import csv
@@ -18,6 +16,8 @@ import pandas as pd
 from vnpy.trader.constant import Direction, Offset
 from vnpy.trader.utility import DIR_SYMBOL
 import shutil
+import json
+
 
 def one():
     engine = BacktestingEngine()
@@ -184,7 +184,9 @@ def one():
                                 "trending": "",
                             }
                         )
-                        signal_continuous_saved_list = continuous_saved_dict.get(signal_key, [])
+                        signal_continuous_saved_list = continuous_saved_dict.get(
+                            signal_key, []
+                        )
                         signal_continuous_saved_list = (
                             signal_continuous_saved_list + continuous_cached_list
                         )
@@ -203,7 +205,9 @@ def one():
         # 趋势追踪列表保存到csv
         start_dt_str = start_dt.strftime("%Y-%m-%d")
         end_dt_str = end_dt.strftime("%Y-%m-%d")
-        trending_dir_path = f"trending_continuous{DIR_SYMBOL}{start_dt_str}_{end_dt_str}{DIR_SYMBOL}"
+        trending_dir_path = (
+            f"trending_continuous{DIR_SYMBOL}{start_dt_str}_{end_dt_str}{DIR_SYMBOL}"
+        )
         for signal, signal_continuous_saved_list in continuous_saved_dict.items():
             if not os.path.exists(trending_dir_path):
                 os.makedirs(trending_dir_path)
@@ -223,6 +227,31 @@ def one():
                 writer.writeheader()
                 # 写入csv文件
                 writer.writerows(signal_continuous_saved_list)
+
+        # 趋势追踪策略状态、回测截止时间保存到json
+        backtesting_history_dir = f"backtesting_history{DIR_SYMBOL}"
+        if not os.path.exists(backtesting_history_dir):
+            os.makedirs(backtesting_history_dir)
+        backtesting_history_json = f"{backtesting_history_dir}{start_dt_str}_{end_dt_str}.json"
+
+        # 先从文件导入已经保存的回测数据
+        backtesting_data = {}
+        if os.path.exists(backtesting_history_json):
+            with open(backtesting_history_json, mode="r", encoding="UTF-8") as f:
+                backtesting_data = json.load(f)
+        
+        # 本次回测结果更新
+        for _, signal_list in engine.portfolio.signalDict.items():
+            for signal in signal_list:
+                symbol = signal.symbol
+                pure_symbol = symbol.split(".")[0]
+                direction = signal.direction
+                signal_key = f"MARTING_{pure_symbol}_{direction.value}"
+                backtesting_data[signal_key] = signal.saved_sync_data
+
+        # 保存到json
+        with open(backtesting_history_json, "w", encoding="utf-8") as file:
+            file.write(json.dumps(backtesting_data, ensure_ascii=False))
 
 
 def two():
