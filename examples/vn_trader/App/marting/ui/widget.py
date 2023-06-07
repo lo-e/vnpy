@@ -1,8 +1,8 @@
 # encoding: UTF-8
 
-'''
+"""
 Marting 和 CTA模块相关的GUI控制组件
-'''
+"""
 
 from vnpy.event import Event, EventEngine
 from vnpy.trader.ui import QtGui, QtCore, QtWidgets
@@ -12,6 +12,7 @@ from vnpy.app.cta_strategy.base import EVENT_CTA_LOG, EVENT_CTA_STRATEGY
 from .language import text
 from vnpy.trader.engine import MainEngine
 from ..base import APP_NAME
+
 
 class CtaValueMonitor(QtWidgets.QTableWidget):
     """参数监控"""
@@ -59,8 +60,10 @@ class CtaValueMonitor(QtWidgets.QTableWidget):
         # 自动调节宽度
         self.resizeColumnsToContents()
 
+
 class CtaStrategyManager(QtWidgets.QGroupBox):
     """策略管理组件"""
+
     signal = QtCore.pyqtSignal(Event)
 
     # ----------------------------------------------------------------------
@@ -134,7 +137,7 @@ class CtaStrategyManager(QtWidgets.QGroupBox):
     def updateVar(self, event):
         """更新组合变量"""
         data = event.data
-        variables = data['variables']
+        variables = data["variables"]
         self.varMonitor.updateData(variables)
 
     # ----------------------------------------------------------------------
@@ -159,13 +162,16 @@ class CtaStrategyManager(QtWidgets.QGroupBox):
         self.martingEngine.stop_strategy(self.name)
 
     """ modify by loe """
+
     # ----------------------------------------------------------------------
     def reinit(self):
         """重新初始化策略"""
         self.martingEngine.reinit_strategie(self.name)
 
+
 class MartingPortfolioManager(QtWidgets.QGroupBox):
     """马丁组合管理组件"""
+
     signal = QtCore.pyqtSignal(Event)
 
     # ----------------------------------------------------------------------
@@ -185,7 +191,7 @@ class MartingPortfolioManager(QtWidgets.QGroupBox):
     # ----------------------------------------------------------------------
     def initUi(self):
         """初始化界面"""
-        self.setTitle(u'组合管理')
+        self.setTitle("组合管理")
 
         self.paramMonitor = CtaValueMonitor(self)
         self.varMonitor = CtaValueMonitor(self)
@@ -194,7 +200,7 @@ class MartingPortfolioManager(QtWidgets.QGroupBox):
         self.paramMonitor.setFixedHeight(height)
         self.varMonitor.setFixedHeight(height)
 
-        buttonLoad = QtWidgets.QPushButton('加载组合')
+        buttonLoad = QtWidgets.QPushButton("加载组合")
         buttonInit = QtWidgets.QPushButton(text.INIT)
         buttonStart = QtWidgets.QPushButton(text.START)
         buttonStop = QtWidgets.QPushButton(text.STOP)
@@ -279,13 +285,16 @@ class MartingPortfolioManager(QtWidgets.QGroupBox):
         self.martingEngine.stopPortfolio()
 
     """ modify by loe """
+
     # ----------------------------------------------------------------------
     def reinit(self):
         """重新初始化策略"""
         self.martingEngine.reinit_strategies()
 
+
 class MartingManager(QtWidgets.QWidget):
-    """ 引擎管理组件 """
+    """引擎管理组件"""
+
     signal = QtCore.pyqtSignal(Event)
 
     def __init__(self, mainEngine: MainEngine, eventEngine: EventEngine, parent=None):
@@ -302,15 +311,17 @@ class MartingManager(QtWidgets.QWidget):
 
     def initUi(self):
         """初始化界面"""
-        self.setWindowTitle(u'马丁趋势追踪交易')
+        self.setWindowTitle("马丁趋势追踪交易")
 
         # 马丁组合
-        portfolioManager = MartingPortfolioManager(self.martingEngine, self.eventEngine, self)
+        portfolioManager = MartingPortfolioManager(
+            self.martingEngine, self.eventEngine, self
+        )
         portfolioManager.setMaximumHeight(600)
 
         # 滚动区域，放置所有的CtaStrategyManager
         self.scrollArea = QtWidgets.QScrollArea()
-        #self.scrollArea.setWidgetResizable(True)
+        # self.scrollArea.setWidgetResizable(True)
 
         # CTA组件的日志监控
         self.ctaLogMonitor = QtWidgets.QTextEdit()
@@ -332,7 +343,9 @@ class MartingManager(QtWidgets.QWidget):
 
         l = self.martingEngine.get_strategy_names()
         for name in l:
-            strategyManager = CtaStrategyManager(self.martingEngine, self.eventEngine, name)
+            strategyManager = CtaStrategyManager(
+                self.martingEngine, self.eventEngine, name
+            )
             vbox.addWidget(strategyManager)
 
         vbox.addStretch()
@@ -361,7 +374,7 @@ class MartingManager(QtWidgets.QWidget):
     def updateCtaLog(self, event):
         """更新CTA相关日志"""
         log = event.data
-        content = '\t'.join([str(log.time), log.msg])
+        content = "\t".join([str(log.time), log.msg])
         self.ctaLogMonitor.append(content)
 
     # ----------------------------------------------------------------------
@@ -369,12 +382,3 @@ class MartingManager(QtWidgets.QWidget):
         """注册事件监听"""
         self.signal.connect(self.updateCtaLog)
         self.eventEngine.register(EVENT_CTA_LOG, self.signal.emit)
-
-
-
-
-
-
-
-
-
