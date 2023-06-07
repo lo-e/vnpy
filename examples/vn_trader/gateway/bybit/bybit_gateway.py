@@ -1282,6 +1282,9 @@ class BybitUsdtRestApi(RestClient):
         # 推送提交中事件
         order: OrderData = req.create_order_data(orderid, self.gateway_name)
 
+        # 持仓模式【0: 单向持仓 1: 买侧双向持仓 2: 卖侧双向持仓】
+        positionIdx = 1 if req.direction == Direction.LONG else (2 if req.direction == Direction.SHORT else 0)
+
         # 生成委托请求
         data: dict = {
             "symbol": req.symbol,
@@ -1290,7 +1293,8 @@ class BybitUsdtRestApi(RestClient):
             "order_link_id": orderid,
             "time_in_force": "GoodTillCancel",
             "reduce_only": False,
-            "close_on_trigger": False
+            "close_on_trigger": False,
+            "positionIdx": positionIdx
         }
 
         data["order_type"] = ORDER_TYPE_VT2BYBIT[req.type]
