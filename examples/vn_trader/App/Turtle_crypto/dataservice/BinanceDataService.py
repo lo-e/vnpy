@@ -27,7 +27,7 @@ class Binancetype(Enum):
 # start：'%Y-%m-%d %H:%M:%S'
 # end：'%Y-%m-%d %H:%M:%S'
 # limit：<= 1500
-def binance_get_bar_data(symbol:str, interval:str, symbol_type:Binancetype, start_time:str='', end_time:str='', limit:int=1000):
+def binance_get_bar_data(symbol:str, interval:str, symbol_type:Binancetype, start_time:str='', end_time:str='', limit:int=1500):
     params: dict = {
         "symbol": symbol,
         "interval": interval,
@@ -101,7 +101,7 @@ def binance_get_bar_data(symbol:str, interval:str, symbol_type:Binancetype, star
         return None
 
     # 写入csv
-    contract = f'Binance.{symbol}'
+    contract = f'BINANCE.{symbol}'
     csv_path = get_csv_path()
     dir_path = csv_path + f'{contract}{DIR_SYMBOL}{interval}{DIR_SYMBOL}'
     if not os.path.exists(dir_path):
@@ -127,12 +127,12 @@ if __name__ == '__main__':
     symbol = 'BTCUSDT'
     interval = '1m'
     start_time = (datetime.now() - timedelta(days=6)).strftime("%Y-%m-%d") + ' 00:00:00'
-    end_time = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d") + ' 00:00:00'
+    end_time = (datetime.now() + timedelta(days=2)).strftime("%Y-%m-%d") + ' 00:00:00'
     #start_time = ''
     #end_time = ''
 
     start_time = '2020-01-01 00:00:00'
-    end_time = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d") + ' 00:00:00'
+    end_time = (datetime.now() + timedelta(days=2)).strftime("%Y-%m-%d") + ' 00:00:00'
 
     binance_get_bar_data(symbol=symbol, interval=interval, symbol_type=Binancetype.USDT, start_time=start_time, end_time=end_time, limit=1500)
     print('completed！')

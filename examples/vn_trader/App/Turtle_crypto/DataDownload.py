@@ -17,20 +17,39 @@ if __name__ == '__main__':
 
     """ BYBIT """
     #"""
-    mode = input('选择模式【反向：1  正向：2 接口获取：3】')
-    if mode == '1':
-        contract_list = ['BTCUSD', 'ETHUSD']
-    elif mode == '2':
-        contract_list = ['BTCUSDT', 'ETHUSDT']
-        # contract_list = ['SHIB1000USDT', 'AAVEUSDT', 'ADAUSDT', 'APEUSDT', 'ATOMUSDT', 'AVAXUSDT', 'BCHUSDT', 'BNBUSDT', 'BTCUSDT', 'CHZUSDT', 'CRVUSDT', 'DOGEUSDT', 'DOTUSDT', 'EOSUSDT', 'ETCUSDT', 'FILUSDT', 'LINKUSDT', 'LTCUSDT', 'MATICUSDT', 'NEARUSDT', 'SANDUSDT', 'SOLUSDT', 'SUSHIUSDT', 'UNIUSDT', 'XRPUSDT']
-    else:
-        contract_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
-        for symbol in contract_list:
-            print(symbol)
-        print(f"即将下载总计：{len(contract_list)}")
+    exchange = input('选择交易所【Bybit：1  Binance：2】')
+    if exchange == "1":
+        mode = input('选择模式【反向：1  正向：2 接口获取：3】')
+        if mode == '1':
+            contract_list = ['BTCUSD', 'ETHUSD']
+
+        elif mode == '2':
+            contract_list = ['BTCUSDT', 'ETHUSDT']
+            # contract_list = ['SHIB1000USDT', 'AAVEUSDT', 'ADAUSDT', 'APEUSDT', 'ATOMUSDT', 'AVAXUSDT', 'BCHUSDT', 'BNBUSDT', 'BTCUSDT', 'CHZUSDT', 'CRVUSDT', 'DOGEUSDT', 'DOTUSDT', 'EOSUSDT', 'ETCUSDT', 'FILUSDT', 'LINKUSDT', 'LTCUSDT', 'MATICUSDT', 'NEARUSDT', 'SANDUSDT', 'SOLUSDT', 'SUSHIUSDT', 'UNIUSDT', 'XRPUSDT']
+        
+        else:
+            contract_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
+            for symbol in contract_list:
+                print(symbol)
+            print(f"即将下载总计：{len(contract_list)}")
+    
+    elif exchange == "2":
+        mode = input('选择模式【反向：1  正向：2 接口获取：3】')
+        if mode == '1':
+            contract_list = ['BTCUSD', 'ETHUSD']
+
+        elif mode == '2':
+            contract_list = ['BTCUSDT', 'ETHUSDT']
+           
+        else:
+            contract_list = ['BTCUSDT']
+            # contract_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
+            # for symbol in contract_list:
+            #     print(symbol)
+            # print(f"即将下载总计：{len(contract_list)}")
 
     # 起止日期
-    days = 6
+    days = 2
     to_date = datetime.now() + timedelta(days=2)
     # days = (datetime.now() - datetime.strptime('2020-01-01', '%Y-%m-%d')).days
     # to_date = datetime.strptime('2023-12-31', '%Y-%m-%d')
@@ -40,9 +59,15 @@ if __name__ == '__main__':
 
     # 开始下载
     dataDownload = TurtleCryptoDataDownloading()
-    dataDownload.download_from_bybit(contract_list=contract_list, days=days, to_date=to_date, from_data_base=from_data_base)
-    # result, complete_msg, back_msg, lost_msg = dataDownload.generate_for_bybit(contract_list=contract_list, days=days)
-    # print('\n\n' + lost_msg + back_msg)
+    if exchange == "1":
+        dataDownload.download_from_bybit(contract_list=contract_list, days=days, to_date=to_date, from_data_base=from_data_base)
+        # result, complete_msg, back_msg, lost_msg = dataDownload.generate_for_bybit(contract_list=contract_list, days=days)
+        # print('\n\n' + lost_msg + back_msg)
+
+    elif exchange == "2":
+        dataDownload.download_from_binance(contract_list=contract_list, days=days, to_date=to_date, from_data_base=from_data_base)
+
+    
     #"""
 
     """ OKEX """
