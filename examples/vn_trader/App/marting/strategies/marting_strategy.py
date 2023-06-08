@@ -600,6 +600,9 @@ class MartingStrategy(CtaTemplate):
 
     def on_trade(self, trade):
         """成交推送"""
+        # 持仓精度自动修正
+        self.pos = round_to(self.pos, self.symbol_min_volume)
+
         # 检查目标持仓是否执行完成
         sub = abs(abs(self.pos) - self.target_volume)
         if sub < self.symbol_min_volume:
