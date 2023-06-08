@@ -171,5 +171,5 @@ if __name__ == '__main__':
     symbol_list = binance_get_symbol_list(need_data=False)
     for symbol in symbol_list:
         print(symbol)
-    print(f"BINANCE_USDT正向永续合约总计{len(symbol_list)}")
+    print(f"BINANCE_USDT正向永续合约总计：{len(symbol_list)}")
     #"""
