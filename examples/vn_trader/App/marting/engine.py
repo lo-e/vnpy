@@ -222,10 +222,10 @@ class MartingEngine(BaseEngine):
             return
 
         if trade.direction == Direction.LONG:
-            strategy.pos = Decimal(str(strategy.pos)) + Decimal(str(trade.volume))
+            strategy.pos = float(Decimal(str(strategy.pos)) + Decimal(str(trade.volume)))
             # strategy.pos += trade.volume
         else:
-            strategy.pos = Decimal(str(strategy.pos)) - Decimal(str(trade.volume))
+            strategy.pos = float(Decimal(str(strategy.pos)) - Decimal(str(trade.volume)))
             # strategy.pos -= trade.volume
 
         self.call_strategy_func(strategy, strategy.on_trade, trade)

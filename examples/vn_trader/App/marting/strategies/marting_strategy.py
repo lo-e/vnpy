@@ -347,6 +347,16 @@ class MartingStrategy(CtaTemplate):
                 if not self.position_close_price:
                     self.raise_error(f"平仓价格异常")
 
+                # 选择盈利最大化平仓价格
+                strategy_reduce_price = self.strategy_status["position_reduce_price"]
+                strategy_trending_step = self.strategy_status["trending_step"]
+                if self.trending_step == strategy_trending_step:
+                    if self.direction == Direction.LONG:
+                        self.position_close_price = max(self.position_close_price, strategy_reduce_price)
+                    
+                    if self.direction == Direction.SHORT:
+                        self.position_close_price = min(self.position_close_price, strategy_reduce_price)
+
                 # 是否达到目标价位
                 if self.direction == Direction.LONG:
                     if (
@@ -362,11 +372,12 @@ class MartingStrategy(CtaTemplate):
                     ):
                         self.target_volume = 0
 
+                # 策略组合更新
+                if self.trending_step >= self.top_step:
+                    self.portfolio.trending_top = False
+                
                 # 重置趋势追踪等级
                 self.trending_step = 0
-
-                # 策略组合更新
-                self.portfolio.trending_top = False
 
             if self.target_volume < 0:
                 # ====== 检查建仓加仓 ======
