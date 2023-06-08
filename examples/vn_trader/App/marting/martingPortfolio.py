@@ -215,3 +215,10 @@ class MartingPortfolio(object):
             file.write(
                 json.dumps(self.strategys_backtesting_history, ensure_ascii=False)
             )
+
+    def update_trending_top(self):
+        self.trending_top = False
+        for _, strategy in self.engine.strategies.items():
+            if strategy.trending_step >= strategy.top_step:
+                self.trending_top = True
+                break

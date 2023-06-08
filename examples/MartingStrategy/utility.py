@@ -423,5 +423,5 @@ if __name__ == "__main__":
 
     # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
     analyse_trending_continuous(
-        by_month=False, target_dir="2022-01-01_2023-05-27", for_trade_setting=True
+        by_month=False, target_dir="2022-01-01_2023-06-06", for_trade_setting=False
     )
