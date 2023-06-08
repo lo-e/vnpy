@@ -626,6 +626,8 @@ class MartingEngine(BaseEngine):
             self.write_log(f"马丁策略{strategy_name}初始化完成")
 
         self.init_thread = None
+        self.martingPortfolio.all_inited = True
+        self.put_portfolio_event()
 
     def start_strategy(self, strategy_name: str):
         """
@@ -721,6 +723,10 @@ class MartingEngine(BaseEngine):
 
     def start_all_strategies(self):
         """ """
+        if not self.martingPortfolio.all_inited:
+            self.write_log(f"策略组合未完全初始化，稍后尝试启动策略")
+            return
+        
         for strategy_name in self.strategies.keys():
             self.start_strategy(strategy_name)
 
