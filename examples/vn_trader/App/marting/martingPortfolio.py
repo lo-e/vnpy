@@ -31,6 +31,7 @@ class MartingPortfolio(object):
     paramList = ["name", "portfolioValue"]
     varList = [
         "today",
+        "all_inited",
         "is_downloading",
         "downloading_cost",
         "downloading_wait",
@@ -74,6 +75,7 @@ class MartingPortfolio(object):
         # 其它
         self.strategy_symbols = []  # 策略合约列表
         self.trending_top = False  # 策略组合中是否有策略已经达到趋势追踪最高级别
+        self.all_inited = False # 是否所有策略完成初始化
 
         # 策略回测历史
         self.strategys_backtesting_history = {}
