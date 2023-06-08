@@ -77,6 +77,7 @@ class MartingStrategy(CtaTemplate):
         "position_value",
         "position_price",
         "position_close_price",
+        "trending_step",
     ]
 
     def __init__(self, ctaEngine, martingPortfolio, setting):
@@ -152,10 +153,14 @@ class MartingStrategy(CtaTemplate):
     def on_init(self):
         # 回测历史记录如果数据库没有记录，从json文件中获取
         if not self.backtesting_status or not self.backtesting_to:
-            backtesting_history = self.portfolio.strategys_backtesting_history.get(self.strategy_name, {})
+            backtesting_history = self.portfolio.strategys_backtesting_history.get(
+                self.strategy_name, {}
+            )
             if backtesting_history:
                 self.backtesting_status = backtesting_history["backtesting_status"]
-                self.backtesting_to = datetime.strptime(backtesting_history["backtesting_to"], "%Y-%m-%d %H:%M:%S")
+                self.backtesting_to = datetime.strptime(
+                    backtesting_history["backtesting_to"], "%Y-%m-%d %H:%M:%S"
+                )
 
         self.write_log(f"{self.strategy_name}\t策略初始化")
 
@@ -416,20 +421,30 @@ class MartingStrategy(CtaTemplate):
 
                     else:
                         self.raise_error("检查代码！")
-                
+
                 # 回测当前趋势追踪等级比当前实盘的高
                 if not next_trending_step:
                     tick_price_cross = False
-                    if self.bottom_step <= strategy_trending_step <= self.top_step and self.strategy_trending_step > self.trending_step and not self.portfolio.trending_top:
+                    if (
+                        self.bottom_step <= strategy_trending_step <= self.top_step
+                        and self.strategy_trending_step > self.trending_step
+                        and not self.portfolio.trending_top
+                    ):
                         # 判断当前回测持仓盈亏是否满足指定条件
                         strategy_position_price = self.strategy_status["position_price"]
                         tick_price_cross = False
-                        if self.direction == Direction.LONG and tick.last_price < strategy_position_price * (1 - 0.01):
+                        if (
+                            self.direction == Direction.LONG
+                            and tick.last_price < strategy_position_price * (1 - 0.01)
+                        ):
                             tick_price_cross = True
-                        
-                        elif self.direction == Direction.SHORT and tick.last_price > strategy_position_price * (1 + 0.01):
+
+                        elif (
+                            self.direction == Direction.SHORT
+                            and tick.last_price > strategy_position_price * (1 + 0.01)
+                        ):
                             tick_price_cross = True
-                        
+
                         if tick_price_cross:
                             next_trending_step = strategy_trending_step
 
@@ -458,14 +473,10 @@ class MartingStrategy(CtaTemplate):
                             # 目标持仓价格
                             price_rate = 0.01
                             if self.direction == Direction.LONG:
-                                target_positon_price = trade_price * (
-                                    1 + price_rate
-                                )
+                                target_positon_price = trade_price * (1 + price_rate)
 
                             elif self.direction == Direction.SHORT:
-                                target_positon_price = trade_price * (
-                                    1 - price_rate
-                                )
+                                target_positon_price = trade_price * (1 - price_rate)
 
                             else:
                                 self.raise_error("检查代码！")
@@ -481,10 +492,7 @@ class MartingStrategy(CtaTemplate):
                         else:
                             target_value = (
                                 self.portfolio.portfolioValue * self.init_value_rate
-                            ) * (
-                                10
-                                ** (next_trending_step - self.bottom_step)
-                            )
+                            ) * (10 ** (next_trending_step - self.bottom_step))
                             changed_volume = target_value / trade_price
                             changed_volume = round_to(
                                 changed_volume, self.symbol_min_volume
@@ -501,7 +509,6 @@ class MartingStrategy(CtaTemplate):
                     # 策略组合更新
                     if self.trending_step >= self.top_step:
                         self.portfolio.trending_top = True
-
 
             # 有正在执行的开平仓操作，立即发出订单
             if self.target_volume >= 0:
