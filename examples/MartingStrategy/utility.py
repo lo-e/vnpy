@@ -357,7 +357,9 @@ def generate_setting(symbol_open_dict: dict):
 
     symbol_setting_list = []
     result_symbol_count = 0
-    for symbol, max_open in symbol_max_open_dict.items():
+    sorted_symbol_list = sorted(list(symbol_max_open_dict.keys()))
+    for symbol in sorted_symbol_list:
+        max_open = symbol_max_open_dict[symbol]
         # 趋势追踪最高等级
         top_step = max(int(max_open), 4)
         # 根据最小交易量决定的趋势追踪最大次数

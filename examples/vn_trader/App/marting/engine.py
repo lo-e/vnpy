@@ -60,6 +60,7 @@ from .martingPortfolio import MartingPortfolio
 import re
 from collections import OrderedDict
 from time import sleep
+from decimal import Decimal
 
 STOP_STATUS_MAP = {
     Status.SUBMITTING: StopOrderStatus.WAITING,
@@ -221,9 +222,11 @@ class MartingEngine(BaseEngine):
             return
 
         if trade.direction == Direction.LONG:
-            strategy.pos += trade.volume
+            strategy.pos = Decimal(str(strategy.pos)) + Decimal(str(trade.volume))
+            # strategy.pos += trade.volume
         else:
-            strategy.pos -= trade.volume
+            strategy.pos = Decimal(str(strategy.pos)) - Decimal(str(trade.volume))
+            # strategy.pos -= trade.volume
 
         self.call_strategy_func(strategy, strategy.on_trade, trade)
         self.put_strategy_event(strategy)
