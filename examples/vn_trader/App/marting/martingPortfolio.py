@@ -36,6 +36,7 @@ class MartingPortfolio(object):
         "downloading_wait",
         "is_generating",
         "generating_cost",
+        "trending_top",
     ]
     syncList = ["today", "trending_top"]
 
@@ -45,7 +46,7 @@ class MartingPortfolio(object):
 
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()  # 数据下载引擎
-        self.downloading_trigger = False # 开启下载线程
+        self.downloading_trigger = False  # 开启下载线程
         self.is_downloading = False  # 是否正在下载
         self.downloading_wait = 10000  # 数据下载等待时间（秒）
         self.downloading_cost = 0  # 下载更新一次花费的时间
@@ -152,7 +153,12 @@ class MartingPortfolio(object):
             self.downloading_cost = int(time() - self.downloading_time)
 
         # 每隔设定的时间开始下载
-        if self.downloading_wait >= 5 * 60 and not self.downloading_trigger and not self.is_downloading and not self.is_generating:
+        if (
+            self.downloading_wait >= 5 * 60
+            and not self.downloading_trigger
+            and not self.is_downloading
+            and not self.is_generating
+        ):
             self.downloading_trigger = True
             thread = Thread(target=self.download_data)
             thread.start()
@@ -194,7 +200,9 @@ class MartingPortfolio(object):
             if strategy.backtesting_status and strategy.backtesting_to:
                 strategy_backtesting_data = {
                     "backtesting_status": strategy.backtesting_status,
-                    "backtesting_to": strategy.backtesting_to.strftime("%Y-%m-%d %H:%M:%S"),
+                    "backtesting_to": strategy.backtesting_to.strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    ),
                 }
                 self.strategys_backtesting_history[
                     f"{strategy.strategy_name}"

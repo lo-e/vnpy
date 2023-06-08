@@ -397,67 +397,77 @@ class MartingStrategy(CtaTemplate):
                 if (
                     self.bottom_step <= strategy_next_trending_step <= self.top_step
                     and strategy_next_trending_step > self.trending_step
-                    and not self.portfolio.trending_top
-                ):
-                    # 是否达到目标价位
-                    if self.direction == Direction.LONG:
-                        # 根据RSI判断是否超卖
-                        rsi_cross = False
-                        for rsi in strategy_rsi_array:
-                            if rsi <= 25:
-                                rsi_cross = True
-                                break
+                ): 
+                    # 策略组合最多只能有一个趋势追踪最高等级
+                    trending_top_cross = True
+                    if strategy_next_trending_step == self.top_step and self.portfolio.trending_top:
+                        trending_top_cross = False
 
-                        if (
-                            rsi_cross
-                            and strategy_ma_price <= strategy_position_increase_price
-                            and tick.last_price > trade_price
-                        ):
-                            next_trending_step = strategy_next_trending_step
+                    if trending_top_cross:
+                        # 是否达到目标价位
+                        if self.direction == Direction.LONG:
+                            # 根据RSI判断是否超卖
+                            rsi_cross = False
+                            for rsi in strategy_rsi_array:
+                                if rsi <= 25:
+                                    rsi_cross = True
+                                    break
 
-                    elif self.direction == Direction.SHORT:
-                        # 根据RSI判断是否超买
-                        rsi_cross = False
-                        for rsi in strategy_rsi_array:
-                            if rsi >= 75:
-                                rsi_cross = True
-                                break
+                            if (
+                                rsi_cross
+                                and strategy_ma_price <= strategy_position_increase_price
+                                and tick.last_price > trade_price
+                            ):
+                                next_trending_step = strategy_next_trending_step
 
-                        if (
-                            rsi_cross
-                            and strategy_ma_price >= strategy_position_increase_price
-                            and tick.last_price < trade_price
-                        ):
-                            next_trending_step = strategy_next_trending_step
+                        elif self.direction == Direction.SHORT:
+                            # 根据RSI判断是否超买
+                            rsi_cross = False
+                            for rsi in strategy_rsi_array:
+                                if rsi >= 75:
+                                    rsi_cross = True
+                                    break
 
-                    else:
-                        self.raise_error("检查代码！")
+                            if (
+                                rsi_cross
+                                and strategy_ma_price >= strategy_position_increase_price
+                                and tick.last_price < trade_price
+                            ):
+                                next_trending_step = strategy_next_trending_step
+
+                        else:
+                            self.raise_error("检查代码！")
 
                 # 回测当前趋势追踪等级比当前实盘的高
                 if not next_trending_step:
                     tick_price_cross = False
                     if (
                         self.bottom_step <= strategy_trending_step <= self.top_step
-                        and self.strategy_trending_step > self.trending_step
-                        and not self.portfolio.trending_top
+                        and strategy_trending_step > self.trending_step
                     ):
-                        # 判断当前回测持仓盈亏是否满足指定条件
-                        strategy_position_price = self.strategy_status["position_price"]
-                        tick_price_cross = False
-                        if (
-                            self.direction == Direction.LONG
-                            and tick.last_price < strategy_position_price * (1 - 0.01)
-                        ):
-                            tick_price_cross = True
+                        # 策略组合最多只能有一个趋势追踪最高等级
+                        trending_top_cross = True
+                        if strategy_trending_step == self.top_step and self.portfolio.trending_top:
+                            trending_top_cross = False
 
-                        elif (
-                            self.direction == Direction.SHORT
-                            and tick.last_price > strategy_position_price * (1 + 0.01)
-                        ):
-                            tick_price_cross = True
+                        if trending_top_cross:
+                            # 判断当前回测持仓盈亏是否满足指定条件
+                            strategy_position_price = self.strategy_status["position_price"]
+                            tick_price_cross = False
+                            if (
+                                self.direction == Direction.LONG
+                                and tick.last_price < strategy_position_price * (1 - 0.01)
+                            ):
+                                tick_price_cross = True
 
-                        if tick_price_cross:
-                            next_trending_step = strategy_trending_step
+                            elif (
+                                self.direction == Direction.SHORT
+                                and tick.last_price > strategy_position_price * (1 + 0.01)
+                            ):
+                                tick_price_cross = True
+
+                            if tick_price_cross:
+                                next_trending_step = strategy_trending_step
 
                 if next_trending_step:
                     # 当前持仓价值
