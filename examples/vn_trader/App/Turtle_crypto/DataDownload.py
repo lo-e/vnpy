@@ -1,4 +1,5 @@
 from dataservice import TurtleCryptoDataDownloading, Binancetype, bybit_get_symbol_list, BybitSymbolType
+from dataservice.BinanceDataService import binance_get_symbol_list
 from vnpy.trader.constant import Interval
 from datetime import datetime, timedelta
 
@@ -42,17 +43,16 @@ if __name__ == '__main__':
             contract_list = ['BTCUSDT', 'ETHUSDT']
            
         else:
-            contract_list = ['BTCUSDT']
-            # contract_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
-            # for symbol in contract_list:
-            #     print(symbol)
-            # print(f"即将下载总计：{len(contract_list)}")
+            contract_list = binance_get_symbol_list()
+            for symbol in contract_list:
+                print(symbol)
+            print(f"即将下载总计：{len(contract_list)}")
 
     # 起止日期
-    days = 2
-    to_date = datetime.now() + timedelta(days=2)
-    # days = (datetime.now() - datetime.strptime('2020-01-01', '%Y-%m-%d')).days
-    # to_date = datetime.strptime('2023-12-31', '%Y-%m-%d')
+    # days = 6
+    # to_date = datetime.now() + timedelta(days=2)
+    days = (datetime.now() - datetime.strptime('2020-01-01', '%Y-%m-%d')).days
+    to_date = datetime.strptime('2023-12-31', '%Y-%m-%d')
 
     # 是否从数据库最新数据日期开始
     from_data_base = True
