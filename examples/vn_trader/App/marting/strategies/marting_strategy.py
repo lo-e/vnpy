@@ -565,6 +565,7 @@ class MartingStrategy(CtaTemplate):
         if self.target_volume >= 0:
             # 建仓加仓
             changed_volume = self.target_volume - abs(self.pos)
+            changed_volume = round_to(changed_volume, self.symbol_min_volume)
             if self.direction == Direction.LONG:
                 if changed_volume > 0:
                     # 加仓
@@ -602,7 +603,8 @@ class MartingStrategy(CtaTemplate):
     def on_trade(self, trade):
         """成交推送"""
         # 检查目标持仓是否执行完成
-        if abs(self.pos) == self.target_volume:
+        sub = abs(abs(self.pos) - self.target_volume)
+        if sub < self.symbol_min_volume:
             self.target_volume = -1
 
         if self.pos:
