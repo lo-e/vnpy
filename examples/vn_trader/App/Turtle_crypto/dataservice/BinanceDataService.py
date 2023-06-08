@@ -117,7 +117,7 @@ def binance_get_bar_data(symbol:str, interval:str, symbol_type:Binancetype, star
     return datetime.strptime(until, "%Y-%m-%d-%H%M%S")
 
 def binance_get_symbol_list(need_data: bool = False):
-    # ====== 只支持正向合约 ======
+    # ====== 只支持USDT正向合约 ======
     symbol_list = set()
     symbol_data_dict = {}
 
@@ -128,8 +128,10 @@ def binance_get_symbol_list(need_data: bool = False):
     data = data.get("symbols", [])
     for d in data:
         symbol = d["symbol"]
-        symbol_list.add(symbol)
-        symbol_data_dict[symbol] = d
+        asset = d["quoteAsset"]
+        if asset == "USDT":
+            symbol_list.add(symbol)
+            symbol_data_dict[symbol] = d
 
     # 排序
     symbol_list = sorted(list(symbol_list))
