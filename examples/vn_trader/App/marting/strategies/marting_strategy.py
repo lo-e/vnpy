@@ -372,12 +372,13 @@ class MartingStrategy(CtaTemplate):
                     ):
                         self.target_volume = 0
 
-                # 策略组合更新
-                if self.trending_step >= self.top_step:
-                    self.portfolio.trending_top = False
-                
-                # 重置趋势追踪等级
-                self.trending_step = 0
+                if self.target_volume == 0:
+                    # 策略组合更新
+                    if self.trending_step >= self.top_step:
+                        self.portfolio.trending_top = False
+                    
+                    # 重置趋势追踪等级
+                    self.trending_step = 0
 
             if self.target_volume < 0:
                 # ====== 检查建仓加仓 ======
