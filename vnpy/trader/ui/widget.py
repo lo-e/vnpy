@@ -938,7 +938,7 @@ class TradingWidget(QtWidgets.QWidget):
             self.qsize_show_frequency = 0
             qsize = self.event_engine._queue.qsize()
             self.qsize_label.setText(f'EVENT_ENGINE_QSIZE {qsize}')
-            if qsize >= 20:
+            if qsize >= 2000:
                 try:
                     self.main_engine.send_ding_talk(content=f'EVENT_ENGINE_QSIZE 监控\n============\nQSIZE：{qsize}')
                 except:
