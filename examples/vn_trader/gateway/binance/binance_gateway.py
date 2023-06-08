@@ -43,8 +43,10 @@ from vnpy.trader.object import (
 from vnpy.trader.event import EVENT_TIMER
 from vnpy.trader.utility import round_to
 
-from vnpy_rest import Request, RestClient, Response
-from vnpy_websocket import WebsocketClient
+# from vnpy_rest import Request, RestClient, Response
+# from vnpy_websocket import WebsocketClient
+from ..rest import Request, RestClient, Response
+from ..websocket import WebsocketClient
 from pytz import timezone
 
 
