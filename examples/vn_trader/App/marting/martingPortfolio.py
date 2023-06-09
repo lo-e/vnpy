@@ -76,7 +76,7 @@ class MartingPortfolio(object):
         self.strategy_symbols = []  # 策略合约列表
         self.trending_top = False  # 策略组合中是否有策略已经达到趋势追踪最高级别
         self.all_inited = False  # 是否所有策略完成初始化
-        self.strategy_info_count_down = 1 * 60  # 每隔一段时间发送策略状态信息通知
+        self.strategy_info_count_down = 2 * 60  # 每隔一段时间发送策略状态信息通知
 
         # 策略回测历史
         self.strategys_backtesting_history = {}
