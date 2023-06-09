@@ -30,11 +30,11 @@ def one():
 
     exchange = input('选择交易所【Bybit：1  Binance：2】')
     if exchange == "1":
-        exhcange = "BYBIT"
+        exchange = "BYBIT"
         filename = "setting_bybit.csv"
 
     elif exchange == "2":
-        exhcange = "BINANCE"
+        exchange = "BINANCE"
         filename = "setting_binance.csv"
 
     else:
@@ -217,7 +217,7 @@ def one():
         start_dt_str = start_dt.strftime("%Y-%m-%d")
         end_dt_str = end_dt.strftime("%Y-%m-%d")
         trending_dir_path = (
-            f"trending_continuous{DIR_SYMBOL}{start_dt_str}_{end_dt_str}{DIR_SYMBOL}"
+            f"trending_continuous{DIR_SYMBOL}{exchange}{DIR_SYMBOL}{start_dt_str}_{end_dt_str}{DIR_SYMBOL}"
         )
         for signal, signal_continuous_saved_list in continuous_saved_dict.items():
             if not os.path.exists(trending_dir_path):
@@ -240,7 +240,7 @@ def one():
                 writer.writerows(signal_continuous_saved_list)
 
         # 趋势追踪策略状态、回测截止时间保存到json
-        backtesting_history_dir = f"backtesting_history{DIR_SYMBOL}"
+        backtesting_history_dir = f"backtesting_history{DIR_SYMBOL}{exchange}{DIR_SYMBOL}"
         if not os.path.exists(backtesting_history_dir):
             os.makedirs(backtesting_history_dir)
         backtesting_history_json = f"{backtesting_history_dir}{start_dt_str}_{end_dt_str}.json"
