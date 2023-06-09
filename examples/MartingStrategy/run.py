@@ -28,7 +28,18 @@ def one():
     if figSavedName:
         figSavedName = f"figSaved{DIR_SYMBOL}{figSavedName}"
 
-    filename = "setting.csv"
+    exchange = input('选择交易所【Bybit：1  Binance：2】')
+    if exchange == "1":
+        exhcange = "BYBIT"
+        filename = "setting_bybit.csv"
+
+    elif exchange == "2":
+        exhcange = "BINANCE"
+        filename = "setting_binance.csv"
+
+    else:
+        exit(f"交易所选择错误")
+
     symbolList = []
     with open(filename, errors="ignore") as f:
         r = DictReader(f)
