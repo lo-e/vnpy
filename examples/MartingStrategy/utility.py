@@ -17,6 +17,7 @@ from vn_trader.App.Turtle_crypto.dataservice.BybitDataService import (
     BybitSymbolType,
 )
 
+from vn_trader.App.Turtle_crypto.dataservice.BinanceDataService import binance_get_symbol_list
 
 # 计算每个加仓阶段的亏损状态
 def calculate_phase_loss(phase_count: int, increase_type: int = 1):
@@ -87,7 +88,7 @@ def calculate_phase_loss(phase_count: int, increase_type: int = 1):
 
 # 分析trending_continuous下的趋势追踪结果
 def analyse_trending_continuous(
-    by_month: bool = False, target_dir: str = "", for_trade_setting: bool = False
+     exchange:str, target_dir: str, by_month: bool = False, for_trade_setting: bool = False
 ):
     # 趋势追踪程度
     continuous_open_dict = {}
@@ -96,24 +97,19 @@ def analyse_trending_continuous(
     month_open_symbol_dict = {}
     month_symbol_open_dict = {}
 
+    start_end = target_dir.split("_")
+    if start_end and len(start_end) == 2:
+        start = start_end[0]
+        end = start_end[1]
+        print(f"\n====== 起止日期：{start} - {end} ======")
+
+    else:
+        exit("参数【target_dir】错误")
+
     path = os.path.abspath(__file__)
     file_name = path.split(DIR_SYMBOL)[-1]
-    main_dir_path = path.rstrip(file_name) + f"trending_continuous{DIR_SYMBOL}"
+    main_dir_path = path.rstrip(file_name) + f"trending_continuous{DIR_SYMBOL}{exchange}{DIR_SYMBOL}{target_dir}{DIR_SYMBOL}"
     for root, _, files in os.walk(main_dir_path):
-        if DIR_SYMBOL in root:
-            dir_name = root.split(DIR_SYMBOL)[-1]
-            if target_dir and dir_name and dir_name != target_dir:
-                continue
-
-            start_end = dir_name.split("_")
-            if start_end and len(start_end) == 2:
-                start = start_end[0]
-                end = start_end[1]
-                print(f"\n====== 起止日期：{start} - {end} ======")
-
-            else:
-                continue
-
         for theFile in files:
             # 排除不合法文件
             if theFile.startswith("."):
@@ -205,19 +201,19 @@ def analyse_trending_continuous(
 
             # 信号连续趋势追踪统计
             symbol_open_dict = month_symbol_open_dict[month]
-            output_symbol_open_result(symbol_open_dict)
+            output_symbol_open_result(symbol_open_dict, exchange=exchange)
 
     else:
         # 连续趋势追踪信号统计
         output_open_symbol_result(continuous_open_symbol_dict)
 
         # 信号连续趋势追踪统计
-        output_symbol_open_result(continuous_symbol_open_dict)
+        output_symbol_open_result(continuous_symbol_open_dict, exchange=exchange)
 
     # 生成实盘setting.json
     if for_trade_setting:
         all_symbol_set = set()
-        setting_file_path = "setting.csv"
+        setting_file_path = f"setting_{exchange.lower()}.csv"
         with open(setting_file_path, "r") as f:
             reader = csv.DictReader(f)
             for row in reader:
@@ -228,7 +224,7 @@ def analyse_trending_continuous(
         total_dict = copy(continuous_symbol_open_dict)
         for max_2_symbol in max_2_symbol_set:
             total_dict[max_2_symbol] = {"2":[]}
-        generate_setting(total_dict)
+        generate_setting(total_dict, exchange=exchange)
 
 
 def output_open_symbol_result(open_symbol_dict: dict):
@@ -260,9 +256,9 @@ def output_open_symbol_result(open_symbol_dict: dict):
             #     )
 
 
-def output_symbol_open_result(symbol_open_dict: dict):
+def output_symbol_open_result(symbol_open_dict: dict, exchange:str):
     all_symbol_set = set()
-    setting_file_path = "setting.csv"
+    setting_file_path = f"setting_{exchange.lower()}.csv"
     with open(setting_file_path, "r") as f:
         reader = csv.DictReader(f)
         for row in reader:
@@ -303,20 +299,32 @@ def output_symbol_open_result(symbol_open_dict: dict):
         print(symbol)
 
 
-def generate_setting(symbol_open_dict: dict):
+def generate_setting(symbol_open_dict: dict, exchange:str):
     # 获取合约最小交易价值
     symbol_min_value_dict = {}
-    usdt_symbol_list, data = bybit_get_symbol_list(
-        type=BybitSymbolType.USDT, need_data=True
-    )
+    if exchange == "BYBIT":
+        usdt_symbol_list, data = bybit_get_symbol_list(
+            type=BybitSymbolType.USDT, need_data=True
+        )
+    
+    elif exchange == "BINANCE":
+        usdt_symbol_list, data = binance_get_symbol_list(need_data=True)
+    
+    else:
+        exit("未知交易所，检查参数是否正确")
+
     for symbol in usdt_symbol_list:
         d = data[symbol]
 
         # 交易所合约
-        full_symbol = f"{symbol}.BYBIT"
+        full_symbol = f"{symbol}.{exchange}"
 
         # 最小交易数量
-        min_volume = d["lot_size_filter"]["min_trading_qty"]
+        if exchange == "BYBIT":
+            min_volume = float(d["lot_size_filter"]["min_trading_qty"])
+        
+        elif exchange == "BINANCE":
+            min_volume = float(d["filters"][2]["minQty"])
 
         # 数据库获取起始日期
         client = MongoClient("localhost", 27017)
@@ -325,10 +333,12 @@ def generate_setting(symbol_open_dict: dict):
         end_data = collection.find_one(sort=[("datetime", DESCENDING)])
         if end_data:
             # 获取最新的价格
-            price = end_data["close_price"] if end_data else None  # 数据库获取最新价格
+            price = end_data["close_price"] # 数据库获取最新价格
 
             # 最小交易价值
             value = min_volume * price
+            if exchange == "BINANCE":
+                value = max(value, 5)
 
             # 存入字典
             symbol_min_value_dict[full_symbol] = value
@@ -371,7 +381,7 @@ def generate_setting(symbol_open_dict: dict):
         if min_value:
             for i in range(len(strategy_trending_value_list)):
                 v = strategy_trending_value_list[i]
-                if min_value * 2 <= v:
+                if min_value * 1.5 <= v:
                     init_value = v
                     step_length = len(strategy_trending_value_list) - i
                     if step_length > top_step:
@@ -412,7 +422,11 @@ def generate_setting(symbol_open_dict: dict):
     setting_dict["signal"] = symbol_setting_list
 
     # 保存到json文件
-    json_file = "trade_setting.json"
+    file_dir = f"trade_setting{DIR_SYMBOL}"
+    if not os.path.exists(file_dir):
+        os.makedirs(file_dir)
+
+    json_file = f"{file_dir}{exchange}.json"
     with io.open(json_file, "w", encoding='utf-8') as file:
         file.write(json.dumps(setting_dict, ensure_ascii=False))
     print(f"\n生成的实盘参数已保存到{json_file}\n总计合约数：{len(symbol_open_dict)}\n成功生成实盘参数合约数：{result_symbol_count}")
@@ -423,5 +437,5 @@ if __name__ == "__main__":
 
     # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
     analyse_trending_continuous(
-        by_month=False, target_dir="2022-01-01_2023-06-06", for_trade_setting=False
+        exchange="BYBIT", target_dir="2022-01-01_2023-06-06", by_month=False, for_trade_setting=True
     )

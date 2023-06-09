@@ -1,0 +1,405 @@
+{
+  "signal": [
+    {
+      "strategy_name": "MARTING_1000SHIB_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "1000SHIBUSDT.BINANCE",
+      "direction": "多",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_1000SHIB_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "1000SHIBUSDT.BINANCE",
+      "direction": "空",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_1000XEC_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "1000XECUSDT.BINANCE",
+      "direction": "多",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_1000XEC_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "1000XECUSDT.BINANCE",
+      "direction": "空",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_1INCH_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "1INCHUSDT.BINANCE",
+      "direction": "多",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_1INCH_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "1INCHUSDT.BINANCE",
+      "direction": "空",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_AAVE_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "AAVEUSDT.BINANCE",
+      "direction": "多",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_AAVE_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "AAVEUSDT.BINANCE",
+      "direction": "空",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_ADA_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "ADAUSDT.BINANCE",
+      "direction": "多",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_ADA_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "ADAUSDT.BINANCE",
+      "direction": "空",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_ALGO_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "ALGOUSDT.BINANCE",
+      "direction": "多",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_ALGO_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "ALGOUSDT.BINANCE",
+      "direction": "空",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_ALICE_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "ALICEUSDT.BINANCE",
+      "direction": "多",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_ALICE_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "ALICEUSDT.BINANCE",
+      "direction": "空",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_ALPHA_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "ALPHAUSDT.BINANCE",
+      "direction": "多",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_ALPHA_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "ALPHAUSDT.BINANCE",
+      "direction": "空",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_ANKR_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "ANKRUSDT.BINANCE",
+      "direction": "多",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_ANKR_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "ANKRUSDT.BINANCE",
+      "direction": "空",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_ATA_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "ATAUSDT.BINANCE",
+      "direction": "多",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_ATA_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "ATAUSDT.BINANCE",
+      "direction": "空",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_ATOM_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "ATOMUSDT.BINANCE",
+      "direction": "多",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_ATOM_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "ATOMUSDT.BINANCE",
+      "direction": "空",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_AUDIO_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "AUDIOUSDT.BINANCE",
+      "direction": "多",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_AUDIO_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "AUDIOUSDT.BINANCE",
+      "direction": "空",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_AVAX_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "AVAXUSDT.BINANCE",
+      "direction": "多",
+      "init_value_rate": 1.0,
+      "bottom_step": 3,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_AVAX_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "AVAXUSDT.BINANCE",
+      "direction": "空",
+      "init_value_rate": 1.0,
+      "bottom_step": 3,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_AXS_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "AXSUSDT.BINANCE",
+      "direction": "多",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_AXS_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "AXSUSDT.BINANCE",
+      "direction": "空",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BAKE_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "BAKEUSDT.BINANCE",
+      "direction": "多",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BAKE_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "BAKEUSDT.BINANCE",
+      "direction": "空",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BAL_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "BALUSDT.BINANCE",
+      "direction": "多",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BAL_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "BALUSDT.BINANCE",
+      "direction": "空",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BAND_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "BANDUSDT.BINANCE",
+      "direction": "多",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BAND_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "BANDUSDT.BINANCE",
+      "direction": "空",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BAT_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "BATUSDT.BINANCE",
+      "direction": "多",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BAT_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "BATUSDT.BINANCE",
+      "direction": "空",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BCH_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "BCHUSDT.BINANCE",
+      "direction": "多",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BCH_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "BCHUSDT.BINANCE",
+      "direction": "空",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BEL_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "BELUSDT.BINANCE",
+      "direction": "多",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BEL_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "BELUSDT.BINANCE",
+      "direction": "空",
+      "init_value_rate": 0.1,
+      "bottom_step": 2,
+      "top_step": 4,
+      "start": true
+    }
+  ],
+  "portfolio": { "name": "MARTING", "portfolioValue": 100 }
+}
