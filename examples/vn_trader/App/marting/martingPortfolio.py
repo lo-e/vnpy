@@ -231,25 +231,50 @@ class MartingPortfolio(object):
                 break
 
     def notice_strategy_info(self):
+        total = 0
+        error_count = 0
         fit_content = ""
         fit_count = 0
         un_fit_content = ""
         un_fit_count = 0
+        min_datetime = None
+        max_datetime = None
         for _, strategy in self.engine.strategies.items():
+            # 总计
+            total += 1
+
+            # 回测数据缺失的数量
             backtesting_status = (
                 strategy.backtesting_status if strategy.backtesting_status else {}
             )
+            if not backtesting_status:
+                error_count += 1
+
+            # 回测趋势追踪等级
             backtesting_step = backtesting_status.get("trending_step", 0)
+
+            # 回测截止时间
+            backtesting_to = strategy.backtesting_to
+
+            # 最小回测截止时间
+            min_datetime = min(min_datetime, backtesting_to) if min_datetime else backtesting_to
+
+            # 最大回测截止时间
+            max_datetime = max(max_datetime, backtesting_to) if max_datetime else backtesting_to
+
+            # 回测和实盘比较趋势追踪等级是否一致
             if backtesting_step or strategy.trending_step:
                 if backtesting_step == strategy.trending_step:
-                    fit_content += f"\nstrategy_name:{strategy.strategy_name}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\n\nstrategy_step: {strategy.trending_step}\nbacktesting_step: {backtesting_step}\nbacktesting_to: {strategy.backtesting_to}"
+                    fit_content += f"\nstrategy_name:{strategy.strategy_name}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\n\nstrategy_step: {strategy.trending_step}\nbacktesting_step: {backtesting_step}\nbacktesting_to: {backtesting_to}"
                     fit_content += "\n\n" + "-" * 10 + "\n\n"
                     fit_count += 1
 
                 else:
-                    un_fit_content += f"\nstrategy_name:{strategy.strategy_name}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\n\nstrategy_step: {strategy.trending_step}\nbacktesting_step: {backtesting_step}\nbacktesting_to: {strategy.backtesting_to}"
+                    un_fit_content += f"\nstrategy_name:{strategy.strategy_name}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\n\nstrategy_step: {strategy.trending_step}\nbacktesting_step: {backtesting_step}\nbacktesting_to: {backtesting_to}"
                     un_fit_content += "\n\n" + "-" * 10 + "\n\n"
                     un_fit_count += 1
 
-        self.engine.send_email(msg=fit_content, subject=f"马丁策略组合状态信息【正常 {fit_count}】")
-        self.engine.send_email(msg=un_fit_content, subject=f"马丁策略组合状态信息【非正常 {un_fit_count}】")
+        self.engine.send_email(msg=fit_content, subject=f"马丁策略组合状态信息【正常：{fit_count} 总共：{total} 周期：{min_datetime} - {max_datetime}】")
+        self.engine.send_email(msg=un_fit_content, subject=f"马丁策略组合状态信息【非正常：{un_fit_count} 总共：{total} 周期：{min_datetime} - {max_datetime}】")
+        if error_count:
+            self.engine.send_email(msg=fit_content, subject=f"马丁策略组合状态信息【回测状态缺失数量：{error_count}】")
