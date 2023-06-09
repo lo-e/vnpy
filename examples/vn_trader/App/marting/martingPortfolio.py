@@ -274,7 +274,12 @@ class MartingPortfolio(object):
                     un_fit_content += "\n\n" + "-" * 10 + "\n\n"
                     un_fit_count += 1
 
-        self.engine.send_email(msg=fit_content, subject=f"马丁策略组合状态信息【正常：{fit_count} 总共：{total} 周期：{min_datetime} - {max_datetime}】")
-        self.engine.send_email(msg=un_fit_content, subject=f"马丁策略组合状态信息【非正常：{un_fit_count} 总共：{total} 周期：{min_datetime} - {max_datetime}】")
+        # 通知内容整理
+        fit_content = f"\n总共：{total} 周期：{min_datetime} - {max_datetime}\n" + fit_content
+        un_fit_content = f"\n总共：{total} 周期：{min_datetime} - {max_datetime}\n" + un_fit_content
+
+        # 邮件发送通知
+        self.engine.send_email(msg=fit_content, subject=f"马丁策略组合状态信息【正常：{fit_count}】")
+        self.engine.send_email(msg=un_fit_content, subject=f"马丁策略组合状态信息【非正常：{un_fit_count}】")
         if error_count:
             self.engine.send_email(msg=fit_content, subject=f"马丁策略组合状态信息【回测状态缺失数量：{error_count}】")
