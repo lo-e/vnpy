@@ -275,8 +275,8 @@ class MartingPortfolio(object):
                     un_fit_count += 1
 
         # 通知内容整理
-        fit_content = f"\n总共：{total} 周期：{min_datetime} - {max_datetime}\n" + fit_content
-        un_fit_content = f"\n总共：{total} 周期：{min_datetime} - {max_datetime}\n" + un_fit_content
+        fit_content = f"\n总共：{total}\n周期：{min_datetime} - {max_datetime}\n" + fit_content
+        un_fit_content = f"\n总共：{total}\n周期：{min_datetime} - {max_datetime}\n" + un_fit_content
 
         # 邮件发送通知
         self.engine.send_email(msg=fit_content, subject=f"马丁策略组合状态信息【正常：{fit_count}】")
