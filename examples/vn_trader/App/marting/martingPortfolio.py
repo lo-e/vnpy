@@ -177,11 +177,21 @@ class MartingPortfolio(object):
 
     def download_data(self):
         contract_list = []
+        exchange = ""
         for symbol in self.strategy_symbols:
             contract_list.append(symbol.split(".")[0])
-        self.download_engine.download_from_bybit(
-            contract_list=contract_list, from_data_base=True
-        )
+            if not exchange:
+                exchange = symbol.split(".")[-1]
+        
+        if exchange == "BYBIT":
+            self.download_engine.download_from_bybit(
+                contract_list=contract_list, from_data_base=True
+            )
+        
+        elif exchange == 'BINANCE':
+            self.download_engine.download_from_binance(
+                contract_list=contract_list, from_data_base=True
+            )
 
     def generate_window_bar(self):
         self.bar_generate_engine.symbol_list = self.strategy_symbols

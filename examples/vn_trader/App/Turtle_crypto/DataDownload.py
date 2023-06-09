@@ -46,6 +46,9 @@ if __name__ == '__main__':
             for symbol in contract_list:
                 print(symbol)
             print(f"即将下载总计：{len(contract_list)}")
+    
+    else:
+        exit(f"交易所选择错误")
 
     # 起止日期
     # days = 6

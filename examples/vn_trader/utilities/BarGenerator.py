@@ -25,6 +25,8 @@ from App.Turtle_crypto.dataservice.BybitDataService import (
     BybitSymbolType,
 )
 
+from App.Turtle_crypto.dataservice.BinanceDataService import binance_get_symbol_list
+
 
 class BarGenerator:
     """
@@ -476,11 +478,20 @@ def get_full_symbol(symbol_list):
 
 
 if __name__ == "__main__":
-    # symbol_list = ['BTCUSDT', 'ETHUSDT']
-    # symbol_list = ['SHIB1000USDT', 'AAVEUSDT', 'ADAUSDT', 'APEUSDT', 'ATOMUSDT', 'AVAXUSDT', 'BCHUSDT', 'BNBUSDT', 'BTCUSDT', 'CHZUSDT', 'CRVUSDT', 'DOGEUSDT', 'DOTUSDT', 'EOSUSDT', 'ETCUSDT', 'FILUSDT', 'LINKUSDT', 'LTCUSDT', 'MATICUSDT', 'NEARUSDT', 'SANDUSDT', 'SOLUSDT', 'SUSHIUSDT', 'UNIUSDT', 'XRPUSDT']
-    symbol_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
+    exchange = input('选择交易所【Bybit：1  Binance：2】')
+    if exchange == "1":
+        exchange = "BYBIT"
+        # symbol_list = ['BTCUSDT', 'ETHUSDT']
+        # symbol_list = ['SHIB1000USDT', 'AAVEUSDT', 'ADAUSDT', 'APEUSDT', 'ATOMUSDT', 'AVAXUSDT', 'BCHUSDT', 'BNBUSDT', 'BTCUSDT', 'CHZUSDT', 'CRVUSDT', 'DOGEUSDT', 'DOTUSDT', 'EOSUSDT', 'ETCUSDT', 'FILUSDT', 'LINKUSDT', 'LTCUSDT', 'MATICUSDT', 'NEARUSDT', 'SANDUSDT', 'SOLUSDT', 'SUSHIUSDT', 'UNIUSDT', 'XRPUSDT']
+        symbol_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
+    
+    elif exchange == "2":
+        exchange = "BINANCE"
+        symbol_list = binance_get_symbol_list()
 
-    exchange = "BYBIT"
+    else:
+        exit(f"交易所选择错误")
+    
     symbol_list = [f"{symbol}.{exchange}" for symbol in symbol_list]
     processor = MultiThreadsMinuteBarProcessor(
         symbol_list=symbol_list,
