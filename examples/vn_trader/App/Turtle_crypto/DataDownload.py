@@ -26,7 +26,6 @@ if __name__ == '__main__':
 
         elif mode == '2':
             contract_list = ['BTCUSDT', 'ETHUSDT']
-            # contract_list = ['SHIB1000USDT', 'AAVEUSDT', 'ADAUSDT', 'APEUSDT', 'ATOMUSDT', 'AVAXUSDT', 'BCHUSDT', 'BNBUSDT', 'BTCUSDT', 'CHZUSDT', 'CRVUSDT', 'DOGEUSDT', 'DOTUSDT', 'EOSUSDT', 'ETCUSDT', 'FILUSDT', 'LINKUSDT', 'LTCUSDT', 'MATICUSDT', 'NEARUSDT', 'SANDUSDT', 'SOLUSDT', 'SUSHIUSDT', 'UNIUSDT', 'XRPUSDT']
         
         else:
             contract_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
