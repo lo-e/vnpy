@@ -26,8 +26,8 @@ class Binancetype(Enum):
 # interval：'1m', '1h', '1d'
 # start：'%Y-%m-%d %H:%M:%S'
 # end：'%Y-%m-%d %H:%M:%S'
-# limit：<= 1000
-def binance_get_bar_data(symbol:str, interval:str, symbol_type:Binancetype, start_time:str='', end_time:str='', limit:int=1000):
+# limit：<= 1500
+def binance_get_bar_data(symbol:str, interval:str, symbol_type:Binancetype, start_time:str='', end_time:str='', limit:int=1500):
     params: dict = {
         "symbol": symbol,
         "interval": interval,
@@ -101,7 +101,7 @@ def binance_get_bar_data(symbol:str, interval:str, symbol_type:Binancetype, star
         return None
 
     # 写入csv
-    contract = f'Binance.{symbol}'
+    contract = f'BINANCE.{symbol}'
     csv_path = get_csv_path()
     dir_path = csv_path + f'{contract}{DIR_SYMBOL}{interval}{DIR_SYMBOL}'
     if not os.path.exists(dir_path):
@@ -116,6 +116,34 @@ def binance_get_bar_data(symbol:str, interval:str, symbol_type:Binancetype, star
 
     return datetime.strptime(until, "%Y-%m-%d-%H%M%S")
 
+def binance_get_symbol_list(need_data: bool = False):
+    # ====== 只支持USDT正向合约 ======
+    symbol_list = set()
+    symbol_data_dict = {}
+
+    # 发起请求
+    url = f"{main_url_usdt}/fapi/v1/exchangeInfo"
+    resp = requests.get(url, headers={}, params={})
+    data = resp.json()
+    data = data.get("symbols", [])
+    for d in data:
+        symbol = d["symbol"]
+        asset = d["quoteAsset"]
+        type = d["contractType"]
+        if asset == "USDT" and type == "PERPETUAL":
+            symbol_list.add(symbol)
+            symbol_data_dict[symbol] = d
+
+    # 排序
+    symbol_list = sorted(list(symbol_list))
+
+    # 返回结果
+    if need_data:
+        return symbol_list, symbol_data_dict
+
+    else:
+        return symbol_list
+
 def get_csv_path():
     path = os.path.abspath(__file__)
     file_name = path.split(DIR_SYMBOL)[-1]
@@ -123,17 +151,26 @@ def get_csv_path():
     return csv_path
 
 if __name__ == '__main__':
-    #"""
+    """
+    # 下载分钟Bar数据
     symbol = 'BTCUSDT'
     interval = '1m'
     start_time = (datetime.now() - timedelta(days=6)).strftime("%Y-%m-%d") + ' 00:00:00'
-    end_time = (datetime.now()).strftime("%Y-%m-%d") + ' 00:00:00'
+    end_time = (datetime.now() + timedelta(days=2)).strftime("%Y-%m-%d") + ' 00:00:00'
     #start_time = ''
     #end_time = ''
 
-    start_time = '2017-09-01 00:00:00'
-    end_time = (datetime.now()).strftime("%Y-%m-%d") + ' 00:00:00'
+    start_time = '2020-01-01 00:00:00'
+    end_time = (datetime.now() + timedelta(days=2)).strftime("%Y-%m-%d") + ' 00:00:00'
 
-    binance_get_bar_data(symbol=symbol, interval=interval, symbol_type=Binancetype.SPOT, start_time=start_time, end_time=end_time, limit=1500)
+    binance_get_bar_data(symbol=symbol, interval=interval, symbol_type=Binancetype.USDT, start_time=start_time, end_time=end_time, limit=1500)
     print('completed！')
+    """
+
+    #"""
+    # 获取正向永续合约列表
+    symbol_list = binance_get_symbol_list(need_data=False)
+    for symbol in symbol_list:
+        print(symbol)
+    print(f"BINANCE_USDT永续合约总计：{len(symbol_list)}")
     #"""

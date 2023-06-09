@@ -1,4 +1,5 @@
 import importlib
+from operator import sub
 import os
 import traceback
 from collections import defaultdict
@@ -222,10 +223,14 @@ class MartingEngine(BaseEngine):
             return
 
         if trade.direction == Direction.LONG:
-            strategy.pos = float(Decimal(str(strategy.pos)) + Decimal(str(trade.volume)))
+            strategy.pos = float(
+                Decimal(str(strategy.pos)) + Decimal(str(trade.volume))
+            )
             # strategy.pos += trade.volume
         else:
-            strategy.pos = float(Decimal(str(strategy.pos)) - Decimal(str(trade.volume)))
+            strategy.pos = float(
+                Decimal(str(strategy.pos)) - Decimal(str(trade.volume))
+            )
             # strategy.pos -= trade.volume
 
         self.call_strategy_func(strategy, strategy.on_trade, trade)
@@ -726,7 +731,7 @@ class MartingEngine(BaseEngine):
         if not self.martingPortfolio.all_inited:
             self.write_log(f"策略组合未完全初始化，稍后尝试启动策略")
             return
-        
+
         for strategy_name in self.strategies.keys():
             self.start_strategy(strategy_name)
 
@@ -784,14 +789,15 @@ class MartingEngine(BaseEngine):
         # 输出日志内容
         print(f"{log.time}\t{log.gateway_name}\t{log.msg}")
 
-    def send_email(self, msg: str, strategy: CtaTemplate = None):
+    def send_email(self, msg: str, strategy: CtaTemplate = None, subject: str = ""):
         """
         Send email to default receiver.
         """
-        if strategy:
-            subject = f"{strategy.strategy_name}"
-        else:
-            subject = "CTA策略引擎"
+        if not subject:
+            if strategy:
+                subject = f"{strategy.strategy_name}"
+            else:
+                subject = "CTA策略引擎"
 
         self.main_engine.send_email(subject, msg)
 

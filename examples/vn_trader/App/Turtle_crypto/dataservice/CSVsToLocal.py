@@ -393,12 +393,14 @@ class CSVsFTXBarLocalEngine(object):
             print(u'总数据量：', totalCount, '\n')
 
 class CSVsBinanceBarLocalEngine(object):
-    def __init__(self, duration:str):
+    def __init__(self, duration:str, contract:str):
         super(CSVsBinanceBarLocalEngine, self).__init__()
         # 周期
         self.duration = duration
         # 项目路径
-        self.walkingDir = get_csv_path()
+        csv_path = get_csv_path()
+        contract = f"BINANCE.{contract}"
+        self.walkingDir = csv_path + f"{contract}{DIR_SYMBOL}{duration}"
         # 获取数据库
         self.client = pymongo.MongoClient('localhost', 27017)
 
@@ -475,12 +477,7 @@ class CSVsBinanceBarLocalEngine(object):
                     print('用时：', sub, 's')
                     print('数据量：', count, '\n')
                     """ fake """
-                    if count < 1000:
-                        print('*' * 60, '\n')
-                        print('*' * 60, '\n')
-                        print('*' * 60, '\n')
-                        print('*' * 60, '\n')
-                        print('*' * 60, '\n')
+                    if count < 1500:
                         print('*' * 60, '\n')
 
         # 打印进程

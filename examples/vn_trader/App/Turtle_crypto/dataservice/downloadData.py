@@ -19,8 +19,14 @@ from time import sleep
 from threading import Thread
 from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 from pymongo import MongoClient, ASCENDING, DESCENDING
+from enum import Enum
 
 # client = MongoClient("localhost", 27017)
+
+class ExchangeType(Enum):
+    BYBIT = "BYBIT"
+    BINANCE = "BINANCE"
+    NONE = "NONE"
 
 class TurtleCryptoDataDownloading(object):
     def __init__(self):
@@ -43,7 +49,7 @@ class TurtleCryptoDataDownloading(object):
         for contract in contract_list:
             while len(self.threads) >= 10:
                 sleep(2)
-            thread = DownloadThread(self, contract=contract, interval='1', days=days, to_date=to_date, from_data_base=from_data_base)
+            thread = DownloadThread(self, exchange=ExchangeType.BYBIT, contract=contract, interval='1', days=days, to_date=to_date, from_data_base=from_data_base)
             self.threads.append(thread)
             thread.start()
         self.loading_complete = True
@@ -105,33 +111,22 @@ class TurtleCryptoDataDownloading(object):
         engine.startWork()
         #"""
 
-    def download_from_binance(self, contract_list, type:Binancetype, days=1):
+    def download_from_binance(self, contract_list, days=1, to_date:datetime=datetime.now() + timedelta(days=2), from_data_base:bool=False):
         #"""
         # 先删除原有文件夹，包括其中所有内容
         csv_path = get_csv_path()
         if os.path.exists(csv_path):
             shutil.rmtree(csv_path)
 
-        # 获取bar数据
-        interval = '1m'
-        from_date = datetime.now() - timedelta(days=days)
-
+        # 多线程获取数据
+        self.loading_complete = False
         for contract in contract_list:
-            from_time = datetime(from_date.year, from_date.month, from_date.day)
-            while from_time:
-                print(f'下载数据：{from_time}\t{contract}')
-                from_time = binance_get_bar_data(symbol=contract, interval=interval, symbol_type=type, start_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"))
-                if from_time:
-                    from_time = from_time + timedelta(minutes=1)
-                    print('\n')
-        #"""
-
-        #"""
-        # 1m数据入数据库
-        print('\n====== 1m数据入数据库 ======')
-        engine = CSVsBinanceBarLocalEngine(duration='1m')
-        engine.startWork()
-        #"""
+            while len(self.threads) >= 10:
+                sleep(2)
+            thread = DownloadThread(self, exchange=ExchangeType.BINANCE, contract=contract, interval='1m', days=days, to_date=to_date, from_data_base=from_data_base)
+            self.threads.append(thread)
+            thread.start()
+        self.loading_complete = True
 
     def generate_for_bybit(self, contract_list, days=1):
         result = True
@@ -192,8 +187,9 @@ class TurtleCryptoDataDownloading(object):
         return result, complete_msg, back_msg, lost_msg
     
 class DownloadThread(object):
-    def __init__(self, engine, contract, interval, days=1, to_date:datetime=datetime.now() + timedelta(days=2), from_data_base:bool=False):
+    def __init__(self, engine, exchange:ExchangeType, contract, interval, days=1, to_date:datetime=datetime.now() + timedelta(days=2), from_data_base:bool=False):
         self.engine = engine
+        self.exchange = exchange
         self.contract = contract
         self.interval = interval
         self.days = days
@@ -211,7 +207,13 @@ class DownloadThread(object):
         if self.from_data_base:
             client = MongoClient("localhost", 27017)
             db = client[MINUTE_DB_NAME]
-            symbol = self.contract + ".BYBIT"
+            symbol = self.contract
+            if self.exchange == ExchangeType.BYBIT:
+                symbol = self.contract + ".BYBIT"
+
+            elif self.exchange == ExchangeType.BINANCE:
+                symbol = self.contract + ".BINANCE"
+
             collection = db[symbol]
             start_data = collection.find_one(sort=[('datetime', ASCENDING)])
             db_start_dt = start_data['datetime'] if start_data else None
@@ -230,7 +232,15 @@ class DownloadThread(object):
             print(f'下载数据：{from_time}\t{self.contract}')
             download_failed = False
             try:
-                from_time = bybit_get_bar_data(symbol=self.contract, interval=self.interval, from_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"))
+                if self.exchange == ExchangeType.BYBIT:
+                    from_time = bybit_get_bar_data(symbol=self.contract, interval=self.interval, from_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"))
+
+                elif self.exchange == ExchangeType.BINANCE:
+                    from_time = binance_get_bar_data(symbol=self.contract, interval=self.interval, symbol_type=Binancetype.USDT, start_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"), end_time=datetime.strftime(to_time, "%Y-%m-%d %H:%M:%S"))
+                
+                else:
+                    print(f"交易所类型错误")
+                    break
             except Exception:
                 download_failed = True
                 print('****** 下载中断 ******')
@@ -243,8 +253,13 @@ class DownloadThread(object):
 
         # 1m数据入数据库
         print('\n====== 1m数据入数据库 ======')
-        engine = CSVsBybitBarLocalEngine(duration='1', contract=self.contract)
-        engine.startWork()
+        if self.exchange == ExchangeType.BYBIT:
+            engine = CSVsBybitBarLocalEngine(duration='1', contract=self.contract)
+            engine.startWork()
+        
+        elif self.exchange == ExchangeType.BINANCE:
+            engine = CSVsBinanceBarLocalEngine(duration='1m', contract=self.contract)
+            engine.startWork()
 
         # 终止线程
         self.close()
