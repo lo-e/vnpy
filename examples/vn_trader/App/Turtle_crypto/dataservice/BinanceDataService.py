@@ -7,6 +7,9 @@ import csv
 from datetime import datetime, timedelta
 from vnpy.trader.utility import DIR_SYMBOL
 from enum import Enum
+from pymongo import MongoClient, ASCENDING, DESCENDING
+from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
+import pandas as pd
 
 main_url_spot = 'https://api.binance.com'
 main_url_inverse = 'https://dapi.binance.com'
@@ -144,6 +147,90 @@ def binance_get_symbol_list(need_data: bool = False):
     else:
         return symbol_list
 
+def binance_marting_setting(min_value_filter: float = 0):
+    # 获取交易对最小交易价值
+    usdt_symbol_list, data = binance_get_symbol_list(
+        need_data=True
+    )
+    print(f"\n所有USDT永续交易对：{len(usdt_symbol_list)}")
+
+    filter_count = 0
+    rusult_list = []
+    for symbol in usdt_symbol_list:
+        d = data[symbol]
+
+        # 交易所合约
+        full_symbol = f"{symbol}.BINANCE"
+
+        # 最小价格变动
+        price_tick = d["filters"][0]["tickSize"]
+
+        # 最小交易数量
+        min_volume = d["filters"][2]["minQty"]
+
+        # 数据库起始日期
+        client = MongoClient("localhost", 27017)
+        db = client[MINUTE_DB_NAME]
+        collection = db[full_symbol]
+        start_data = collection.find_one(sort=[("datetime", ASCENDING)])
+        db_start_dt = start_data["datetime"] if start_data else None
+
+        if min_value_filter:
+            # 最新的价格
+            # latest_price = binance_get_latest_price(symbol=symbol) # 接口获取实时最新价格
+            end_data = collection.find_one(sort=[("datetime", DESCENDING)])  # 数据库获取最新价格
+            latest_price = end_data["close_price"] if end_data else None
+            if not latest_price:
+                continue
+
+            # 最小交易价值
+            latest_min_value = min_volume * latest_price
+
+            if latest_min_value <= min_value_filter:
+                # print(f"{symbol}\t\t最新价格：{latest_price}\t\t最小交易数量：{min_volume}\t\t价值：{value}")
+                filter_count += 1
+                rusult_list.append(
+                    {
+                        "symbol": full_symbol,
+                        "priceTick": price_tick,
+                        "variableCommission": 0.0004,
+                        "slippage": 1,
+                        "min_volume": min_volume,
+                        "latest_price": latest_price,
+                        "latest_min_value": latest_min_value,
+                        "start_dt": db_start_dt,
+                    }
+                )
+
+        else:
+            rusult_list.append(
+                {
+                    "symbol": full_symbol,
+                    "priceTick": price_tick,
+                    "variableCommission": 0.0004,
+                    "slippage": 1,
+                    "min_volume": min_volume,
+                    "start_dt": db_start_dt,
+                }
+            )
+
+    if min_value_filter:
+        print(f"满足筛选条件的交易对：{filter_count}")
+
+    # 写入CSV
+    csv_path = get_csv_path()
+    if not os.path.exists(csv_path):
+        os.makedirs(csv_path)
+    if min_value_filter:
+        csv_file_path = f"{csv_path}binance_marting_backtesting_setting_filter_{min_value_filter}.csv"
+    else:
+        csv_file_path = f"{csv_path}binance_marting_backtesting_setting.csv"
+    results_sorted = pd.DataFrame(rusult_list)
+    results_sorted = results_sorted.sort_values("start_dt", ascending=True)
+    results_sorted.to_csv(csv_file_path, index=False)
+
+    return rusult_list
+
 def get_csv_path():
     path = os.path.abspath(__file__)
     file_name = path.split(DIR_SYMBOL)[-1]
@@ -167,10 +254,13 @@ if __name__ == '__main__':
     print('completed！')
     """
 
-    #"""
+    """
     # 获取正向永续合约列表
     symbol_list = binance_get_symbol_list(need_data=False)
     for symbol in symbol_list:
         print(symbol)
     print(f"BINANCE_USDT永续合约总计：{len(symbol_list)}")
-    #"""
+    """
+
+    # 生成马丁策略回测参数
+    binance_marting_setting(min_value_filter=0)

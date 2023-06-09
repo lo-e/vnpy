@@ -276,7 +276,7 @@ def bybit_marting_setting(min_value_filter: float = 0):
         full_symbol = f"{symbol}.BYBIT"
 
         # 最小价格变动
-        price_tick = d["price_filter"]["min_price"]
+        price_tick = d["price_filter"]["tick_size"]
 
         # 最小交易数量
         min_volume = d["lot_size_filter"]["min_trading_qty"]
@@ -306,7 +306,7 @@ def bybit_marting_setting(min_value_filter: float = 0):
                     {
                         "symbol": full_symbol,
                         "priceTick": price_tick,
-                        "variableCommission": 0.0001,
+                        "variableCommission": 0.0006,
                         "slippage": 1,
                         "min_volume": min_volume,
                         "latest_price": latest_price,
@@ -320,7 +320,7 @@ def bybit_marting_setting(min_value_filter: float = 0):
                 {
                     "symbol": full_symbol,
                     "priceTick": price_tick,
-                    "variableCommission": 0.0001,
+                    "variableCommission": 0.0006,
                     "slippage": 1,
                     "min_volume": min_volume,
                     "start_dt": db_start_dt,
@@ -335,9 +335,9 @@ def bybit_marting_setting(min_value_filter: float = 0):
     if not os.path.exists(csv_path):
         os.makedirs(csv_path)
     if min_value_filter:
-        csv_file_path = f"{csv_path}marting_setting_filter_{min_value_filter}.csv"
+        csv_file_path = f"{csv_path}bybit_marting_backtesting_setting_filter_{min_value_filter}.csv"
     else:
-        csv_file_path = f"{csv_path}marting_setting.csv"
+        csv_file_path = f"{csv_path}bybit_marting_backtesting_setting.csv"
     results_sorted = pd.DataFrame(rusult_list)
     results_sorted = results_sorted.sort_values("start_dt", ascending=True)
     results_sorted.to_csv(csv_file_path, index=False)
@@ -395,4 +395,4 @@ if __name__ == "__main__":
     # bybit_get_min_value(filter=0.5)
 
     # 生成马丁策略回测参数
-    bybit_marting_setting(min_value_filter=0.5)
+    bybit_marting_setting(min_value_filter=0)
