@@ -380,7 +380,7 @@ if __name__ == "__main__":
     print(f"====== USDT永续交易 ======")
     for symbol in usdt_symbol_list:
         print(symbol)
-    print(f"总计：{len(usdt_symbol_list)}")
+    print(f"BYBIT_USDT永续合约总计：{len(usdt_symbol_list)}")
 
     # print(f"====== 现货独享交易 ======")
     # for symbol in spot_only_list:

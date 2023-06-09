@@ -75,7 +75,8 @@ class MartingPortfolio(object):
         # 其它
         self.strategy_symbols = []  # 策略合约列表
         self.trending_top = False  # 策略组合中是否有策略已经达到趋势追踪最高级别
-        self.all_inited = False # 是否所有策略完成初始化
+        self.all_inited = False  # 是否所有策略完成初始化
+        self.strategy_info_count_down = 1 * 60  # 每隔一段时间发送策略状态信息通知
 
         # 策略回测历史
         self.strategys_backtesting_history = {}
@@ -165,6 +166,12 @@ class MartingPortfolio(object):
             thread = Thread(target=self.download_data)
             thread.start()
 
+        # 通知策略状态信息
+        self.strategy_info_count_down -= 1
+        if self.strategy_info_count_down <= 0:
+            self.strategy_info_count_down = 60 * 60
+            self.notice_strategy_info()
+
         # 组合状态更新
         self.engine.put_portfolio_event()
 
@@ -222,3 +229,27 @@ class MartingPortfolio(object):
             if strategy.trending_step >= strategy.top_step:
                 self.trending_top = True
                 break
+
+    def notice_strategy_info(self):
+        fit_content = ""
+        fit_count = 0
+        un_fit_content = ""
+        un_fit_count = 0
+        for _, strategy in self.engine.strategies.items():
+            backtesting_status = (
+                strategy.backtesting_status if strategy.backtesting_status else {}
+            )
+            backtesting_step = backtesting_status.get("trending_step", 0)
+            if backtesting_step or strategy.trending_step:
+                if backtesting_step == strategy.trending_step:
+                    fit_content += f"\nstrategy_name:{strategy.strategy_name}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\n\nstrategy_step: {strategy.trending_step}\nbacktesting_step: {backtesting_step}\nbacktesting_to: {strategy.backtesting_to}"
+                    fit_content += "\n\n" + "-" * 10 + "\n\n"
+                    fit_count += 1
+
+                else:
+                    un_fit_content += f"\nstrategy_name:{strategy.strategy_name}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\n\nstrategy_step: {strategy.trending_step}\nbacktesting_step: {backtesting_step}\nbacktesting_to: {strategy.backtesting_to}"
+                    un_fit_content += "\n\n" + "-" * 10 + "\n\n"
+                    un_fit_count += 1
+
+        self.engine.send_email(msg=fit_content, subject=f"马丁策略组合状态信息【正常 {fit_count}】")
+        self.engine.send_email(msg=un_fit_content, subject=f"马丁策略组合状态信息【非正常 {un_fit_count}】")

@@ -129,7 +129,8 @@ def binance_get_symbol_list(need_data: bool = False):
     for d in data:
         symbol = d["symbol"]
         asset = d["quoteAsset"]
-        if asset == "USDT":
+        type = d["contractType"]
+        if asset == "USDT" and type == "PERPETUAL":
             symbol_list.add(symbol)
             symbol_data_dict[symbol] = d
 
@@ -171,5 +172,5 @@ if __name__ == '__main__':
     symbol_list = binance_get_symbol_list(need_data=False)
     for symbol in symbol_list:
         print(symbol)
-    print(f"BINANCE_USDT正向永续合约总计：{len(symbol_list)}")
+    print(f"BINANCE_USDT永续合约总计：{len(symbol_list)}")
     #"""
