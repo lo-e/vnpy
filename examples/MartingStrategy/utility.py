@@ -354,7 +354,7 @@ def generate_setting(symbol_open_dict: dict, exchange:str):
     portfolioValue = 100
     setting_dict = {
         "signal": [],
-        "portfolio": {"name": "MARTING", "portfolioValue": portfolioValue},
+        "portfolio": {"name": f"MARTING_{exchange}", "portfolioValue": portfolioValue},
     }
     max_leverage = 10
     strategy_min_value = 1
@@ -394,7 +394,7 @@ def generate_setting(symbol_open_dict: dict, exchange:str):
             bottom_step = top_step - (step_length - 1)
             pure_symbol = symbol[:symbol.index('USDT')] 
             data_long = {
-                "strategy_name": f"MARTING_{pure_symbol}_多",
+                "strategy_name": f"MARTING_{exchange}_{pure_symbol}_多",
                 "class_name": "MartingStrategy",
                 "vt_symbol": symbol,
                 "direction": "多",
@@ -406,7 +406,7 @@ def generate_setting(symbol_open_dict: dict, exchange:str):
             symbol_setting_list.append(data_long)
 
             data_short = {
-                "strategy_name": f"MARTING_{pure_symbol}_空",
+                "strategy_name": f"MARTING_{exchange}_{pure_symbol}_空",
                 "class_name": "MartingStrategy",
                 "vt_symbol": symbol,
                 "direction": "空",
