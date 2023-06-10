@@ -385,7 +385,8 @@ class MartingStrategy(CtaTemplate):
 
                 if self.target_volume == 0:
                     # 邮件提醒
-                    email_msg += f"\n平仓：当前趋势追踪等级{self.trending_step}"
+                    position_value = abs(self.pos) * self.position_price
+                    email_msg += f"\n平仓：当前趋势追踪等级{self.trending_step} 持仓价值{position_value}"
 
                     # 重置趋势追踪等级
                     self.trending_step = 0
