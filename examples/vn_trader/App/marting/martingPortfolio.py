@@ -276,15 +276,18 @@ class MartingPortfolio(object):
             # 最大回测截止时间
             max_datetime = max(max_datetime, backtesting_to) if max_datetime else backtesting_to
 
+            # 实盘持仓信息
+            position_value = abs(strategy.pos) * strategy.position_price
+
             # 回测和实盘比较趋势追踪等级是否一致
             if backtesting_step or strategy.trending_step:
                 if backtesting_step == strategy.trending_step:
-                    fit_content += f"\nstrategy_name:{strategy.strategy_name}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\n\nstrategy_step: {strategy.trending_step}\nbacktesting_step: {backtesting_step}\nbacktesting_to: {backtesting_to}"
+                    fit_content += f"\nstrategy_name:{strategy.strategy_name}\nstrategy_pos:{strategy.pos}\nstrategy_position_price:{strategy.position_price}\nstrategy_position_value:{position_value}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\n\nstrategy_step: {strategy.trending_step}\nbacktesting_step: {backtesting_step}\nbacktesting_to: {backtesting_to}"
                     fit_content += "\n\n" + "-" * 10 + "\n\n"
                     fit_count += 1
 
                 else:
-                    un_fit_content += f"\nstrategy_name:{strategy.strategy_name}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\n\nstrategy_step: {strategy.trending_step}\nbacktesting_step: {backtesting_step}\nbacktesting_to: {backtesting_to}"
+                    un_fit_content += f"\nstrategy_name:{strategy.strategy_name}\nstrategy_pos:{strategy.pos}\nstrategy_position_price:{strategy.position_price}\nstrategy_position_value:{position_value}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\n\nstrategy_step: {strategy.trending_step}\nbacktesting_step: {backtesting_step}\nbacktesting_to: {backtesting_to}"
                     un_fit_content += "\n\n" + "-" * 10 + "\n\n"
                     un_fit_count += 1
 
