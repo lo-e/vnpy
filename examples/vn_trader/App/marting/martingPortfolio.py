@@ -79,16 +79,16 @@ class MartingPortfolio(object):
         self.all_inited = False  # 是否所有策略完成初始化
         self.strategy_info_count_down = 2 * 60  # 每隔一段时间发送策略状态信息通知
 
-        # 策略回测历史
-        self.strategys_backtesting_history = {}
-        self.load_backtesting_history()
-
         # 设置参数
         if setting:
             d = self.__dict__
             for key in self.paramList:
                 if key in setting:
                     d[key] = setting[key]
+
+        # 策略回测历史
+        self.strategys_backtesting_history = {}
+        self.load_backtesting_history()
 
     def on_update_today(self):
         self.today = copy(self.engine.today)
