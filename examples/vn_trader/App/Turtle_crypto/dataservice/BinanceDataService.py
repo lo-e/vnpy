@@ -119,6 +119,45 @@ def binance_get_bar_data(symbol:str, interval:str, symbol_type:Binancetype, star
 
     return datetime.strptime(until, "%Y-%m-%d-%H%M%S")
 
+def binance_get_first_bar_datetime(symbol:str, interval:str, symbol_type:Binancetype, start_time:str=''):
+    result = None
+    params: dict = {
+        "symbol": symbol,
+        "interval": interval,
+        "limit": 10
+    }
+
+    if symbol_type == Binancetype.SPOT:
+        api = "/api/v3/klines"
+        base_url = f'{main_url_spot}{api}'
+
+    elif symbol_type == Binancetype.INVERSE:
+        api = '/dapi/v1/klines'
+        base_url = f'{main_url_inverse}{api}'
+
+    elif symbol_type == Binancetype.USDT:
+        api = "/fapi/v1/klines"
+        base_url = f'{main_url_usdt}{api}'
+    else:
+        return
+
+    url = base_url
+    if start_time:
+        timeArray = time.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+        start_time = int(time.mktime(timeArray))
+        params["startTime"] = start_time * 1000
+
+    resp = requests.get(url, headers={}, params=params)
+    bar_data_list = resp.json()
+
+    if bar_data_list:
+        # 数据整理
+        for data in bar_data_list:
+            ts = data[0]
+            result = datetime.fromtimestamp(int(ts) / 1000)
+            break
+    return result
+
 def binance_get_symbol_list(need_data: bool = False):
     # ====== 只支持USDT正向合约 ======
     symbol_list = set()

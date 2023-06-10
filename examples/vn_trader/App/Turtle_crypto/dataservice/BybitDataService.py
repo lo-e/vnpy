@@ -94,6 +94,22 @@ def bybit_get_bar_data(symbol: str, interval: str, from_time: str, limit: int = 
 
     return datetime.strptime(until, "%Y-%m-%d-%H%M%S")
 
+def bybit_get_first_bar_datetime(symbol: str, interval: str, from_time: str):
+    result = None
+    timeArray = time.strptime(from_time, "%Y-%m-%d %H:%M:%S")
+    timeStamp = int(time.mktime(timeArray))
+    if "USDT" in symbol:
+        url = f"{main_url}/public/linear/kline?symbol={symbol}&interval={interval}&from={timeStamp}&limit=10"
+    else:
+        url = f"{main_url}/v2/public/kline/list?symbol={symbol}&interval={interval}&from={timeStamp}&limit=10"
+    resp = requests.get(url, headers={}, params={})
+    data = resp.json()
+    bar_data = data.get("result", [])
+    for dic in bar_data:
+        the_timestamp = dic["open_time"]
+        result = datetime.fromtimestamp(the_timestamp)
+        break
+    return result
 
 def bybit_get_latest_price(symbol: str):
     from_time = datetime.now() - timedelta(hours=1)

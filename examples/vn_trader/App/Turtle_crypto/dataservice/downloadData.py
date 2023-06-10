@@ -5,10 +5,10 @@
 """
 
 from .OneTokenDataService import get_bar_data, get_csv_path
-from .BybitDataService import bybit_get_bar_data, bybit_get_symbol_list, BybitSymbolType
+from .BybitDataService import bybit_get_bar_data, bybit_get_symbol_list, BybitSymbolType, bybit_get_first_bar_datetime
 from .OKExDataService import okex_get_bar_data
 from .FTXDataService import ftx_get_bar_data
-from .BinanceDataService import binance_get_bar_data, Binancetype
+from .BinanceDataService import binance_get_bar_data, Binancetype, binance_get_first_bar_datetime
 from .CSVsToLocal import CSVs1TokenBarLocalEngine, CSVsBybitBarLocalEngine, CSVsOKExBarLocalEngine, CSVsFTXBarLocalEngine, CSVsBinanceBarLocalEngine
 from .BarToLocal import BarLocalEngine
 from datetime import datetime, timedelta
@@ -204,6 +204,18 @@ class DownloadThread(object):
         print(f"====== {self.contract}开始下载 ======")
         from_time = datetime.now() - timedelta(days=self.days)
         from_time = datetime(from_time.year, from_time.month, from_time.day)
+
+        # 接口获取合约起始时间
+        first_bar_dt = None
+        if self.exchange == ExchangeType.BYBIT:
+            first_bar_dt = bybit_get_first_bar_datetime(symbol=self.contract, interval=self.interval, from_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"))
+           
+        elif self.exchange == ExchangeType.BINANCE:
+            first_bar_dt = binance_get_first_bar_datetime(symbol=self.contract, interval=self.interval, symbol_type=Binancetype.USDT, start_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"))
+
+        else:
+            exit(f"交易所类型错误")
+
         if self.from_data_base:
             client = MongoClient("localhost", 27017)
             db = client[MINUTE_DB_NAME]
@@ -213,17 +225,46 @@ class DownloadThread(object):
 
             elif self.exchange == ExchangeType.BINANCE:
                 symbol = self.contract + ".BINANCE"
-
             collection = db[symbol]
-            start_data = collection.find_one(sort=[('datetime', ASCENDING)])
-            db_start_dt = start_data['datetime'] if start_data else None
-            end_data = collection.find_one(sort=[('datetime', DESCENDING)])
-            db_end_dt = end_data['datetime'] if end_data else None
-            
-            print(f"{self.contract}数据库起止时间\t{db_start_dt}\t{db_end_dt}")
-            if db_end_dt:
-                from_time = db_end_dt - timedelta(minutes=10)
 
+            if first_bar_dt:
+                flt = {"datetime": {"$gte": from_time}}
+                cursor = collection.find(flt).sort('datetime', ASCENDING)
+                dt_list = []
+                if cursor:
+                    for bar in list(cursor):
+                        dt_list.append(bar["datetime"])
+                if dt_list:
+                    db_start_dt = dt_list[0]
+                    db_end_dt = dt_list[-1]
+                    print(f"{self.contract}数据库起止时间\t{db_start_dt}\t{db_end_dt}\t")
+
+                    if db_start_dt <= first_bar_dt:
+                        virtual_dt_list = []
+                        i = first_bar_dt
+                        while i <= db_end_dt:
+                            virtual_dt_list.append(i)
+                            i += timedelta(minutes=1)
+                        sub = set(virtual_dt_list).difference(set(dt_list))
+                        if sub:
+                            # 数据库数据缺失
+                            loss_dt = sorted(list(sub))[0]
+                            from_time = loss_dt - timedelta(minutes=10)
+                            print(f"!!!!!! {self.contract}数据库数据缺失【from：{loss_dt}】 !!!!!!")
+                        else:
+                            # 数据库数据完整
+                            from_time = db_end_dt - timedelta(minutes=10)
+
+            else:
+                start_data = collection.find_one(sort=[('datetime', ASCENDING)])
+                db_start_dt = start_data['datetime'] if start_data else None
+                end_data = collection.find_one(sort=[('datetime', DESCENDING)])
+                db_end_dt = end_data['datetime'] if end_data else None
+                
+                print(f"{self.contract}数据库起止时间\t{db_start_dt}\t{db_end_dt}")
+                if db_end_dt:
+                    from_time = db_end_dt - timedelta(minutes=10)
+            
         to_time = datetime(self.to_date.year, self.to_date.month, self.to_date.day)
         while from_time:
             if from_time >= to_time:
