@@ -59,6 +59,7 @@ class MartingStrategy(CtaTemplate):
         "position_value",
         "position_price",
         "position_close_price",
+        "position_increase_price",
         "trending_step",
         "target_volume",
         "strategy_position_price",
@@ -77,6 +78,7 @@ class MartingStrategy(CtaTemplate):
         "position_value",
         "position_price",
         "position_close_price",
+        "position_increase_price",
         "trending_step",
     ]
 
@@ -118,6 +120,7 @@ class MartingStrategy(CtaTemplate):
         self.position_value = 0  # 持仓价值
         self.position_price = 0  # 持仓均价
         self.position_close_price = 0  # 平仓价格
+        self.position_increase_price = 0 # 加仓价格
         self.trending_step = 0  # 趋势追踪等级
         self.tick_trade_enable = False  # Tick数据时间在回测后的指定范围内允许交易
         self.target_volume = -1  # 目标持仓
@@ -346,29 +349,34 @@ class MartingStrategy(CtaTemplate):
                 # ====== 检查平仓 ======
                 if not self.position_close_price:
                     self.raise_error(f"平仓价格异常")
+                
+                # 平仓价格
+                target_close_price = self.position_close_price
 
                 # 选择盈利最大化平仓价格
                 strategy_reduce_price = self.strategy_status["position_reduce_price"]
                 strategy_trending_step = self.strategy_status["trending_step"]
                 if self.trending_step == strategy_trending_step:
                     if self.direction == Direction.LONG:
-                        self.position_close_price = max(self.position_close_price, strategy_reduce_price)
+                        target_close_price = max(self.position_close_price, strategy_reduce_price)
                     
                     if self.direction == Direction.SHORT:
-                        self.position_close_price = min(self.position_close_price, strategy_reduce_price)
+                        target_close_price = min(self.position_close_price, strategy_reduce_price)
 
                 # 是否达到目标价位
                 if self.direction == Direction.LONG:
                     if (
-                        strategy_ma_price >= self.position_close_price
+                        strategy_ma_price >= target_close_price
                         and tick.last_price < trade_price
+                        and tick.last_price > trade_price - self.symbol_price_tick * 5
                     ):
                         self.target_volume = 0
 
                 if self.direction == Direction.SHORT:
                     if (
-                        strategy_ma_price <= self.position_close_price
+                        strategy_ma_price <= target_close_price
                         and tick.last_price > trade_price
+                        and tick.last_price < trade_price + self.symbol_price_tick * 5
                     ):
                         self.target_volume = 0
 
@@ -417,6 +425,7 @@ class MartingStrategy(CtaTemplate):
                                 rsi_cross
                                 and strategy_ma_price <= strategy_position_increase_price
                                 and tick.last_price > trade_price
+                                and tick.last_price < trade_price + self.symbol_price_tick * 5
                             ):
                                 next_trending_step = strategy_next_trending_step
 
@@ -432,6 +441,7 @@ class MartingStrategy(CtaTemplate):
                                 rsi_cross
                                 and strategy_ma_price >= strategy_position_increase_price
                                 and tick.last_price < trade_price
+                                and tick.last_price > trade_price - self.symbol_price_tick * 5
                             ):
                                 next_trending_step = strategy_next_trending_step
 
@@ -468,6 +478,52 @@ class MartingStrategy(CtaTemplate):
 
                             if tick_price_cross:
                                 next_trending_step = strategy_trending_step
+
+                # 回测趋势追踪等级与实盘不匹配，已实盘加仓标准再次判断
+                if not next_trending_step:
+                    target_trending_step = self.trending_step + 1
+                    if strategy_trending_step != self.trending_step and self.bottom_step <= target_trending_step <= self.top_step and self.position_increase_price:
+                        # 策略组合最多只能有一个趋势追踪最高等级
+                        trending_top_cross = True
+                        if target_trending_step == self.top_step and self.portfolio.trending_top:
+                            trending_top_cross = False
+
+                        if trending_top_cross:
+                            # 是否达到目标价位
+                            if self.direction == Direction.LONG:
+                                # 根据RSI判断是否超卖
+                                rsi_cross = False
+                                for rsi in strategy_rsi_array:
+                                    if rsi <= 25:
+                                        rsi_cross = True
+                                        break
+
+                                if (
+                                    rsi_cross
+                                    and strategy_ma_price <= self.position_increase_price
+                                    and tick.last_price > trade_price
+                                    and tick.last_price < trade_price + self.symbol_price_tick * 5
+                                ):
+                                    next_trending_step = target_trending_step
+
+                            elif self.direction == Direction.SHORT:
+                                # 根据RSI判断是否超买
+                                rsi_cross = False
+                                for rsi in strategy_rsi_array:
+                                    if rsi >= 75:
+                                        rsi_cross = True
+                                        break
+
+                                if (
+                                    rsi_cross
+                                    and strategy_ma_price >= self.position_increase_price
+                                    and tick.last_price < trade_price
+                                    and tick.last_price > trade_price - self.symbol_price_tick * 5
+                                ):
+                                    next_trending_step = target_trending_step
+
+                            else:
+                                self.raise_error("检查代码！")
 
                 if next_trending_step:
                     # 当前持仓价值
@@ -636,18 +692,21 @@ class MartingStrategy(CtaTemplate):
                 # 持仓均价
                 self.position_price = self.position_value / abs(self.pos)
 
-                # 平仓价格
+                # 平仓、加仓价格
                 if self.direction == Direction.LONG:
                     self.position_close_price = self.position_price * (1 + 0.01)
+                    self.position_increase_price = self.position_price * (1 - 0.08)
 
                 elif self.direction == Direction.SHORT:
                     self.position_close_price = self.position_price * (1 - 0.01)
+                    self.position_increase_price = self.position_price * (1 + 0.08)
 
         else:
             # 重置持仓价值、持仓均价、平仓价格
             self.position_value = 0
             self.position_price = 0
             self.position_close_price = 0
+            self.position_increase_price = 0
 
         # 邮件提醒
         super(MartingStrategy, self).on_trade(trade)
