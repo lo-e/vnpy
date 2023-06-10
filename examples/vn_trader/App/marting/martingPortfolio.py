@@ -14,6 +14,7 @@ from vnpy.event import Event
 import os
 import json
 from pathlib import Path
+from vnpy.trader.utility import DIR_SYMBOL
 
 BAR_DOWNLOAD_GENERATE_COMPLETE = "eDataComplete"
 
@@ -198,9 +199,12 @@ class MartingPortfolio(object):
         self.bar_generate_engine.start()
 
     def get_backtesting_history_file_path(self):
+        exchange = self.name.split("_")[-1]
         dir = os.path.dirname(os.path.realpath(__file__))
-        file_path = Path(dir)
-        file_path = file_path.joinpath("backtesting_history.json")
+        dir_path = Path(dir).joinpath(f"backtesting_history{DIR_SYMBOL}")
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        file_path = dir_path.joinpath(f"{exchange}.json")
         return file_path
 
     def load_backtesting_history(self):
