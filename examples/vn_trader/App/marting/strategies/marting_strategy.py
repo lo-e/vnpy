@@ -384,14 +384,15 @@ class MartingStrategy(CtaTemplate):
                         self.target_volume = 0
 
                 if self.target_volume == 0:
+                    # 邮件提醒
+                    position_value = abs(self.pos) * self.position_price
+                    email_msg += f"\n平仓：当前趋势追踪等级{self.trending_step} 持仓价值{position_value}"
+
                     # 重置趋势追踪等级
                     self.trending_step = 0
 
                     # 策略组合更新
                     self.portfolio.update_trending_top()
-
-                    # 邮件提醒
-                    email_msg += "\n平仓"
 
             if self.target_volume < 0:
                 # ====== 检查建仓加仓 ======
@@ -756,7 +757,7 @@ class MartingStrategy(CtaTemplate):
 
     def send_email(self, content):
         # 邮件发送通知
-        self.cta_engine.send_email(msg=content, subject=f"马丁策略{self.strategy_name}提醒")
+        self.cta_engine.send_email(msg=content, subject=f"马丁策略{self.strategy_name}")
 
 class MartingBacktesting(object):
     def __init__(
