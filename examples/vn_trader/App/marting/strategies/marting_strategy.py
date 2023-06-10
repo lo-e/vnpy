@@ -719,6 +719,9 @@ class MartingStrategy(CtaTemplate):
         self.cta_engine.main_engine.send_ding_talk(content)
         raise (content)
 
+    def send_email(self, content):
+        # 邮件发送通知
+        self.cta_engine.send_email(msg=content, subject=f"马丁策略{self.strategy_name}提醒")
 
 class MartingBacktesting(object):
     def __init__(
