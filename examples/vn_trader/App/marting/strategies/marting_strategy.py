@@ -345,6 +345,9 @@ class MartingStrategy(CtaTemplate):
             if not strategy_ma_price:
                 self.raise_error(f"均线价格异常")
 
+            # 邮件通知内容
+            email_msg = ""
+
             if self.pos:
                 # ====== 检查平仓 ======
                 if not self.position_close_price:
@@ -387,6 +390,9 @@ class MartingStrategy(CtaTemplate):
                     # 策略组合更新
                     self.portfolio.update_trending_top()
 
+                    # 邮件提醒
+                    email_msg += "\n平仓"
+
             if self.target_volume < 0:
                 # ====== 检查建仓加仓 ======
                 strategy_trending_step = self.strategy_status["trending_step"]
@@ -395,6 +401,7 @@ class MartingStrategy(CtaTemplate):
                 strategy_position_increase_price = self.strategy_status[
                     "position_increase_price"
                 ]
+
                 if not strategy_position_increase_price:
                     self.raise_error(f"建仓加仓价格异常")
 
@@ -448,6 +455,10 @@ class MartingStrategy(CtaTemplate):
                         else:
                             self.raise_error("检查代码！")
 
+                        if next_trending_step:
+                            # 邮件提醒
+                            email_msg += f"\n加仓【下一趋势等级】：当前{self.trending_step} 即将：{next_trending_step}"
+
                 # 回测当前趋势追踪等级比当前实盘的高
                 if not next_trending_step:
                     tick_price_cross = False
@@ -479,7 +490,10 @@ class MartingStrategy(CtaTemplate):
                             if tick_price_cross:
                                 next_trending_step = strategy_trending_step
 
-                # 回测趋势追踪等级与实盘不匹配，已实盘加仓标准再次判断
+                                # 邮件提醒
+                                email_msg += f"\n加仓【当前趋势等级】：当前{self.trending_step} 即将：{next_trending_step}"
+
+                # 回测趋势追踪等级与实盘不匹配，以实盘加仓标准再次判断
                 if not next_trending_step:
                     target_trending_step = self.trending_step + 1
                     if strategy_trending_step != self.trending_step and self.bottom_step <= target_trending_step <= self.top_step and self.position_increase_price:
@@ -525,6 +539,10 @@ class MartingStrategy(CtaTemplate):
                             else:
                                 self.raise_error("检查代码！")
 
+                            if next_trending_step:
+                                # 邮件提醒
+                                email_msg = f"\n加仓【实盘下一趋势等级】：当前{self.trending_step} 即将：{next_trending_step}"
+
                 if next_trending_step:
                     # 当前持仓价值
                     current_position_value = abs(self.pos) * self.position_price
@@ -558,10 +576,20 @@ class MartingStrategy(CtaTemplate):
                             else:
                                 self.raise_error("检查代码！")
 
-                            changed_volume = (
+                            changed_volume1 = (
                                 abs(self.pos) * target_positon_price
                                 - current_position_value
                             ) / (trade_price - target_positon_price)
+
+                            target_value = (
+                                self.portfolio.portfolioValue * self.init_value_rate
+                            ) * (10 ** (next_trending_step - self.bottom_step))
+                            changed_volume2 = (
+                                target_value - current_position_value
+                            ) / trade_price
+
+                            # 加仓数量选择最优
+                            changed_volume = max(changed_volume1, changed_volume2)
                             changed_volume = round_to(
                                 changed_volume, self.symbol_min_volume
                             )
@@ -580,11 +608,18 @@ class MartingStrategy(CtaTemplate):
                         changed_volume + abs(self.pos) if changed_volume > 0 else -1
                     )
 
+                    # 邮件提醒
+                    email_msg += f"\n持仓变化：{changed_volume} 目标持仓：{self.target_volume}"
+
                     # 确定趋势追踪等级
                     self.trending_step = next_trending_step
 
                     # 策略组合更新
                     self.portfolio.update_trending_top()
+
+            # 邮件通知
+            if email_msg:
+                self.send_email(content=email_msg)
 
             # 有正在执行的开平仓操作，立即发出订单
             if self.target_volume >= 0:
