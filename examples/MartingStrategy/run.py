@@ -22,7 +22,7 @@ import json
 def one():
     engine = BacktestingEngine()
     start_dt = datetime(2022, 1, 1)
-    end_dt = datetime(2023, 6, 6)
+    end_dt = datetime(2023, 12, 31)
     engine.setPeriod(start_dt, end_dt)
     figSavedName = ""
     if figSavedName:
