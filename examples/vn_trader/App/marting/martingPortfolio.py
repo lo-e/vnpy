@@ -251,8 +251,8 @@ class MartingPortfolio(object):
         fit_count = 0
         un_fit_content = ""
         un_fit_count = 0
-        ding_content = ""
-        ding_count = 0
+        highlight_content = ""
+        highlight_count = 0
         min_datetime = None
         max_datetime = None
         for _, strategy in self.engine.strategies.items():
@@ -294,9 +294,9 @@ class MartingPortfolio(object):
                     fit_count += 1
 
                     if strategy.trending_step >= 3:
-                        ding_content += content
-                        ding_content += "\n\n" + "-" * 10 + "\n\n"
-                        ding_count += 1
+                        highlight_content += content
+                        highlight_content += "\n\n" + "-" * 10 + "\n\n"
+                        highlight_count += 1
 
                 else:
                     if (
@@ -322,14 +322,12 @@ class MartingPortfolio(object):
         )
 
         if error_count:
-            error_content = f"\n策略总数：{total}\n回测周期：{min_datetime} - {max_datetime}\n"
-            self.engine.send_email(
-                msg=error_content, subject=f"马丁策略组合状态信息【回测状态缺失数量：{error_count}】"
-            )
+            error_content = f"\n马丁策略组合状态信息【回测状态缺失数量：{error_count}】\n\n策略总数：{total}\n回测周期：{min_datetime} - {max_datetime}\n"
+            self.engine.main_engine.send_ding_talk(content=error_content)
 
-        if ding_count:
-            ding_content = (
-                f"\n马丁策略组合状态信息【高等级追踪：{ding_count}】\n\n策略总数：{total}\n回测周期：{min_datetime} - {max_datetime}\n"
-                + ding_content
+        if highlight_count:
+            highlight_content = (
+                f"\n马丁策略组合状态信息【高等级追踪：{highlight_count}】\n\n策略总数：{total}\n回测周期：{min_datetime} - {max_datetime}\n"
+                + highlight_content
             )
-            self.engine.main_engine.send_ding_talk(content=ding_content)
+            self.engine.main_engine.send_ding_talk(content=highlight_content)
