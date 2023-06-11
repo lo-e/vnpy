@@ -725,7 +725,7 @@ class EmailEngine(BaseEngine):
 
         """ modify by loe """
         # 同时发送钉钉消息
-        self.main_engine.send_ding_talk(content=f'邮件主题\n============\n{subject}\n\n邮件内容\n============\n{content}')
+        # self.main_engine.send_ding_talk(content=f'邮件主题\n============\n{subject}\n\n邮件内容\n============\n{content}')
 
     def run(self) -> None:
         """"""
