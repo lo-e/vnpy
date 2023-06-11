@@ -62,6 +62,7 @@ class MartingStrategy(CtaTemplate):
         "position_price",
         "position_close_price",
         "position_increase_price",
+        "current_pnl_rate",
         "trending_step",
         "target_volume",
         "strategy_position_price",
@@ -123,6 +124,7 @@ class MartingStrategy(CtaTemplate):
         self.position_price = 0  # 持仓均价
         self.position_close_price = 0  # 平仓价格
         self.position_increase_price = 0 # 加仓价格
+        self.current_pnl_rate = ""  # 当前持仓亏损比率【基于Tick数据实时计算】
         self.trending_step = 0  # 趋势追踪等级
         self.tick_dt = None # 最新的tick时间
         self.tick_trade_enable = False  # Tick数据时间在回测后的指定范围内允许交易
@@ -331,6 +333,28 @@ class MartingStrategy(CtaTemplate):
                 self.strategy_current_pnl_rate, 0.01
             )
             self.strategy_current_pnl_rate = f"{self.strategy_current_pnl_rate}%"
+        
+        else:
+            self.strategy_current_pnl_rate = ""
+
+        # 计算当前持仓盈亏比率
+        if self.position_price:
+            if self.direction == Direction.LONG:
+                direction_value = 1
+            else:
+                direction_value = -1
+            self.current_pnl_rate = (
+                ((tick.last_price / self.position_price) - 1)
+                * 100
+                * direction_value
+            )
+            self.current_pnl_rate = round_to(
+                self.current_pnl_rate, 0.01
+            )
+            self.current_pnl_rate = f"{self.current_pnl_rate}%"
+
+        else:
+            self.current_pnl_rate = ""
 
         # 当前策略状态更新至最新时满足交易条件
         if self.strategy_to and self.strategy_to + timedelta(
