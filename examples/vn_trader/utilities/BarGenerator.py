@@ -490,6 +490,11 @@ if __name__ == "__main__":
     else:
         exit(f"交易所选择错误")
     
+    print("\n")
+    for symbol in symbol_list:
+        print(symbol)
+    print(f"\n交易所：{exchange}\n合约总数：{len(symbol_list)}")
+    sleep(2)
     symbol_list = [f"{symbol}.{exchange}" for symbol in symbol_list]
     processor = MultiThreadsMinuteBarProcessor(
         symbol_list=symbol_list,

@@ -2,6 +2,7 @@ from dataservice import TurtleCryptoDataDownloading, Binancetype, bybit_get_symb
 from dataservice.BinanceDataService import binance_get_symbol_list
 from vnpy.trader.constant import Interval
 from datetime import datetime, timedelta
+from time import sleep
 
 if __name__ == '__main__':
     """ 1TOKEN"""
@@ -20,6 +21,7 @@ if __name__ == '__main__':
     #"""
     exchange = input('选择交易所【Bybit：1  Binance：2】')
     if exchange == "1":
+        exchange = "BYBIT"
         mode = input('选择模式【反向：1  正向：2 接口获取：3】')
         if mode == '1':
             contract_list = ['BTCUSD', 'ETHUSD']
@@ -29,11 +31,9 @@ if __name__ == '__main__':
         
         else:
             contract_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
-            for symbol in contract_list:
-                print(symbol)
-            print(f"即将下载总计：{len(contract_list)}")
     
     elif exchange == "2":
+        exchange = "BINANCE"
         mode = input('选择模式【反向：1  正向：2 接口获取：3】')
         if mode == '1':
             contract_list = ['BTCUSD', 'ETHUSD']
@@ -43,12 +43,15 @@ if __name__ == '__main__':
            
         else:
             contract_list = binance_get_symbol_list()
-            for symbol in contract_list:
-                print(symbol)
-            print(f"即将下载总计：{len(contract_list)}")
     
     else:
         exit(f"交易所选择错误")
+
+    print("\n")
+    for symbol in contract_list:
+        print(symbol)
+    print(f"\n交易所：{exchange}\n合约总数：{len(contract_list)}")
+    sleep(2)
 
     # 起止日期
     # days = 6
@@ -61,12 +64,12 @@ if __name__ == '__main__':
 
     # 开始下载
     dataDownload = TurtleCryptoDataDownloading()
-    if exchange == "1":
+    if exchange == "BYBIT":
         dataDownload.download_from_bybit(contract_list=contract_list, days=days, to_date=to_date, from_data_base=from_data_base)
         # result, complete_msg, back_msg, lost_msg = dataDownload.generate_for_bybit(contract_list=contract_list, days=days)
         # print('\n\n' + lost_msg + back_msg)
 
-    elif exchange == "2":
+    elif exchange == "BINANCE":
         dataDownload.download_from_binance(contract_list=contract_list, days=days, to_date=to_date, from_data_base=from_data_base)
 
     
