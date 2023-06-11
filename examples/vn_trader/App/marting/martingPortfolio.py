@@ -183,13 +183,13 @@ class MartingPortfolio(object):
             contract_list.append(symbol.split(".")[0])
             if not exchange:
                 exchange = symbol.split(".")[-1]
-        
+
         if exchange == "BYBIT":
             self.download_engine.download_from_bybit(
                 contract_list=contract_list, from_data_base=True
             )
-        
-        elif exchange == 'BINANCE':
+
+        elif exchange == "BINANCE":
             self.download_engine.download_from_binance(
                 contract_list=contract_list, from_data_base=True
             )
@@ -251,8 +251,8 @@ class MartingPortfolio(object):
         fit_count = 0
         un_fit_content = ""
         un_fit_count = 0
-        ding_content = ""
-        ding_count = 0
+        highlight_content = ""
+        highlight_count = 0
         min_datetime = None
         max_datetime = None
         for _, strategy in self.engine.strategies.items():
@@ -273,10 +273,14 @@ class MartingPortfolio(object):
             backtesting_to = strategy.backtesting_to
 
             # 最小回测截止时间
-            min_datetime = min(min_datetime, backtesting_to) if min_datetime else backtesting_to
+            min_datetime = (
+                min(min_datetime, backtesting_to) if min_datetime else backtesting_to
+            )
 
             # 最大回测截止时间
-            max_datetime = max(max_datetime, backtesting_to) if max_datetime else backtesting_to
+            max_datetime = (
+                max(max_datetime, backtesting_to) if max_datetime else backtesting_to
+            )
 
             # 实盘持仓信息
             position_value = abs(strategy.pos) * strategy.position_price
@@ -284,34 +288,46 @@ class MartingPortfolio(object):
             # 回测和实盘比较趋势追踪等级是否一致
             if backtesting_step or strategy.trending_step:
                 if backtesting_step == strategy.trending_step:
-                    content = f"\nstrategy_name:{strategy.strategy_name}\nstrategy_pos:{strategy.pos}\nstrategy_position_price:{strategy.position_price}\nstrategy_position_value:{position_value}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\n\nstrategy_step: {strategy.trending_step}\nbacktesting_step: {backtesting_step}\nbacktesting_to: {backtesting_to}"
+                    content = f"\nstrategy_name:{strategy.strategy_name}\nstrategy_pos:{strategy.pos}\nstrategy_position_price:{strategy.position_price}\nstrategy_position_value:{position_value}\nstrategy_pnl:{strategy.current_pnl_rate}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\n\nstrategy_step: {strategy.trending_step}\nbacktesting_step: {backtesting_step}\nbacktesting_to: {backtesting_to}"
                     fit_content += content
                     fit_content += "\n\n" + "-" * 10 + "\n\n"
                     fit_count += 1
 
                     if strategy.trending_step >= 3:
-                        ding_content += content
-                        ding_content += "\n\n" + "-" * 10 + "\n\n"
-                        ding_count += 1
+                        highlight_content += content
+                        highlight_content += "\n\n" + "-" * 10 + "\n\n"
+                        highlight_count += 1
 
                 else:
-                    if strategy.trending_step == 0 and backtesting_step < strategy.bottom_step:
+                    if (
+                        strategy.trending_step == 0
+                        and backtesting_step < strategy.bottom_step
+                    ):
                         continue
-                    un_fit_content += f"\nstrategy_name:{strategy.strategy_name}\nstrategy_pos:{strategy.pos}\nstrategy_position_price:{strategy.position_price}\nstrategy_position_value:{position_value}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\n\nstrategy_step: {strategy.trending_step}\nbacktesting_step: {backtesting_step}\nbacktesting_to: {backtesting_to}"
+                    un_fit_content += f"\nstrategy_name:{strategy.strategy_name}\nstrategy_pos:{strategy.pos}\nstrategy_position_price:{strategy.position_price}\nstrategy_position_value:{position_value}\nstrategy_pnl:{strategy.current_pnl_rate}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\n\nstrategy_step: {strategy.trending_step}\nbacktesting_step: {backtesting_step}\nbacktesting_to: {backtesting_to}"
                     un_fit_content += "\n\n" + "-" * 10 + "\n\n"
                     un_fit_count += 1
 
         # 邮件发送通知
-        fit_content = f"\n策略总数：{total}\n回测周期：{min_datetime} - {max_datetime}\n" + fit_content
+        fit_content = (
+            f"\n策略总数：{total}\n回测周期：{min_datetime} - {max_datetime}\n" + fit_content
+        )
         self.engine.send_email(msg=fit_content, subject=f"马丁策略组合状态信息【正常：{fit_count}】")
 
-        un_fit_content = f"\n策略总数：{total}\n回测周期：{min_datetime} - {max_datetime}\n" + un_fit_content
-        self.engine.send_email(msg=un_fit_content, subject=f"马丁策略组合状态信息【非正常：{un_fit_count}】")
+        un_fit_content = (
+            f"\n策略总数：{total}\n回测周期：{min_datetime} - {max_datetime}\n" + un_fit_content
+        )
+        self.engine.send_email(
+            msg=un_fit_content, subject=f"马丁策略组合状态信息【非正常：{un_fit_count}】"
+        )
 
         if error_count:
-            error_content = f"\n策略总数：{total}\n回测周期：{min_datetime} - {max_datetime}\n"
-            self.engine.send_email(msg=error_content, subject=f"马丁策略组合状态信息【回测状态缺失数量：{error_count}】")
+            error_content = f"\n马丁策略组合状态信息【回测状态缺失数量：{error_count}】\n\n策略总数：{total}\n回测周期：{min_datetime} - {max_datetime}\n"
+            self.engine.main_engine.send_ding_talk(content=error_content)
 
-        if ding_count:
-            ding_content = f"\n策略总数：{total}\n回测周期：{min_datetime} - {max_datetime}\n" + ding_content
-            self.engine.send_email(msg=ding_content, subject=f"马丁策略组合状态信息【高等级追踪：{ding_count}】")
+        if highlight_count:
+            highlight_content = (
+                f"\n马丁策略组合状态信息【高等级追踪：{highlight_count}】\n\n策略总数：{total}\n回测周期：{min_datetime} - {max_datetime}\n"
+                + highlight_content
+            )
+            self.engine.main_engine.send_ding_talk(content=highlight_content)
