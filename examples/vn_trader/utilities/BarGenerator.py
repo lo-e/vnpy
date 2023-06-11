@@ -481,8 +481,6 @@ if __name__ == "__main__":
     exchange = input('选择交易所【Bybit：1  Binance：2】')
     if exchange == "1":
         exchange = "BYBIT"
-        # symbol_list = ['BTCUSDT', 'ETHUSDT']
-        # symbol_list = ['SHIB1000USDT', 'AAVEUSDT', 'ADAUSDT', 'APEUSDT', 'ATOMUSDT', 'AVAXUSDT', 'BCHUSDT', 'BNBUSDT', 'BTCUSDT', 'CHZUSDT', 'CRVUSDT', 'DOGEUSDT', 'DOTUSDT', 'EOSUSDT', 'ETCUSDT', 'FILUSDT', 'LINKUSDT', 'LTCUSDT', 'MATICUSDT', 'NEARUSDT', 'SANDUSDT', 'SOLUSDT', 'SUSHIUSDT', 'UNIUSDT', 'XRPUSDT']
         symbol_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
     
     elif exchange == "2":
