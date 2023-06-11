@@ -1874,20 +1874,25 @@ class BybitUsdtPublicWebsocketApi(WebsocketClient):
 
         bid_keys: list = list(bids.keys())
         bid_keys.sort(reverse=True)
-
-        ask_keys: list = list(asks.keys())
-        ask_keys.sort()
-
-        for i in range(5):
+        bid_count = min(len(bid_keys), 5)
+        for i in range(bid_count):
             n = i + 1
 
             bid_price = bid_keys[i]
             bid_data = bids[bid_price]
-            ask_price = ask_keys[i]
-            ask_data = asks[ask_price]
 
             setattr(tick, f"bid_price_{n}", bid_price)
             setattr(tick, f"bid_volume_{n}", bid_data["size"])
+        
+        ask_keys: list = list(asks.keys())
+        ask_keys.sort()
+        ask_count = min(len(ask_keys), 5)
+        for i in range(ask_count):
+            n = i + 1
+
+            ask_price = ask_keys[i]
+            ask_data = asks[ask_price]
+
             setattr(tick, f"ask_price_{n}", ask_price)
             setattr(tick, f"ask_volume_{n}", ask_data["size"])
 
