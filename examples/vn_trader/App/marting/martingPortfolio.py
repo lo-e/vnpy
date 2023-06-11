@@ -287,6 +287,8 @@ class MartingPortfolio(object):
                     fit_count += 1
 
                 else:
+                    if strategy.trending_step == 0 and backtesting_step < strategy.bottom_step:
+                        continue
                     un_fit_content += f"\nstrategy_name:{strategy.strategy_name}\nstrategy_pos:{strategy.pos}\nstrategy_position_price:{strategy.position_price}\nstrategy_position_value:{position_value}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\n\nstrategy_step: {strategy.trending_step}\nbacktesting_step: {backtesting_step}\nbacktesting_to: {backtesting_to}"
                     un_fit_content += "\n\n" + "-" * 10 + "\n\n"
                     un_fit_count += 1
