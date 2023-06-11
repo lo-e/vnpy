@@ -54,7 +54,9 @@ class MartingStrategy(CtaTemplate):
         "symbol_min_volume",
         "backtesting_to",
         "strategy_to",
+        "tick_dt",
         "tick_trade_enable",
+        "latest_price",
         "order_check_wait",
         "position_value",
         "position_price",
@@ -122,7 +124,9 @@ class MartingStrategy(CtaTemplate):
         self.position_close_price = 0  # 平仓价格
         self.position_increase_price = 0 # 加仓价格
         self.trending_step = 0  # 趋势追踪等级
+        self.tick_dt = None # 最新的tick时间
         self.tick_trade_enable = False  # Tick数据时间在回测后的指定范围内允许交易
+        self.latest_price = 0 # 最新的tick价格
         self.target_volume = -1  # 目标持仓
         self.order_check_wait = 0  # 检查Order状态的等待时间
         self.window_bar_list = []  # 基于实时Tick数据生成的周期Bar数据列表
@@ -306,6 +310,8 @@ class MartingStrategy(CtaTemplate):
         # 去除时区，避免不必要的麻烦
         tick.datetime = tick.datetime.replace(tzinfo=None)
         self.tick = copy(tick)
+        self.tick_dt = tick.datetime
+        self.latest_price = tick.last_price
 
         # 给分钟Bar生成器推送数据
         self.minute_bar_generator.update_tick(tick=tick)
