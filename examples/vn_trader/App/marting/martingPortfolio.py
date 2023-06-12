@@ -186,12 +186,12 @@ class MartingPortfolio(object):
 
         if exchange == "BYBIT":
             self.download_engine.download_from_bybit(
-                contract_list=contract_list, from_data_base=True
+                contract_list=contract_list, days=5, from_data_base=True
             )
 
         elif exchange == "BINANCE":
             self.download_engine.download_from_binance(
-                contract_list=contract_list, from_data_base=True
+                contract_list=contract_list, days=5, from_data_base=True
             )
 
     def generate_window_bar(self):

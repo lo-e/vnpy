@@ -257,7 +257,7 @@ def one():
                 symbol = signal.symbol
                 pure_symbol = symbol[:symbol.index('USDT')] 
                 direction = signal.direction
-                signal_key = f"MARTING_{pure_symbol}_{direction.value}"
+                signal_key = f"MARTING_{exchange}_{pure_symbol}_{direction.value}"
                 backtesting_data[signal_key] = signal.saved_sync_data
 
         # 保存到json

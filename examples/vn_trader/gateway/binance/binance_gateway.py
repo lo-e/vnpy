@@ -48,6 +48,9 @@ from vnpy.trader.utility import round_to
 from ..rest import Request, RestClient, Response
 from ..websocket import WebsocketClient
 from pytz import timezone
+from queue import Empty, Queue
+from threading import Thread
+from time import sleep
 
 
 # 中国时区
@@ -579,6 +582,10 @@ class BinanceUsdtRestApi(RestClient):
             pricetick: int = 1
             min_volume: int = 1
 
+            # 排除未正式交易的合约、交割合约
+            if quote_currency != "USDT" or d["contractType"] != "PERPETUAL":
+                continue
+
             for f in d["filters"]:
                 if f["filterType"] == "PRICE_FILTER":
                     pricetick = float(f["tickSize"])
@@ -602,7 +609,7 @@ class BinanceUsdtRestApi(RestClient):
 
             symbol_contract_map[contract.symbol] = contract
 
-        self.gateway.write_log("合约信息查询成功")
+        self.gateway.write_log(f"合约信息查询成功：{len(symbol_contract_map)}")
 
     def on_send_order(self, data: dict, request: Request) -> None:
         """委托下单回报"""
@@ -902,6 +909,10 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
         self.ticks: Dict[str, TickData] = {}
         self.reqid: int = 0
 
+        self.subscribe_thread = Thread(target=self.run_subscribe)
+        self.subscribe_thread.start()
+        self.subscribe_queue = Queue()
+
     def connect(self, proxy_host: str, proxy_port: int, server: str) -> None:
         """连接Websocket行情频道"""
         if server == "REAL":
@@ -917,14 +928,12 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
 
         # 重新订阅行情
         if self.ticks:
-            channels = []
-            for symbol in self.ticks.keys():
-                channels.append(f"{symbol}@ticker")
-                channels.append(f"{symbol}@depth5")
-
-            req: dict = {"method": "SUBSCRIBE", "params": channels, "id": self.reqid}
-            self.send_packet(req)
-
+            # 加入订阅队列
+            # self.subscribe_queue = Queue()
+            # for symbol in self.ticks.keys():
+            #     self.subscribe_queue.put(symbol)
+            pass
+            
     def subscribe(self, req: SubscribeRequest) -> None:
         """订阅行情"""
         if req.symbol in self.ticks:
@@ -934,8 +943,6 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
             self.gateway.write_log(f"找不到该合约代码{req.symbol}")
             return
 
-        self.reqid += 1
-
         # 创建TICK对象
         tick: TickData = TickData(
             symbol=req.symbol,
@@ -944,12 +951,10 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
             datetime=datetime.now(CHINA_TZ),
             gateway_name=self.gateway_name,
         )
-        self.ticks[req.symbol.lower()] = tick
+        self.ticks[req.symbol] = tick
 
-        channels = [f"{req.symbol.lower()}@ticker", f"{req.symbol.lower()}@depth5"]
-
-        req: dict = {"method": "SUBSCRIBE", "params": channels, "id": self.reqid}
-        self.send_packet(req)
+        # 加入订阅队列
+        self.subscribe_queue.put(req.symbol)
 
     def on_packet(self, packet: dict) -> None:
         """推送数据回报"""
@@ -961,7 +966,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
         data: dict = packet["data"]
 
         symbol, channel = stream.split("@")
-        tick: TickData = self.ticks[symbol]
+        tick: TickData = self.ticks[symbol.upper()]
 
         if channel == "ticker":
             tick.volume = float(data["v"])
@@ -972,6 +977,8 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
             tick.last_price = float(data["c"])
             tick.datetime = generate_datetime(float(data["E"]))
         else:
+            dt = generate_datetime(data["E"])
+            tick.datetime = dt
             bids: list = data["b"]
             for n in range(min(5, len(bids))):
                 price, volume = bids[n]
@@ -991,7 +998,19 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
     def on_disconnected(self) -> None:
         """连接断开回报"""
         self.gateway.write_log("行情Websocket API断开")
+    
+    def run_subscribe(self):
+        while True:
+            try:
+                symbol = self.subscribe_queue.get(block=True, timeout=1)
+                self.reqid += 1
+                channels = [f"{symbol.lower()}@ticker", f"{symbol.lower()}@depth5"]
+                req: dict = {"method": "SUBSCRIBE", "params": channels, "id": self.reqid}
+                self.send_packet(req)
 
+            except:
+                pass
+            sleep(0.2)
 
 def generate_datetime(timestamp: float) -> datetime:
     """生成时间"""

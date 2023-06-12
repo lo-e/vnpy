@@ -38,7 +38,7 @@ class TurtleCryptoDataDownloading(object):
         if thread in self.threads:
             self.threads.remove(thread)
 
-    def download_from_bybit(self, contract_list, days=1, to_date:datetime=datetime.now() + timedelta(days=2), from_data_base:bool=False):
+    def download_from_bybit(self, contract_list, days=1, to_date:datetime=datetime.now() + timedelta(days=2), from_data_base:bool=False, api_check:bool=False):
         # 先删除原有文件夹，包括其中所有内容
         csv_path = get_csv_path()
         if os.path.exists(csv_path):
@@ -49,7 +49,7 @@ class TurtleCryptoDataDownloading(object):
         for contract in contract_list:
             while len(self.threads) >= 10:
                 sleep(2)
-            thread = DownloadThread(self, exchange=ExchangeType.BYBIT, contract=contract, interval='1', days=days, to_date=to_date, from_data_base=from_data_base)
+            thread = DownloadThread(self, exchange=ExchangeType.BYBIT, contract=contract, interval='1', days=days, to_date=to_date, from_data_base=from_data_base, api_check=api_check)
             self.threads.append(thread)
             thread.start()
         self.loading_complete = True
@@ -111,7 +111,7 @@ class TurtleCryptoDataDownloading(object):
         engine.startWork()
         #"""
 
-    def download_from_binance(self, contract_list, days=1, to_date:datetime=datetime.now() + timedelta(days=2), from_data_base:bool=False):
+    def download_from_binance(self, contract_list, days=1, to_date:datetime=datetime.now() + timedelta(days=2), from_data_base:bool=False, api_check:bool=False):
         #"""
         # 先删除原有文件夹，包括其中所有内容
         csv_path = get_csv_path()
@@ -123,7 +123,7 @@ class TurtleCryptoDataDownloading(object):
         for contract in contract_list:
             while len(self.threads) >= 10:
                 sleep(2)
-            thread = DownloadThread(self, exchange=ExchangeType.BINANCE, contract=contract, interval='1m', days=days, to_date=to_date, from_data_base=from_data_base)
+            thread = DownloadThread(self, exchange=ExchangeType.BINANCE, contract=contract, interval='1m', days=days, to_date=to_date, from_data_base=from_data_base, api_check=api_check)
             self.threads.append(thread)
             thread.start()
         self.loading_complete = True
@@ -187,7 +187,7 @@ class TurtleCryptoDataDownloading(object):
         return result, complete_msg, back_msg, lost_msg
     
 class DownloadThread(object):
-    def __init__(self, engine, exchange:ExchangeType, contract, interval, days=1, to_date:datetime=datetime.now() + timedelta(days=2), from_data_base:bool=False):
+    def __init__(self, engine, exchange:ExchangeType, contract, interval, days=1, to_date:datetime=datetime.now() + timedelta(days=2), from_data_base:bool=False, api_check:bool=False):
         self.engine = engine
         self.exchange = exchange
         self.contract = contract
@@ -195,6 +195,7 @@ class DownloadThread(object):
         self.days = days
         self.to_date = to_date
         self.from_data_base = from_data_base
+        self.api_check = api_check
 
         self.thread = Thread(target=self.run)
         self.active = False
@@ -207,14 +208,15 @@ class DownloadThread(object):
 
         # 接口获取合约起始时间
         first_bar_dt = None
-        if self.exchange == ExchangeType.BYBIT:
-            first_bar_dt = bybit_get_first_bar_datetime(symbol=self.contract, interval=self.interval, from_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"))
-           
-        elif self.exchange == ExchangeType.BINANCE:
-            first_bar_dt = binance_get_first_bar_datetime(symbol=self.contract, interval=self.interval, symbol_type=Binancetype.USDT, start_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"))
+        if self.api_check:
+            if self.exchange == ExchangeType.BYBIT:
+                first_bar_dt = bybit_get_first_bar_datetime(symbol=self.contract, interval=self.interval, from_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"))
+            
+            elif self.exchange == ExchangeType.BINANCE:
+                first_bar_dt = binance_get_first_bar_datetime(symbol=self.contract, interval=self.interval, symbol_type=Binancetype.USDT, start_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"))
 
-        else:
-            exit(f"交易所类型错误")
+            else:
+                exit(f"交易所类型错误")
 
         if self.from_data_base:
             client = MongoClient("localhost", 27017)

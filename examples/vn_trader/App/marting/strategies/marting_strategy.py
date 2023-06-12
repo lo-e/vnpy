@@ -311,12 +311,15 @@ class MartingStrategy(CtaTemplate):
 
         # 去除时区，避免不必要的麻烦
         tick.datetime = tick.datetime.replace(tzinfo=None)
-        self.tick = copy(tick)
-        self.tick_dt = tick.datetime
-        self.latest_price = tick.last_price
 
         # 给分钟Bar生成器推送数据
-        self.minute_bar_generator.update_tick(tick=tick)
+        if (self.tick_dt and tick.datetime >= self.tick_dt) or not self.tick_dt:
+            self.minute_bar_generator.update_tick(tick=tick)
+        
+        # 更新tick相关变量
+        self.tick = copy(tick)
+        self.tick_dt = max(self.tick_dt, tick.datetime) if self.tick_dt else tick.datetime
+        self.latest_price = tick.last_price
 
         # 计算当前回测盈亏比率
         if self.strategy_position_price:
