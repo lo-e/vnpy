@@ -1,5 +1,5 @@
 {
-  "MARTING_BCH_多": {
+  "MARTING_BINANCE_BCH_多": {
     "backtesting_status": {
       "position": 133.2190000000683,
       "position_price": 112.59635930310334,
@@ -19,7 +19,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_BCH_空": {
+  "MARTING_BINANCE_BCH_空": {
     "backtesting_status": {
       "position": -134.86599999998998,
       "position_price": 111.22172497145336,
@@ -39,7 +39,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ADA_多": {
+  "MARTING_BINANCE_ADA_多": {
     "backtesting_status": {
       "position": 1006132.0,
       "position_price": 0.331381,
@@ -59,7 +59,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ADA_空": {
+  "MARTING_BINANCE_ADA_空": {
     "backtesting_status": {
       "position": -15898.0,
       "position_price": 0.3145,
@@ -79,7 +79,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ATOM_多": {
+  "MARTING_BINANCE_ATOM_多": {
     "backtesting_status": {
       "position": 31206.489999999834,
       "position_price": 9.54349,
@@ -99,7 +99,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ATOM_空": {
+  "MARTING_BINANCE_ATOM_空": {
     "backtesting_status": {
       "position": -534.5900000019427,
       "position_price": 9.353,
@@ -119,7 +119,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_BAT_多": {
+  "MARTING_BINANCE_BAT_多": {
     "backtesting_status": {
       "position": 176467.00000002288,
       "position_price": 0.19833738466682263,
@@ -139,7 +139,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_BAT_空": {
+  "MARTING_BINANCE_BAT_空": {
     "backtesting_status": {
       "position": -25733.399999999303,
       "position_price": 0.1943,
@@ -159,7 +159,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ALGO_多": {
+  "MARTING_BINANCE_ALGO_多": {
     "backtesting_status": {
       "position": 220893897.7,
       "position_price": 0.12837099999999999,
@@ -179,7 +179,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ALGO_空": {
+  "MARTING_BINANCE_ALGO_空": {
     "backtesting_status": {
       "position": -120348.70000001081,
       "position_price": 0.12463783821511966,
@@ -199,7 +199,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_BAND_多": {
+  "MARTING_BINANCE_BAND_多": {
     "backtesting_status": {
       "position": 4033.1999999061227,
       "position_price": 1.2397,
@@ -219,7 +219,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_BAND_空": {
+  "MARTING_BINANCE_BAND_空": {
     "backtesting_status": {
       "position": -12124.100000000506,
       "position_price": 1.2372099058899206,
@@ -239,7 +239,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_BAL_多": {
+  "MARTING_BINANCE_BAL_多": {
     "backtesting_status": {
       "position": 2988.699999991947,
       "position_price": 5.018849064810493,
@@ -259,7 +259,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_BAL_空": {
+  "MARTING_BINANCE_BAL_空": {
     "backtesting_status": {
       "position": -1018.0999999996443,
       "position_price": 4.911,
@@ -279,7 +279,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_AVAX_多": {
+  "MARTING_BINANCE_AVAX_多": {
     "backtesting_status": {
       "position": 1049.0,
       "position_price": 14.296562440419448,
@@ -299,7 +299,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_AVAX_空": {
+  "MARTING_BINANCE_AVAX_空": {
     "backtesting_status": {
       "position": -1066.0,
       "position_price": 14.077076923076921,
@@ -319,7 +319,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_AAVE_多": {
+  "MARTING_BINANCE_AAVE_多": {
     "backtesting_status": {
       "position": 249.8000000009346,
       "position_price": 60.05657325861374,
@@ -339,7 +339,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_AAVE_空": {
+  "MARTING_BINANCE_AAVE_空": {
     "backtesting_status": {
       "position": -249.79999999997676,
       "position_price": 60.04348278622907,
@@ -359,7 +359,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_BEL_多": {
+  "MARTING_BINANCE_BEL_多": {
     "backtesting_status": {
       "position": 51480.0,
       "position_price": 0.6798731993006993,
@@ -379,7 +379,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_BEL_空": {
+  "MARTING_BINANCE_BEL_空": {
     "backtesting_status": {
       "position": -22716.0,
       "position_price": 0.6603211656981862,
@@ -399,7 +399,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_AXS_多": {
+  "MARTING_BINANCE_AXS_多": {
     "backtesting_status": {
       "position": 47978.0,
       "position_price": 6.2317,
@@ -419,7 +419,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_AXS_空": {
+  "MARTING_BINANCE_AXS_空": {
     "backtesting_status": {
       "position": -2407.0,
       "position_price": 6.2316983797258,
@@ -439,7 +439,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ALPHA_多": {
+  "MARTING_BINANCE_ALPHA_多": {
     "backtesting_status": {
       "position": 42159.0,
       "position_price": 0.1186,
@@ -459,7 +459,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ALPHA_空": {
+  "MARTING_BINANCE_ALPHA_空": {
     "backtesting_status": {
       "position": -131478.0,
       "position_price": 0.11408747204855565,
@@ -479,7 +479,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_1INCH_多": {
+  "MARTING_BINANCE_1INCH_多": {
     "backtesting_status": {
       "position": 15319.0,
       "position_price": 0.3264,
@@ -499,7 +499,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_1INCH_空": {
+  "MARTING_BINANCE_1INCH_空": {
     "backtesting_status": {
       "position": -47271.0,
       "position_price": 0.3173225465930486,
@@ -519,7 +519,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ANKR_多": {
+  "MARTING_BINANCE_ANKR_多": {
     "backtesting_status": {
       "position": 1404604.0,
       "position_price": 0.024918049998433726,
@@ -539,7 +539,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ANKR_空": {
+  "MARTING_BINANCE_ANKR_空": {
     "backtesting_status": {
       "position": -632443.0,
       "position_price": 0.023717545596994512,
@@ -559,7 +559,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ALICE_多": {
+  "MARTING_BINANCE_ALICE_多": {
     "backtesting_status": {
       "position": 286534.30000000756,
       "position_price": 1.11504,
@@ -579,7 +579,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ALICE_空": {
+  "MARTING_BINANCE_ALICE_空": {
     "backtesting_status": {
       "position": -13716.60000000062,
       "position_price": 1.0935677062828972,
@@ -599,7 +599,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_1000SHIB_多": {
+  "MARTING_BINANCE_1000SHIB_多": {
     "backtesting_status": {
       "position": 4221943.0,
       "position_price": 0.008290022669183359,
@@ -619,7 +619,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_1000SHIB_空": {
+  "MARTING_BINANCE_1000SHIB_空": {
     "backtesting_status": {
       "position": -634679.0,
       "position_price": 0.007878,
@@ -639,7 +639,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_BAKE_多": {
+  "MARTING_BINANCE_BAKE_多": {
     "backtesting_status": {
       "position": 126871.0,
       "position_price": 0.11823072569775599,
@@ -659,7 +659,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_BAKE_空": {
+  "MARTING_BINANCE_BAKE_空": {
     "backtesting_status": {
       "position": -43328.0,
       "position_price": 0.1154,
@@ -679,7 +679,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_AUDIO_多": {
+  "MARTING_BINANCE_AUDIO_多": {
     "backtesting_status": {
       "position": 1623854.0,
       "position_price": 0.207656,
@@ -699,7 +699,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_AUDIO_空": {
+  "MARTING_BINANCE_AUDIO_空": {
     "backtesting_status": {
       "position": -73663.0,
       "position_price": 0.20362960780853342,
@@ -719,7 +719,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ATA_多": {
+  "MARTING_BINANCE_ATA_多": {
     "backtesting_status": {
       "position": 136462.0,
       "position_price": 0.10992079626562705,
@@ -739,7 +739,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ATA_空": {
+  "MARTING_BINANCE_ATA_空": {
     "backtesting_status": {
       "position": -46773.0,
       "position_price": 0.1069,
@@ -759,7 +759,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_1000XEC_多": {
+  "MARTING_BINANCE_1000XEC_多": {
     "backtesting_status": {
       "position": 216450.0,
       "position_price": 0.0231,
@@ -779,7 +779,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_1000XEC_空": {
+  "MARTING_BINANCE_1000XEC_空": {
     "backtesting_status": {
       "position": -659216.0,
       "position_price": 0.022754304931919128,
@@ -799,7 +799,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_AR_多": {
+  "MARTING_BINANCE_AR_多": {
     "backtesting_status": {
       "position": 5425.799999998023,
       "position_price": 6.4506890412471956,
@@ -819,7 +819,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_AR_空": {
+  "MARTING_BINANCE_AR_空": {
     "backtesting_status": {
       "position": -2418.9000000000397,
       "position_price": 6.20109434040266,
@@ -839,7 +839,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ARPA_多": {
+  "MARTING_BINANCE_ARPA_多": {
     "backtesting_status": {
       "position": 92902.0,
       "position_price": 0.05382,
@@ -859,7 +859,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ARPA_空": {
+  "MARTING_BINANCE_ARPA_空": {
     "backtesting_status": {
       "position": -301445.0,
       "position_price": 0.04976033986299325,
@@ -879,7 +879,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_HNT_多": {
+  "MARTING_BINANCE_HNT_多": {
     "backtesting_status": {
       "position": 23802.0,
       "position_price": 1.4704426938912696,
@@ -894,7 +894,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_HNT_空": {
+  "MARTING_BINANCE_HNT_空": {
     "backtesting_status": {
       "position": -10444.0,
       "position_price": 1.4362490425124472,
@@ -909,7 +909,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_OGN_多": {
+  "MARTING_BINANCE_OGN_多": {
     "backtesting_status": {
       "position": 409899.0,
       "position_price": 0.08538694605256415,
@@ -929,7 +929,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_OGN_空": {
+  "MARTING_BINANCE_OGN_空": {
     "backtesting_status": {
       "position": -184775.0,
       "position_price": 0.08117983006359086,
@@ -949,7 +949,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_OMG_多": {
+  "MARTING_BINANCE_OMG_多": {
     "backtesting_status": {
       "position": 51471.19999995257,
       "position_price": 0.679991894884877,
@@ -969,7 +969,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_OMG_空": {
+  "MARTING_BINANCE_OMG_空": {
     "backtesting_status": {
       "position": -22735.700000001503,
       "position_price": 0.6597553446781925,
@@ -989,7 +989,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_HBAR_多": {
+  "MARTING_BINANCE_HBAR_多": {
     "backtesting_status": {
       "position": 678877.0,
       "position_price": 0.05155570615884763,
@@ -1009,7 +1009,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_HBAR_空": {
+  "MARTING_BINANCE_HBAR_空": {
     "backtesting_status": {
       "position": -310695.0,
       "position_price": 0.04827888273065225,
@@ -1029,7 +1029,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_GTC_多": {
+  "MARTING_BINANCE_GTC_多": {
     "backtesting_status": {
       "position": 4366.799999973737,
       "position_price": 1.145,
@@ -1049,7 +1049,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_GTC_空": {
+  "MARTING_BINANCE_GTC_空": {
     "backtesting_status": {
       "position": -13338.800000001387,
       "position_price": 1.1245423426395162,
@@ -1069,7 +1069,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_GRT_多": {
+  "MARTING_BINANCE_GRT_多": {
     "backtesting_status": {
       "position": 303784.0,
       "position_price": 0.11521332874674109,
@@ -1089,7 +1089,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_GRT_空": {
+  "MARTING_BINANCE_GRT_空": {
     "backtesting_status": {
       "position": -135205.0,
       "position_price": 0.11094248289634259,
@@ -1109,7 +1109,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ONE_多": {
+  "MARTING_BINANCE_ONE_多": {
     "backtesting_status": {
       "position": 2603155.0,
       "position_price": 0.01344522464855147,
@@ -1129,7 +1129,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ONE_空": {
+  "MARTING_BINANCE_ONE_空": {
     "backtesting_status": {
       "position": -1174430.0,
       "position_price": 0.012772149297957306,
@@ -1149,7 +1149,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ONT_多": {
+  "MARTING_BINANCE_ONT_多": {
     "backtesting_status": {
       "position": 1745631.4999999953,
       "position_price": 0.208262,
@@ -1169,7 +1169,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ONT_空": {
+  "MARTING_BINANCE_ONT_空": {
     "backtesting_status": {
       "position": -76408.09999998505,
       "position_price": 0.19631417519870326,
@@ -1189,7 +1189,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_QTUM_多": {
+  "MARTING_BINANCE_QTUM_多": {
     "backtesting_status": {
       "position": 124906.6999999993,
       "position_price": 2.35128,
@@ -1209,7 +1209,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_QTUM_空": {
+  "MARTING_BINANCE_QTUM_空": {
     "backtesting_status": {
       "position": -2131.3000000011743,
       "position_price": 2.346,
@@ -1229,7 +1229,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_GALA_多": {
+  "MARTING_BINANCE_GALA_多": {
     "backtesting_status": {
       "position": 1328618.0,
       "position_price": 0.026343163588029062,
@@ -1249,7 +1249,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_GALA_空": {
+  "MARTING_BINANCE_GALA_空": {
     "backtesting_status": {
       "position": -578873.0,
       "position_price": 0.025912426646259198,
@@ -1269,7 +1269,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_EOS_多": {
+  "MARTING_BINANCE_EOS_多": {
     "backtesting_status": {
       "position": 5599.099999994423,
       "position_price": 0.893,
@@ -1289,7 +1289,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_EOS_空": {
+  "MARTING_BINANCE_EOS_空": {
     "backtesting_status": {
       "position": -17103.399999999776,
       "position_price": 0.877018873440369,
@@ -1309,7 +1309,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ETH_多": {
+  "MARTING_BINANCE_ETH_多": {
     "backtesting_status": {
       "position": 7.980000000000262,
       "position_price": 1879.5889824561411,
@@ -1329,7 +1329,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ETH_空": {
+  "MARTING_BINANCE_ETH_空": {
     "backtesting_status": {
       "position": -2.73099999999624,
       "position_price": 1831.16,
@@ -1349,7 +1349,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_RSR_多": {
+  "MARTING_BINANCE_RSR_多": {
     "backtesting_status": {
       "position": 6184937.0,
       "position_price": 0.002425246968077444,
@@ -1369,7 +1369,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_RSR_空": {
+  "MARTING_BINANCE_RSR_空": {
     "backtesting_status": {
       "position": -6312798.0,
       "position_price": 0.002376125389090543,
@@ -1389,7 +1389,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_FIL_多": {
+  "MARTING_BINANCE_FIL_多": {
     "backtesting_status": {
       "position": 8316.600000000886,
       "position_price": 4.208446360291487,
@@ -1409,7 +1409,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_FIL_空": {
+  "MARTING_BINANCE_FIL_空": {
     "backtesting_status": {
       "position": -1229.9999999911884,
       "position_price": 4.065,
@@ -1429,7 +1429,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_FLM_多": {
+  "MARTING_BINANCE_FLM_多": {
     "backtesting_status": {
       "position": 480650.0,
       "position_price": 0.07281803370435869,
@@ -1449,7 +1449,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_FLM_空": {
+  "MARTING_BINANCE_FLM_空": {
     "backtesting_status": {
       "position": -212693.0,
       "position_price": 0.07052415500275044,
@@ -1469,7 +1469,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_RLC_多": {
+  "MARTING_BINANCE_RLC_多": {
     "backtesting_status": {
       "position": 24940.599999990896,
       "position_price": 1.4033322377969772,
@@ -1489,7 +1489,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_RLC_空": {
+  "MARTING_BINANCE_RLC_空": {
     "backtesting_status": {
       "position": -3623.199999998221,
       "position_price": 1.38,
@@ -1509,7 +1509,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_REN_多": {
+  "MARTING_BINANCE_REN_多": {
     "backtesting_status": {
       "position": 445719.0,
       "position_price": 0.07852477794305382,
@@ -1529,7 +1529,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_REN_空": {
+  "MARTING_BINANCE_REN_空": {
     "backtesting_status": {
       "position": -65677.0,
       "position_price": 0.07613,
@@ -1549,7 +1549,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_FTM_多": {
+  "MARTING_BINANCE_FTM_多": {
     "backtesting_status": {
       "position": 16779.0,
       "position_price": 0.298,
@@ -1569,7 +1569,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_FTM_空": {
+  "MARTING_BINANCE_FTM_空": {
     "backtesting_status": {
       "position": -17159.0,
       "position_price": 0.2914,
@@ -1589,7 +1589,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_REEF_多": {
+  "MARTING_BINANCE_REEF_多": {
     "backtesting_status": {
       "position": 148677395.0,
       "position_price": 0.00191698,
@@ -1609,7 +1609,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_REEF_空": {
+  "MARTING_BINANCE_REEF_空": {
     "backtesting_status": {
       "position": -2753304.0,
       "position_price": 0.001816,
@@ -1629,7 +1629,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_RAY_多": {
+  "MARTING_BINANCE_RAY_多": {
     "backtesting_status": {
       "position": 19455.300000226496,
       "position_price": 0.257,
@@ -1644,7 +1644,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_RAY_空": {
+  "MARTING_BINANCE_RAY_空": {
     "backtesting_status": {
       "position": -145043.79999999964,
       "position_price": 0.2413064219222056,
@@ -1659,7 +1659,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ETC_多": {
+  "MARTING_BINANCE_ETC_多": {
     "backtesting_status": {
       "position": 1991.2800000007526,
       "position_price": 17.57664738258846,
@@ -1679,7 +1679,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ETC_空": {
+  "MARTING_BINANCE_ETC_空": {
     "backtesting_status": {
       "position": -883.550000003572,
       "position_price": 16.97705584290543,
@@ -1699,7 +1699,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_OCEAN_多": {
+  "MARTING_BINANCE_OCEAN_多": {
     "backtesting_status": {
       "position": 99269.0,
       "position_price": 0.35257807875570424,
@@ -1719,7 +1719,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_OCEAN_空": {
+  "MARTING_BINANCE_OCEAN_空": {
     "backtesting_status": {
       "position": -15024.0,
       "position_price": 0.3328,
@@ -1739,7 +1739,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_SC_多": {
+  "MARTING_BINANCE_SC_多": {
     "backtesting_status": {
       "position": 9664257.0,
       "position_price": 0.003621592301612012,
@@ -1754,7 +1754,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_SC_空": {
+  "MARTING_BINANCE_SC_空": {
     "backtesting_status": {
       "position": -9881571.0,
       "position_price": 0.003541946973209017,
@@ -1769,7 +1769,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_NKN_多": {
+  "MARTING_BINANCE_NKN_多": {
     "backtesting_status": {
       "position": 47205.0,
       "position_price": 0.10592,
@@ -1789,7 +1789,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_NKN_空": {
+  "MARTING_BINANCE_NKN_空": {
     "backtesting_status": {
       "position": -142967.0,
       "position_price": 0.1049195573803745,
@@ -1809,7 +1809,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_LINK_多": {
+  "MARTING_BINANCE_LINK_多": {
     "backtesting_status": {
       "position": 5576.960000000204,
       "position_price": 6.27582441509354,
@@ -1829,7 +1829,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_LINK_空": {
+  "MARTING_BINANCE_LINK_空": {
     "backtesting_status": {
       "position": -2497.5099999999393,
       "position_price": 6.005976913005355,
@@ -1849,7 +1849,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_LINA_多": {
+  "MARTING_BINANCE_LINA_多": {
     "backtesting_status": {
       "position": 391236.0,
       "position_price": 0.01278,
@@ -1869,7 +1869,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_LINA_空": {
+  "MARTING_BINANCE_LINA_空": {
     "backtesting_status": {
       "position": -1223266.0,
       "position_price": 0.01226225856028043,
@@ -1889,7 +1889,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_LRC_多": {
+  "MARTING_BINANCE_LRC_多": {
     "backtesting_status": {
       "position": 139450.0,
       "position_price": 0.25098650340623874,
@@ -1909,7 +1909,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_LRC_空": {
+  "MARTING_BINANCE_LRC_空": {
     "backtesting_status": {
       "position": -60818.0,
       "position_price": 0.24663923509487323,
@@ -1929,7 +1929,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_LTC_多": {
+  "MARTING_BINANCE_LTC_多": {
     "backtesting_status": {
       "position": 385.0070000049632,
       "position_price": 90.9074501503304,
@@ -1949,7 +1949,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_LTC_空": {
+  "MARTING_BINANCE_LTC_空": {
     "backtesting_status": {
       "position": -171.27800000001355,
       "position_price": 87.57715252396679,
@@ -1969,7 +1969,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_KSM_多": {
+  "MARTING_BINANCE_KSM_多": {
     "backtesting_status": {
       "position": 1348.600000001445,
       "position_price": 25.952659053835205,
@@ -1989,7 +1989,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_KSM_空": {
+  "MARTING_BINANCE_KSM_空": {
     "backtesting_status": {
       "position": -578.8999999999911,
       "position_price": 25.908999827258597,
@@ -2009,7 +2009,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_KNC_多": {
+  "MARTING_BINANCE_KNC_多": {
     "backtesting_status": {
       "position": 58880.0,
       "position_price": 0.5944338383152173,
@@ -2029,7 +2029,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_KNC_空": {
+  "MARTING_BINANCE_KNC_空": {
     "backtesting_status": {
       "position": -26916.0,
       "position_price": 0.5572990488928518,
@@ -2049,7 +2049,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_KLAY_多": {
+  "MARTING_BINANCE_KLAY_多": {
     "backtesting_status": {
       "position": 202078.49999995233,
       "position_price": 0.17320003389771577,
@@ -2069,7 +2069,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_KLAY_空": {
+  "MARTING_BINANCE_KLAY_空": {
     "backtesting_status": {
       "position": -91212.59999999794,
       "position_price": 0.1644509401113443,
@@ -2089,7 +2089,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_MANA_多": {
+  "MARTING_BINANCE_MANA_多": {
     "backtesting_status": {
       "position": 709923.0,
       "position_price": 0.43339099999999997,
@@ -2109,7 +2109,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_MANA_空": {
+  "MARTING_BINANCE_MANA_空": {
     "backtesting_status": {
       "position": -35983.0,
       "position_price": 0.41686202651251986,
@@ -2129,7 +2129,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_KAVA_多": {
+  "MARTING_BINANCE_KAVA_多": {
     "backtesting_status": {
       "position": 309155.69999998837,
       "position_price": 0.996264,
@@ -2149,7 +2149,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_KAVA_空": {
+  "MARTING_BINANCE_KAVA_空": {
     "backtesting_status": {
       "position": -5303.400000011854,
       "position_price": 0.9428,
@@ -2169,7 +2169,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_HOT_多": {
+  "MARTING_BINANCE_HOT_多": {
     "backtesting_status": {
       "position": 23744577.0,
       "position_price": 0.001474020794685035,
@@ -2189,7 +2189,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_HOT_空": {
+  "MARTING_BINANCE_HOT_空": {
     "backtesting_status": {
       "position": -10393548.0,
       "position_price": 0.001443202975538286,
@@ -2209,7 +2209,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_MASK_多": {
+  "MARTING_BINANCE_MASK_多": {
     "backtesting_status": {
       "position": 1183.0,
       "position_price": 4.227,
@@ -2229,7 +2229,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_MASK_空": {
+  "MARTING_BINANCE_MASK_空": {
     "backtesting_status": {
       "position": -3711.0,
       "position_price": 4.041628940986257,
@@ -2249,7 +2249,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ENS_多": {
+  "MARTING_BINANCE_ENS_多": {
     "backtesting_status": {
       "position": 3838.9000000001733,
       "position_price": 9.117101461356137,
@@ -2269,7 +2269,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ENS_空": {
+  "MARTING_BINANCE_ENS_空": {
     "backtesting_status": {
       "position": -559.5999999999976,
       "position_price": 8.935,
@@ -2289,7 +2289,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_IOTX_多": {
+  "MARTING_BINANCE_IOTX_多": {
     "backtesting_status": {
       "position": 1620036.0,
       "position_price": 0.02160445349362607,
@@ -2309,7 +2309,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_IOTX_空": {
+  "MARTING_BINANCE_IOTX_空": {
     "backtesting_status": {
       "position": -699762.0,
       "position_price": 0.02143584508732969,
@@ -2329,7 +2329,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_IOTA_多": {
+  "MARTING_BINANCE_IOTA_多": {
     "backtesting_status": {
       "position": 2396748.7999999765,
       "position_price": 0.187557,
@@ -2349,7 +2349,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_IOTA_空": {
+  "MARTING_BINANCE_IOTA_空": {
     "backtesting_status": {
       "position": -28169.000000001106,
       "position_price": 0.1775,
@@ -2369,7 +2369,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_IOST_多": {
+  "MARTING_BINANCE_IOST_多": {
     "backtesting_status": {
       "position": 4061607.0,
       "position_price": 0.008617278355833048,
@@ -2389,7 +2389,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_IOST_空": {
+  "MARTING_BINANCE_IOST_空": {
     "backtesting_status": {
       "position": -587751.0,
       "position_price": 0.008507,
@@ -2409,7 +2409,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_MKR_多": {
+  "MARTING_BINANCE_MKR_多": {
     "backtesting_status": {
       "position": 52.43600000000785,
       "position_price": 667.4768632237435,
@@ -2429,7 +2429,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_MKR_空": {
+  "MARTING_BINANCE_MKR_空": {
     "backtesting_status": {
       "position": -23.83500000005362,
       "position_price": 629.3322592825473,
@@ -2449,7 +2449,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_MTL_多": {
+  "MARTING_BINANCE_MTL_多": {
     "backtesting_status": {
       "position": 29465.0,
       "position_price": 1.187853398947904,
@@ -2469,7 +2469,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_MTL_空": {
+  "MARTING_BINANCE_MTL_空": {
     "backtesting_status": {
       "position": -4333.0,
       "position_price": 1.1539,
@@ -2489,7 +2489,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_NEAR_多": {
+  "MARTING_BINANCE_NEAR_多": {
     "backtesting_status": {
       "position": 23379.0,
       "position_price": 1.4970728431498352,
@@ -2509,7 +2509,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_NEAR_空": {
+  "MARTING_BINANCE_NEAR_空": {
     "backtesting_status": {
       "position": -10592.0,
       "position_price": 1.4161405777945617,
@@ -2529,7 +2529,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_NEO_多": {
+  "MARTING_BINANCE_NEO_多": {
     "backtesting_status": {
       "position": 3779.5900000002935,
       "position_price": 9.260272344354842,
@@ -2549,7 +2549,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_NEO_空": {
+  "MARTING_BINANCE_NEO_空": {
     "backtesting_status": {
       "position": -1665.4599999999664,
       "position_price": 9.006510825837909,
@@ -2569,7 +2569,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ICX_多": {
+  "MARTING_BINANCE_ICX_多": {
     "backtesting_status": {
       "position": 153240.0,
       "position_price": 0.228399689376142,
@@ -2589,7 +2589,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ICX_空": {
+  "MARTING_BINANCE_ICX_空": {
     "backtesting_status": {
       "position": -68752.0,
       "position_price": 0.21817635559692808,
@@ -2609,7 +2609,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_MATIC_多": {
+  "MARTING_BINANCE_MATIC_多": {
     "backtesting_status": {
       "position": 3048521.0,
       "position_price": 0.781235,
@@ -2629,7 +2629,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_MATIC_空": {
+  "MARTING_BINANCE_MATIC_空": {
     "backtesting_status": {
       "position": -19317.0,
       "position_price": 0.776515903090542,
@@ -2649,7 +2649,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ENJ_多": {
+  "MARTING_BINANCE_ENJ_多": {
     "backtesting_status": {
       "position": 112683.0,
       "position_price": 0.310606556445959,
@@ -2669,7 +2669,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ENJ_空": {
+  "MARTING_BINANCE_ENJ_空": {
     "backtesting_status": {
       "position": -16892.0,
       "position_price": 0.296,
@@ -2689,7 +2689,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_LPT_多": {
+  "MARTING_BINANCE_LPT_多": {
     "backtesting_status": {
       "position": 7042.899999999447,
       "position_price": 4.9695662582174585,
@@ -2709,7 +2709,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_LPT_空": {
+  "MARTING_BINANCE_LPT_空": {
     "backtesting_status": {
       "position": -3211.6000000015283,
       "position_price": 4.6705834475027626,
@@ -2729,7 +2729,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_RUNE_多": {
+  "MARTING_BINANCE_RUNE_多": {
     "backtesting_status": {
       "position": 13837.0,
       "position_price": 1.0840339669003398,
@@ -2749,7 +2749,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_RUNE_空": {
+  "MARTING_BINANCE_RUNE_空": {
     "backtesting_status": {
       "position": -4651.0,
       "position_price": 1.075,
@@ -2769,7 +2769,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_BLZ_多": {
+  "MARTING_BINANCE_BLZ_多": {
     "backtesting_status": {
       "position": 83333.0,
       "position_price": 0.06,
@@ -2789,7 +2789,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_BLZ_空": {
+  "MARTING_BINANCE_BLZ_空": {
     "backtesting_status": {
       "position": -255448.0,
       "position_price": 0.05872034809432839,
@@ -2809,7 +2809,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_BNB_多": {
+  "MARTING_BINANCE_BNB_多": {
     "backtesting_status": {
       "position": 18.970000000003274,
       "position_price": 263.51,
@@ -2829,7 +2829,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_BNB_空": {
+  "MARTING_BINANCE_BNB_空": {
     "backtesting_status": {
       "position": -19.299999999997148,
       "position_price": 259.03,
@@ -2849,7 +2849,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_BTCDOM_多": {
+  "MARTING_BINANCE_BTCDOM_多": {
     "backtesting_status": {
       "position": 3.0560000000000036,
       "position_price": 1635.9,
@@ -2869,7 +2869,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_BTCDOM_空": {
+  "MARTING_BINANCE_BTCDOM_空": {
     "backtesting_status": {
       "position": -9.422999999999927,
       "position_price": 1591.905730659026,
@@ -2889,7 +2889,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_BTC_多": {
+  "MARTING_BINANCE_BTC_多": {
     "backtesting_status": {
       "position": 0.5649999999999438,
       "position_price": 26541.899115044194,
@@ -2909,7 +2909,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_BTC_空": {
+  "MARTING_BINANCE_BTC_空": {
     "backtesting_status": {
       "position": -0.5709999999999761,
       "position_price": 26247.485464098103,
@@ -2929,7 +2929,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_BTS_多": {
+  "MARTING_BINANCE_BTS_多": {
     "backtesting_status": {
       "position": 2790241.0,
       "position_price": 0.01254372004783816,
@@ -2944,7 +2944,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_BTS_空": {
+  "MARTING_BINANCE_BTS_空": {
     "backtesting_status": {
       "position": -1220636.0,
       "position_price": 0.012288672085699587,
@@ -2959,7 +2959,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_C98_多": {
+  "MARTING_BINANCE_C98_多": {
     "backtesting_status": {
       "position": 1917546.0,
       "position_price": 0.17008399999999999,
@@ -2979,7 +2979,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_C98_空": {
+  "MARTING_BINANCE_C98_空": {
     "backtesting_status": {
       "position": -89900.0,
       "position_price": 0.16685145717463848,
@@ -2999,7 +2999,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_CELO_多": {
+  "MARTING_BINANCE_CELO_多": {
     "backtesting_status": {
       "position": 10460.2999999987,
       "position_price": 0.478,
@@ -3018,7 +3018,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_CELO_空": {
+  "MARTING_BINANCE_CELO_空": {
     "backtesting_status": {
       "position": -31650.100000000264,
       "position_price": 0.4739319180666095,
@@ -3037,7 +3037,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_EGLD_多": {
+  "MARTING_BINANCE_EGLD_多": {
     "backtesting_status": {
       "position": 955.6000000000091,
       "position_price": 36.625646714106345,
@@ -3057,7 +3057,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_EGLD_空": {
+  "MARTING_BINANCE_EGLD_空": {
     "backtesting_status": {
       "position": -144.70000000003202,
       "position_price": 34.56,
@@ -3077,7 +3077,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_SOL_多": {
+  "MARTING_BINANCE_SOL_多": {
     "backtesting_status": {
       "position": 18585.0,
       "position_price": 19.08597,
@@ -3097,7 +3097,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_SOL_空": {
+  "MARTING_BINANCE_SOL_空": {
     "backtesting_status": {
       "position": -793.0,
       "position_price": 18.910087011349304,
@@ -3117,7 +3117,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_CHR_多": {
+  "MARTING_BINANCE_CHR_多": {
     "backtesting_status": {
       "position": 105605.0,
       "position_price": 0.14203881255622366,
@@ -3137,7 +3137,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_CHR_空": {
+  "MARTING_BINANCE_CHR_空": {
     "backtesting_status": {
       "position": -35971.0,
       "position_price": 0.139,
@@ -3157,7 +3157,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_CHZ_多": {
+  "MARTING_BINANCE_CHZ_多": {
     "backtesting_status": {
       "position": 37267320.0,
       "position_price": 0.087567,
@@ -3177,7 +3177,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_CHZ_空": {
+  "MARTING_BINANCE_CHZ_空": {
     "backtesting_status": {
       "position": -171674.0,
       "position_price": 0.08737484860840897,
@@ -3197,7 +3197,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_SNX_多": {
+  "MARTING_BINANCE_SNX_多": {
     "backtesting_status": {
       "position": 15795.599999997916,
       "position_price": 2.215806914583795,
@@ -3217,7 +3217,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_SNX_空": {
+  "MARTING_BINANCE_SNX_空": {
     "backtesting_status": {
       "position": -2453.3999999882117,
       "position_price": 2.038,
@@ -3237,7 +3237,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_SKL_多": {
+  "MARTING_BINANCE_SKL_多": {
     "backtesting_status": {
       "position": 499932.0,
       "position_price": 0.03000406099229495,
@@ -3257,7 +3257,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_SKL_空": {
+  "MARTING_BINANCE_SKL_空": {
     "backtesting_status": {
       "position": -168294.0,
       "position_price": 0.02971,
@@ -3277,7 +3277,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_SFP_多": {
+  "MARTING_BINANCE_SFP_多": {
     "backtesting_status": {
       "position": 89258.0,
       "position_price": 0.3921199937260526,
@@ -3297,7 +3297,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_SFP_空": {
+  "MARTING_BINANCE_SFP_空": {
     "backtesting_status": {
       "position": -39709.0,
       "position_price": 0.37775202598907054,
@@ -3317,7 +3317,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_COMP_多": {
+  "MARTING_BINANCE_COMP_多": {
     "backtesting_status": {
       "position": 1025.6539999998502,
       "position_price": 34.12456725172388,
@@ -3337,7 +3337,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_COMP_空": {
+  "MARTING_BINANCE_COMP_空": {
     "backtesting_status": {
       "position": -156.44599999999807,
       "position_price": 31.96,
@@ -3357,7 +3357,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_CELR_多": {
+  "MARTING_BINANCE_CELR_多": {
     "backtesting_status": {
       "position": 294985.0,
       "position_price": 0.01695,
@@ -3377,7 +3377,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_CELR_空": {
+  "MARTING_BINANCE_CELR_空": {
     "backtesting_status": {
       "position": -2091736.0,
       "position_price": 0.016732510173367958,
@@ -3397,7 +3397,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_CRV_多": {
+  "MARTING_BINANCE_CRV_多": {
     "backtesting_status": {
       "position": 43069.70000009602,
       "position_price": 0.8126360782639364,
@@ -3417,7 +3417,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_CRV_空": {
+  "MARTING_BINANCE_CRV_空": {
     "backtesting_status": {
       "position": -6622.500000004446,
       "position_price": 0.755,
@@ -3437,7 +3437,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_COTI_多": {
+  "MARTING_BINANCE_COTI_多": {
     "backtesting_status": {
       "position": 93214.0,
       "position_price": 0.05364,
@@ -3457,7 +3457,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_COTI_空": {
+  "MARTING_BINANCE_COTI_空": {
     "backtesting_status": {
       "position": -281556.0,
       "position_price": 0.053275371968631455,
@@ -3477,7 +3477,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_RVN_多": {
+  "MARTING_BINANCE_RVN_多": {
     "backtesting_status": {
       "position": 262192.0,
       "position_price": 0.01907,
@@ -3497,7 +3497,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_RVN_空": {
+  "MARTING_BINANCE_RVN_空": {
     "backtesting_status": {
       "position": -810603.0,
       "position_price": 0.01850473131730329,
@@ -3517,7 +3517,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_DOT_多": {
+  "MARTING_BINANCE_DOT_多": {
     "backtesting_status": {
       "position": 2908.8000000007246,
       "position_price": 5.156737004950515,
@@ -3537,7 +3537,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_DOT_空": {
+  "MARTING_BINANCE_DOT_空": {
     "backtesting_status": {
       "position": -1002.1999999985561,
       "position_price": 4.989,
@@ -3557,7 +3557,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_DOGE_多": {
+  "MARTING_BINANCE_DOGE_多": {
     "backtesting_status": {
       "position": 70962.0,
       "position_price": 0.07046,
@@ -3577,7 +3577,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_DOGE_空": {
+  "MARTING_BINANCE_DOGE_空": {
     "backtesting_status": {
       "position": -216396.0,
       "position_price": 0.06931744782713174,
@@ -3597,7 +3597,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_DGB_多": {
+  "MARTING_BINANCE_DGB_多": {
     "backtesting_status": {
       "position": 4576405.0,
       "position_price": 0.0076479249214175754,
@@ -3617,7 +3617,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_DGB_空": {
+  "MARTING_BINANCE_DGB_空": {
     "backtesting_status": {
       "position": -2073989.0,
       "position_price": 0.007232438465199188,
@@ -3637,7 +3637,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_DENT_多": {
+  "MARTING_BINANCE_DENT_多": {
     "backtesting_status": {
       "position": 42792862.0,
       "position_price": 0.0008178934051197604,
@@ -3657,7 +3657,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_DENT_空": {
+  "MARTING_BINANCE_DENT_空": {
     "backtesting_status": {
       "position": -6510417.0,
       "position_price": 0.000768,
@@ -3677,7 +3677,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_DYDX_多": {
+  "MARTING_BINANCE_DYDX_多": {
     "backtesting_status": {
       "position": 17284.50000000102,
       "position_price": 2.024933159767429,
@@ -3697,7 +3697,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_DYDX_空": {
+  "MARTING_BINANCE_DYDX_空": {
     "backtesting_status": {
       "position": -2556.1999999991426,
       "position_price": 1.956,
@@ -3717,7 +3717,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_DASH_多": {
+  "MARTING_BINANCE_DASH_多": {
     "backtesting_status": {
       "position": 862.0999999999989,
       "position_price": 40.59853039090593,
@@ -3737,7 +3737,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_DASH_空": {
+  "MARTING_BINANCE_DASH_空": {
     "backtesting_status": {
       "position": -391.5209999999982,
       "position_price": 38.3121399107583,
@@ -3757,7 +3757,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_SAND_多": {
+  "MARTING_BINANCE_SAND_多": {
     "backtesting_status": {
       "position": 607622.0,
       "position_price": 0.5002530000000001,
@@ -3777,7 +3777,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_SAND_空": {
+  "MARTING_BINANCE_SAND_空": {
     "backtesting_status": {
       "position": -10560.0,
       "position_price": 0.4735,
@@ -3797,7 +3797,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_LIT_多": {
+  "MARTING_BINANCE_LIT_多": {
     "backtesting_status": {
       "position": 44245.10000000568,
       "position_price": 0.7910478538866491,
@@ -3817,7 +3817,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_LIT_空": {
+  "MARTING_BINANCE_LIT_空": {
     "backtesting_status": {
       "position": -19646.79999999218,
       "position_price": 0.7634828368996543,
@@ -3837,7 +3837,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_CVC_多": {
+  "MARTING_BINANCE_CVC_多": {
     "backtesting_status": {
       "position": 48704.0,
       "position_price": 0.10266,
@@ -3852,7 +3852,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_CVC_空": {
+  "MARTING_BINANCE_CVC_空": {
     "backtesting_status": {
       "position": -354137.0,
       "position_price": 0.0988318324546715,
@@ -3867,7 +3867,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_CTSI_多": {
+  "MARTING_BINANCE_CTSI_多": {
     "backtesting_status": {
       "position": 222932.0,
       "position_price": 0.1569988391078894,
@@ -3887,7 +3887,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_CTSI_空": {
+  "MARTING_BINANCE_CTSI_空": {
     "backtesting_status": {
       "position": -99203.0,
       "position_price": 0.15120561474955396,
@@ -3907,7 +3907,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_CTK_多": {
+  "MARTING_BINANCE_CTK_多": {
     "backtesting_status": {
       "position": 48073.0,
       "position_price": 0.7280542737087347,
@@ -3927,7 +3927,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_CTK_空": {
+  "MARTING_BINANCE_CTK_空": {
     "backtesting_status": {
       "position": -22058.0,
       "position_price": 0.680040429776045,
@@ -3947,7 +3947,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_DEFI_多": {
+  "MARTING_BINANCE_DEFI_多": {
     "backtesting_status": {
       "position": 71.11999999999802,
       "position_price": 492.1292393138351,
@@ -3967,7 +3967,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_DEFI_空": {
+  "MARTING_BINANCE_DEFI_空": {
     "backtesting_status": {
       "position": -10.85800000002429,
       "position_price": 460.5,
@@ -3987,7 +3987,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_XEM_多": {
+  "MARTING_BINANCE_XEM_多": {
     "backtesting_status": {
       "position": 171233.0,
       "position_price": 0.0292,
@@ -4006,7 +4006,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_XEM_空": {
+  "MARTING_BINANCE_XEM_空": {
     "backtesting_status": {
       "position": -174216.0,
       "position_price": 0.0287,
@@ -4025,7 +4025,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_WAVES_多": {
+  "MARTING_BINANCE_WAVES_多": {
     "backtesting_status": {
       "position": 9280.300000000945,
       "position_price": 1.6163310130060489,
@@ -4045,7 +4045,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_WAVES_空": {
+  "MARTING_BINANCE_WAVES_空": {
     "backtesting_status": {
       "position": -3127.699999883025,
       "position_price": 1.5986,
@@ -4065,7 +4065,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_VET_多": {
+  "MARTING_BINANCE_VET_多": {
     "backtesting_status": {
       "position": 1951782.0,
       "position_price": 0.017932333098675982,
@@ -4085,7 +4085,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_VET_空": {
+  "MARTING_BINANCE_VET_空": {
     "backtesting_status": {
       "position": -290192.0,
       "position_price": 0.01723,
@@ -4105,7 +4105,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_UNI_多": {
+  "MARTING_BINANCE_UNI_多": {
     "backtesting_status": {
       "position": 7184.0,
       "position_price": 4.872070851893096,
@@ -4125,7 +4125,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_UNI_空": {
+  "MARTING_BINANCE_UNI_空": {
     "backtesting_status": {
       "position": -3265.0,
       "position_price": 4.59451056661562,
@@ -4145,7 +4145,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_UNFI_多": {
+  "MARTING_BINANCE_UNFI_多": {
     "backtesting_status": {
       "position": 8700.600000001865,
       "position_price": 4.022719984828684,
@@ -4165,7 +4165,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_UNFI_空": {
+  "MARTING_BINANCE_UNFI_空": {
     "backtesting_status": {
       "position": -1260.0999999941491,
       "position_price": 3.968,
@@ -4185,7 +4185,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_XRP_多": {
+  "MARTING_BINANCE_XRP_多": {
     "backtesting_status": {
       "position": 9307.500000007367,
       "position_price": 0.5372,
@@ -4205,7 +4205,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_XRP_空": {
+  "MARTING_BINANCE_XRP_空": {
     "backtesting_status": {
       "position": -28893.29999996683,
       "position_price": 0.5191522996680996,
@@ -4225,7 +4225,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_SUSHI_多": {
+  "MARTING_BINANCE_SUSHI_多": {
     "backtesting_status": {
       "position": 6697.0,
       "position_price": 0.7466,
@@ -4245,7 +4245,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_SUSHI_空": {
+  "MARTING_BINANCE_SUSHI_空": {
     "backtesting_status": {
       "position": -20402.0,
       "position_price": 0.7352356533673169,
@@ -4265,7 +4265,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_THETA_多": {
+  "MARTING_BINANCE_THETA_多": {
     "backtesting_status": {
       "position": 45356.800000049596,
       "position_price": 0.7716595646077696,
@@ -4285,7 +4285,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_THETA_空": {
+  "MARTING_BINANCE_THETA_空": {
     "backtesting_status": {
       "position": -19801.09999999943,
       "position_price": 0.7575354141941613,
@@ -4305,7 +4305,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_SXP_多": {
+  "MARTING_BINANCE_SXP_多": {
     "backtesting_status": {
       "position": 12422.399999994013,
       "position_price": 0.4025,
@@ -4325,7 +4325,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_SXP_空": {
+  "MARTING_BINANCE_SXP_空": {
     "backtesting_status": {
       "position": -38272.600000005405,
       "position_price": 0.3919256036955932,
@@ -4345,7 +4345,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_XTZ_多": {
+  "MARTING_BINANCE_XTZ_多": {
     "backtesting_status": {
       "position": 39834.39999999927,
       "position_price": 0.8786372833530811,
@@ -4365,7 +4365,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_XTZ_空": {
+  "MARTING_BINANCE_XTZ_空": {
     "backtesting_status": {
       "position": -5995.20000000018,
       "position_price": 0.834,
@@ -4385,7 +4385,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_STORJ_多": {
+  "MARTING_BINANCE_STORJ_多": {
     "backtesting_status": {
       "position": 111366.0,
       "position_price": 0.31427948925165666,
@@ -4405,7 +4405,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_STORJ_空": {
+  "MARTING_BINANCE_STORJ_空": {
     "backtesting_status": {
       "position": -16383.0,
       "position_price": 0.3052,
@@ -4425,7 +4425,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_STMX_多": {
+  "MARTING_BINANCE_STMX_多": {
     "backtesting_status": {
       "position": 1222494.0,
       "position_price": 0.00409,
@@ -4445,7 +4445,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_STMX_空": {
+  "MARTING_BINANCE_STMX_空": {
     "backtesting_status": {
       "position": -8831381.0,
       "position_price": 0.003963140238202836,
@@ -4465,7 +4465,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_SRM_多": {
+  "MARTING_BINANCE_SRM_多": {
     "backtesting_status": {
       "position": 17507.0,
       "position_price": 0.2856,
@@ -4480,7 +4480,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_SRM_空": {
+  "MARTING_BINANCE_SRM_空": {
     "backtesting_status": {
       "position": -79671452.0,
       "position_price": 0.282744,
@@ -4495,7 +4495,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_TRX_多": {
+  "MARTING_BINANCE_TRX_多": {
     "backtesting_status": {
       "position": 432972.0,
       "position_price": 0.08083668620603641,
@@ -4515,7 +4515,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_TRX_空": {
+  "MARTING_BINANCE_TRX_空": {
     "backtesting_status": {
       "position": -193177.0,
       "position_price": 0.07764900790466775,
@@ -4535,7 +4535,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ZRX_多": {
+  "MARTING_BINANCE_ZRX_多": {
     "backtesting_status": {
       "position": 166447.10000010795,
       "position_price": 0.21027700080086692,
@@ -4555,7 +4555,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ZRX_空": {
+  "MARTING_BINANCE_ZRX_空": {
     "backtesting_status": {
       "position": -25188.899999973102,
       "position_price": 0.1985,
@@ -4575,7 +4575,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_XMR_多": {
+  "MARTING_BINANCE_XMR_多": {
     "backtesting_status": {
       "position": 235.28899999973765,
       "position_price": 148.75346697039896,
@@ -4595,7 +4595,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_XMR_空": {
+  "MARTING_BINANCE_XMR_空": {
     "backtesting_status": {
       "position": -35.305999999999784,
       "position_price": 141.62,
@@ -4615,7 +4615,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_YFI_多": {
+  "MARTING_BINANCE_YFI_多": {
     "backtesting_status": {
       "position": 5.62099999999955,
       "position_price": 6227.114570361106,
@@ -4635,7 +4635,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_YFI_空": {
+  "MARTING_BINANCE_YFI_空": {
     "backtesting_status": {
       "position": -0.8489999999941814,
       "position_price": 5888.0,
@@ -4655,7 +4655,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ZEN_多": {
+  "MARTING_BINANCE_ZEN_多": {
     "backtesting_status": {
       "position": 687.2000000000285,
       "position_price": 7.276,
@@ -4675,7 +4675,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ZEN_空": {
+  "MARTING_BINANCE_ZEN_空": {
     "backtesting_status": {
       "position": -2089.6000000000536,
       "position_price": 7.178433001531391,
@@ -4695,7 +4695,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ZEC_多": {
+  "MARTING_BINANCE_ZEC_多": {
     "backtesting_status": {
       "position": 510.4139999968214,
       "position_price": 29.387922725470272,
@@ -4715,7 +4715,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ZEC_空": {
+  "MARTING_BINANCE_ZEC_空": {
     "backtesting_status": {
       "position": -520.1099999999523,
       "position_price": 28.840054027032785,
@@ -4735,7 +4735,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ZIL_多": {
+  "MARTING_BINANCE_ZIL_多": {
     "backtesting_status": {
       "position": 1579291.0,
       "position_price": 0.02216184257366122,
@@ -4755,7 +4755,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ZIL_空": {
+  "MARTING_BINANCE_ZIL_空": {
     "backtesting_status": {
       "position": -238095.0,
       "position_price": 0.021,
@@ -4775,7 +4775,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_XLM_多": {
+  "MARTING_BINANCE_XLM_多": {
     "backtesting_status": {
       "position": 168123.0,
       "position_price": 0.08922042915008654,
@@ -4795,7 +4795,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_XLM_空": {
+  "MARTING_BINANCE_XLM_空": {
     "backtesting_status": {
       "position": -57498.0,
       "position_price": 0.08696,
@@ -4815,7 +4815,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_PEOPLE_多": {
+  "MARTING_BINANCE_PEOPLE_多": {
     "backtesting_status": {
       "position": 306373.0,
       "position_price": 0.01632,
@@ -4835,7 +4835,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_PEOPLE_空": {
+  "MARTING_BINANCE_PEOPLE_空": {
     "backtesting_status": {
       "position": -950098.0,
       "position_price": 0.015787841401623832,
@@ -4855,7 +4855,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ANT_多": {
+  "MARTING_BINANCE_ANT_多": {
     "backtesting_status": {
       "position": 10299.00000000328,
       "position_price": 3.398397028837808,
@@ -4875,7 +4875,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ANT_空": {
+  "MARTING_BINANCE_ANT_空": {
     "backtesting_status": {
       "position": -4458.89999999692,
       "position_price": 3.3640252752921436,
@@ -4895,7 +4895,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ROSE_多": {
+  "MARTING_BINANCE_ROSE_多": {
     "backtesting_status": {
       "position": 670586.0,
       "position_price": 0.05219318252990668,
@@ -4915,7 +4915,7 @@
     },
     "backtesting_to": "2023-06-10 00:00:00"
   },
-  "MARTING_ROSE_空": {
+  "MARTING_BINANCE_ROSE_空": {
     "backtesting_status": {
       "position": -304264.0,
       "position_price": 0.04929933432808351,
