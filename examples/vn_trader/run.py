@@ -36,6 +36,7 @@ from vnpy.trader.ui import MainWindow, create_qapp
 # from vnpy.gateway.bitmex import BitmexGateway
 # from vnpy.gateway.bybit import BybitGateway
 from gateway.bybit import BybitGateway
+from gateway.binance import BinanceUsdtGateway
 # from vnpy.gateway.gateios import GateiosGateway
 # from vnpy_deribit import DeribitGateway
 # from vnpy_bitfinex import BitfinexGateway
@@ -110,6 +111,7 @@ def main():
     # main_engine.add_gateway(HuobiInverseGateway)    
     # main_engine.add_gateway(HuobiUsdtGateway)
     main_engine.add_gateway(BybitGateway)
+    main_engine.add_gateway(BinanceUsdtGateway)
     # main_engine.add_gateway(OkexGateway)
     # main_engine.add_gateway(BitmexGateway)
     # main_engine.add_gateway(GateiosGateway)
