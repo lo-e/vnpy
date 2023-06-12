@@ -304,9 +304,16 @@ class MartingPortfolio(object):
                         and backtesting_step < strategy.bottom_step
                     ):
                         continue
-                    un_fit_content += f"\nstrategy_name:{strategy.strategy_name}\nstrategy_pos:{strategy.pos}\nstrategy_position_price:{strategy.position_price}\nstrategy_position_value:{position_value}\nstrategy_pnl:{strategy.current_pnl_rate}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\n\nstrategy_step: {strategy.trending_step}\nbacktesting_step: {backtesting_step}\nbacktesting_to: {backtesting_to}"
+                    
+                    content = f"\nstrategy_name:{strategy.strategy_name}\nstrategy_pos:{strategy.pos}\nstrategy_position_price:{strategy.position_price}\nstrategy_position_value:{position_value}\nstrategy_pnl:{strategy.current_pnl_rate}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\n\nstrategy_step: {strategy.trending_step}\nbacktesting_step: {backtesting_step}\nbacktesting_to: {backtesting_to}"
+                    un_fit_content += content
                     un_fit_content += "\n\n" + "-" * 10 + "\n\n"
                     un_fit_count += 1
+
+                    if strategy.trending_step >= 3:
+                        highlight_content += content
+                        highlight_content += "\n\n" + "-" * 10 + "\n\n"
+                        highlight_count += 1
 
         # 邮件发送通知
         fit_content = (
