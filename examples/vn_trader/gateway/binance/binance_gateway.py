@@ -929,10 +929,10 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
         # 重新订阅行情
         if self.ticks:
             # 加入订阅队列
-            # self.subscribe_queue = Queue()
-            # for symbol in self.ticks.keys():
-            #     self.subscribe_queue.put(symbol)
-            pass
+            self.subscribe_queue = Queue()
+            for symbol in self.ticks.keys():
+                self.subscribe_queue.put(symbol)
+            # pass
             
     def subscribe(self, req: SubscribeRequest) -> None:
         """订阅行情"""
