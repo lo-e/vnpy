@@ -65,12 +65,12 @@ if __name__ == '__main__':
     # 开始下载
     dataDownload = TurtleCryptoDataDownloading()
     if exchange == "BYBIT":
-        dataDownload.download_from_bybit(contract_list=contract_list, days=days, to_date=to_date, from_data_base=from_data_base)
+        dataDownload.download_from_bybit(contract_list=contract_list, days=days, to_date=to_date, from_data_base=from_data_base, api_check=True)
         # result, complete_msg, back_msg, lost_msg = dataDownload.generate_for_bybit(contract_list=contract_list, days=days)
         # print('\n\n' + lost_msg + back_msg)
 
     elif exchange == "BINANCE":
-        dataDownload.download_from_binance(contract_list=contract_list, days=days, to_date=to_date, from_data_base=from_data_base)
+        dataDownload.download_from_binance(contract_list=contract_list, days=days, to_date=to_date, from_data_base=from_data_base, api_check=True)
 
     
     #"""
