@@ -504,23 +504,43 @@ class BinanceUsdtRestApi(RestClient):
     def on_query_position(self, data: dict, request: Request) -> None:
         """持仓查询回报"""
         for d in data:
-            position: PositionData = PositionData(
-                symbol=d["symbol"],
-                exchange=Exchange.BINANCE,
-                direction=Direction.NET,
-                volume=float(d["positionAmt"]),
-                price=float(d["entryPrice"]),
-                pnl=float(d["unRealizedProfit"]),
-                gateway_name=self.gateway_name,
-            )
-
-            if position.volume:
+            if float(d["positionAmt"]):
+                # 持仓数量
                 volume = d["positionAmt"]
                 if "." in volume:
-                    position.volume = float(d["positionAmt"])
+                    volume = float(d["positionAmt"])
                 else:
-                    position.volume = int(d["positionAmt"])
+                    volume = int(d["positionAmt"])
 
+                # 持仓方向
+                direction = Direction.NET
+                position_side = d.get("positionSide", "")
+                if position_side:
+                    if position_side == "LONG":
+                        direction = Direction.LONG
+
+                    elif position_side == "SHORT":
+                        direction = Direction.SHORT
+                    
+                else:
+                    if volume > 0:
+                        direction = Direction.LONG
+
+                    elif volume < 0:
+                        direction = Direction.SHORT
+
+                # 创建
+                position: PositionData = PositionData(
+                    symbol=d["symbol"],
+                    exchange=Exchange.BINANCE,
+                    direction=direction,
+                    volume=volume,
+                    price=float(d["entryPrice"]),
+                    pnl=float(d["unRealizedProfit"]),
+                    gateway_name=self.gateway_name,
+                )
+
+                # 回调
                 self.gateway.on_position(position)
 
         self.gateway.write_log("持仓信息查询成功")
@@ -777,23 +797,39 @@ class BinanceUsdtTradeWebsocketApi(WebsocketClient):
                 self.gateway.on_account(account)
 
         for pos_data in packet["a"]["P"]:
-            if pos_data["ps"] == "BOTH":
-                volume = pos_data["pa"]
-                if "." in volume:
-                    volume = float(volume)
-                else:
-                    volume = int(volume)
+            # if pos_data["ps"] == "BOTH":
+            volume = pos_data["pa"]
+            if "." in volume:
+                volume = float(volume)
+            else:
+                volume = int(volume)
 
-                position: PositionData = PositionData(
-                    symbol=pos_data["s"],
-                    exchange=Exchange.BINANCE,
-                    direction=Direction.NET,
-                    volume=volume,
-                    price=float(pos_data["ep"]),
-                    pnl=float(pos_data["cr"]),
-                    gateway_name=self.gateway_name,
-                )
-                self.gateway.on_position(position)
+            direction = Direction.NET
+            position_side = pos_data.get("ps", "")
+            if position_side:
+                if position_side == "LONG":
+                    direction = Direction.LONG
+
+                elif position_side == "SHORT":
+                    direction = Direction.SHORT
+                
+            else:
+                if volume > 0:
+                    direction = Direction.LONG
+
+                elif volume < 0:
+                    direction = Direction.SHORT
+                
+            position: PositionData = PositionData(
+                symbol=pos_data["s"],
+                exchange=Exchange.BINANCE,
+                direction=direction,
+                volume=volume,
+                price=float(pos_data["ep"]),
+                pnl=float(pos_data["up"]),
+                gateway_name=self.gateway_name,
+            )
+            self.gateway.on_position(position)
 
     def on_order(self, packet: dict) -> None:
         """委托更新推送"""
