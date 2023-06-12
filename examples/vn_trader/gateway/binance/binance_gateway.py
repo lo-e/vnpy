@@ -927,7 +927,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
 
     def subscribe(self, req: SubscribeRequest) -> None:
         """订阅行情"""
-        if req.symbol in self.ticks:
+        if req.symbol.lower() in self.ticks:
             return
 
         if req.symbol not in symbol_contract_map:
