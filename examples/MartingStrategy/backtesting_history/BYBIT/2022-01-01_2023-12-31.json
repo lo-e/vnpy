@@ -38,5 +38,45 @@
       "next_trending_step": 0
     },
     "backtesting_to": "2023-06-11 08:55:00"
+  },
+  "MARTING_ALICE_多": {
+    "backtesting_status": {
+      "position": 7109679.30000001,
+      "position_price": 0.90395,
+      "position_reduce_price": 0.9129895,
+      "position_increase_price": 0.8316340000000001,
+      "max_loss_value": -596858.0,
+      "max_loss_rate": "-9.29%",
+      "ma_price": 0.8366666666666666,
+      "rsi_array": [
+        50.0, 32.5, 32.500000000000014, 62.74493794905291, 50.54897793968832,
+        50.54897793968832, 50.54897793968832, 50.548977939688335,
+        60.798034187273764, 60.798034187273764, 49.01609711058829,
+        49.01609711058829
+      ],
+      "trending_step": 2,
+      "next_trending_step": 3
+    },
+    "backtesting_to": "2023-06-12 13:20:00"
+  },
+  "MARTING_ALICE_空": {
+    "backtesting_status": {
+      "position": -6024.100000001478,
+      "position_price": 0.83,
+      "position_reduce_price": 0.8217,
+      "position_increase_price": 0.8466,
+      "max_loss_value": -60.0,
+      "max_loss_rate": "-1.2%",
+      "ma_price": 0.8366666666666666,
+      "rsi_array": [
+        50.0, 32.5, 32.500000000000014, 62.74493794905291, 50.54897793968832,
+        50.54897793968832, 50.54897793968832, 50.548977939688335,
+        60.798034187273764, 60.798034187273764, 49.01609711058829,
+        49.01609711058829
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0
+    },
+    "backtesting_to": "2023-06-12 13:20:00"
   }
 }
