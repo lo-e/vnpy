@@ -609,7 +609,7 @@ class BinanceUsdtRestApi(RestClient):
 
             symbol_contract_map[contract.symbol] = contract
 
-        self.gateway.write_log("合约信息查询成功")
+        self.gateway.write_log(f"合约信息查询成功：{len(symbol_contract_map)}")
 
     def on_send_order(self, data: dict, request: Request) -> None:
         """委托下单回报"""
