@@ -215,8 +215,8 @@ class DownloadThread(object):
             elif self.exchange == ExchangeType.BINANCE:
                 first_bar_dt = binance_get_first_bar_datetime(symbol=self.contract, interval=self.interval, symbol_type=Binancetype.USDT, start_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"))
 
-        else:
-            exit(f"交易所类型错误")
+            else:
+                exit(f"交易所类型错误")
 
         if self.from_data_base:
             client = MongoClient("localhost", 27017)
