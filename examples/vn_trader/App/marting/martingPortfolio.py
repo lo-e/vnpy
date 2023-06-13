@@ -6,7 +6,7 @@ import re
 from datetime import datetime
 from copy import copy
 from App.Turtle_crypto.dataservice import TurtleCryptoDataDownloading
-from time import time
+from time import time, sleep
 from threading import Thread
 from utilities.BarGenerator import MultiThreadsMinuteBarProcessor
 from vnpy.trader.constant import Interval
@@ -15,6 +15,7 @@ import os
 import json
 from pathlib import Path
 from vnpy.trader.utility import DIR_SYMBOL
+from queue import Queue
 
 BAR_DOWNLOAD_GENERATE_COMPLETE = "eDataComplete"
 
@@ -72,6 +73,10 @@ class MartingPortfolio(object):
         self.backtesting_preparing = False  # 准备通知策略回测，倒计时的开关
         self.backtesting_saved_count_down = 60  # 保存策略回测历史倒计时（秒）
         self.backtesting_saved_preparing = False  # 准备保存策略回测历史，倒计时的开关
+
+        self.backtesting_thread = Thread(target=self.run_strategy_backtesting)
+        self.backtesting_thread.start()
+        self.backtesting_queue = Queue()
 
         # 其它
         self.strategy_symbols = []  # 策略合约列表
@@ -338,3 +343,15 @@ class MartingPortfolio(object):
                 + highlight_content
             )
             self.engine.main_engine.send_ding_talk(content=highlight_content)
+
+    def run_strategy_backtesting(self):
+        while True:
+            try:
+                strategy_name = self.backtesting_queue.get(block=True, timeout=1)
+                strategy = self.engine.strategies.get(strategy_name, None)
+                if strategy:
+                    print(f"{strategy_name}\t开始回测")
+                    strategy.backtesting_marting()
+            except:
+                pass
+            sleep(0.1)

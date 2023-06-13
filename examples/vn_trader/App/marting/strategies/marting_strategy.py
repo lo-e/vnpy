@@ -50,6 +50,7 @@ class MartingStrategy(CtaTemplate):
         "bottom_step",
         "top_step",
         "is_backtesting",
+        "backtesting_wait",
         "symbol_price_tick",
         "symbol_min_volume",
         "backtesting_to",
@@ -97,6 +98,7 @@ class MartingStrategy(CtaTemplate):
         self.backtesting_to: datetime = None
         self.backtesting_status = {}
         self.is_backtesting = False
+        self.backtesting_wait = 0
         self.strategy_to: datetime = None
         self.strategy_status = {}
 
@@ -196,13 +198,14 @@ class MartingStrategy(CtaTemplate):
             self.start_backtesting()
 
     def start_backtesting(self):
-        if not self.is_backtesting:
-            self.write_log(f"开启回测线程")
-            self.is_backtesting = True
-            thread = Thread(target=self.backtesting_marting)
-            thread.start()
+        # 策略组合统一管理回测线程
+        self.portfolio.backtesting_queue.put(self.strategy_name)
 
     def backtesting_marting(self):
+        if self.is_backtesting or self.backtesting_wait <= 60:
+            return
+        self.is_backtesting = True
+
         backtestint_start = (
             self.backtesting_to + timedelta(minutes=self.interval_window)
             if self.backtesting_to
@@ -293,13 +296,18 @@ class MartingStrategy(CtaTemplate):
 
         # 结束回测
         self.is_backtesting = False
+        self.backtesting_wait = 0
         self.write_log(f"回测结束：{self.backtesting_to}")
 
     def on_timer(self):
+        # 订单检查
         self.order_check_wait += 1
         if self.order_check_wait >= 6:
             self.order_check_wait = 0
             self.check_order()
+
+        # 回测等待
+        self.backtesting_wait += 1
 
         # 策略状态更新
         self.put_timer_event()
