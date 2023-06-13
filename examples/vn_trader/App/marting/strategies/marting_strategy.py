@@ -301,7 +301,7 @@ class MartingStrategy(CtaTemplate):
         # 结束回测
         self.is_backtesting = False
         self.backtesting_wait = 0
-        self.write_log(f"回测结束：{self.backtesting_to}")
+        print(f"回测结束：{self.backtesting_to}")
 
     def on_timer(self):
         # 订单检查
@@ -797,8 +797,8 @@ class MartingStrategy(CtaTemplate):
 
     def raise_error(self, content):
         # 推送钉钉消息
+        content = f"{self.strategy_name}\t{content}"
         self.cta_engine.main_engine.send_ding_talk(content)
-        raise (content)
 
     def send_email(self, content):
         # 邮件发送通知
