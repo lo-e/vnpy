@@ -928,9 +928,11 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
 
         # 重新订阅行情
         if self.ticks:
-            # 加入订阅队列
+            subscribe_symbols = list(self.ticks.keys())
+            self.ticks = {}
             self.subscribe_queue = Queue()
-            for symbol in self.ticks.keys():
+            # 加入订阅队列
+            for symbol in subscribe_symbols:
                 self.subscribe_queue.put(symbol)
             # pass
             
@@ -998,7 +1000,6 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
 
     def on_disconnected(self) -> None:
         """连接断开回报"""
-        self.ticks = {}
         self.gateway.write_log("行情Websocket API断开")
     
     def run_subscribe(self):
