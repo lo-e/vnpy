@@ -180,7 +180,8 @@ def binance_get_symbol_list(need_data: bool = False):
         symbol = d["symbol"]
         asset = d["quoteAsset"]
         type = d["contractType"]
-        if asset == "USDT" and type == "PERPETUAL":
+        status = d["status"]
+        if asset == "USDT" and type == "PERPETUAL" and status == "TRADING":
             symbol_list.add(symbol)
             symbol_data_dict[symbol] = d
 
