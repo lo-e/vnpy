@@ -98,7 +98,7 @@ class MartingStrategy(CtaTemplate):
         self.backtesting_to: datetime = None
         self.backtesting_status = {}
         self.is_backtesting = False
-        self.backtesting_wait = 0
+        self.backtesting_wait = 100
         self.strategy_to: datetime = None
         self.strategy_status = {}
 
