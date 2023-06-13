@@ -20,6 +20,7 @@ import json
 
 
 def one():
+    # 回测起始日期
     engine = BacktestingEngine()
     start_dt = datetime(2022, 1, 1)
     end_dt = datetime(2023, 12, 31)
@@ -28,6 +29,7 @@ def one():
     if figSavedName:
         figSavedName = f"figSaved{DIR_SYMBOL}{figSavedName}"
 
+    # 回测合约
     exchange = input('选择交易所【Bybit：1  Binance：2】')
     if exchange == "1":
         exchange = "BYBIT"
@@ -44,6 +46,7 @@ def one():
     backtesting_history_file = ""
     backtesting_history_file = "2022-01-01_2023-06-10.json"
 
+    # 开始回测
     symbolList = []
     with open(filename, errors="ignore") as f:
         r = DictReader(f)
