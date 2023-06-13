@@ -226,7 +226,7 @@ class MartingStrategy(CtaTemplate):
 
         # 载入历史数据获取回测参数
         if self.backtesting_to:
-            data_from = self.backtesting_to - timedelta(days=1)
+            data_from = self.backtesting_to - timedelta(hours=5)
 
         elif self.backtesting_from:
             data_from = self.backtesting_from
@@ -675,7 +675,7 @@ class MartingStrategy(CtaTemplate):
         """基于实时Tick数据生成的周期Bar数据推送"""
         # 保存到列表
         self.window_bar_list.append(bar)
-        if len(self.window_bar_list) > 10:
+        if len(self.window_bar_list) > 20:
             self.window_bar_list.pop(0)
 
         # 回测数据
