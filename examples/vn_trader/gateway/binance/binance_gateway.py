@@ -1004,7 +1004,8 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
             try:
                 symbol = self.subscribe_queue.get(block=True, timeout=1)
                 self.reqid += 1
-                channels = [f"{symbol.lower()}@ticker", f"{symbol.lower()}@depth5"]
+                # channels = [f"{symbol.lower()}@ticker", f"{symbol.lower()}@depth5"]
+                channels = [f"{symbol.lower()}@ticker"]
                 req: dict = {"method": "SUBSCRIBE", "params": channels, "id": self.reqid}
                 self.send_packet(req)
 

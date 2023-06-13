@@ -66,8 +66,17 @@ def binance_get_bar_data(symbol:str, interval:str, symbol_type:Binancetype, star
         params["endTime"] = end_time * 1000
 
     resp = requests.get(url, headers={}, params=params)
+    text = resp.text
+    if "until" in text:
+        i_until = resp.text.index("until")
+        i_please = resp.text.index(". Please")
+        timestamp = float(resp.text[i_until + 6:i_please])
+        banned_to = datetime.fromtimestamp(timestamp/1000)
+        print(f"访问受限：{banned_to}")
+        time.sleep(2)
+        return None
+    
     bar_data_list = resp.json()
-
     if bar_data_list:
         # 数据整理
         for data in bar_data_list:
