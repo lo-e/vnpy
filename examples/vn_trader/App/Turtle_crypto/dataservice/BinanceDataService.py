@@ -66,8 +66,7 @@ def binance_get_bar_data(symbol:str, interval:str, symbol_type:Binancetype, star
         params["endTime"] = end_time * 1000
 
     resp = requests.get(url, headers={}, params=params)
-    text = resp.text
-    if "until" in text:
+    if "until" in resp.text:
         i_until = resp.text.index("until")
         i_please = resp.text.index(". Please")
         timestamp = float(resp.text[i_until + 6:i_please])
