@@ -302,13 +302,11 @@ if __name__ == '__main__':
     print('completed！')
     """
 
-    #"""
     # 获取正向永续合约列表
-    symbol_list = binance_get_symbol_list(need_data=False)
-    for symbol in symbol_list:
-        print(symbol)
-    print(f"BINANCE_USDT永续合约总计：{len(symbol_list)}")
-    #"""
+    # symbol_list = binance_get_symbol_list(need_data=False)
+    # for symbol in symbol_list:
+    #     print(symbol)
+    # print(f"BINANCE_USDT永续合约总计：{len(symbol_list)}")
 
     # 生成马丁策略回测参数
-    # binance_marting_setting(min_value_filter=0)
+    binance_marting_setting(min_value_filter=0)
