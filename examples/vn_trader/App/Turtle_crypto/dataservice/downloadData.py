@@ -201,6 +201,9 @@ class DownloadThread(object):
         self.active = False
 
     def run(self):
+        if self.exchange != ExchangeType.BYBIT and self.exchange != ExchangeType.BINANCE:
+            exit(f"交易所类型错误")
+
         # 获取bar数据
         print(f"====== {self.contract}开始下载 ======")
         from_time = datetime.now() - timedelta(days=self.days)
@@ -209,14 +212,18 @@ class DownloadThread(object):
         # 接口获取合约起始时间
         first_bar_dt = None
         if self.api_check:
-            if self.exchange == ExchangeType.BYBIT:
-                first_bar_dt = bybit_get_first_bar_datetime(symbol=self.contract, interval=self.interval, from_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"))
-            
-            elif self.exchange == ExchangeType.BINANCE:
-                first_bar_dt = binance_get_first_bar_datetime(symbol=self.contract, interval=self.interval, symbol_type=Binancetype.USDT, start_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"))
-
-            else:
-                exit(f"交易所类型错误")
+            request_needed = True
+            while request_needed:
+                try:
+                    if self.exchange == ExchangeType.BYBIT:
+                        first_bar_dt = bybit_get_first_bar_datetime(symbol=self.contract, interval=self.interval, from_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"))
+                    
+                    elif self.exchange == ExchangeType.BINANCE:
+                        first_bar_dt = binance_get_first_bar_datetime(symbol=self.contract, interval=self.interval, symbol_type=Binancetype.USDT, start_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"))
+                    
+                    request_needed = False
+                except:
+                    sleep(2)
 
         if self.from_data_base:
             client = MongoClient("localhost", 27017)
