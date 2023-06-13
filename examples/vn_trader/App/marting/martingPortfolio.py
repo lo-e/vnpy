@@ -334,14 +334,26 @@ class MartingPortfolio(object):
         )
 
         if error_count:
-            error_content = f"\n马丁策略组合状态信息【回测状态缺失数量：{error_count}】\n\n策略总数：{total}\n回测周期：{min_datetime} - {max_datetime}\n"
+            error_subject = f"马丁策略组合状态信息【回测状态缺失数量：{error_count}】"
+            error_content = f"\n策略总数：{total}\n回测周期：{min_datetime} - {max_datetime}\n"
+            self.engine.send_email(
+                msg=error_content, subject=error_subject
+            )
+            
+            error_content = f"\n{error_subject}\n{error_content}"
             self.engine.main_engine.send_ding_talk(content=error_content)
 
         if highlight_count:
+            highlight_subject = f"马丁策略组合状态信息【高等级追踪：{highlight_count}】"
             highlight_content = (
-                f"\n马丁策略组合状态信息【高等级追踪：{highlight_count}】\n\n策略总数：{total}\n回测周期：{min_datetime} - {max_datetime}\n"
+                f"\n策略总数：{total}\n回测周期：{min_datetime} - {max_datetime}\n"
                 + highlight_content
             )
+            self.engine.send_email(
+                msg=highlight_content, subject=highlight_subject
+            )
+
+            highlight_content = f"\n{highlight_subject}\n{highlight_content}"
             self.engine.main_engine.send_ding_talk(content=highlight_content)
 
     def run_strategy_backtesting(self):
