@@ -928,9 +928,11 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
 
         # 重新订阅行情
         if self.ticks:
-            # 加入订阅队列
+            subscribe_symbols = list(self.ticks.keys())
+            self.ticks = {}
             self.subscribe_queue = Queue()
-            for symbol in self.ticks.keys():
+            # 加入订阅队列
+            for symbol in subscribe_symbols:
                 self.subscribe_queue.put(symbol)
             # pass
             
@@ -942,16 +944,6 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
         if req.symbol not in symbol_contract_map:
             self.gateway.write_log(f"找不到该合约代码{req.symbol}")
             return
-
-        # 创建TICK对象
-        tick: TickData = TickData(
-            symbol=req.symbol,
-            name=symbol_contract_map[req.symbol].name,
-            exchange=Exchange.BINANCE,
-            datetime=datetime.now(CHINA_TZ),
-            gateway_name=self.gateway_name,
-        )
-        self.ticks[req.symbol] = tick
 
         # 加入订阅队列
         self.subscribe_queue.put(req.symbol)
@@ -966,7 +958,18 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
         data: dict = packet["data"]
 
         symbol, channel = stream.split("@")
-        tick: TickData = self.ticks[symbol.upper()]
+        symbol_upper = symbol.upper()
+        tick = self.ticks.get(symbol_upper, None)
+        if not tick:
+            # 创建TICK对象
+            tick: TickData = TickData(
+                symbol=symbol_upper,
+                name=symbol_contract_map[symbol_upper].name,
+                exchange=Exchange.BINANCE,
+                datetime=datetime.now(CHINA_TZ),
+                gateway_name=self.gateway_name,
+            )
+            self.ticks[symbol_upper] = tick
 
         if channel == "ticker":
             tick.volume = float(data["v"])

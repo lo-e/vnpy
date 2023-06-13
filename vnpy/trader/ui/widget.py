@@ -847,6 +847,9 @@ class TradingWidget(QtWidgets.QWidget):
         self.qsize_label = self.create_label()
         self.qsize_label.setText('EVENT_ENGINE_QSIZE')
 
+        self.subscribe_count_label = self.create_label()
+        self.subscribe_count_label.setText('SUBSCRIBE_COUNT')
+
         # Market depth display area
         bid_color = "rgb(255,174,201)"
         ask_color = "rgb(160,255,160)"
@@ -891,6 +894,7 @@ class TradingWidget(QtWidgets.QWidget):
         form = QtWidgets.QFormLayout()
         """ modify by loe """
         form.addRow(self.qsize_label)
+        form.addRow(self.subscribe_count_label)
         form.addRow(self.ap5_label, self.av5_label)
         form.addRow(self.ap4_label, self.av4_label)
         form.addRow(self.ap3_label, self.av3_label)
@@ -935,6 +939,7 @@ class TradingWidget(QtWidgets.QWidget):
     def process_timer_event(self, event: Event) -> None:
         self.qsize_show_frequency += 1
         if self.qsize_show_frequency >= 5:
+            # 事件处理队列
             self.qsize_show_frequency = 0
             qsize = self.event_engine._queue.qsize()
             self.qsize_label.setText(f'EVENT_ENGINE_QSIZE {qsize}')
@@ -943,6 +948,14 @@ class TradingWidget(QtWidgets.QWidget):
                     self.main_engine.send_ding_talk(content=f'EVENT_ENGINE_QSIZE 监控\n============\nQSIZE：{qsize}')
                 except:
                     pass
+
+            # 合约订阅数量【暂时只支持币安】
+            gateway_subscribe = 0
+            for gateway_name, gateway in self.main_engine.gateways.items():
+                if gateway_name == "BINANCE":
+                    gateway_subscribe = len(gateway.market_ws_api.ticks)
+                    break
+            self.subscribe_count_label.setText(f'SUBSCRIBE_COUNT {gateway_subscribe}')
 
     def process_tick_event(self, event: Event) -> None:
         """"""
