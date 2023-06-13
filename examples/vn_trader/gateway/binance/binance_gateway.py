@@ -998,6 +998,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
 
     def on_disconnected(self) -> None:
         """连接断开回报"""
+        self.ticks = {}
         self.gateway.write_log("行情Websocket API断开")
     
     def run_subscribe(self):
