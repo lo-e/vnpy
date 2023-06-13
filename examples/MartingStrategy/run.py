@@ -40,6 +40,10 @@ def one():
     else:
         exit(f"交易所选择错误")
 
+    # 回测历史数据文件
+    backtesting_history_file = ""
+    backtesting_history_file = "2022-01-01_2023-06-10.json"
+
     symbolList = []
     with open(filename, errors="ignore") as f:
         r = DictReader(f)
@@ -47,7 +51,7 @@ def one():
             symbolList.append(d)
     if not symbolList:
         return
-    engine.initListPortfolio(symbolList, 1000000)
+    engine.initListPortfolio(symbolList, 1000000, history_file=backtesting_history_file)
     engine.loadData()
     engine.runBacktesting()
     engine.showResult(figSavedName)

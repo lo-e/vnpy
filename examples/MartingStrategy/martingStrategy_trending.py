@@ -13,10 +13,13 @@ from enum import Enum
 from vnpy.trader.utility import round_to, floor_to, ceil_to
 from vnpy.trader.utility import DIR_SYMBOL
 import numpy as np
+import os
+from pathlib import Path
+import json
 
 
 class MartingSignal(object):
-    def __init__(self, portfolio, symbol, direction, ma_window, rsi_window):
+    def __init__(self, portfolio, symbol, direction, ma_window, rsi_window, history_data:dict={}):
         # 常量
         self.portfolio = portfolio  # 投资组合
         self.symbol = symbol  # 合约代码
@@ -520,16 +523,38 @@ class MartingPortfolio(object):
         self.dt = None  # 当前回测时间
         self.trending_open = True
 
-    def init(self, portfolioValue, symbolList):
+    def init(self, portfolioValue, symbolList, history_file:str=""):
         self.portfolioValue = portfolioValue
 
+        # 回测历史数据
+        exchange = symbolList[0].split(".")[-1]
+        history_data = self.load_backtesting_history_data(exchange=exchange, file_name=history_file)
+
         for symbol in symbolList:
-            signal1 = MartingSignal(self, symbol, Direction.LONG, 9, 14)
-            signal2 = MartingSignal(self, symbol, Direction.SHORT, 9, 14)
+            pure_symbol = symbol[:symbol.index("USDT")]
+            signal_key = f"MARTING_{exchange}_{pure_symbol}"
+
+            long_signal_key = f"{signal_key}_{Direction.LONG.value}"
+            long_history_data = history_data.get(long_signal_key, {})
+            signal1 = MartingSignal(self, symbol, Direction.LONG, 9, 14, history_data=long_history_data)
+
+            short_signal_key = f"{signal_key}_{Direction.SHORT.value}"
+            short_history_data = history_data.get(short_signal_key, {})
+            signal2 = MartingSignal(self, symbol, Direction.SHORT, 9, 14, history_data=short_history_data)
 
             l = self.signalDict[symbol]
             l.append(signal1)
             l.append(signal2)
+
+    def load_backtesting_history_data(self, exchange:str, file_name:str):
+        history_data = {}
+        
+        dir = os.path.dirname(os.path.realpath(__file__))
+        file_path = Path(dir).joinpath(f"backtesting_history{DIR_SYMBOL}{exchange}{DIR_SYMBOL}{file_name}")
+        if file_path.exists():
+            with open(file_path, mode="r", encoding="UTF-8") as f:
+                history_data = json.load(f)
+        return history_data
 
     def onBar(self, bar):
         if not self.dt or self.dt != bar.datetime:

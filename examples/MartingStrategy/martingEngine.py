@@ -56,7 +56,7 @@ class BacktestingEngine(object):
         self.startDt = startDt
         self.endDt = endDt
     
-    def initListPortfolio(self, l, portfolioValue=10000000):
+    def initListPortfolio(self, l, portfolioValue=10000000, history_file:str=""):
         """初始化投资组合"""
         self.portfolioValue = portfolioValue
 
@@ -69,7 +69,7 @@ class BacktestingEngine(object):
             SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
 
         self.portfolio = MartingPortfolio(self)
-        self.portfolio.init(portfolioValue, self.symbolList)
+        self.portfolio.init(portfolioValue, self.symbolList, history_file=history_file)
         self.portfolio.tradingStart = self.tradingStart
 
         self.output(u'投资组合的合约代码%s' % (self.symbolList))
