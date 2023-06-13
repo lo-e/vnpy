@@ -54,10 +54,10 @@ if __name__ == '__main__':
     sleep(2)
 
     # 起止日期
-    # days = 6
-    # to_date = datetime.now() + timedelta(days=2)
-    days = (datetime.now() - datetime.strptime('2023-05-01', '%Y-%m-%d')).days
-    to_date = datetime.strptime('2023-12-31', '%Y-%m-%d')
+    days = 6
+    to_date = datetime.now() + timedelta(days=2)
+    # days = (datetime.now() - datetime.strptime('2021-12-01', '%Y-%m-%d')).days
+    # to_date = datetime.strptime('2023-12-31', '%Y-%m-%d')
 
     # 是否从数据库最新数据日期开始
     from_data_base = True
