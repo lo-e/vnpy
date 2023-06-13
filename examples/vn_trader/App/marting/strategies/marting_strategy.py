@@ -206,94 +206,98 @@ class MartingStrategy(CtaTemplate):
             return
         self.is_backtesting = True
 
-        backtestint_start = (
-            self.backtesting_to + timedelta(minutes=self.interval_window)
-            if self.backtesting_to
-            else None
-        )
+        try:
+            backtestint_start = (
+                self.backtesting_to + timedelta(minutes=self.interval_window)
+                if self.backtesting_to
+                else None
+            )
 
-        self.backtesting = MartingBacktesting(
-            strategy=self,
-            vt_symbol=self.vt_symbol,
-            direction=self.direction,
-            ma_window=self.ma_window,
-            rsi_window=self.rsi_window,
-            symbol_min_volume=self.symbol_min_volume,
-            symbol_price_tick=self.symbol_price_tick,
-            init_status=self.backtesting_status,
-            start_dt=backtestint_start,
-        )
+            self.backtesting = MartingBacktesting(
+                strategy=self,
+                vt_symbol=self.vt_symbol,
+                direction=self.direction,
+                ma_window=self.ma_window,
+                rsi_window=self.rsi_window,
+                symbol_min_volume=self.symbol_min_volume,
+                symbol_price_tick=self.symbol_price_tick,
+                init_status=self.backtesting_status,
+                start_dt=backtestint_start,
+            )
 
-        # 载入历史数据获取回测参数
-        if self.backtesting_to:
-            data_from = self.backtesting_to - timedelta(hours=5)
+            # 载入历史数据获取回测参数
+            if self.backtesting_to:
+                data_from = self.backtesting_to - timedelta(hours=5)
 
-        elif self.backtesting_from:
-            data_from = self.backtesting_from
+            elif self.backtesting_from:
+                data_from = self.backtesting_from
 
-        else:
-            self.raise_error("检查代码！")
+            else:
+                self.raise_error("检查代码！")
 
-        backtesting_data = self.cta_engine.load_bar(
-            vt_symbol=self.vt_symbol,
-            data_from=data_from,
-            interval=Interval.MINUTE,
-            window=5,
-            callback=None,
-        )
-        if len(backtesting_data) < 100:
-            self.raise_error("回测数据缺失！")
+            backtesting_data = self.cta_engine.load_bar(
+                vt_symbol=self.vt_symbol,
+                data_from=data_from,
+                interval=Interval.MINUTE,
+                window=5,
+                callback=None,
+            )
+            if len(backtesting_data) < 50:
+                self.raise_error("回测数据缺失！")
 
-        # 剔除最后一个Bar数据，保证数据的准确性
-        backtesting_data = backtesting_data[0:-1]
+            # 剔除最后一个Bar数据，保证数据的准确性
+            backtesting_data = backtesting_data[0:-1]
 
-        # 开始历史数据回测
-        for bar in backtesting_data:
-            self.backtesting.on_bar(bar)
+            # 开始历史数据回测
+            for bar in backtesting_data:
+                self.backtesting.on_bar(bar)
 
-        # 历史数据回测完成保存回测状态
-        status = {}
-        for name in self.backtesting.syncs:
-            status[name] = self.backtesting.__getattribute__(name)
-        self.backtesting_status = status
-        self.backtesting_to = backtesting_data[-1].datetime
-        self.strategy_status = status
-        self.strategy_to = backtesting_data[-1].datetime
-
-        # 实时数据
-        strategy_data = []
-        last_bar = backtesting_data[-1]
-        next_bar_dt = last_bar.datetime + timedelta(minutes=self.interval_window)
-        for i in range(len(self.window_bar_list)):
-            bar = self.window_bar_list[i]
-            if bar.datetime == next_bar_dt:
-                strategy_data = self.window_bar_list[i:]
-                break
-
-        # 开始实时数据回测
-        for bar in strategy_data:
-            self.backtesting.on_bar(bar)
-
-        # 实时数据回测完成保存策略状态
-        if strategy_data:
+            # 历史数据回测完成保存回测状态
             status = {}
             for name in self.backtesting.syncs:
                 status[name] = self.backtesting.__getattribute__(name)
+            self.backtesting_status = status
+            self.backtesting_to = backtesting_data[-1].datetime
             self.strategy_status = status
-            self.strategy_to = strategy_data[-1].datetime
+            self.strategy_to = backtesting_data[-1].datetime
 
-        # 回测结果
-        self.strategy_position_price = self.strategy_status["position_price"]
-        self.strategy_position_reduce_price = self.strategy_status[
-            "position_reduce_price"
-        ]
-        self.strategy_position_increase_price = self.strategy_status[
-            "position_increase_price"
-        ]
-        self.strategy_max_loss_value = self.strategy_status["max_loss_value"]
-        self.strategy_max_loss_rate = self.strategy_status["max_loss_rate"]
-        self.strategy_trending_step = self.strategy_status["trending_step"]
+            # 实时数据
+            strategy_data = []
+            last_bar = backtesting_data[-1]
+            next_bar_dt = last_bar.datetime + timedelta(minutes=self.interval_window)
+            for i in range(len(self.window_bar_list)):
+                bar = self.window_bar_list[i]
+                if bar.datetime == next_bar_dt:
+                    strategy_data = self.window_bar_list[i:]
+                    break
 
+            # 开始实时数据回测
+            for bar in strategy_data:
+                self.backtesting.on_bar(bar)
+
+            # 实时数据回测完成保存策略状态
+            if strategy_data:
+                status = {}
+                for name in self.backtesting.syncs:
+                    status[name] = self.backtesting.__getattribute__(name)
+                self.strategy_status = status
+                self.strategy_to = strategy_data[-1].datetime
+
+            # 回测结果
+            self.strategy_position_price = self.strategy_status["position_price"]
+            self.strategy_position_reduce_price = self.strategy_status[
+                "position_reduce_price"
+            ]
+            self.strategy_position_increase_price = self.strategy_status[
+                "position_increase_price"
+            ]
+            self.strategy_max_loss_value = self.strategy_status["max_loss_value"]
+            self.strategy_max_loss_rate = self.strategy_status["max_loss_rate"]
+            self.strategy_trending_step = self.strategy_status["trending_step"]
+
+        except:
+            pass
+        
         # 结束回测
         self.is_backtesting = False
         self.backtesting_wait = 0
