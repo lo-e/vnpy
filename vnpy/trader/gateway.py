@@ -97,7 +97,7 @@ class BaseGateway(ABC):
         General event push.
         """
         event = Event(type, data)
-        if type == EVENT_ORDER or type == EVENT_TRADE:
+        if EVENT_ORDER in type or EVENT_TRADE in type:
             self.event_engine.put_order_trade(event)
         
         else:
