@@ -223,9 +223,17 @@ def one():
         # 趋势追踪列表保存到csv
         start_dt_str = start_dt.strftime("%Y-%m-%d")
         end_dt_str = end_dt.strftime("%Y-%m-%d")
-        trending_dir_path = (
-            f"trending_continuous{DIR_SYMBOL}{exchange}{DIR_SYMBOL}{start_dt_str}_{end_dt_str}{DIR_SYMBOL}"
-        )
+        if backtesting_history_file:
+            history_dt = backtesting_history_file.split(".")[0]
+            trending_dir_path = (
+                f"trending_continuous{DIR_SYMBOL}{exchange}{DIR_SYMBOL}from_history_{history_dt}{DIR_SYMBOL}{start_dt_str}_{end_dt_str}{DIR_SYMBOL}"
+            )
+
+        else:
+            trending_dir_path = (
+                f"trending_continuous{DIR_SYMBOL}{exchange}{DIR_SYMBOL}{start_dt_str}_{end_dt_str}{DIR_SYMBOL}"
+            )
+
         for signal, signal_continuous_saved_list in continuous_saved_dict.items():
             if not os.path.exists(trending_dir_path):
                 os.makedirs(trending_dir_path)
@@ -247,7 +255,13 @@ def one():
                 writer.writerows(signal_continuous_saved_list)
 
         # 趋势追踪策略状态、回测截止时间保存到json
-        backtesting_history_dir = f"backtesting_history{DIR_SYMBOL}{exchange}{DIR_SYMBOL}"
+        if backtesting_history_file:
+            history_dt = backtesting_history_file.split(".")[0]
+            backtesting_history_dir = f"backtesting_history{DIR_SYMBOL}{exchange}{DIR_SYMBOL}from_history_{history_dt}{DIR_SYMBOL}"
+        
+        else:
+            backtesting_history_dir = f"backtesting_history{DIR_SYMBOL}{exchange}{DIR_SYMBOL}"
+
         if not os.path.exists(backtesting_history_dir):
             os.makedirs(backtesting_history_dir)
         backtesting_history_json = f"{backtesting_history_dir}{start_dt_str}_{end_dt_str}.json"
