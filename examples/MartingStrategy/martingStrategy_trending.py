@@ -37,7 +37,6 @@ class MartingSignal(object):
             exit("检查代码！")
 
         # 变量
-        self.inited = False  # 是否完成初始建仓
         self.bar: BarData = None  # 最新K线
         self.am = ArrayManager(max(self.ma_window, self.rsi_window + 12))  # K线容器
         self.position = 0  # 持仓量
@@ -173,9 +172,6 @@ class MartingSignal(object):
 
             else:
                 exit("检查代码！")
-
-            # 完成初始建仓
-            self.inited = True
 
             # 初始化后停止后续判断
             return
