@@ -851,7 +851,7 @@ class TradingWidget(QtWidgets.QWidget):
         
         # 订阅成功合约数量
         self.subscribe_count_label = self.create_label()
-        self.subscribe_count_label.setText('SUBSCRIBE_COUNT')
+        self.subscribe_count_label.setText('订阅成功合约：0')
 
         # Market depth display area
         bid_color = "rgb(255,174,201)"
@@ -968,7 +968,7 @@ class TradingWidget(QtWidgets.QWidget):
                 if gateway_name == "BINANCE":
                     gateway_subscribe = len(gateway.market_ws_api.ticks)
                     break
-            self.subscribe_count_label.setText(f'SUBSCRIBE_COUNT {gateway_subscribe}')
+            self.subscribe_count_label.setText(f'订阅成功合约：{gateway_subscribe}')
 
     def process_tick_event(self, event: Event) -> None:
         """"""
