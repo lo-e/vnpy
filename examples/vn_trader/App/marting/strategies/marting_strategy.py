@@ -194,7 +194,7 @@ class MartingStrategy(CtaTemplate):
         return True
 
     def portfolio_download_generate_complete(self, event: Event):  # 回测数据
-        if self.trading:
+        if self.inited:
             self.start_backtesting()
 
     def start_backtesting(self):
