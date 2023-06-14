@@ -843,10 +843,13 @@ class TradingWidget(QtWidgets.QWidget):
         grid.addWidget(send_button, 9, 0, 1, 3)
         grid.addWidget(cancel_button, 10, 0, 1, 3)
 
-        """ modify by loe """
+        # 事件队列容量
         self.qsize_label = self.create_label()
-        self.qsize_label.setText('EVENT_ENGINE_QSIZE')
-
+        self.qsize_label.setText('主事件队列：0')
+        self.order_trade_qsize_label = self.create_label()
+        self.order_trade_qsize_label.setText('订单事件队列：0')
+        
+        # 订阅成功合约数量
         self.subscribe_count_label = self.create_label()
         self.subscribe_count_label.setText('SUBSCRIBE_COUNT')
 
@@ -894,6 +897,7 @@ class TradingWidget(QtWidgets.QWidget):
         form = QtWidgets.QFormLayout()
         """ modify by loe """
         form.addRow(self.qsize_label)
+        form.addRow(self.order_trade_qsize_label)
         form.addRow(self.subscribe_count_label)
         form.addRow(self.ap5_label, self.av5_label)
         form.addRow(self.ap4_label, self.av4_label)
@@ -939,13 +943,22 @@ class TradingWidget(QtWidgets.QWidget):
     def process_timer_event(self, event: Event) -> None:
         self.qsize_show_frequency += 1
         if self.qsize_show_frequency >= 5:
-            # 事件处理队列
             self.qsize_show_frequency = 0
+
+            # 事件处理队列
             qsize = self.event_engine._queue.qsize()
-            self.qsize_label.setText(f'EVENT_ENGINE_QSIZE {qsize}')
+            self.qsize_label.setText(f'主事件队列：{self.event_engine._queue.qsize()}')
             if qsize >= 2000:
                 try:
-                    self.main_engine.send_ding_talk(content=f'EVENT_ENGINE_QSIZE 监控\n============\nQSIZE：{qsize}')
+                    self.main_engine.send_ding_talk(content=f'\n主事件队列拥堵提醒：{qsize}')
+                except:
+                    pass
+            
+            order_trade_qsize = self.event_engine._order_trade_queue.qsize()
+            self.order_trade_qsize_label.setText(f'订单事件队列：{order_trade_qsize}')
+            if order_trade_qsize >= 20:
+                try:
+                    self.main_engine.send_ding_talk(content=f'\n订单事件队列拥堵提醒：{order_trade_qsize}')
                 except:
                     pass
 

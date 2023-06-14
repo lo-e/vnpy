@@ -44,8 +44,10 @@ class EventEngine:
         """
         self._interval: int = interval
         self._queue: Queue = Queue()
+        self._order_trade_queue: Queue = Queue()
         self._active: bool = False
         self._thread: Thread = Thread(target=self._run)
+        self._order_trade_thread: Thread = Thread(target=self._run_order_trade)
         self._timer: Thread = Thread(target=self._run_timer)
         self._handlers: defaultdict = defaultdict(list)
         self._general_handlers: List = []
@@ -61,6 +63,17 @@ class EventEngine:
             except Empty:
                 pass
 
+    def _run_order_trade(self) -> None:
+        """
+        Get event from queue and then process it.
+        """
+        while self._active:
+            try:
+                event = self._order_trade_queue.get(block=True, timeout=1)
+                self._process(event)
+            except Empty:
+                pass
+
     def _process(self, event: Event) -> None:
         """
         First distribute event to those handlers registered listening
@@ -69,7 +82,7 @@ class EventEngine:
         Then distribute event to those general handlers which listens
         to all types.
         """
-        """ modify by loe """
+
         # 过滤无效的TICK
         if event.type == EVENT_TICK:
             tick_data = event.data
@@ -81,6 +94,8 @@ class EventEngine:
 
         if self._general_handlers:
             [handler(event) for handler in self._general_handlers]
+
+        print(f"事件类型：{event.type} 主队列容量：{self._queue.qsize()} 订单队列容量：{self._order_trade_queue.qsize()}")
 
     def _run_timer(self) -> None:
         """
@@ -112,6 +127,12 @@ class EventEngine:
         Put an event object into event queue.
         """
         self._queue.put(event)
+
+    def put_order_trade(self, event: Event) -> None:
+        """
+        Put an event object into event queue.
+        """
+        self._order_trade_queue.put(event)
 
     def register(self, type: str, handler: HandlerType) -> None:
         """
