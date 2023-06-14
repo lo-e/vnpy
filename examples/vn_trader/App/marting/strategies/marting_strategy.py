@@ -58,7 +58,6 @@ class MartingStrategy(CtaTemplate):
         "tick_dt",
         "tick_trade_enable",
         "latest_price",
-        "order_check_wait",
         "position_value",
         "position_price",
         "position_close_price",
@@ -132,8 +131,8 @@ class MartingStrategy(CtaTemplate):
         self.tick_trade_enable = False  # Tick数据时间在回测后的指定范围内允许交易
         self.latest_price = 0 # 最新的tick价格
         self.target_volume = -1  # 目标持仓
-        self.order_check_wait = 0  # 检查Order状态的等待时间
         self.window_bar_list = []  # 基于实时Tick数据生成的周期Bar数据列表
+        self.sync_data_dict = {} # 最新的同步数据，用于检查是否更新，如更新及时同步数据库
 
         self.window_bar_generator = BarGenerator(
             window=self.interval_window,
@@ -304,18 +303,30 @@ class MartingStrategy(CtaTemplate):
         print(f"回测结束：{self.backtesting_to}")
 
     def on_timer(self):
-        # 订单检查
-        self.order_check_wait += 1
-        if self.order_check_wait >= 6:
-            self.order_check_wait = 0
-            self.check_order()
-
         # 回测等待
         self.backtesting_wait += 1
 
-        # 策略状态更新
-        self.put_timer_event()
+        # 检查同步数据
+        self.put_sync_event()
         super().on_timer()
+
+    def put_sync_event(self):
+        updated = False
+        sync_data_dict = {}
+        for key in self.syncs:
+            # 当前同步数据
+            value = self.__getattribute__(key)
+            sync_data_dict[key] = value
+
+            # 比较是否有更新
+            if self.sync_data_dict:
+                last_value = self.sync_data_dict[key]
+                if value != last_value:
+                    updated = True
+
+        self.sync_data_dict = sync_data_dict
+        if updated:
+            self.put_timer_event()
 
     def on_tick(self, tick):
         if not self.trading:
@@ -669,7 +680,6 @@ class MartingStrategy(CtaTemplate):
 
             # 有正在执行的开平仓操作，立即发出订单
             if self.target_volume >= 0:
-                self.order_check_wait = 0
                 self.check_order()
         else:
             # Tick不允许交易
@@ -689,12 +699,9 @@ class MartingStrategy(CtaTemplate):
         """根据目标仓位发出订单"""
         if not self.trading or not self.tick:
             return
-
+        
         # 先取消现有的活动订单
-        vt_orderids = self.cta_engine.strategy_orderid_map[self.strategy_name]
-        if vt_orderids:
-            self.cancel_all()
-            return
+        self.cancel_all()
 
         # 发出订单
         if self.target_volume >= 0:
