@@ -48,7 +48,6 @@ class MartingSignal(object):
         self.max_loss_rate = ""  # 当前持仓最大亏损比率
         self.ma_price = 0  # 均线价格
         self.rsi_array = []
-        self.phase_position_volume = 0  # 阶段仓位的初始持仓数量
         self.trending_step = 0  # 追踪趋势的等级
         self.next_trending_step = 0  # 下一个趋势追踪等级
         self.calculate_phase_positions()  # 马丁格尔倍数仓位管理
@@ -90,7 +89,7 @@ class MartingSignal(object):
 
     def get_current_phase(self):
         current_phase_position_value = (
-            abs(self.phase_position_volume) * self.position_price
+            abs(self.position) * self.position_price
         )
         for i in range(len(self.phase_position_values)):
             phase_positon_value = self.phase_position_values[i]
@@ -152,9 +151,6 @@ class MartingSignal(object):
             # 初始化持仓合约数量
             init_volume = self.unit_value / self.position_price
             init_volume = round_to(init_volume, self.symbol_min_volume)
-
-            # 初始化阶段持仓合约数量
-            self.phase_position_volume = init_volume
 
             # 当前持仓数量更新、发起订单
             if self.direction == Direction.LONG:
@@ -229,9 +225,6 @@ class MartingSignal(object):
 
                 # 目标仓位合约数量
                 target_position = abs(self.position) + changed_volume
-
-                # 平仓后更新阶段仓位合约数量
-                self.phase_position_volume = target_position
 
                 if changed_volume:
                     # 当前持仓数量更新、发起订单
@@ -389,9 +382,6 @@ class MartingSignal(object):
 
                 # 目标仓位合约数量
                 target_position = abs(self.position) + changed_volume
-
-                # 加仓后更新阶段仓位合约数量
-                self.phase_position_volume = target_position
 
                 if changed_volume:
                     # 当前持仓数量更新、发起订单
