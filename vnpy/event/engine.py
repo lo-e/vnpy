@@ -112,6 +112,7 @@ class EventEngine:
         """
         self._active = True
         self._thread.start()
+        self._order_trade_thread.start()
         self._timer.start()
 
     def stop(self) -> None:
@@ -121,6 +122,7 @@ class EventEngine:
         self._active = False
         self._timer.join()
         self._thread.join()
+        self._order_trade_thread.join()
 
     def put(self, event: Event) -> None:
         """
