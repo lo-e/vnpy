@@ -233,7 +233,7 @@ class MartingStrategy(CtaTemplate):
                 data_from = self.backtesting_from
 
             else:
-                self.raise_error("检查代码！")
+                self.raise_error("开始回测时backtesting_to和backtesting_from缺失")
 
             backtesting_data = self.cta_engine.load_bar(
                 vt_symbol=self.vt_symbol,
@@ -499,7 +499,7 @@ class MartingStrategy(CtaTemplate):
                                 next_trending_step = strategy_next_trending_step
 
                         else:
-                            self.raise_error("检查代码！")
+                            self.raise_error("on_tick中发现direction不正确")
 
                         if next_trending_step:
                             # 邮件提醒
@@ -583,7 +583,7 @@ class MartingStrategy(CtaTemplate):
                                     next_trending_step = target_trending_step
 
                             else:
-                                self.raise_error("检查代码！")
+                                self.raise_error("on_tick中发现direction不正确")
 
                             if next_trending_step:
                                 # 邮件提醒
@@ -620,7 +620,7 @@ class MartingStrategy(CtaTemplate):
                                 target_positon_price = trade_price * (1 - price_rate)
 
                             else:
-                                self.raise_error("检查代码！")
+                                self.raise_error("on_tick中发现direction不正确")
 
                             changed_volume1 = (
                                 abs(self.pos) * target_positon_price
@@ -829,7 +829,7 @@ class MartingBacktesting(object):
         self.init_status = init_status  # 回测初始状态
         self.start_dt = start_dt  # 回测开始时间
         if not self.symbol_min_volume or not self.symbol_price_tick:
-            self.strategy.raise_error("检查代码！")
+            self.strategy.raise_error("马丁回测symbol_min_volume和symbol_price_tick缺失")
 
         # 变量
         self.start = (
@@ -937,7 +937,7 @@ class MartingBacktesting(object):
                 self.max_loss_rate = f"{self.max_loss_rate}%"
 
         else:
-            self.strategy.raise_error("检查代码！")
+            self.strategy.raise_error("马丁回测direction不正确")
 
     def generate_signal(self, bar):
         """
@@ -974,7 +974,7 @@ class MartingBacktesting(object):
                 self.position = init_volume * -1
 
             else:
-                self.strategy.raise_error("检查代码！")
+                self.strategy.raise_error("马丁回测direction不正确")
 
             # 初始化后停止后续判断
             return
@@ -1030,7 +1030,7 @@ class MartingBacktesting(object):
                         self.position = target_position * -1
 
                     else:
-                        self.strategy.raise_error("检查代码！")
+                        self.strategy.raise_error("马丁回测direction不正确")
 
                 # 初始化仓位最大亏损
                 self.max_loss_value = 0
@@ -1102,7 +1102,7 @@ class MartingBacktesting(object):
                         target_positon_price = trade_price * (1 - price_rate)
 
                     else:
-                        self.strategy.raise_error("检查代码！")
+                        self.strategy.raise_error("马丁回测direction不正确")
 
                     # 计算加仓的合约数量
                     # current_position_value + changed_volume * trade_price = (abs(self.position) + changed_volume) * self.position_price
@@ -1153,7 +1153,7 @@ class MartingBacktesting(object):
                         self.position = target_position * -1
 
                     else:
-                        self.strategy.raise_error("检查代码！")
+                        self.strategy.raise_error("马丁回测direction不正确")
 
                     # 加仓需要变更最大亏损比率，基于加仓后的持仓价值
                     self.max_loss_rate = (
