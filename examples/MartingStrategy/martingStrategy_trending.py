@@ -4,7 +4,7 @@ from collections import defaultdict
 from rsa import sign
 from vnpy.trader.constant import Direction, Offset, Exchange
 from vnpy.trader.utility import ArrayManager
-from datetime import datetime
+from datetime import datetime, timedelta
 from pymongo import MongoClient, ASCENDING
 from vnpy.trader.object import BarData
 import re
@@ -33,10 +33,20 @@ class MartingSignal(object):
         self.symbol_price_tick = self.portfolio.engine.priceTickDict[
             self.symbol
         ]  # 合约最小价格变动
+
+        self.init_status = history_data.get("backtesting_status", {})  # 回测初始状态
+        self.start_dt = None # 回测开始时间
+        backtesting_to = history_data.get("backtesting_to", "")
+        if backtesting_to:
+            self.start_dt = datetime.strptime(backtesting_to, "%Y-%m-%d %H:%M:%S") + timedelta(minutes=5)
+
         if not self.symbol_min_volume or not self.symbol_price_tick:
             exit("检查代码！")
 
         # 变量
+        self.start = (
+            False if self.init_status else True
+        )  # 开始回测开关，当有初始状态时，回测Bar数据需要从start_dt开始
         self.bar: BarData = None  # 最新K线
         self.am = ArrayManager(max(self.ma_window, self.rsi_window + 12))  # K线容器
         self.position = 0  # 持仓量
@@ -50,6 +60,10 @@ class MartingSignal(object):
         self.trending_step = 0  # 追踪趋势的等级
         self.next_trending_step = 0  # 下一个趋势追踪等级
         self.calculate_phase_positions()  # 马丁格尔倍数仓位管理
+
+        # 初始化状态
+        for name, value in self.init_status.items():
+            self.__setattr__(name, value)
 
         # 保存到backtesting_history.json的变量
         self.syncs = [
@@ -73,6 +87,23 @@ class MartingSignal(object):
         self.am.update_bar(bar)
         if not self.am.inited:
             return
+
+        # 检查是否可以开始回测
+        if not self.start:
+            if not self.start_dt:
+                exit ("回测有初始状态，但没有开始时间！")
+
+            if bar.datetime < self.start_dt:
+                # 未达到开始时间
+                return
+
+            elif bar.datetime == self.start_dt:
+                # 开始回测
+                self.start = True
+
+            else:
+                # 开始回测时间的Bar数据缺失
+                exit ("开始回测时间的Bar数据缺失！")
 
         self.calculate_max_loss()
         self.generate_signal(bar)
@@ -503,7 +534,6 @@ class MartingPortfolio(object):
         self.posDict = {}  # 合约持仓量字典
         self.signalPosDict = {}  # 策略持仓量字典
         self.signalTradesDict = {}  # 策略成交订单字典
-        self.trending_signal_list = []  # 正在追踪的趋势策略信号列表
         self.trending_update_list = []  # 趋势策略信号的更新先缓存在这里，在on_daily完成更新
         self.trending_history_dict = {}  # 缓存追踪过的趋势策略
         self.dt = None  # 当前回测时间
@@ -517,6 +547,7 @@ class MartingPortfolio(object):
         history_data = self.load_backtesting_history_data(exchange=exchange, file_name=history_file)
 
         for symbol in symbolList:
+            # 创建策略信号，并根据历史回测数据初始化
             pure_symbol = symbol[:symbol.index("USDT")]
             signal_key = f"MARTING_{exchange}_{pure_symbol}"
 
@@ -531,6 +562,21 @@ class MartingPortfolio(object):
             l = self.signalDict[symbol]
             l.append(signal1)
             l.append(signal2)
+
+            # 根据历史回测数据给策略组合初始化
+            long_signal_position = 0
+            if long_history_data:
+                long_signal_position = long_history_data["backtesting_status"]["position"]
+                long_signal_position_key = f"{symbol}_{Direction.LONG.value}"
+                self.signalPosDict[long_signal_position_key] = long_signal_position
+
+            short_signal_position = 0
+            if short_history_data:
+                short_signal_position = short_history_data["backtesting_status"]["position"]
+                short_signal_position_key = f"{symbol}_{Direction.SHORT.value}"
+                self.signalPosDict[short_signal_position_key] = short_signal_position
+
+            self.posDict[symbol] = long_signal_position + short_signal_position
 
     def load_backtesting_history_data(self, exchange:str, file_name:str):
         history_data = {}
@@ -557,17 +603,6 @@ class MartingPortfolio(object):
             trending = trending_update_data["trending"]
             max_loss_value = trending_update_data["max_loss_value"]
             max_loss_rate = trending_update_data["max_loss_rate"]
-            if trending:
-                # 记录最新追踪的趋势策略信号，并且有且只有一个
-                if signal not in self.trending_signal_list:
-                    # 添加到趋势追踪列表
-                    self.trending_signal_list.append(signal)
-
-            else:
-                # 取消追踪的趋势策略信号必须在当前列表中
-                if signal not in self.trending_signal_list:
-                    exit("检查代码！")
-                self.trending_signal_list.remove(signal)
 
             # 缓存趋势追踪记录
             signal_key = f"{signal.symbol}_{signal.direction.value}"
