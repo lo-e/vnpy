@@ -199,7 +199,7 @@ class MartingStrategy(CtaTemplate):
         self.portfolio.backtesting_queue.put(self.strategy_name)
 
     def backtesting_marting(self):
-        if self.is_backtesting or self.backtesting_wait <= 60:
+        if self.is_backtesting or self.backtesting_wait <= 10:
             return
         self.is_backtesting = True
 
@@ -299,6 +299,7 @@ class MartingStrategy(CtaTemplate):
         self.is_backtesting = False
         self.backtesting_wait = 0
         print(f"回测结束：{self.backtesting_to}")
+        self.put_timer_event()
 
     def on_timer(self):
         # 回测等待
