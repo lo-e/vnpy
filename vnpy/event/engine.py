@@ -95,7 +95,7 @@ class EventEngine:
         if self._general_handlers:
             [handler(event) for handler in self._general_handlers]
 
-        print(f"事件类型：{event.type} 主队列容量：{self._queue.qsize()} 订单队列容量：{self._order_trade_queue.qsize()}")
+        # print(f"事件类型：{event.type} 主队列容量：{self._queue.qsize()} 订单队列容量：{self._order_trade_queue.qsize()}")
 
     def _run_timer(self) -> None:
         """
