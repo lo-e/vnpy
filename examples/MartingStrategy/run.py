@@ -273,6 +273,17 @@ def one():
                 backtesting_data = json.load(f)
         
         # 本次回测结果更新
+        trade_setting = {} # 实盘设置参数
+        signal_trade_setting = {} # 策略的实盘设置参数
+        trade_setting_file = f"trade_setting{DIR_SYMBOL}{exchange}.json"
+        if os.path.exists(trade_setting_file):
+            with open(trade_setting_file, mode="r", encoding="UTF-8") as f:
+                trade_setting = json.load(f)
+        for setting in trade_setting.get("signal", []):
+            name = setting["strategy_name"]
+            signal_trade_setting[name] = setting
+
+        signal_trending_step_dict = {} # 回测结果中信号的趋势追踪信息
         for _, signal_list in engine.portfolio.signalDict.items():
             for signal in signal_list:
                 symbol = signal.symbol
@@ -281,11 +292,32 @@ def one():
                 signal_key = f"MARTING_{exchange}_{pure_symbol}_{direction.value}"
                 backtesting_data[signal_key] = signal.saved_sync_data
 
-        # 保存到json
+                trade_setting = signal_trade_setting.get(signal_key, {})
+                signal_bottom = trade_setting["bottom_step"]
+                signal_status = signal.saved_sync_data["backtesting_status"]
+                trending_step = signal_status["trending_step"]
+                data_list = signal_trending_step_dict.get(trending_step, [])
+                data_list.append([signal_key, signal_bottom, signal_status])
+                signal_trending_step_dict[trending_step] = data_list
+
+        # 保存回测结果的信号状态到json文件
         with open(backtesting_history_json, "w", encoding="utf-8") as file:
             file.write(json.dumps(backtesting_data, ensure_ascii=False))
         print(f"\n已保存回测历史到{start_dt_str}_{end_dt_str}.json\t总数：{len(backtesting_data)}")
-
+        
+        # 输出回测结果的趋势追踪信号信息
+        trending_step_list = sorted(list(signal_trending_step_dict.keys()))
+        for trending_step in trending_step_list:
+            if trending_step:
+                print(f"\n趋势追踪{trending_step}")
+                data_list = signal_trending_step_dict[trending_step]
+                for signal_data in data_list:
+                    signal_key, signal_bottom, signal_status = signal_data
+                    p = signal_status["position_price"]
+                    r = signal_status["position_reduce_price"]
+                    i = signal_status["position_increase_price"]
+                    print(f"{signal_key}_bottom_{signal_bottom}_p_{p}\t\tr：{r}\ti：{i}")
+        print("\n")
 
 def two():
     filename = "setting.csv"
