@@ -393,4 +393,4 @@ class MartingPortfolio(object):
                     print(f"{strategy_name}\t回测用时：{time() - start_t}s\n")
             except:
                 pass
-            sleep(0.1)
+            # sleep(0.1)
