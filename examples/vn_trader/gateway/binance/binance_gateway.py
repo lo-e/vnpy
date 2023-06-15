@@ -204,6 +204,7 @@ class BinanceUsdtGateway(BaseGateway):
     def process_timer_event(self, event: Event) -> None:
         """定时事件处理"""
         self.rest_api.keep_user_stream()
+        self.rest_api.check_trade_ws()
 
     def on_order(self, order: OrderData) -> None:
         """推送委托数据"""
@@ -234,6 +235,7 @@ class BinanceUsdtRestApi(RestClient):
         self.keep_alive_count: int = 0
         self.recv_window: int = 5000
         self.time_offset: int = 0
+        self.trade_ws_ping_wait = 0
 
         self.order_count: int = 1_000_000
         self.order_count_lock: Lock = Lock()
@@ -481,6 +483,13 @@ class BinanceUsdtRestApi(RestClient):
             data=data,
             on_error=self.on_keep_user_stream_error,
         )
+
+    def check_trade_ws(self):
+        self.trade_ws_ping_wait += 1
+        if self.trade_ws_ping_wait < 2 * 60:
+            return
+        self.trade_ws_ping_wait = 0
+        self.trade_ws_api.ping()
 
     def on_query_time(self, data: dict, request: Request) -> None:
         """时间查询回报"""
@@ -769,6 +778,9 @@ class BinanceUsdtTradeWebsocketApi(WebsocketClient):
 
     def on_packet(self, packet: dict) -> None:
         """推送数据回报"""
+        if "e" not in packet:
+            return
+
         if packet["e"] == "ACCOUNT_UPDATE":
             self.on_account(packet)
         elif packet["e"] == "ORDER_TRADE_UPDATE":
@@ -895,6 +907,9 @@ class BinanceUsdtTradeWebsocketApi(WebsocketClient):
         self.gateway.write_log("交易Websocket API断开")
         self.gateway.rest_api.start_user_stream()
 
+    def ping(self):
+        req: dict = {"op": "ping"}
+        self.send_packet(req)
 
 class BinanceUsdtDataWebsocketApi(WebsocketClient):
     """币安正向合约的行情Websocket API"""
