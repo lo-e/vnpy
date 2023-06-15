@@ -39,6 +39,8 @@ class MartingPortfolio(object):
         "downloading_wait",
         "is_generating",
         "generating_cost",
+        "strategy_backtesting",
+        "strategy_backtesting_cost",
         "trending_top",
     ]
     syncList = ["today", "trending_top"]
@@ -77,6 +79,9 @@ class MartingPortfolio(object):
         self.backtesting_thread = Thread(target=self.run_strategy_backtesting)
         self.backtesting_thread.start()
         self.backtesting_queue = Queue()
+        self.strategy_backtesting = False # 策略组合是否正在回测
+        self.strategy_backtesting_cost = 0 # 策略组合回测用时
+        self.strategy_backtesting_time = 0 # 策略组合回测开始时间
 
         # 其它
         self.strategy_symbols = []  # 策略合约列表
@@ -177,6 +182,20 @@ class MartingPortfolio(object):
         if self.strategy_info_count_down <= 0:
             self.strategy_info_count_down = 60 * 60
             self.notice_strategy_info()
+
+        # 策略组合是否正在回测
+        if self.backtesting_queue.qsize():
+            if not self.strategy_backtesting:
+                # 计时
+                self.strategy_backtesting_time = time()
+            self.strategy_backtesting = True
+        
+        else:
+            if self.strategy_backtesting and self.strategy_backtesting_time:
+                # 统计用时
+                self.strategy_backtesting_cost = time() - self.strategy_backtesting_time
+                self.strategy_backtesting_time = 0
+            self.strategy_backtesting = False
 
         # 组合状态更新
         self.engine.put_portfolio_event()
