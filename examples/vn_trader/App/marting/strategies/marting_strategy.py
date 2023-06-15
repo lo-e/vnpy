@@ -711,14 +711,14 @@ class MartingStrategy(CtaTemplate):
                 if changed_volume > 0:
                     # 加仓
                     super().buy(
-                        self.tick.last_price + self.symbol_price_tick * 100,
+                        self.tick.last_price + self.symbol_price_tick * 20,
                         abs(changed_volume),
                     )
 
                 elif changed_volume < 0:
                     # 平仓
                     super().sell(
-                        self.tick.last_price - self.symbol_price_tick * 100,
+                        self.tick.last_price - self.symbol_price_tick * 20,
                         abs(changed_volume),
                     )
 
@@ -726,14 +726,14 @@ class MartingStrategy(CtaTemplate):
                 if changed_volume > 0:
                     # 加仓
                     super().short(
-                        self.tick.last_price - self.symbol_price_tick * 100,
+                        self.tick.last_price - self.symbol_price_tick * 20,
                         abs(changed_volume),
                     )
 
                 elif changed_volume < 0:
                     # 平仓
                     super().cover(
-                        self.tick.last_price + self.symbol_price_tick * 100,
+                        self.tick.last_price + self.symbol_price_tick * 20,
                         abs(changed_volume),
                     )
 
