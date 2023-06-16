@@ -53,7 +53,7 @@ class MartingPortfolio(object):
         self.download_engine = TurtleCryptoDataDownloading()  # 数据下载引擎
         self.downloading_trigger = False  # 开启下载线程
         self.is_downloading = False  # 是否正在下载
-        self.downloading_wait = 0  # 数据下载等待时间（秒）
+        self.downloading_wait = 320  # 数据下载等待时间（秒）
         self.downloading_cost = 0  # 下载更新一次花费的时间
         self.downloading_time = 0  # 下载开始的时间戳
 
@@ -168,7 +168,7 @@ class MartingPortfolio(object):
 
         # 每隔设定的时间开始下载
         if (
-            self.downloading_wait >= 10 * 60
+            self.downloading_wait >= 350
             and not self.downloading_trigger
             and not self.is_downloading
             and not self.is_generating
@@ -280,6 +280,8 @@ class MartingPortfolio(object):
         highlight_count = 0
         min_datetime = ""
         max_datetime = ""
+        # fake
+        strategy_to_dict = {}
         for _, strategy in self.engine.strategies.items():
             # 总计
             total += 1
@@ -301,7 +303,13 @@ class MartingPortfolio(object):
             # 回测截止时间
             strategy_to = strategy.strategy_to
 
+            # fake
+            key = "none"
+
             if strategy_to:
+                # fake
+                key = strategy_to
+
                 # 最小回测截止时间
                 min_datetime = (
                     min(min_datetime, strategy_to) if min_datetime else strategy_to
@@ -311,6 +319,11 @@ class MartingPortfolio(object):
                 max_datetime = (
                     max(max_datetime, strategy_to) if max_datetime else strategy_to
                 )
+
+            # fake
+            name_list = strategy_to_dict.get(key, [])
+            name_list.append(strategy.strategy_name)
+            strategy_to_dict[key] = name_list
 
             # 实盘持仓信息
             position_value = abs(strategy.pos) * strategy.position_price
@@ -381,6 +394,14 @@ class MartingPortfolio(object):
 
             highlight_content = f"\n{highlight_subject}\n{highlight_content}"
             self.engine.main_engine.send_ding_talk(content=highlight_content)
+        
+        # fake
+        to_content = ""
+        for to_, name_list in strategy_to_dict.items():
+            to_content += f"\n\n{to_}\n总数：{len(name_list)}\n{name_list}"
+        self.engine.send_email(
+            msg=to_content, subject="回测时间详情"
+        )
 
     def run_strategy_backtesting(self):
         while True:
