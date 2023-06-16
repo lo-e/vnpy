@@ -337,6 +337,10 @@ class MartingStrategy(CtaTemplate):
         # 给分钟Bar生成器推送数据
         if (self.tick_dt and tick.datetime >= self.tick_dt) or not self.tick_dt:
             self.minute_bar_generator.update_tick(tick=tick)
+
+        # 第一个五分钟周期起始，下载数据
+        if (not self.window_bar_list) and (not tick.datetime.minute % self.interval_window):
+            self.portfolio.download_immediately()
         
         # 更新tick相关变量
         self.tick = copy(tick)

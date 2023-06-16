@@ -53,7 +53,7 @@ class MartingPortfolio(object):
         self.download_engine = TurtleCryptoDataDownloading()  # 数据下载引擎
         self.downloading_trigger = False  # 开启下载线程
         self.is_downloading = False  # 是否正在下载
-        self.downloading_wait = 320  # 数据下载等待时间（秒）
+        self.downloading_wait = 0  # 数据下载等待时间（秒）
         self.downloading_cost = 0  # 下载更新一次花费的时间
         self.downloading_time = 0  # 下载开始的时间戳
 
@@ -217,6 +217,9 @@ class MartingPortfolio(object):
             self.download_engine.download_from_binance(
                 contract_list=contract_list, days=5, from_data_base=True
             )
+
+    def download_immediately(self):
+        self.downloading_wait = 350
 
     def generate_window_bar(self):
         self.bar_generate_engine.symbol_list = self.strategy_symbols
