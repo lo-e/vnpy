@@ -83,6 +83,9 @@ class MartingStrategy(CtaTemplate):
         "trending_step",
     ]
 
+    # 监控列表
+    monitors = ["tick_trade_enable"]
+
     def __init__(self, ctaEngine, martingPortfolio, setting):
         # 组合管理引擎
         self.portfolio = martingPortfolio
@@ -130,7 +133,7 @@ class MartingStrategy(CtaTemplate):
         self.latest_price = 0 # 最新的tick价格
         self.target_volume = -1  # 目标持仓
         self.window_bar_list = []  # 基于实时Tick数据生成的周期Bar数据列表
-        self.sync_data_dict = {} # 最新的同步数据，用于检查是否更新，如更新及时同步数据库
+        self.monitor_dict = {} # 最新的同步数据，用于检查是否更新，如更新及时同步数据库
 
         self.window_bar_generator = BarGenerator(
             window=self.interval_window,
@@ -311,19 +314,26 @@ class MartingStrategy(CtaTemplate):
 
     def put_sync_event(self):
         updated = False
-        sync_data_dict = {}
-        for key in self.syncs:
-            # 当前同步数据
-            value = self.__getattribute__(key)
-            sync_data_dict[key] = value
+        monitor_dict = {}
 
-            # 比较是否有更新
-            if self.sync_data_dict:
-                last_value = self.sync_data_dict[key]
+        # 当前同步数据
+        for key in self.syncs:
+            value = self.__getattribute__(key)
+            monitor_dict[key] = value
+        
+        for key in self.monitors:
+            value = self.__getattribute__(key)
+            monitor_dict[key] = value
+
+        # 比较是否有更新
+        for key, value in monitor_dict.items():
+            if key in self.monitor_dict:
+                last_value = self.monitor_dict[key]
                 if value != last_value:
                     updated = True
-
-        self.sync_data_dict = sync_data_dict
+                    break
+                
+        self.monitor_dict = monitor_dict
         if updated:
             self.put_timer_event()
 
