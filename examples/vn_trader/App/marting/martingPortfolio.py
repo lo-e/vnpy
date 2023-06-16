@@ -56,6 +56,7 @@ class MartingPortfolio(object):
         self.downloading_wait = 0  # 数据下载等待时间（秒）
         self.downloading_cost = 0  # 下载更新一次花费的时间
         self.downloading_time = 0  # 下载开始的时间戳
+        self.downloading_for_init = False # 是否已经为组合数据初始化下载
 
         # window_bar合成相关
         self.bar_generate_engine = MultiThreadsMinuteBarProcessor(
@@ -218,8 +219,10 @@ class MartingPortfolio(object):
                 contract_list=contract_list, days=5, from_data_base=True
             )
 
-    def download_immediately(self):
-        self.downloading_wait = 350
+    def download_initing(self):
+        if not self.downloading_for_init:
+            self.downloading_for_init = True
+            self.downloading_wait = 350
 
     def generate_window_bar(self):
         self.bar_generate_engine.symbol_list = self.strategy_symbols

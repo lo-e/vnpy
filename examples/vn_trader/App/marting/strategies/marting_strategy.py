@@ -340,7 +340,7 @@ class MartingStrategy(CtaTemplate):
 
         # 第一个五分钟周期起始，下载数据
         if (not self.window_bar_list) and (not tick.datetime.minute % self.interval_window):
-            self.portfolio.download_immediately()
+            self.portfolio.download_initing()
         
         # 更新tick相关变量
         self.tick = copy(tick)
