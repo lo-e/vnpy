@@ -278,8 +278,8 @@ class MartingPortfolio(object):
         un_fit_count = 0
         highlight_content = ""
         highlight_count = 0
-        min_datetime = None
-        max_datetime = None
+        min_datetime = ""
+        max_datetime = ""
         for _, strategy in self.engine.strategies.items():
             # 总计
             total += 1
@@ -289,35 +289,36 @@ class MartingPortfolio(object):
                 loss_tick_symbols.add(symbol)
 
             # 回测数据缺失的数量
-            backtesting_status = (
-                strategy.backtesting_status if strategy.backtesting_status else {}
+            strategy_status = (
+                copy(strategy.strategy_status) if strategy.strategy_status else {}
             )
-            if not backtesting_status:
+            if not strategy_status:
                 error_count += 1
 
             # 回测趋势追踪等级
-            backtesting_step = backtesting_status.get("trending_step", 0)
+            strategy_step = strategy_status.get("trending_step", 0)
 
             # 回测截止时间
-            backtesting_to = strategy.backtesting_to
+            strategy_to = strategy.strategy_to
 
-            # 最小回测截止时间
-            min_datetime = (
-                min(min_datetime, backtesting_to) if min_datetime else backtesting_to
-            )
+            if strategy_to:
+                # 最小回测截止时间
+                min_datetime = (
+                    min(min_datetime, strategy_to) if min_datetime else strategy_to
+                )
 
-            # 最大回测截止时间
-            max_datetime = (
-                max(max_datetime, backtesting_to) if max_datetime else backtesting_to
-            )
+                # 最大回测截止时间
+                max_datetime = (
+                    max(max_datetime, strategy_to) if max_datetime else strategy_to
+                )
 
             # 实盘持仓信息
             position_value = abs(strategy.pos) * strategy.position_price
 
             # 回测和实盘比较趋势追踪等级是否一致
-            if backtesting_step or strategy.trending_step:
-                if backtesting_step == strategy.trending_step:
-                    content = f"\nstrategy_name:{strategy.strategy_name}\nstrategy_pos:{strategy.pos}\nstrategy_position_price:{strategy.position_price}\nstrategy_position_value:{position_value}\nstrategy_pnl:{strategy.current_pnl_rate}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\nstrategy_step: {strategy.trending_step}\n\nbacktesting_step: {backtesting_step}\nbacktesting_to: {backtesting_to}\nbacktesting_pnl：{strategy.strategy_current_pnl_rate}"
+            if strategy_step or strategy.trending_step:
+                if strategy_step == strategy.trending_step:
+                    content = f"\nsignal_name:{strategy.strategy_name}\nsignal_pos:{strategy.pos}\nsignal_position_price:{strategy.position_price}\nsignal_position_value:{position_value}\nsignal_pnl:{strategy.current_pnl_rate}\nsignal_bottom: {strategy.bottom_step}\nsignal_top: {strategy.top_step}\nsignal_step: {strategy.trending_step}\n\nstrategy_step: {strategy_step}\nstrategy_to: {strategy_to}\nstrategy_pnl：{strategy.strategy_current_pnl_rate}"
                     fit_content += content
                     fit_content += "\n\n" + "-" * 10 + "\n\n"
                     fit_count += 1
@@ -330,11 +331,11 @@ class MartingPortfolio(object):
                 else:
                     if (
                         strategy.trending_step == 0
-                        and backtesting_step < strategy.bottom_step
+                        and strategy_step < strategy.bottom_step
                     ):
                         continue
                     
-                    content = f"\nstrategy_name:{strategy.strategy_name}\nstrategy_pos:{strategy.pos}\nstrategy_position_price:{strategy.position_price}\nstrategy_position_value:{position_value}\nstrategy_pnl:{strategy.current_pnl_rate}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\nstrategy_step: {strategy.trending_step}\n\nbacktesting_step: {backtesting_step}\nbacktesting_to: {backtesting_to}\nbacktesting_pnl：{strategy.strategy_current_pnl_rate}"
+                    content = f"\nsignal_name:{strategy.strategy_name}\nsignal_pos:{strategy.pos}\nsignal_position_price:{strategy.position_price}\nsignal_position_value:{position_value}\nsignal_pnl:{strategy.current_pnl_rate}\nsignal_bottom: {strategy.bottom_step}\nsignal_top: {strategy.top_step}\nsignal_step: {strategy.trending_step}\n\nstrategy_step: {strategy_step}\nstrategy_to: {strategy_to}\nstrategy_pnl：{strategy.strategy_current_pnl_rate}"
                     un_fit_content += content
                     un_fit_content += "\n\n" + "-" * 10 + "\n\n"
                     un_fit_count += 1
