@@ -17,6 +17,7 @@ from vnpy.trader.constant import Direction, Offset
 from vnpy.trader.utility import DIR_SYMBOL
 import shutil
 import json
+from vnpy.trader.utility import round_to
 
 
 def one():
@@ -297,7 +298,15 @@ def one():
                 signal_status = signal.saved_sync_data["backtesting_status"]
                 trending_step = signal_status["trending_step"]
                 data_list = signal_trending_step_dict.get(trending_step, [])
-                data_list.append([signal_key, signal_bottom, signal_status])
+                # 计算当前盈亏
+                direction_v = 1 if signal.direction == Direction.LONG else -1
+                position_pnl = (
+                    (signal.bar.close_price / signal.position_price) - 1
+                ) * 100 * direction_v
+                position_pnl = round_to(position_pnl, 0.01)
+                position_pnl = f"{position_pnl}%"
+
+                data_list.append([signal_key, signal_bottom, position_pnl, signal_status])
                 signal_trending_step_dict[trending_step] = data_list
 
         # 保存回测结果的信号状态到json文件
@@ -312,11 +321,11 @@ def one():
                 print(f"\n趋势追踪{trending_step}")
                 data_list = signal_trending_step_dict[trending_step]
                 for signal_data in data_list:
-                    signal_key, signal_bottom, signal_status = signal_data
+                    signal_key, signal_bottom, position_pnl, signal_status = signal_data
                     p = signal_status["position_price"]
                     r = signal_status["position_reduce_price"]
                     i = signal_status["position_increase_price"]
-                    print(f"{signal_key}_bottom_{signal_bottom}_p_{p}\t\tr：{r}\ti：{i}")
+                    print(f"{signal_key}_bottom_{signal_bottom}\t\tp：{p}\tr：{r}\ti：{i}\tpnl：{position_pnl}")
         print("\n")
 
 def two():
