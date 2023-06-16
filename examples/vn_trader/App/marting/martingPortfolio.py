@@ -317,7 +317,7 @@ class MartingPortfolio(object):
             # 回测和实盘比较趋势追踪等级是否一致
             if backtesting_step or strategy.trending_step:
                 if backtesting_step == strategy.trending_step:
-                    content = f"\nstrategy_name:{strategy.strategy_name}\nstrategy_pos:{strategy.pos}\nstrategy_position_price:{strategy.position_price}\nstrategy_position_value:{position_value}\nstrategy_pnl:{strategy.current_pnl_rate}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\n\nstrategy_step: {strategy.trending_step}\nbacktesting_step: {backtesting_step}\nbacktesting_to: {backtesting_to}"
+                    content = f"\nstrategy_name:{strategy.strategy_name}\nstrategy_pos:{strategy.pos}\nstrategy_position_price:{strategy.position_price}\nstrategy_position_value:{position_value}\nstrategy_pnl:{strategy.current_pnl_rate}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\nstrategy_step: {strategy.trending_step}\n\nbacktesting_step: {backtesting_step}\nbacktesting_to: {backtesting_to}\nbacktesting_pnl：{strategy.strategy_current_pnl_rate}"
                     fit_content += content
                     fit_content += "\n\n" + "-" * 10 + "\n\n"
                     fit_count += 1
@@ -334,7 +334,7 @@ class MartingPortfolio(object):
                     ):
                         continue
                     
-                    content = f"\nstrategy_name:{strategy.strategy_name}\nstrategy_pos:{strategy.pos}\nstrategy_position_price:{strategy.position_price}\nstrategy_position_value:{position_value}\nstrategy_pnl:{strategy.current_pnl_rate}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\n\nstrategy_step: {strategy.trending_step}\nbacktesting_step: {backtesting_step}\nbacktesting_to: {backtesting_to}"
+                    content = f"\nstrategy_name:{strategy.strategy_name}\nstrategy_pos:{strategy.pos}\nstrategy_position_price:{strategy.position_price}\nstrategy_position_value:{position_value}\nstrategy_pnl:{strategy.current_pnl_rate}\nstrategy_bottom: {strategy.bottom_step}\nstrategy_top: {strategy.top_step}\nstrategy_step: {strategy.trending_step}\n\nbacktesting_step: {backtesting_step}\nbacktesting_to: {backtesting_to}\nbacktesting_pnl：{strategy.strategy_current_pnl_rate}"
                     un_fit_content += content
                     un_fit_content += "\n\n" + "-" * 10 + "\n\n"
                     un_fit_count += 1
@@ -390,6 +390,9 @@ class MartingPortfolio(object):
                     print(f"{strategy_name}\t开始回测")
                     start_t = time()
                     strategy.backtesting_marting()
+                    if strategy.window_bar_list:
+                        bar = strategy.window_bar_list[-1]
+                        print(f"dt：{bar.datetime}]\to：{bar.open_price}\th：{bar.high_price}\tl：{bar.low_price}\tc：{bar.close_price}")
                     print(f"{strategy_name}\t回测用时：{time() - start_t}s\n")
             except:
                 pass
