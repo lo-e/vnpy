@@ -390,6 +390,9 @@ class MartingPortfolio(object):
                     print(f"{strategy_name}\t开始回测")
                     start_t = time()
                     strategy.backtesting_marting()
+                    if strategy.window_bar_list:
+                        bar = strategy.window_bar_list[-1]
+                        print(f"dt：{bar.datetime}]\to：{bar.open_price}\th：{bar.high_price}\tl：{bar.low_price}\tc：{bar.close_price}")
                     print(f"{strategy_name}\t回测用时：{time() - start_t}s\n")
             except:
                 pass
