@@ -284,10 +284,12 @@ class MartingPortfolio(object):
         un_fit_count = 0
         highlight_content = ""
         highlight_count = 0
-        min_datetime = ""
-        max_datetime = ""
+        b_min_datetime = ""
+        b_max_datetime = ""
+        s_min_datetime = ""
+        s_max_datetime = ""
         # fake
-        strategy_to_dict = {}
+        # strategy_to_dict = {}
         for _, strategy in self.engine.strategies.items():
             # 总计
             total += 1
@@ -307,29 +309,41 @@ class MartingPortfolio(object):
             strategy_step = strategy_status.get("trending_step", 0)
 
             # 回测截止时间
+            backtesting_to = strategy.backtesting_to
             strategy_to = strategy.strategy_to
 
             # fake
-            key = "none"
+            # key = "none"
 
-            if strategy_to:
-                # fake
-                key = strategy_to
-
+            if backtesting_to:
                 # 最小回测截止时间
-                min_datetime = (
-                    min(min_datetime, strategy_to) if min_datetime else strategy_to
+                b_min_datetime = (
+                    min(b_min_datetime, backtesting_to) if b_min_datetime else backtesting_to
                 )
 
                 # 最大回测截止时间
-                max_datetime = (
-                    max(max_datetime, strategy_to) if max_datetime else strategy_to
+                b_max_datetime = (
+                    max(b_max_datetime, backtesting_to) if b_max_datetime else backtesting_to
+                )
+
+            if strategy_to:
+                # fake
+                # key = strategy_to
+
+                # 最小回测截止时间
+                s_min_datetime = (
+                    min(s_min_datetime, strategy_to) if s_min_datetime else strategy_to
+                )
+
+                # 最大回测截止时间
+                s_max_datetime = (
+                    max(s_max_datetime, strategy_to) if s_max_datetime else strategy_to
                 )
 
             # fake
-            name_list = strategy_to_dict.get(key, [])
-            name_list.append(strategy.strategy_name)
-            strategy_to_dict[key] = name_list
+            # name_list = strategy_to_dict.get(key, [])
+            # name_list.append(strategy.strategy_name)
+            # strategy_to_dict[key] = name_list
 
             # 实盘持仓信息
             position_value = abs(strategy.pos) * strategy.position_price
@@ -364,7 +378,7 @@ class MartingPortfolio(object):
                         highlight_content += "\n\n" + "-" * 10 + "\n\n"
                         highlight_count += 1
 
-        main_content = f"策略总数：{total}\n行情缺失合约{len(loss_tick_symbols)}：{loss_tick_symbols}\n回测周期：{min_datetime} - {max_datetime}"
+        main_content = f"策略总数：{total}\n行情缺失合约{len(loss_tick_symbols)}：{loss_tick_symbols}\n回测周期b：{b_min_datetime} - {b_max_datetime}\n回测周期s：{s_min_datetime} - {s_max_datetime}"
         # 邮件发送通知
         fit_content = (
             f"\n{main_content}\n" + fit_content
@@ -402,12 +416,12 @@ class MartingPortfolio(object):
             self.engine.main_engine.send_ding_talk(content=highlight_content)
         
         # fake
-        to_content = ""
-        for to_, name_list in strategy_to_dict.items():
-            to_content += f"\n\n{to_}\n总数：{len(name_list)}\n{name_list}"
-        self.engine.send_email(
-            msg=to_content, subject="回测时间详情"
-        )
+        # to_content = ""
+        # for to_, name_list in strategy_to_dict.items():
+        #     to_content += f"\n\n{to_}\n总数：{len(name_list)}\n{name_list}"
+        # self.engine.send_email(
+        #     msg=to_content, subject="回测时间详情"
+        # )
 
     def run_strategy_backtesting(self):
         while True:
@@ -420,7 +434,7 @@ class MartingPortfolio(object):
                     strategy.backtesting_marting()
                     if strategy.window_bar_list:
                         bar = strategy.window_bar_list[-1]
-                        print(f"dt：{bar.datetime}\to：{bar.open_price}\th：{bar.high_price}\tl：{bar.low_price}\tc：{bar.close_price}")
+                        print(f"latest_bar_dt：{bar.datetime}\to：{bar.open_price}\th：{bar.high_price}\tl：{bar.low_price}\tc：{bar.close_price}")
                     print(f"{strategy_name}\t回测用时：{time() - start_t}s\n")
             except:
                 pass

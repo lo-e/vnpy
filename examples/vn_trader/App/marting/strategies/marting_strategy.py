@@ -301,7 +301,7 @@ class MartingStrategy(CtaTemplate):
         # 结束回测
         self.is_backtesting = False
         self.backtesting_wait = 0
-        print(f"回测结束：{self.backtesting_to}")
+        print(f"回测结束 b_to：{self.backtesting_to}\ts_to：{self.strategy_to}")
         self.put_timer_event()
 
     def on_timer(self):
