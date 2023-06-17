@@ -308,8 +308,13 @@ class MartingStrategy(CtaTemplate):
         # 回测等待
         self.backtesting_wait += 1
 
-        # 周期起始，手动update_tick
+        # 周期首尾分钟，手动update_tick
         dt = datetime.now()
+        if (not (dt.minute + 1) % self.interval_window) and self.tick and (self.tick.datetime.minute != dt.minute):
+            manual_tick = copy(self.tick)
+            manual_tick.datetime = dt
+            self.on_tick(manual_tick)
+            
         if (not dt.minute % self.interval_window) and self.tick and (self.tick.datetime.minute != dt.minute):
             manual_tick = copy(self.tick)
             manual_tick.datetime = dt

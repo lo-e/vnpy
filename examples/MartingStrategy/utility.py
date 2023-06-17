@@ -123,6 +123,7 @@ def analyse_trending_continuous(
 
                     # 开始导入数据
                     reader = csv.DictReader(f)
+                    open_close_rows = []
                     for row in reader:
                         dt = row["datetime"]
                         signal = row["signal"]
@@ -134,7 +135,10 @@ def analyse_trending_continuous(
                         trending = row["trending"]
                         if trending == f"加仓":
                             continuous_open += 1
+                            open_close_rows.append(row)
                         else:
+                            open_close_rows.append(row)
+
                             # 记录趋势追踪程度
                             continuous_key = str(continuous_open)
                             count = continuous_open_dict.get(continuous_key, 0)
@@ -146,14 +150,14 @@ def analyse_trending_continuous(
                                 continuous_key, {}
                             )
                             signal_list = signal_dict.get(symbol, [])
-                            signal_list.append(row)
+                            signal_list += open_close_rows
                             signal_dict[symbol] = signal_list
                             continuous_open_symbol_dict[continuous_key] = signal_dict
 
                             # 趋势追踪的信号统计2
                             open_dict = continuous_symbol_open_dict.get(symbol, {})
                             open_list = open_dict.get(continuous_key, [])
-                            open_list.append(row)
+                            open_list += open_close_rows
                             open_dict[continuous_key] = open_list
                             continuous_symbol_open_dict[symbol] = open_dict
 
@@ -164,7 +168,7 @@ def analyse_trending_continuous(
                             month_dict = month_open_symbol_dict.get(month_str, {})
                             signal_dict = month_dict.get(continuous_key, {})
                             signal_list = signal_dict.get(symbol, [])
-                            signal_list.append(row)
+                            signal_list += open_close_rows
                             signal_dict[symbol] = signal_list
                             month_dict[continuous_key] = signal_dict
                             month_open_symbol_dict[month_str] = month_dict
@@ -173,13 +177,14 @@ def analyse_trending_continuous(
                             month_dict = month_symbol_open_dict.get(month_str, {})
                             open_dict = month_dict.get(symbol, {})
                             open_list = open_dict.get(continuous_key, [])
-                            open_list.append(row)
+                            open_list += open_close_rows
                             open_dict[continuous_key] = open_list
                             month_dict[symbol] = open_dict
                             month_symbol_open_dict[month_str] = month_dict
 
                             # 连续加仓重置
                             continuous_open = 0
+                            open_close_rows = []
 
     # 连续趋势追踪程度统计
     print(f"\n****** 连续趋势追踪程度统计 ******")
@@ -242,18 +247,22 @@ def output_open_symbol_result(open_symbol_dict: dict):
         for _, row in df.iterrows():
             symbol = row["symbol"]
             symbol_data_list = symbol_dict[symbol]
-            print(f"{symbol}有{len(symbol_data_list)}次记录")
-            # for symbol_data in symbol_data_list:
-            #     dt = symbol_data["datetime"]
-            #     signal = symbol_data["signal"]
-            #     position_price = symbol_data["position_price"]
-            #     position_value = symbol_data["position_value"]
-            #     max_loss_value = symbol_data["max_loss_value"]
-            #     max_loss_rate = symbol_data["max_loss_rate"]
-            #     trending = symbol_data["trending"]
-            #     print(
-            #         f"{dt}\t{signal}\t{position_price}\t{position_value}\t{max_loss_value}\t{max_loss_rate}\t{trending}"
-            #     )
+            close_count = int(len(symbol_data_list) / (int(continuous_key) + 1))
+            print(f"\n{symbol}有{close_count}次记录")
+            for i in range(len(symbol_data_list)):
+                symbol_data = symbol_data_list[i]
+                dt = symbol_data["datetime"]
+                signal = symbol_data["signal"]
+                position_price = symbol_data["position_price"]
+                position_value = symbol_data["position_value"]
+                max_loss_value = symbol_data["max_loss_value"]
+                max_loss_rate = symbol_data["max_loss_rate"]
+                trending = symbol_data["trending"]
+                print(
+                    f"{dt}\t{signal}\t{position_price}\t{position_value}\t{max_loss_value}\t{max_loss_rate}\t{trending}"
+                )
+                if trending == "平仓" and i != len(symbol_data_list) - 1:
+                    print("\n")
 
 
 def output_symbol_open_result(symbol_open_dict: dict, exchange:str):
@@ -267,8 +276,9 @@ def output_symbol_open_result(symbol_open_dict: dict, exchange:str):
     max_2_symbol_set = all_symbol_set - set(list(symbol_open_dict.keys()))
     max_3_symbol_set = set()
     max_4_symbol_set = set()
+    over_4_symbol_set = set()
     for symbol, open_dict in symbol_open_dict.items():
-        print(f"\n{symbol}的连续趋势追踪记录")
+        # print(f"\n{symbol}的连续趋势追踪记录")
         max_3 = True
         max_4 = True
         for continuous_key, data_list in open_dict.items():
@@ -278,17 +288,20 @@ def output_symbol_open_result(symbol_open_dict: dict, exchange:str):
             if int(continuous_key) > 4:
                 max_4 = False
 
-            print(f"追踪{continuous_key}\t{len(data_list)}")
+            # print(f"追踪{continuous_key}\t{len(data_list)}")
 
         if max_3:
             max_3_symbol_set.add(symbol)
 
         elif max_4:
             max_4_symbol_set.add(symbol)
+        
+        else:
+            over_4_symbol_set.add(symbol)
 
-    print(f"\n最大连续趋势追踪2的合约总数：{len(max_2_symbol_set)}")
-    for symbol in max_2_symbol_set:
-        print(symbol)
+    # print(f"\n最大连续趋势追踪2的合约总数：{len(max_2_symbol_set)}")
+    # for symbol in max_2_symbol_set:
+    #     print(symbol)
 
     print(f"\n最大连续趋势追踪3的合约总数：{len(max_3_symbol_set)}")
     for symbol in max_3_symbol_set:
@@ -297,6 +310,11 @@ def output_symbol_open_result(symbol_open_dict: dict, exchange:str):
     print(f"\n最大连续趋势追踪4的合约总数：{len(max_4_symbol_set)}")
     for symbol in max_4_symbol_set:
         print(symbol)
+
+    print(f"\n连续趋势追踪5以上的合约总数：{len(over_4_symbol_set)}")
+    for symbol in over_4_symbol_set:
+        print(symbol)
+    print("\n")
 
 
 def generate_setting(symbol_open_dict: dict, exchange:str):
@@ -437,5 +455,5 @@ if __name__ == "__main__":
 
     # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
     analyse_trending_continuous(
-        exchange="BINANCE", target_dir="2022-01-01_2023-06-10", by_month=False, for_trade_setting=True
+        exchange="BINANCE", target_dir="2022-01-01_2023-06-10", by_month=True, for_trade_setting=False
     )
