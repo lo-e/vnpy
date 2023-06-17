@@ -310,7 +310,7 @@ class MartingStrategy(CtaTemplate):
 
         # 周期起始，手动update_tick
         dt = datetime.now()
-        if (not dt.minute % self.interval_window) and (self.tick.datetime.minute != dt.minute):
+        if (not dt.minute % self.interval_window) and self.tick and (self.tick.datetime.minute != dt.minute):
             manual_tick = copy(self.tick)
             manual_tick.datetime = dt
             self.on_tick(manual_tick)
