@@ -250,6 +250,9 @@ class MartingSignal(object):
                 # 初始化趋势追踪等级
                 self.trending_step = 0
 
+                # 初始化趋势追踪组合
+                self.current_trending_group = []
+
                 # 平仓
                 self.position_price = trade_price
                 target_position_value = self.unit_value
@@ -395,6 +398,9 @@ class MartingSignal(object):
                     # 新的趋势策略信号
                     self.portfolio.update_trending(self, True)
                     self.trending_step += 1
+                    self.current_trending_group.append({"datetime":bar.datetime.strftime("%Y-%m-%d %H:%M:%S"),
+                                                        "max_loss_value":self.max_loss_value,
+                                                        "max_loss_rate":self.max_loss_rate})
 
                 else:
                     # ====== 震荡行情 ======
@@ -465,12 +471,12 @@ class MartingSignal(object):
                     else:
                         exit("检查代码！")
 
-                    # 加仓需要变更最大亏损比率，基于加仓后的持仓价值
-                    self.max_loss_rate = (
-                        self.max_loss_value / (abs(self.position) * self.position_price)
-                    ) * 100
-                    self.max_loss_rate = round_to(self.max_loss_rate, 0.01)
-                    self.max_loss_rate = f"{self.max_loss_rate}%"
+                # 加仓需要变更最大亏损比率，基于加仓后的持仓价值
+                self.max_loss_rate = (
+                    self.max_loss_value / (abs(self.position) * self.position_price)
+                ) * 100
+                self.max_loss_rate = round_to(self.max_loss_rate, 0.01)
+                self.max_loss_rate = f"{self.max_loss_rate}%"
 
     def calculate_indicator(self):
         """计算入场指标"""
