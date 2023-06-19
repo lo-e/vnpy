@@ -19,7 +19,15 @@ import json
 
 
 class MartingSignal(object):
-    def __init__(self, portfolio, symbol, direction, ma_window, rsi_window, history_data:dict={}):
+    def __init__(
+        self,
+        portfolio,
+        symbol,
+        direction,
+        ma_window,
+        rsi_window,
+        history_data: dict = {},
+    ):
         # 常量
         self.portfolio = portfolio  # 投资组合
         self.symbol = symbol  # 合约代码
@@ -35,10 +43,12 @@ class MartingSignal(object):
         ]  # 合约最小价格变动
 
         self.init_status = history_data.get("backtesting_status", {})  # 回测初始状态
-        self.start_dt = None # 回测开始时间
+        self.start_dt = None  # 回测开始时间
         backtesting_to = history_data.get("backtesting_to", "")
         if backtesting_to:
-            self.start_dt = datetime.strptime(backtesting_to, "%Y-%m-%d %H:%M:%S") + timedelta(minutes=5)
+            self.start_dt = datetime.strptime(
+                backtesting_to, "%Y-%m-%d %H:%M:%S"
+            ) + timedelta(minutes=5)
 
         if not self.symbol_min_volume or not self.symbol_price_tick:
             exit("检查代码！")
@@ -59,6 +69,7 @@ class MartingSignal(object):
         self.rsi_array = []
         self.trending_step = 0  # 追踪趋势的等级
         self.next_trending_step = 0  # 下一个趋势追踪等级
+        self.current_trending_group = []
         self.calculate_phase_positions()  # 马丁格尔倍数仓位管理
 
         # 初始化状态
@@ -77,6 +88,7 @@ class MartingSignal(object):
             "rsi_array",
             "trending_step",
             "next_trending_step",
+            "current_trending_group",
         ]
         self.saved_sync_data = {}
 
@@ -91,7 +103,7 @@ class MartingSignal(object):
         # 检查是否可以开始回测
         if not self.start:
             if not self.start_dt:
-                exit ("回测有初始状态，但没有开始时间！")
+                exit("回测有初始状态，但没有开始时间！")
 
             if bar.datetime < self.start_dt:
                 # 未达到开始时间
@@ -103,7 +115,7 @@ class MartingSignal(object):
 
             else:
                 # 开始回测时间的Bar数据缺失
-                exit ("开始回测时间的Bar数据缺失！")
+                exit("开始回测时间的Bar数据缺失！")
 
         self.calculate_max_loss()
         self.generate_signal(bar)
@@ -118,9 +130,7 @@ class MartingSignal(object):
             self.phase_position_values.append(phase_position)
 
     def get_current_phase(self):
-        current_phase_position_value = (
-            abs(self.position) * self.position_price
-        )
+        current_phase_position_value = abs(self.position) * self.position_price
         for i in range(len(self.phase_position_values)):
             phase_positon_value = self.phase_position_values[i]
             if current_phase_position_value <= phase_positon_value * 1.1:
@@ -519,7 +529,10 @@ class MartingSignal(object):
         status = {}
         for name in self.syncs:
             status[name] = self.__getattribute__(name)
-        self.saved_sync_data = {"backtesting_status": status, "backtesting_to": self.bar.datetime.strftime("%Y-%m-%d %H:%M:%S")}
+        self.saved_sync_data = {
+            "backtesting_status": status,
+            "backtesting_to": self.bar.datetime.strftime("%Y-%m-%d %H:%M:%S"),
+        }
 
     def newSignal(self, direction, offset, price, volume):
         self.portfolio.newSignal(self, direction, offset, price, volume)
@@ -539,25 +552,31 @@ class MartingPortfolio(object):
         self.dt = None  # 当前回测时间
         self.trending_open = True
 
-    def init(self, portfolioValue, symbolList, history_file:str=""):
+    def init(self, portfolioValue, symbolList, history_file: str = ""):
         self.portfolioValue = portfolioValue
 
         # 回测历史数据
         exchange = symbolList[0].split(".")[-1]
-        history_data = self.load_backtesting_history_data(exchange=exchange, file_name=history_file)
+        history_data = self.load_backtesting_history_data(
+            exchange=exchange, file_name=history_file
+        )
 
         for symbol in symbolList:
             # 创建策略信号，并根据历史回测数据初始化
-            pure_symbol = symbol[:symbol.index("USDT")]
+            pure_symbol = symbol[: symbol.index("USDT")]
             signal_key = f"MARTING_{exchange}_{pure_symbol}"
 
             long_signal_key = f"{signal_key}_{Direction.LONG.value}"
             long_history_data = history_data.get(long_signal_key, {})
-            signal1 = MartingSignal(self, symbol, Direction.LONG, 9, 14, history_data=long_history_data)
+            signal1 = MartingSignal(
+                self, symbol, Direction.LONG, 9, 14, history_data=long_history_data
+            )
 
             short_signal_key = f"{signal_key}_{Direction.SHORT.value}"
             short_history_data = history_data.get(short_signal_key, {})
-            signal2 = MartingSignal(self, symbol, Direction.SHORT, 9, 14, history_data=short_history_data)
+            signal2 = MartingSignal(
+                self, symbol, Direction.SHORT, 9, 14, history_data=short_history_data
+            )
 
             l = self.signalDict[symbol]
             l.append(signal1)
@@ -566,24 +585,30 @@ class MartingPortfolio(object):
             # 根据历史回测数据给策略组合初始化
             long_signal_position = 0
             if long_history_data:
-                long_signal_position = long_history_data["backtesting_status"]["position"]
+                long_signal_position = long_history_data["backtesting_status"][
+                    "position"
+                ]
                 long_signal_position_key = f"{symbol}_{Direction.LONG.value}"
                 self.signalPosDict[long_signal_position_key] = long_signal_position
 
             short_signal_position = 0
             if short_history_data:
-                short_signal_position = short_history_data["backtesting_status"]["position"]
+                short_signal_position = short_history_data["backtesting_status"][
+                    "position"
+                ]
                 short_signal_position_key = f"{symbol}_{Direction.SHORT.value}"
                 self.signalPosDict[short_signal_position_key] = short_signal_position
 
             self.posDict[symbol] = long_signal_position + short_signal_position
 
-    def load_backtesting_history_data(self, exchange:str, file_name:str):
+    def load_backtesting_history_data(self, exchange: str, file_name: str):
         history_data = {}
-        
+
         if file_name:
             dir = os.path.dirname(os.path.realpath(__file__))
-            file_path = Path(dir).joinpath(f"backtesting_history{DIR_SYMBOL}{exchange}{DIR_SYMBOL}{file_name}")
+            file_path = Path(dir).joinpath(
+                f"backtesting_history{DIR_SYMBOL}{exchange}{DIR_SYMBOL}{file_name}"
+            )
             if file_path.exists():
                 with open(file_path, mode="r", encoding="UTF-8") as f:
                     history_data = json.load(f)
