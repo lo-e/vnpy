@@ -879,6 +879,7 @@ class MartingBacktesting(object):
         self.rsi_array = []
         self.trending_step = 0  # 趋势追踪等级
         self.next_trending_step = 0  # 下一个趋势追踪等级
+        self.current_trending_group = []
         self.calculate_phase_positions()  # 马丁格尔倍数仓位管理
 
         # 同步保存到数据库的变量
@@ -893,6 +894,7 @@ class MartingBacktesting(object):
             "rsi_array",
             "trending_step",
             "next_trending_step",
+            "current_trending_group",
         ]
 
         # 初始化状态
@@ -1040,6 +1042,9 @@ class MartingBacktesting(object):
                 # 初始化趋势追踪等级
                 self.trending_step = 0
 
+                # 初始化趋势追踪组合
+                self.current_trending_group = []
+
                 # 平仓
                 self.position_price = trade_price
                 target_position_value = self.unit_value
@@ -1152,6 +1157,10 @@ class MartingBacktesting(object):
                     # 新的趋势策略信号
                     self.trending_step += 1
 
+                    self.current_trending_group.append({"datetime":bar.datetime.strftime("%Y-%m-%d %H:%M:%S"),
+                                                        "max_loss_value":self.max_loss_value,
+                                                        "max_loss_rate":self.max_loss_rate})
+
                 else:
                     # ====== 震荡行情 ======
 
@@ -1193,6 +1202,13 @@ class MartingBacktesting(object):
                     ) * 100
                     self.max_loss_rate = round_to(self.max_loss_rate, 0.01)
                     self.max_loss_rate = f"{self.max_loss_rate}%"
+
+                # 加仓需要变更最大亏损比率，基于加仓后的持仓价值
+                self.max_loss_rate = (
+                    self.max_loss_value / (abs(self.position) * self.position_price)
+                ) * 100
+                self.max_loss_rate = round_to(self.max_loss_rate, 0.01)
+                self.max_loss_rate = f"{self.max_loss_rate}%"
 
     def calculate_indicator(self):
         """计算入场指标"""
