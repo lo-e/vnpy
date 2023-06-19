@@ -287,18 +287,20 @@ def one():
         signal_trending_step_dict = {} # 回测结果中信号的趋势追踪信息
         for _, signal_list in engine.portfolio.signalDict.items():
             for signal in signal_list:
+                # 信号的状态
                 symbol = signal.symbol
                 pure_symbol = symbol[:symbol.index('USDT')] 
                 direction = signal.direction
                 signal_key = f"MARTING_{exchange}_{pure_symbol}_{direction.value}"
                 backtesting_data[signal_key] = signal.saved_sync_data
 
+                # 信号组合的最新趋势追踪信息
                 trade_setting = signal_trade_setting.get(signal_key, {})
                 signal_bottom = trade_setting["bottom_step"]
                 signal_status = signal.saved_sync_data["backtesting_status"]
                 trending_step = signal_status["trending_step"]
                 data_list = signal_trending_step_dict.get(trending_step, [])
-                # 计算当前盈亏
+                
                 direction_v = 1 if signal.direction == Direction.LONG else -1
                 position_pnl = (
                     (signal.bar.close_price / signal.position_price) - 1
