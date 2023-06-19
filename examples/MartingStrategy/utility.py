@@ -198,22 +198,22 @@ def analyse_trending_continuous(
         month_keys = list(month_open_symbol_dict.keys())
         month_keys = sorted(month_keys)
         for month in month_keys:
-            print(f"\n====== 按月统计：{month} ======")
+            print(f"\n======================== 按月统计：{month} ========================")
 
             # 连续趋势追踪信号统计
             open_symbol_dict = month_open_symbol_dict[month]
             output_open_symbol_result(open_symbol_dict)
 
             # 信号连续趋势追踪统计
-            symbol_open_dict = month_symbol_open_dict[month]
-            output_symbol_open_result(symbol_open_dict, exchange=exchange)
+            # symbol_open_dict = month_symbol_open_dict[month]
+            # output_symbol_open_result(symbol_open_dict, exchange=exchange)
 
     else:
         # 连续趋势追踪信号统计
         output_open_symbol_result(continuous_open_symbol_dict)
 
         # 信号连续趋势追踪统计
-        output_symbol_open_result(continuous_symbol_open_dict, exchange=exchange)
+        # output_symbol_open_result(continuous_symbol_open_dict, exchange=exchange)
 
     # 生成实盘setting.json
     if for_trade_setting:
