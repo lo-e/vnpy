@@ -390,6 +390,12 @@ def generate_setting(symbol_open_dict: dict, exchange:str):
         max_open = symbol_max_open_dict[symbol]
         # 趋势追踪最高等级
         top_step = max(int(max_open), 4)
+
+        #"""
+        # 固定参数使用
+        top_step = 4
+        #"""
+
         # 根据最小交易量决定的趋势追踪最大次数
         step_length = 0
         # 初始趋势追踪的持仓价值
@@ -402,6 +408,13 @@ def generate_setting(symbol_open_dict: dict, exchange:str):
                 if min_value * 1.5 <= v:
                     init_value = v
                     step_length = len(strategy_trending_value_list) - i
+
+                    #"""
+                    # 固定参数使用
+                    step_length = min(step_length, 2)
+                    init_value = strategy_trending_value_list[len(strategy_trending_value_list) - step_length]
+                    #"""
+
                     if step_length > top_step:
                         step_length = top_step
                         init_value = strategy_trending_value_list[len(strategy_trending_value_list) - step_length]
@@ -455,5 +468,5 @@ if __name__ == "__main__":
 
     # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
     analyse_trending_continuous(
-        exchange="BINANCE", target_dir="2022-01-01_2023-06-10", by_month=True, for_trade_setting=False
+        exchange="BINANCE", target_dir="2022-01-01_2023-06-20", by_month=True, for_trade_setting=False
     )
