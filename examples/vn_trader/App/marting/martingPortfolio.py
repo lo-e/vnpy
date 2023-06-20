@@ -200,6 +200,9 @@ class MartingPortfolio(object):
                 self.strategy_backtesting_time = 0
             self.strategy_backtesting = False
 
+        # 更新组合持仓价值
+        self.update_strategys_position_value()
+        
         # 组合状态更新
         self.engine.put_portfolio_event()
 
