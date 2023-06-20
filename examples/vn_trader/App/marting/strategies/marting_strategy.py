@@ -137,7 +137,7 @@ class MartingStrategy(CtaTemplate):
         self.latest_price = 0 # 最新的tick价格
         self.target_volume = -1  # 目标持仓
         self.window_bar_list = []  # 基于实时Tick数据生成的周期Bar数据列表
-        self.monitor_dict = {} # 最新的同步数据，用于检查是否更新，如更新及时同步数据库
+        self.monitor_dict = {} # 最新的同步和监控的变量数据，用于检查是否更新，如更新及时同步数据库和刷新UI
         self.open_email_suspend = False # 加仓超限email发送暂停
 
         self.window_bar_generator = BarGenerator(
