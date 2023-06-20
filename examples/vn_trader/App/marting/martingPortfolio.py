@@ -42,6 +42,7 @@ class MartingPortfolio(object):
         "strategy_backtesting",
         "strategy_backtesting_cost",
         "trending_top",
+        "total_strategy_value",
     ]
     syncList = ["today", "trending_top"]
 
@@ -89,6 +90,7 @@ class MartingPortfolio(object):
         self.trending_top = False  # 策略组合中是否有策略已经达到趋势追踪最高级别
         self.all_inited = False  # 是否所有策略完成初始化
         self.strategy_info_count_down = 10 * 60  # 每隔一段时间发送策略状态信息通知
+        self.total_strategy_value = 0 # 当前策略总持仓价值
 
         # 设置参数
         if setting:
@@ -273,6 +275,20 @@ class MartingPortfolio(object):
             if strategy.trending_step >= strategy.top_step:
                 self.trending_top = True
                 break
+
+    def check_open_cross(self, open_value):
+        self.update_strategys_position_value()
+        result_value = self.total_strategy_value + open_value
+        if result_value >= self.portfolioValue * 15:
+            return False
+        else:
+            return True
+        
+    def update_strategys_position_value(self):
+        self.total_strategy_value = 0
+        for _, strategy in self.engine.strategies.items():
+            value_ = strategy.position_price * abs(strategy.pos)
+            self.total_strategy_value += value_
 
     def notice_strategy_info(self):
         total = 0
