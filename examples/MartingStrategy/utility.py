@@ -8,6 +8,7 @@ from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 from copy import copy
 import json
 import io
+import math
 # 将上一级目录添加到模块搜索路径中
 import sys
 
@@ -390,12 +391,6 @@ def generate_setting(symbol_open_dict: dict, exchange:str):
         max_open = symbol_max_open_dict[symbol]
         # 趋势追踪最高等级
         top_step = max(int(max_open), 4)
-
-        #"""
-        # 固定参数使用
-        top_step = 4
-        #"""
-
         # 根据最小交易量决定的趋势追踪最大次数
         step_length = 0
         # 初始趋势追踪的持仓价值
@@ -408,21 +403,21 @@ def generate_setting(symbol_open_dict: dict, exchange:str):
                 if min_value * 1.5 <= v:
                     init_value = v
                     step_length = len(strategy_trending_value_list) - i
-
-                    #"""
-                    # 固定参数使用
-                    step_length = min(step_length, 2)
-                    init_value = strategy_trending_value_list[len(strategy_trending_value_list) - step_length]
-                    #"""
-
                     if step_length > top_step:
                         step_length = top_step
                         init_value = strategy_trending_value_list[len(strategy_trending_value_list) - step_length]
                     break
-
+                
         if step_length:
             init_value_rate = init_value / portfolioValue
             bottom_step = top_step - (step_length - 1)
+            #"""
+            # 固定参数使用
+            top_step = 9
+            init_value = max(10, init_value)
+            bottom_step = int(math.log10(init_value)) + 2
+            init_value_rate = init_value / portfolioValue
+            #"""
             pure_symbol = symbol[:symbol.index('USDT')] 
             data_long = {
                 "strategy_name": f"MARTING_{exchange}_{pure_symbol}_多",
