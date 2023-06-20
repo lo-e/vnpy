@@ -62,6 +62,8 @@ class MartingStrategy(CtaTemplate):
         "position_increase_price",
         "current_pnl_rate",
         "trending_step",
+        "manual_top",
+        "manual_top_completed",
         "target_volume",
         "strategy_position_price",
         "strategy_position_reduce_price",
@@ -128,6 +130,8 @@ class MartingStrategy(CtaTemplate):
         self.position_increase_price = 0 # 加仓价格
         self.current_pnl_rate = ""  # 当前持仓亏损比率【基于Tick数据实时计算】
         self.trending_step = 0  # 趋势追踪等级
+        self.manual_top = False # 是否手动加仓到最高等级
+        self.manual_top_completed = False # 手动加仓最高等级完成
         self.tick_dt = None # 最新的tick时间
         self.tick_trade_enable = False  # Tick数据时间在回测后的指定范围内允许交易
         self.latest_price = 0 # 最新的tick价格
@@ -298,6 +302,9 @@ class MartingStrategy(CtaTemplate):
         except:
             pass
         
+        # 判断是否手动加仓到最高等级
+        self.check_manual_top()
+
         # 结束回测
         self.is_backtesting = False
         self.backtesting_wait = 0
@@ -472,6 +479,10 @@ class MartingStrategy(CtaTemplate):
                     # 重置趋势追踪等级
                     self.trending_step = 0
 
+                    # 重置手动加仓最高等级
+                    self.manual_top = False
+                    self.manual_top_completed = False
+
                     # 策略组合更新
                     self.portfolio.update_trending_top()
 
@@ -483,6 +494,7 @@ class MartingStrategy(CtaTemplate):
                 strategy_position_increase_price = self.strategy_status[
                     "position_increase_price"
                 ]
+                strategy_trending_group = self.strategy_status["current_trending_group"]
 
                 if not strategy_position_increase_price:
                     self.raise_error(f"建仓加仓价格异常")
@@ -492,7 +504,7 @@ class MartingStrategy(CtaTemplate):
 
                 # 回测下一趋势追踪等级满足指定条件
                 if (
-                    self.bottom_step <= strategy_next_trending_step <= self.top_step
+                    self.top_step-1 <= strategy_next_trending_step <= self.top_step
                     and strategy_next_trending_step > self.trending_step
                 ): 
                     # 策略组合最多只能有一个趋势追踪最高等级
@@ -500,7 +512,34 @@ class MartingStrategy(CtaTemplate):
                     if strategy_next_trending_step == self.top_step and self.portfolio.trending_top:
                         trending_top_cross = False
 
-                    if trending_top_cross:
+                    # 趋势追踪亏损要求判断
+                    group_loss_cross = True
+                    if strategy_next_trending_step == self.top_step:
+                        if not self.trending_step:
+                            if len(strategy_trending_group) >= 3:
+                                max_loss_rate_1 = float(strategy_trending_group[-1]["max_loss_rate"].split("%")[0])
+                                max_loss_rate_2 = float(strategy_trending_group[-2]["max_loss_rate"].split("%")[0])
+                                max_loss_rate_3 = float(strategy_trending_group[-3]["max_loss_rate"].split("%")[0])
+                                sum_loss_rate = max_loss_rate_1 + max_loss_rate_2 + max_loss_rate_3
+                                if max_loss_rate_1 <= -16 or max_loss_rate_2 <= -16 or max_loss_rate_3 <= -16 or sum_loss_rate <= -36:
+                                    group_loss_cross = False
+                            else:
+                                group_loss_cross = False
+
+                    elif strategy_next_trending_step == self.top_step-1:
+                        if len(strategy_trending_group) >= 2:
+                            max_loss_rate_1 = float(strategy_trending_group[-1]["max_loss_rate"].split("%")[0])
+                            max_loss_rate_2 = float(strategy_trending_group[-2]["max_loss_rate"].split("%")[0])
+                            max_loss_rate_3 = self.strategy_status["max_loss_rate"]
+                            sum_loss_rate = max_loss_rate_1 + max_loss_rate_2 + max_loss_rate_3
+                            if max_loss_rate_1 <= -16 or max_loss_rate_2 <= -16 or max_loss_rate_3 <= -16 or sum_loss_rate <= -36:
+                                group_loss_cross = False
+                        else:
+                            group_loss_cross = False
+                    else:
+                        group_loss_cross = False
+
+                    if trending_top_cross and group_loss_cross:
                         # 是否达到目标价位
                         if self.direction == Direction.LONG:
                             # 根据RSI判断是否超卖
@@ -545,7 +584,7 @@ class MartingStrategy(CtaTemplate):
                 if not next_trending_step:
                     tick_price_cross = False
                     if (
-                        self.bottom_step <= strategy_trending_step <= self.top_step
+                        self.top_step-1 <= strategy_trending_step <= self.top_step
                         and strategy_trending_step > self.trending_step
                     ):
                         # 策略组合最多只能有一个趋势追踪最高等级
@@ -553,7 +592,34 @@ class MartingStrategy(CtaTemplate):
                         if strategy_trending_step == self.top_step and self.portfolio.trending_top:
                             trending_top_cross = False
 
-                        if trending_top_cross:
+                        # 趋势追踪亏损要求判断
+                        group_loss_cross = True
+                        if strategy_trending_step == self.top_step:
+                            if not self.trending_step:
+                                if len(strategy_trending_group) >= 4:
+                                    max_loss_rate_1 = float(strategy_trending_group[-2]["max_loss_rate"].split("%")[0])
+                                    max_loss_rate_2 = float(strategy_trending_group[-3]["max_loss_rate"].split("%")[0])
+                                    max_loss_rate_3 = float(strategy_trending_group[-4]["max_loss_rate"].split("%")[0])
+                                    sum_loss_rate = max_loss_rate_1 + max_loss_rate_2 + max_loss_rate_3
+                                    if max_loss_rate_1 <= -16 or max_loss_rate_2 <= -16 or max_loss_rate_3 <= -16 or sum_loss_rate <= -36:
+                                        group_loss_cross = False
+                                else:
+                                    group_loss_cross = False
+
+                        elif strategy_trending_step == self.top_step-1:
+                            if len(strategy_trending_group) >= 3:
+                                max_loss_rate_1 = float(strategy_trending_group[-1]["max_loss_rate"].split("%")[0])
+                                max_loss_rate_2 = float(strategy_trending_group[-2]["max_loss_rate"].split("%")[0])
+                                max_loss_rate_3 = float(strategy_trending_group[-3]["max_loss_rate"].split("%")[0])
+                                sum_loss_rate = max_loss_rate_1 + max_loss_rate_2 + max_loss_rate_3
+                                if max_loss_rate_1 <= -16 or max_loss_rate_2 <= -16 or max_loss_rate_3 <= -16 or sum_loss_rate <= -36:
+                                    group_loss_cross = False
+                            else:
+                                group_loss_cross = False
+                        else:
+                            group_loss_cross = False
+
+                        if trending_top_cross and group_loss_cross:
                             # 判断当前回测持仓盈亏是否满足指定条件
                             strategy_position_price = self.strategy_status["position_price"]
                             tick_price_cross = False
@@ -624,6 +690,12 @@ class MartingStrategy(CtaTemplate):
                             if next_trending_step:
                                 # 邮件提醒
                                 email_msg = f"\n加仓【实盘下一趋势等级】：当前{self.trending_step} 即将：{next_trending_step}"
+
+                # 判断是否手动加仓到最高等级
+                if not next_trending_step:
+                    if self.manual_top and not self.manual_top_completed:
+                        self.manual_top_completed = True
+                        print(f"手动加仓到最高等级")
 
                 if next_trending_step:
                     # 当前持仓价值
@@ -762,6 +834,23 @@ class MartingStrategy(CtaTemplate):
                         self.tick.last_price + self.symbol_price_tick * 20,
                         abs(changed_volume),
                     )
+
+    def check_manual_top(self):
+        if self.manual_top:
+            return
+        
+        if self.trending_step and self.strategy_status and self.trending_step == self.top_step-1 and self.trending_step == self.strategy_status["trending_step"]:
+            trending_group = self.strategy_status["current_trending_group"]
+            if len(trending_group) >= 3:
+                last_trending_datetime = trending_group[-1]["datetime"]
+                last_trending_datetime = datetime.strptime(last_trending_datetime, "%Y-%m-%d %H:%M:%S")
+                sub = (self.strategy_to - last_trending_datetime).total_seconds()
+                if sub >= 3 * 60 * 60:
+                    loss_rate = self.strategy_status["max_loss_rate"]
+                    loss_rate = float(loss_rate.split("%")[0])
+                    if loss_rate >= -3.0:
+                        self.manual_top = True
+
 
     def on_order(self, order):
         """委托推送"""
