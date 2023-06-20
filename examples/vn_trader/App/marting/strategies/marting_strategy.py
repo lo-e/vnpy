@@ -520,7 +520,7 @@ class MartingStrategy(CtaTemplate):
                         if len(strategy_trending_group) >= 2:
                             max_loss_rate_1 = float(strategy_trending_group[-1]["max_loss_rate"].split("%")[0])
                             max_loss_rate_2 = float(strategy_trending_group[-2]["max_loss_rate"].split("%")[0])
-                            max_loss_rate_3 = self.strategy_status["max_loss_rate"]
+                            max_loss_rate_3 = float(self.strategy_status["max_loss_rate"].split("%")[0])
                             sum_loss_rate = max_loss_rate_1 + max_loss_rate_2 + max_loss_rate_3
                             if max_loss_rate_1 <= -16 or max_loss_rate_2 <= -16 or max_loss_rate_3 <= -16 or sum_loss_rate <= -36:
                                 group_loss_cross = False
