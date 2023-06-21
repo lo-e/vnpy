@@ -641,13 +641,15 @@ class MartingStrategy(CtaTemplate):
 
                     if next_trending_step == self.bottom_step:
                         # 初始建仓
-                        target_value = (
-                            self.portfolio.portfolioValue * self.init_value_rate
-                        )
+                        # target_value = (
+                        #     self.portfolio.portfolioValue * self.init_value_rate
+                        # )
+                        target_value = max(tick.last_price * self.symbol_min_volume * 1.5, 6)
+
                         changed_volume = (
                             target_value - current_position_value
                         ) / tick.last_price
-                        changed_volume = round_to(
+                        changed_volume = ceil_to(
                             changed_volume, self.symbol_min_volume
                         )
 
@@ -670,25 +672,27 @@ class MartingStrategy(CtaTemplate):
                                 - current_position_value
                             ) / (tick.last_price - target_positon_price)
 
-                            target_value = (
-                                self.portfolio.portfolioValue * self.init_value_rate
-                            ) * (10 ** (next_trending_step - self.bottom_step))
+                            # target_value = (
+                            #     self.portfolio.portfolioValue * self.init_value_rate
+                            # ) * (10 ** (next_trending_step - self.bottom_step))
+                            target_value = max(tick.last_price * self.symbol_min_volume * 1.5, 6) * (10 ** (next_trending_step - self.bottom_step))
                             changed_volume2 = (
                                 target_value - current_position_value
                             ) / tick.last_price
 
                             # 加仓数量选择最优
                             changed_volume = max(changed_volume1, changed_volume2)
-                            changed_volume = round_to(
+                            changed_volume = ceil_to(
                                 changed_volume, self.symbol_min_volume
                             )
 
                         else:
-                            target_value = (
-                                self.portfolio.portfolioValue * self.init_value_rate
-                            ) * (10 ** (next_trending_step - self.bottom_step))
+                            # target_value = (
+                            #     self.portfolio.portfolioValue * self.init_value_rate
+                            # ) * (10 ** (next_trending_step - self.bottom_step))
+                            target_value = max(tick.last_price * self.symbol_min_volume * 1.5, 6) * (10 ** (next_trending_step - self.bottom_step))
                             changed_volume = target_value / tick.last_price
-                            changed_volume = round_to(
+                            changed_volume = ceil_to(
                                 changed_volume, self.symbol_min_volume
                             )
 
