@@ -14,7 +14,8 @@ from vnpy.trader.object import BarData
 from vnpy.trader.constant import Direction, Exchange
 
 # from martingStrategy_general import MartingPortfolio
-from martingStrategy_trending import MartingPortfolio
+from martingStrategy_trending_test import MartingPortfolio
+# from martingStrategy_trending import MartingPortfolio
 
 from vnpy.app.cta_strategy.base import DAILY_DB_NAME, MINUTE_DB_NAME, HOUR_DB_NAME, MinuteDataBaseName, HourDataBaseName
 import pandas as pd
