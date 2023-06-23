@@ -23,7 +23,7 @@ from vnpy.trader.utility import round_to
 def one():
     # 回测起始日期
     engine = BacktestingEngine()
-    start_dt = datetime(2023, 6, 10)
+    start_dt = datetime(2022, 1, 1)
     end_dt = datetime(2023, 12, 31)
     engine.setPeriod(start_dt, end_dt)
     figSavedName = ""
@@ -45,7 +45,7 @@ def one():
 
     # 回测历史数据文件
     backtesting_history_file = ""
-    backtesting_history_file = "2022-01-01_2023-06-20.json"
+    # backtesting_history_file = "2022-01-01_2023-06-20.json"
 
     # 开始回测
     symbolList = []
@@ -169,7 +169,7 @@ def one():
     if engine.portfolio.trending_open:
         # 输出趋势追踪列表
         print(f"\n****** 趋势追踪列表 ******")
-        step_required = 3
+        step_required = 1
         continuous_open_dict = {}
         continuous_saved_dict = {}
         for signal_key, trending_list in engine.portfolio.trending_history_dict.items():
