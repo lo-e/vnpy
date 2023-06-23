@@ -34,6 +34,7 @@ class MartingPortfolio(object):
     varList = [
         "today",
         "all_inited",
+        "downloading_trigger",
         "is_downloading",
         "downloading_cost",
         "downloading_wait",
