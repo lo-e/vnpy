@@ -169,7 +169,7 @@ def one():
     if engine.portfolio.trending_open:
         # 输出趋势追踪列表
         print(f"\n****** 趋势追踪列表 ******")
-        step_required = 1
+        step_required = 2
         continuous_open_dict = {}
         continuous_saved_dict = {}
         for signal_key, trending_list in engine.portfolio.trending_history_dict.items():
@@ -227,12 +227,12 @@ def one():
         if backtesting_history_file:
             history_dt = backtesting_history_file.split(".")[0]
             trending_dir_path = (
-                f"trending_continuous{DIR_SYMBOL}{exchange}{DIR_SYMBOL}from_history_{history_dt}{DIR_SYMBOL}{start_dt_str}_{end_dt_str}{DIR_SYMBOL}"
+                f"trending_continuous{DIR_SYMBOL}{exchange}{DIR_SYMBOL}min_continuous_{step_required}{DIR_SYMBOL}from_history_{history_dt}{DIR_SYMBOL}{start_dt_str}_{end_dt_str}{DIR_SYMBOL}"
             )
 
         else:
             trending_dir_path = (
-                f"trending_continuous{DIR_SYMBOL}{exchange}{DIR_SYMBOL}{start_dt_str}_{end_dt_str}{DIR_SYMBOL}"
+                f"trending_continuous{DIR_SYMBOL}{exchange}{DIR_SYMBOL}min_continuous_{step_required}{DIR_SYMBOL}{start_dt_str}_{end_dt_str}{DIR_SYMBOL}"
             )
 
         for signal, signal_continuous_saved_list in continuous_saved_dict.items():
