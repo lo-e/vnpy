@@ -267,12 +267,13 @@ class MartingSignal(object):
             increase_price_cross = False
             if self.direction == Direction.LONG:
                 # 根据RSI判断是否超卖
-                rsi_cross = False
-                for rsi in self.rsi_array:
-                    if rsi <= 25:
-                        rsi_cross = True
-                        break
-
+                # rsi_cross = False
+                # for rsi in self.rsi_array:
+                #     if rsi <= 25:
+                #         rsi_cross = True
+                #         break
+                
+                rsi_cross = True
                 if (
                     rsi_cross
                     and self.ma_price <= self.position_increase_price
@@ -283,12 +284,13 @@ class MartingSignal(object):
 
             if self.direction == Direction.SHORT:
                 # 根据RSI判断是否超买
-                rsi_cross = False
-                for rsi in self.rsi_array:
-                    if rsi >= 75:
-                        rsi_cross = True
-                        break
+                # rsi_cross = False
+                # for rsi in self.rsi_array:
+                #     if rsi >= 75:
+                #         rsi_cross = True
+                #         break
 
+                rsi_cross = True
                 if (
                     rsi_cross
                     and self.ma_price >= self.position_increase_price
@@ -401,8 +403,8 @@ class MartingSignal(object):
                 self.position_reduce_price = self.position_price * (1 - reduce_rate)
 
             # ====== 加仓价格 ======
-            # increase_rate = 0.01 * 2*(current_phase + 1)
-            increase_rate = 0.01 * 2**(current_phase + 1)
+            increase_rate = 0.01 * 2*(current_phase + 1)
+            # increase_rate = 0.01 * 2**(current_phase + 1)
             increase_rate = min(increase_rate, 0.32)
             if self.direction == Direction.LONG:
                 self.position_increase_price = self.position_price * (1 - increase_rate)
@@ -426,7 +428,7 @@ class MartingPortfolio(object):
         self.dt = None  # 当前回测时间
         self.trending_open = False
 
-    def init(self, portfolioValue, symbolList):
+    def init(self, portfolioValue, symbolList, history_file=""):
         self.portfolioValue = portfolioValue
 
         for symbol in symbolList:
