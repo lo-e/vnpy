@@ -326,12 +326,13 @@ class MartingSignal(object):
             increase_price_cross = False
             if self.direction == Direction.LONG:
                 # 根据RSI判断是否超卖
-                rsi_cross = False
-                for rsi in self.rsi_array:
-                    if rsi <= 25:
-                        rsi_cross = True
-                        break
+                # rsi_cross = False
+                # for rsi in self.rsi_array:
+                #     if rsi <= 25:
+                #         rsi_cross = True
+                #         break
 
+                rsi_cross = True
                 if (
                     rsi_cross
                     and self.ma_price <= self.position_increase_price
@@ -342,12 +343,13 @@ class MartingSignal(object):
 
             if self.direction == Direction.SHORT:
                 # 根据RSI判断是否超买
-                rsi_cross = False
-                for rsi in self.rsi_array:
-                    if rsi >= 75:
-                        rsi_cross = True
-                        break
-
+                # rsi_cross = False
+                # for rsi in self.rsi_array:
+                #     if rsi >= 75:
+                #         rsi_cross = True
+                #         break
+                
+                rsi_cross = True
                 if (
                     rsi_cross
                     and self.ma_price >= self.position_increase_price

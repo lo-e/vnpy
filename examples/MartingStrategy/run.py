@@ -169,7 +169,7 @@ def one():
     if engine.portfolio.trending_open:
         # 输出趋势追踪列表
         print(f"\n****** 趋势追踪列表 ******")
-        step_required = 2
+        step_required = 1
         continuous_open_dict = {}
         continuous_saved_dict = {}
         for signal_key, trending_list in engine.portfolio.trending_history_dict.items():
