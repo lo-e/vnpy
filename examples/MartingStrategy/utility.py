@@ -171,7 +171,8 @@ def analyse_trending_continuous(
                                 if trending == "加仓" and i <= 2:
                                     max_loss_rate = row["max_loss_rate"].replace("%", "")
                                     max_loss_rate = float(max_loss_rate)
-                                    if max_loss_rate <= -15.0:
+
+                                    if (max_loss_rate <= -15.0 and int(continuous_key) >= 3):
                                         overload_dict = continuous_open_overload_dict.get(
                                             continuous_key, {}
                                         )
@@ -209,7 +210,8 @@ def analyse_trending_continuous(
                                 if trending == "加仓" and i <= 2:
                                     max_loss_rate = row["max_loss_rate"].replace("%", "")
                                     max_loss_rate = float(max_loss_rate)
-                                    if max_loss_rate <= -15.0:
+
+                                    if (max_loss_rate <= -15.0 and int(continuous_key) >= 3):
                                         month_dict = month_open_overload_dict.get(month_str, {})
                                         overload_dict = month_dict.get(continuous_key, {})
                                         overload_list = overload_dict.get(symbol, [])
@@ -238,8 +240,8 @@ def analyse_trending_continuous(
             print(f"\n======================== 按月统计：{month} ========================")
 
             # 连续趋势追踪信号统计
-            open_symbol_dict = month_open_symbol_dict[month]
-            output_open_symbol_result(open_symbol_dict)
+            # open_symbol_dict = month_open_symbol_dict[month]
+            # output_open_symbol_result(open_symbol_dict)
 
             # 信号连续趋势追踪统计
             # symbol_open_dict = month_symbol_open_dict[month]
@@ -251,7 +253,7 @@ def analyse_trending_continuous(
 
     else:
         # 连续趋势追踪信号统计
-        output_open_symbol_result(continuous_open_symbol_dict)
+        # output_open_symbol_result(continuous_open_symbol_dict)
 
         # 信号连续趋势追踪统计
         # output_symbol_open_result(continuous_symbol_open_dict, exchange=exchange)
@@ -362,8 +364,6 @@ def output_open_overload_result(open_overload_dict: dict):
     continuous_keys = list(open_overload_dict.keys())
     continuous_keys = sorted(continuous_keys)
     for continuous_key in continuous_keys:
-        if int(continuous_key) < 3:
-            continue
         print(f"\n****** 连续趋势追踪{continuous_key}<强势>信号统计 ******")
         continuous_total = 0
         symbol_dict = open_overload_dict[continuous_key]
@@ -540,5 +540,5 @@ if __name__ == "__main__":
 
     # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
     analyse_trending_continuous(
-        exchange="BINANCE", min_continuous="1", target_dir="2022-01-01_2023-12-31", by_month=False, for_trade_setting=False
+        exchange="BINANCE", min_continuous="1", target_dir="2022-01-01_2023-12-28", by_month=True, for_trade_setting=False
     )
