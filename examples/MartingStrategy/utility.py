@@ -364,8 +364,7 @@ def output_open_overload_result(open_overload_dict: dict):
     # 筛选合约列表
     target_symbols = []
     # target_symbols = ['GALAUSDT', 'ZRXUSDT', 'BAKEUSDT', 'SFPUSDT', 'LINAUSDT', 'OMGUSDT', 'RENUSDT', 'KNCUSDT', 'BATUSDT', 'BELUSDT', 'WAVESUSDT', 'ZENUSDT', 'SXPUSDT', 'RLCUSDT', 'PEOPLEUSDT', 'CHRUSDT', 'ARUSDT', 'ARPAUSDT', 'ATAUSDT', 'UNFIUSDT', 'DYDXUSDT', 'OGNUSDT', 'DASHUSDT', 'AUDIOUSDT', 'LRCUSDT', 'SKLUSDT', 'ETHUSDT', 'AXSUSDT', 'MASKUSDT', 'AAVEUSDT', 'ZILUSDT', 'SUSHIUSDT', 'STORJUSDT', 'FTMUSDT', 'ETCUSDT', 'CTSIUSDT', 'KAVAUSDT', 'DOGEUSDT', 'EGLDUSDT', 'SOLUSDT', 'C98USDT', 'CRVUSDT', 'YFIUSDT', 'ALGOUSDT', 'RSRUSDT', 'MKRUSDT', 'ENJUSDT']
-    target_symbols = ['PEOPLEUSDT', 'GALAUSDT', 'ETCUSDT', 'BAKEUSDT', 'DOGEUSDT', 'ZILUSDT', 'ATAUSDT', 'AXSUSDT', 'LINAUSDT', 'SOLUSDT', 'ALGOUSDT', 'KNCUSDT', 'DASHUSDT', 'WAVESUSDT', 'SXPUSDT', 'ENJUSDT', 'SKLUSDT', 'UNFIUSDT']
-    
+
     # 优选合约列表
     continuous_4_symbols = set()
     continuous_5_symbols = set()
@@ -572,5 +571,5 @@ if __name__ == "__main__":
 
     # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
     analyse_trending_continuous(
-        exchange="BINANCE", min_continuous="1", target_dir="2022-01-01_2023-12-28", by_month=False, for_trade_setting=False
+        exchange="BINANCE", min_continuous="1", target_dir="2021-01-01_2022-01-01", by_month=False, for_trade_setting=False
     )
