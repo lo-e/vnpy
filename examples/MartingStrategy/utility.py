@@ -361,6 +361,18 @@ def output_symbol_open_result(symbol_open_dict: dict, exchange:str):
     print("\n")
 
 def output_open_overload_result(open_overload_dict: dict):
+    # 筛选合约列表
+    target_4_symbols = ['AAVEUSDT.BINANCE', 'RSRUSDT.BINANCE', 'CHRUSDT.BINANCE', 'ETHUSDT.BINANCE', 'RENUSDT.BINANCE', 'PEOPLEUSDT.BINANCE', 'YFIUSDT.BINANCE', 'MKRUSDT.BINANCE', 'AUDIOUSDT.BINANCE', 'OMGUSDT.BINANCE', 'KAVAUSDT.BINANCE', 'CTSIUSDT.BINANCE', 'UNFIUSDT.BINANCE', 'SFPUSDT.BINANCE', 'CRVUSDT.BINANCE', 'AXSUSDT.BINANCE', 'ZRXUSDT.BINANCE', 'ETCUSDT.BINANCE', 'ZILUSDT.BINANCE', 'LRCUSDT.BINANCE', 'BELUSDT.BINANCE', 'STORJUSDT.BINANCE', 'ARPAUSDT.BINANCE', 'RLCUSDT.BINANCE', 'ARUSDT.BINANCE', 'WAVESUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'LINAUSDT.BINANCE', 'ZENUSDT.BINANCE', 'C98USDT.BINANCE', 'SOLUSDT.BINANCE', 'FTMUSDT.BINANCE', 'MASKUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'OGNUSDT.BINANCE', 'BATUSDT.BINANCE', 'BAKEUSDT.BINANCE', 'EGLDUSDT.BINANCE']
+    target_5_symbols = ['DOGEUSDT.BINANCE', 'ALGOUSDT.BINANCE', 'SKLUSDT.BINANCE', 'GALAUSDT.BINANCE', 'ENJUSDT.BINANCE', 'BAKEUSDT.BINANCE', 'ZILUSDT.BINANCE', 'WAVESUSDT.BINANCE', 'SXPUSDT.BINANCE', 'LINAUSDT.BINANCE', 'AXSUSDT.BINANCE', 'PEOPLEUSDT.BINANCE', 'ETCUSDT.BINANCE', 'ATAUSDT.BINANCE', 'DASHUSDT.BINANCE', 'SOLUSDT.BINANCE', 'KNCUSDT.BINANCE']
+    target_over_5_symbols = ['GALAUSDT.BINANCE', 'UNFIUSDT.BINANCE', 'LINAUSDT.BINANCE']
+    target_symbols = []
+    target_symbols = list(set(target_4_symbols) | set(target_5_symbols) | set(target_over_5_symbols))
+    
+    # 优选合约列表
+    max_4_symbols = set()
+    max_5_symbols = set()
+    over_5_symbols = set()
+
     continuous_keys = list(open_overload_dict.keys())
     continuous_keys = sorted(continuous_keys)
     for continuous_key in continuous_keys:
@@ -375,6 +387,18 @@ def output_open_overload_result(open_overload_dict: dict):
         df = df.sort_values("times", ascending=False)
         for _, row in df.iterrows():
             symbol = row["symbol"]
+            # 如果有筛选合约，做出筛选
+            if target_symbols and symbol not in target_symbols:
+                continue
+            
+            # 统计优选合约
+            if int(continuous_key) == 4:
+                max_4_symbols.add(symbol)
+            if int(continuous_key) == 5:
+                max_5_symbols.add(symbol)
+            if int(continuous_key) > 5:
+                over_5_symbols.add(symbol)
+
             symbol_data_list = symbol_dict[symbol]
             close_count = int(len(symbol_data_list) / (int(continuous_key) + 1))
             print(f"\n{symbol}有{close_count}次记录")
@@ -394,6 +418,13 @@ def output_open_overload_result(open_overload_dict: dict):
                 if trending == "平仓" and i != len(symbol_data_list) - 1:
                     print("\n")
         print(f"总计：{continuous_total}")
+    
+    if not target_symbols:
+        total_symbols = list(set(max_4_symbols) | set(max_5_symbols) | set(over_5_symbols))
+        print(f"\n强势追踪4的合约数量{len(max_4_symbols)}：\n{max_4_symbols}")
+        print(f"\n强势追踪5的合约数量{len(max_5_symbols)}：\n{max_5_symbols}")
+        print(f"\n强势追踪5以上的合约数量{len(over_5_symbols)}：\n{over_5_symbols}")
+        print(f"\n统计：{len(total_symbols)}：\n{total_symbols}\n")
 
 def generate_setting(symbol_open_dict: dict, exchange:str):
     # 获取合约最小交易价值
@@ -540,5 +571,5 @@ if __name__ == "__main__":
 
     # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
     analyse_trending_continuous(
-        exchange="BINANCE", min_continuous="1", target_dir="2022-01-01_2023-12-28", by_month=True, for_trade_setting=False
+        exchange="BINANCE", min_continuous="1", target_dir="2022-01-01_2023-12-28", by_month=False, for_trade_setting=False
     )
