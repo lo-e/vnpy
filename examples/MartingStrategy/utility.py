@@ -363,11 +363,12 @@ def output_symbol_open_result(symbol_open_dict: dict, exchange:str):
 def output_open_overload_result(open_overload_dict: dict):
     # 筛选合约列表
     target_symbols = []
-    target_symbols = ['GALAUSDT', 'ZRXUSDT', 'BAKEUSDT', 'SFPUSDT', 'LINAUSDT', 'OMGUSDT', 'RENUSDT', 'KNCUSDT', 'BATUSDT', 'BELUSDT', 'WAVESUSDT', 'ZENUSDT', 'SXPUSDT', 'RLCUSDT', 'PEOPLEUSDT', 'CHRUSDT', 'ARUSDT', 'ARPAUSDT', 'ATAUSDT', 'UNFIUSDT', 'DYDXUSDT', 'OGNUSDT', 'DASHUSDT', 'AUDIOUSDT', 'LRCUSDT', 'SKLUSDT', 'ETHUSDT', 'AXSUSDT', 'MASKUSDT', 'AAVEUSDT', 'ZILUSDT', 'SUSHIUSDT', 'STORJUSDT', 'FTMUSDT', 'ETCUSDT', 'CTSIUSDT', 'KAVAUSDT', 'DOGEUSDT', 'EGLDUSDT', 'SOLUSDT', 'C98USDT', 'CRVUSDT', 'YFIUSDT', 'ALGOUSDT', 'RSRUSDT', 'MKRUSDT', 'ENJUSDT']
+    # target_symbols = ['GALAUSDT', 'ZRXUSDT', 'BAKEUSDT', 'SFPUSDT', 'LINAUSDT', 'OMGUSDT', 'RENUSDT', 'KNCUSDT', 'BATUSDT', 'BELUSDT', 'WAVESUSDT', 'ZENUSDT', 'SXPUSDT', 'RLCUSDT', 'PEOPLEUSDT', 'CHRUSDT', 'ARUSDT', 'ARPAUSDT', 'ATAUSDT', 'UNFIUSDT', 'DYDXUSDT', 'OGNUSDT', 'DASHUSDT', 'AUDIOUSDT', 'LRCUSDT', 'SKLUSDT', 'ETHUSDT', 'AXSUSDT', 'MASKUSDT', 'AAVEUSDT', 'ZILUSDT', 'SUSHIUSDT', 'STORJUSDT', 'FTMUSDT', 'ETCUSDT', 'CTSIUSDT', 'KAVAUSDT', 'DOGEUSDT', 'EGLDUSDT', 'SOLUSDT', 'C98USDT', 'CRVUSDT', 'YFIUSDT', 'ALGOUSDT', 'RSRUSDT', 'MKRUSDT', 'ENJUSDT']
+    target_symbols = ['PEOPLEUSDT', 'GALAUSDT', 'ETCUSDT', 'BAKEUSDT', 'DOGEUSDT', 'ZILUSDT', 'ATAUSDT', 'AXSUSDT', 'LINAUSDT', 'SOLUSDT', 'ALGOUSDT', 'KNCUSDT', 'DASHUSDT', 'WAVESUSDT', 'SXPUSDT', 'ENJUSDT', 'SKLUSDT', 'UNFIUSDT']
     
     # 优选合约列表
-    max_4_symbols = set()
-    max_5_symbols = set()
+    continuous_4_symbols = set()
+    continuous_5_symbols = set()
     over_5_symbols = set()
 
     continuous_keys = list(open_overload_dict.keys())
@@ -391,9 +392,9 @@ def output_open_overload_result(open_overload_dict: dict):
             
             # 统计优选合约
             if int(continuous_key) == 4:
-                max_4_symbols.add(pure_symbol)
+                continuous_4_symbols.add(pure_symbol)
             if int(continuous_key) == 5:
-                max_5_symbols.add(pure_symbol)
+                continuous_5_symbols.add(pure_symbol)
             if int(continuous_key) > 5:
                 over_5_symbols.add(pure_symbol)
 
@@ -418,11 +419,13 @@ def output_open_overload_result(open_overload_dict: dict):
         print(f"总计：{continuous_total}")
     
     if not target_symbols:
-        total_symbols = list(set(max_4_symbols) | set(max_5_symbols) | set(over_5_symbols))
-        print(f"\n强势追踪4的合约数量{len(max_4_symbols)}：\n{max_4_symbols}")
-        print(f"\n强势追踪5的合约数量{len(max_5_symbols)}：\n{max_5_symbols}")
+        total_symbols = list(set(continuous_4_symbols) | set(continuous_5_symbols) | set(over_5_symbols))
+        total_symbols_little = list(set(continuous_5_symbols) | set(over_5_symbols))
+        print(f"\n强势追踪4的合约数量{len(continuous_4_symbols)}：\n{continuous_4_symbols}")
+        print(f"\n强势追踪5的合约数量{len(continuous_5_symbols)}：\n{continuous_5_symbols}")
         print(f"\n强势追踪5以上的合约数量{len(over_5_symbols)}：\n{over_5_symbols}")
-        print(f"\n统计：{len(total_symbols)}：\n{total_symbols}\n")
+        print(f"\n统计【4 5 6】：{len(total_symbols)}：\n{total_symbols}\n")
+        print(f"\n统计【5 6】：{len(total_symbols_little)}：\n{total_symbols_little}\n")
 
 def generate_setting(symbol_open_dict: dict, exchange:str):
     # 获取合约最小交易价值

@@ -73,7 +73,7 @@ def binance_get_bar_data(symbol:str, interval:str, symbol_type:Binancetype, star
         banned_to = datetime.fromtimestamp(timestamp/1000)
         print(f"访问受限：{banned_to}")
         time.sleep(2)
-        return None
+        raise("访问受限")
     
     bar_data_list = resp.json()
     if bar_data_list:
@@ -303,10 +303,16 @@ if __name__ == '__main__':
     """
 
     # 获取正向永续合约列表
-    symbol_list = binance_get_symbol_list(need_data=False)
+    # symbol_list = binance_get_symbol_list(need_data=False)
+    # for symbol in symbol_list:
+    #     print(symbol)
+    # print(f"BINANCE_USDT永续合约总计：{len(symbol_list)}")
+
+    # 获取指定时间段的合约最初交易时间
+    symbol_list = ['GALAUSDT', 'ZRXUSDT', 'BAKEUSDT', 'SFPUSDT', 'LINAUSDT', 'OMGUSDT', 'RENUSDT', 'KNCUSDT', 'BATUSDT', 'BELUSDT', 'WAVESUSDT', 'ZENUSDT', 'SXPUSDT', 'RLCUSDT', 'PEOPLEUSDT', 'CHRUSDT', 'ARUSDT', 'ARPAUSDT', 'ATAUSDT', 'UNFIUSDT', 'DYDXUSDT', 'OGNUSDT', 'DASHUSDT', 'AUDIOUSDT', 'LRCUSDT', 'SKLUSDT', 'ETHUSDT', 'AXSUSDT', 'MASKUSDT', 'AAVEUSDT', 'ZILUSDT', 'SUSHIUSDT', 'STORJUSDT', 'FTMUSDT', 'ETCUSDT', 'CTSIUSDT', 'KAVAUSDT', 'DOGEUSDT', 'EGLDUSDT', 'SOLUSDT', 'C98USDT', 'CRVUSDT', 'YFIUSDT', 'ALGOUSDT', 'RSRUSDT', 'MKRUSDT', 'ENJUSDT']
     for symbol in symbol_list:
-        print(symbol)
-    print(f"BINANCE_USDT永续合约总计：{len(symbol_list)}")
+        start_dt = binance_get_first_bar_datetime(symbol=symbol, interval="1m", symbol_type=Binancetype.USDT, start_time="2020-12-01 00:00:00")
+        print(f"{symbol}\t{start_dt}")
 
     # 生成马丁策略回测参数
     # binance_marting_setting(min_value_filter=0)
