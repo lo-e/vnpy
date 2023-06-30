@@ -189,27 +189,32 @@ def one():
                     count += 1
                     continuous_open_dict[continuous_key] = count
 
-                    # 将指定趋势强度的追踪记录添加到将要保存的列表
-                    if len(continuous_cached_list) >= step_required + 1:
-                        # 空数据作为分割线
-                        continuous_cached_list.append(
-                            {
-                                "datetime": "",
-                                "signal": "",
-                                "position_price": "",
-                                "position_value": "",
-                                "max_loss_value": "",
-                                "max_loss_rate": "",
-                                "trending": "",
-                            }
-                        )
-                        signal_continuous_saved_list = continuous_saved_dict.get(
-                            signal_key, []
-                        )
-                        signal_continuous_saved_list = (
-                            signal_continuous_saved_list + continuous_cached_list
-                        )
-                        continuous_saved_dict[signal_key] = signal_continuous_saved_list
+                    # 空数据作为分割线
+                    continuous_cached_list.append(
+                        {
+                            "datetime": "",
+                            "signal": "",
+                            "position_price": "",
+                            "position_value": "",
+                            "max_loss_value": "",
+                            "max_loss_rate": "",
+                            "trending": "",
+                        }
+                    )
+                    for i in range(3):
+                        step_required = i + 1
+
+                        # 将指定趋势强度的追踪记录添加到将要保存的列表
+                        if len(continuous_cached_list) >= step_required + 2:
+                            required_continuous_saved_dict = continuous_saved_dict.get(step_required, {})
+                            signal_continuous_saved_list = required_continuous_saved_dict.get(
+                                signal_key, []
+                            )
+                            signal_continuous_saved_list = (
+                                signal_continuous_saved_list + continuous_cached_list
+                            )
+                            required_continuous_saved_dict[signal_key] = signal_continuous_saved_list
+                            continuous_saved_dict[step_required] = required_continuous_saved_dict
 
                     continuous_open = 0
                     continuous_cached_list = []
@@ -222,38 +227,41 @@ def one():
             print(f"{continuous_key}\t{count}")
 
         # 趋势追踪列表保存到csv
-        start_dt_str = start_dt.strftime("%Y-%m-%d")
-        end_dt_str = end_dt.strftime("%Y-%m-%d")
-        if backtesting_history_file:
-            history_dt = backtesting_history_file.split(".")[0]
-            trending_dir_path = (
-                f"trending_continuous{DIR_SYMBOL}{exchange}{DIR_SYMBOL}from_history_{history_dt}{DIR_SYMBOL}{start_dt_str}_{end_dt_str}{DIR_SYMBOL}"
-            )
+        for i in range(3):
+            step_required = i + 1
+            start_dt_str = start_dt.strftime("%Y-%m-%d")
+            end_dt_str = end_dt.strftime("%Y-%m-%d")
+            if backtesting_history_file:
+                history_dt = backtesting_history_file.split(".")[0]
+                trending_dir_path = (
+                    f"trending_continuous{DIR_SYMBOL}{exchange}{DIR_SYMBOL}min_continuous_{step_required}{DIR_SYMBOL}from_history_{history_dt}{DIR_SYMBOL}{start_dt_str}_{end_dt_str}{DIR_SYMBOL}"
+                )
 
-        else:
-            trending_dir_path = (
-                f"trending_continuous{DIR_SYMBOL}{exchange}{DIR_SYMBOL}{start_dt_str}_{end_dt_str}{DIR_SYMBOL}"
-            )
+            else:
+                trending_dir_path = (
+                    f"trending_continuous{DIR_SYMBOL}{exchange}{DIR_SYMBOL}min_continuous_{step_required}{DIR_SYMBOL}{start_dt_str}_{end_dt_str}{DIR_SYMBOL}"
+                )
 
-        for signal, signal_continuous_saved_list in continuous_saved_dict.items():
-            if not os.path.exists(trending_dir_path):
-                os.makedirs(trending_dir_path)
+            required_continuous_saved_dict = continuous_saved_dict.get(step_required, {})
+            for signal, signal_continuous_saved_list in required_continuous_saved_dict.items():
+                if not os.path.exists(trending_dir_path):
+                    os.makedirs(trending_dir_path)
 
-            filePath = f"{trending_dir_path}{signal}.csv"
-            fieldNames = [
-                "datetime",
-                "signal",
-                "position_price",
-                "position_value",
-                "max_loss_value",
-                "max_loss_rate",
-                "trending",
-            ]
-            with open(filePath, "w") as f:
-                writer = csv.DictWriter(f, fieldnames=fieldNames)
-                writer.writeheader()
-                # 写入csv文件
-                writer.writerows(signal_continuous_saved_list)
+                filePath = f"{trending_dir_path}{signal}.csv"
+                fieldNames = [
+                    "datetime",
+                    "signal",
+                    "position_price",
+                    "position_value",
+                    "max_loss_value",
+                    "max_loss_rate",
+                    "trending",
+                ]
+                with open(filePath, "w") as f:
+                    writer = csv.DictWriter(f, fieldnames=fieldNames)
+                    writer.writeheader()
+                    # 写入csv文件
+                    writer.writerows(signal_continuous_saved_list)
 
         # 趋势追踪策略状态、回测截止时间保存到json
         if backtesting_history_file:

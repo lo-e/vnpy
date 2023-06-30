@@ -40,7 +40,8 @@ if __name__ == '__main__':
 
         elif mode == '2':
             contract_list = ['BTCUSDT', 'ETHUSDT']
-           
+            # contract_list = ['GALAUSDT', 'ZRXUSDT', 'BAKEUSDT', 'SFPUSDT', 'LINAUSDT', 'OMGUSDT', 'RENUSDT', 'KNCUSDT', 'BATUSDT', 'BELUSDT', 'WAVESUSDT', 'ZENUSDT', 'SXPUSDT', 'RLCUSDT', 'PEOPLEUSDT', 'CHRUSDT', 'ARUSDT', 'ARPAUSDT', 'ATAUSDT', 'UNFIUSDT', 'DYDXUSDT', 'OGNUSDT', 'DASHUSDT', 'AUDIOUSDT', 'LRCUSDT', 'SKLUSDT', 'ETHUSDT', 'AXSUSDT', 'MASKUSDT', 'AAVEUSDT', 'ZILUSDT', 'SUSHIUSDT', 'STORJUSDT', 'FTMUSDT', 'ETCUSDT', 'CTSIUSDT', 'KAVAUSDT', 'DOGEUSDT', 'EGLDUSDT', 'SOLUSDT', 'C98USDT', 'CRVUSDT', 'YFIUSDT', 'ALGOUSDT', 'RSRUSDT', 'MKRUSDT', 'ENJUSDT']
+            # contract_list = ['PEOPLEUSDT', 'GALAUSDT', 'ETCUSDT', 'BAKEUSDT', 'DOGEUSDT', 'ZILUSDT', 'ATAUSDT', 'AXSUSDT', 'LINAUSDT', 'SOLUSDT', 'ALGOUSDT', 'KNCUSDT', 'DASHUSDT', 'WAVESUSDT', 'SXPUSDT', 'ENJUSDT', 'SKLUSDT', 'UNFIUSDT']
         else:
             contract_list = binance_get_symbol_list()
     

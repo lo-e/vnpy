@@ -89,14 +89,16 @@ def calculate_phase_loss(phase_count: int, increase_type: int = 1):
 
 # 分析trending_continuous下的趋势追踪结果
 def analyse_trending_continuous(
-     exchange:str, target_dir: str, by_month: bool = False, for_trade_setting: bool = False
+     exchange:str, target_dir: str, min_continuous: str, by_month: bool = False, for_trade_setting: bool = False
 ):
     # 趋势追踪程度
     continuous_open_dict = {}
     continuous_open_symbol_dict = {}
     continuous_symbol_open_dict = {}
+    continuous_open_overload_dict = {}
     month_open_symbol_dict = {}
     month_symbol_open_dict = {}
+    month_open_overload_dict = {}
 
     start_end = target_dir.split("_")
     if start_end and len(start_end) == 2:
@@ -109,7 +111,7 @@ def analyse_trending_continuous(
 
     path = os.path.abspath(__file__)
     file_name = path.split(DIR_SYMBOL)[-1]
-    main_dir_path = path.rstrip(file_name) + f"trending_continuous{DIR_SYMBOL}{exchange}{DIR_SYMBOL}{target_dir}{DIR_SYMBOL}"
+    main_dir_path = path.rstrip(file_name) + f"trending_continuous{DIR_SYMBOL}{exchange}{DIR_SYMBOL}min_continuous_{min_continuous}{DIR_SYMBOL}{target_dir}{DIR_SYMBOL}"
     for root, _, files in os.walk(main_dir_path):
         for theFile in files:
             # 排除不合法文件
@@ -162,6 +164,24 @@ def analyse_trending_continuous(
                             open_dict[continuous_key] = open_list
                             continuous_symbol_open_dict[symbol] = open_dict
 
+                            # 趋势追踪的信号统计3
+                            for i in range(len(open_close_rows)):
+                                row = open_close_rows[i]
+                                trending = row["trending"]
+                                if trending == "加仓" and i <= 2:
+                                    max_loss_rate = row["max_loss_rate"].replace("%", "")
+                                    max_loss_rate = float(max_loss_rate)
+
+                                    if (max_loss_rate <= -15.0 and int(continuous_key) >= 3):
+                                        overload_dict = continuous_open_overload_dict.get(
+                                            continuous_key, {}
+                                        )
+                                        overload_list = overload_dict.get(symbol, [])
+                                        overload_list += open_close_rows
+                                        overload_dict[symbol] = overload_list
+                                        continuous_open_overload_dict[continuous_key] = overload_dict
+                                        break
+
                             # 月份趋势追踪的信号统计1
                             month_str = datetime.strptime(
                                 dt, "%Y-%m-%d %H:%M:%S"
@@ -183,6 +203,24 @@ def analyse_trending_continuous(
                             month_dict[symbol] = open_dict
                             month_symbol_open_dict[month_str] = month_dict
 
+                            # 月份趋势追踪的信号统计3
+                            for i in range(len(open_close_rows)):
+                                row = open_close_rows[i]
+                                trending = row["trending"]
+                                if trending == "加仓" and i <= 2:
+                                    max_loss_rate = row["max_loss_rate"].replace("%", "")
+                                    max_loss_rate = float(max_loss_rate)
+
+                                    if (max_loss_rate <= -15.0 and int(continuous_key) >= 3):
+                                        month_dict = month_open_overload_dict.get(month_str, {})
+                                        overload_dict = month_dict.get(continuous_key, {})
+                                        overload_list = overload_dict.get(symbol, [])
+                                        overload_list += open_close_rows
+                                        overload_dict[symbol] = overload_list
+                                        month_dict[continuous_key] = overload_dict
+                                        month_open_overload_dict[month_str] = month_dict
+                                        break
+
                             # 连续加仓重置
                             continuous_open = 0
                             open_close_rows = []
@@ -202,19 +240,26 @@ def analyse_trending_continuous(
             print(f"\n======================== 按月统计：{month} ========================")
 
             # 连续趋势追踪信号统计
-            open_symbol_dict = month_open_symbol_dict[month]
-            output_open_symbol_result(open_symbol_dict)
+            # open_symbol_dict = month_open_symbol_dict[month]
+            # output_open_symbol_result(open_symbol_dict)
 
             # 信号连续趋势追踪统计
             # symbol_open_dict = month_symbol_open_dict[month]
             # output_symbol_open_result(symbol_open_dict, exchange=exchange)
 
+            # 连续趋势追踪<强势>信号统计
+            open_overload_dict = month_open_overload_dict[month]
+            output_open_overload_result(open_overload_dict)
+
     else:
         # 连续趋势追踪信号统计
-        output_open_symbol_result(continuous_open_symbol_dict)
+        # output_open_symbol_result(continuous_open_symbol_dict)
 
         # 信号连续趋势追踪统计
         # output_symbol_open_result(continuous_symbol_open_dict, exchange=exchange)
+
+        # 连续趋势追踪<强势>信号统计
+        output_open_overload_result(continuous_open_overload_dict)
 
     # 生成实盘setting.json
     if for_trade_setting:
@@ -231,7 +276,6 @@ def analyse_trending_continuous(
         for max_2_symbol in max_2_symbol_set:
             total_dict[max_2_symbol] = {"2":[]}
         generate_setting(total_dict, exchange=exchange)
-
 
 def output_open_symbol_result(open_symbol_dict: dict):
     continuous_keys = list(open_symbol_dict.keys())
@@ -264,7 +308,6 @@ def output_open_symbol_result(open_symbol_dict: dict):
                 )
                 if trending == "平仓" and i != len(symbol_data_list) - 1:
                     print("\n")
-
 
 def output_symbol_open_result(symbol_open_dict: dict, exchange:str):
     all_symbol_set = set()
@@ -317,6 +360,71 @@ def output_symbol_open_result(symbol_open_dict: dict, exchange:str):
         print(symbol)
     print("\n")
 
+def output_open_overload_result(open_overload_dict: dict):
+    # 筛选合约列表
+    target_symbols = []
+    # target_symbols = ['GALAUSDT', 'ZRXUSDT', 'BAKEUSDT', 'SFPUSDT', 'LINAUSDT', 'OMGUSDT', 'RENUSDT', 'KNCUSDT', 'BATUSDT', 'BELUSDT', 'WAVESUSDT', 'ZENUSDT', 'SXPUSDT', 'RLCUSDT', 'PEOPLEUSDT', 'CHRUSDT', 'ARUSDT', 'ARPAUSDT', 'ATAUSDT', 'UNFIUSDT', 'DYDXUSDT', 'OGNUSDT', 'DASHUSDT', 'AUDIOUSDT', 'LRCUSDT', 'SKLUSDT', 'ETHUSDT', 'AXSUSDT', 'MASKUSDT', 'AAVEUSDT', 'ZILUSDT', 'SUSHIUSDT', 'STORJUSDT', 'FTMUSDT', 'ETCUSDT', 'CTSIUSDT', 'KAVAUSDT', 'DOGEUSDT', 'EGLDUSDT', 'SOLUSDT', 'C98USDT', 'CRVUSDT', 'YFIUSDT', 'ALGOUSDT', 'RSRUSDT', 'MKRUSDT', 'ENJUSDT']
+
+    # 优选合约列表
+    continuous_4_symbols = set()
+    continuous_5_symbols = set()
+    over_5_symbols = set()
+
+    continuous_keys = list(open_overload_dict.keys())
+    continuous_keys = sorted(continuous_keys)
+    for continuous_key in continuous_keys:
+        print(f"\n****** 连续趋势追踪{continuous_key}<强势>信号统计 ******")
+        continuous_total = 0
+        symbol_dict = open_overload_dict[continuous_key]
+        # 进行次数倒叙排序
+        symbol_times_list = []
+        for symbol, symbol_data_list in symbol_dict.items():
+            symbol_times_list.append({"symbol": symbol, "times": len(symbol_data_list)})
+        df = pd.DataFrame(symbol_times_list)
+        df = df.sort_values("times", ascending=False)
+        for _, row in df.iterrows():
+            symbol = row["symbol"]
+            pure_symbol = symbol.split(".")[0]
+            # 如果有筛选合约，做出筛选
+            if target_symbols and pure_symbol not in target_symbols:
+                continue
+            
+            # 统计优选合约
+            if int(continuous_key) == 4:
+                continuous_4_symbols.add(pure_symbol)
+            if int(continuous_key) == 5:
+                continuous_5_symbols.add(pure_symbol)
+            if int(continuous_key) > 5:
+                over_5_symbols.add(pure_symbol)
+
+            symbol_data_list = symbol_dict[symbol]
+            close_count = int(len(symbol_data_list) / (int(continuous_key) + 1))
+            print(f"\n{symbol}有{close_count}次记录")
+            continuous_total += close_count
+            for i in range(len(symbol_data_list)):
+                symbol_data = symbol_data_list[i]
+                dt = symbol_data["datetime"]
+                signal = symbol_data["signal"]
+                position_price = symbol_data["position_price"]
+                position_value = symbol_data["position_value"]
+                max_loss_value = symbol_data["max_loss_value"]
+                max_loss_rate = symbol_data["max_loss_rate"]
+                trending = symbol_data["trending"]
+                print(
+                    f"{dt}\t{signal}\t{position_price}\t{position_value}\t{max_loss_value}\t{max_loss_rate}\t{trending}"
+                )
+                if trending == "平仓" and i != len(symbol_data_list) - 1:
+                    print("\n")
+        print(f"总计：{continuous_total}")
+    
+    if not target_symbols:
+        total_symbols = list(set(continuous_4_symbols) | set(continuous_5_symbols) | set(over_5_symbols))
+        total_symbols_little = list(set(continuous_5_symbols) | set(over_5_symbols))
+        print(f"\n强势追踪4的合约数量{len(continuous_4_symbols)}：\n{continuous_4_symbols}")
+        print(f"\n强势追踪5的合约数量{len(continuous_5_symbols)}：\n{continuous_5_symbols}")
+        print(f"\n强势追踪5以上的合约数量{len(over_5_symbols)}：\n{over_5_symbols}")
+        print(f"\n统计【4 5 6】：{len(total_symbols)}：\n{total_symbols}\n")
+        print(f"\n统计【5 6】：{len(total_symbols_little)}：\n{total_symbols_little}\n")
 
 def generate_setting(symbol_open_dict: dict, exchange:str):
     # 获取合约最小交易价值
@@ -463,5 +571,5 @@ if __name__ == "__main__":
 
     # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
     analyse_trending_continuous(
-        exchange="BINANCE", target_dir="2022-01-01_2023-06-20", by_month=True, for_trade_setting=False
+        exchange="BINANCE", min_continuous="1", target_dir="2021-01-01_2022-01-01", by_month=False, for_trade_setting=False
     )
