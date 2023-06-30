@@ -38,7 +38,10 @@ class TurtleCryptoDataDownloading(object):
         if thread in self.threads:
             self.threads.remove(thread)
 
-    def download_from_bybit(self, contract_list, days=1, to_date:datetime=datetime.now() + timedelta(days=2), from_data_base:bool=False, api_check:bool=False):
+    def download_from_bybit(self, contract_list, days=1, to_date:datetime=None, from_data_base:bool=False, api_check:bool=False):
+        if not to_date:
+            to_date = datetime.now() + timedelta(days=2)
+
         # 先删除原有文件夹，包括其中所有内容
         csv_path = get_csv_path()
         if os.path.exists(csv_path):
@@ -114,7 +117,7 @@ class TurtleCryptoDataDownloading(object):
     def download_from_binance(self, contract_list, days=1, to_date:datetime=None, from_data_base:bool=False, api_check:bool=False):
         if not to_date:
             to_date = datetime.now() + timedelta(days=2)
-            
+
         #"""
         # 先删除原有文件夹，包括其中所有内容
         csv_path = get_csv_path()
