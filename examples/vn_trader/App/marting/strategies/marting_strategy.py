@@ -41,6 +41,7 @@ class MartingStrategy(CtaTemplate):
         "init_value_rate",
         "bottom_step",
         "top_step",
+        "forward",
     ]
 
     # 变量列表，保存了变量的名称
@@ -115,6 +116,7 @@ class MartingStrategy(CtaTemplate):
         self.init_value_rate = 0  # 初始持仓价值占组合价值比率
         self.bottom_step = 0  # 趋势追踪最低等级
         self.top_step = 0  # 趋势追踪最高等级
+        self.forward = True # 趋势策略还是反转策略
 
         # 策略变量
         self.tick: TickData = None
@@ -417,82 +419,184 @@ class MartingStrategy(CtaTemplate):
             # Tick允许交易
             self.tick_trade_enable = True
 
-            # 有正在执行的开平仓操作，不进行后续判断
-            if self.target_volume >= 0:
-                return
+            # 生成交易信号
+            if self.forward:
+                self.generate_forward_signal(tick=tick)
+            
+            else:
+                self.generate_inverse_signal(tick=tick)
+        else:
+            # Tick不允许交易
+            self.tick_trade_enable = False
 
-            # 策略成交价格
-            strategy_ma_price = self.strategy_status["ma_price"]
-            trade_price = round_to(strategy_ma_price, self.symbol_price_tick)
-            if not strategy_ma_price:
-                self.raise_error(f"均线价格异常")
+    # 生成正向信号
+    def generate_forward_signal(self, tick):
+        pass
+    
+    # 生成反向信号
+    def generate_inverse_signal(self, tick):
+        # 有正在执行的开平仓操作，不进行后续判断
+        if self.target_volume >= 0:
+            return
 
-            # 邮件通知内容
-            email_msg = ""
+        # 策略成交价格
+        strategy_ma_price = self.strategy_status["ma_price"]
+        trade_price = round_to(strategy_ma_price, self.symbol_price_tick)
+        if not strategy_ma_price:
+            self.raise_error(f"均线价格异常")
 
-            if self.pos:
-                # ====== 检查平仓 ======
-                if not self.position_close_price:
-                    self.raise_error(f"平仓价格异常")
-                
-                # 平仓价格
-                target_close_price = self.position_close_price
+        # 邮件通知内容
+        email_msg = ""
 
-                # 选择盈利最大化平仓价格
-                strategy_reduce_price = self.strategy_status["position_reduce_price"]
-                strategy_trending_step = self.strategy_status["trending_step"]
-                if self.trending_step == strategy_trending_step:
-                    if self.direction == Direction.LONG:
-                        target_close_price = max(self.position_close_price, strategy_reduce_price)
-                    
-                    if self.direction == Direction.SHORT:
-                        target_close_price = min(self.position_close_price, strategy_reduce_price)
+        if self.pos:
+            # ====== 检查平仓 ======
+            if not self.position_close_price:
+                self.raise_error(f"平仓价格异常")
+            
+            # 平仓价格
+            target_close_price = self.position_close_price
 
-                # 是否达到目标价位
+            # 选择盈利最大化平仓价格
+            strategy_reduce_price = self.strategy_status["position_reduce_price"]
+            strategy_trending_step = self.strategy_status["trending_step"]
+            if self.trending_step == strategy_trending_step:
                 if self.direction == Direction.LONG:
-                    if (
-                        strategy_ma_price >= target_close_price
-                        and tick.last_price < trade_price
-                        and tick.last_price > trade_price - self.symbol_price_tick * 5
-                    ):
-                        self.target_volume = 0
-
+                    target_close_price = max(self.position_close_price, strategy_reduce_price)
+                
                 if self.direction == Direction.SHORT:
-                    if (
-                        strategy_ma_price <= target_close_price
-                        and tick.last_price > trade_price
-                        and tick.last_price < trade_price + self.symbol_price_tick * 5
-                    ):
-                        self.target_volume = 0
+                    target_close_price = min(self.position_close_price, strategy_reduce_price)
 
-                if self.target_volume == 0:
-                    # 邮件提醒
-                    position_value = abs(self.pos) * self.position_price
-                    email_msg += f"\n平仓：当前趋势追踪等级{self.trending_step} 持仓价值{position_value}"
-
-            # 下一实盘趋势追踪等级
-            next_trending_step = 0
-            if self.target_volume < 0:
-                # ====== 检查建仓加仓 ======
-                strategy_trending_step = self.strategy_status["trending_step"]
-                strategy_next_trending_step = self.strategy_status["next_trending_step"]
-                strategy_rsi_array = self.strategy_status["rsi_array"]
-                strategy_position_increase_price = self.strategy_status[
-                    "position_increase_price"
-                ]
-                strategy_trending_group = self.strategy_status["current_trending_group"]
-
-                if not strategy_position_increase_price:
-                    self.raise_error(f"建仓加仓价格异常")
-
-                # 回测下一趋势追踪等级满足指定条件
+            # 是否达到目标价位
+            if self.direction == Direction.LONG:
                 if (
-                    self.bottom_step <= strategy_next_trending_step <= self.top_step
-                    and strategy_next_trending_step > self.trending_step
-                ): 
+                    strategy_ma_price >= target_close_price
+                    and tick.last_price < trade_price
+                    and tick.last_price > trade_price - self.symbol_price_tick * 5
+                ):
+                    self.target_volume = 0
+
+            if self.direction == Direction.SHORT:
+                if (
+                    strategy_ma_price <= target_close_price
+                    and tick.last_price > trade_price
+                    and tick.last_price < trade_price + self.symbol_price_tick * 5
+                ):
+                    self.target_volume = 0
+
+            if self.target_volume == 0:
+                # 邮件提醒
+                position_value = abs(self.pos) * self.position_price
+                email_msg += f"\n平仓：当前趋势追踪等级{self.trending_step} 持仓价值{position_value}"
+
+        # 下一实盘趋势追踪等级
+        next_trending_step = 0
+        if self.target_volume < 0:
+            # ====== 检查建仓加仓 ======
+            strategy_trending_step = self.strategy_status["trending_step"]
+            strategy_next_trending_step = self.strategy_status["next_trending_step"]
+            strategy_rsi_array = self.strategy_status["rsi_array"]
+            strategy_position_increase_price = self.strategy_status[
+                "position_increase_price"
+            ]
+            strategy_trending_group = self.strategy_status["current_trending_group"]
+
+            if not strategy_position_increase_price:
+                self.raise_error(f"建仓加仓价格异常")
+
+            # 回测下一趋势追踪等级满足指定条件
+            if (
+                self.bottom_step <= strategy_next_trending_step <= self.top_step
+                and strategy_next_trending_step > self.trending_step
+            ): 
+                # 策略组合最多只能有一个趋势追踪最高等级
+                trending_top_cross = True
+                if strategy_next_trending_step == self.top_step and self.portfolio.trending_top:
+                    trending_top_cross = False
+
+                if trending_top_cross:
+                    # 是否达到目标价位
+                    if self.direction == Direction.LONG:
+                        # 根据RSI判断是否超卖
+                        # rsi_cross = False
+                        # for rsi in strategy_rsi_array:
+                        #     if rsi <= 25:
+                        #         rsi_cross = True
+                        #         break
+                        rsi_cross = True
+
+                        if (
+                            rsi_cross
+                            and strategy_ma_price <= strategy_position_increase_price
+                            and tick.last_price > trade_price
+                            and tick.last_price < trade_price + self.symbol_price_tick * 5
+                        ):
+                            next_trending_step = strategy_next_trending_step
+
+                    elif self.direction == Direction.SHORT:
+                        # 根据RSI判断是否超买
+                        # rsi_cross = False
+                        # for rsi in strategy_rsi_array:
+                        #     if rsi >= 75:
+                        #         rsi_cross = True
+                        #         break
+                        rsi_cross = True
+
+                        if (
+                            rsi_cross
+                            and strategy_ma_price >= strategy_position_increase_price
+                            and tick.last_price < trade_price
+                            and tick.last_price > trade_price - self.symbol_price_tick * 5
+                        ):
+                            next_trending_step = strategy_next_trending_step
+
+                    else:
+                        self.raise_error("on_tick中发现direction不正确")
+
+                    if next_trending_step:
+                        # 邮件提醒
+                        email_msg += f"\n加仓【下一趋势等级】：当前{self.trending_step} 即将：{next_trending_step}"
+
+            # 回测当前趋势追踪等级比当前实盘的高
+            if not next_trending_step:
+                tick_price_cross = False
+                if (
+                    self.bottom_step <= strategy_trending_step <= self.top_step
+                    and strategy_trending_step > self.trending_step
+                ):
                     # 策略组合最多只能有一个趋势追踪最高等级
                     trending_top_cross = True
-                    if strategy_next_trending_step == self.top_step and self.portfolio.trending_top:
+                    if strategy_trending_step == self.top_step and self.portfolio.trending_top:
+                        trending_top_cross = False
+
+                    if trending_top_cross:
+                        # 判断当前回测持仓盈亏是否满足指定条件
+                        strategy_position_price = self.strategy_status["position_price"]
+                        tick_price_cross = False
+                        if (
+                            self.direction == Direction.LONG
+                            and tick.last_price < strategy_position_price * (1 - 0.01)
+                        ):
+                            tick_price_cross = True
+
+                        elif (
+                            self.direction == Direction.SHORT
+                            and tick.last_price > strategy_position_price * (1 + 0.01)
+                        ):
+                            tick_price_cross = True
+
+                        if tick_price_cross:
+                            next_trending_step = strategy_trending_step
+
+                            # 邮件提醒
+                            email_msg += f"\n加仓【当前趋势等级】：当前{self.trending_step} 即将：{next_trending_step}"
+
+            # 回测趋势追踪等级与实盘不匹配，以实盘加仓标准再次判断
+            if not next_trending_step:
+                target_trending_step = self.trending_step + 1
+                if strategy_trending_step != self.trending_step and self.bottom_step <= target_trending_step <= self.top_step and self.position_increase_price:
+                    # 策略组合最多只能有一个趋势追踪最高等级
+                    trending_top_cross = True
+                    if target_trending_step == self.top_step and self.portfolio.trending_top:
                         trending_top_cross = False
 
                     if trending_top_cross:
@@ -508,11 +612,11 @@ class MartingStrategy(CtaTemplate):
 
                             if (
                                 rsi_cross
-                                and strategy_ma_price <= strategy_position_increase_price
+                                and strategy_ma_price <= self.position_increase_price
                                 and tick.last_price > trade_price
                                 and tick.last_price < trade_price + self.symbol_price_tick * 5
                             ):
-                                next_trending_step = strategy_next_trending_step
+                                next_trending_step = target_trending_step
 
                         elif self.direction == Direction.SHORT:
                             # 根据RSI判断是否超买
@@ -525,231 +629,146 @@ class MartingStrategy(CtaTemplate):
 
                             if (
                                 rsi_cross
-                                and strategy_ma_price >= strategy_position_increase_price
+                                and strategy_ma_price >= self.position_increase_price
                                 and tick.last_price < trade_price
                                 and tick.last_price > trade_price - self.symbol_price_tick * 5
                             ):
-                                next_trending_step = strategy_next_trending_step
+                                next_trending_step = target_trending_step
 
                         else:
                             self.raise_error("on_tick中发现direction不正确")
 
                         if next_trending_step:
                             # 邮件提醒
-                            email_msg += f"\n加仓【下一趋势等级】：当前{self.trending_step} 即将：{next_trending_step}"
+                            email_msg = f"\n加仓【实盘下一趋势等级】：当前{self.trending_step} 即将：{next_trending_step}"
 
-                # 回测当前趋势追踪等级比当前实盘的高
-                if not next_trending_step:
-                    tick_price_cross = False
-                    if (
-                        self.bottom_step <= strategy_trending_step <= self.top_step
-                        and strategy_trending_step > self.trending_step
-                    ):
-                        # 策略组合最多只能有一个趋势追踪最高等级
-                        trending_top_cross = True
-                        if strategy_trending_step == self.top_step and self.portfolio.trending_top:
-                            trending_top_cross = False
+            if next_trending_step:
+                # """ 常规加仓 """
+                # 当前持仓价值
+                current_position_value = abs(self.pos) * self.position_price
 
-                        if trending_top_cross:
-                            # 判断当前回测持仓盈亏是否满足指定条件
-                            strategy_position_price = self.strategy_status["position_price"]
-                            tick_price_cross = False
-                            if (
-                                self.direction == Direction.LONG
-                                and tick.last_price < strategy_position_price * (1 - 0.01)
-                            ):
-                                tick_price_cross = True
+                # 加仓的数量
+                changed_volume = 0
 
-                            elif (
-                                self.direction == Direction.SHORT
-                                and tick.last_price > strategy_position_price * (1 + 0.01)
-                            ):
-                                tick_price_cross = True
+                if next_trending_step == self.bottom_step:
+                    # 初始建仓
+                    # target_value = (
+                    #     self.portfolio.portfolioValue * self.init_value_rate
+                    # )
+                    target_value = max(tick.last_price * self.symbol_min_volume * 1.5, 6)
 
-                            if tick_price_cross:
-                                next_trending_step = strategy_trending_step
+                    changed_volume = (
+                        target_value - current_position_value
+                    ) / tick.last_price
+                    changed_volume = ceil_to(
+                        changed_volume, self.symbol_min_volume
+                    )
 
-                                # 邮件提醒
-                                email_msg += f"\n加仓【当前趋势等级】：当前{self.trending_step} 即将：{next_trending_step}"
+                else:
+                    # 加仓
+                    if self.pos:
+                        # 目标持仓价格
+                        price_rate = 0.01
+                        if self.direction == Direction.LONG:
+                            target_positon_price = tick.last_price * (1 + price_rate)
 
-                # 回测趋势追踪等级与实盘不匹配，以实盘加仓标准再次判断
-                if not next_trending_step:
-                    target_trending_step = self.trending_step + 1
-                    if strategy_trending_step != self.trending_step and self.bottom_step <= target_trending_step <= self.top_step and self.position_increase_price:
-                        # 策略组合最多只能有一个趋势追踪最高等级
-                        trending_top_cross = True
-                        if target_trending_step == self.top_step and self.portfolio.trending_top:
-                            trending_top_cross = False
+                        elif self.direction == Direction.SHORT:
+                            target_positon_price = tick.last_price * (1 - price_rate)
 
-                        if trending_top_cross:
-                            # 是否达到目标价位
-                            if self.direction == Direction.LONG:
-                                # 根据RSI判断是否超卖
-                                # rsi_cross = False
-                                # for rsi in strategy_rsi_array:
-                                #     if rsi <= 25:
-                                #         rsi_cross = True
-                                #         break
-                                rsi_cross = True
+                        else:
+                            self.raise_error("on_tick中发现direction不正确")
 
-                                if (
-                                    rsi_cross
-                                    and strategy_ma_price <= self.position_increase_price
-                                    and tick.last_price > trade_price
-                                    and tick.last_price < trade_price + self.symbol_price_tick * 5
-                                ):
-                                    next_trending_step = target_trending_step
+                        changed_volume1 = (
+                            abs(self.pos) * target_positon_price
+                            - current_position_value
+                        ) / (tick.last_price - target_positon_price)
 
-                            elif self.direction == Direction.SHORT:
-                                # 根据RSI判断是否超买
-                                # rsi_cross = False
-                                # for rsi in strategy_rsi_array:
-                                #     if rsi >= 75:
-                                #         rsi_cross = True
-                                #         break
-                                rsi_cross = True
-
-                                if (
-                                    rsi_cross
-                                    and strategy_ma_price >= self.position_increase_price
-                                    and tick.last_price < trade_price
-                                    and tick.last_price > trade_price - self.symbol_price_tick * 5
-                                ):
-                                    next_trending_step = target_trending_step
-
-                            else:
-                                self.raise_error("on_tick中发现direction不正确")
-
-                            if next_trending_step:
-                                # 邮件提醒
-                                email_msg = f"\n加仓【实盘下一趋势等级】：当前{self.trending_step} 即将：{next_trending_step}"
-    
-                if next_trending_step:
-                    # """ 常规加仓 """
-                    # 当前持仓价值
-                    current_position_value = abs(self.pos) * self.position_price
-
-                    # 加仓的数量
-                    changed_volume = 0
-
-                    if next_trending_step == self.bottom_step:
-                        # 初始建仓
                         # target_value = (
                         #     self.portfolio.portfolioValue * self.init_value_rate
-                        # )
-                        target_value = max(tick.last_price * self.symbol_min_volume * 1.5, 6)
-
-                        changed_volume = (
+                        # ) * (10 ** (next_trending_step - self.bottom_step))
+                        target_value = max(tick.last_price * self.symbol_min_volume * 1.5, 6) * (10 ** (next_trending_step - self.bottom_step))
+                        changed_volume2 = (
                             target_value - current_position_value
                         ) / tick.last_price
+
+                        # 加仓数量选择最优
+                        changed_volume = max(changed_volume1, changed_volume2)
                         changed_volume = ceil_to(
                             changed_volume, self.symbol_min_volume
                         )
 
                     else:
-                        # 加仓
-                        if self.pos:
-                            # 目标持仓价格
-                            price_rate = 0.01
-                            if self.direction == Direction.LONG:
-                                target_positon_price = tick.last_price * (1 + price_rate)
+                        # target_value = (
+                        #     self.portfolio.portfolioValue * self.init_value_rate
+                        # ) * (10 ** (next_trending_step - self.bottom_step))
+                        target_value = max(tick.last_price * self.symbol_min_volume * 1.5, 6) * (10 ** (next_trending_step - self.bottom_step))
+                        changed_volume = target_value / tick.last_price
+                        changed_volume = ceil_to(
+                            changed_volume, self.symbol_min_volume
+                        )
 
-                            elif self.direction == Direction.SHORT:
-                                target_positon_price = tick.last_price * (1 - price_rate)
+                # 加仓后的目标持仓数量
+                self.target_volume = (
+                    changed_volume + abs(self.pos) if changed_volume > 0 else -1
+                )
 
-                            else:
-                                self.raise_error("on_tick中发现direction不正确")
+                # 邮件提醒
+                email_msg += f"\n持仓变化：{changed_volume} 目标持仓：{self.target_volume}"
 
-                            changed_volume1 = (
-                                abs(self.pos) * target_positon_price
-                                - current_position_value
-                            ) / (tick.last_price - target_positon_price)
-
-                            # target_value = (
-                            #     self.portfolio.portfolioValue * self.init_value_rate
-                            # ) * (10 ** (next_trending_step - self.bottom_step))
-                            target_value = max(tick.last_price * self.symbol_min_volume * 1.5, 6) * (10 ** (next_trending_step - self.bottom_step))
-                            changed_volume2 = (
-                                target_value - current_position_value
-                            ) / tick.last_price
-
-                            # 加仓数量选择最优
-                            changed_volume = max(changed_volume1, changed_volume2)
-                            changed_volume = ceil_to(
-                                changed_volume, self.symbol_min_volume
-                            )
-
-                        else:
-                            # target_value = (
-                            #     self.portfolio.portfolioValue * self.init_value_rate
-                            # ) * (10 ** (next_trending_step - self.bottom_step))
-                            target_value = max(tick.last_price * self.symbol_min_volume * 1.5, 6) * (10 ** (next_trending_step - self.bottom_step))
-                            changed_volume = target_value / tick.last_price
-                            changed_volume = ceil_to(
-                                changed_volume, self.symbol_min_volume
-                            )
-
-                    # 加仓后的目标持仓数量
-                    self.target_volume = (
-                        changed_volume + abs(self.pos) if changed_volume > 0 else -1
-                    )
-
-                    # 邮件提醒
-                    email_msg += f"\n持仓变化：{changed_volume} 目标持仓：{self.target_volume}"
-
-            # 有正在执行的开平仓操作，立即发出订单
-            if self.target_volume >= 0:
-                if self.target_volume > 0:
-                    """ 加仓需要判断组合持仓是否杠杆过大 """
-                    changed_volume = self.target_volume - abs(self.pos)
-                    changed_volume = round_to(changed_volume, self.symbol_min_volume)
-                    open_value = changed_volume * tick.last_price
-                    open_cross = self.portfolio.check_open_cross(open_value=open_value)
-                    if open_cross:
-                        if next_trending_step:
-                            # 更新趋势追踪等级
-                            self.trending_step = next_trending_step
-                            
-                            # 更新策略组合
-                            self.portfolio.update_trending_top()
+        # 有正在执行的开平仓操作，立即发出订单
+        if self.target_volume >= 0:
+            if self.target_volume > 0:
+                """ 加仓需要判断组合持仓是否杠杆过大 """
+                changed_volume = self.target_volume - abs(self.pos)
+                changed_volume = round_to(changed_volume, self.symbol_min_volume)
+                open_value = changed_volume * tick.last_price
+                open_cross = self.portfolio.check_open_cross(open_value=open_value)
+                if open_cross:
+                    if next_trending_step:
+                        # 更新趋势追踪等级
+                        self.trending_step = next_trending_step
                         
-                        # 邮件通知
-                        if email_msg:
-                            self.send_email(content=email_msg)
-                        self.open_email_suspend = False
-
-                        # 提交订单
-                        self.check_order()
-
-                    else:
-                        if not self.open_email_suspend:
-                            self.open_email_suspend = True
-                            email_msg += f"\n\n加仓不通过【组合持仓价值超过限制】 当前组合持仓价值：{self.portfolio.total_strategy_value} 加仓价值：{open_value}"
-                            self.send_email(content=email_msg)
-                
-                else:
-                    """ 平仓 """
-                    # 更新趋势追踪等级
-                    self.trending_step = 0
-
-                    # 更新策略组合
-                    self.portfolio.update_trending_top()
-
+                        # 更新策略组合
+                        self.portfolio.update_trending_top()
+                    
                     # 邮件通知
                     if email_msg:
                         self.send_email(content=email_msg)
+                    self.open_email_suspend = False
 
                     # 提交订单
                     self.check_order()
-        else:
-            # Tick不允许交易
-            self.tick_trade_enable = False
+
+                else:
+                    if not self.open_email_suspend:
+                        self.open_email_suspend = True
+                        email_msg += f"\n\n加仓不通过【组合持仓价值超过限制】 当前组合持仓价值：{self.portfolio.total_strategy_value} 加仓价值：{open_value}"
+                        self.send_email(content=email_msg)
+
+                        # 取消正在进行的所有订单
+                        self.cancel_all()
+                    self.target_volume = -1
+            
+            else:
+                """ 平仓 """
+                # 更新趋势追踪等级
+                self.trending_step = 0
+
+                # 更新策略组合
+                self.portfolio.update_trending_top()
+
+                # 邮件通知
+                if email_msg:
+                    self.send_email(content=email_msg)
+
+                # 提交订单
+                self.check_order()
 
     def on_bar(self, bar):
         """基于实时Tick数据生成的周期Bar数据推送"""
         # 保存到列表
         self.window_bar_list.append(bar)
-        if len(self.window_bar_list) > 20:
+        if len(self.window_bar_list) > 50:
             self.window_bar_list.pop(0)
 
         # 回测数据

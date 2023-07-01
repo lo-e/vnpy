@@ -365,7 +365,7 @@ def output_open_overload_result(open_overload_dict: dict):
     target_symbols = []
     # target_symbols = ['ETHUSDT', 'WAVESUSDT', 'OGNUSDT', 'GALAUSDT', 'ANKRUSDT', 'SXPUSDT', 'ZILUSDT', 'CHRUSDT', 'BCHUSDT', 'ETCUSDT', 'AXSUSDT', 'ZRXUSDT', 'RLCUSDT', 'AVAXUSDT', 'DASHUSDT', 'YFIUSDT', 'STORJUSDT', 'DOGEUSDT', 'ALPHAUSDT', 'FTMUSDT', 'SKLUSDT', 'OMGUSDT', 'SUSHIUSDT', 'SFPUSDT', 'EGLDUSDT', '1000SHIBUSDT', 'MKRUSDT', 'ATOMUSDT', 'BELUSDT', 'ADAUSDT', 'ENJUSDT']
     # target_symbols = ['GALAUSDT', 'ZRXUSDT', 'BAKEUSDT', 'SFPUSDT', 'LINAUSDT', 'OMGUSDT', 'RENUSDT', 'KNCUSDT', 'BATUSDT', 'BELUSDT', 'WAVESUSDT', 'ZENUSDT', 'SXPUSDT', 'RLCUSDT', 'PEOPLEUSDT', 'CHRUSDT', 'ARUSDT', 'ARPAUSDT', 'ATAUSDT', 'UNFIUSDT', 'DYDXUSDT', 'OGNUSDT', 'DASHUSDT', 'AUDIOUSDT', 'LRCUSDT', 'SKLUSDT', 'ETHUSDT', 'AXSUSDT', 'MASKUSDT', 'AAVEUSDT', 'ZILUSDT', 'SUSHIUSDT', 'STORJUSDT', 'FTMUSDT', 'ETCUSDT', 'CTSIUSDT', 'KAVAUSDT', 'DOGEUSDT', 'EGLDUSDT', 'SOLUSDT', 'C98USDT', 'CRVUSDT', 'YFIUSDT', 'ALGOUSDT', 'RSRUSDT', 'MKRUSDT', 'ENJUSDT']
-    target_symbols = ['ZILUSDT', 'ATAUSDT', 'CTSIUSDT', 'EGLDUSDT', 'DYDXUSDT', 'AUDIOUSDT', '1000SHIBUSDT', 'LINAUSDT', 'OMGUSDT', 'WAVESUSDT', 'ARUSDT', 'ALPHAUSDT', 'ZENUSDT', 'PEOPLEUSDT', 'KAVAUSDT', 'FTMUSDT', 'DOGEUSDT', 'STORJUSDT', 'UNFIUSDT', 'BATUSDT', 'SXPUSDT', 'CHRUSDT', 'ARPAUSDT', 'BAKEUSDT', 'RSRUSDT', 'AXSUSDT', 'ETCUSDT', 'SFPUSDT', 'BCHUSDT', 'ETHUSDT', 'YFIUSDT', 'LRCUSDT', 'RENUSDT', 'AVAXUSDT', 'ATOMUSDT', 'GALAUSDT', 'KNCUSDT', 'AAVEUSDT', 'SUSHIUSDT', 'CRVUSDT', 'OGNUSDT', 'ADAUSDT', 'DASHUSDT', 'SOLUSDT', 'SKLUSDT', 'MASKUSDT', 'ALGOUSDT', 'BELUSDT', 'C98USDT', 'ANKRUSDT', 'ZRXUSDT', 'RLCUSDT', 'ENJUSDT', 'MKRUSDT']
+    # target_symbols = ['ZILUSDT', 'ATAUSDT', 'CTSIUSDT', 'EGLDUSDT', 'DYDXUSDT', 'AUDIOUSDT', '1000SHIBUSDT', 'LINAUSDT', 'OMGUSDT', 'WAVESUSDT', 'ARUSDT', 'ALPHAUSDT', 'ZENUSDT', 'PEOPLEUSDT', 'KAVAUSDT', 'FTMUSDT', 'DOGEUSDT', 'STORJUSDT', 'UNFIUSDT', 'BATUSDT', 'SXPUSDT', 'CHRUSDT', 'ARPAUSDT', 'BAKEUSDT', 'RSRUSDT', 'AXSUSDT', 'ETCUSDT', 'SFPUSDT', 'BCHUSDT', 'ETHUSDT', 'YFIUSDT', 'LRCUSDT', 'RENUSDT', 'AVAXUSDT', 'ATOMUSDT', 'GALAUSDT', 'KNCUSDT', 'AAVEUSDT', 'SUSHIUSDT', 'CRVUSDT', 'OGNUSDT', 'ADAUSDT', 'DASHUSDT', 'SOLUSDT', 'SKLUSDT', 'MASKUSDT', 'ALGOUSDT', 'BELUSDT', 'C98USDT', 'ANKRUSDT', 'ZRXUSDT', 'RLCUSDT', 'ENJUSDT', 'MKRUSDT']
 
     # 优选合约列表
     continuous_4_symbols = set()
@@ -420,15 +420,19 @@ def output_open_overload_result(open_overload_dict: dict):
         print(f"总计：{continuous_total}")
     
     if not target_symbols:
-        total_symbols = list(set(continuous_4_symbols) | set(continuous_5_symbols) | set(over_5_symbols))
-        total_symbols_little = list(set(continuous_5_symbols) | set(over_5_symbols))
         print(f"\n强势追踪4的合约数量{len(continuous_4_symbols)}：\n{continuous_4_symbols}")
         print(f"\n强势追踪5的合约数量{len(continuous_5_symbols)}：\n{continuous_5_symbols}")
         print(f"\n强势追踪5以上的合约数量{len(over_5_symbols)}：\n{over_5_symbols}")
-        print(f"\n统计【4 5 6】：{len(total_symbols)}：\n{total_symbols}\n")
-        print(f"\n统计【5 6】：{len(total_symbols_little)}：\n{total_symbols_little}\n")
+
+        total_symbols = list(set(continuous_4_symbols) | set(continuous_5_symbols) | set(over_5_symbols))
+        print(f"\n并集统计【4 5 6】：{len(total_symbols)}：\n{total_symbols}\n")
+
+        # total_symbols_little = list(set(continuous_5_symbols) | set(over_5_symbols))
+        # print(f"\n统计【5 6】：{len(total_symbols_little)}：\n{total_symbols_little}\n")
 
 def generate_setting(symbol_open_dict: dict, exchange:str):
+    forward_symbols = ['ZILUSDT', 'ATAUSDT', 'CTSIUSDT', 'EGLDUSDT', 'DYDXUSDT', 'AUDIOUSDT', '1000SHIBUSDT', 'LINAUSDT', 'OMGUSDT', 'WAVESUSDT', 'ARUSDT', 'ALPHAUSDT', 'ZENUSDT', 'PEOPLEUSDT', 'KAVAUSDT', 'FTMUSDT', 'DOGEUSDT', 'STORJUSDT', 'UNFIUSDT', 'BATUSDT', 'SXPUSDT', 'CHRUSDT', 'ARPAUSDT', 'BAKEUSDT', 'RSRUSDT', 'AXSUSDT', 'ETCUSDT', 'SFPUSDT', 'BCHUSDT', 'ETHUSDT', 'YFIUSDT', 'LRCUSDT', 'RENUSDT', 'AVAXUSDT', 'ATOMUSDT', 'GALAUSDT', 'KNCUSDT', 'AAVEUSDT', 'SUSHIUSDT', 'CRVUSDT', 'OGNUSDT', 'ADAUSDT', 'DASHUSDT', 'SOLUSDT', 'SKLUSDT', 'MASKUSDT', 'ALGOUSDT', 'BELUSDT', 'C98USDT', 'ANKRUSDT', 'ZRXUSDT', 'RLCUSDT', 'ENJUSDT', 'MKRUSDT']
+    
     # 获取合约最小交易价值
     symbol_min_value_dict = {}
     if exchange == "BYBIT":
@@ -528,7 +532,8 @@ def generate_setting(symbol_open_dict: dict, exchange:str):
             bottom_step = int(math.log10(init_value)) + 2
             init_value_rate = init_value / portfolioValue
             #"""
-            pure_symbol = symbol[:symbol.index('USDT')] 
+            pure_symbol = symbol[:symbol.index('USDT')]
+            forward = True if f"{pure_symbol}USDT" in forward_symbols else False
             data_long = {
                 "strategy_name": f"MARTING_{exchange}_{pure_symbol}_多",
                 "class_name": "MartingStrategy",
@@ -537,6 +542,7 @@ def generate_setting(symbol_open_dict: dict, exchange:str):
                 "init_value_rate": init_value_rate,
                 "bottom_step": bottom_step,
                 "top_step": top_step,
+                "forward": forward,
                 "start": True
                 }
             symbol_setting_list.append(data_long)
@@ -549,6 +555,7 @@ def generate_setting(symbol_open_dict: dict, exchange:str):
                 "init_value_rate": init_value_rate,
                 "bottom_step": bottom_step,
                 "top_step": top_step,
+                "forward": forward,
                 "start": True
                 }
             symbol_setting_list.append(data_short)
@@ -573,5 +580,5 @@ if __name__ == "__main__":
 
     # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
     analyse_trending_continuous(
-        exchange="BINANCE", min_continuous="1", target_dir="2021-01-01_2022-01-01", by_month=False, for_trade_setting=False
+        exchange="BINANCE", min_continuous="1", target_dir="2022-01-01_2023-06-28", by_month=False, for_trade_setting=True
     )

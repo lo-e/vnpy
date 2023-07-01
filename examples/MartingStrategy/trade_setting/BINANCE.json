@@ -8,6 +8,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -18,6 +19,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -28,6 +30,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -38,6 +41,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -48,6 +52,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -58,6 +63,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -68,6 +74,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -78,6 +85,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -88,6 +96,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -98,6 +107,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -108,6 +118,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -118,6 +129,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -128,6 +140,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -138,6 +151,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -148,6 +162,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -158,6 +173,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -168,6 +184,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -178,6 +195,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -188,6 +206,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -198,6 +217,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -208,6 +228,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -218,6 +239,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -228,6 +250,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -238,6 +261,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -248,6 +272,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -258,6 +283,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -268,6 +294,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -278,6 +305,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -288,6 +316,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -298,6 +327,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -306,8 +336,9 @@
       "vt_symbol": "AVAXUSDT.BINANCE",
       "direction": "多",
       "init_value_rate": 1.0,
-      "bottom_step": 7,
+      "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -316,8 +347,9 @@
       "vt_symbol": "AVAXUSDT.BINANCE",
       "direction": "空",
       "init_value_rate": 1.0,
-      "bottom_step": 7,
+      "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -328,6 +360,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -338,6 +371,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -348,6 +382,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -358,6 +393,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -368,6 +404,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -378,6 +415,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -388,6 +426,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -398,6 +437,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -408,6 +448,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -418,6 +459,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -428,6 +470,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -438,6 +481,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -448,6 +492,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -458,6 +503,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -468,6 +514,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -478,6 +525,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -488,6 +536,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -498,6 +547,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -508,6 +558,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -518,6 +569,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -526,8 +578,9 @@
       "vt_symbol": "BTCUSDT.BINANCE",
       "direction": "多",
       "init_value_rate": 1.0,
-      "bottom_step": 7,
+      "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -536,8 +589,9 @@
       "vt_symbol": "BTCUSDT.BINANCE",
       "direction": "空",
       "init_value_rate": 1.0,
-      "bottom_step": 7,
+      "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -548,6 +602,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -558,6 +613,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -568,6 +624,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -578,6 +635,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -588,6 +646,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -598,6 +657,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -608,6 +668,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -618,6 +679,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -628,6 +690,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -638,6 +701,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -648,6 +712,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -658,6 +723,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -668,6 +734,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -678,6 +745,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -688,6 +756,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -698,6 +767,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -708,6 +778,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -718,6 +789,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -728,6 +800,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -738,6 +811,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -748,6 +822,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -758,6 +833,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -768,6 +844,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -778,6 +855,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -788,6 +866,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -798,6 +877,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -808,6 +888,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -818,6 +899,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -828,6 +910,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -838,6 +921,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -848,6 +932,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -858,6 +943,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -868,6 +954,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -878,6 +965,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -888,6 +976,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -898,6 +987,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -908,6 +998,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -918,6 +1009,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -928,6 +1020,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -938,6 +1031,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -948,6 +1042,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -958,6 +1053,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -968,6 +1064,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -978,6 +1075,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -988,6 +1086,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -998,6 +1097,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1008,6 +1108,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1018,6 +1119,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1028,6 +1130,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1038,6 +1141,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1048,6 +1152,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1058,6 +1163,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1068,6 +1174,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1078,6 +1185,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1088,6 +1196,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1098,6 +1207,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1108,6 +1218,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1118,6 +1229,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1128,6 +1240,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1138,6 +1251,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1148,6 +1262,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1158,6 +1273,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1168,6 +1284,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1178,6 +1295,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1188,6 +1306,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1198,6 +1317,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1208,6 +1328,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1218,6 +1339,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1228,6 +1350,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1238,6 +1361,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1248,6 +1372,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1258,6 +1383,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1268,6 +1394,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1278,6 +1405,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1288,6 +1416,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1298,6 +1427,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1308,6 +1438,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1318,6 +1449,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1328,6 +1460,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1338,6 +1471,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1348,6 +1482,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1358,6 +1493,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1368,6 +1504,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1378,6 +1515,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1388,6 +1526,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1398,6 +1537,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1408,6 +1548,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1418,6 +1559,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1428,6 +1570,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1438,6 +1581,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1448,6 +1592,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1458,6 +1603,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1468,6 +1614,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1478,6 +1625,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1488,6 +1636,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1498,6 +1647,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1508,6 +1658,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1518,6 +1669,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1528,6 +1680,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1538,6 +1691,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1548,6 +1702,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1558,6 +1713,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1568,6 +1724,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1578,6 +1735,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1588,6 +1746,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1598,6 +1757,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1608,6 +1768,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1618,6 +1779,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1628,6 +1790,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1638,6 +1801,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1648,6 +1812,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1658,6 +1823,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1668,6 +1834,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1678,6 +1845,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1688,6 +1856,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1698,6 +1867,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1708,6 +1878,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1718,6 +1889,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1728,6 +1900,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1738,6 +1911,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1748,6 +1922,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1758,6 +1933,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1768,6 +1944,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1778,6 +1955,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1788,6 +1966,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1798,6 +1977,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1808,6 +1988,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1818,6 +1999,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1828,6 +2010,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1838,6 +2021,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1848,6 +2032,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1858,6 +2043,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1868,6 +2054,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1878,6 +2065,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1888,6 +2076,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1898,6 +2087,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1908,6 +2098,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1918,6 +2109,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1928,6 +2120,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1938,6 +2131,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1948,6 +2142,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1958,6 +2153,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1966,8 +2162,9 @@
       "vt_symbol": "SOLUSDT.BINANCE",
       "direction": "多",
       "init_value_rate": 1.0,
-      "bottom_step": 7,
+      "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1976,8 +2173,9 @@
       "vt_symbol": "SOLUSDT.BINANCE",
       "direction": "空",
       "init_value_rate": 1.0,
-      "bottom_step": 7,
+      "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -1988,6 +2186,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -1998,6 +2197,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -2008,6 +2208,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -2018,6 +2219,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -2028,6 +2230,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -2038,6 +2241,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -2048,6 +2252,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -2058,6 +2263,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -2068,6 +2274,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -2078,6 +2285,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -2088,6 +2296,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -2098,6 +2307,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -2108,6 +2318,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -2118,6 +2329,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -2128,6 +2340,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -2138,6 +2351,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -2148,6 +2362,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -2158,6 +2373,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -2168,6 +2384,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -2178,6 +2395,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -2188,6 +2406,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -2198,6 +2417,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -2208,6 +2428,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -2218,6 +2439,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -2228,6 +2450,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -2238,6 +2461,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -2248,6 +2472,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -2258,6 +2483,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -2268,6 +2494,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -2278,6 +2505,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -2288,6 +2516,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -2298,6 +2527,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -2308,6 +2538,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -2318,6 +2549,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": false,
       "start": true
     },
     {
@@ -2328,6 +2560,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -2338,6 +2571,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -2348,6 +2582,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -2358,6 +2593,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -2368,6 +2604,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     },
     {
@@ -2378,6 +2615,7 @@
       "init_value_rate": 0.1,
       "bottom_step": 6,
       "top_step": 9,
+      "forward": true,
       "start": true
     }
   ],
