@@ -643,7 +643,6 @@ class MartingStrategy(CtaTemplate):
                             email_msg = f"\n加仓【实盘下一趋势等级】：当前{self.trending_step} 即将：{next_trending_step}"
 
             if next_trending_step:
-                # """ 常规加仓 """
                 # 当前持仓价值
                 current_position_value = abs(self.pos) * self.position_price
 

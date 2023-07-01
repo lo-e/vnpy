@@ -283,7 +283,7 @@ class MartingPortfolio(object):
     def check_open_cross(self, open_value):
         self.update_strategys_position_value()
         result_value = self.total_strategy_value + open_value
-        if result_value >= self.portfolioValue * 15:
+        if result_value >= self.portfolioValue * 20:
             return False
         else:
             return True
