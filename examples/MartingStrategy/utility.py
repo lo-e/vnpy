@@ -532,7 +532,8 @@ def generate_setting(symbol_open_dict: dict, exchange:str):
             bottom_step = int(math.log10(init_value)) + 2
             init_value_rate = init_value / portfolioValue
             #"""
-            pure_symbol = symbol[:symbol.index('USDT')] 
+            pure_symbol = symbol[:symbol.index('USDT')]
+            forward = True if f"{pure_symbol}USDT" in forward_symbols else False
             data_long = {
                 "strategy_name": f"MARTING_{exchange}_{pure_symbol}_多",
                 "class_name": "MartingStrategy",
@@ -541,6 +542,7 @@ def generate_setting(symbol_open_dict: dict, exchange:str):
                 "init_value_rate": init_value_rate,
                 "bottom_step": bottom_step,
                 "top_step": top_step,
+                "forward": forward,
                 "start": True
                 }
             symbol_setting_list.append(data_long)
@@ -553,6 +555,7 @@ def generate_setting(symbol_open_dict: dict, exchange:str):
                 "init_value_rate": init_value_rate,
                 "bottom_step": bottom_step,
                 "top_step": top_step,
+                "forward": forward,
                 "start": True
                 }
             symbol_setting_list.append(data_short)
@@ -577,5 +580,5 @@ if __name__ == "__main__":
 
     # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
     analyse_trending_continuous(
-        exchange="BINANCE", min_continuous="1", target_dir="2022-01-01_2023-06-28", by_month=False, for_trade_setting=False
+        exchange="BINANCE", min_continuous="1", target_dir="2022-01-01_2023-06-28", by_month=False, for_trade_setting=True
     )
