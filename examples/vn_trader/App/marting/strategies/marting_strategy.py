@@ -744,6 +744,10 @@ class MartingStrategy(CtaTemplate):
                         self.open_email_suspend = True
                         email_msg += f"\n\n加仓不通过【组合持仓价值超过限制】 当前组合持仓价值：{self.portfolio.total_strategy_value} 加仓价值：{open_value}"
                         self.send_email(content=email_msg)
+
+                        # 取消正在进行的所有订单
+                        self.cancel_all()
+                    self.target_volume = -1
             
             else:
                 """ 平仓 """
