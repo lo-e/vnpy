@@ -90,7 +90,7 @@ from .base import EVENT_MARTING_PORTFOLIO
 
 class MartingEngine(BaseEngine):
     """"""
-    execute_mode = StrategyExecuteMode.FORWARD_ONLY
+    execute_mode = StrategyExecuteMode.FORWARD_INVERSE
 
     engine_type = EngineType.LIVE  # live trading engine
 
