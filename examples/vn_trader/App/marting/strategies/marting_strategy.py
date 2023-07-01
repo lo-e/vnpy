@@ -510,11 +510,12 @@ class MartingStrategy(CtaTemplate):
                         # 是否达到目标价位
                         if self.direction == Direction.LONG:
                             # 根据RSI判断是否超卖
-                            rsi_cross = False
-                            for rsi in strategy_rsi_array:
-                                if rsi <= 25:
-                                    rsi_cross = True
-                                    break
+                            # rsi_cross = False
+                            # for rsi in strategy_rsi_array:
+                            #     if rsi <= 25:
+                            #         rsi_cross = True
+                            #         break
+                            rsi_cross = True
 
                             if (
                                 rsi_cross
@@ -526,11 +527,12 @@ class MartingStrategy(CtaTemplate):
 
                         elif self.direction == Direction.SHORT:
                             # 根据RSI判断是否超买
-                            rsi_cross = False
-                            for rsi in strategy_rsi_array:
-                                if rsi >= 75:
-                                    rsi_cross = True
-                                    break
+                            # rsi_cross = False
+                            # for rsi in strategy_rsi_array:
+                            #     if rsi >= 75:
+                            #         rsi_cross = True
+                            #         break
+                            rsi_cross = True
 
                             if (
                                 rsi_cross
@@ -594,11 +596,12 @@ class MartingStrategy(CtaTemplate):
                             # 是否达到目标价位
                             if self.direction == Direction.LONG:
                                 # 根据RSI判断是否超卖
-                                rsi_cross = False
-                                for rsi in strategy_rsi_array:
-                                    if rsi <= 25:
-                                        rsi_cross = True
-                                        break
+                                # rsi_cross = False
+                                # for rsi in strategy_rsi_array:
+                                #     if rsi <= 25:
+                                #         rsi_cross = True
+                                #         break
+                                rsi_cross = True
 
                                 if (
                                     rsi_cross
@@ -610,11 +613,12 @@ class MartingStrategy(CtaTemplate):
 
                             elif self.direction == Direction.SHORT:
                                 # 根据RSI判断是否超买
-                                rsi_cross = False
-                                for rsi in strategy_rsi_array:
-                                    if rsi >= 75:
-                                        rsi_cross = True
-                                        break
+                                # rsi_cross = False
+                                # for rsi in strategy_rsi_array:
+                                #     if rsi >= 75:
+                                #         rsi_cross = True
+                                #         break
+                                rsi_cross = True
 
                                 if (
                                     rsi_cross
@@ -1199,12 +1203,13 @@ class MartingBacktesting(object):
             increase_price_cross = False
             if self.direction == Direction.LONG:
                 # 根据RSI判断是否超卖
-                rsi_cross = False
-                for rsi in self.rsi_array:
-                    if rsi <= 25:
-                        rsi_cross = True
-                        break
-
+                # rsi_cross = False
+                # for rsi in self.rsi_array:
+                #     if rsi <= 25:
+                #         rsi_cross = True
+                #         break
+                rsi_cross = True
+                
                 if (
                     rsi_cross
                     and self.ma_price <= self.position_increase_price
@@ -1215,11 +1220,12 @@ class MartingBacktesting(object):
 
             if self.direction == Direction.SHORT:
                 # 根据RSI判断是否超买
-                rsi_cross = False
-                for rsi in self.rsi_array:
-                    if rsi >= 75:
-                        rsi_cross = True
-                        break
+                # rsi_cross = False
+                # for rsi in self.rsi_array:
+                #     if rsi >= 75:
+                #         rsi_cross = True
+                #         break
+                rsi_cross = True
 
                 if (
                     rsi_cross

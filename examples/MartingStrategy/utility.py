@@ -573,5 +573,5 @@ if __name__ == "__main__":
 
     # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
     analyse_trending_continuous(
-        exchange="BINANCE", min_continuous="1", target_dir="2022-01-01_2023-12-28", by_month=False, for_trade_setting=False
+        exchange="BINANCE", min_continuous="1", target_dir="2021-01-01_2022-01-01", by_month=False, for_trade_setting=False
     )
