@@ -323,6 +323,10 @@ class MartingStrategy(CtaTemplate):
             manual_tick.datetime = dt
             self.on_tick(manual_tick)
 
+            # 新周期开始，取消未成交的所有订单
+            self.cancel_all()
+            self.target_volume = -1
+
         # 检查同步数据
         self.put_sync_event()
         super().on_timer()
@@ -431,7 +435,143 @@ class MartingStrategy(CtaTemplate):
 
     # 生成正向信号
     def generate_forward_signal(self, tick):
-        pass
+        # 有正在执行的开平仓操作，不进行后续判断
+        if self.target_volume >= 0:
+            return
+
+        # 策略成交价格
+        strategy_ma_price = self.strategy_status["ma_price"]
+        trade_price = round_to(strategy_ma_price, self.symbol_price_tick)
+        if not strategy_ma_price:
+            self.raise_error(f"均线价格异常")
+
+        # 邮件通知内容
+        email_msg = ""
+        
+        # ====== 检查平仓 ======
+        if self.pos:
+            if not self.position_close_price:
+                self.raise_error(f"平仓价格异常")
+            
+            # 平仓价格
+            target_close_price = self.position_close_price
+
+            # 选择盈利最大化平仓价格
+            strategy_reduce_price = self.strategy_status["position_reduce_price"]
+            if self.direction == Direction.LONG:
+                target_close_price = min(self.position_close_price, strategy_reduce_price)
+            
+            if self.direction == Direction.SHORT:
+                target_close_price = max(self.position_close_price, strategy_reduce_price)
+
+            # 是否达到目标价位
+            if self.direction == Direction.LONG:
+                if (
+                    tick.last_price >= target_close_price
+                ):
+                    self.target_volume = 0
+
+            if self.direction == Direction.SHORT:
+                if (
+                    tick.last_price <= target_close_price
+                ):
+                    self.target_volume = 0
+
+            if self.target_volume == 0:
+                # 邮件提醒
+                position_value = abs(self.pos) * self.position_price
+                email_msg += f"\n平仓：持仓价值{position_value}"
+                self.send_email(content=email_msg)
+
+                # 提交订单
+                self.check_order()
+
+        # ====== 检查建仓 ======
+        if self.target_volume < 0 and not self.pos:
+            open_cross_maker = False
+            open_cross_taker = False
+            strategy_trending_step = self.strategy_status["trending_step"]
+            strategy_reduce_price = self.strategy_status[
+                "position_reduce_price"
+            ]
+            strategy_position_increase_price = self.strategy_status[
+                "position_increase_price"
+            ]
+
+            if not strategy_position_increase_price:
+                self.raise_error(f"建仓加仓价格异常")
+
+            if strategy_trending_step == 2:
+                # 价格满足条件发出Maker委托单
+                if self.direction == Direction.LONG:
+                    if (strategy_ma_price <= strategy_position_increase_price
+                        and tick.last_price < trade_price
+                    ):
+                        open_cross_maker = True
+
+                elif self.direction == Direction.SHORT:
+                    if (strategy_ma_price >= strategy_position_increase_price
+                        and tick.last_price > trade_price
+                    ):
+                        open_cross_maker = True
+
+                if open_cross_maker:
+                    # 邮件提醒
+                    email_msg += f"\n建仓【Maker】：当前价格{tick.last_price} 目标价格：{trade_price}"
+            
+            elif strategy_trending_step >= 3:
+                # 价格满足调价发出Taker委托单
+                if self.direction == Direction.LONG:
+                    trade_price = strategy_reduce_price * (1 - 0.02)
+                    if (tick.last_price <= trade_price and tick.last_price >= trade_price + self.symbol_price_tick * 5):
+                        open_cross_taker = True
+
+                elif self.direction == Direction.SHORT:
+                    trade_price = strategy_reduce_price * (1 + 0.02)
+                    if (tick.last_price >= trade_price and tick.last_price <= trade_price + self.symbol_price_tick * 5):
+                        open_cross_taker = True
+
+                if open_cross_taker:
+                    # 邮件提醒
+                    email_msg += f"\n建仓【Taker】：当前价格{tick.last_price} 目标价格：{trade_price}"
+
+            if open_cross_maker or open_cross_taker:
+                target_value = self.portfolio.portfolioValue * 2.5
+                self.target_volume = target_value / trade_price
+                self.target_volume = ceil_to(
+                    self.target_volume, self.symbol_min_volume
+                )
+
+                # 邮件提醒
+                email_msg += f"\n目标持仓：{self.target_volume}"
+
+                # 判断组合持仓是否杠杆过大
+                changed_volume = self.target_volume - abs(self.pos)
+                changed_volume = round_to(changed_volume, self.symbol_min_volume)
+                open_value = changed_volume * trade_price
+                portfolio_open_cross = self.portfolio.check_open_cross(open_value=open_value)
+                if portfolio_open_cross:
+                    # 邮件通知
+                    if email_msg:
+                        self.send_email(content=email_msg)
+                    self.open_email_suspend = False
+
+                    # 提交订单
+                    if open_cross_maker:
+                        self.check_order(price=trade_price)
+
+                    elif open_cross_taker:
+                        self.check_order()
+
+                else:
+                    if not self.open_email_suspend:
+                        self.open_email_suspend = True
+                        email_msg += f"\n\n建仓不通过【组合持仓价值超过限制】 当前组合持仓价值：{self.portfolio.total_strategy_value} 建仓价值：{open_value}"
+                        self.send_email(content=email_msg)
+
+                        # 取消正在进行的所有订单
+                        self.cancel_all()
+                    self.target_volume = -1
     
     # 生成反向信号
     def generate_inverse_signal(self, tick):
@@ -498,7 +638,6 @@ class MartingStrategy(CtaTemplate):
             strategy_position_increase_price = self.strategy_status[
                 "position_increase_price"
             ]
-            strategy_trending_group = self.strategy_status["current_trending_group"]
 
             if not strategy_position_increase_price:
                 self.raise_error(f"建仓加仓价格异常")
@@ -773,7 +912,7 @@ class MartingStrategy(CtaTemplate):
         # 回测数据
         self.start_backtesting()
 
-    def check_order(self):
+    def check_order(self, price:float=0):
         """根据目标仓位发出订单"""
         if not self.trading or not self.tick:
             return
@@ -789,30 +928,42 @@ class MartingStrategy(CtaTemplate):
             if self.direction == Direction.LONG:
                 if changed_volume > 0:
                     # 加仓
+                    if not price:
+                        price = self.tick.last_price + self.symbol_price_tick * 20
+
                     super().buy(
-                        self.tick.last_price + self.symbol_price_tick * 20,
+                        price,
                         abs(changed_volume),
                     )
 
                 elif changed_volume < 0:
                     # 平仓
+                    if not price:
+                        price = self.tick.last_price - self.symbol_price_tick * 20
+
                     super().sell(
-                        self.tick.last_price - self.symbol_price_tick * 20,
+                        price,
                         abs(changed_volume),
                     )
 
             elif self.direction == Direction.SHORT:
                 if changed_volume > 0:
                     # 加仓
+                    if not price:
+                        price = self.tick.last_price - self.symbol_price_tick * 20
+
                     super().short(
-                        self.tick.last_price - self.symbol_price_tick * 20,
+                        price,
                         abs(changed_volume),
                     )
 
                 elif changed_volume < 0:
                     # 平仓
+                    if not price:
+                        price = self.tick.last_price + self.symbol_price_tick * 20
+
                     super().cover(
-                        self.tick.last_price + self.symbol_price_tick * 20,
+                        price,
                         abs(changed_volume),
                     )
 
@@ -835,37 +986,54 @@ class MartingStrategy(CtaTemplate):
             trade_volume = trade.volume
             is_open = False
             if self.direction == Direction.LONG:
-                if trade.direction == Direction.LONG:
-                    # 加仓后的持仓价值
-                    self.position_value += trade_price * trade_volume
-                    is_open = True
+                if self.forward:
+                    # 趋势追踪策略
+                    if trade.direction == Direction.SHORT:
+                        is_open = True
 
                 else:
-                    # 平仓后的持仓价值
-                    self.position_value = self.position_price * abs(self.pos)
+                    # 趋势反转策略
+                    if trade.direction == Direction.LONG:
+                        is_open = True
 
             elif self.direction == Direction.SHORT:
-                if trade.direction == Direction.SHORT:
-                    # 加仓后的持仓价值
-                    self.position_value += trade_price * trade_volume
-                    is_open = True
+                if self.forward:
+                    # 趋势追踪策略
+                    if trade.direction == Direction.LONG:
+                        is_open = True
 
                 else:
-                    # 平仓后的持仓价值
-                    self.position_value = self.position_price * abs(self.pos)
+                    # 趋势反转策略
+                    if trade.direction == Direction.SHORT:
+                        is_open = True
 
             if is_open:
+                # 加仓后的持仓价值
+                self.position_value += trade_price * trade_volume
+
                 # 持仓均价
                 self.position_price = self.position_value / abs(self.pos)
 
                 # 平仓、加仓价格
-                if self.direction == Direction.LONG:
-                    self.position_close_price = self.position_price * (1 + 0.01)
-                    self.position_increase_price = self.position_price * (1 - 0.08)
+                if self.forward:
+                    if self.direction == Direction.LONG:
+                        self.position_close_price = self.position_price * (1 + 0.02)
+                    
+                    elif self.direction == Direction.SHORT:
+                        self.position_close_price = self.position_price * (1 - 0.02)
 
-                elif self.direction == Direction.SHORT:
-                    self.position_close_price = self.position_price * (1 - 0.01)
-                    self.position_increase_price = self.position_price * (1 + 0.08)
+                else:
+                    if self.direction == Direction.LONG:
+                        self.position_close_price = self.position_price * (1 + 0.01)
+                        self.position_increase_price = self.position_price * (1 - 0.08)
+
+                    elif self.direction == Direction.SHORT:
+                        self.position_close_price = self.position_price * (1 - 0.01)
+                        self.position_increase_price = self.position_price * (1 + 0.08)
+            
+            else:
+                # 平仓后的持仓价值
+                self.position_value = self.position_price * abs(self.pos)
 
         else:
             # 重置持仓价值、持仓均价、平仓价格
