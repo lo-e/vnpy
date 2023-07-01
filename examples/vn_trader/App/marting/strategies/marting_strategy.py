@@ -62,8 +62,6 @@ class MartingStrategy(CtaTemplate):
         "position_increase_price",
         "current_pnl_rate",
         "trending_step",
-        "manual_top",
-        "manual_top_completed",
         "target_volume",
         "strategy_position_price",
         "strategy_position_reduce_price",
@@ -130,8 +128,6 @@ class MartingStrategy(CtaTemplate):
         self.position_increase_price = 0 # 加仓价格
         self.current_pnl_rate = ""  # 当前持仓亏损比率【基于Tick数据实时计算】
         self.trending_step = 0  # 趋势追踪等级
-        self.manual_top = False # 是否手动加仓到最高等级
-        self.manual_top_completed = False # 手动加仓最高等级完成
         self.tick_dt = None # 最新的tick时间
         self.tick_trade_enable = False  # Tick数据时间在回测后的指定范围内允许交易
         self.latest_price = 0 # 最新的tick价格
@@ -302,9 +298,6 @@ class MartingStrategy(CtaTemplate):
 
         except:
             pass
-        
-        # 判断是否手动加仓到最高等级
-        self.check_manual_top()
 
         # 结束回测
         self.is_backtesting = False
@@ -479,10 +472,6 @@ class MartingStrategy(CtaTemplate):
 
             # 下一实盘趋势追踪等级
             next_trending_step = 0
-
-            # 是否手动加仓最高等级
-            manual_top_trying = False
-
             if self.target_volume < 0:
                 # ====== 检查建仓加仓 ======
                 strategy_trending_step = self.strategy_status["trending_step"]
@@ -510,11 +499,12 @@ class MartingStrategy(CtaTemplate):
                         # 是否达到目标价位
                         if self.direction == Direction.LONG:
                             # 根据RSI判断是否超卖
-                            rsi_cross = False
-                            for rsi in strategy_rsi_array:
-                                if rsi <= 25:
-                                    rsi_cross = True
-                                    break
+                            # rsi_cross = False
+                            # for rsi in strategy_rsi_array:
+                            #     if rsi <= 25:
+                            #         rsi_cross = True
+                            #         break
+                            rsi_cross = True
 
                             if (
                                 rsi_cross
@@ -526,11 +516,12 @@ class MartingStrategy(CtaTemplate):
 
                         elif self.direction == Direction.SHORT:
                             # 根据RSI判断是否超买
-                            rsi_cross = False
-                            for rsi in strategy_rsi_array:
-                                if rsi >= 75:
-                                    rsi_cross = True
-                                    break
+                            # rsi_cross = False
+                            # for rsi in strategy_rsi_array:
+                            #     if rsi >= 75:
+                            #         rsi_cross = True
+                            #         break
+                            rsi_cross = True
 
                             if (
                                 rsi_cross
@@ -594,11 +585,12 @@ class MartingStrategy(CtaTemplate):
                             # 是否达到目标价位
                             if self.direction == Direction.LONG:
                                 # 根据RSI判断是否超卖
-                                rsi_cross = False
-                                for rsi in strategy_rsi_array:
-                                    if rsi <= 25:
-                                        rsi_cross = True
-                                        break
+                                # rsi_cross = False
+                                # for rsi in strategy_rsi_array:
+                                #     if rsi <= 25:
+                                #         rsi_cross = True
+                                #         break
+                                rsi_cross = True
 
                                 if (
                                     rsi_cross
@@ -610,11 +602,12 @@ class MartingStrategy(CtaTemplate):
 
                             elif self.direction == Direction.SHORT:
                                 # 根据RSI判断是否超买
-                                rsi_cross = False
-                                for rsi in strategy_rsi_array:
-                                    if rsi >= 75:
-                                        rsi_cross = True
-                                        break
+                                # rsi_cross = False
+                                # for rsi in strategy_rsi_array:
+                                #     if rsi >= 75:
+                                #         rsi_cross = True
+                                #         break
+                                rsi_cross = True
 
                                 if (
                                     rsi_cross
@@ -703,51 +696,6 @@ class MartingStrategy(CtaTemplate):
 
                     # 邮件提醒
                     email_msg += f"\n持仓变化：{changed_volume} 目标持仓：{self.target_volume}"
-                
-                else:
-                    """ 手动加仓到最高等级 """
-                    if self.manual_top and not self.manual_top_completed:
-                        # 判断当前回测持仓盈亏是否满足指定条件
-                        strategy_position_price = self.strategy_status["position_price"]
-                        tick_price_cross = False
-                        if (
-                            self.direction == Direction.LONG
-                            and tick.last_price < strategy_position_price * (1 - 0.01)
-                        ):
-                            tick_price_cross = True
-
-                        elif (
-                            self.direction == Direction.SHORT
-                            and tick.last_price > strategy_position_price * (1 + 0.01)
-                        ):
-                            tick_price_cross = True
-
-                        if tick_price_cross:
-                            # 计算加仓数量
-                            current_position_value = abs(self.pos) * self.position_price
-                            changed_volume = 0
-
-                            target_value = (
-                                self.portfolio.portfolioValue * self.init_value_rate
-                            ) * (10 ** (self.top_step - self.bottom_step))
-                            changed_volume = (
-                                target_value - current_position_value
-                            ) / tick.last_price
-                            changed_volume = round_to(
-                                changed_volume, self.symbol_min_volume
-                            )
-                            
-                            # 加仓后的目标持仓数量
-                            self.target_volume = (
-                                changed_volume + abs(self.pos) if changed_volume > 0 else -1
-                            )
-
-                            # 邮件提醒
-                            email_msg = f"\n手动加仓到最高等级"
-                            email_msg += f"\n持仓变化：{changed_volume} 目标持仓：{self.target_volume}"
-
-                            # 加仓尝试
-                            manual_top_trying = True
 
             # 有正在执行的开平仓操作，立即发出订单
             if self.target_volume >= 0:
@@ -764,10 +712,6 @@ class MartingStrategy(CtaTemplate):
                             
                             # 更新策略组合
                             self.portfolio.update_trending_top()
-                        
-                        if manual_top_trying:
-                            # 手动加仓最高等级完成
-                            self.manual_top_completed = True
                         
                         # 邮件通知
                         if email_msg:
@@ -790,10 +734,6 @@ class MartingStrategy(CtaTemplate):
 
                     # 更新策略组合
                     self.portfolio.update_trending_top()
-
-                    # 更新手动加仓最高等级
-                    self.manual_top = False
-                    self.manual_top_completed = False
 
                     # 邮件通知
                     if email_msg:
@@ -857,25 +797,6 @@ class MartingStrategy(CtaTemplate):
                         self.tick.last_price + self.symbol_price_tick * 20,
                         abs(changed_volume),
                     )
-
-    def check_manual_top(self):
-        return
-    
-        if self.manual_top:
-            return
-        
-        if self.trending_step and self.strategy_status and self.trending_step == self.top_step-1 and self.trending_step == self.strategy_status["trending_step"]:
-            trending_group = self.strategy_status["current_trending_group"]
-            if len(trending_group) == self.trending_step:
-                last_trending_datetime = trending_group[-1]["datetime"]
-                last_trending_datetime = datetime.strptime(last_trending_datetime, "%Y-%m-%d %H:%M:%S")
-                sub = (self.strategy_to - last_trending_datetime).total_seconds()
-                if  3 * 60 * 60 <= sub <= 12 * 60 * 60:
-                    loss_rate = self.strategy_status["max_loss_rate"]
-                    loss_rate = float(loss_rate.split("%")[0])
-                    if loss_rate >= -3.0:
-                        self.manual_top = True
-
 
     def on_order(self, order):
         """委托推送"""
@@ -1199,12 +1120,13 @@ class MartingBacktesting(object):
             increase_price_cross = False
             if self.direction == Direction.LONG:
                 # 根据RSI判断是否超卖
-                rsi_cross = False
-                for rsi in self.rsi_array:
-                    if rsi <= 25:
-                        rsi_cross = True
-                        break
-
+                # rsi_cross = False
+                # for rsi in self.rsi_array:
+                #     if rsi <= 25:
+                #         rsi_cross = True
+                #         break
+                rsi_cross = True
+                
                 if (
                     rsi_cross
                     and self.ma_price <= self.position_increase_price
@@ -1215,11 +1137,12 @@ class MartingBacktesting(object):
 
             if self.direction == Direction.SHORT:
                 # 根据RSI判断是否超买
-                rsi_cross = False
-                for rsi in self.rsi_array:
-                    if rsi >= 75:
-                        rsi_cross = True
-                        break
+                # rsi_cross = False
+                # for rsi in self.rsi_array:
+                #     if rsi >= 75:
+                #         rsi_cross = True
+                #         break
+                rsi_cross = True
 
                 if (
                     rsi_cross
