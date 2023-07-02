@@ -525,9 +525,10 @@ def generate_setting(symbol_open_dict: dict, exchange:str):
         if step_length:
             init_value_rate = init_value / portfolioValue
             bottom_step = top_step - (step_length - 1)
+            forward_step = 3
             #"""
             # 固定参数使用
-            top_step = 9
+            top_step = 100
             init_value = max(10, init_value)
             bottom_step = int(math.log10(init_value)) + 2
             init_value_rate = init_value / portfolioValue
@@ -543,6 +544,7 @@ def generate_setting(symbol_open_dict: dict, exchange:str):
                 "bottom_step": bottom_step,
                 "top_step": top_step,
                 "forward": forward,
+                "forward_step": forward_step,
                 "start": True
                 }
             symbol_setting_list.append(data_long)
@@ -556,6 +558,7 @@ def generate_setting(symbol_open_dict: dict, exchange:str):
                 "bottom_step": bottom_step,
                 "top_step": top_step,
                 "forward": forward,
+                "forward_step": forward_step,
                 "start": True
                 }
             symbol_setting_list.append(data_short)

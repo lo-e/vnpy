@@ -873,7 +873,7 @@ class MartingEngine(BaseEngine):
                 self.add_strategy(setting)
 
         # 马丁组合策略合约列表
-        self.martingPortfolio.strategy_symbols = list(symbol_set)
+        self.martingPortfolio.set_strategy_symbols(symbols=list(symbol_set))
 
     def add_strategy(self, setting):
         """
