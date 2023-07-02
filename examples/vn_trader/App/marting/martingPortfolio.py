@@ -321,10 +321,8 @@ class MartingPortfolio(object):
             if not strategy.tick:
                 symbol = strategy.vt_symbol.split(".")[0]
                 if strategy.forward:
-                    symbol = f"{symbol}_趋势追踪"
                     loss_tick_symbols_forward.add(symbol)
                 else:
-                    symbol = f"{symbol}_反转"
                     loss_tick_symbols_inverse.add(symbol)
 
             # 回测数据缺失的数量
@@ -416,7 +414,7 @@ class MartingPortfolio(object):
                             highlight_count += 1
 
         total_loss_tick_count = len(loss_tick_symbols_forward) + len(loss_tick_symbols_inverse)
-        main_content = f"策略总数：{total}\n行情缺失合约{total_loss_tick_count}：{loss_tick_symbols_forward}\n{loss_tick_symbols_inverse}\n回测周期b：{b_min_datetime} - {b_max_datetime}\n回测周期s：{s_min_datetime} - {s_max_datetime}"
+        main_content = f"策略总数：{total}\n行情缺失合约{total_loss_tick_count}：\n（趋势追踪）\n{loss_tick_symbols_forward}\n（反转）\n{loss_tick_symbols_inverse}\n回测周期b：{b_min_datetime} - {b_max_datetime}\n回测周期s：{s_min_datetime} - {s_max_datetime}"
         """ 邮件发送通知 """
         # 趋势追踪
         if forward_count:
