@@ -556,7 +556,11 @@ class MartingStrategy(CtaTemplate):
                     email_msg += f"\n趋势追踪建仓【Taker】：当前价格{tick.last_price} 目标价格：{trade_price}"
 
             if open_cross_maker or open_cross_taker:
-                target_value = self.portfolio.portfolioValue * 2.5
+                # fake
+                symbol_leverage = self.portfolio.strategys_symbol_leverage.get(self.vt_symbol.split(".")[0], 0)
+                target_value = 30 * 0.95 * symbol_leverage
+                
+                # target_value = self.portfolio.portfolioValue * 2.5
                 self.target_volume = target_value / trade_price
                 self.target_volume = ceil_to(
                     self.target_volume, self.symbol_min_volume
