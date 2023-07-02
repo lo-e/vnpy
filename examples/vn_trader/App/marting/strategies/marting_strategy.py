@@ -19,7 +19,6 @@ from App.marting.martingPortfolio import BAR_DOWNLOAD_GENERATE_COMPLETE
 from vnpy.event import Event
 from copy import copy
 
-
 class MartingStrategy(CtaTemplate):
     """马丁策略"""
 
@@ -42,6 +41,7 @@ class MartingStrategy(CtaTemplate):
         "bottom_step",
         "top_step",
         "forward",
+        "forward_step",
     ]
 
     # 变量列表，保存了变量的名称
@@ -51,6 +51,8 @@ class MartingStrategy(CtaTemplate):
         "bottom_step",
         "top_step",
         "forward",
+        "forward_step",
+        "forward_start",
         "symbol_price_tick",
         "symbol_min_volume",
         "backtesting_to",
@@ -83,6 +85,7 @@ class MartingStrategy(CtaTemplate):
         "position_close_price",
         "position_increase_price",
         "trending_step",
+        "forward_start",
     ]
 
     # 监控列表
@@ -115,13 +118,15 @@ class MartingStrategy(CtaTemplate):
 
         # 策略参数
         self.init_value_rate = 0  # 初始持仓价值占组合价值比率
-        self.bottom_step = 0  # 趋势追踪最低等级
-        self.top_step = 0  # 趋势追踪最高等级
-        self.forward = True # 趋势策略还是反转策略
+        self.bottom_step = 0  # 趋势反转最低等级
+        self.top_step = 0  # 趋势反转最高等级
+        self.forward = True # 趋势追踪还是反转策略
+        self.forward_step = 0 # 趋势追踪最低等级
 
         # 策略变量
         self.tick: TickData = None
         self.direction: Direction = Direction.NET  # 交易方向
+        self.forward_start = False # 当前趋势追踪进行中
         self.symbol_min_volume: float = 0.0
         self.symbol_price_tick: float = 0.0
         self.bar: BarData = None  # 最新K线
@@ -264,6 +269,13 @@ class MartingStrategy(CtaTemplate):
             self.backtesting_to = backtesting_data[-1].datetime
             self.strategy_status = status
             self.strategy_to = backtesting_data[-1].datetime
+            if self.forward:
+                backtesting_trending_step = self.backtesting_status["trending_step"]
+                if backtesting_trending_step >= self.forward_step and abs(self.pos):
+                    self.forward_start = True
+                
+                if backtesting_trending_step < self.forward_step:
+                    self.forward_start = False
 
             # 实时数据
             strategy_data = []
@@ -509,9 +521,7 @@ class MartingStrategy(CtaTemplate):
             if not strategy_position_increase_price:
                 self.raise_error(f"建仓加仓价格异常")
 
-            # fake
-            if strategy_trending_step == 1:
-            # if strategy_trending_step == 2:
+            if strategy_trending_step == self.forward_step - 1:
                 # 价格满足条件发出Maker委托单
                 if self.direction == Direction.LONG:
                     if (strategy_ma_price <= strategy_position_increase_price
@@ -529,9 +539,7 @@ class MartingStrategy(CtaTemplate):
                     # 邮件提醒
                     email_msg += f"\n趋势追踪建仓【Maker】：当前价格{tick.last_price} 目标价格：{trade_price}"
             
-            # fake
-            elif strategy_trending_step >= 2:
-            # elif strategy_trending_step >= 3:
+            elif strategy_trending_step >= self.forward_step:
                 # 价格满足条件发出Taker委托单
                 if self.direction == Direction.LONG:
                     trade_price = strategy_reduce_price * (1 - 0.02)
