@@ -939,45 +939,89 @@ class MartingStrategy(CtaTemplate):
             changed_volume = round_to(changed_volume, self.symbol_min_volume)
             if self.direction == Direction.LONG:
                 if changed_volume > 0:
-                    # 加仓
-                    if not price:
-                        price = self.tick.last_price + self.symbol_price_tick * 20
+                    if self.forward:
+                        # 趋势追踪加仓
+                        if not price:
+                            price = self.tick.last_price - self.symbol_price_tick * 20
 
-                    super().buy(
-                        price,
-                        abs(changed_volume),
-                    )
+                        super().short(
+                            price,
+                            abs(changed_volume),
+                        )
+
+                    else:
+                        # 反转加仓
+                        if not price:
+                            price = self.tick.last_price + self.symbol_price_tick * 20
+
+                        super().buy(
+                            price,
+                            abs(changed_volume),
+                        )
 
                 elif changed_volume < 0:
-                    # 平仓
-                    if not price:
-                        price = self.tick.last_price - self.symbol_price_tick * 20
+                    if self.forward:
+                        # 趋势追踪平仓
+                        if not price:
+                            price = self.tick.last_price + self.symbol_price_tick * 20
 
-                    super().sell(
-                        price,
-                        abs(changed_volume),
-                    )
+                        super().cover(
+                            price,
+                            abs(changed_volume),
+                        )
+
+                    else:
+                        # 反转平仓
+                        if not price:
+                            price = self.tick.last_price - self.symbol_price_tick * 20
+
+                        super().sell(
+                            price,
+                            abs(changed_volume),
+                        )
 
             elif self.direction == Direction.SHORT:
                 if changed_volume > 0:
-                    # 加仓
-                    if not price:
-                        price = self.tick.last_price - self.symbol_price_tick * 20
+                    if self.forward:
+                        # 趋势追踪加仓
+                        if not price:
+                            price = self.tick.last_price + self.symbol_price_tick * 20
 
-                    super().short(
-                        price,
-                        abs(changed_volume),
-                    )
+                        super().buy(
+                            price,
+                            abs(changed_volume),
+                        )
+                    
+                    else:
+                        # 反转加仓
+                        if not price:
+                            price = self.tick.last_price - self.symbol_price_tick * 20
+
+                        super().short(
+                            price,
+                            abs(changed_volume),
+                        )
 
                 elif changed_volume < 0:
-                    # 平仓
-                    if not price:
-                        price = self.tick.last_price + self.symbol_price_tick * 20
+                    if self.forward:
+                        # 趋势追踪平仓
+                        if not price:
+                            price = self.tick.last_price - self.symbol_price_tick * 20
 
-                    super().cover(
-                        price,
-                        abs(changed_volume),
-                    )
+                        super().sell(
+                            price,
+                            abs(changed_volume),
+                        )
+                    
+                    else:
+                        # 反转平仓
+                        if not price:
+                            price = self.tick.last_price + self.symbol_price_tick * 20
+
+                        super().cover(
+                            price,
+                            abs(changed_volume),
+                        )
 
     def on_order(self, order):
         """委托推送"""
