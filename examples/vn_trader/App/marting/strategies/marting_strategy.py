@@ -539,7 +539,7 @@ class MartingStrategy(CtaTemplate):
                     # 邮件提醒
                     email_msg += f"\n趋势追踪建仓【Maker】：当前价格{tick.last_price} 目标价格：{trade_price}"
             
-            elif strategy_trending_step >= self.forward_step:
+            elif (strategy_trending_step == self.forward_step) or (strategy_trending_step > self.forward_step and self.forward_start):
                 # 价格满足条件发出Taker委托单
                 if self.direction == Direction.LONG:
                     trade_price = strategy_reduce_price * (1 - 0.02)
