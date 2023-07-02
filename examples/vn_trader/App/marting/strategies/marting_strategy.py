@@ -398,9 +398,16 @@ class MartingStrategy(CtaTemplate):
         # 计算当前持仓盈亏比率
         if self.position_price:
             if self.direction == Direction.LONG:
-                direction_value = 1
+                if self.forward:
+                    direction_value = -1
+                else:
+                    direction_value = 1
             else:
-                direction_value = -1
+                if self.forward:
+                    direction_value = 1
+                else:
+                    direction_value = -1
+                    
             self.current_pnl_rate = (
                 ((tick.last_price / self.position_price) - 1)
                 * 100
