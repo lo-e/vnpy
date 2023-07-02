@@ -532,7 +532,7 @@ class MartingStrategy(CtaTemplate):
             # fake
             elif strategy_trending_step >= 2:
             # elif strategy_trending_step >= 3:
-                # 价格满足调价发出Taker委托单
+                # 价格满足条件发出Taker委托单
                 if self.direction == Direction.LONG:
                     trade_price = strategy_reduce_price * (1 - 0.02)
                     if (tick.last_price <= trade_price and tick.last_price >= trade_price + self.symbol_price_tick * 5):
