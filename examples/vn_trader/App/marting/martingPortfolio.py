@@ -414,7 +414,7 @@ class MartingPortfolio(object):
                             highlight_count += 1
 
         total_loss_tick_count = len(loss_tick_symbols_forward) + len(loss_tick_symbols_inverse)
-        main_content = f"策略总数：{total}\n行情缺失合约{total_loss_tick_count}：\n（趋势追踪）\n{loss_tick_symbols_forward}\n（反转）\n{loss_tick_symbols_inverse}\n回测周期b：{b_min_datetime} - {b_max_datetime}\n回测周期s：{s_min_datetime} - {s_max_datetime}"
+        main_content = f"策略总数：{total}\n行情缺失合约{total_loss_tick_count}：\n（趋势追踪{len(loss_tick_symbols_forward)}）\n{loss_tick_symbols_forward}\n（反转{len(loss_tick_symbols_inverse)}）\n{loss_tick_symbols_inverse}\n回测周期b：{b_min_datetime} - {b_max_datetime}\n回测周期s：{s_min_datetime} - {s_max_datetime}"
         """ 邮件发送通知 """
         # 趋势追踪
         if forward_count:

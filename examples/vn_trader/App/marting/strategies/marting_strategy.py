@@ -50,6 +50,7 @@ class MartingStrategy(CtaTemplate):
         "init_value_rate",
         "bottom_step",
         "top_step",
+        "forward",
         "symbol_price_tick",
         "symbol_min_volume",
         "backtesting_to",
