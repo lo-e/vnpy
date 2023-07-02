@@ -104,6 +104,9 @@ class MartingPortfolio(object):
         self.strategys_backtesting_history = {}
         self.load_backtesting_history()
 
+        # 策略组合合约杠杆
+        self.strategys_symbol_leverage = {}
+
     def on_update_today(self):
         self.today = copy(self.engine.today)
         # 同步到数据库
@@ -485,4 +488,22 @@ class MartingPortfolio(object):
                     print(f"{strategy_name}\t回测用时：{time() - start_t}s\n")
             except:
                 pass
-            # sleep(0.1)
+
+    def set_strategy_symbols(self, symbols:list):
+        self.strategy_symbols = symbols
+        self.load_symbol_leverage_data()
+
+    def load_symbol_leverage_data(self):
+        # 读取json文件
+        exchange = self.strategy_symbols[0].split(".")[-1]
+        dir = os.path.dirname(os.path.realpath(__file__))
+        dir_path = Path(dir).joinpath(f"leverage{DIR_SYMBOL}")
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        json_file = dir_path.joinpath(f"{exchange}.json")
+        with open(json_file, "r", encoding="utf-8") as f:
+            json_data = json.load(f)
+            if json_data:
+                self.strategys_symbol_leverage = json_data
+
+    
