@@ -407,7 +407,7 @@ class MartingStrategy(CtaTemplate):
                     direction_value = 1
                 else:
                     direction_value = -1
-                    
+
             self.current_pnl_rate = (
                 ((tick.last_price / self.position_price) - 1)
                 * 100
@@ -487,7 +487,7 @@ class MartingStrategy(CtaTemplate):
             if self.target_volume == 0:
                 # 邮件提醒
                 position_value = abs(self.pos) * self.position_price
-                email_msg += f"\n平仓：持仓价值{position_value}"
+                email_msg += f"\n趋势追踪平仓：持仓价值{position_value}"
                 self.send_email(content=email_msg)
 
                 # 提交订单
@@ -526,7 +526,7 @@ class MartingStrategy(CtaTemplate):
 
                 if open_cross_maker:
                     # 邮件提醒
-                    email_msg += f"\n建仓【Maker】：当前价格{tick.last_price} 目标价格：{trade_price}"
+                    email_msg += f"\n趋势追踪建仓【Maker】：当前价格{tick.last_price} 目标价格：{trade_price}"
             
             # fake
             elif strategy_trending_step >= 2:
@@ -544,7 +544,7 @@ class MartingStrategy(CtaTemplate):
 
                 if open_cross_taker:
                     # 邮件提醒
-                    email_msg += f"\n建仓【Taker】：当前价格{tick.last_price} 目标价格：{trade_price}"
+                    email_msg += f"\n趋势追踪建仓【Taker】：当前价格{tick.last_price} 目标价格：{trade_price}"
 
             if open_cross_maker or open_cross_taker:
                 target_value = self.portfolio.portfolioValue * 2.5
@@ -554,7 +554,7 @@ class MartingStrategy(CtaTemplate):
                 )
 
                 # 邮件提醒
-                email_msg += f"\n目标持仓：{self.target_volume}"
+                email_msg += f"\n目标持仓：{self.target_volume}\n目标持仓价值：{target_value}"
 
                 # 判断组合持仓是否杠杆过大
                 changed_volume = self.target_volume - abs(self.pos)
@@ -637,7 +637,7 @@ class MartingStrategy(CtaTemplate):
             if self.target_volume == 0:
                 # 邮件提醒
                 position_value = abs(self.pos) * self.position_price
-                email_msg += f"\n平仓：当前趋势追踪等级{self.trending_step} 持仓价值{position_value}"
+                email_msg += f"\n反转平仓：当前趋势追踪等级{self.trending_step} 持仓价值{position_value}"
 
         # 下一实盘趋势追踪等级
         next_trending_step = 0
@@ -704,7 +704,7 @@ class MartingStrategy(CtaTemplate):
 
                     if next_trending_step:
                         # 邮件提醒
-                        email_msg += f"\n加仓【下一趋势等级】：当前{self.trending_step} 即将：{next_trending_step}"
+                        email_msg += f"\n反转加仓【下一趋势等级】：当前{self.trending_step} 即将：{next_trending_step}"
 
             # 回测当前趋势追踪等级比当前实盘的高
             if not next_trending_step:
@@ -738,7 +738,7 @@ class MartingStrategy(CtaTemplate):
                             next_trending_step = strategy_trending_step
 
                             # 邮件提醒
-                            email_msg += f"\n加仓【当前趋势等级】：当前{self.trending_step} 即将：{next_trending_step}"
+                            email_msg += f"\n反转加仓【当前趋势等级】：当前{self.trending_step} 即将：{next_trending_step}"
 
             # 回测趋势追踪等级与实盘不匹配，以实盘加仓标准再次判断
             if not next_trending_step:
@@ -790,7 +790,7 @@ class MartingStrategy(CtaTemplate):
 
                         if next_trending_step:
                             # 邮件提醒
-                            email_msg = f"\n加仓【实盘下一趋势等级】：当前{self.trending_step} 即将：{next_trending_step}"
+                            email_msg = f"\n反转加仓【实盘下一趋势等级】：当前{self.trending_step} 即将：{next_trending_step}"
 
             if next_trending_step:
                 # 当前持仓价值
