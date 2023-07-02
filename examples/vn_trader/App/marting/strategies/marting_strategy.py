@@ -501,7 +501,9 @@ class MartingStrategy(CtaTemplate):
             if not strategy_position_increase_price:
                 self.raise_error(f"建仓加仓价格异常")
 
-            if strategy_trending_step == 2:
+            # fake
+            if strategy_trending_step == 1:
+            # if strategy_trending_step == 2:
                 # 价格满足条件发出Maker委托单
                 if self.direction == Direction.LONG:
                     if (strategy_ma_price <= strategy_position_increase_price
@@ -519,7 +521,9 @@ class MartingStrategy(CtaTemplate):
                     # 邮件提醒
                     email_msg += f"\n建仓【Maker】：当前价格{tick.last_price} 目标价格：{trade_price}"
             
-            elif strategy_trending_step >= 3:
+            # fake
+            elif strategy_trending_step >= 2:
+            # elif strategy_trending_step >= 3:
                 # 价格满足调价发出Taker委托单
                 if self.direction == Direction.LONG:
                     trade_price = strategy_reduce_price * (1 - 0.02)
