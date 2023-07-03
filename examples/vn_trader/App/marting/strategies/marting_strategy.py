@@ -42,6 +42,7 @@ class MartingStrategy(CtaTemplate):
         "top_step",
         "forward",
         "forward_step",
+        "forward_rate",
     ]
 
     # 变量列表，保存了变量的名称
@@ -52,6 +53,7 @@ class MartingStrategy(CtaTemplate):
         "top_step",
         "forward",
         "forward_step",
+        "forward_rate",
         "forward_start",
         "symbol_price_tick",
         "symbol_min_volume",
@@ -122,6 +124,7 @@ class MartingStrategy(CtaTemplate):
         self.top_step = 0  # 趋势反转最高等级
         self.forward = True # 趋势追踪还是反转策略
         self.forward_step = 0 # 趋势追踪最低等级
+        self.forward_rate = 0 # 强趋势指标
 
         # 策略变量
         self.tick: TickData = None
