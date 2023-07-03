@@ -10,6 +10,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -22,6 +23,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -34,6 +36,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -46,6 +49,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -58,6 +62,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -70,6 +75,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -82,6 +88,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -94,6 +101,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -106,6 +114,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -118,6 +127,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -130,6 +140,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -142,6 +153,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -154,6 +166,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -166,6 +179,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -178,6 +192,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -190,6 +205,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -202,6 +218,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -214,6 +231,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -226,6 +244,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -238,6 +257,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -250,6 +270,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -262,6 +283,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -274,6 +296,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -286,6 +309,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -298,6 +322,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -310,6 +335,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -322,6 +348,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -334,6 +361,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -346,6 +374,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -358,6 +387,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -370,6 +400,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -382,6 +413,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -394,6 +426,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -406,6 +439,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -418,6 +452,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -430,6 +465,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -442,6 +478,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -454,6 +491,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -466,6 +504,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -478,6 +517,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -490,6 +530,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -502,6 +543,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -514,6 +556,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -526,6 +569,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -538,6 +582,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -550,6 +595,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -562,6 +608,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -574,6 +621,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -586,6 +634,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -598,6 +647,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -610,6 +660,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -622,6 +673,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -634,6 +686,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -646,6 +699,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -658,6 +712,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -670,6 +725,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -682,6 +738,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -694,6 +751,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -706,6 +764,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -718,6 +777,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -730,6 +790,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -742,6 +803,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -754,6 +816,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -766,6 +829,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -778,6 +842,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -790,6 +855,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -802,6 +868,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -814,6 +881,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -826,6 +894,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -838,6 +907,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -850,6 +920,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -862,6 +933,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -874,6 +946,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -886,6 +959,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -898,6 +972,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -910,6 +985,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -922,6 +998,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -934,6 +1011,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -946,6 +1024,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -958,6 +1037,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -970,6 +1050,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -982,6 +1063,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -994,6 +1076,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1006,6 +1089,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1018,6 +1102,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1030,6 +1115,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1042,6 +1128,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1054,6 +1141,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1066,6 +1154,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1078,6 +1167,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1090,6 +1180,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1102,6 +1193,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1114,6 +1206,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1126,6 +1219,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1138,6 +1232,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1150,6 +1245,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1162,6 +1258,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1174,6 +1271,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1186,6 +1284,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1198,6 +1297,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1210,6 +1310,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1222,6 +1323,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1234,6 +1336,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1246,6 +1349,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1258,6 +1362,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1270,6 +1375,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1282,6 +1388,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1294,6 +1401,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1306,6 +1414,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1318,6 +1427,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1330,6 +1440,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1342,6 +1453,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1354,6 +1466,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1366,6 +1479,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1378,6 +1492,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1390,6 +1505,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1402,6 +1518,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1414,6 +1531,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1426,6 +1544,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1438,6 +1557,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1450,6 +1570,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1462,6 +1583,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1474,6 +1596,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1486,6 +1609,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1498,6 +1622,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1510,6 +1635,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1522,6 +1648,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1534,6 +1661,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1546,6 +1674,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1558,6 +1687,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1570,6 +1700,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1582,6 +1713,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1594,6 +1726,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1606,6 +1739,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1618,6 +1752,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1630,6 +1765,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1642,6 +1778,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1654,6 +1791,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1666,6 +1804,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1678,6 +1817,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1690,6 +1830,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1702,6 +1843,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1714,6 +1856,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1726,6 +1869,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1738,6 +1882,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1750,6 +1895,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1762,6 +1908,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1774,6 +1921,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1786,6 +1934,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1798,6 +1947,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1810,6 +1960,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1822,6 +1973,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1834,6 +1986,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1846,6 +1999,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1858,6 +2012,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1870,6 +2025,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1882,6 +2038,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1894,6 +2051,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1906,6 +2064,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1918,6 +2077,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1930,6 +2090,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1942,6 +2103,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1954,6 +2116,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1966,6 +2129,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1978,6 +2142,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -1990,6 +2155,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2002,6 +2168,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2014,6 +2181,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2026,6 +2194,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2038,6 +2207,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2050,6 +2220,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2062,6 +2233,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2074,6 +2246,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2086,6 +2259,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2098,6 +2272,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2110,6 +2285,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2122,6 +2298,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2134,6 +2311,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2146,6 +2324,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2158,6 +2337,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2170,6 +2350,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2182,6 +2363,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2194,6 +2376,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2206,6 +2389,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2218,6 +2402,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2230,6 +2415,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2242,6 +2428,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2254,6 +2441,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2266,6 +2454,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2278,6 +2467,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2290,6 +2480,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2302,6 +2493,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2314,6 +2506,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2326,6 +2519,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2338,6 +2532,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2350,6 +2545,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2362,6 +2558,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2374,6 +2571,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2386,6 +2584,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2398,6 +2597,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2410,6 +2610,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2422,6 +2623,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2434,6 +2636,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2446,6 +2649,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2458,6 +2662,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2470,6 +2675,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2482,6 +2688,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2494,6 +2701,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2506,6 +2714,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2518,6 +2727,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2530,6 +2740,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2542,6 +2753,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2554,6 +2766,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2566,6 +2779,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2578,6 +2792,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2590,6 +2805,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2602,6 +2818,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2614,6 +2831,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2626,6 +2844,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2638,6 +2857,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2650,6 +2870,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2662,6 +2883,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2674,6 +2896,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2686,6 +2909,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2698,6 +2922,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2710,6 +2935,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2722,6 +2948,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2734,6 +2961,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2741,11 +2969,12 @@
       "class_name": "MartingStrategy",
       "vt_symbol": "YFIUSDT.BINANCE",
       "direction": "多",
-      "init_value_rate": 0.1,
-      "bottom_step": 3,
+      "init_value_rate": 1.0,
+      "bottom_step": 4,
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2753,11 +2982,12 @@
       "class_name": "MartingStrategy",
       "vt_symbol": "YFIUSDT.BINANCE",
       "direction": "空",
-      "init_value_rate": 0.1,
-      "bottom_step": 3,
+      "init_value_rate": 1.0,
+      "bottom_step": 4,
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2770,6 +3000,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2782,6 +3013,7 @@
       "top_step": 100,
       "forward": false,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2794,6 +3026,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2806,6 +3039,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2818,6 +3052,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2830,6 +3065,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2842,6 +3078,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     },
     {
@@ -2854,6 +3091,7 @@
       "top_step": 100,
       "forward": true,
       "forward_step": 2,
+      "forward_rate": 12,
       "start": true
     }
   ],
