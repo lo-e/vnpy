@@ -42,6 +42,7 @@ class MartingStrategy(CtaTemplate):
         "top_step",
         "forward",
         "forward_step",
+        "forward_rate",
     ]
 
     # 变量列表，保存了变量的名称
@@ -52,6 +53,7 @@ class MartingStrategy(CtaTemplate):
         "top_step",
         "forward",
         "forward_step",
+        "forward_rate",
         "forward_start",
         "symbol_price_tick",
         "symbol_min_volume",
@@ -122,6 +124,7 @@ class MartingStrategy(CtaTemplate):
         self.top_step = 0  # 趋势反转最高等级
         self.forward = True # 趋势追踪还是反转策略
         self.forward_step = 0 # 趋势追踪最低等级
+        self.forward_rate = 0 # 强趋势指标
 
         # 策略变量
         self.tick: TickData = None
@@ -517,43 +520,68 @@ class MartingStrategy(CtaTemplate):
             strategy_position_increase_price = self.strategy_status[
                 "position_increase_price"
             ]
+            strategy_trending_group = self.strategy_status["current_trending_group"]
 
             if not strategy_position_increase_price:
                 self.raise_error(f"建仓加仓价格异常")
 
             if strategy_trending_step == self.forward_step - 1:
-                # 价格满足条件发出Maker委托单
-                if self.direction == Direction.LONG:
-                    if (strategy_ma_price <= strategy_position_increase_price
-                        and tick.last_price < trade_price
-                    ):
-                        open_cross_maker = True
+                # 强趋势指标判断
+                trending_loss_cross = False
+                current_trending_loss = float(self.strategy_max_loss_rate.replace("%", ""))
+                if abs(current_trending_loss) >= self.forward_rate:
+                     trending_loss_cross = True
+                else:
+                    for trending_data in strategy_trending_group:
+                        trending_step = trending_data["trending_step"]
+                        trending_loss = float(trending_data["max_loss_rate"].replace("%", ""))
+                        if trending_step <= self.forward_step and abs(trending_loss) >= self.forward_rate:
+                            trending_loss_cross = True
+                            break
+                
+                if trending_loss_cross:
+                    # 价格满足条件发出Maker委托单
+                    if self.direction == Direction.LONG:
+                        if (strategy_ma_price <= strategy_position_increase_price
+                            and tick.last_price < trade_price
+                        ):
+                            open_cross_maker = True
 
-                elif self.direction == Direction.SHORT:
-                    if (strategy_ma_price >= strategy_position_increase_price
-                        and tick.last_price > trade_price
-                    ):
-                        open_cross_maker = True
+                    elif self.direction == Direction.SHORT:
+                        if (strategy_ma_price >= strategy_position_increase_price
+                            and tick.last_price > trade_price
+                        ):
+                            open_cross_maker = True
 
-                if open_cross_maker:
-                    # 邮件提醒
-                    email_msg += f"\n趋势追踪建仓【Maker】：当前价格{tick.last_price} 目标价格：{trade_price}"
+                    if open_cross_maker:
+                        # 邮件提醒
+                        email_msg += f"\n趋势追踪建仓【Maker】：当前价格{tick.last_price} 目标价格：{trade_price}"
             
             elif (strategy_trending_step == self.forward_step) or (strategy_trending_step > self.forward_step and self.forward_start):
-                # 价格满足条件发出Taker委托单
-                if self.direction == Direction.LONG:
-                    trade_price = strategy_reduce_price * (1 - 0.02)
-                    if (tick.last_price <= trade_price and tick.last_price >= trade_price + self.symbol_price_tick * 5):
-                        open_cross_taker = True
+                # 强趋势指标判断
+                trending_loss_cross = False
+                for trending_data in strategy_trending_group:
+                    trending_step = trending_data["trending_step"]
+                    trending_loss = float(trending_data["max_loss_rate"].replace("%", ""))
+                    if trending_step <= self.forward_step and abs(trending_loss) >= self.forward_rate:
+                        trending_loss_cross = True
+                        break
+                
+                if trending_loss_cross:
+                    # 价格满足条件发出Taker委托单
+                    if self.direction == Direction.LONG:
+                        trade_price = strategy_reduce_price * (1 - 0.02)
+                        if (tick.last_price <= trade_price and tick.last_price >= trade_price + self.symbol_price_tick * 5):
+                            open_cross_taker = True
 
-                elif self.direction == Direction.SHORT:
-                    trade_price = strategy_reduce_price * (1 + 0.02)
-                    if (tick.last_price >= trade_price and tick.last_price <= trade_price + self.symbol_price_tick * 5):
-                        open_cross_taker = True
+                    elif self.direction == Direction.SHORT:
+                        trade_price = strategy_reduce_price * (1 + 0.02)
+                        if (tick.last_price >= trade_price and tick.last_price <= trade_price + self.symbol_price_tick * 5):
+                            open_cross_taker = True
 
-                if open_cross_taker:
-                    # 邮件提醒
-                    email_msg += f"\n趋势追踪建仓【Taker】：当前价格{tick.last_price} 目标价格：{trade_price}"
+                    if open_cross_taker:
+                        # 邮件提醒
+                        email_msg += f"\n趋势追踪建仓【Taker】：当前价格{tick.last_price} 目标价格：{trade_price}"
 
             if open_cross_maker or open_cross_taker:
                 # fake
@@ -713,7 +741,7 @@ class MartingStrategy(CtaTemplate):
                             next_trending_step = strategy_next_trending_step
 
                     else:
-                        self.raise_error("on_tick中发现direction不正确")
+                        self.raise_error("generate_inverse_signal中发现direction不正确")
 
                     if next_trending_step:
                         # 邮件提醒
@@ -799,7 +827,7 @@ class MartingStrategy(CtaTemplate):
                                 next_trending_step = target_trending_step
 
                         else:
-                            self.raise_error("on_tick中发现direction不正确")
+                            self.raise_error("generate_inverse_signal中发现direction不正确")
 
                         if next_trending_step:
                             # 邮件提醒
@@ -838,7 +866,7 @@ class MartingStrategy(CtaTemplate):
                             target_positon_price = tick.last_price * (1 - price_rate)
 
                         else:
-                            self.raise_error("on_tick中发现direction不正确")
+                            self.raise_error("generate_inverse_signal中发现direction不正确")
 
                         changed_volume1 = (
                             abs(self.pos) * target_positon_price
@@ -1449,6 +1477,7 @@ class MartingBacktesting(object):
                     self.trending_step += 1
 
                     self.current_trending_group.append({"datetime":bar.datetime.strftime("%Y-%m-%d %H:%M:%S"),
+                                                        "trending_step":self.trending_step,
                                                         "max_loss_value":self.max_loss_value,
                                                         "max_loss_rate":self.max_loss_rate})
 

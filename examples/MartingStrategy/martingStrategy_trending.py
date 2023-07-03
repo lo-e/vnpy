@@ -401,6 +401,7 @@ class MartingSignal(object):
                     self.portfolio.update_trending(self, True)
                     self.trending_step += 1
                     self.current_trending_group.append({"datetime":bar.datetime.strftime("%Y-%m-%d %H:%M:%S"),
+                                                        "trending_step":self.trending_step,
                                                         "max_loss_value":self.max_loss_value,
                                                         "max_loss_rate":self.max_loss_rate})
 
