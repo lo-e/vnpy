@@ -533,8 +533,9 @@ class MartingStrategy(CtaTemplate):
                      trending_loss_cross = True
                 else:
                     for trending_data in strategy_trending_group:
+                        trending_step = trending_data["trending_step"]
                         trending_loss = float(trending_data["max_loss_rate"].replace("%", ""))
-                        if abs(trending_loss) >= self.forward_rate:
+                        if trending_step <= self.forward_step and abs(trending_loss) >= self.forward_rate:
                             trending_loss_cross = True
                             break
                 
@@ -560,8 +561,9 @@ class MartingStrategy(CtaTemplate):
                 # 强趋势指标判断
                 trending_loss_cross = False
                 for trending_data in strategy_trending_group:
+                    trending_step = trending_data["trending_step"]
                     trending_loss = float(trending_data["max_loss_rate"].replace("%", ""))
-                    if abs(trending_loss) >= self.forward_rate:
+                    if trending_step <= self.forward_step and abs(trending_loss) >= self.forward_rate:
                         trending_loss_cross = True
                         break
                 
@@ -1475,6 +1477,7 @@ class MartingBacktesting(object):
                     self.trending_step += 1
 
                     self.current_trending_group.append({"datetime":bar.datetime.strftime("%Y-%m-%d %H:%M:%S"),
+                                                        "trending_step":self.trending_step,
                                                         "max_loss_value":self.max_loss_value,
                                                         "max_loss_rate":self.max_loss_rate})
 
