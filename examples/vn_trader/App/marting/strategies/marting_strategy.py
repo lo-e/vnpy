@@ -267,7 +267,7 @@ class MartingStrategy(CtaTemplate):
             # 历史数据回测完成保存回测状态
             status = {}
             for name in self.backtesting.syncs:
-                status[name] = self.backtesting.__getattribute__(name)
+                status[name] = copy(self.backtesting.__getattribute__(name))
             self.backtesting_status = status
             self.backtesting_to = backtesting_data[-1].datetime
             self.strategy_status = status
@@ -298,7 +298,7 @@ class MartingStrategy(CtaTemplate):
             if strategy_data:
                 status = {}
                 for name in self.backtesting.syncs:
-                    status[name] = self.backtesting.__getattribute__(name)
+                    status[name] = copy(self.backtesting.__getattribute__(name))
                 self.strategy_status = status
                 self.strategy_to = strategy_data[-1].datetime
 
