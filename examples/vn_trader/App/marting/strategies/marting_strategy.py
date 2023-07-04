@@ -233,7 +233,7 @@ class MartingStrategy(CtaTemplate):
                 rsi_window=self.rsi_window,
                 symbol_min_volume=self.symbol_min_volume,
                 symbol_price_tick=self.symbol_price_tick,
-                init_status=self.backtesting_status,
+                init_status=copy(self.backtesting_status),
                 start_dt=backtestint_start,
             )
 
