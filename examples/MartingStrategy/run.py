@@ -31,14 +31,37 @@ def one():
         figSavedName = f"figSaved{DIR_SYMBOL}{figSavedName}"
 
     # 回测合约
-    exchange = input('选择交易所【Bybit：1  Binance：2】')
+    marting_type = input('选择类型（默认1）【趋势追踪：1  反转：2】')
+    if not marting_type:
+        marting_type = "1"
+
+    if marting_type == "1":
+        marting_type = "FORWARD"
+
+    elif marting_type == "2":
+        marting_type = "INVERSE"
+
+    else:
+        exit(f"类型选择错误")
+
+    exchange = input('选择交易所（默认1）【Binance：1 Bybit：2】')
+    if not exchange:
+        exchange = "1"
     if exchange == "1":
-        exchange = "BYBIT"
-        filename = "setting_bybit.csv"
+        exchange = "BINANCE"
+        if marting_type == "FORWARD":
+            filename = f"setting_forward{DIR_SYMBOL}setting_binance.csv"
+
+        else:
+            filename = f"setting_inverse{DIR_SYMBOL}setting_binance.csv"
 
     elif exchange == "2":
-        exchange = "BINANCE"
-        filename = "setting_binance.csv"
+        exchange = "BYBIT"
+        if marting_type == "FORWARD":
+            filename = f"setting_forward{DIR_SYMBOL}setting_bybit.csv"
+
+        else:
+            filename = f"setting_inverse{DIR_SYMBOL}setting_bybit.csv"
 
     else:
         exit(f"交易所选择错误")
@@ -55,7 +78,7 @@ def one():
             symbolList.append(d)
     if not symbolList:
         return
-    engine.initListPortfolio(symbolList, 1000000, history_file=backtesting_history_file)
+    engine.initListPortfolio(symbolList, marting_type=marting_type, portfolioValue=1000000, history_file=backtesting_history_file)
     engine.loadData()
     engine.runBacktesting()
     engine.showResult(figSavedName)

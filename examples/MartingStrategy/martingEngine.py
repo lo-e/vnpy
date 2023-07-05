@@ -13,6 +13,7 @@ from pymongo import MongoClient
 from vnpy.trader.object import BarData
 from vnpy.trader.constant import Direction, Exchange
 
+from martingStrategy_trending_forward import MartingForwardPortfolio
 from martingStrategy_trending_inverse import MartingInversePortfolio
 
 from vnpy.app.cta_strategy.base import DAILY_DB_NAME, MINUTE_DB_NAME, HOUR_DB_NAME, MinuteDataBaseName, HourDataBaseName
@@ -55,7 +56,7 @@ class BacktestingEngine(object):
         self.startDt = startDt
         self.endDt = endDt
     
-    def initListPortfolio(self, l, portfolioValue=10000000, history_file:str=""):
+    def initListPortfolio(self, l, marting_type:str, portfolioValue=10000000, history_file:str=""):
         """初始化投资组合"""
         self.portfolioValue = portfolioValue
 
@@ -67,7 +68,10 @@ class BacktestingEngine(object):
             VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
             SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
 
-        self.portfolio = MartingInversePortfolio(self)
+        if marting_type == "FORWARD":
+            self.portfolio = MartingForwardPortfolio(self)
+        else:
+            self.portfolio = MartingInversePortfolio(self)
         self.portfolio.init(portfolioValue, self.symbolList, history_file=history_file)
         self.portfolio.tradingStart = self.tradingStart
 
