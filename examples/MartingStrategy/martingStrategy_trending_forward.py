@@ -28,6 +28,202 @@ class MartingForwardSignal(object):
         rsi_window,
         history_data: dict = {},
     ):
+        self.portfolio = portfolio  # 投资组合
+        self.symbol = symbol  # 合约代码
+        self.direction = direction  # 交易方向
+        self.symbol_min_volume = self.portfolio.engine.min_volume_dict[
+            self.symbol
+        ]  # 合约最小交易数量
+        self.symbol_price_tick = self.portfolio.engine.priceTickDict[
+            self.symbol
+        ]  # 合约最小价格变动
+        self.bar: BarData = None  # 最新K线
+        self.position_price = 0  # 持仓均价
+        self.position_reduce_price = 0  # 减仓价格
+        self.forward_start = False # 当前趋势追踪是否初始开仓
+        self.inverse_signal = MartingInverseSignal(
+            self, symbol, direction, ma_window, rsi_window, history_data=history_data
+        )# 反转信号
+
+        if not self.symbol_min_volume or not self.symbol_price_tick:
+            exit("检查代码！")
+
+    def on_bar(self, bar):
+        if not bar.check_valid():
+            raise ("Bar数据校验不通过！！")
+        self.bar = bar
+        if not self.inverse_signal.start:
+            return
+        
+        self.generate_signal(bar)
+        self.inverse_signal.on_bar(bar)
+
+    def generate_signal(self, bar):
+        """
+        判断交易信号
+        要注意在任何一个数据点：buy/sell/short/cover只允许执行一类动作
+        """
+
+        # 检查减仓
+        if self.position:
+            if not self.position_reduce_price:
+                exit("平仓价格缺失，检查代码！")
+
+            # 是否达到目标价位
+            reduce_price_cross = False
+            trade_price = 0
+            if self.direction == Direction.LONG:
+                if (
+                    bar.high_price >= self.position_reduce_price
+                ):
+                    reduce_price_cross = True
+                    trade_price = min(self.position_reduce_price, self.inverse_signal.position_reduce_price)
+                    trade_price = max(bar.open_price, trade_price)
+
+            if self.direction == Direction.SHORT:
+                if (
+                    bar.low_price <= self.position_reduce_price
+                ):
+                    reduce_price_cross = True
+                    trade_price = max(self.position_reduce_price, self.inverse_signal.position_reduce_price)
+                    trade_price = min(bar.open_price, trade_price)
+
+            if reduce_price_cross:
+                self.position = 0
+                self.position_price = 0
+                self.position_reduce_price = 0
+
+                if self.direction == Direction.LONG:
+                    self.newSignal(
+                        Direction.LONG,
+                        Offset.CLOSE,
+                        trade_price,
+                        abs(self.position),
+                    )
+
+                elif self.direction == Direction.SHORT:
+                    self.newSignal(
+                        Direction.SHORT,
+                        Offset.CLOSE,
+                        trade_price,
+                        abs(self.position),
+                    )
+                
+                else:
+                    exit("检查代码！")
+
+                # 减仓操作后停止后续加仓判断
+                return
+
+        # 检查加仓
+        else:
+            open_cross = False
+            trade_price = 0
+            if self.inverse_signal.trending_step == 2:
+                # 成交价格
+                trade_price = round_to(self.inverse_signal.ma_price, self.symbol_price_tick)
+
+                # 强趋势指标判断
+                trending_loss_cross = False
+                current_trending_loss = float(self.inverse_signal.max_loss_rate.replace("%", ""))
+                if abs(current_trending_loss) >= 15:
+                     trending_loss_cross = True
+                else:
+                    for trending_data in self.inverse_signal.current_trending_group:
+                        trending_step = trending_data["trending_step"]
+                        trending_loss = float(trending_data["max_loss_rate"].replace("%", ""))
+                        if trending_step <= 3 and abs(trending_loss) >= 15:
+                            trending_loss_cross = True
+                            break
+                
+                if trending_loss_cross:
+                    if self.direction == Direction.LONG:
+                        if (
+                            self.inverse_signal.ma_price <= self.inverse_signal.position_increase_price
+                            and bar.high_price >= trade_price
+                            and bar.low_price <= trade_price
+                        ):
+                            open_cross = True
+
+                    elif self.direction == Direction.SHORT:
+                        if (
+                            self.inverse_signal.ma_price >= self.inverse_signal.position_increase_price
+                            and bar.low_price <= trade_price
+                            and bar.high_price >= trade_price
+                        ):
+                            open_cross = True
+                
+            elif (self.inverse_signal.trending_step == 3) or (self.inverse_signal.trending_step > 3 and self.forward_start):
+                # 强趋势指标判断
+                trending_loss_cross = False
+                for trending_data in self.inverse_signal.current_trending_group:
+                    trending_step = trending_data["trending_step"]
+                    trending_loss = float(trending_data["max_loss_rate"].replace("%", ""))
+                    if trending_step <= 3 and abs(trending_loss) >= 15:
+                        trending_loss_cross = True
+                        break
+                
+                if trending_loss_cross:
+                    if self.direction == Direction.LONG:
+                        trade_price = self.inverse_signal.position_reduce_price * (1 - 0.02)
+                        if (bar.low_price <= trade_price and bar.high_price >= trade_price):
+                            open_cross = True
+
+                    elif self.direction == Direction.SHORT:
+                        trade_price = self.inverse_signal.position_reduce_price * (1 + 0.02)
+                        if (bar.high_price >= trade_price and bar.low_price <= trade_price):
+                            open_cross = True
+
+            if open_cross:
+                self.forward_start = True
+                self.position_price = trade_price
+
+                # 开仓数量
+                trade_value = self.portfolio.portfolioValue * 2.5
+                trade_volume = trade_value / trade_price
+                trade_volume = round_to(trade_volume, self.symbol_min_volume)
+
+                # 当前持仓数量更新、发起订单
+                if self.direction == Direction.LONG:
+                    self.position = trade_volume * -1
+                    self.position_reduce_price = self.position_price * (1 + 0.02)
+                    self.newSignal(
+                        Direction.SHORT,
+                        Offset.OPEN,
+                        trade_price,
+                        abs(trade_volume),
+                    )
+
+                elif self.direction == Direction.SHORT:
+                    self.position = trade_volume
+                    self.position_reduce_price = self.position_price * (1 - 0.02)
+                    self.newSignal(
+                        Direction.LONG,
+                        Offset.OPEN,
+                        trade_price,
+                        abs(trade_volume),
+                    )
+
+                else:
+                    exit("检查代码！")
+
+        # 更新forward_start
+        if self.inverse_signal.trending_step < 3 and not self.position:
+            self.forward_start = False
+
+    def newSignal(self, direction, offset, price, volume):
+        self.portfolio.newSignal(self, direction, offset, price, volume)
+
+class MartingInverseSignal(object):
+    def __init__(
+        self,
+        portfolio,
+        symbol,
+        direction,
+        ma_window,
+        rsi_window,
+        history_data: dict = {},
+    ):
         # 常量
         self.portfolio = portfolio  # 投资组合
         self.symbol = symbol  # 合约代码
@@ -195,21 +391,9 @@ class MartingForwardSignal(object):
             # 当前持仓数量更新、发起订单
             if self.direction == Direction.LONG:
                 self.position = init_volume
-                self.newSignal(
-                    Direction.LONG,
-                    Offset.OPEN,
-                    trade_price,
-                    abs(init_volume),
-                )
 
             elif self.direction == Direction.SHORT:
                 self.position = init_volume * -1
-                self.newSignal(
-                    Direction.SHORT,
-                    Offset.OPEN,
-                    trade_price,
-                    abs(init_volume),
-                )
 
             else:
                 exit("检查代码！")
@@ -227,7 +411,7 @@ class MartingForwardSignal(object):
             if self.direction == Direction.LONG:
                 if (
                     self.ma_price >= self.position_reduce_price
-                    and bar.low_price < trade_price
+                    and bar.low_price <= trade_price
                     and bar.high_price >= trade_price
                 ):
                     reduce_price_cross = True
@@ -235,7 +419,7 @@ class MartingForwardSignal(object):
             if self.direction == Direction.SHORT:
                 if (
                     self.ma_price <= self.position_reduce_price
-                    and bar.high_price > trade_price
+                    and bar.high_price >= trade_price
                     and bar.low_price <= trade_price
                 ):
                     reduce_price_cross = True
@@ -270,43 +454,10 @@ class MartingForwardSignal(object):
                     # 当前持仓数量更新、发起订单
                     if self.direction == Direction.LONG:
                         self.position = target_position
-                        if changed_volume > 0:
-                            # 加仓
-                            self.newSignal(
-                                Direction.LONG,
-                                Offset.OPEN,
-                                trade_price,
-                                abs(changed_volume),
-                            )
-
-                        elif changed_volume < 0:
-                            # 平仓
-                            self.newSignal(
-                                Direction.SHORT,
-                                Offset.CLOSE,
-                                trade_price,
-                                abs(changed_volume),
-                            )
 
                     elif self.direction == Direction.SHORT:
                         self.position = target_position * -1
-                        if changed_volume > 0:
-                            # 加仓
-                            self.newSignal(
-                                Direction.SHORT,
-                                Offset.OPEN,
-                                trade_price,
-                                abs(changed_volume),
-                            )
 
-                        elif changed_volume < 0:
-                            # 平仓
-                            self.newSignal(
-                                Direction.LONG,
-                                Offset.CLOSE,
-                                trade_price,
-                                abs(changed_volume),
-                            )
                     else:
                         exit("检查代码！")
 
@@ -325,35 +476,17 @@ class MartingForwardSignal(object):
             # 是否达到目标价位
             increase_price_cross = False
             if self.direction == Direction.LONG:
-                # 根据RSI判断是否超卖
-                # rsi_cross = False
-                # for rsi in self.rsi_array:
-                #     if rsi <= 25:
-                #         rsi_cross = True
-                #         break
-
-                rsi_cross = True
                 if (
-                    rsi_cross
-                    and self.ma_price <= self.position_increase_price
-                    and bar.high_price > trade_price
+                    self.ma_price <= self.position_increase_price
+                    and bar.high_price >= trade_price
                     and bar.low_price <= trade_price
                 ):
                     increase_price_cross = True
 
             if self.direction == Direction.SHORT:
-                # 根据RSI判断是否超买
-                # rsi_cross = False
-                # for rsi in self.rsi_array:
-                #     if rsi >= 75:
-                #         rsi_cross = True
-                #         break
-                
-                rsi_cross = True
                 if (
-                    rsi_cross
-                    and self.ma_price >= self.position_increase_price
-                    and bar.low_price < trade_price
+                    self.ma_price >= self.position_increase_price
+                    and bar.low_price <= trade_price
                     and bar.high_price >= trade_price
                 ):
                     increase_price_cross = True
@@ -433,43 +566,9 @@ class MartingForwardSignal(object):
                     # 当前持仓数量更新、发起订单
                     if self.direction == Direction.LONG:
                         self.position = target_position
-                        if changed_volume > 0:
-                            # 加仓
-                            self.newSignal(
-                                Direction.LONG,
-                                Offset.OPEN,
-                                trade_price,
-                                abs(changed_volume),
-                            )
-
-                        elif changed_volume < 0:
-                            # 平仓
-                            self.newSignal(
-                                Direction.SHORT,
-                                Offset.CLOSE,
-                                trade_price,
-                                abs(changed_volume),
-                            )
 
                     elif self.direction == Direction.SHORT:
                         self.position = target_position * -1
-                        if changed_volume > 0:
-                            # 加仓
-                            self.newSignal(
-                                Direction.SHORT,
-                                Offset.OPEN,
-                                trade_price,
-                                abs(changed_volume),
-                            )
-
-                        elif changed_volume < 0:
-                            # 平仓
-                            self.newSignal(
-                                Direction.LONG,
-                                Offset.CLOSE,
-                                trade_price,
-                                abs(changed_volume),
-                            )
 
                     else:
                         exit("检查代码！")
@@ -542,10 +641,6 @@ class MartingForwardSignal(object):
             "backtesting_status": status,
             "backtesting_to": self.bar.datetime.strftime("%Y-%m-%d %H:%M:%S"),
         }
-
-    def newSignal(self, direction, offset, price, volume):
-        self.portfolio.newSignal(self, direction, offset, price, volume)
-
 
 class MartingForwardPortfolio(object):
     def __init__(self, engine):

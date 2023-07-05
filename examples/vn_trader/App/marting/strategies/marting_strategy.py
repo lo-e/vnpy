@@ -676,7 +676,7 @@ class MartingStrategy(CtaTemplate):
             if self.direction == Direction.LONG:
                 if (
                     strategy_ma_price >= target_close_price
-                    and tick.last_price < trade_price
+                    and tick.last_price <= trade_price
                     and tick.last_price > trade_price - self.symbol_price_tick * 5
                 ):
                     self.target_volume = 0
@@ -684,7 +684,7 @@ class MartingStrategy(CtaTemplate):
             if self.direction == Direction.SHORT:
                 if (
                     strategy_ma_price <= target_close_price
-                    and tick.last_price > trade_price
+                    and tick.last_price >= trade_price
                     and tick.last_price < trade_price + self.symbol_price_tick * 5
                 ):
                     self.target_volume = 0
@@ -732,7 +732,7 @@ class MartingStrategy(CtaTemplate):
                         if (
                             rsi_cross
                             and strategy_ma_price <= strategy_position_increase_price
-                            and tick.last_price > trade_price
+                            and tick.last_price >= trade_price
                             and tick.last_price < trade_price + self.symbol_price_tick * 5
                         ):
                             next_trending_step = strategy_next_trending_step
@@ -749,7 +749,7 @@ class MartingStrategy(CtaTemplate):
                         if (
                             rsi_cross
                             and strategy_ma_price >= strategy_position_increase_price
-                            and tick.last_price < trade_price
+                            and tick.last_price <= trade_price
                             and tick.last_price > trade_price - self.symbol_price_tick * 5
                         ):
                             next_trending_step = strategy_next_trending_step
@@ -818,7 +818,7 @@ class MartingStrategy(CtaTemplate):
                             if (
                                 rsi_cross
                                 and strategy_ma_price <= self.position_increase_price
-                                and tick.last_price > trade_price
+                                and tick.last_price >= trade_price
                                 and tick.last_price < trade_price + self.symbol_price_tick * 5
                             ):
                                 next_trending_step = target_trending_step
@@ -835,7 +835,7 @@ class MartingStrategy(CtaTemplate):
                             if (
                                 rsi_cross
                                 and strategy_ma_price >= self.position_increase_price
-                                and tick.last_price < trade_price
+                                and tick.last_price <= trade_price
                                 and tick.last_price > trade_price - self.symbol_price_tick * 5
                             ):
                                 next_trending_step = target_trending_step
