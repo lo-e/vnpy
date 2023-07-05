@@ -18,7 +18,7 @@ from pathlib import Path
 import json
 
 
-class MartingSignal(object):
+class MartingInverseSignal(object):
     def __init__(
         self,
         portfolio,
@@ -325,14 +325,34 @@ class MartingSignal(object):
             # 是否达到目标价位
             increase_price_cross = False
             if self.direction == Direction.LONG:
-                if (self.ma_price <= self.position_increase_price
+                # 根据RSI判断是否超卖
+                # rsi_cross = False
+                # for rsi in self.rsi_array:
+                #     if rsi <= 25:
+                #         rsi_cross = True
+                #         break
+
+                rsi_cross = True
+                if (
+                    rsi_cross
+                    and self.ma_price <= self.position_increase_price
                     and bar.high_price > trade_price
                     and bar.low_price <= trade_price
                 ):
                     increase_price_cross = True
 
             if self.direction == Direction.SHORT:
-                if (self.ma_price >= self.position_increase_price
+                # 根据RSI判断是否超买
+                # rsi_cross = False
+                # for rsi in self.rsi_array:
+                #     if rsi >= 75:
+                #         rsi_cross = True
+                #         break
+                
+                rsi_cross = True
+                if (
+                    rsi_cross
+                    and self.ma_price >= self.position_increase_price
                     and bar.low_price < trade_price
                     and bar.high_price >= trade_price
                 ):
@@ -381,6 +401,7 @@ class MartingSignal(object):
                     self.portfolio.update_trending(self, True)
                     self.trending_step += 1
                     self.current_trending_group.append({"datetime":bar.datetime.strftime("%Y-%m-%d %H:%M:%S"),
+                                                        "trending_step":self.trending_step,
                                                         "max_loss_value":self.max_loss_value,
                                                         "max_loss_rate":self.max_loss_rate})
 
@@ -526,7 +547,7 @@ class MartingSignal(object):
         self.portfolio.newSignal(self, direction, offset, price, volume)
 
 
-class MartingPortfolio(object):
+class MartingInversePortfolio(object):
     def __init__(self, engine):
         self.engine = engine
         self.portfolioValue = 0  # 组合市值
@@ -556,13 +577,13 @@ class MartingPortfolio(object):
 
             long_signal_key = f"{signal_key}_{Direction.LONG.value}"
             long_history_data = history_data.get(long_signal_key, {})
-            signal1 = MartingSignal(
+            signal1 = MartingInverseSignal(
                 self, symbol, Direction.LONG, 9, 14, history_data=long_history_data
             )
 
             short_signal_key = f"{signal_key}_{Direction.SHORT.value}"
             short_history_data = history_data.get(short_signal_key, {})
-            signal2 = MartingSignal(
+            signal2 = MartingInverseSignal(
                 self, symbol, Direction.SHORT, 9, 14, history_data=short_history_data
             )
 

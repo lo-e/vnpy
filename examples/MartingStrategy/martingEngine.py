@@ -13,9 +13,7 @@ from pymongo import MongoClient
 from vnpy.trader.object import BarData
 from vnpy.trader.constant import Direction, Exchange
 
-# from martingStrategy_general import MartingPortfolio
-# from martingStrategy_trending_test import MartingPortfolio
-from martingStrategy_trending import MartingPortfolio
+from martingStrategy_trending_inverse import MartingInversePortfolio
 
 from vnpy.app.cta_strategy.base import DAILY_DB_NAME, MINUTE_DB_NAME, HOUR_DB_NAME, MinuteDataBaseName, HourDataBaseName
 import pandas as pd
@@ -69,7 +67,7 @@ class BacktestingEngine(object):
             VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
             SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
 
-        self.portfolio = MartingPortfolio(self)
+        self.portfolio = MartingInversePortfolio(self)
         self.portfolio.init(portfolioValue, self.symbolList, history_file=history_file)
         self.portfolio.tradingStart = self.tradingStart
 
