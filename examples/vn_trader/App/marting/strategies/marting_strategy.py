@@ -55,6 +55,7 @@ class MartingStrategy(CtaTemplate):
         "forward_step",
         "forward_rate",
         "forward_start",
+        "backtesting_forward_start",
         "symbol_price_tick",
         "symbol_min_volume",
         "backtesting_to",
@@ -87,7 +88,6 @@ class MartingStrategy(CtaTemplate):
         "position_close_price",
         "position_increase_price",
         "trending_step",
-        "forward_start",
     ]
 
     # 监控列表
@@ -130,6 +130,7 @@ class MartingStrategy(CtaTemplate):
         self.tick: TickData = None
         self.direction: Direction = Direction.NET  # 交易方向
         self.forward_start = False # 当前趋势追踪进行中
+        self.backtesting_forward_start = False # 回测趋势追踪进行中
         self.symbol_min_volume: float = 0.0
         self.symbol_price_tick: float = 0.0
         self.bar: BarData = None  # 最新K线
@@ -272,13 +273,26 @@ class MartingStrategy(CtaTemplate):
             self.backtesting_to = backtesting_data[-1].datetime
             self.strategy_status = status
             self.strategy_to = backtesting_data[-1].datetime
+
+            # 判断实盘和回测的趋势追踪状态
             if self.forward:
                 backtesting_trending_step = self.backtesting_status["trending_step"]
-                if backtesting_trending_step >= self.forward_step and abs(self.pos):
-                    self.forward_start = True
+                backtesting_trending_group = self.backtesting_status["current_trending_group"]
+                trending_loss_cross = False
+                for trending_data in backtesting_trending_group:
+                    trending_step = trending_data["trending_step"]
+                    trending_loss = float(trending_data["max_loss_rate"].replace("%", ""))
+                    if trending_step <= self.forward_step and abs(trending_loss) >= self.forward_rate:
+                        trending_loss_cross = True
+                        break
+                if backtesting_trending_step >= self.forward_step and trending_loss_cross:
+                    if abs(self.pos):
+                        self.forward_start = True
+                    self.backtesting_forward_start = True
                 
-                if backtesting_trending_step < self.forward_step:
+                else:
                     self.forward_start = False
+                    self.backtesting_forward_start = False
 
             # 实时数据
             strategy_data = []

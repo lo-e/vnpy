@@ -302,12 +302,14 @@ class MartingPortfolio(object):
         loss_tick_symbols_forward = set()
         loss_tick_symbols_inverse = set()
         error_count = 0
-        forward_content = ""
-        forward_count = 0
-        fit_content = ""
-        fit_count = 0
-        un_fit_content = ""
-        un_fit_count = 0
+        forward_fit_content = ""
+        forward_fit_count = 0
+        forward_unfit_content = ""
+        forward_unfit_count = 0
+        inverse_fit_content = ""
+        inverse_fit_count = 0
+        inverse_unfit_content = ""
+        inverse_unfit_count = 0
         highlight_content = ""
         highlight_count = 0
         b_min_datetime = ""
@@ -381,18 +383,31 @@ class MartingPortfolio(object):
             # 回测和实盘比较趋势追踪等级是否一致
             if strategy_step or strategy.trending_step:
                 if strategy.forward:
-                    if strategy_step >= 2:
+                    if strategy.backtesting_forward_start:
+                        if strategy.forward_start:
+                            content = f"\nsignal_name:{strategy.strategy_name}_趋势追踪\nsignal_pos:{strategy.pos}\nsignal_position_price:{strategy.position_price}\nsignal_position_value:{position_value}\nsignal_pnl:{strategy.current_pnl_rate}\n\nstrategy_step: {strategy_step}\nstrategy_to: {strategy_to}\nstrategy_pnl：{strategy.strategy_current_pnl_rate}"
+                            forward_fit_content += content
+                            forward_fit_content += "\n\n" + "-" * 10 + "\n\n"
+                            forward_fit_count += 1
+
+                        else:
+                            content = f"\nsignal_name:{strategy.strategy_name}_趋势追踪\nsignal_pos:{strategy.pos}\nsignal_position_price:{strategy.position_price}\nsignal_position_value:{position_value}\nsignal_pnl:{strategy.current_pnl_rate}\n\nstrategy_step: {strategy_step}\nstrategy_to: {strategy_to}\nstrategy_pnl：{strategy.strategy_current_pnl_rate}"
+                            forward_unfit_content += content
+                            forward_unfit_content += "\n\n" + "-" * 10 + "\n\n"
+                            forward_unfit_count += 1
+                    
+                    elif abs(strategy.pos):
                         content = f"\nsignal_name:{strategy.strategy_name}_趋势追踪\nsignal_pos:{strategy.pos}\nsignal_position_price:{strategy.position_price}\nsignal_position_value:{position_value}\nsignal_pnl:{strategy.current_pnl_rate}\n\nstrategy_step: {strategy_step}\nstrategy_to: {strategy_to}\nstrategy_pnl：{strategy.strategy_current_pnl_rate}"
-                        forward_content += content
-                        forward_content += "\n\n" + "-" * 10 + "\n\n"
-                        forward_count += 1
+                        forward_unfit_content += content
+                        forward_unfit_content += "\n\n" + "-" * 10 + "\n\n"
+                        forward_unfit_count += 1
 
                 else:
                     if strategy_step == strategy.trending_step:
                         content = f"\nsignal_name:{strategy.strategy_name}_反转\nsignal_pos:{strategy.pos}\nsignal_position_price:{strategy.position_price}\nsignal_position_value:{position_value}\nsignal_pnl:{strategy.current_pnl_rate}\nsignal_bottom: {strategy.bottom_step}\nsignal_top: {strategy.top_step}\nsignal_step: {strategy.trending_step}\n\nstrategy_step: {strategy_step}\nstrategy_to: {strategy_to}\nstrategy_pnl：{strategy.strategy_current_pnl_rate}"
-                        fit_content += content
-                        fit_content += "\n\n" + "-" * 10 + "\n\n"
-                        fit_count += 1
+                        inverse_fit_content += content
+                        inverse_fit_content += "\n\n" + "-" * 10 + "\n\n"
+                        inverse_fit_count += 1
 
                         if strategy.trending_step >= 3:
                             highlight_content += content
@@ -407,9 +422,9 @@ class MartingPortfolio(object):
                             continue
                         
                         content = f"\nsignal_name:{strategy.strategy_name}_反转\nsignal_pos:{strategy.pos}\nsignal_position_price:{strategy.position_price}\nsignal_position_value:{position_value}\nsignal_pnl:{strategy.current_pnl_rate}\nsignal_bottom: {strategy.bottom_step}\nsignal_top: {strategy.top_step}\nsignal_step: {strategy.trending_step}\n\nstrategy_step: {strategy_step}\nstrategy_to: {strategy_to}\nstrategy_pnl：{strategy.strategy_current_pnl_rate}"
-                        un_fit_content += content
-                        un_fit_content += "\n\n" + "-" * 10 + "\n\n"
-                        un_fit_count += 1
+                        inverse_unfit_content += content
+                        inverse_unfit_content += "\n\n" + "-" * 10 + "\n\n"
+                        inverse_unfit_count += 1
 
                         if strategy.trending_step >= 3:
                             highlight_content += content
@@ -419,26 +434,35 @@ class MartingPortfolio(object):
         total_loss_tick_count = len(loss_tick_symbols_forward) + len(loss_tick_symbols_inverse)
         main_content = f"策略总数：{total}\n行情缺失合约{total_loss_tick_count}：\n（趋势追踪{len(loss_tick_symbols_forward)}）\n{loss_tick_symbols_forward}\n（反转{len(loss_tick_symbols_inverse)}）\n{loss_tick_symbols_inverse}\n回测周期b：{b_min_datetime} - {b_max_datetime}\n回测周期s：{s_min_datetime} - {s_max_datetime}"
         """ 邮件发送通知 """
-        # 趋势追踪
-        if forward_count:
-            forward_content = (
-                f"\n{main_content}\n" + forward_content
+        # 趋势追踪正常
+        if forward_fit_count:
+            forward_fit_content = (
+                f"\n{main_content}\n" + forward_fit_content
             )
-            self.engine.send_email(msg=forward_content, subject=f"马丁策略组合状态信息【趋势追踪：{forward_count}】")
+            self.engine.send_email(msg=forward_fit_content, subject=f"马丁策略组合状态信息【趋势追踪（正常）：{forward_fit_count}】")
+        
+        # 趋势追踪非正常
+        if forward_unfit_count:
+            forward_unfit_content = (
+                f"\n{main_content}\n" + forward_unfit_content
+            )
+            self.engine.send_email(msg=forward_unfit_content, subject=f"马丁策略组合状态信息【趋势追踪（非正常）：{forward_unfit_count}】")
 
         # 反转正常
-        fit_content = (
-            f"\n{main_content}\n" + fit_content
-        )
-        self.engine.send_email(msg=fit_content, subject=f"马丁策略组合状态信息【正常反转：{fit_count}】")
+        if inverse_fit_count:
+            inverse_fit_content = (
+                f"\n{main_content}\n" + inverse_fit_content
+            )
+            self.engine.send_email(msg=inverse_fit_content, subject=f"马丁策略组合状态信息【反转（正常）：{inverse_fit_count}】")
 
         # 反转非正常
-        un_fit_content = (
-            f"\n{main_content}\n" + un_fit_content
-        )
-        self.engine.send_email(
-            msg=un_fit_content, subject=f"马丁策略组合状态信息【非正常反转：{un_fit_count}】"
-        )
+        if inverse_unfit_count:
+            inverse_unfit_content = (
+                f"\n{main_content}\n" + inverse_unfit_content
+            )
+            self.engine.send_email(
+                msg=inverse_unfit_content, subject=f"马丁策略组合状态信息【反转（非正常）：{inverse_unfit_count}】"
+            )
 
         # 回测状态缺失
         if error_count:
@@ -452,26 +476,18 @@ class MartingPortfolio(object):
             self.engine.main_engine.send_ding_talk(content=error_content)
 
         # 高等级反转
-        if highlight_count:
-            highlight_subject = f"马丁策略组合状态信息【高等级反转：{highlight_count}】"
-            highlight_content = (
-                f"\n{main_content}\n"
-                + highlight_content
-            )
-            self.engine.send_email(
-                msg=highlight_content, subject=highlight_subject
-            )
+        # if highlight_count:
+        #     highlight_subject = f"马丁策略组合状态信息【高等级反转：{highlight_count}】"
+        #     highlight_content = (
+        #         f"\n{main_content}\n"
+        #         + highlight_content
+        #     )
+        #     self.engine.send_email(
+        #         msg=highlight_content, subject=highlight_subject
+        #     )
 
-            highlight_content = f"\n{highlight_subject}\n{highlight_content}"
-            self.engine.main_engine.send_ding_talk(content=highlight_content)
-        
-        # fake
-        # to_content = ""
-        # for to_, name_list in strategy_to_dict.items():
-        #     to_content += f"\n\n{to_}\n总数：{len(name_list)}\n{name_list}"
-        # self.engine.send_email(
-        #     msg=to_content, subject="回测时间详情"
-        # )
+        #     highlight_content = f"\n{highlight_subject}\n{highlight_content}"
+        #     self.engine.main_engine.send_ding_talk(content=highlight_content)
 
     def run_strategy_backtesting(self):
         while True:
