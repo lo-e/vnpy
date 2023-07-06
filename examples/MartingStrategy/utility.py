@@ -89,7 +89,7 @@ def calculate_phase_loss(phase_count: int, increase_type: int = 1):
 
 # 分析trending_continuous下的趋势追踪结果
 def analyse_trending_continuous(
-     exchange:str, target_dir: str, min_continuous: str, by_month: bool = False, for_trade_setting: bool = False
+     exchange:str, marting_type:str, min_continuous: str, target_dir: str, by_month: bool = False, for_trade_setting: bool = False
 ):
     # 趋势追踪程度
     continuous_open_dict = {}
@@ -111,7 +111,7 @@ def analyse_trending_continuous(
 
     path = os.path.abspath(__file__)
     file_name = path.split(DIR_SYMBOL)[-1]
-    main_dir_path = path.rstrip(file_name) + f"trending_continuous{DIR_SYMBOL}{exchange}{DIR_SYMBOL}min_continuous_{min_continuous}{DIR_SYMBOL}{target_dir}{DIR_SYMBOL}"
+    main_dir_path = path.rstrip(file_name) + f"trending_continuous{DIR_SYMBOL}{marting_type}{DIR_SYMBOL}{exchange}{DIR_SYMBOL}min_continuous_{min_continuous}{DIR_SYMBOL}{target_dir}{DIR_SYMBOL}"
     for root, _, files in os.walk(main_dir_path):
         for theFile in files:
             # 排除不合法文件
@@ -586,5 +586,5 @@ if __name__ == "__main__":
 
     # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
     analyse_trending_continuous(
-        exchange="BINANCE", min_continuous="1", target_dir="2022-01-01_2023-06-28", by_month=False, for_trade_setting=False
+        exchange="BINANCE", marting_type="INVERSE", min_continuous="1", target_dir="2022-01-01_2023-07-02", by_month=False, for_trade_setting=False
     )
