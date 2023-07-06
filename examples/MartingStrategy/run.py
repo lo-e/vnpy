@@ -249,6 +249,20 @@ def one():
             count = continuous_open_dict[continuous_key]
             print(f"{continuous_key}\t{count}")
 
+
+        if marting_type == "FORWARD":
+            print(f"\n****** 趋势追踪二次开仓统计 ******")
+            symbol_second_dict = {}
+            for symbol, signal_list in engine.portfolio.signalDict.items():
+                second_open_count = 0
+                for signal in signal_list:
+                    second_open_count += signal.second_open_count
+                symbol_second_dict[symbol] = second_open_count
+            # 排序
+            sorted_list = sorted(symbol_second_dict.items(), key=lambda x: x[1], reverse=False)
+            for symbol, second_open_count in sorted_list:
+                print(f"{symbol}\t{second_open_count}")
+
         # 趋势追踪列表保存到csv
         for i in range(3):
             step_required = i + 1

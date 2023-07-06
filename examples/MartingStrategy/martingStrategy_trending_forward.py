@@ -42,6 +42,7 @@ class MartingForwardSignal(object):
         self.position_price = 0  # 持仓均价
         self.position_reduce_price = 0  # 减仓价格
         self.forward_start = False # 当前趋势追踪是否初始开仓
+        self.second_open_count = 0 # 二次开仓次数
         self.inverse_signal = MartingInverseSignal(
             portfolio, symbol, direction, ma_window, rsi_window, history_data=history_data
         )# 反转信号
@@ -183,6 +184,10 @@ class MartingForwardSignal(object):
                             trade_price = round_to(trade_price, self.symbol_price_tick)
                             if (bar.low_price <= trade_price and bar.high_price >= trade_price):
                                 open_cross = True
+                                self.second_open_count += 1
+                                # fake
+                                if self.inverse_signal.trending_step == 3 and not self.forward_start:
+                                    print("趋势追踪延迟开仓")
 
                     elif self.direction == Direction.SHORT:
                         if self.inverse_signal.ma_price > self.inverse_signal.position_reduce_price:
@@ -190,6 +195,10 @@ class MartingForwardSignal(object):
                             trade_price = round_to(trade_price, self.symbol_price_tick)
                             if (bar.high_price >= trade_price and bar.low_price <= trade_price):
                                 open_cross = True
+                                self.second_open_count += 1
+                                # fake
+                                if self.inverse_signal.trending_step == 3 and not self.forward_start:
+                                    print("趋势追踪延迟开仓")
 
             if open_cross:
                 self.forward_start = True
