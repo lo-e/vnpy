@@ -584,14 +584,16 @@ class MartingStrategy(CtaTemplate):
                 if trending_loss_cross:
                     # 价格满足条件发出Taker委托单
                     if self.direction == Direction.LONG:
-                        trade_price = strategy_reduce_price * (1 - 0.02)
-                        if (tick.last_price <= trade_price and tick.last_price >= trade_price + self.symbol_price_tick * 5):
-                            open_cross_taker = True
+                        if strategy_ma_price < strategy_reduce_price:
+                            trade_price = strategy_reduce_price * (1 - 0.02)
+                            if (tick.last_price <= trade_price and tick.last_price >= trade_price + self.symbol_price_tick * 5):
+                                open_cross_taker = True
 
                     elif self.direction == Direction.SHORT:
-                        trade_price = strategy_reduce_price * (1 + 0.02)
-                        if (tick.last_price >= trade_price and tick.last_price <= trade_price + self.symbol_price_tick * 5):
-                            open_cross_taker = True
+                        if strategy_ma_price > strategy_reduce_price:
+                            trade_price = strategy_reduce_price * (1 + 0.02)
+                            if (tick.last_price >= trade_price and tick.last_price <= trade_price + self.symbol_price_tick * 5):
+                                open_cross_taker = True
 
                     if open_cross_taker:
                         # 邮件提醒
@@ -676,7 +678,7 @@ class MartingStrategy(CtaTemplate):
             if self.direction == Direction.LONG:
                 if (
                     strategy_ma_price >= target_close_price
-                    and tick.last_price < trade_price
+                    and tick.last_price <= trade_price
                     and tick.last_price > trade_price - self.symbol_price_tick * 5
                 ):
                     self.target_volume = 0
@@ -684,7 +686,7 @@ class MartingStrategy(CtaTemplate):
             if self.direction == Direction.SHORT:
                 if (
                     strategy_ma_price <= target_close_price
-                    and tick.last_price > trade_price
+                    and tick.last_price >= trade_price
                     and tick.last_price < trade_price + self.symbol_price_tick * 5
                 ):
                     self.target_volume = 0
@@ -721,35 +723,17 @@ class MartingStrategy(CtaTemplate):
                 if trending_top_cross:
                     # 是否达到目标价位
                     if self.direction == Direction.LONG:
-                        # 根据RSI判断是否超卖
-                        # rsi_cross = False
-                        # for rsi in strategy_rsi_array:
-                        #     if rsi <= 25:
-                        #         rsi_cross = True
-                        #         break
-                        rsi_cross = True
-
                         if (
-                            rsi_cross
-                            and strategy_ma_price <= strategy_position_increase_price
-                            and tick.last_price > trade_price
+                            strategy_ma_price <= strategy_position_increase_price
+                            and tick.last_price >= trade_price
                             and tick.last_price < trade_price + self.symbol_price_tick * 5
                         ):
                             next_trending_step = strategy_next_trending_step
 
                     elif self.direction == Direction.SHORT:
-                        # 根据RSI判断是否超买
-                        # rsi_cross = False
-                        # for rsi in strategy_rsi_array:
-                        #     if rsi >= 75:
-                        #         rsi_cross = True
-                        #         break
-                        rsi_cross = True
-
                         if (
-                            rsi_cross
-                            and strategy_ma_price >= strategy_position_increase_price
-                            and tick.last_price < trade_price
+                            strategy_ma_price >= strategy_position_increase_price
+                            and tick.last_price <= trade_price
                             and tick.last_price > trade_price - self.symbol_price_tick * 5
                         ):
                             next_trending_step = strategy_next_trending_step
@@ -807,35 +791,17 @@ class MartingStrategy(CtaTemplate):
                     if trending_top_cross:
                         # 是否达到目标价位
                         if self.direction == Direction.LONG:
-                            # 根据RSI判断是否超卖
-                            # rsi_cross = False
-                            # for rsi in strategy_rsi_array:
-                            #     if rsi <= 25:
-                            #         rsi_cross = True
-                            #         break
-                            rsi_cross = True
-
                             if (
-                                rsi_cross
-                                and strategy_ma_price <= self.position_increase_price
-                                and tick.last_price > trade_price
+                                strategy_ma_price <= self.position_increase_price
+                                and tick.last_price >= trade_price
                                 and tick.last_price < trade_price + self.symbol_price_tick * 5
                             ):
                                 next_trending_step = target_trending_step
 
                         elif self.direction == Direction.SHORT:
-                            # 根据RSI判断是否超买
-                            # rsi_cross = False
-                            # for rsi in strategy_rsi_array:
-                            #     if rsi >= 75:
-                            #         rsi_cross = True
-                            #         break
-                            rsi_cross = True
-
                             if (
-                                rsi_cross
-                                and strategy_ma_price >= self.position_increase_price
-                                and tick.last_price < trade_price
+                                strategy_ma_price >= self.position_increase_price
+                                and tick.last_price <= trade_price
                                 and tick.last_price > trade_price - self.symbol_price_tick * 5
                             ):
                                 next_trending_step = target_trending_step
@@ -1415,34 +1381,16 @@ class MartingBacktesting(object):
             # 是否达到目标价位
             increase_price_cross = False
             if self.direction == Direction.LONG:
-                # 根据RSI判断是否超卖
-                # rsi_cross = False
-                # for rsi in self.rsi_array:
-                #     if rsi <= 25:
-                #         rsi_cross = True
-                #         break
-                rsi_cross = True
-                
                 if (
-                    rsi_cross
-                    and self.ma_price <= self.position_increase_price
+                    self.ma_price <= self.position_increase_price
                     and bar.high_price > trade_price
                     and bar.low_price <= trade_price
                 ):
                     increase_price_cross = True
 
             if self.direction == Direction.SHORT:
-                # 根据RSI判断是否超买
-                # rsi_cross = False
-                # for rsi in self.rsi_array:
-                #     if rsi >= 75:
-                #         rsi_cross = True
-                #         break
-                rsi_cross = True
-
                 if (
-                    rsi_cross
-                    and self.ma_price >= self.position_increase_price
+                    self.ma_price >= self.position_increase_price
                     and bar.low_price < trade_price
                     and bar.high_price >= trade_price
                 ):
