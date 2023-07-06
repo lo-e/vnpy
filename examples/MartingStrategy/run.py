@@ -4,6 +4,8 @@ from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import copy
+
+from sqlalchemy import true
 from martingEngine import BacktestingEngine
 from csv import DictReader
 import csv
@@ -23,8 +25,8 @@ from vnpy.trader.utility import round_to
 def one():
     # 回测起始日期
     engine = BacktestingEngine()
-    start_dt = datetime(2022, 1, 1)
-    end_dt = datetime(2023, 7, 5)
+    start_dt = datetime(2021, 1, 1)
+    end_dt = datetime(2022, 1, 1)
     engine.setPeriod(start_dt, end_dt)
     figSavedName = ""
     if figSavedName:
@@ -259,9 +261,10 @@ def one():
                     second_open_count += signal.second_open_count
                 symbol_second_dict[symbol] = second_open_count
             # 排序
-            sorted_list = sorted(symbol_second_dict.items(), key=lambda x: x[1], reverse=False)
+            sorted_list = sorted(symbol_second_dict.items(), key=lambda x: x[1], reverse=True)
             for symbol, second_open_count in sorted_list:
-                print(f"{symbol}\t{second_open_count}")
+                if second_open_count:
+                    print(f"{symbol}\t{second_open_count}")
 
         # 趋势追踪列表保存到csv
         for i in range(3):
