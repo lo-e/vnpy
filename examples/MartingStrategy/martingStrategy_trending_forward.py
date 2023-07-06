@@ -38,11 +38,12 @@ class MartingForwardSignal(object):
             self.symbol
         ]  # 合约最小价格变动
         self.bar: BarData = None  # 最新K线
+        self.position = 0 # 持仓量
         self.position_price = 0  # 持仓均价
         self.position_reduce_price = 0  # 减仓价格
         self.forward_start = False # 当前趋势追踪是否初始开仓
         self.inverse_signal = MartingInverseSignal(
-            self, symbol, direction, ma_window, rsi_window, history_data=history_data
+            portfolio, symbol, direction, ma_window, rsi_window, history_data=history_data
         )# 反转信号
 
         if not self.symbol_min_volume or not self.symbol_price_tick:
@@ -64,6 +65,14 @@ class MartingForwardSignal(object):
         要注意在任何一个数据点：buy/sell/short/cover只允许执行一类动作
         """
 
+        # fake
+        if self.symbol == "LINAUSDT.BINANCE" and self.direction == Direction.LONG:
+            a = 2
+            if self.bar.datetime >= datetime.strptime(
+                "2023-06-05 13:50:00", "%Y-%m-%d %H:%M:%S"
+            ):
+                a = 2
+
         # 检查减仓
         if self.position:
             if not self.position_reduce_price:
@@ -73,22 +82,25 @@ class MartingForwardSignal(object):
             reduce_price_cross = False
             trade_price = 0
             if self.direction == Direction.LONG:
+                trade_price = min(self.position_reduce_price, self.inverse_signal.position_reduce_price)
+                trade_price = round_to(trade_price, self.symbol_price_tick)
                 if (
-                    bar.high_price >= self.position_reduce_price
+                    bar.high_price >= trade_price
                 ):
                     reduce_price_cross = True
-                    trade_price = min(self.position_reduce_price, self.inverse_signal.position_reduce_price)
                     trade_price = max(bar.open_price, trade_price)
 
             if self.direction == Direction.SHORT:
+                trade_price = max(self.position_reduce_price, self.inverse_signal.position_reduce_price)
+                trade_price = round_to(trade_price, self.symbol_price_tick)
                 if (
-                    bar.low_price <= self.position_reduce_price
+                    bar.low_price <= trade_price
                 ):
                     reduce_price_cross = True
-                    trade_price = max(self.position_reduce_price, self.inverse_signal.position_reduce_price)
                     trade_price = min(bar.open_price, trade_price)
 
             if reduce_price_cross:
+                trade_volume = abs(self.position)
                 self.position = 0
                 self.position_price = 0
                 self.position_reduce_price = 0
@@ -98,7 +110,7 @@ class MartingForwardSignal(object):
                         Direction.LONG,
                         Offset.CLOSE,
                         trade_price,
-                        abs(self.position),
+                        trade_volume,
                     )
 
                 elif self.direction == Direction.SHORT:
@@ -106,7 +118,7 @@ class MartingForwardSignal(object):
                         Direction.SHORT,
                         Offset.CLOSE,
                         trade_price,
-                        abs(self.position),
+                        trade_volume,
                     )
                 
                 else:
@@ -166,11 +178,13 @@ class MartingForwardSignal(object):
                 if trending_loss_cross:
                     if self.direction == Direction.LONG:
                         trade_price = self.inverse_signal.position_reduce_price * (1 - 0.02)
+                        trade_price = round_to(trade_price, self.symbol_price_tick)
                         if (bar.low_price <= trade_price and bar.high_price >= trade_price):
                             open_cross = True
 
                     elif self.direction == Direction.SHORT:
                         trade_price = self.inverse_signal.position_reduce_price * (1 + 0.02)
+                        trade_price = round_to(trade_price, self.symbol_price_tick)
                         if (bar.high_price >= trade_price and bar.low_price <= trade_price):
                             open_cross = True
 
@@ -366,12 +380,6 @@ class MartingInverseSignal(object):
         判断交易信号
         要注意在任何一个数据点：buy/sell/short/cover只允许执行一类动作
         """
-        # fake
-        if self.symbol == "CHZUSDT.BYBIT" and self.direction == Direction.LONG:
-            if self.bar.datetime >= datetime.strptime(
-                "2023-05-12 20:05:00", "%Y-%m-%d %H:%M:%S"
-            ):
-                a = 2
 
         # 当前仓位阶段
         current_phase = self.get_current_phase()
@@ -827,8 +835,6 @@ class MartingForwardPortfolio(object):
             "signal_position_value": round_to(
                 abs(signal.position) * signal.position_price, 1
             ),
-            "max_loss_value": signal.max_loss_value,
-            "max_loss_rate": signal.max_loss_rate,
         }
         signal_trades_list.append(trade_data)
         self.signalTradesDict[signal_key] = signal_trades_list
