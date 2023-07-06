@@ -177,16 +177,18 @@ class MartingForwardSignal(object):
                 
                 if trending_loss_cross:
                     if self.direction == Direction.LONG:
-                        trade_price = self.inverse_signal.position_reduce_price * (1 - 0.02)
-                        trade_price = round_to(trade_price, self.symbol_price_tick)
-                        if (bar.low_price <= trade_price and bar.high_price >= trade_price):
-                            open_cross = True
+                        if self.inverse_signal.ma_price < self.inverse_signal.position_reduce_price:
+                            trade_price = self.inverse_signal.position_reduce_price * (1 - 0.02)
+                            trade_price = round_to(trade_price, self.symbol_price_tick)
+                            if (bar.low_price <= trade_price and bar.high_price >= trade_price):
+                                open_cross = True
 
                     elif self.direction == Direction.SHORT:
-                        trade_price = self.inverse_signal.position_reduce_price * (1 + 0.02)
-                        trade_price = round_to(trade_price, self.symbol_price_tick)
-                        if (bar.high_price >= trade_price and bar.low_price <= trade_price):
-                            open_cross = True
+                        if self.inverse_signal.ma_price > self.inverse_signal.position_reduce_price:
+                            trade_price = self.inverse_signal.position_reduce_price * (1 + 0.02)
+                            trade_price = round_to(trade_price, self.symbol_price_tick)
+                            if (bar.high_price >= trade_price and bar.low_price <= trade_price):
+                                open_cross = True
 
             if open_cross:
                 self.forward_start = True

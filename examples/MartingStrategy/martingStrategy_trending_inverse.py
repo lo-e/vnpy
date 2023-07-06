@@ -227,7 +227,7 @@ class MartingInverseSignal(object):
             if self.direction == Direction.LONG:
                 if (
                     self.ma_price >= self.position_reduce_price
-                    and bar.low_price < trade_price
+                    and bar.low_price <= trade_price
                     and bar.high_price >= trade_price
                 ):
                     reduce_price_cross = True
@@ -235,7 +235,7 @@ class MartingInverseSignal(object):
             if self.direction == Direction.SHORT:
                 if (
                     self.ma_price <= self.position_reduce_price
-                    and bar.high_price > trade_price
+                    and bar.high_price >= trade_price
                     and bar.low_price <= trade_price
                 ):
                     reduce_price_cross = True
@@ -325,35 +325,17 @@ class MartingInverseSignal(object):
             # 是否达到目标价位
             increase_price_cross = False
             if self.direction == Direction.LONG:
-                # 根据RSI判断是否超卖
-                # rsi_cross = False
-                # for rsi in self.rsi_array:
-                #     if rsi <= 25:
-                #         rsi_cross = True
-                #         break
-
-                rsi_cross = True
                 if (
-                    rsi_cross
-                    and self.ma_price <= self.position_increase_price
-                    and bar.high_price > trade_price
+                    self.ma_price <= self.position_increase_price
+                    and bar.high_price >= trade_price
                     and bar.low_price <= trade_price
                 ):
                     increase_price_cross = True
 
             if self.direction == Direction.SHORT:
-                # 根据RSI判断是否超买
-                # rsi_cross = False
-                # for rsi in self.rsi_array:
-                #     if rsi >= 75:
-                #         rsi_cross = True
-                #         break
-                
-                rsi_cross = True
                 if (
-                    rsi_cross
-                    and self.ma_price >= self.position_increase_price
-                    and bar.low_price < trade_price
+                    self.ma_price >= self.position_increase_price
+                    and bar.low_price <= trade_price
                     and bar.high_price >= trade_price
                 ):
                     increase_price_cross = True
