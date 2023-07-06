@@ -573,7 +573,7 @@ class MartingInversePortfolio(object):
             l.append(signal1)
             l.append(signal2)
 
-            # 根据历史回测数据给策略组合初始化
+            # 根据历史回测数据给策略组合持仓初始化
             long_signal_position = 0
             if long_history_data:
                 long_signal_position = long_history_data["backtesting_status"][
