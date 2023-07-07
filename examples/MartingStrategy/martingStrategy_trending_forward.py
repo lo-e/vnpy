@@ -37,6 +37,9 @@ class MartingForwardSignal(object):
         self.symbol_price_tick = self.portfolio.engine.priceTickDict[
             self.symbol
         ]  # 合约最小价格变动
+        self.forward_step = 3 # 趋势追踪起始等级
+        self.forward_rate = 15 # 强趋势指标
+
         self.bar: BarData = None  # 最新K线
         self.position = 0 # 持仓量
         self.position_price = 0  # 持仓均价
@@ -90,7 +93,7 @@ class MartingForwardSignal(object):
                     bar.high_price >= trade_price
                 ):
                     reduce_price_cross = True
-                    trade_price = max(bar.open_price, trade_price)
+                    # trade_price = max(bar.open_price, trade_price)
 
             if self.direction == Direction.SHORT:
                 trade_price = max(self.position_reduce_price, self.inverse_signal.position_reduce_price)
@@ -99,7 +102,7 @@ class MartingForwardSignal(object):
                     bar.low_price <= trade_price
                 ):
                     reduce_price_cross = True
-                    trade_price = min(bar.open_price, trade_price)
+                    # trade_price = min(bar.open_price, trade_price)
 
             if reduce_price_cross:
                 trade_volume = abs(self.position)
@@ -133,20 +136,20 @@ class MartingForwardSignal(object):
         else:
             open_cross = False
             trade_price = 0
-            if self.inverse_signal.trending_step == 2:
+            if self.inverse_signal.trending_step == self.forward_step - 1:
                 # 成交价格
                 trade_price = round_to(self.inverse_signal.ma_price, self.symbol_price_tick)
 
                 # 强趋势指标判断
                 trending_loss_cross = False
                 current_trending_loss = float(self.inverse_signal.max_loss_rate.replace("%", ""))
-                if abs(current_trending_loss) >= 15:
+                if abs(current_trending_loss) >= self.forward_rate:
                      trending_loss_cross = True
                 else:
                     for trending_data in self.inverse_signal.current_trending_group:
                         trending_step = trending_data["trending_step"]
                         trending_loss = float(trending_data["max_loss_rate"].replace("%", ""))
-                        if trending_step <= 3 and abs(trending_loss) >= 15:
+                        if trending_step <= self.forward_step and abs(trending_loss) >= self.forward_rate:
                             trending_loss_cross = True
                             break
                 
@@ -167,13 +170,13 @@ class MartingForwardSignal(object):
                         ):
                             open_cross = True
                 
-            elif (self.inverse_signal.trending_step == 3) or (self.inverse_signal.trending_step > 3 and self.forward_start):
+            elif (self.inverse_signal.trending_step == self.forward_step) or (self.inverse_signal.trending_step > self.forward_step and self.forward_start):
                 # 强趋势指标判断
                 trending_loss_cross = False
                 for trending_data in self.inverse_signal.current_trending_group:
                     trending_step = trending_data["trending_step"]
                     trending_loss = float(trending_data["max_loss_rate"].replace("%", ""))
-                    if trending_step <= 3 and abs(trending_loss) >= 15:
+                    if trending_step <= self.forward_step and abs(trending_loss) >= self.forward_rate:
                         trending_loss_cross = True
                         break
                 
@@ -186,7 +189,7 @@ class MartingForwardSignal(object):
                                 open_cross = True
                                 self.second_open_count += 1
                                 # fake
-                                if self.inverse_signal.trending_step == 3 and not self.forward_start:
+                                if self.inverse_signal.trending_step == self.forward_step and not self.forward_start:
                                     print("趋势追踪延迟开仓")
 
                     elif self.direction == Direction.SHORT:
@@ -197,7 +200,7 @@ class MartingForwardSignal(object):
                                 open_cross = True
                                 self.second_open_count += 1
                                 # fake
-                                if self.inverse_signal.trending_step == 3 and not self.forward_start:
+                                if self.inverse_signal.trending_step == self.forward_step and not self.forward_start:
                                     print("趋势追踪延迟开仓")
 
             if open_cross:
@@ -234,7 +237,7 @@ class MartingForwardSignal(object):
                     exit("检查代码！")
 
         # 更新forward_start
-        if self.inverse_signal.trending_step < 3 and not self.position:
+        if self.inverse_signal.trending_step < self.forward_step and not self.position:
             self.forward_start = False
 
     def newSignal(self, direction, offset, price, volume):
