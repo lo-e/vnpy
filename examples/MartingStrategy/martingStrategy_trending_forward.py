@@ -93,7 +93,15 @@ class MartingForwardSignal(object):
                     bar.high_price >= trade_price
                 ):
                     reduce_price_cross = True
-                    # trade_price = max(bar.open_price, trade_price)
+
+                # fake
+                # inverse_trade_price = round_to(self.inverse_signal.ma_price, self.inverse_signal.symbol_price_tick)
+                # if (
+                #     self.inverse_signal.ma_price >= self.inverse_signal.position_reduce_price
+                #     and bar.low_price <= inverse_trade_price
+                #     and bar.high_price >= inverse_trade_price
+                # ):
+                #     reduce_price_cross = True
 
             if self.direction == Direction.SHORT:
                 trade_price = max(self.position_reduce_price, self.inverse_signal.position_reduce_price)
@@ -102,7 +110,15 @@ class MartingForwardSignal(object):
                     bar.low_price <= trade_price
                 ):
                     reduce_price_cross = True
-                    # trade_price = min(bar.open_price, trade_price)
+                
+                # fake
+                # inverse_trade_price = round_to(self.inverse_signal.ma_price, self.inverse_signal.symbol_price_tick)
+                # if (
+                #     self.inverse_signal.ma_price <= self.inverse_signal.position_reduce_price
+                #     and bar.high_price >= inverse_trade_price
+                #     and bar.low_price <= inverse_trade_price
+                # ):
+                #     reduce_price_cross = True
 
             if reduce_price_cross:
                 trade_volume = abs(self.position)
