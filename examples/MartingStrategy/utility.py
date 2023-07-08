@@ -245,7 +245,7 @@ def analyse_trending_continuous(
 
             # 信号连续趋势追踪统计
             # symbol_open_dict = month_symbol_open_dict[month]
-            # output_symbol_open_result(symbol_open_dict, exchange=exchange)
+            # output_symbol_open_result(symbol_open_dict, marting_type=marting_type, exchange=exchange)
 
             # 连续趋势追踪<强势>信号统计
             open_overload_dict = month_open_overload_dict[month]
@@ -256,7 +256,7 @@ def analyse_trending_continuous(
         # output_open_symbol_result(continuous_open_symbol_dict)
 
         # 信号连续趋势追踪统计
-        # output_symbol_open_result(continuous_symbol_open_dict, exchange=exchange)
+        # output_symbol_open_result(continuous_symbol_open_dict, marting_type=marting_type, exchange=exchange)
 
         # 连续趋势追踪<强势>信号统计
         output_open_overload_result(continuous_open_overload_dict)
@@ -309,9 +309,9 @@ def output_open_symbol_result(open_symbol_dict: dict):
                 if trending == "平仓" and i != len(symbol_data_list) - 1:
                     print("\n")
 
-def output_symbol_open_result(symbol_open_dict: dict, exchange:str):
+def output_symbol_open_result(symbol_open_dict: dict, marting_type:str, exchange:str):
     all_symbol_set = set()
-    setting_file_path = f"setting_{exchange.lower()}.csv"
+    setting_file_path = f"setting_{marting_type.lower()}{DIR_SYMBOL}setting_{exchange.lower()}.csv"
     with open(setting_file_path, "r") as f:
         reader = csv.DictReader(f)
         for row in reader:
