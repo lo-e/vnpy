@@ -204,9 +204,6 @@ class MartingForwardSignal(object):
                             if (bar.low_price <= trade_price and bar.high_price >= trade_price):
                                 open_cross = True
                                 self.second_open_count += 1
-                                # fake
-                                if self.inverse_signal.trending_step == self.forward_step and not self.forward_start:
-                                    print("趋势追踪延迟开仓")
 
                     elif self.direction == Direction.SHORT:
                         if self.inverse_signal.ma_price > self.inverse_signal.position_reduce_price:
@@ -215,9 +212,6 @@ class MartingForwardSignal(object):
                             if (bar.high_price >= trade_price and bar.low_price <= trade_price):
                                 open_cross = True
                                 self.second_open_count += 1
-                                # fake
-                                if self.inverse_signal.trending_step == self.forward_step and not self.forward_start:
-                                    print("趋势追踪延迟开仓")
 
             if open_cross:
                 self.forward_start = True
