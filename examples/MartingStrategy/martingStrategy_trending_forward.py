@@ -18,7 +18,7 @@ from pathlib import Path
 import json
 
 
-class MartingForwardSignal(object):
+class MartingTradeEngine(object):
     def __init__(
         self,
         portfolio,
@@ -560,11 +560,13 @@ class MartingInverseSignal(object):
                     ) / (trade_price - target_positon_price)
                     changed_volume = round_to(changed_volume, self.symbol_min_volume)
 
+                    # 组合策略趋势追踪
+                    self.portfolio.update_trending(self, True)
+
                     # 更新持仓价格
                     self.position_price = target_positon_price
 
                     # 新的趋势策略信号
-                    self.portfolio.update_trending(self, True)
                     self.trending_step += 1
                     self.current_trending_group.append({"datetime":bar.datetime.strftime("%Y-%m-%d %H:%M:%S"),
                                                         "trending_step":self.trending_step,
@@ -705,13 +707,13 @@ class MartingForwardPortfolio(object):
 
             long_signal_key = f"{signal_key}_{Direction.LONG.value}"
             long_history_data = history_data.get(long_signal_key, {})
-            signal1 = MartingForwardSignal(
+            signal1 = MartingTradeEngine(
                 self, symbol, Direction.LONG, 9, 14, history_data=long_history_data
             )
 
             short_signal_key = f"{signal_key}_{Direction.SHORT.value}"
             short_history_data = history_data.get(short_signal_key, {})
-            signal2 = MartingForwardSignal(
+            signal2 = MartingTradeEngine(
                 self, symbol, Direction.SHORT, 9, 14, history_data=short_history_data
             )
 
@@ -747,6 +749,7 @@ class MartingForwardPortfolio(object):
             trending = trending_update_data["trending"]
             max_loss_value = trending_update_data["max_loss_value"]
             max_loss_rate = trending_update_data["max_loss_rate"]
+            last_position_price = trending_update_data["last_position_price"]
 
             # 缓存趋势追踪记录
             signal_key = f"{signal.symbol}_{signal.direction.value}"
@@ -757,11 +760,20 @@ class MartingForwardPortfolio(object):
             # 趋势策略当前持仓价值
             position_value = abs(round_to(signal.position * signal.position_price, 1))
 
+            # 平仓盈亏
+            close_pnl = 0
+            if not trending:
+                direction_v = 1 if signal.direction == Direction.LONG else -1
+                close_pnl = ((position_price / last_position_price) - 1) * 100 * direction_v
+                close_pnl = round_to(close_pnl, 0.01)
+                close_pnl = f"{close_pnl}%"
+
             data = {
                 "datetime": self.dt,
                 "signal": signal_key,
                 "position_price": position_price,
                 "position_value": position_value,
+                "close_pnl": close_pnl,
                 "max_loss_value": max_loss_value,
                 "max_loss_rate": max_loss_rate,
                 "trending": trending,
@@ -780,6 +792,7 @@ class MartingForwardPortfolio(object):
         trending_data = {
             "signal": signal,
             "trending": trending,
+            "last_position_price": signal.position_price,
             "max_loss_value": max_loss_value,
             "max_loss_rate": max_loss_rate,
         }

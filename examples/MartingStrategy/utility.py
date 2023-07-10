@@ -244,22 +244,22 @@ def analyse_trending_continuous(
             # output_open_symbol_result(open_symbol_dict)
 
             # 信号连续趋势追踪统计
-            # symbol_open_dict = month_symbol_open_dict[month]
-            # output_symbol_open_result(symbol_open_dict, marting_type=marting_type, exchange=exchange)
+            symbol_open_dict = month_symbol_open_dict[month]
+            output_symbol_open_result(symbol_open_dict, marting_type=marting_type, exchange=exchange)
 
             # 连续趋势追踪<强势>信号统计
-            open_overload_dict = month_open_overload_dict[month]
-            output_open_overload_result(open_overload_dict)
+            # open_overload_dict = month_open_overload_dict[month]
+            # output_open_overload_result(open_overload_dict)
 
     else:
         # 连续趋势追踪信号统计
         # output_open_symbol_result(continuous_open_symbol_dict)
 
         # 信号连续趋势追踪统计
-        # output_symbol_open_result(continuous_symbol_open_dict, marting_type=marting_type, exchange=exchange)
+        output_symbol_open_result(continuous_symbol_open_dict, marting_type=marting_type, exchange=exchange)
 
         # 连续趋势追踪<强势>信号统计
-        output_open_overload_result(continuous_open_overload_dict)
+        # output_open_overload_result(continuous_open_overload_dict)
 
     # 生成实盘setting.json
     if for_trade_setting:
@@ -343,9 +343,9 @@ def output_symbol_open_result(symbol_open_dict: dict, marting_type:str, exchange
         else:
             over_4_symbol_set.add(symbol)
 
-    # print(f"\n最大连续趋势追踪2的合约总数：{len(max_2_symbol_set)}")
-    # for symbol in max_2_symbol_set:
-    #     print(symbol)
+    print(f"\n最大连续趋势追踪2的合约总数：{len(max_2_symbol_set)}")
+    for symbol in max_2_symbol_set:
+        print(symbol)
 
     print(f"\n最大连续趋势追踪3的合约总数：{len(max_3_symbol_set)}")
     for symbol in max_3_symbol_set:
@@ -586,5 +586,5 @@ if __name__ == "__main__":
 
     # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
     analyse_trending_continuous(
-        exchange="BINANCE", marting_type="INVERSE", min_continuous="1", target_dir="2022-01-01_2023-07-02", by_month=False, for_trade_setting=False
+        exchange="BINANCE", marting_type="INVERSE", min_continuous="1", target_dir="2022-01-01_2023-07-08", by_month=False, for_trade_setting=False
     )

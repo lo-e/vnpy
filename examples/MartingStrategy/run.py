@@ -26,7 +26,7 @@ def one():
     # 回测起始日期
     engine = BacktestingEngine()
     start_dt = datetime(2022, 1, 1)
-    end_dt = datetime(2023, 7, 7)
+    end_dt = datetime(2023, 7, 8)
     engine.setPeriod(start_dt, end_dt)
     figSavedName = ""
     if figSavedName:
@@ -80,7 +80,8 @@ def one():
             symbolList.append(d)
     if not symbolList:
         return
-    engine.initListPortfolio(symbolList, marting_type=marting_type, portfolioValue=1000000, history_file=backtesting_history_file)
+
+    engine.initListPortfolio(symbolList, marting_type=marting_type, portfolioValue=10000, history_file=backtesting_history_file)
     engine.loadData()
     engine.runBacktesting()
     engine.showResult(figSavedName)
@@ -293,6 +294,7 @@ def one():
                     "signal",
                     "position_price",
                     "position_value",
+                    "close_pnl",
                     "max_loss_value",
                     "max_loss_rate",
                     "trending",
@@ -341,18 +343,18 @@ def one():
                     pure_symbol = symbol[:symbol.index('USDT')] 
                     direction = signal.direction
                     signal_key = f"MARTING_{exchange}_{pure_symbol}_{direction.value}"
-                    backtesting_data[signal_key] = signal.saved_sync_data
+                    backtesting_data[signal_key] = signal.inverse_signal.saved_sync_data
 
                     # 信号组合的最新趋势追踪信息
                     trade_setting = signal_trade_setting.get(signal_key, {})
                     signal_bottom = trade_setting["bottom_step"]
-                    signal_status = signal.saved_sync_data["backtesting_status"]
+                    signal_status = signal.inverse_signal.saved_sync_data["backtesting_status"]
                     trending_step = signal_status["trending_step"]
                     data_list = signal_trending_step_dict.get(trending_step, [])
                     
                     direction_v = 1 if signal.direction == Direction.LONG else -1
                     position_pnl = (
-                        (signal.bar.close_price / signal.position_price) - 1
+                        (signal.inverse_signal.bar.close_price / signal.inverse_signal.position_price) - 1
                     ) * 100 * direction_v
                     position_pnl = round_to(position_pnl, 0.01)
                     position_pnl = f"{position_pnl}%"
