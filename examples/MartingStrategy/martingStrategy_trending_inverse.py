@@ -644,6 +644,7 @@ class MartingInversePortfolio(object):
         self.trending_history_dict = {}  # 缓存追踪过的趋势策略
         self.dt = None  # 当前回测时间
         self.trending_open = True
+        self.target_symbol_list = []
         self.target_symbol_list = ['NEARUSDT.BINANCE', 'IOSTUSDT.BINANCE', 'ENSUSDT.BINANCE', 'BALUSDT.BINANCE', 'FLMUSDT.BINANCE', 'COMPUSDT.BINANCE', 'CELRUSDT.BINANCE', 'BTCUSDT.BINANCE', 'CTKUSDT.BINANCE', 'GTCUSDT.BINANCE', 'UNIUSDT.BINANCE', '1INCHUSDT.BINANCE', 'TRXUSDT.BINANCE', 'BTCDOMUSDT.BINANCE', 'KLAYUSDT.BINANCE', 'GRTUSDT.BINANCE', 'XRPUSDT.BINANCE', 'BCHUSDT.BINANCE', 'CELOUSDT.BINANCE', 'ALPHAUSDT.BINANCE', 'HBARUSDT.BINANCE']
 
     def init(self, portfolioValue, symbolList, history_file: str = ""):

@@ -86,6 +86,10 @@ class BacktestingEngine(object):
         """ modify by loe """
         dataDict = {}
         for symbol in self.symbolList:
+            if self.portfolio.target_symbol_list:
+                if symbol not in self.portfolio.target_symbol_list:
+                    continue
+
             flt = {'datetime':{'$gte':self.startDt,
                                '$lte':self.endDt}} 
             

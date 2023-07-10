@@ -690,6 +690,7 @@ class MartingForwardPortfolio(object):
         self.trending_history_dict = {}  # 缓存追踪过的趋势策略
         self.dt = None  # 当前回测时间
         self.trending_open = True
+        self.target_symbol_list = []
 
     def init(self, portfolioValue, symbolList, history_file: str = ""):
         self.portfolioValue = portfolioValue

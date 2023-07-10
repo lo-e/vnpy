@@ -26,7 +26,7 @@ def one():
     # 回测起始日期
     engine = BacktestingEngine()
     start_dt = datetime(2022, 1, 1)
-    end_dt = datetime(2023, 7, 8)
+    end_dt = datetime(2023, 7, 9)
     engine.setPeriod(start_dt, end_dt)
     figSavedName = ""
     if figSavedName:
@@ -305,81 +305,80 @@ def one():
                     # 写入csv文件
                     writer.writerows(signal_continuous_saved_list)
 
-        # 反转策略状态、回测截止时间保存到json
-        if marting_type == "INVERSE":
-            if backtesting_history_file:
-                history_dt = backtesting_history_file.split(".")[0]
-                backtesting_history_dir = f"backtesting_history{DIR_SYMBOL}{exchange}{DIR_SYMBOL}from_history_{history_dt}{DIR_SYMBOL}"
-            
-            else:
-                backtesting_history_dir = f"backtesting_history{DIR_SYMBOL}{exchange}{DIR_SYMBOL}"
+        # 策略状态、回测截止时间保存到json
+        if backtesting_history_file:
+            history_dt = backtesting_history_file.split(".")[0]
+            backtesting_history_dir = f"backtesting_history{DIR_SYMBOL}{marting_type}{DIR_SYMBOL}{exchange}{DIR_SYMBOL}from_history_{history_dt}{DIR_SYMBOL}"
+        
+        else:
+            backtesting_history_dir = f"backtesting_history{DIR_SYMBOL}{marting_type}{DIR_SYMBOL}{exchange}{DIR_SYMBOL}"
 
-            if not os.path.exists(backtesting_history_dir):
-                os.makedirs(backtesting_history_dir)
-            backtesting_history_json = f"{backtesting_history_dir}{start_dt_str}_{end_dt_str}.json"
+        if not os.path.exists(backtesting_history_dir):
+            os.makedirs(backtesting_history_dir)
+        backtesting_history_json = f"{backtesting_history_dir}{start_dt_str}_{end_dt_str}.json"
 
-            # 先从文件导入已经保存的回测数据
-            backtesting_data = {}
-            if os.path.exists(backtesting_history_json):
-                with open(backtesting_history_json, mode="r", encoding="UTF-8") as f:
-                    backtesting_data = json.load(f)
-            
-            # 本次回测结果更新
-            trade_setting = {} # 实盘设置参数
-            signal_trade_setting = {} # 策略的实盘设置参数
-            trade_setting_file = f"trade_setting{DIR_SYMBOL}{exchange}.json"
-            if os.path.exists(trade_setting_file):
-                with open(trade_setting_file, mode="r", encoding="UTF-8") as f:
-                    trade_setting = json.load(f)
-            for setting in trade_setting.get("signal", []):
-                name = setting["strategy_name"]
-                signal_trade_setting[name] = setting
+        # 先从文件导入已经保存的回测数据
+        backtesting_data = {}
+        if os.path.exists(backtesting_history_json):
+            with open(backtesting_history_json, mode="r", encoding="UTF-8") as f:
+                backtesting_data = json.load(f)
+        
+        # 本次回测结果更新
+        trade_setting = {} # 实盘设置参数
+        signal_trade_setting = {} # 策略的实盘设置参数
+        trade_setting_file = f"trade_setting{DIR_SYMBOL}{exchange}.json"
+        if os.path.exists(trade_setting_file):
+            with open(trade_setting_file, mode="r", encoding="UTF-8") as f:
+                trade_setting = json.load(f)
+        for setting in trade_setting.get("signal", []):
+            name = setting["strategy_name"]
+            signal_trade_setting[name] = setting
 
-            signal_trending_step_dict = {} # 回测结果中信号的趋势追踪信息
-            for _, signal_list in engine.portfolio.signalDict.items():
-                for signal in signal_list:
-                    # 信号的状态
-                    symbol = signal.symbol
-                    pure_symbol = symbol[:symbol.index('USDT')] 
-                    direction = signal.direction
-                    signal_key = f"MARTING_{exchange}_{pure_symbol}_{direction.value}"
-                    backtesting_data[signal_key] = signal.inverse_signal.saved_sync_data
+        signal_trending_step_dict = {} # 回测结果中信号的趋势追踪信息
+        for _, signal_list in engine.portfolio.signalDict.items():
+            for signal in signal_list:
+                # 信号的状态
+                symbol = signal.symbol
+                pure_symbol = symbol[:symbol.index('USDT')] 
+                direction = signal.direction
+                signal_key = f"MARTING_{exchange}_{pure_symbol}_{direction.value}"
+                backtesting_data[signal_key] = signal.inverse_signal.saved_sync_data
 
-                    # 信号组合的最新趋势追踪信息
-                    trade_setting = signal_trade_setting.get(signal_key, {})
-                    signal_bottom = trade_setting["bottom_step"]
-                    signal_status = signal.inverse_signal.saved_sync_data["backtesting_status"]
-                    trending_step = signal_status["trending_step"]
-                    data_list = signal_trending_step_dict.get(trending_step, [])
-                    
-                    direction_v = 1 if signal.direction == Direction.LONG else -1
-                    position_pnl = (
-                        (signal.inverse_signal.bar.close_price / signal.inverse_signal.position_price) - 1
-                    ) * 100 * direction_v
-                    position_pnl = round_to(position_pnl, 0.01)
-                    position_pnl = f"{position_pnl}%"
+                # 信号组合的最新趋势追踪信息
+                trade_setting = signal_trade_setting.get(signal_key, {})
+                signal_bottom = trade_setting["bottom_step"]
+                signal_status = signal.inverse_signal.saved_sync_data["backtesting_status"]
+                trending_step = signal_status["trending_step"]
+                data_list = signal_trending_step_dict.get(trending_step, [])
+                
+                direction_v = 1 if signal.direction == Direction.LONG else -1
+                position_pnl = (
+                    (signal.inverse_signal.bar.close_price / signal.inverse_signal.position_price) - 1
+                ) * 100 * direction_v
+                position_pnl = round_to(position_pnl, 0.01)
+                position_pnl = f"{position_pnl}%"
 
-                    data_list.append([signal_key, signal_bottom, position_pnl, signal_status])
-                    signal_trending_step_dict[trending_step] = data_list
+                data_list.append([signal_key, signal_bottom, position_pnl, signal_status])
+                signal_trending_step_dict[trending_step] = data_list
 
-            # 保存回测结果的信号状态到json文件
-            with open(backtesting_history_json, "w", encoding="utf-8") as file:
-                file.write(json.dumps(backtesting_data, ensure_ascii=False))
-            print(f"\n已保存回测历史到{start_dt_str}_{end_dt_str}.json\t总数：{len(backtesting_data)}")
-            
-            # 输出回测结果的趋势追踪信号信息
-            trending_step_list = sorted(list(signal_trending_step_dict.keys()))
-            for trending_step in trending_step_list:
-                if trending_step:
-                    print(f"\n趋势追踪{trending_step}")
-                    data_list = signal_trending_step_dict[trending_step]
-                    for signal_data in data_list:
-                        signal_key, signal_bottom, position_pnl, signal_status = signal_data
-                        p = signal_status["position_price"]
-                        r = signal_status["position_reduce_price"]
-                        i = signal_status["position_increase_price"]
-                        print(f"{signal_key}_bottom_{signal_bottom}\t\tp：{p}\tr：{r}\ti：{i}\tpnl：{position_pnl}")
-            print("\n")
+        # 保存回测结果的信号状态到json文件
+        with open(backtesting_history_json, "w", encoding="utf-8") as file:
+            file.write(json.dumps(backtesting_data, ensure_ascii=False))
+        print(f"\n已保存回测历史到{start_dt_str}_{end_dt_str}.json\t总数：{len(backtesting_data)}")
+        
+        # 输出回测结果的趋势追踪信号信息
+        trending_step_list = sorted(list(signal_trending_step_dict.keys()))
+        for trending_step in trending_step_list:
+            if trending_step:
+                print(f"\n趋势追踪{trending_step}")
+                data_list = signal_trending_step_dict[trending_step]
+                for signal_data in data_list:
+                    signal_key, signal_bottom, position_pnl, signal_status = signal_data
+                    p = signal_status["position_price"]
+                    r = signal_status["position_reduce_price"]
+                    i = signal_status["position_increase_price"]
+                    print(f"{signal_key}_bottom_{signal_bottom}\t\tp：{p}\tr：{r}\ti：{i}\tpnl：{position_pnl}")
+        print("\n")
 
 def two():
     filename = "setting.csv"

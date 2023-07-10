@@ -351,13 +351,13 @@ def output_symbol_open_result(symbol_open_dict: dict, marting_type:str, exchange
     for symbol in max_3_symbol_set:
         print(symbol)
 
-    print(f"\n最大连续趋势追踪4的合约总数：{len(max_4_symbol_set)}")
-    for symbol in max_4_symbol_set:
-        print(symbol)
+    # print(f"\n最大连续趋势追踪4的合约总数：{len(max_4_symbol_set)}")
+    # for symbol in max_4_symbol_set:
+    #     print(symbol)
 
-    print(f"\n连续趋势追踪5以上的合约总数：{len(over_4_symbol_set)}")
-    for symbol in over_4_symbol_set:
-        print(symbol)
+    # print(f"\n连续趋势追踪5以上的合约总数：{len(over_4_symbol_set)}")
+    # for symbol in over_4_symbol_set:
+    #     print(symbol)
     print("\n")
 
 def output_open_overload_result(open_overload_dict: dict):
@@ -586,5 +586,5 @@ if __name__ == "__main__":
 
     # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
     analyse_trending_continuous(
-        exchange="BINANCE", marting_type="INVERSE", min_continuous="1", target_dir="2022-01-01_2023-07-08", by_month=False, for_trade_setting=False
+        exchange="BINANCE", marting_type="INVERSE", min_continuous="1", target_dir="2022-01-01_2023-07-02", by_month=False, for_trade_setting=False
     )
