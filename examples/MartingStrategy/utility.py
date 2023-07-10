@@ -346,14 +346,17 @@ def output_symbol_open_result(symbol_open_dict: dict, marting_type:str, exchange
     print(f"\n最大连续趋势追踪2的合约总数：{len(max_2_symbol_set)}")
     for symbol in max_2_symbol_set:
         print(symbol)
+    print(f"{list(max_2_symbol_set)}")
 
     print(f"\n最大连续趋势追踪3的合约总数：{len(max_3_symbol_set)}")
     for symbol in max_3_symbol_set:
         print(symbol)
+    print(f"{list(max_3_symbol_set)}")
 
     print(f"\n最大连续趋势追踪4的合约总数：{len(max_4_symbol_set)}")
     for symbol in max_4_symbol_set:
         print(symbol)
+    print(f"{list(max_4_symbol_set)}")
 
     # print(f"\n连续趋势追踪5以上的合约总数：{len(over_4_symbol_set)}")
     # for symbol in over_4_symbol_set:
