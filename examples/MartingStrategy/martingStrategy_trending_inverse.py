@@ -35,6 +35,7 @@ class MartingTradeEngine(object):
             self.symbol
         ]  # 合约最小价格变动
         self.open_step = 1 # 开仓等级
+        self.top_step = 4 # 最高等级
 
         self.bar: BarData = None  # 最新K线
         self.position = 0 # 持仓量
@@ -93,11 +94,18 @@ class MartingTradeEngine(object):
                     and bar.low_price <= trade_price
                 ):
                     reduce_price_cross = True
+            
+            # 如果反转信号已平仓，立即平仓
+            if not reduce_price_cross:
+                if not self.inverse_signal.trending_step:
+                    reduce_price_cross = True
+                    trade_price = bar.open_price
 
             if reduce_price_cross:
                 trade_volume = abs(self.position)
                 self.position = 0
                 self.position_price = 0
+                self.portfolio.check_top_step(self, False)
 
                 if self.direction == Direction.LONG:
                     self.newSignal(
@@ -123,6 +131,7 @@ class MartingTradeEngine(object):
 
         # 检查加仓
         open_cross = False
+        top_cross = True
         trade_price = round_to(self.inverse_signal.ma_price, self.symbol_price_tick)
         if self.inverse_signal.next_trending_step >= self.open_step:
             if self.direction == Direction.LONG:
@@ -140,8 +149,12 @@ class MartingTradeEngine(object):
                     and bar.high_price >= trade_price
                 ):
                     open_cross = True
+        
+        # 组合策略检查最高等级
+        if open_cross and self.inverse_signal.next_trending_step >= self.top_step:
+            top_cross = self.portfolio.check_top_step(self, True)
 
-        if open_cross:
+        if open_cross and top_cross:
             trade_volume = 0
             if self.inverse_signal.next_trending_step == self.open_step:
                 """ 初始建仓 """
@@ -643,9 +656,11 @@ class MartingInversePortfolio(object):
         self.trending_update_list = []  # 趋势策略信号的更新先缓存在这里，在on_daily完成更新
         self.trending_history_dict = {}  # 缓存追踪过的趋势策略
         self.dt = None  # 当前回测时间
+        self.top_step_signal = None
         self.trending_open = True
         self.target_symbol_list = []
-        # self.target_symbol_list = ['NEARUSDT.BINANCE', 'IOSTUSDT.BINANCE', 'ENSUSDT.BINANCE', 'BALUSDT.BINANCE', 'FLMUSDT.BINANCE', 'COMPUSDT.BINANCE', 'CELRUSDT.BINANCE', 'BTCUSDT.BINANCE', 'CTKUSDT.BINANCE', 'GTCUSDT.BINANCE', 'UNIUSDT.BINANCE', '1INCHUSDT.BINANCE', 'TRXUSDT.BINANCE', 'BTCDOMUSDT.BINANCE', 'KLAYUSDT.BINANCE', 'GRTUSDT.BINANCE', 'XRPUSDT.BINANCE', 'BCHUSDT.BINANCE', 'CELOUSDT.BINANCE', 'ALPHAUSDT.BINANCE', 'HBARUSDT.BINANCE']
+        self.target_symbol_list = ['1INCHUSDT.BINANCE', 'EGLDUSDT.BINANCE', 'BCHUSDT.BINANCE', 'CTKUSDT.BINANCE', 'TRXUSDT.BINANCE', 'BTCDOMUSDT.BINANCE', 'ALPHAUSDT.BINANCE', 'DENTUSDT.BINANCE', 'MKRUSDT.BINANCE', 'BLZUSDT.BINANCE', 'FLMUSDT.BINANCE', 'ADAUSDT.BINANCE', 'ENSUSDT.BINANCE', 'CRVUSDT.BINANCE', 'CHZUSDT.BINANCE', 'CHRUSDT.BINANCE', 'QTUMUSDT.BINANCE', 'UNIUSDT.BINANCE', 'LITUSDT.BINANCE', 'RVNUSDT.BINANCE', 'KAVAUSDT.BINANCE', 'BNBUSDT.BINANCE', 'ALICEUSDT.BINANCE', 'LINKUSDT.BINANCE', 'NEARUSDT.BINANCE', 'NEOUSDT.BINANCE', 'RUNEUSDT.BINANCE', 'XMRUSDT.BINANCE', 'DEFIUSDT.BINANCE', 'NKNUSDT.BINANCE', 'ETHUSDT.BINANCE', 'AXSUSDT.BINANCE', 'CELOUSDT.BINANCE', '1000XECUSDT.BINANCE', 'ICXUSDT.BINANCE', 'COMPUSDT.BINANCE', 'STMXUSDT.BINANCE', 'DGBUSDT.BINANCE', 'CTSIUSDT.BINANCE', 'BAKEUSDT.BINANCE']
+        # self.target_symbol_list = ['1INCHUSDT.BINANCE', 'EGLDUSDT.BINANCE', 'BCHUSDT.BINANCE', 'CTKUSDT.BINANCE', 'ALPHAUSDT.BINANCE']
 
     def init(self, portfolioValue, symbolList, history_file: str = ""):
         self.portfolioValue = portfolioValue
@@ -777,6 +792,23 @@ class MartingInversePortfolio(object):
         }
         self.trending_update_list.append(trending_data)
 
+    def check_top_step(self, signal, top: bool):
+        if top:
+            if self.top_step_signal and signal != self.top_step_signal:
+                return False
+            
+            else:
+                self.top_step_signal = signal
+                return True
+        
+        else:
+            if signal == self.top_step_signal:
+                self.top_step_signal = None
+                return True
+            
+            else:
+                return False
+    
     def newSignal(self, signal, direction, offset, price, volume):
         # 策略当前持仓数量
         signal_key = f"{signal.symbol}_{signal.direction.value}"
