@@ -727,10 +727,6 @@ class MartingInversePortfolio(object):
         )
 
         for symbol in symbolList:
-            if self.target_symbol_list:
-                if symbol not in self.target_symbol_list:
-                    continue
-
             # 创建策略信号，并根据历史回测数据初始化
             pure_symbol = symbol[: symbol.index("USDT")]
             signal_key = f"MARTING_{exchange}_{pure_symbol}"
