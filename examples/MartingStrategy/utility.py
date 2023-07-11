@@ -244,22 +244,22 @@ def analyse_trending_continuous(
             # output_open_symbol_result(open_symbol_dict)
 
             # 信号连续趋势追踪统计
-            symbol_open_dict = month_symbol_open_dict[month]
-            output_symbol_open_result(symbol_open_dict, marting_type=marting_type, exchange=exchange)
+            # symbol_open_dict = month_symbol_open_dict[month]
+            # output_symbol_open_result(symbol_open_dict, marting_type=marting_type, exchange=exchange)
 
             # 连续趋势追踪<强势>信号统计
-            # open_overload_dict = month_open_overload_dict[month]
-            # output_open_overload_result(open_overload_dict)
+            open_overload_dict = month_open_overload_dict[month]
+            output_open_overload_result(open_overload_dict)
 
     else:
         # 连续趋势追踪信号统计
         # output_open_symbol_result(continuous_open_symbol_dict)
 
         # 信号连续趋势追踪统计
-        output_symbol_open_result(continuous_symbol_open_dict, marting_type=marting_type, exchange=exchange)
+        # output_symbol_open_result(continuous_symbol_open_dict, marting_type=marting_type, exchange=exchange)
 
         # 连续趋势追踪<强势>信号统计
-        # output_open_overload_result(continuous_open_overload_dict)
+        output_open_overload_result(continuous_open_overload_dict)
 
     # 生成实盘setting.json
     if for_trade_setting:
@@ -366,10 +366,8 @@ def output_symbol_open_result(symbol_open_dict: dict, marting_type:str, exchange
 def output_open_overload_result(open_overload_dict: dict):
     # 筛选合约列表
     target_symbols = []
-    # target_symbols = ['ETHUSDT', 'WAVESUSDT', 'OGNUSDT', 'GALAUSDT', 'ANKRUSDT', 'SXPUSDT', 'ZILUSDT', 'CHRUSDT', 'BCHUSDT', 'ETCUSDT', 'AXSUSDT', 'ZRXUSDT', 'RLCUSDT', 'AVAXUSDT', 'DASHUSDT', 'YFIUSDT', 'STORJUSDT', 'DOGEUSDT', 'ALPHAUSDT', 'FTMUSDT', 'SKLUSDT', 'OMGUSDT', 'SUSHIUSDT', 'SFPUSDT', 'EGLDUSDT', '1000SHIBUSDT', 'MKRUSDT', 'ATOMUSDT', 'BELUSDT', 'ADAUSDT', 'ENJUSDT']
-    # target_symbols = ['GALAUSDT', 'ZRXUSDT', 'BAKEUSDT', 'SFPUSDT', 'LINAUSDT', 'OMGUSDT', 'RENUSDT', 'KNCUSDT', 'BATUSDT', 'BELUSDT', 'WAVESUSDT', 'ZENUSDT', 'SXPUSDT', 'RLCUSDT', 'PEOPLEUSDT', 'CHRUSDT', 'ARUSDT', 'ARPAUSDT', 'ATAUSDT', 'UNFIUSDT', 'DYDXUSDT', 'OGNUSDT', 'DASHUSDT', 'AUDIOUSDT', 'LRCUSDT', 'SKLUSDT', 'ETHUSDT', 'AXSUSDT', 'MASKUSDT', 'AAVEUSDT', 'ZILUSDT', 'SUSHIUSDT', 'STORJUSDT', 'FTMUSDT', 'ETCUSDT', 'CTSIUSDT', 'KAVAUSDT', 'DOGEUSDT', 'EGLDUSDT', 'SOLUSDT', 'C98USDT', 'CRVUSDT', 'YFIUSDT', 'ALGOUSDT', 'RSRUSDT', 'MKRUSDT', 'ENJUSDT']
-    target_symbols = ['ZILUSDT', 'ATAUSDT', 'CTSIUSDT', 'EGLDUSDT', 'DYDXUSDT', 'AUDIOUSDT', '1000SHIBUSDT', 'LINAUSDT', 'OMGUSDT', 'WAVESUSDT', 'ARUSDT', 'ALPHAUSDT', 'ZENUSDT', 'PEOPLEUSDT', 'KAVAUSDT', 'FTMUSDT', 'DOGEUSDT', 'STORJUSDT', 'UNFIUSDT', 'BATUSDT', 'SXPUSDT', 'CHRUSDT', 'ARPAUSDT', 'BAKEUSDT', 'RSRUSDT', 'AXSUSDT', 'ETCUSDT', 'SFPUSDT', 'BCHUSDT', 'ETHUSDT', 'YFIUSDT', 'LRCUSDT', 'RENUSDT', 'AVAXUSDT', 'ATOMUSDT', 'GALAUSDT', 'KNCUSDT', 'AAVEUSDT', 'SUSHIUSDT', 'CRVUSDT', 'OGNUSDT', 'ADAUSDT', 'DASHUSDT', 'SOLUSDT', 'SKLUSDT', 'MASKUSDT', 'ALGOUSDT', 'BELUSDT', 'C98USDT', 'ANKRUSDT', 'ZRXUSDT', 'RLCUSDT', 'ENJUSDT', 'MKRUSDT']
-
+    target_symbols = ['ANKRUSDT', 'RLCUSDT', 'DASHUSDT', 'EGLDUSDT', 'FTMUSDT', 'SUSHIUSDT', 'WAVESUSDT', 'BELUSDT', 'YFIUSDT', 'ETCUSDT', 'CHRUSDT', 'ENJUSDT', 'ETHUSDT', 'SFPUSDT', 'DOGEUSDT', 'OGNUSDT', 'AXSUSDT', 'ZILUSDT', 'SXPUSDT', 'STORJUSDT', 'MKRUSDT', 'GALAUSDT', 'SKLUSDT', 'ZRXUSDT', 'OMGUSDT']
+    
     # 优选合约列表
     continuous_4_symbols = set()
     continuous_5_symbols = set()
@@ -412,11 +410,12 @@ def output_open_overload_result(open_overload_dict: dict):
                 signal = symbol_data["signal"]
                 position_price = symbol_data["position_price"]
                 position_value = symbol_data["position_value"]
+                close_pnl = symbol_data["close_pnl"]
                 max_loss_value = symbol_data["max_loss_value"]
                 max_loss_rate = symbol_data["max_loss_rate"]
                 trending = symbol_data["trending"]
                 print(
-                    f"{dt}\t{signal}\t{position_price}\t{position_value}\t{max_loss_value}\t{max_loss_rate}\t{trending}"
+                    f"{dt}\t{signal}\t{position_price}\t{position_value}\t{close_pnl}\t{max_loss_value}\t{max_loss_rate}\t{trending}"
                 )
                 if trending == "平仓" and i != len(symbol_data_list) - 1:
                     print("\n")
@@ -589,5 +588,5 @@ if __name__ == "__main__":
 
     # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
     analyse_trending_continuous(
-        exchange="BINANCE", marting_type="INVERSE", min_continuous="1", target_dir="2022-01-01_2023-07-01", by_month=False, for_trade_setting=False
+        exchange="BINANCE", marting_type="FORWARD", min_continuous="1", target_dir="2021-01-01_2022-01-01", by_month=False, for_trade_setting=False
     )
