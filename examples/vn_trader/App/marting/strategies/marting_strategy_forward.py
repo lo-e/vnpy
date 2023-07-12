@@ -58,7 +58,6 @@ class MartingStrategy(CtaTemplate):
         "position_value",
         "position_price",
         "position_close_price",
-        "position_increase_price",
         "current_pnl_rate",
         "trending_step",
         "target_volume",
@@ -78,7 +77,6 @@ class MartingStrategy(CtaTemplate):
         "position_value",
         "position_price",
         "position_close_price",
-        "position_increase_price",
         "trending_step",
     ]
 
