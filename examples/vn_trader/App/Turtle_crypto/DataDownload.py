@@ -40,8 +40,7 @@ if __name__ == '__main__':
 
         elif mode == '2':
             contract_list = ['BTCUSDT', 'ETHUSDT']
-            # contract_list = ['GALAUSDT', 'ZRXUSDT', 'BAKEUSDT', 'SFPUSDT', 'LINAUSDT', 'OMGUSDT', 'RENUSDT', 'KNCUSDT', 'BATUSDT', 'BELUSDT', 'WAVESUSDT', 'ZENUSDT', 'SXPUSDT', 'RLCUSDT', 'PEOPLEUSDT', 'CHRUSDT', 'ARUSDT', 'ARPAUSDT', 'ATAUSDT', 'UNFIUSDT', 'DYDXUSDT', 'OGNUSDT', 'DASHUSDT', 'AUDIOUSDT', 'LRCUSDT', 'SKLUSDT', 'ETHUSDT', 'AXSUSDT', 'MASKUSDT', 'AAVEUSDT', 'ZILUSDT', 'SUSHIUSDT', 'STORJUSDT', 'FTMUSDT', 'ETCUSDT', 'CTSIUSDT', 'KAVAUSDT', 'DOGEUSDT', 'EGLDUSDT', 'SOLUSDT', 'C98USDT', 'CRVUSDT', 'YFIUSDT', 'ALGOUSDT', 'RSRUSDT', 'MKRUSDT', 'ENJUSDT']
-            # contract_list = ['PEOPLEUSDT', 'GALAUSDT', 'ETCUSDT', 'BAKEUSDT', 'DOGEUSDT', 'ZILUSDT', 'ATAUSDT', 'AXSUSDT', 'LINAUSDT', 'SOLUSDT', 'ALGOUSDT', 'KNCUSDT', 'DASHUSDT', 'WAVESUSDT', 'SXPUSDT', 'ENJUSDT', 'SKLUSDT', 'UNFIUSDT']
+            
         else:
             contract_list = binance_get_symbol_list()
     
@@ -57,8 +56,8 @@ if __name__ == '__main__':
     # 起止日期
     days = 6
     to_date = datetime.now() + timedelta(days=2)
-    # days = (datetime.now() - datetime.strptime('2021-12-01', '%Y-%m-%d')).days
-    # to_date = datetime.strptime('2023-12-31', '%Y-%m-%d')
+    # days = (datetime.now() - datetime.strptime('2020-12-01', '%Y-%m-%d')).days
+    # to_date = datetime.strptime('2022-01-01', '%Y-%m-%d')
 
     # 是否从数据库最新数据日期开始
     from_data_base = True

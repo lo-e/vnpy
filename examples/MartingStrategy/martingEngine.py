@@ -72,11 +72,19 @@ class BacktestingEngine(object):
             self.portfolio = MartingForwardPortfolio(self)
         else:
             self.portfolio = MartingInversePortfolio(self)
+
+        # 筛选合约
+        if self.portfolio.target_symbol_list:
+            temp = []
+            for symbol in self.portfolio.target_symbol_list:
+                if symbol in self.symbolList:
+                    temp.append(symbol)
+            self.symbolList = temp
         self.portfolio.init(portfolioValue, self.symbolList, history_file=history_file)
         self.portfolio.tradingStart = self.tradingStart
 
-        self.output(u'投资组合的合约代码%s' % (self.symbolList))
-        self.output(u'投资组合的初始价值%s' % (portfolioValue))
+        self.output(f"投资组合的合约代码：{len(self.symbolList)}\n{self.symbolList}")
+        self.output(f"投资组合的初始价值：{portfolioValue}")
     
     def loadData(self):
         """加载数据"""

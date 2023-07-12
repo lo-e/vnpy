@@ -1,0 +1,23 @@
+{
+  "signal": [
+    {
+      "strategy_name": "MARTING_BINANCE_1000SHIB_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "1000SHIBUSDT.BINANCE",
+      "direction": "多",
+      "forward_step": 2,
+      "forward_rate": 12,
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BINANCE_1000SHIB_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "1000SHIBUSDT.BINANCE",
+      "direction": "空",
+      "forward_step": 2,
+      "forward_rate": 12,
+      "start": true
+    }
+  ],
+  "portfolio": { "name": "MARTING_BINANCE", "portfolioValue": 100 }
+}

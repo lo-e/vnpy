@@ -18,7 +18,7 @@ from pathlib import Path
 import json
 
 
-class MartingForwardSignal(object):
+class MartingTradeEngine(object):
     def __init__(
         self,
         portfolio,
@@ -37,11 +37,15 @@ class MartingForwardSignal(object):
         self.symbol_price_tick = self.portfolio.engine.priceTickDict[
             self.symbol
         ]  # 合约最小价格变动
+        self.forward_step = 3 # 趋势追踪起始等级
+        self.forward_rate = 15 # 强趋势指标
+
         self.bar: BarData = None  # 最新K线
         self.position = 0 # 持仓量
         self.position_price = 0  # 持仓均价
         self.position_reduce_price = 0  # 减仓价格
         self.forward_start = False # 当前趋势追踪是否初始开仓
+        self.second_open_count = 0 # 二次开仓次数
         self.inverse_signal = MartingInverseSignal(
             portfolio, symbol, direction, ma_window, rsi_window, history_data=history_data
         )# 反转信号
@@ -54,10 +58,11 @@ class MartingForwardSignal(object):
             raise ("Bar数据校验不通过！！")
         self.bar = bar
         if not self.inverse_signal.start:
-            return
+            self.inverse_signal.on_bar(bar)
         
-        self.generate_signal(bar)
-        self.inverse_signal.on_bar(bar)
+        else:
+            self.generate_signal(bar)
+            self.inverse_signal.on_bar(bar)
 
     def generate_signal(self, bar):
         """
@@ -88,7 +93,15 @@ class MartingForwardSignal(object):
                     bar.high_price >= trade_price
                 ):
                     reduce_price_cross = True
-                    trade_price = max(bar.open_price, trade_price)
+
+                # fake
+                # inverse_trade_price = round_to(self.inverse_signal.ma_price, self.inverse_signal.symbol_price_tick)
+                # if (
+                #     self.inverse_signal.ma_price >= self.inverse_signal.position_reduce_price
+                #     and bar.low_price <= inverse_trade_price
+                #     and bar.high_price >= inverse_trade_price
+                # ):
+                #     reduce_price_cross = True
 
             if self.direction == Direction.SHORT:
                 trade_price = max(self.position_reduce_price, self.inverse_signal.position_reduce_price)
@@ -97,7 +110,15 @@ class MartingForwardSignal(object):
                     bar.low_price <= trade_price
                 ):
                     reduce_price_cross = True
-                    trade_price = min(bar.open_price, trade_price)
+                
+                # fake
+                # inverse_trade_price = round_to(self.inverse_signal.ma_price, self.inverse_signal.symbol_price_tick)
+                # if (
+                #     self.inverse_signal.ma_price <= self.inverse_signal.position_reduce_price
+                #     and bar.high_price >= inverse_trade_price
+                #     and bar.low_price <= inverse_trade_price
+                # ):
+                #     reduce_price_cross = True
 
             if reduce_price_cross:
                 trade_volume = abs(self.position)
@@ -131,20 +152,20 @@ class MartingForwardSignal(object):
         else:
             open_cross = False
             trade_price = 0
-            if self.inverse_signal.trending_step == 2:
+            if self.inverse_signal.trending_step == self.forward_step - 1:
                 # 成交价格
                 trade_price = round_to(self.inverse_signal.ma_price, self.symbol_price_tick)
 
                 # 强趋势指标判断
                 trending_loss_cross = False
                 current_trending_loss = float(self.inverse_signal.max_loss_rate.replace("%", ""))
-                if abs(current_trending_loss) >= 15:
+                if abs(current_trending_loss) >= self.forward_rate:
                      trending_loss_cross = True
                 else:
                     for trending_data in self.inverse_signal.current_trending_group:
                         trending_step = trending_data["trending_step"]
                         trending_loss = float(trending_data["max_loss_rate"].replace("%", ""))
-                        if trending_step <= 3 and abs(trending_loss) >= 15:
+                        if trending_step <= self.forward_step and abs(trending_loss) >= self.forward_rate:
                             trending_loss_cross = True
                             break
                 
@@ -165,13 +186,13 @@ class MartingForwardSignal(object):
                         ):
                             open_cross = True
                 
-            elif (self.inverse_signal.trending_step == 3) or (self.inverse_signal.trending_step > 3 and self.forward_start):
+            elif (self.inverse_signal.trending_step == self.forward_step) or (self.inverse_signal.trending_step > self.forward_step and self.forward_start):
                 # 强趋势指标判断
                 trending_loss_cross = False
                 for trending_data in self.inverse_signal.current_trending_group:
                     trending_step = trending_data["trending_step"]
                     trending_loss = float(trending_data["max_loss_rate"].replace("%", ""))
-                    if trending_step <= 3 and abs(trending_loss) >= 15:
+                    if trending_step <= self.forward_step and abs(trending_loss) >= self.forward_rate:
                         trending_loss_cross = True
                         break
                 
@@ -182,6 +203,7 @@ class MartingForwardSignal(object):
                             trade_price = round_to(trade_price, self.symbol_price_tick)
                             if (bar.low_price <= trade_price and bar.high_price >= trade_price):
                                 open_cross = True
+                                self.second_open_count += 1
 
                     elif self.direction == Direction.SHORT:
                         if self.inverse_signal.ma_price > self.inverse_signal.position_reduce_price:
@@ -189,6 +211,7 @@ class MartingForwardSignal(object):
                             trade_price = round_to(trade_price, self.symbol_price_tick)
                             if (bar.high_price >= trade_price and bar.low_price <= trade_price):
                                 open_cross = True
+                                self.second_open_count += 1
 
             if open_cross:
                 self.forward_start = True
@@ -224,7 +247,7 @@ class MartingForwardSignal(object):
                     exit("检查代码！")
 
         # 更新forward_start
-        if self.inverse_signal.trending_step < 3 and not self.position:
+        if self.inverse_signal.trending_step < self.forward_step and not self.position:
             self.forward_start = False
 
     def newSignal(self, direction, offset, price, volume):
@@ -537,11 +560,13 @@ class MartingInverseSignal(object):
                     ) / (trade_price - target_positon_price)
                     changed_volume = round_to(changed_volume, self.symbol_min_volume)
 
+                    # 组合策略趋势追踪
+                    self.portfolio.update_trending(self, True)
+
                     # 更新持仓价格
                     self.position_price = target_positon_price
 
                     # 新的趋势策略信号
-                    self.portfolio.update_trending(self, True)
                     self.trending_step += 1
                     self.current_trending_group.append({"datetime":bar.datetime.strftime("%Y-%m-%d %H:%M:%S"),
                                                         "trending_step":self.trending_step,
@@ -665,6 +690,11 @@ class MartingForwardPortfolio(object):
         self.trending_history_dict = {}  # 缓存追踪过的趋势策略
         self.dt = None  # 当前回测时间
         self.trending_open = True
+        self.target_symbol_list = []
+        # 交集：25
+        self.target_symbol_list = ['ANKRUSDT.BINANCE', 'RLCUSDT.BINANCE', 'DASHUSDT.BINANCE', 'EGLDUSDT.BINANCE', 'FTMUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'WAVESUSDT.BINANCE', 'BELUSDT.BINANCE', 'YFIUSDT.BINANCE', 'ETCUSDT.BINANCE', 'CHRUSDT.BINANCE', 'ENJUSDT.BINANCE', 'ETHUSDT.BINANCE', 'SFPUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'OGNUSDT.BINANCE', 'AXSUSDT.BINANCE', 'ZILUSDT.BINANCE', 'SXPUSDT.BINANCE', 'STORJUSDT.BINANCE', 'MKRUSDT.BINANCE', 'GALAUSDT.BINANCE', 'SKLUSDT.BINANCE', 'ZRXUSDT.BINANCE', 'OMGUSDT.BINANCE']
+        # 交集：82
+        # self.target_symbol_list = ['LRCUSDT.BINANCE', 'SXPUSDT.BINANCE', 'DASHUSDT.BINANCE', 'CTSIUSDT.BINANCE', 'UNIUSDT.BINANCE', 'CHRUSDT.BINANCE', 'AVAXUSDT.BINANCE', 'TRXUSDT.BINANCE', 'KNCUSDT.BINANCE', 'NEARUSDT.BINANCE', 'SOLUSDT.BINANCE', 'ANKRUSDT.BINANCE', 'BELUSDT.BINANCE', '1000SHIBUSDT.BINANCE', '1000XECUSDT.BINANCE', 'RLCUSDT.BINANCE', 'BLZUSDT.BINANCE', 'AAVEUSDT.BINANCE', 'XTZUSDT.BINANCE', 'ONEUSDT.BINANCE', 'YFIUSDT.BINANCE', 'GALAUSDT.BINANCE', 'CTKUSDT.BINANCE', 'IOSTUSDT.BINANCE', 'EGLDUSDT.BINANCE', 'MANAUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'BAKEUSDT.BINANCE', 'OMGUSDT.BINANCE', 'PEOPLEUSDT.BINANCE', 'ADAUSDT.BINANCE', 'BCHUSDT.BINANCE', 'ENJUSDT.BINANCE', 'NEOUSDT.BINANCE', 'COTIUSDT.BINANCE', 'EOSUSDT.BINANCE', 'RENUSDT.BINANCE', 'SKLUSDT.BINANCE', 'IOTAUSDT.BINANCE', 'AUDIOUSDT.BINANCE', 'FILUSDT.BINANCE', 'DENTUSDT.BINANCE', 'ZRXUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'XEMUSDT.BINANCE', 'OGNUSDT.BINANCE', 'LINAUSDT.BINANCE', 'XRPUSDT.BINANCE', 'MATICUSDT.BINANCE', 'ZILUSDT.BINANCE', 'MKRUSDT.BINANCE', 'DGBUSDT.BINANCE', 'FTMUSDT.BINANCE', 'BATUSDT.BINANCE', 'MASKUSDT.BINANCE', 'ETHUSDT.BINANCE', 'ETCUSDT.BINANCE', 'STORJUSDT.BINANCE', 'BNBUSDT.BINANCE', 'GTCUSDT.BINANCE', 'ATAUSDT.BINANCE', 'WAVESUSDT.BINANCE', 'ATOMUSDT.BINANCE', 'RSRUSDT.BINANCE', 'ZECUSDT.BINANCE', 'CELRUSDT.BINANCE', 'ZENUSDT.BINANCE', 'XLMUSDT.BINANCE', 'RUNEUSDT.BINANCE', 'ALGOUSDT.BINANCE', 'UNFIUSDT.BINANCE', 'SFPUSDT.BINANCE', 'KAVAUSDT.BINANCE', 'ARUSDT.BINANCE', 'AXSUSDT.BINANCE', 'LITUSDT.BINANCE', 'ALPHAUSDT.BINANCE', 'CRVUSDT.BINANCE', 'FLMUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'ARPAUSDT.BINANCE', 'C98USDT.BINANCE']
 
     def init(self, portfolioValue, symbolList, history_file: str = ""):
         self.portfolioValue = portfolioValue
@@ -682,38 +712,19 @@ class MartingForwardPortfolio(object):
 
             long_signal_key = f"{signal_key}_{Direction.LONG.value}"
             long_history_data = history_data.get(long_signal_key, {})
-            signal1 = MartingForwardSignal(
+            signal1 = MartingTradeEngine(
                 self, symbol, Direction.LONG, 9, 14, history_data=long_history_data
             )
 
             short_signal_key = f"{signal_key}_{Direction.SHORT.value}"
             short_history_data = history_data.get(short_signal_key, {})
-            signal2 = MartingForwardSignal(
+            signal2 = MartingTradeEngine(
                 self, symbol, Direction.SHORT, 9, 14, history_data=short_history_data
             )
 
             l = self.signalDict[symbol]
             l.append(signal1)
             l.append(signal2)
-
-            # 根据历史回测数据给策略组合初始化
-            long_signal_position = 0
-            if long_history_data:
-                long_signal_position = long_history_data["backtesting_status"][
-                    "position"
-                ]
-                long_signal_position_key = f"{symbol}_{Direction.LONG.value}"
-                self.signalPosDict[long_signal_position_key] = long_signal_position
-
-            short_signal_position = 0
-            if short_history_data:
-                short_signal_position = short_history_data["backtesting_status"][
-                    "position"
-                ]
-                short_signal_position_key = f"{symbol}_{Direction.SHORT.value}"
-                self.signalPosDict[short_signal_position_key] = short_signal_position
-
-            self.posDict[symbol] = long_signal_position + short_signal_position
 
     def load_backtesting_history_data(self, exchange: str, file_name: str):
         history_data = {}
@@ -743,6 +754,7 @@ class MartingForwardPortfolio(object):
             trending = trending_update_data["trending"]
             max_loss_value = trending_update_data["max_loss_value"]
             max_loss_rate = trending_update_data["max_loss_rate"]
+            last_position_price = trending_update_data["last_position_price"]
 
             # 缓存趋势追踪记录
             signal_key = f"{signal.symbol}_{signal.direction.value}"
@@ -753,11 +765,20 @@ class MartingForwardPortfolio(object):
             # 趋势策略当前持仓价值
             position_value = abs(round_to(signal.position * signal.position_price, 1))
 
+            # 平仓盈亏
+            close_pnl = 0
+            if not trending:
+                direction_v = 1 if signal.direction == Direction.LONG else -1
+                close_pnl = ((position_price / last_position_price) - 1) * 100 * direction_v
+                close_pnl = round_to(close_pnl, 0.01)
+                close_pnl = f"{close_pnl}%"
+
             data = {
                 "datetime": self.dt,
                 "signal": signal_key,
                 "position_price": position_price,
                 "position_value": position_value,
+                "close_pnl": close_pnl,
                 "max_loss_value": max_loss_value,
                 "max_loss_rate": max_loss_rate,
                 "trending": trending,
@@ -776,6 +797,7 @@ class MartingForwardPortfolio(object):
         trending_data = {
             "signal": signal,
             "trending": trending,
+            "last_position_price": signal.position_price,
             "max_loss_value": max_loss_value,
             "max_loss_rate": max_loss_rate,
         }

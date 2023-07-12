@@ -16,6 +16,7 @@ import json
 from pathlib import Path
 from vnpy.trader.utility import DIR_SYMBOL
 from queue import Queue
+from .base import StrategyExecuteMode
 
 BAR_DOWNLOAD_GENERATE_COMPLETE = "eDataComplete"
 
@@ -240,7 +241,16 @@ class MartingPortfolio(object):
     def get_backtesting_history_file_path(self):
         exchange = self.name.split("_")[-1]
         dir = os.path.dirname(os.path.realpath(__file__))
-        dir_path = Path(dir).joinpath(f"backtesting_history{DIR_SYMBOL}")
+        
+        if self.engine.execute_mode == StrategyExecuteMode.FORWARD_ONLY:
+            dir_path = Path(dir).joinpath(f"backtesting_history{DIR_SYMBOL}FORWARD{DIR_SYMBOL}")
+        
+        elif self.engine.execute_mode == StrategyExecuteMode.INVERSE_ONLY:
+            dir_path = Path(dir).joinpath(f"backtesting_history{DIR_SYMBOL}INVERSE{DIR_SYMBOL}")
+
+        else:
+            exit(f"马丁模式错误，检查代码")
+
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
         file_path = dir_path.joinpath(f"{exchange}.json")

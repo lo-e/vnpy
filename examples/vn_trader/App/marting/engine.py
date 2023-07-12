@@ -62,13 +62,7 @@ import re
 from collections import OrderedDict
 from time import sleep
 from decimal import Decimal
-from enum import Enum
-
-class StrategyExecuteMode(Enum):
-    # 策略执行模式
-    FORWARD_ONLY = "FORWARD_ONLY" # 只进行趋势追踪
-    INVERSE_ONLY = "INVERSE_ONLY" # 只进行趋势反转
-    FORWARD_INVERSE = "FORWARD_INVERSE" # 同时进行趋势追踪和趋势反转
+from .base import StrategyExecuteMode
 
 STOP_STATUS_MAP = {
     Status.SUBMITTING: StopOrderStatus.WAITING,
@@ -90,11 +84,15 @@ from .base import EVENT_MARTING_PORTFOLIO
 
 class MartingEngine(BaseEngine):
     """"""
-    execute_mode = StrategyExecuteMode.FORWARD_INVERSE
+    execute_mode = StrategyExecuteMode.INVERSE_ONLY
 
     engine_type = EngineType.LIVE  # live trading engine
 
-    setting_filename = "marting_setting.json"
+    if execute_mode == StrategyExecuteMode.FORWARD_ONLY:
+        setting_filename = "marting_setting_forward.json"
+    
+    elif execute_mode == StrategyExecuteMode.INVERSE_ONLY:
+        setting_filename = "marting_setting_inverse.json"
 
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
         """"""
@@ -860,17 +858,7 @@ class MartingEngine(BaseEngine):
         symbol_set = set()
         for setting in signalList:
             symbol_set.add(setting["vt_symbol"])
-            forward = setting["forward"]
-            if self.execute_mode == StrategyExecuteMode.FORWARD_ONLY:
-                if forward:
-                    self.add_strategy(setting)
-
-            elif self.execute_mode == StrategyExecuteMode.INVERSE_ONLY:
-                if not forward:
-                    self.add_strategy(setting)
-            
-            elif self.execute_mode == StrategyExecuteMode.FORWARD_INVERSE:
-                self.add_strategy(setting)
+            self.add_strategy(setting)
 
         # 马丁组合策略合约列表
         self.martingPortfolio.set_strategy_symbols(symbols=list(symbol_set))
