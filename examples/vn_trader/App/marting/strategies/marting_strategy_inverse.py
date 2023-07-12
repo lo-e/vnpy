@@ -19,6 +19,10 @@ from App.marting.martingPortfolio import BAR_DOWNLOAD_GENERATE_COMPLETE
 from vnpy.event import Event
 from copy import copy
 
+TRENDING_OPEN_LOSS_RATE = 0.02 # 趋势加仓时的持仓亏损比率
+REDUCE_RATE = 0.005 # 盈利平仓比率
+TRENDING_INCREASE_RATE = 0.04 # 趋势加仓比率
+
 class MartingStrategy(CtaTemplate):
     """马丁策略"""
 
@@ -549,13 +553,13 @@ class MartingStrategy(CtaTemplate):
                         tick_price_cross = False
                         if (
                             self.direction == Direction.LONG
-                            and tick.last_price < strategy_position_price * (1 - 0.01)
+                            and tick.last_price < strategy_position_price * (1 - TRENDING_OPEN_LOSS_RATE)
                         ):
                             tick_price_cross = True
 
                         elif (
                             self.direction == Direction.SHORT
-                            and tick.last_price > strategy_position_price * (1 + 0.01)
+                            and tick.last_price > strategy_position_price * (1 + TRENDING_OPEN_LOSS_RATE)
                         ):
                             tick_price_cross = True
 
@@ -621,7 +625,7 @@ class MartingStrategy(CtaTemplate):
                 else:
                     # 加仓
                     # 目标持仓价格
-                    price_rate = 0.01
+                    price_rate = TRENDING_OPEN_LOSS_RATE
                     if self.direction == Direction.LONG:
                         target_positon_price = tick.last_price * (1 + price_rate)
 
@@ -793,12 +797,12 @@ class MartingStrategy(CtaTemplate):
 
                 # 平仓、加仓价格
                 if self.direction == Direction.LONG:
-                    self.position_close_price = self.position_price * (1 + 0.01)
-                    self.position_increase_price = self.position_price * (1 - 0.08)
+                    self.position_close_price = self.position_price * (1 + REDUCE_RATE)
+                    self.position_increase_price = self.position_price * (1 - TRENDING_INCREASE_RATE)
 
                 elif self.direction == Direction.SHORT:
-                    self.position_close_price = self.position_price * (1 - 0.01)
-                    self.position_increase_price = self.position_price * (1 + 0.08)
+                    self.position_close_price = self.position_price * (1 - REDUCE_RATE)
+                    self.position_increase_price = self.position_price * (1 + TRENDING_INCREASE_RATE)
             
             else:
                 # 平仓后的持仓价值
@@ -840,7 +844,7 @@ class MartingBacktesting(object):
         start_dt: datetime,
     ):
         # 常量
-        self.unit_value = 1000000 * 0.5 * 0.01  # 最小持仓价值
+        self.unit_value = 10000 * 0.5 * 0.01  # 最小持仓价值
         self.strategy = strategy  # 实盘策略
         self.vt_symbol = vt_symbol  # 合约代码
         self.direction = direction  # 交易方向
@@ -1105,7 +1109,7 @@ class MartingBacktesting(object):
                     current_position_value = abs(self.position) * self.position_price
 
                     # 更新持仓价格
-                    price_rate = 0.01
+                    price_rate = TRENDING_OPEN_LOSS_RATE
                     if self.direction == Direction.LONG:
                         target_positon_price = trade_price * (1 + price_rate)
 
@@ -1212,10 +1216,10 @@ class MartingBacktesting(object):
         if self.position_price:
             # ====== 减仓价格 ======
             if self.direction == Direction.LONG:
-                self.position_reduce_price = self.position_price * (1 + 0.01)
+                self.position_reduce_price = self.position_price * (1 + REDUCE_RATE)
 
             elif self.direction == Direction.SHORT:
-                self.position_reduce_price = self.position_price * (1 - 0.01)
+                self.position_reduce_price = self.position_price * (1 - REDUCE_RATE)
 
             # ====== 加仓价格 ======
             if self.direction == Direction.LONG:
@@ -1226,7 +1230,7 @@ class MartingBacktesting(object):
                     self.position_increase_price = self.position_price * (1 - 0.04)
 
                 else:
-                    self.position_increase_price = self.position_price * (1 - 0.08)
+                    self.position_increase_price = self.position_price * (1 - TRENDING_INCREASE_RATE)
 
             elif self.direction == Direction.SHORT:
                 if current_phase == 0:
@@ -1236,4 +1240,4 @@ class MartingBacktesting(object):
                     self.position_increase_price = self.position_price * (1 + 0.04)
 
                 else:
-                    self.position_increase_price = self.position_price * (1 + 0.08)
+                    self.position_increase_price = self.position_price * (1 + TRENDING_INCREASE_RATE)

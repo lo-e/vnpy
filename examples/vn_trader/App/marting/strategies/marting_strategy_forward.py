@@ -758,7 +758,7 @@ class MartingBacktesting(object):
         start_dt: datetime,
     ):
         # 常量
-        self.unit_value = 1000000 * 0.5 * 0.01  # 最小持仓价值
+        self.unit_value = 10000 * 0.5 * 0.01  # 最小持仓价值
         self.strategy = strategy  # 实盘策略
         self.vt_symbol = vt_symbol  # 合约代码
         self.direction = direction  # 交易方向

@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 import json
 
+TRENDING_OPEN_LOSS_RATE = 0.02 # 趋势加仓时的持仓亏损比率
 REDUCE_RATE = 0.005 # 盈利平仓比率
 TRENDING_INCREASE_RATE = 0.04 # 趋势加仓比率
 
@@ -208,7 +209,7 @@ class MartingTradeEngine(object):
                 current_position_value = abs(self.position) * self.position_price
 
                 # 计算加仓数量
-                price_rate = 0.02
+                price_rate = TRENDING_OPEN_LOSS_RATE
                 if self.direction == Direction.LONG:
                     target_positon_price = trade_price * (1 + price_rate)
 
@@ -566,7 +567,7 @@ class MartingInverseSignal(object):
                     current_position_value = abs(self.position) * self.position_price
 
                     # 更新持仓价格
-                    price_rate = 0.02
+                    price_rate = TRENDING_OPEN_LOSS_RATE
                     if self.direction == Direction.LONG:
                         target_positon_price = trade_price * (1 + price_rate)
 
