@@ -68,9 +68,9 @@ class MartingTradeEngine(object):
         """
 
         # fake
-        if self.symbol == "ENSUSDT.BINANCE" and self.direction == Direction.SHORT:
+        if self.symbol == "BALUSDT.BINANCE" and self.direction == Direction.SHORT:
             if self.bar.datetime >= datetime.strptime(
-                "2022-08-03 06:45:00", "%Y-%m-%d %H:%M:%S"
+                "2022-01-02 05:25:00", "%Y-%m-%d %H:%M:%S"
             ):
                 a = 2
 
@@ -220,12 +220,12 @@ class MartingTradeEngine(object):
                 ) / (trade_price - target_positon_price)
                 trade_volume = round_to(trade_volume, self.symbol_min_volume)
 
-                # 更新持仓价格
-                self.position_price = target_positon_price
+                if trade_volume > 0:
+                    # 更新持仓价格
+                    self.position_price = target_positon_price
 
             if trade_volume <= 0:
-                if trade_volume < 0:
-                    exit("加仓数量错误，检查代码！")
+                exit("加仓数量错误，检查代码！")
 
             # 更新追踪等级
             self.trending_step = next_trending_step
@@ -233,27 +233,28 @@ class MartingTradeEngine(object):
             # 更新加减仓价格
             self.update_reduce_increase_price()
 
-            # 当前持仓数量更新、发起订单
-            if self.direction == Direction.LONG:
-                self.position = abs(self.position) + trade_volume
-                self.newSignal(
-                    Direction.LONG,
-                    Offset.OPEN,
-                    trade_price,
-                    abs(trade_volume),
-                )
+            if trade_volume > 0:
+                # 当前持仓数量更新、发起订单
+                if self.direction == Direction.LONG:
+                    self.position = abs(self.position) + trade_volume
+                    self.newSignal(
+                        Direction.LONG,
+                        Offset.OPEN,
+                        trade_price,
+                        abs(trade_volume),
+                    )
 
-            elif self.direction == Direction.SHORT:
-                self.position = (abs(self.position) + trade_volume) * -1
-                self.newSignal(
-                    Direction.SHORT,
-                    Offset.OPEN,
-                    trade_price,
-                    abs(trade_volume),
-                )
+                elif self.direction == Direction.SHORT:
+                    self.position = (abs(self.position) + trade_volume) * -1
+                    self.newSignal(
+                        Direction.SHORT,
+                        Offset.OPEN,
+                        trade_price,
+                        abs(trade_volume),
+                    )
 
-            else:
-                exit("检查代码！")
+                else:
+                    exit("检查代码！")
 
     def update_reduce_increase_price(self):
         if self.position_price:

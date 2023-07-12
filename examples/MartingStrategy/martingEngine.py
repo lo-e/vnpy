@@ -74,12 +74,12 @@ class BacktestingEngine(object):
             self.portfolio = MartingInversePortfolio(self)
 
         # 筛选合约
-        temp = []
         if self.portfolio.target_symbol_list:
+            temp = []
             for symbol in self.portfolio.target_symbol_list:
                 if symbol in self.symbolList:
                     temp.append(symbol)
-        self.symbolList = temp
+            self.symbolList = temp
         self.portfolio.init(portfolioValue, self.symbolList, history_file=history_file)
         self.portfolio.tradingStart = self.tradingStart
 
