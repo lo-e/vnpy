@@ -23,10 +23,10 @@ TRENDING_OPEN_LOSS_RATE = 0.02 # 趋势加仓时的持仓亏损比率
 REDUCE_RATE = 0.005 # 盈利平仓比率
 TRENDING_INCREASE_RATE = 0.04 # 趋势加仓比率
 
-class MartingStrategy(CtaTemplate):
+class MartingInverseStrategy(CtaTemplate):
     """马丁策略"""
 
-    className = "MartingStrategy"
+    className = "MartingInverseStrategy"
     author = "loe"
 
     # 策略参数
@@ -149,7 +149,7 @@ class MartingStrategy(CtaTemplate):
         )  # 1分钟Bar生成工具
 
         # 完成setting.json参数的配置
-        super(MartingStrategy, self).__init__(
+        super(MartingInverseStrategy, self).__init__(
             cta_engine=ctaEngine, strategy_name="", vt_symbol="", setting=setting
         )
 
@@ -816,7 +816,7 @@ class MartingStrategy(CtaTemplate):
             self.position_increase_price = 0
 
         # 邮件提醒
-        super(MartingStrategy, self).on_trade(trade)
+        super(MartingInverseStrategy, self).on_trade(trade)
 
     def on_stop(self):
         self.write_log(f"{self.strategy_name}\t策略停止")
@@ -833,7 +833,7 @@ class MartingStrategy(CtaTemplate):
 class MartingBacktesting(object):
     def __init__(
         self,
-        strategy: MartingStrategy,
+        strategy: MartingInverseStrategy,
         vt_symbol: str,
         direction: Direction,
         ma_window: int,

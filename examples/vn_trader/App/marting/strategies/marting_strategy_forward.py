@@ -19,10 +19,10 @@ from App.marting.martingPortfolio import BAR_DOWNLOAD_GENERATE_COMPLETE
 from vnpy.event import Event
 from copy import copy
 
-class MartingStrategy(CtaTemplate):
+class MartingForwardStrategy(CtaTemplate):
     """马丁策略"""
 
-    className = "MartingStrategy"
+    className = "MartingForwardStrategy"
     author = "loe"
 
     # 策略参数
@@ -143,7 +143,7 @@ class MartingStrategy(CtaTemplate):
         )  # 1分钟Bar生成工具
 
         # 完成setting.json参数的配置
-        super(MartingStrategy, self).__init__(
+        super(MartingForwardStrategy, self).__init__(
             cta_engine=ctaEngine, strategy_name="", vt_symbol="", setting=setting
         )
 
@@ -730,7 +730,7 @@ class MartingStrategy(CtaTemplate):
             self.position_close_price = 0
 
         # 邮件提醒
-        super(MartingStrategy, self).on_trade(trade)
+        super(MartingForwardStrategy, self).on_trade(trade)
 
     def on_stop(self):
         self.write_log(f"{self.strategy_name}\t策略停止")
@@ -747,7 +747,7 @@ class MartingStrategy(CtaTemplate):
 class MartingBacktesting(object):
     def __init__(
         self,
-        strategy: MartingStrategy,
+        strategy: MartingForwardStrategy,
         vt_symbol: str,
         direction: Direction,
         ma_window: int,

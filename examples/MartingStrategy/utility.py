@@ -560,7 +560,7 @@ def generate_setting(symbol_open_dict: dict, marting_type:str, exchange:str):
                 pure_symbol = symbol[:symbol.index('USDT')]
                 data_long = {
                     "strategy_name": f"MARTING_{exchange}_{pure_symbol}_多",
-                    "class_name": "MartingStrategy",
+                    "class_name": "MartingForwardStrategy",
                     "vt_symbol": symbol,
                     "direction": "多",
                     "forward_step": forward_step,
@@ -571,7 +571,7 @@ def generate_setting(symbol_open_dict: dict, marting_type:str, exchange:str):
 
                 data_short = {
                     "strategy_name": f"MARTING_{exchange}_{pure_symbol}_空",
-                    "class_name": "MartingStrategy",
+                    "class_name": "MartingForwardStrategy",
                     "vt_symbol": symbol,
                     "direction": "空",
                     "forward_step": forward_step,
@@ -594,7 +594,7 @@ def generate_setting(symbol_open_dict: dict, marting_type:str, exchange:str):
                 pure_symbol = symbol[:symbol.index('USDT')]
                 data_long = {
                     "strategy_name": f"MARTING_{exchange}_{pure_symbol}_多",
-                    "class_name": "MartingStrategy",
+                    "class_name": "MartingInverseStrategy",
                     "vt_symbol": symbol,
                     "direction": "多",
                     "init_value_rate": init_value_rate,
@@ -606,7 +606,7 @@ def generate_setting(symbol_open_dict: dict, marting_type:str, exchange:str):
 
                 data_short = {
                     "strategy_name": f"MARTING_{exchange}_{pure_symbol}_空",
-                    "class_name": "MartingStrategy",
+                    "class_name": "MartingInverseStrategy",
                     "vt_symbol": symbol,
                     "direction": "空",
                     "init_value_rate": init_value_rate,
