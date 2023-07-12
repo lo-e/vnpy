@@ -658,7 +658,8 @@ class MartingInverseStrategy(CtaTemplate):
                 changed_volume = self.target_volume - abs(self.pos)
                 changed_volume = round_to(changed_volume, self.symbol_min_volume)
                 open_value = changed_volume * tick.last_price
-                open_cross = self.portfolio.check_open_cross(open_value=open_value)
+                # open_cross = self.portfolio.check_open_cross(open_value=open_value)
+                open_cross = True
                 if open_cross:
                     if next_trending_step:
                         # 更新趋势追踪等级

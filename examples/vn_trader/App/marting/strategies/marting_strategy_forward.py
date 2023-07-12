@@ -593,7 +593,8 @@ class MartingForwardStrategy(CtaTemplate):
                 changed_volume = self.target_volume - abs(self.pos)
                 changed_volume = round_to(changed_volume, self.symbol_min_volume)
                 open_value = changed_volume * trade_price
-                portfolio_open_cross = self.portfolio.check_open_cross(open_value=open_value)
+                # portfolio_open_cross = self.portfolio.check_open_cross(open_value=open_value)
+                portfolio_open_cross = True
                 if portfolio_open_cross:
                     # 邮件通知
                     if email_msg:
