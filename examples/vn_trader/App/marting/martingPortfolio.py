@@ -311,17 +311,22 @@ class MartingPortfolio(object):
         total = 0
         loss_tick_symbols_forward = set()
         loss_tick_symbols_inverse = set()
+
         error_count = 0
+
         forward_fit_content = ""
         forward_fit_count = 0
         forward_unfit_content = ""
         forward_unfit_count = 0
+
         inverse_fit_content = ""
         inverse_fit_count = 0
         inverse_unfit_content = ""
         inverse_unfit_count = 0
+
         highlight_content = ""
         highlight_count = 0
+
         b_min_datetime = ""
         b_max_datetime = ""
         s_min_datetime = ""
@@ -335,8 +340,9 @@ class MartingPortfolio(object):
 
             if not strategy.tick:
                 symbol = strategy.vt_symbol.split(".")[0]
-                if strategy.forward:
+                if "forward" in strategy.className.lower():
                     loss_tick_symbols_forward.add(symbol)
+                    
                 else:
                     loss_tick_symbols_inverse.add(symbol)
 
@@ -354,9 +360,6 @@ class MartingPortfolio(object):
             backtesting_to = strategy.backtesting_to
             strategy_to = strategy.strategy_to
 
-            # fake
-            # key = "none"
-
             if backtesting_to:
                 # 最小回测截止时间
                 b_min_datetime = (
@@ -369,9 +372,6 @@ class MartingPortfolio(object):
                 )
 
             if strategy_to:
-                # fake
-                # key = strategy_to
-
                 # 最小回测截止时间
                 s_min_datetime = (
                     min(s_min_datetime, strategy_to) if s_min_datetime else strategy_to
@@ -392,7 +392,7 @@ class MartingPortfolio(object):
 
             # 回测和实盘比较趋势追踪等级是否一致
             if strategy_step or strategy.trending_step:
-                if strategy.forward:
+                if "forward" in strategy.className.lower():
                     if strategy.backtesting_forward_start:
                         if strategy.forward_start:
                             content = f"\nsignal_name:{strategy.strategy_name}_趋势追踪\nsignal_pos:{strategy.pos}\nsignal_position_price:{strategy.position_price}\nsignal_position_value:{position_value}\nsignal_pnl:{strategy.current_pnl_rate}\n\nstrategy_step: {strategy_step}\nstrategy_to: {strategy_to}\nstrategy_pnl：{strategy.strategy_current_pnl_rate}"
