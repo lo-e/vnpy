@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 import json
 
+REDUCE_RATE = 0.005 # 盈利平仓比率
 TRENDING_INCREASE_RATE = 0.04 # 趋势加仓比率
 
 class MartingTradeEngine(object):
@@ -262,11 +263,11 @@ class MartingTradeEngine(object):
     def update_reduce_increase_price(self):
         if self.position_price:
             if self.direction == Direction.LONG:
-                self.position_reduce_price = self.position_price * (1 + 0.005)
+                self.position_reduce_price = self.position_price * (1 + REDUCE_RATE)
                 self.position_increase_price = self.position_price * (1 - TRENDING_INCREASE_RATE)
 
             elif self.direction == Direction.SHORT:
-                self.position_reduce_price = self.position_price * (1 - 0.005)
+                self.position_reduce_price = self.position_price * (1 - REDUCE_RATE)
                 self.position_increase_price = self.position_price * (1 + TRENDING_INCREASE_RATE)
         
         else:
@@ -667,10 +668,10 @@ class MartingInverseSignal(object):
         if self.position_price:
             # ====== 减仓价格 ======
             if self.direction == Direction.LONG:
-                self.position_reduce_price = self.position_price * (1 + 0.005)
+                self.position_reduce_price = self.position_price * (1 + REDUCE_RATE)
 
             elif self.direction == Direction.SHORT:
-                self.position_reduce_price = self.position_price * (1 - 0.005)
+                self.position_reduce_price = self.position_price * (1 - REDUCE_RATE)
 
             # ====== 加仓价格 ======
             if self.direction == Direction.LONG:
