@@ -485,6 +485,12 @@ class MartingPortfolio(object):
             error_content = f"\n{error_subject}\n{error_content}"
             self.engine.main_engine.send_ding_talk(content=error_content)
 
+        if not forward_fit_count and not forward_unfit_count and not inverse_fit_count and not inverse_unfit_count and not error_count:
+            msg_content = f"\n{main_content}\n"
+            self.engine.send_email(
+                msg=msg_content, subject=f"马丁策略组合状态信息"
+            )
+
         # 高等级反转
         # if highlight_count:
         #     highlight_subject = f"马丁策略组合状态信息【高等级反转：{highlight_count}】"
