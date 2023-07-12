@@ -2,7 +2,7 @@
   "signal": [
     {
       "strategy_name": "MARTING_BINANCE_ALGO_多",
-      "class_name": "MartingStrategy",
+      "class_name": "MartingInverseStrategy",
       "vt_symbol": "ALGOUSDT.BINANCE",
       "direction": "多",
       "init_value_rate": 0.1,
@@ -12,7 +12,7 @@
     },
     {
       "strategy_name": "MARTING_BINANCE_ALGO_空",
-      "class_name": "MartingStrategy",
+      "class_name": "MartingInverseStrategy",
       "vt_symbol": "ALGOUSDT.BINANCE",
       "direction": "空",
       "init_value_rate": 0.1,
@@ -22,7 +22,7 @@
     },
     {
       "strategy_name": "MARTING_BINANCE_ATOM_多",
-      "class_name": "MartingStrategy",
+      "class_name": "MartingInverseStrategy",
       "vt_symbol": "ATOMUSDT.BINANCE",
       "direction": "多",
       "init_value_rate": 0.1,
@@ -32,7 +32,7 @@
     },
     {
       "strategy_name": "MARTING_BINANCE_ATOM_空",
-      "class_name": "MartingStrategy",
+      "class_name": "MartingInverseStrategy",
       "vt_symbol": "ATOMUSDT.BINANCE",
       "direction": "空",
       "init_value_rate": 0.1,
@@ -42,7 +42,7 @@
     },
     {
       "strategy_name": "MARTING_BINANCE_CHR_多",
-      "class_name": "MartingStrategy",
+      "class_name": "MartingInverseStrategy",
       "vt_symbol": "CHRUSDT.BINANCE",
       "direction": "多",
       "init_value_rate": 0.1,
@@ -52,7 +52,7 @@
     },
     {
       "strategy_name": "MARTING_BINANCE_CHR_空",
-      "class_name": "MartingStrategy",
+      "class_name": "MartingInverseStrategy",
       "vt_symbol": "CHRUSDT.BINANCE",
       "direction": "空",
       "init_value_rate": 0.1,
@@ -62,7 +62,7 @@
     },
     {
       "strategy_name": "MARTING_BINANCE_ENS_多",
-      "class_name": "MartingStrategy",
+      "class_name": "MartingInverseStrategy",
       "vt_symbol": "ENSUSDT.BINANCE",
       "direction": "多",
       "init_value_rate": 0.1,
@@ -72,7 +72,7 @@
     },
     {
       "strategy_name": "MARTING_BINANCE_ENS_空",
-      "class_name": "MartingStrategy",
+      "class_name": "MartingInverseStrategy",
       "vt_symbol": "ENSUSDT.BINANCE",
       "direction": "空",
       "init_value_rate": 0.1,
@@ -82,7 +82,7 @@
     },
     {
       "strategy_name": "MARTING_BINANCE_TRX_多",
-      "class_name": "MartingStrategy",
+      "class_name": "MartingInverseStrategy",
       "vt_symbol": "TRXUSDT.BINANCE",
       "direction": "多",
       "init_value_rate": 0.1,
@@ -92,7 +92,7 @@
     },
     {
       "strategy_name": "MARTING_BINANCE_TRX_空",
-      "class_name": "MartingStrategy",
+      "class_name": "MartingInverseStrategy",
       "vt_symbol": "TRXUSDT.BINANCE",
       "direction": "空",
       "init_value_rate": 0.1,
