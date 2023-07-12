@@ -264,7 +264,7 @@ def analyse_trending_continuous(
     # 生成实盘setting.json
     if for_trade_setting:
         all_symbol_set = set()
-        setting_file_path = f"setting_{exchange.lower()}.csv"
+        setting_file_path = f"setting_{marting_type.lower()}{DIR_SYMBOL}setting_{exchange.lower()}.csv"
         with open(setting_file_path, "r") as f:
             reader = csv.DictReader(f)
             for row in reader:
@@ -275,7 +275,7 @@ def analyse_trending_continuous(
         total_dict = copy(continuous_symbol_open_dict)
         for max_2_symbol in max_2_symbol_set:
             total_dict[max_2_symbol] = {"2":[]}
-        generate_setting(total_dict, exchange=exchange)
+        generate_setting(total_dict, marting_type=marting_type, exchange=exchange)
 
 def output_open_symbol_result(open_symbol_dict: dict):
     continuous_keys = list(open_symbol_dict.keys())
@@ -458,9 +458,9 @@ def output_open_overload_result(open_overload_dict: dict):
         # total_symbols_little = list(set(continuous_5_symbols) | set(over_5_symbols))
         # print(f"\n统计【5 6】：{len(total_symbols_little)}：\n{total_symbols_little}\n")
 
-def generate_setting(symbol_open_dict: dict, exchange:str):
-    forward_symbols = ['ZILUSDT', 'ATAUSDT', 'CTSIUSDT', 'EGLDUSDT', 'DYDXUSDT', 'AUDIOUSDT', '1000SHIBUSDT', 'LINAUSDT', 'OMGUSDT', 'WAVESUSDT', 'ARUSDT', 'ALPHAUSDT', 'ZENUSDT', 'PEOPLEUSDT', 'KAVAUSDT', 'FTMUSDT', 'DOGEUSDT', 'STORJUSDT', 'UNFIUSDT', 'BATUSDT', 'SXPUSDT', 'CHRUSDT', 'ARPAUSDT', 'BAKEUSDT', 'RSRUSDT', 'AXSUSDT', 'ETCUSDT', 'SFPUSDT', 'BCHUSDT', 'ETHUSDT', 'YFIUSDT', 'LRCUSDT', 'RENUSDT', 'AVAXUSDT', 'ATOMUSDT', 'GALAUSDT', 'KNCUSDT', 'AAVEUSDT', 'SUSHIUSDT', 'CRVUSDT', 'OGNUSDT', 'ADAUSDT', 'DASHUSDT', 'SOLUSDT', 'SKLUSDT', 'MASKUSDT', 'ALGOUSDT', 'BELUSDT', 'C98USDT', 'ANKRUSDT', 'ZRXUSDT', 'RLCUSDT', 'ENJUSDT', 'MKRUSDT']
-    
+def generate_setting(symbol_open_dict: dict, marting_type:str, exchange:str):
+    target_symbols = ['ATOMUSDT.BINANCE', 'TRXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'CHRUSDT.BINANCE', 'ALGOUSDT.BINANCE']
+
     # 获取合约最小交易价值
     symbol_min_value_dict = {}
     if exchange == "BYBIT":
@@ -530,6 +530,9 @@ def generate_setting(symbol_open_dict: dict, exchange:str):
     result_symbol_count = 0
     sorted_symbol_list = sorted(list(symbol_max_open_dict.keys()))
     for symbol in sorted_symbol_list:
+        if symbol not in target_symbols:
+            continue
+
         max_open = symbol_max_open_dict[symbol]
         # 趋势追踪最高等级
         top_step = max(int(max_open), 4)
@@ -551,55 +554,74 @@ def generate_setting(symbol_open_dict: dict, exchange:str):
                     break
                 
         if step_length:
-            init_value_rate = init_value / portfolioValue
-            bottom_step = top_step - (step_length - 1)
-            forward_step = 3
-            forward_rate = 15
-            #"""
-            # 固定参数使用
-            top_step = 100
-            init_value = max(10, init_value)
-            bottom_step = int(math.log10(init_value)) + 2
-            init_value_rate = init_value / portfolioValue
-            #"""
-            pure_symbol = symbol[:symbol.index('USDT')]
-            forward = True if f"{pure_symbol}USDT" in forward_symbols else False
-            data_long = {
-                "strategy_name": f"MARTING_{exchange}_{pure_symbol}_多",
-                "class_name": "MartingStrategy",
-                "vt_symbol": symbol,
-                "direction": "多",
-                "init_value_rate": init_value_rate,
-                "bottom_step": bottom_step,
-                "top_step": top_step,
-                "forward": forward,
-                "forward_step": forward_step,
-                "forward_rate": forward_rate,
-                "start": True
-                }
-            symbol_setting_list.append(data_long)
+            if marting_type == "FORWARD":
+                forward_step = 3
+                forward_rate = 15
+                pure_symbol = symbol[:symbol.index('USDT')]
+                data_long = {
+                    "strategy_name": f"MARTING_{exchange}_{pure_symbol}_多",
+                    "class_name": "MartingStrategy",
+                    "vt_symbol": symbol,
+                    "direction": "多",
+                    "forward_step": forward_step,
+                    "forward_rate": forward_rate,
+                    "start": True
+                    }
+                symbol_setting_list.append(data_long)
 
-            data_short = {
-                "strategy_name": f"MARTING_{exchange}_{pure_symbol}_空",
-                "class_name": "MartingStrategy",
-                "vt_symbol": symbol,
-                "direction": "空",
-                "init_value_rate": init_value_rate,
-                "bottom_step": bottom_step,
-                "top_step": top_step,
-                "forward": forward,
-                "forward_step": forward_step,
-                "forward_rate": forward_rate,
-                "start": True
-                }
-            symbol_setting_list.append(data_short)
-            result_symbol_count += 1
+                data_short = {
+                    "strategy_name": f"MARTING_{exchange}_{pure_symbol}_空",
+                    "class_name": "MartingStrategy",
+                    "vt_symbol": symbol,
+                    "direction": "空",
+                    "forward_step": forward_step,
+                    "forward_rate": forward_rate,
+                    "start": True
+                    }
+                symbol_setting_list.append(data_short)
+                result_symbol_count += 1
+
+            else:
+                init_value_rate = init_value / portfolioValue
+                bottom_step = top_step - (step_length - 1)
+                #"""
+                # 固定参数使用
+                top_step = 4
+                bottom_step = 1
+                init_value = 10
+                init_value_rate = init_value / portfolioValue
+                #"""
+                pure_symbol = symbol[:symbol.index('USDT')]
+                data_long = {
+                    "strategy_name": f"MARTING_{exchange}_{pure_symbol}_多",
+                    "class_name": "MartingStrategy",
+                    "vt_symbol": symbol,
+                    "direction": "多",
+                    "init_value_rate": init_value_rate,
+                    "bottom_step": bottom_step,
+                    "top_step": top_step,
+                    "start": True
+                    }
+                symbol_setting_list.append(data_long)
+
+                data_short = {
+                    "strategy_name": f"MARTING_{exchange}_{pure_symbol}_空",
+                    "class_name": "MartingStrategy",
+                    "vt_symbol": symbol,
+                    "direction": "空",
+                    "init_value_rate": init_value_rate,
+                    "bottom_step": bottom_step,
+                    "top_step": top_step,
+                    "start": True
+                    }
+                symbol_setting_list.append(data_short)
+                result_symbol_count += 1
     
     # 完成setting参数
     setting_dict["signal"] = symbol_setting_list
 
     # 保存到json文件
-    file_dir = f"trade_setting{DIR_SYMBOL}"
+    file_dir = f"trade_setting{DIR_SYMBOL}{marting_type}{DIR_SYMBOL}"
     if not os.path.exists(file_dir):
         os.makedirs(file_dir)
 
@@ -614,5 +636,5 @@ if __name__ == "__main__":
 
     # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
     analyse_trending_continuous(
-        exchange="BINANCE", marting_type="INVERSE", min_continuous="1", target_dir="2022-01-01_2023-07-02", by_month=False, for_trade_setting=False
+        exchange="BINANCE", marting_type="INVERSE", min_continuous="1", target_dir="2022-01-01_2023-07-02", by_month=False, for_trade_setting=True
     )
