@@ -15,6 +15,8 @@ import os
 from pathlib import Path
 import json
 
+TRENDING_INCREASE_RATE = 0.04 # 趋势加仓比率
+
 class MartingTradeEngine(object):
     def __init__(
         self,
@@ -36,6 +38,7 @@ class MartingTradeEngine(object):
         ]  # 合约最小价格变动
         self.open_step = 1 # 开仓等级
         self.top_step = 4 # 最高等级
+        self.init_rate = 0.1 # 初始建仓价值比率
 
         self.bar: BarData = None  # 最新K线
         self.position = 0 # 持仓量
@@ -195,7 +198,7 @@ class MartingTradeEngine(object):
             if not self.position:
                 """ 初始建仓 """
                 self.position_price = trade_price
-                trade_volume = (self.portfolio.portfolioValue * 0.1) / trade_price
+                trade_volume = (self.portfolio.portfolioValue * self.init_rate) / trade_price
                 trade_volume = round_to(trade_volume, self.symbol_min_volume)
             
             else:
@@ -224,8 +227,8 @@ class MartingTradeEngine(object):
                     # 更新持仓价格
                     self.position_price = target_positon_price
 
-            if trade_volume <= 0:
-                exit("加仓数量错误，检查代码！")
+            # if trade_volume <= 0:
+            #     exit("加仓数量错误，检查代码！")
 
             # 更新追踪等级
             self.trending_step = next_trending_step
@@ -260,11 +263,11 @@ class MartingTradeEngine(object):
         if self.position_price:
             if self.direction == Direction.LONG:
                 self.position_reduce_price = self.position_price * (1 + 0.005)
-                self.position_increase_price = self.position_price * (1 - 0.08)
+                self.position_increase_price = self.position_price * (1 - TRENDING_INCREASE_RATE)
 
             elif self.direction == Direction.SHORT:
                 self.position_reduce_price = self.position_price * (1 - 0.005)
-                self.position_increase_price = self.position_price * (1 + 0.08)
+                self.position_increase_price = self.position_price * (1 + TRENDING_INCREASE_RATE)
         
         else:
             self.position_reduce_price = 0
@@ -678,7 +681,7 @@ class MartingInverseSignal(object):
                     self.position_increase_price = self.position_price * (1 - 0.04)
 
                 else:
-                    self.position_increase_price = self.position_price * (1 - 0.08)
+                    self.position_increase_price = self.position_price * (1 - TRENDING_INCREASE_RATE)
 
             elif self.direction == Direction.SHORT:
                 if current_phase == 0:
@@ -688,7 +691,7 @@ class MartingInverseSignal(object):
                     self.position_increase_price = self.position_price * (1 + 0.04)
 
                 else:
-                    self.position_increase_price = self.position_price * (1 + 0.08)
+                    self.position_increase_price = self.position_price * (1 + TRENDING_INCREASE_RATE)
 
     def save_sync_data(self):
         status = {}
@@ -715,9 +718,12 @@ class MartingInversePortfolio(object):
         self.top_step_signal = None
         self.trending_open = True
         self.target_symbol_list = []
-        # 最大连续趋势追踪3、最大连续趋势追踪4：40
+        # （TRENDING_INCREASE_RATE 0.08）最大连续趋势追踪3、最大连续趋势追踪4：40
         # self.target_symbol_list = ['1INCHUSDT.BINANCE', 'EGLDUSDT.BINANCE', 'BCHUSDT.BINANCE', 'CTKUSDT.BINANCE', 'TRXUSDT.BINANCE', 'BTCDOMUSDT.BINANCE', 'ALPHAUSDT.BINANCE', 'DENTUSDT.BINANCE', 'MKRUSDT.BINANCE', 'BLZUSDT.BINANCE', 'FLMUSDT.BINANCE', 'ADAUSDT.BINANCE', 'ENSUSDT.BINANCE', 'CRVUSDT.BINANCE', 'CHZUSDT.BINANCE', 'CHRUSDT.BINANCE', 'QTUMUSDT.BINANCE', 'UNIUSDT.BINANCE', 'LITUSDT.BINANCE', 'RVNUSDT.BINANCE', 'KAVAUSDT.BINANCE', 'BNBUSDT.BINANCE', 'ALICEUSDT.BINANCE', 'LINKUSDT.BINANCE', 'NEARUSDT.BINANCE', 'NEOUSDT.BINANCE', 'RUNEUSDT.BINANCE', 'XMRUSDT.BINANCE', 'DEFIUSDT.BINANCE', 'NKNUSDT.BINANCE', 'ETHUSDT.BINANCE', 'AXSUSDT.BINANCE', 'CELOUSDT.BINANCE', '1000XECUSDT.BINANCE', 'ICXUSDT.BINANCE', 'COMPUSDT.BINANCE', 'STMXUSDT.BINANCE', 'DGBUSDT.BINANCE', 'CTSIUSDT.BINANCE', 'BAKEUSDT.BINANCE']
         # self.target_symbol_list = ['1INCHUSDT.BINANCE', 'EGLDUSDT.BINANCE', 'BCHUSDT.BINANCE', 'CTKUSDT.BINANCE', 'ALPHAUSDT.BINANCE']
+        
+        # （TRENDING_INCREASE_RATE 0.04）最大连续趋势追踪6：8
+        self.target_symbol_list = ['ATOMUSDT.BINANCE', 'TRXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'CHRUSDT.BINANCE', 'ALGOUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE']
 
     def init(self, portfolioValue, symbolList, history_file: str = ""):
         self.portfolioValue = portfolioValue

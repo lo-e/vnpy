@@ -256,10 +256,10 @@ def analyse_trending_continuous(
         # output_open_symbol_result(continuous_open_symbol_dict)
 
         # 信号连续趋势追踪统计
-        # output_symbol_open_result(continuous_symbol_open_dict, marting_type=marting_type, exchange=exchange)
+        output_symbol_open_result(continuous_symbol_open_dict, marting_type=marting_type, exchange=exchange)
 
         # 连续趋势追踪<强势>信号统计
-        output_open_overload_result(continuous_open_overload_dict)
+        # output_open_overload_result(continuous_open_overload_dict)
 
     # 生成实盘setting.json
     if for_trade_setting:
@@ -320,17 +320,27 @@ def output_symbol_open_result(symbol_open_dict: dict, marting_type:str, exchange
     max_2_symbol_set = all_symbol_set - set(list(symbol_open_dict.keys()))
     max_3_symbol_set = set()
     max_4_symbol_set = set()
-    over_4_symbol_set = set()
+    max_5_symbol_set = set()
+    max_6_symbol_set = set()
+    over_symbol_set = set()
     for symbol, open_dict in symbol_open_dict.items():
         # print(f"\n{symbol}的连续趋势追踪记录")
         max_3 = True
         max_4 = True
+        max_5 = True
+        max_6 = True
         for continuous_key, data_list in open_dict.items():
             if int(continuous_key) > 3:
                 max_3 = False
 
             if int(continuous_key) > 4:
                 max_4 = False
+
+            if int(continuous_key) > 5:
+                max_5 = False
+
+            if int(continuous_key) > 6:
+                max_6 = False
 
             # print(f"追踪{continuous_key}\t{len(data_list)}")
 
@@ -340,8 +350,14 @@ def output_symbol_open_result(symbol_open_dict: dict, marting_type:str, exchange
         elif max_4:
             max_4_symbol_set.add(symbol)
         
+        elif max_5:
+            max_5_symbol_set.add(symbol)
+        
+        elif max_6:
+            max_6_symbol_set.add(symbol)
+        
         else:
-            over_4_symbol_set.add(symbol)
+            over_symbol_set.add(symbol)
 
     print(f"\n最大连续趋势追踪2的合约总数：{len(max_2_symbol_set)}")
     for symbol in max_2_symbol_set:
@@ -358,9 +374,19 @@ def output_symbol_open_result(symbol_open_dict: dict, marting_type:str, exchange
         print(symbol)
     print(f"{list(max_4_symbol_set)}")
 
-    # print(f"\n连续趋势追踪5以上的合约总数：{len(over_4_symbol_set)}")
-    # for symbol in over_4_symbol_set:
-    #     print(symbol)
+    print(f"\n最大连续趋势追踪5的合约总数：{len(max_5_symbol_set)}")
+    for symbol in max_5_symbol_set:
+        print(symbol)
+    print(f"{list(max_5_symbol_set)}")
+
+    print(f"\n最大连续趋势追踪6的合约总数：{len(max_6_symbol_set)}")
+    for symbol in max_6_symbol_set:
+        print(symbol)
+    print(f"{list(max_6_symbol_set)}")
+
+    print(f"\n连续趋势追踪超限的合约总数：{len(over_symbol_set)}")
+    for symbol in over_symbol_set:
+        print(symbol)
     print("\n")
 
 def output_open_overload_result(open_overload_dict: dict):
@@ -588,5 +614,5 @@ if __name__ == "__main__":
 
     # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
     analyse_trending_continuous(
-        exchange="BINANCE", marting_type="FORWARD", min_continuous="1", target_dir="2022-01-01_2023-07-01", by_month=True, for_trade_setting=False
+        exchange="BINANCE", marting_type="INVERSE", min_continuous="1", target_dir="2022-01-01_2023-07-02", by_month=False, for_trade_setting=False
     )
