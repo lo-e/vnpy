@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 import shutil
 import os
 from vnpy.trader.constant import Interval
-from time import sleep
+from time import time, sleep
 from threading import Thread
 from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 from pymongo import MongoClient, ASCENDING, DESCENDING
@@ -49,12 +49,18 @@ class TurtleCryptoDataDownloading(object):
 
         # 多线程获取数据
         self.loading_complete = False
+        start_time = time()
         for contract in contract_list:
             while len(self.threads) >= 10:
                 sleep(2)
             thread = DownloadThread(self, exchange=ExchangeType.BYBIT, contract=contract, interval='1', days=days, to_date=to_date, from_data_base=from_data_base, api_check=api_check)
             self.threads.append(thread)
             thread.start()
+        end_time = time()
+
+        # 避免下载时间过短影响逻辑判断
+        if start_time - end_time < 2:
+            sleep(1)
         self.loading_complete = True
 
     def download_from_okex(self, contract_list, days=1):
@@ -126,12 +132,18 @@ class TurtleCryptoDataDownloading(object):
 
         # 多线程获取数据
         self.loading_complete = False
+        start_time = time()
         for contract in contract_list:
             while len(self.threads) >= 10:
                 sleep(2)
             thread = DownloadThread(self, exchange=ExchangeType.BINANCE, contract=contract, interval='1m', days=days, to_date=to_date, from_data_base=from_data_base, api_check=api_check)
             self.threads.append(thread)
             thread.start()
+        end_time = time()
+        
+        # 避免下载时间过短影响逻辑判断
+        if start_time - end_time < 2:
+            sleep(1)
         self.loading_complete = True
 
     def generate_for_bybit(self, contract_list, days=1):
