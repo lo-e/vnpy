@@ -150,14 +150,14 @@ class MartingPortfolio(object):
             self.generating_cost = int(time() - self.generating_time)
 
         # 下载开始
-        if len(self.download_engine.threads):
+        if not self.download_engine.loading_complete:
             if self.downloading_trigger:
                 self.downloading_trigger = False
                 self.is_downloading = True
                 self.downloading_wait = 0
                 self.downloading_time = time()
 
-        elif not self.downloading_trigger and self.download_engine.loading_complete:
+        elif not self.downloading_trigger and not len(self.download_engine.threads):
             if self.is_downloading:
                 # 刚结束下载，开始生成window_bar
                 self.is_generating = True
