@@ -326,7 +326,7 @@ def one():
         # 本次回测结果更新
         trade_setting = {} # 实盘设置参数
         signal_trade_setting = {} # 策略的实盘设置参数
-        trade_setting_file = f"trade_setting{DIR_SYMBOL}{exchange}.json"
+        trade_setting_file = f"trade_setting{DIR_SYMBOL}{marting_type}{DIR_SYMBOL}{exchange}.json"
         if os.path.exists(trade_setting_file):
             with open(trade_setting_file, mode="r", encoding="UTF-8") as f:
                 trade_setting = json.load(f)
@@ -346,7 +346,7 @@ def one():
 
                 # 信号组合的最新趋势追踪信息
                 trade_setting = signal_trade_setting.get(signal_key, {})
-                signal_bottom = trade_setting["bottom_step"]
+                signal_bottom = trade_setting.get("bottom_step", 0)
                 signal_status = signal.inverse_signal.saved_sync_data["backtesting_status"]
                 trending_step = signal_status["trending_step"]
                 data_list = signal_trending_step_dict.get(trending_step, [])
