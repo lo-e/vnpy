@@ -101,5 +101,5 @@
       "start": true
     }
   ],
-  "portfolio": { "name": "MARTING_BINANCE", "portfolioValue": 100 }
+  "portfolio": { "name": "MARTING_INVERSE_BINANCE", "portfolioValue": 100 }
 }

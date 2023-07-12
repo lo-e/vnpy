@@ -515,7 +515,7 @@ def generate_setting(symbol_open_dict: dict, marting_type:str, exchange:str):
     portfolioValue = 100
     setting_dict = {
         "signal": [],
-        "portfolio": {"name": f"MARTING_{exchange}", "portfolioValue": portfolioValue},
+        "portfolio": {"name": f"MARTING_{marting_type}_{exchange}", "portfolioValue": portfolioValue},
     }
     max_leverage = 10
     strategy_min_value = 1
