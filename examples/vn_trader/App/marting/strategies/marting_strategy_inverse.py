@@ -507,7 +507,7 @@ class MartingInverseStrategy(CtaTemplate):
             ): 
                 # 策略组合最多只能有一个趋势追踪最高等级
                 trending_top_cross = True
-                if strategy_next_trending_step == self.top_step and self.portfolio.trending_top:
+                if strategy_next_trending_step >= self.top_step and self.portfolio.trending_top_strategies and self.strategy_name not in self.portfolio.trending_top_strategies:
                     trending_top_cross = False
 
                 if trending_top_cross:
@@ -543,7 +543,7 @@ class MartingInverseStrategy(CtaTemplate):
                 ):
                     # 策略组合最多只能有一个趋势追踪最高等级
                     trending_top_cross = True
-                    if strategy_trending_step == self.top_step and self.portfolio.trending_top:
+                    if strategy_trending_step >= self.top_step and self.portfolio.trending_top_strategies and self.strategy_name not in self.portfolio.trending_top_strategies:
                         trending_top_cross = False
 
                     if trending_top_cross:
@@ -579,7 +579,7 @@ class MartingInverseStrategy(CtaTemplate):
                 if strategy_trending_step != self.trending_step and target_trending_step >= self.bottom_step and self.position_increase_price:
                     # 策略组合最多只能有一个趋势追踪最高等级
                     trending_top_cross = True
-                    if target_trending_step == self.top_step and self.portfolio.trending_top:
+                    if target_trending_step >= self.top_step and self.portfolio.trending_top_strategies and self.strategy_name not in self.portfolio.trending_top_strategies:
                         trending_top_cross = False
 
                     if trending_top_cross:
