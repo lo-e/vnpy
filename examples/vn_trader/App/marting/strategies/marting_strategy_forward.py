@@ -304,7 +304,7 @@ class MartingForwardStrategy(CtaTemplate):
 
             # 回测结果
             self.strategy_position_price = self.strategy_status["position_price"]
-            self.strategy_position_value = self.strategy_status["position"] * self.strategy_status["position_price"]
+            self.strategy_position_value = abs(self.strategy_status["position"]) * self.strategy_status["position_price"]
             self.strategy_position_reduce_price = self.strategy_status[
                 "position_reduce_price"
             ]
