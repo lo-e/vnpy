@@ -776,24 +776,24 @@ class MartingInversePortfolio(object):
             l.append(signal1)
             l.append(signal2)
 
-            # 根据历史回测数据给策略组合持仓初始化
-            long_signal_position = 0
-            if long_history_data:
-                long_signal_position = long_history_data["backtesting_status"][
-                    "position"
-                ]
-                long_signal_position_key = f"{symbol}_{Direction.LONG.value}"
-                self.signalPosDict[long_signal_position_key] = long_signal_position
+            # # 根据历史回测数据给策略组合持仓初始化
+            # long_signal_position = 0
+            # if long_history_data:
+            #     long_signal_position = long_history_data["backtesting_status"][
+            #         "position"
+            #     ]
+            #     long_signal_position_key = f"{symbol}_{Direction.LONG.value}"
+            #     self.signalPosDict[long_signal_position_key] = long_signal_position
 
-            short_signal_position = 0
-            if short_history_data:
-                short_signal_position = short_history_data["backtesting_status"][
-                    "position"
-                ]
-                short_signal_position_key = f"{symbol}_{Direction.SHORT.value}"
-                self.signalPosDict[short_signal_position_key] = short_signal_position
+            # short_signal_position = 0
+            # if short_history_data:
+            #     short_signal_position = short_history_data["backtesting_status"][
+            #         "position"
+            #     ]
+            #     short_signal_position_key = f"{symbol}_{Direction.SHORT.value}"
+            #     self.signalPosDict[short_signal_position_key] = short_signal_position
 
-            self.posDict[symbol] = long_signal_position + short_signal_position
+            # self.posDict[symbol] = long_signal_position + short_signal_position
 
     def load_backtesting_history_data(self, exchange: str, file_name: str):
         history_data = {}
