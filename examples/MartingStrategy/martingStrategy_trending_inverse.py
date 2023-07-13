@@ -745,7 +745,23 @@ class MartingInversePortfolio(object):
         
         # （TRENDING_INCREASE_RATE 0.04）最大连续趋势追踪6：8
         self.target_symbol_list = ['TRXUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'ENSUSDT.BINANCE', 'CHRUSDT.BINANCE', 'ALGOUSDT.BINANCE', 'EOSUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ATOMUSDT.BINANCE']
-        # self.target_symbol_list = ['ATOMUSDT.BINANCE', 'TRXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'CHRUSDT.BINANCE', 'ALGOUSDT.BINANCE']
+        """
+        总收益率：      497.57%
+        最大回撤:       -7,681.3        2023-02-08 16:20:00
+        百分比最大回撤: -55.88% 2022-01-22 18:05:00
+        最大回撤【本金】:       -4,768.65       2022-01-22 18:05:00
+        百分比最大回撤【本金】: -47.69% 2022-01-22 18:05:00
+        """
+        self.target_symbol_list = ['ATOMUSDT.BINANCE', 'TRXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'CHRUSDT.BINANCE', 'ALGOUSDT.BINANCE']
+
+        """
+        总收益率：      1,144.76%
+        最大回撤:       -168,695.91     2022-06-13 22:45:00
+        百分比最大回撤: -216.92%        2022-06-13 19:25:00
+        最大回撤【本金】:       -85,641.07      2022-06-13 22:45:00
+        百分比最大回撤【本金】: -856.41%        2022-06-13 22:45:00
+        """
+        self.target_symbol_list = ['SUSHIUSDT.BINANCE', 'EOSUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ALGOUSDT.BINANCE', 'ATOMUSDT.BINANCE']
 
     def init(self, portfolioValue, symbolList, history_file: str = ""):
         self.portfolioValue = portfolioValue
