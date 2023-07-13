@@ -744,7 +744,8 @@ class MartingInversePortfolio(object):
         # self.target_symbol_list = ['1INCHUSDT.BINANCE', 'EGLDUSDT.BINANCE', 'BCHUSDT.BINANCE', 'CTKUSDT.BINANCE', 'ALPHAUSDT.BINANCE']
         
         # （TRENDING_INCREASE_RATE 0.04）最大连续趋势追踪6：8
-        self.target_symbol_list = ['ATOMUSDT.BINANCE', 'TRXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'CHRUSDT.BINANCE', 'ALGOUSDT.BINANCE']
+        self.target_symbol_list = ['TRXUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'ENSUSDT.BINANCE', 'CHRUSDT.BINANCE', 'ALGOUSDT.BINANCE', 'EOSUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ATOMUSDT.BINANCE']
+        # self.target_symbol_list = ['ATOMUSDT.BINANCE', 'TRXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'CHRUSDT.BINANCE', 'ALGOUSDT.BINANCE']
 
     def init(self, portfolioValue, symbolList, history_file: str = ""):
         self.portfolioValue = portfolioValue

@@ -459,7 +459,8 @@ def output_open_overload_result(open_overload_dict: dict):
         # print(f"\n统计【5 6】：{len(total_symbols_little)}：\n{total_symbols_little}\n")
 
 def generate_setting(symbol_open_dict: dict, marting_type:str, exchange:str):
-    target_symbols = ['ATOMUSDT.BINANCE', 'TRXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'CHRUSDT.BINANCE', 'ALGOUSDT.BINANCE']
+    target_symbols = ['TRXUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'ENSUSDT.BINANCE', 'CHRUSDT.BINANCE', 'ALGOUSDT.BINANCE', 'EOSUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ATOMUSDT.BINANCE']
+    # target_symbols = ['ATOMUSDT.BINANCE', 'TRXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'CHRUSDT.BINANCE', 'ALGOUSDT.BINANCE']
 
     # 获取合约最小交易价值
     symbol_min_value_dict = {}
@@ -636,5 +637,5 @@ if __name__ == "__main__":
 
     # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
     analyse_trending_continuous(
-        exchange="BINANCE", marting_type="INVERSE", min_continuous="1", target_dir="2022-01-01_2023-07-02", by_month=False, for_trade_setting=True
+        exchange="BINANCE", marting_type="INVERSE", min_continuous="1", target_dir="2022-01-01_2023-07-02", by_month=False, for_trade_setting=False
     )
