@@ -782,7 +782,7 @@ class MartingInversePortfolio(object):
         if file_name:
             dir = os.path.dirname(os.path.realpath(__file__))
             file_path = Path(dir).joinpath(
-                f"backtesting_history{DIR_SYMBOL}{exchange}{DIR_SYMBOL}{file_name}"
+                f"backtesting_history{DIR_SYMBOL}INVERSE{DIR_SYMBOL}{exchange}{DIR_SYMBOL}{file_name}"
             )
             if file_path.exists():
                 with open(file_path, mode="r", encoding="UTF-8") as f:
