@@ -932,7 +932,7 @@ class MartingBacktesting(object):
             if self.direction == Direction.LONG:
                 if (
                     self.ma_price >= self.position_reduce_price
-                    and bar.low_price < trade_price
+                    and bar.low_price <= trade_price
                     and bar.high_price >= trade_price
                 ):
                     reduce_price_cross = True
@@ -940,7 +940,7 @@ class MartingBacktesting(object):
             if self.direction == Direction.SHORT:
                 if (
                     self.ma_price <= self.position_reduce_price
-                    and bar.high_price > trade_price
+                    and bar.high_price >= trade_price
                     and bar.low_price <= trade_price
                 ):
                     reduce_price_cross = True
@@ -995,7 +995,7 @@ class MartingBacktesting(object):
             if self.direction == Direction.LONG:
                 if (
                     self.ma_price <= self.position_increase_price
-                    and bar.high_price > trade_price
+                    and bar.high_price >= trade_price
                     and bar.low_price <= trade_price
                 ):
                     increase_price_cross = True
@@ -1003,7 +1003,7 @@ class MartingBacktesting(object):
             if self.direction == Direction.SHORT:
                 if (
                     self.ma_price >= self.position_increase_price
-                    and bar.low_price < trade_price
+                    and bar.low_price <= trade_price
                     and bar.high_price >= trade_price
                 ):
                     increase_price_cross = True
