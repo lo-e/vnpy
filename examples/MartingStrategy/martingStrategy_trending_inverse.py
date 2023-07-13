@@ -171,6 +171,25 @@ class MartingTradeEngine(object):
                 ):
                     next_trending_step = self.inverse_signal.next_trending_step
         
+        # 反转信号的当前趋势追踪等级比当前实盘的高
+        if not next_trending_step:
+            if self.inverse_signal.trending_step >= self.open_step and self.inverse_signal.trending_step > self.trending_step:
+                if self.direction == Direction.LONG:
+                    if (
+                        self.inverse_signal.ma_price <= self.inverse_signal.position_price * (1 - TRENDING_OPEN_LOSS_RATE)
+                        and bar.high_price >= trade_price
+                        and bar.low_price <= trade_price
+                    ):
+                        next_trending_step = self.inverse_signal.trending_step
+
+                elif self.direction == Direction.SHORT:
+                    if (
+                        self.inverse_signal.ma_price >= self.inverse_signal.position_price * (1 + TRENDING_OPEN_LOSS_RATE)
+                        and bar.low_price <= trade_price
+                        and bar.high_price >= trade_price
+                    ):
+                        next_trending_step = self.inverse_signal.trending_step
+
         # 反转信号趋势追踪等级与实盘不匹配，以实盘加仓标准再次判断
         if not next_trending_step:
             target_trending_step = self.trending_step + 1
