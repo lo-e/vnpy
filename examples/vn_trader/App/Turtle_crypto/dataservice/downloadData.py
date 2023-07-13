@@ -59,7 +59,7 @@ class TurtleCryptoDataDownloading(object):
         end_time = time()
 
         # 避免下载时间过短影响逻辑判断
-        if start_time - end_time < 2:
+        if end_time - start_time < 2:
             sleep(1)
         self.loading_complete = True
 
@@ -142,8 +142,8 @@ class TurtleCryptoDataDownloading(object):
         end_time = time()
         
         # 避免下载时间过短影响逻辑判断
-        if start_time - end_time < 2:
-            sleep(1)
+        if end_time - start_time < 5:
+            sleep(5)
         self.loading_complete = True
 
     def generate_for_bybit(self, contract_list, days=1):
