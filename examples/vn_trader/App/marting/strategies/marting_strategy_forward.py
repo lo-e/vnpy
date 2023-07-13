@@ -62,6 +62,7 @@ class MartingForwardStrategy(CtaTemplate):
         "trending_step",
         "target_volume",
         "strategy_position_price",
+        "strategy_position_value",
         "strategy_position_reduce_price",
         "strategy_position_increase_price",
         "strategy_max_loss_value",
@@ -101,6 +102,7 @@ class MartingForwardStrategy(CtaTemplate):
 
         # 回测结果相关
         self.strategy_position_price = 0  # 持仓均价
+        self.strategy_position_value = 0 # 持仓价值
         self.strategy_position_reduce_price = 0  # 平仓价格
         self.strategy_position_increase_price = 0  # 加仓价格
         self.strategy_max_loss_value = 0  # 最大亏损价值
@@ -302,6 +304,7 @@ class MartingForwardStrategy(CtaTemplate):
 
             # 回测结果
             self.strategy_position_price = self.strategy_status["position_price"]
+            self.strategy_position_value = self.strategy_status["position"] * self.strategy_status["position_price"]
             self.strategy_position_reduce_price = self.strategy_status[
                 "position_reduce_price"
             ]
