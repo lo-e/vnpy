@@ -507,7 +507,7 @@ class MartingInverseStrategy(CtaTemplate):
             ): 
                 # 策略组合最多只能有一个趋势追踪最高等级
                 trending_top_cross = True
-                if strategy_next_trending_step == self.top_step and self.portfolio.trending_top:
+                if strategy_next_trending_step >= self.top_step and self.portfolio.trending_top_strategies and self.strategy_name not in self.portfolio.trending_top_strategies:
                     trending_top_cross = False
 
                 if trending_top_cross:
@@ -537,35 +537,39 @@ class MartingInverseStrategy(CtaTemplate):
 
             # 回测当前趋势追踪等级比当前实盘的高
             if not next_trending_step:
-                tick_price_cross = False
                 if (
                     strategy_trending_step >= self.bottom_step
                     and strategy_trending_step > self.trending_step
                 ):
                     # 策略组合最多只能有一个趋势追踪最高等级
                     trending_top_cross = True
-                    if strategy_trending_step == self.top_step and self.portfolio.trending_top:
+                    if strategy_trending_step >= self.top_step and self.portfolio.trending_top_strategies and self.strategy_name not in self.portfolio.trending_top_strategies:
                         trending_top_cross = False
 
                     if trending_top_cross:
                         # 判断当前回测持仓盈亏是否满足指定条件
                         strategy_position_price = self.strategy_status["position_price"]
-                        tick_price_cross = False
-                        if (
-                            self.direction == Direction.LONG
-                            and tick.last_price < strategy_position_price * (1 - TRENDING_OPEN_LOSS_RATE)
-                        ):
-                            tick_price_cross = True
 
-                        elif (
-                            self.direction == Direction.SHORT
-                            and tick.last_price > strategy_position_price * (1 + TRENDING_OPEN_LOSS_RATE)
-                        ):
-                            tick_price_cross = True
+                        if self.direction == Direction.LONG:
+                            if (
+                                strategy_ma_price <= strategy_position_price * (1 - TRENDING_OPEN_LOSS_RATE)
+                                and tick.last_price >= trade_price
+                                and tick.last_price < trade_price + self.symbol_price_tick * 5
+                            ):
+                                next_trending_step = strategy_trending_step
 
-                        if tick_price_cross:
-                            next_trending_step = strategy_trending_step
+                        elif self.direction == Direction.SHORT:
+                            if (
+                                strategy_ma_price >= strategy_position_price * (1 + TRENDING_OPEN_LOSS_RATE)
+                                and tick.last_price <= trade_price
+                                and tick.last_price > trade_price - self.symbol_price_tick * 5
+                            ):
+                                next_trending_step = strategy_trending_step
+                        
+                        else:
+                            self.raise_error("generate_inverse_signal中发现direction不正确")
 
+                        if next_trending_step:
                             # 邮件提醒
                             email_msg += f"\n反转加仓【当前趋势等级】：当前{self.trending_step} 即将：{next_trending_step}"
 
@@ -575,7 +579,7 @@ class MartingInverseStrategy(CtaTemplate):
                 if strategy_trending_step != self.trending_step and target_trending_step >= self.bottom_step and self.position_increase_price:
                     # 策略组合最多只能有一个趋势追踪最高等级
                     trending_top_cross = True
-                    if target_trending_step == self.top_step and self.portfolio.trending_top:
+                    if target_trending_step >= self.top_step and self.portfolio.trending_top_strategies and self.strategy_name not in self.portfolio.trending_top_strategies:
                         trending_top_cross = False
 
                     if trending_top_cross:
