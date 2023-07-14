@@ -649,6 +649,9 @@ class MartingInverseStrategy(CtaTemplate):
                     changed_volume = ceil_to(
                         changed_volume, self.symbol_min_volume
                     )
+                
+                # 针对币安开仓金额不得低于5U，不满足则不开仓
+                changed_volume = changed_volume if changed_volume * tick.last_price > 5 else 0
 
                 # 加仓后的目标持仓数量
                 self.target_volume = (
