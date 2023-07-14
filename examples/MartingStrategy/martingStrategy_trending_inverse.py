@@ -739,12 +739,10 @@ class MartingInversePortfolio(object):
         self.top_step_signal = None
         self.trending_open = True
         self.target_symbol_list = []
-        # （TRENDING_INCREASE_RATE 0.08）最大连续趋势追踪3、最大连续趋势追踪4：40
-        # self.target_symbol_list = ['1INCHUSDT.BINANCE', 'EGLDUSDT.BINANCE', 'BCHUSDT.BINANCE', 'CTKUSDT.BINANCE', 'TRXUSDT.BINANCE', 'BTCDOMUSDT.BINANCE', 'ALPHAUSDT.BINANCE', 'DENTUSDT.BINANCE', 'MKRUSDT.BINANCE', 'BLZUSDT.BINANCE', 'FLMUSDT.BINANCE', 'ADAUSDT.BINANCE', 'ENSUSDT.BINANCE', 'CRVUSDT.BINANCE', 'CHZUSDT.BINANCE', 'CHRUSDT.BINANCE', 'QTUMUSDT.BINANCE', 'UNIUSDT.BINANCE', 'LITUSDT.BINANCE', 'RVNUSDT.BINANCE', 'KAVAUSDT.BINANCE', 'BNBUSDT.BINANCE', 'ALICEUSDT.BINANCE', 'LINKUSDT.BINANCE', 'NEARUSDT.BINANCE', 'NEOUSDT.BINANCE', 'RUNEUSDT.BINANCE', 'XMRUSDT.BINANCE', 'DEFIUSDT.BINANCE', 'NKNUSDT.BINANCE', 'ETHUSDT.BINANCE', 'AXSUSDT.BINANCE', 'CELOUSDT.BINANCE', '1000XECUSDT.BINANCE', 'ICXUSDT.BINANCE', 'COMPUSDT.BINANCE', 'STMXUSDT.BINANCE', 'DGBUSDT.BINANCE', 'CTSIUSDT.BINANCE', 'BAKEUSDT.BINANCE']
-        # self.target_symbol_list = ['1INCHUSDT.BINANCE', 'EGLDUSDT.BINANCE', 'BCHUSDT.BINANCE', 'CTKUSDT.BINANCE', 'ALPHAUSDT.BINANCE']
-        
+
         # （TRENDING_INCREASE_RATE 0.04）最大连续趋势追踪6：8
-        self.target_symbol_list = ['TRXUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'ENSUSDT.BINANCE', 'CHRUSDT.BINANCE', 'ALGOUSDT.BINANCE', 'EOSUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ATOMUSDT.BINANCE']
+        # self.target_symbol_list = ['ALGOUSDT.BINANCE', 'ATOMUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'TRXUSDT.BINANCE']
+        
         """
         总收益率：      497.57%
         最大回撤:       -7,681.3        2023-02-08 16:20:00
@@ -753,6 +751,7 @@ class MartingInversePortfolio(object):
         百分比最大回撤【本金】: -47.69% 2022-01-22 18:05:00
         """
         # self.target_symbol_list = ['ATOMUSDT.BINANCE', 'TRXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'CHRUSDT.BINANCE', 'ALGOUSDT.BINANCE']
+        self.target_symbol_list = ['ALGOUSDT.BINANCE', 'ATOMUSDT.BINANCE', 'CHRUSDT.BINANCE', 'ENSUSDT.BINANCE', 'TRXUSDT.BINANCE']
 
         """
         总收益率：      1,144.76%
@@ -762,6 +761,7 @@ class MartingInversePortfolio(object):
         百分比最大回撤【本金】: -856.41%        2022-06-13 22:45:00
         """
         # self.target_symbol_list = ['SUSHIUSDT.BINANCE', 'EOSUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ALGOUSDT.BINANCE', 'ATOMUSDT.BINANCE']
+        # self.target_symbol_list = ['ALGOUSDT.BINANCE', 'ATOMUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE']
 
     def init(self, portfolioValue, symbolList, history_file: str = ""):
         self.portfolioValue = portfolioValue
