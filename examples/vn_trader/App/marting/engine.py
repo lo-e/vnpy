@@ -807,6 +807,15 @@ class MartingEngine(BaseEngine):
 
         self.main_engine.send_email(subject, msg)
 
+    def send_dingtalk(self, msg: str, strategy: CtaTemplate = None):
+        """
+        Send dingtalk to default receiver.
+        """
+        if strategy:
+            msg = f"{strategy.strategy_name}\n{msg}"
+
+        self.main_engine.send_ding_talk(content=msg)
+
     def load_bar(self, vt_symbol, data_from, interval, window, callback):
         if interval == Interval.DAILY:
             dbName = DAILY_DB_NAME
@@ -1073,8 +1082,6 @@ class MartingEngine(BaseEngine):
             return contract.priceTick
         return 0
 
-    """ modify by loe """
-
     # 新的DailyBar更新后需要自动重新初始化策略
     def reinit_strategies(self):
         for strategy_name in self.strategies.keys():
@@ -1096,10 +1103,6 @@ class MartingEngine(BaseEngine):
             strategy.trading = temp
             self.put_strategy_event(strategy)
             self.write_log(f"{strategy_name}重新初始化完成")
-
-
-""" modify by loe """
-
 
 # 数据下载引擎，每天固定时间从数据服务器自动下载策略回测及实盘必要的数据，并自动结合订阅下载的数据合成DailyBar，策略自动重新初始化
 class MartingAutoEngine(object):

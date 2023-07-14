@@ -342,6 +342,13 @@ class CtaTemplate(ABC):
         if self.inited:
             self.cta_engine.send_email(msg, self)
 
+    def send_dingtalk(self, msg):
+        """
+        Send dingtalk to default receiver.
+        """
+        if self.inited:
+            self.cta_engine.send_dingtalk(msg, self)
+
     def sync_data(self):
         """
         Sync strategy variables value into disk storage.
