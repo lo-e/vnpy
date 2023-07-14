@@ -1,0 +1,3682 @@
+{
+  "MARTING_BINANCE_LRC_多": {
+    "backtesting_status": {
+      "position": 204.0,
+      "position_price": 0.2451,
+      "position_reduce_price": 0.24755100000000002,
+      "position_increase_price": 0.240198,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.14%",
+      "ma_price": 0.24473333333333333,
+      "rsi_array": [
+        50.47619047619055, 50.9789702683104, 40.73545798974818,
+        44.39737118923775, 44.39737118923775, 47.61504674326649,
+        46.1761830799847, 45.68065171340461, 47.50082013639005,
+        45.320237152201464, 48.502612521264055, 49.14016278099441
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_LRC_空": {
+    "backtesting_status": {
+      "position": -1516.0,
+      "position_price": 0.23088087071240104,
+      "position_reduce_price": 0.22857206200527702,
+      "position_increase_price": 0.24935134036939313,
+      "max_loss_value": -24.0,
+      "max_loss_rate": "-6.77%",
+      "ma_price": 0.24473333333333333,
+      "rsi_array": [
+        50.47619047619055, 50.9789702683104, 40.73545798974818,
+        44.39737118923775, 44.39737118923775, 47.61504674326649,
+        46.1761830799847, 45.68065171340461, 47.50082013639005,
+        45.320237152201464, 48.502612521264055, 49.14016278099441
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_SXP_多": {
+    "backtesting_status": {
+      "position": 130.10000000016134,
+      "position_price": 0.3843,
+      "position_reduce_price": 0.38814299999999996,
+      "position_increase_price": 0.37661399999999995,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-2.16%",
+      "ma_price": 0.38566666666666666,
+      "rsi_array": [
+        36.87943262411334, 38.75066172578076, 34.60741171764186,
+        37.48666176372256, 35.789619644110196, 38.774538991810736,
+        38.774538991810736, 37.75674181981584, 40.55731205909202,
+        41.12784244893039, 39.8908706562485, 36.71931823645036
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_SXP_空": {
+    "backtesting_status": {
+      "position": -402.5000000000112,
+      "position_price": 0.3726988322981364,
+      "position_reduce_price": 0.36897184397515503,
+      "position_increase_price": 0.38760678559006184,
+      "max_loss_value": -7.0,
+      "max_loss_rate": "-4.75%",
+      "ma_price": 0.38566666666666666,
+      "rsi_array": [
+        36.87943262411334, 38.75066172578076, 34.60741171764186,
+        37.48666176372256, 35.789619644110196, 38.774538991810736,
+        38.774538991810736, 37.75674181981584, 40.55731205909202,
+        41.12784244893039, 39.8908706562485, 36.71931823645036
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_DASH_多": {
+    "backtesting_status": {
+      "position": 1.3889999999911335,
+      "position_price": 36.01,
+      "position_reduce_price": 36.3701,
+      "position_increase_price": 35.2898,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.03%",
+      "ma_price": 35.965555555555554,
+      "rsi_array": [
+        38.62068965517249, 37.778930980799224, 31.190060310450512,
+        35.66540807160011, 34.93140545381331, 38.56249846063791,
+        37.99170443766442, 41.26841943620793, 39.349039694049715,
+        39.023277823751066, 41.12297490530557, 39.65253196427905
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_DASH_空": {
+    "backtesting_status": {
+      "position": -10.337000000000138,
+      "position_price": 33.859711715197825,
+      "position_reduce_price": 33.52111459804585,
+      "position_increase_price": 36.568488652413656,
+      "max_loss_value": -28.0,
+      "max_loss_rate": "-7.97%",
+      "ma_price": 35.965555555555554,
+      "rsi_array": [
+        38.62068965517249, 37.778930980799224, 31.190060310450512,
+        35.66540807160011, 34.93140545381331, 38.56249846063791,
+        37.99170443766442, 41.26841943620793, 39.349039694049715,
+        39.023277823751066, 41.12297490530557, 39.65253196427905
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_CTSI_多": {
+    "backtesting_status": {
+      "position": 296.0,
+      "position_price": 0.1692,
+      "position_reduce_price": 0.170892,
+      "position_increase_price": 0.165816,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.65%",
+      "ma_price": 0.1675444444444444,
+      "rsi_array": [
+        40.6250000000001, 42.55813953488377, 37.323501725760956,
+        36.916006843592186, 36.06785278766751, 39.08236957193678,
+        38.59244925575188, 39.410400332540036, 42.69829411258127,
+        39.791559686449425, 43.90410410488522, 43.90410410488522
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_CTSI_空": {
+    "backtesting_status": {
+      "position": -2170.0,
+      "position_price": 0.16131428571428572,
+      "position_reduce_price": 0.15970114285714285,
+      "position_increase_price": 0.17421942857142858,
+      "max_loss_value": -20.0,
+      "max_loss_rate": "-5.82%",
+      "ma_price": 0.1675444444444444,
+      "rsi_array": [
+        40.6250000000001, 42.55813953488377, 37.323501725760956,
+        36.916006843592186, 36.06785278766751, 39.08236957193678,
+        38.59244925575188, 39.410400332540036, 42.69829411258127,
+        39.791559686449425, 43.90410410488522, 43.90410410488522
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_UNI_多": {
+    "backtesting_status": {
+      "position": 9.0,
+      "position_price": 5.87,
+      "position_reduce_price": 5.9287,
+      "position_increase_price": 5.7526,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.05%",
+      "ma_price": 5.939111111111109,
+      "rsi_array": [
+        50.16501650165023, 46.680841011103304, 40.9873470234391,
+        42.535625032120166, 44.3059374275196, 50.18252347903862,
+        50.35879947719252, 54.03690904645182, 55.880933904544186,
+        50.522943273912425, 50.89850722963818, 50.07974678808495
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_UNI_空": {
+    "backtesting_status": {
+      "position": -478.0,
+      "position_price": 5.8499099999999995,
+      "position_reduce_price": 5.7914109,
+      "position_increase_price": 6.3179028,
+      "max_loss_value": -59.0,
+      "max_loss_rate": "-2.1%",
+      "ma_price": 5.939111111111109,
+      "rsi_array": [
+        50.16501650165023, 46.680841011103304, 40.9873470234391,
+        42.535625032120166, 44.3059374275196, 50.18252347903862,
+        50.35879947719252, 54.03690904645182, 55.880933904544186,
+        50.522943273912425, 50.89850722963818, 50.07974678808495
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 08:55:00",
+          "trending_step": 1,
+          "max_loss_value": -32.0,
+          "max_loss_rate": "-9.2%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_CHR_多": {
+    "backtesting_status": {
+      "position": 400.0,
+      "position_price": 0.125,
+      "position_reduce_price": 0.12625,
+      "position_increase_price": 0.1225,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.16%",
+      "ma_price": 0.12587777777777776,
+      "rsi_array": [
+        47.058823529411825, 52.11459754433838, 45.55545362810753,
+        47.58527455655878, 50.56265559838747, 53.41258684542469,
+        55.26410839388215, 52.995879081475685, 55.91852277749479,
+        55.918522777494786, 55.91852277749477, 58.088408593073524
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_CHR_空": {
+    "backtesting_status": {
+      "position": -2964.0,
+      "position_price": 0.11806366396761134,
+      "position_reduce_price": 0.11688302732793522,
+      "position_increase_price": 0.12750875708502024,
+      "max_loss_value": -25.0,
+      "max_loss_rate": "-7.23%",
+      "ma_price": 0.12587777777777776,
+      "rsi_array": [
+        47.058823529411825, 52.11459754433838, 45.55545362810753,
+        47.58527455655878, 50.56265559838747, 53.41258684542469,
+        55.26410839388215, 52.995879081475685, 55.91852277749479,
+        55.918522777494786, 55.91852277749477, 58.088408593073524
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_AVAX_多": {
+    "backtesting_status": {
+      "position": 3.0,
+      "position_price": 14.64,
+      "position_reduce_price": 14.7864,
+      "position_increase_price": 14.3472,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.46%",
+      "ma_price": 14.55633333333334,
+      "rsi_array": [
+        56.26566416040097, 56.90539513677816, 48.739017246989896,
+        47.97851086777271, 46.48145809557992, 49.014113396372814,
+        44.540977189130565, 47.32277913979425, 50.930584827195226,
+        52.641460420371814, 52.23286374159256, 50.21797076435921
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_AVAX_空": {
+    "backtesting_status": {
+      "position": -25.0,
+      "position_price": 13.77448,
+      "position_reduce_price": 13.6367352,
+      "position_increase_price": 14.876438400000001,
+      "max_loss_value": -26.0,
+      "max_loss_rate": "-7.41%",
+      "ma_price": 14.55633333333334,
+      "rsi_array": [
+        56.26566416040097, 56.90539513677816, 48.739017246989896,
+        47.97851086777271, 46.48145809557992, 49.014113396372814,
+        44.540977189130565, 47.32277913979425, 50.930584827195226,
+        52.641460420371814, 52.23286374159256, 50.21797076435921
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_TRX_多": {
+    "backtesting_status": {
+      "position": 615.0,
+      "position_price": 0.08134,
+      "position_reduce_price": 0.0821534,
+      "position_increase_price": 0.0797132,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.07%",
+      "ma_price": 0.08124777777777778,
+      "rsi_array": [
+        31.746031746032426, 32.32445520581236, 26.516424751720034,
+        27.68254739350262, 26.12018109940804, 25.674327250116974,
+        24.33246369127676, 23.242299729551387, 26.09498789230551,
+        25.583024486144883, 27.869041538267027, 26.69168795653965
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_TRX_空": {
+    "backtesting_status": {
+      "position": -35063.0,
+      "position_price": 0.08052659999999999,
+      "position_reduce_price": 0.07972133399999999,
+      "position_increase_price": 0.086968728,
+      "max_loss_value": -59.0,
+      "max_loss_rate": "-2.08%",
+      "ma_price": 0.08124777777777778,
+      "rsi_array": [
+        31.746031746032426, 32.32445520581236, 26.516424751720034,
+        27.68254739350262, 26.12018109940804, 25.674327250116974,
+        24.33246369127676, 23.242299729551387, 26.09498789230551,
+        25.583024486144883, 27.869041538267027, 26.69168795653965
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 02:45:00",
+          "trending_step": 1,
+          "max_loss_value": -35.0,
+          "max_loss_rate": "-9.94%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_KNC_多": {
+    "backtesting_status": {
+      "position": 243.0,
+      "position_price": 0.6172218106995885,
+      "position_reduce_price": 0.6233940288065843,
+      "position_increase_price": 0.5925329382716049,
+      "max_loss_value": -5.0,
+      "max_loss_rate": "-3.02%",
+      "ma_price": 0.6196222222222225,
+      "rsi_array": [
+        52.44956772334298, 52.8882055787393, 47.11548591983859,
+        47.28296307922765, 48.85287570268415, 52.413832368115045,
+        52.751221768889565, 60.7026406134741, 55.922005387351895,
+        54.08708888931746, 55.34931275277394, 54.942648647616785
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_KNC_空": {
+    "backtesting_status": {
+      "position": -5887.0,
+      "position_price": 0.6048899999999999,
+      "position_reduce_price": 0.5988410999999999,
+      "position_increase_price": 0.6532812,
+      "max_loss_value": -248.0,
+      "max_loss_rate": "-6.96%",
+      "ma_price": 0.6196222222222225,
+      "rsi_array": [
+        52.44956772334298, 52.8882055787393, 47.11548591983859,
+        47.28296307922765, 48.85287570268415, 52.413832368115045,
+        52.751221768889565, 60.7026406134741, 55.922005387351895,
+        54.08708888931746, 55.34931275277394, 54.942648647616785
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-13 18:20:00",
+          "trending_step": 1,
+          "max_loss_value": -43.0,
+          "max_loss_rate": "-12.42%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_NEAR_多": {
+    "backtesting_status": {
+      "position": 34.0,
+      "position_price": 1.489,
+      "position_reduce_price": 1.5038900000000002,
+      "position_increase_price": 1.4592200000000002,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.14%",
+      "ma_price": 1.4867777777777784,
+      "rsi_array": [
+        51.19047619047606, 54.67687074829922, 45.37016934433347,
+        45.98895383396069, 44.89371264909357, 42.703269228884935,
+        41.08419325760037, 43.39541900142046, 43.395419001420464,
+        42.74713447346682, 43.65364382850147, 44.59831939931843
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_NEAR_空": {
+    "backtesting_status": {
+      "position": -2012.0,
+      "position_price": 1.47411,
+      "position_reduce_price": 1.4593689,
+      "position_increase_price": 1.5920388,
+      "max_loss_value": -74.0,
+      "max_loss_rate": "-2.5%",
+      "ma_price": 1.4867777777777784,
+      "rsi_array": [
+        51.19047619047606, 54.67687074829922, 45.37016934433347,
+        45.98895383396069, 44.89371264909357, 42.703269228884935,
+        41.08419325760037, 43.39541900142046, 43.395419001420464,
+        42.74713447346682, 43.65364382850147, 44.59831939931843
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 09:05:00",
+          "trending_step": 1,
+          "max_loss_value": -36.0,
+          "max_loss_rate": "-10.17%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_SOL_多": {
+    "backtesting_status": {
+      "position": 2.0,
+      "position_price": 29.276,
+      "position_reduce_price": 29.56876,
+      "position_increase_price": 28.10496,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.56%",
+      "ma_price": 29.029111111111117,
+      "rsi_array": [
+        34.727681078046054, 32.55263157894737, 30.210669610858044,
+        30.444053917271642, 31.053521303330132, 33.91734511189902,
+        32.187259959026164, 32.312034364606696, 33.3942761669244,
+        37.83266018248457, 35.45308083912996, 34.87367457342
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_SOL_空": {
+    "backtesting_status": {
+      "position": -12.0,
+      "position_price": 28.462499999999995,
+      "position_reduce_price": 28.177874999999993,
+      "position_increase_price": 30.739499999999996,
+      "max_loss_value": -16.0,
+      "max_loss_rate": "-4.68%",
+      "ma_price": 29.029111111111117,
+      "rsi_array": [
+        34.727681078046054, 32.55263157894737, 30.210669610858044,
+        30.444053917271642, 31.053521303330132, 33.91734511189902,
+        32.187259959026164, 32.312034364606696, 33.3942761669244,
+        37.83266018248457, 35.45308083912996, 34.87367457342
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ANKR_多": {
+    "backtesting_status": {
+      "position": 1901.0,
+      "position_price": 0.0263,
+      "position_reduce_price": 0.026563,
+      "position_increase_price": 0.025774,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.19%",
+      "ma_price": 0.02628444444444444,
+      "rsi_array": [
+        44.52554744525544, 48.56845393024461, 42.851086380498096,
+        42.533901254083354, 42.533901254083354, 45.79141640099586,
+        44.62393363566321, 45.126155043889135, 47.18934560720647,
+        45.798524154401846, 43.93900332479993, 46.844322931850265
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ANKR_空": {
+    "backtesting_status": {
+      "position": -112815.0,
+      "position_price": 0.025492499999999998,
+      "position_reduce_price": 0.025237574999999998,
+      "position_increase_price": 0.027531899999999998,
+      "max_loss_value": -117.0,
+      "max_loss_rate": "-4.07%",
+      "ma_price": 0.02628444444444444,
+      "rsi_array": [
+        44.52554744525544, 48.56845393024461, 42.851086380498096,
+        42.533901254083354, 42.533901254083354, 45.79141640099586,
+        44.62393363566321, 45.126155043889135, 47.18934560720647,
+        45.798524154401846, 43.93900332479993, 46.844322931850265
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 04:20:00",
+          "trending_step": 1,
+          "max_loss_value": -31.0,
+          "max_loss_rate": "-8.93%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_BEL_多": {
+    "backtesting_status": {
+      "position": 67.0,
+      "position_price": 0.7421,
+      "position_reduce_price": 0.749521,
+      "position_increase_price": 0.727258,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.35%",
+      "ma_price": 0.7407222222222221,
+      "rsi_array": [
+        44.66858789625354, 48.20502178875293, 42.140295550004915,
+        42.47914058906826, 41.819767487434476, 44.598111457733204,
+        42.555491232978135, 43.15629334561906, 46.75462162934002,
+        46.57821560271447, 54.04696290449851, 52.46705863636974
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_BEL_空": {
+    "backtesting_status": {
+      "position": -490.0,
+      "position_price": 0.7145036734693878,
+      "position_reduce_price": 0.7073586367346939,
+      "position_increase_price": 0.7716639673469389,
+      "max_loss_value": -17.0,
+      "max_loss_rate": "-4.97%",
+      "ma_price": 0.7407222222222221,
+      "rsi_array": [
+        44.66858789625354, 48.20502178875293, 42.140295550004915,
+        42.47914058906826, 41.819767487434476, 44.598111457733204,
+        42.555491232978135, 43.15629334561906, 46.75462162934002,
+        46.57821560271447, 54.04696290449851, 52.46705863636974
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_1000SHIB_多": {
+    "backtesting_status": {
+      "position": 6267.0,
+      "position_price": 0.007978,
+      "position_reduce_price": 0.00805778,
+      "position_increase_price": 0.007818440000000001,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.0%",
+      "ma_price": 0.00801866666666667,
+      "rsi_array": [
+        45.258620689655245, 49.26244622003691, 41.07825744135621,
+        40.57182480133956, 39.3527067709669, 42.03244775508305,
+        39.407203415944146, 39.03214910957943, 42.28564143668688,
+        42.28564143668688, 43.55593431097064, 45.804004759099925
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_1000SHIB_空": {
+    "backtesting_status": {
+      "position": -356331.0,
+      "position_price": 0.007956630000000001,
+      "position_reduce_price": 0.0078770637,
+      "position_increase_price": 0.0085931604,
+      "max_loss_value": -41.0,
+      "max_loss_rate": "-1.46%",
+      "ma_price": 0.00801866666666667,
+      "rsi_array": [
+        45.258620689655245, 49.26244622003691, 41.07825744135621,
+        40.57182480133956, 39.3527067709669, 42.03244775508305,
+        39.407203415944146, 39.03214910957943, 42.28564143668688,
+        42.28564143668688, 43.55593431097064, 45.804004759099925
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 09:05:00",
+          "trending_step": 1,
+          "max_loss_value": -34.0,
+          "max_loss_rate": "-9.6%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_1000XEC_多": {
+    "backtesting_status": {
+      "position": 89183.0,
+      "position_price": 0.0317544,
+      "position_reduce_price": 0.032071944000000005,
+      "position_increase_price": 0.029214048000000003,
+      "max_loss_value": -98.0,
+      "max_loss_rate": "-3.48%",
+      "ma_price": 0.03122222222222223,
+      "rsi_array": [
+        52.33160621761655, 52.596115735235706, 49.35202403089679,
+        49.95640385037704, 48.70461057435392, 49.04834610391583,
+        46.689766603480514, 42.30787122030925, 42.00462592563487,
+        46.54352554857552, 44.17424546965095, 43.493016212193915
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 02:05:00",
+          "trending_step": 1,
+          "max_loss_value": -32.0,
+          "max_loss_rate": "-9.06%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_1000XEC_空": {
+    "backtesting_status": {
+      "position": -4779.0,
+      "position_price": 0.031387231638418084,
+      "position_reduce_price": 0.0310733593220339,
+      "position_increase_price": 0.03264272090395481,
+      "max_loss_value": -2.0,
+      "max_loss_rate": "-1.33%",
+      "ma_price": 0.03122222222222223,
+      "rsi_array": [
+        52.33160621761655, 52.596115735235706, 49.35202403089679,
+        49.95640385037704, 48.70461057435392, 49.04834610391583,
+        46.689766603480514, 42.30787122030925, 42.00462592563487,
+        46.54352554857552, 44.17424546965095, 43.493016212193915
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_RLC_多": {
+    "backtesting_status": {
+      "position": 38.80000000229047,
+      "position_price": 1.2888,
+      "position_reduce_price": 1.301688,
+      "position_increase_price": 1.263024,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.05%",
+      "ma_price": 1.2877444444444446,
+      "rsi_array": [
+        45.776031434184716, 45.58314522197147, 34.35768569658575,
+        38.54540998903511, 39.55553746889233, 41.06248863997352,
+        40.150339407057345, 40.409530118812334, 44.547466429113854,
+        44.4436057916559, 45.671284169780634, 47.743909972543705
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_RLC_空": {
+    "backtesting_status": {
+      "position": -286.899999999741,
+      "position_price": 1.2198196584176075,
+      "position_reduce_price": 1.2076214618334316,
+      "position_increase_price": 1.3174052310910163,
+      "max_loss_value": -25.0,
+      "max_loss_rate": "-7.12%",
+      "ma_price": 1.2877444444444446,
+      "rsi_array": [
+        45.776031434184716, 45.58314522197147, 34.35768569658575,
+        38.54540998903511, 39.55553746889233, 41.06248863997352,
+        40.150339407057345, 40.409530118812334, 44.547466429113854,
+        44.4436057916559, 45.671284169780634, 47.743909972543705
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_BLZ_多": {
+    "backtesting_status": {
+      "position": 819.0,
+      "position_price": 0.06105,
+      "position_reduce_price": 0.0616605,
+      "position_increase_price": 0.059829,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.16%",
+      "ma_price": 0.060933333333333346,
+      "rsi_array": [
+        46.96356275303637, 51.79733937163876, 41.52049845541656,
+        43.19462502591894, 42.86425200945187, 44.24205634558513,
+        40.717352813727615, 41.96221930881982, 46.996460681451055,
+        45.381516135821585, 45.63300714872089, 43.89183682754016
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_BLZ_空": {
+    "backtesting_status": {
+      "position": -6131.0,
+      "position_price": 0.057087600717664326,
+      "position_reduce_price": 0.05651672471048768,
+      "position_increase_price": 0.061654608775077474,
+      "max_loss_value": -28.0,
+      "max_loss_rate": "-7.94%",
+      "ma_price": 0.060933333333333346,
+      "rsi_array": [
+        46.96356275303637, 51.79733937163876, 41.52049845541656,
+        43.19462502591894, 42.86425200945187, 44.24205634558513,
+        40.717352813727615, 41.96221930881982, 46.996460681451055,
+        45.381516135821585, 45.63300714872089, 43.89183682754016
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_AAVE_多": {
+    "backtesting_status": {
+      "position": 0.5999999999874991,
+      "position_price": 80.95,
+      "position_reduce_price": 81.7595,
+      "position_increase_price": 79.331,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.23%",
+      "ma_price": 81.01222222222225,
+      "rsi_array": [
+        53.96825396825394, 54.994031038599246, 51.15749309490584,
+        57.08936052295838, 53.58513152964194, 55.98846620463962,
+        52.01907261361159, 51.26634253829449, 50.79144148215422,
+        49.15681705951364, 51.348857316283095, 47.92548865098215
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_AAVE_空": {
+    "backtesting_status": {
+      "position": -36.99999999999891,
+      "position_price": 76.79429999999999,
+      "position_reduce_price": 76.02635699999999,
+      "position_increase_price": 82.937844,
+      "max_loss_value": -174.0,
+      "max_loss_rate": "-6.13%",
+      "ma_price": 81.01222222222225,
+      "rsi_array": [
+        53.96825396825394, 54.994031038599246, 51.15749309490584,
+        57.08936052295838, 53.58513152964194, 55.98846620463962,
+        52.01907261361159, 51.26634253829449, 50.79144148215422,
+        49.15681705951364, 51.348857316283095, 47.92548865098215
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 00:30:00",
+          "trending_step": 1,
+          "max_loss_value": -33.0,
+          "max_loss_rate": "-9.43%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_XTZ_多": {
+    "backtesting_status": {
+      "position": 54.899999999989745,
+      "position_price": 0.911,
+      "position_reduce_price": 0.9201100000000001,
+      "position_increase_price": 0.89278,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.33%",
+      "ma_price": 0.9089999999999999,
+      "rsi_array": [
+        44.11764705882352, 48.96694214876033, 41.2560257096947,
+        42.87073766879031, 42.87073766879031, 44.635682182000835,
+        43.19845527025518, 45.102090164678735, 43.530980000779365,
+        41.95700045174873, 41.95700045174874, 44.293036260775395
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_XTZ_空": {
+    "backtesting_status": {
+      "position": -3771.9999999999955,
+      "position_price": 0.88209,
+      "position_reduce_price": 0.8732691,
+      "position_increase_price": 0.9526572000000001,
+      "max_loss_value": -154.0,
+      "max_loss_rate": "-4.64%",
+      "ma_price": 0.9089999999999999,
+      "rsi_array": [
+        44.11764705882352, 48.96694214876033, 41.2560257096947,
+        42.87073766879031, 42.87073766879031, 44.635682182000835,
+        43.19845527025518, 45.102090164678735, 43.530980000779365,
+        41.95700045174873, 41.95700045174874, 44.293036260775395
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 02:30:00",
+          "trending_step": 1,
+          "max_loss_value": -39.0,
+          "max_loss_rate": "-11.2%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ONE_多": {
+    "backtesting_status": {
+      "position": 3642.0,
+      "position_price": 0.01373,
+      "position_reduce_price": 0.013867299999999999,
+      "position_increase_price": 0.0134554,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.6%",
+      "ma_price": 0.013696666666666664,
+      "rsi_array": [
+        51.562500000000064, 56.66666666666662, 46.184441148712445,
+        46.93945374413301, 41.877670664637144, 43.51751999858576,
+        42.23427189336516, 45.684030515666265, 45.684030515666265,
+        43.42812865273729, 41.94120021136055, 40.44971450091959
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ONE_空": {
+    "backtesting_status": {
+      "position": -217873.0,
+      "position_price": 0.0131571,
+      "position_reduce_price": 0.013025529,
+      "position_increase_price": 0.014209668,
+      "max_loss_value": -168.0,
+      "max_loss_rate": "-5.87%",
+      "ma_price": 0.013696666666666664,
+      "rsi_array": [
+        51.562500000000064, 56.66666666666662, 46.184441148712445,
+        46.93945374413301, 41.877670664637144, 43.51751999858576,
+        42.23427189336516, 45.684030515666265, 45.684030515666265,
+        43.42812865273729, 41.94120021136055, 40.44971450091959
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 04:05:00",
+          "trending_step": 1,
+          "max_loss_value": -33.0,
+          "max_loss_rate": "-9.33%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_YFI_多": {
+    "backtesting_status": {
+      "position": 0.007000000000001233,
+      "position_price": 7340.0,
+      "position_reduce_price": 7413.4,
+      "position_increase_price": 7193.2,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.25%",
+      "ma_price": 7408.777777777777,
+      "rsi_array": [
+        45.038167938931295, 46.36103151862464, 36.69190245263929,
+        42.223071289839844, 41.76959921213805, 45.74394774838488,
+        46.36639917091741, 48.89214476336996, 50.96451140400065,
+        48.02829012809411, 49.374455822522094, 51.18982637329651
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_YFI_空": {
+    "backtesting_status": {
+      "position": -0.04900000000006051,
+      "position_price": 7112.693877550707,
+      "position_reduce_price": 7041.5669387752,
+      "position_increase_price": 7681.709387754764,
+      "max_loss_value": -17.0,
+      "max_loss_rate": "-4.9%",
+      "ma_price": 7408.777777777777,
+      "rsi_array": [
+        45.038167938931295, 46.36103151862464, 36.69190245263929,
+        42.223071289839844, 41.76959921213805, 45.74394774838488,
+        46.36639917091741, 48.89214476336996, 50.96451140400065,
+        48.02829012809411, 49.374455822522094, 51.18982637329651
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_GALA_多": {
+    "backtesting_status": {
+      "position": 1902.0,
+      "position_price": 0.02629,
+      "position_reduce_price": 0.0265529,
+      "position_increase_price": 0.0257642,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.53%",
+      "ma_price": 0.026206666666666666,
+      "rsi_array": [
+        36.84210526315792, 37.84860557768923, 32.54281949934125,
+        32.286283105757455, 34.51016826674918, 38.836713011056084,
+        38.4943717412092, 40.1974798459198, 40.1974798459198, 39.35491289578819,
+        37.25264801773541, 36.00972503617756
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_GALA_空": {
+    "backtesting_status": {
+      "position": -14075.0,
+      "position_price": 0.024867350621669625,
+      "position_reduce_price": 0.02461867711545293,
+      "position_increase_price": 0.0268567386714032,
+      "max_loss_value": -26.0,
+      "max_loss_rate": "-7.57%",
+      "ma_price": 0.026206666666666666,
+      "rsi_array": [
+        36.84210526315792, 37.84860557768923, 32.54281949934125,
+        32.286283105757455, 34.51016826674918, 38.836713011056084,
+        38.4943717412092, 40.1974798459198, 40.1974798459198, 39.35491289578819,
+        37.25264801773541, 36.00972503617756
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_CTK_多": {
+    "backtesting_status": {
+      "position": 79.0,
+      "position_price": 0.6306,
+      "position_reduce_price": 0.6369060000000001,
+      "position_increase_price": 0.617988,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.08%",
+      "ma_price": 0.6293666666666666,
+      "rsi_array": [
+        46.39999999999997, 48.82491186839007, 39.97261895952044,
+        41.7910983290737, 41.28599792017385, 44.19161299589332,
+        43.99621721982336, 44.52452984376104, 47.71176108970116,
+        46.04972259449187, 48.000464350220206, 48.000464350220206
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_CTK_空": {
+    "backtesting_status": {
+      "position": -598.0,
+      "position_price": 0.5851356187290969,
+      "position_reduce_price": 0.579284262541806,
+      "position_increase_price": 0.6319464682274247,
+      "max_loss_value": -29.0,
+      "max_loss_rate": "-8.37%",
+      "ma_price": 0.6293666666666666,
+      "rsi_array": [
+        46.39999999999997, 48.82491186839007, 39.97261895952044,
+        41.7910983290737, 41.28599792017385, 44.19161299589332,
+        43.99621721982336, 44.52452984376104, 47.71176108970116,
+        46.04972259449187, 48.000464350220206, 48.000464350220206
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_IOST_多": {
+    "backtesting_status": {
+      "position": 5332.0,
+      "position_price": 0.009377,
+      "position_reduce_price": 0.00947077,
+      "position_increase_price": 0.00918946,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.09%",
+      "ma_price": 0.00937255555555555,
+      "rsi_array": [
+        34.88943488943488, 39.825327510917, 34.00447427293055,
+        35.10452092370992, 33.971996247802885, 37.63860408765214,
+        36.935784803594125, 36.724783062451856, 41.07493762723103,
+        39.37439915287225, 39.948137572754725, 40.151455138499124
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_IOST_空": {
+    "backtesting_status": {
+      "position": -339147.0,
+      "position_price": 0.00915453,
+      "position_reduce_price": 0.009062984699999999,
+      "position_increase_price": 0.0098868924,
+      "max_loss_value": -139.0,
+      "max_loss_rate": "-4.47%",
+      "ma_price": 0.00937255555555555,
+      "rsi_array": [
+        34.88943488943488, 39.825327510917, 34.00447427293055,
+        35.10452092370992, 33.971996247802885, 37.63860408765214,
+        36.935784803594125, 36.724783062451856, 41.07493762723103,
+        39.37439915287225, 39.948137572754725, 40.151455138499124
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 04:10:00",
+          "trending_step": 1,
+          "max_loss_value": -34.0,
+          "max_loss_rate": "-9.66%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_EGLD_多": {
+    "backtesting_status": {
+      "position": 1.3999999999985921,
+      "position_price": 36.98,
+      "position_reduce_price": 37.349799999999995,
+      "position_increase_price": 36.240399999999994,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.05%",
+      "ma_price": 37.03555555555555,
+      "rsi_array": [
+        35.5769230769231, 37.51793400286955, 30.044189129474102,
+        34.331744299580706, 34.011048998319836, 38.926089764991154,
+        38.16084809680516, 36.61067482982007, 38.62441671957141,
+        37.34672840549301, 38.80019956570035, 38.80019956570035
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_EGLD_空": {
+    "backtesting_status": {
+      "position": -10.099999999999707,
+      "position_price": 34.63059405940598,
+      "position_reduce_price": 34.28428811881192,
+      "position_increase_price": 37.40104158415846,
+      "max_loss_value": -30.0,
+      "max_loss_rate": "-8.55%",
+      "ma_price": 37.03555555555555,
+      "rsi_array": [
+        35.5769230769231, 37.51793400286955, 30.044189129474102,
+        34.331744299580706, 34.011048998319836, 38.926089764991154,
+        38.16084809680516, 36.61067482982007, 38.62441671957141,
+        37.34672840549301, 38.80019956570035, 38.80019956570035
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_MANA_多": {
+    "backtesting_status": {
+      "position": 114.0,
+      "position_price": 0.4402,
+      "position_reduce_price": 0.444602,
+      "position_increase_price": 0.43139599999999995,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.27%",
+      "ma_price": 0.4406444444444444,
+      "rsi_array": [
+        41.30434782608705, 44.54976303317543, 39.11512608030738,
+        40.0157408580386, 39.54329885564515, 43.82848517212232,
+        41.043626553677456, 41.79046518660395, 43.33648205219407,
+        42.3275846063691, 41.70029451842505, 41.26127782288577
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_MANA_空": {
+    "backtesting_status": {
+      "position": -7989.0,
+      "position_price": 0.43579799999999996,
+      "position_reduce_price": 0.43144002,
+      "position_increase_price": 0.47066184,
+      "max_loss_value": -99.0,
+      "max_loss_rate": "-2.85%",
+      "ma_price": 0.4406444444444444,
+      "rsi_array": [
+        41.30434782608705, 44.54976303317543, 39.11512608030738,
+        40.0157408580386, 39.54329885564515, 43.82848517212232,
+        41.043626553677456, 41.79046518660395, 43.33648205219407,
+        42.3275846063691, 41.70029451842505, 41.26127782288577
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 08:05:00",
+          "trending_step": 1,
+          "max_loss_value": -39.0,
+          "max_loss_rate": "-11.05%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_DOGE_多": {
+    "backtesting_status": {
+      "position": 704.0,
+      "position_price": 0.07107,
+      "position_reduce_price": 0.07178069999999999,
+      "position_increase_price": 0.06964859999999999,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.08%",
+      "ma_price": 0.07080666666666666,
+      "rsi_array": [
+        30.808080808080362, 46.74043062200954, 38.282839701559915,
+        41.0939860232722, 39.63580595858709, 42.79345689276492,
+        41.35964291162889, 40.62668089234005, 42.01009370533296,
+        44.51611367714222, 46.98344953841434, 49.14816198176587
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_DOGE_空": {
+    "backtesting_status": {
+      "position": -5071.0,
+      "position_price": 0.06901644054427135,
+      "position_reduce_price": 0.06832627613882863,
+      "position_increase_price": 0.07453775578781306,
+      "max_loss_value": -17.0,
+      "max_loss_rate": "-4.8%",
+      "ma_price": 0.07080666666666666,
+      "rsi_array": [
+        30.808080808080362, 46.74043062200954, 38.282839701559915,
+        41.0939860232722, 39.63580595858709, 42.79345689276492,
+        41.35964291162889, 40.62668089234005, 42.01009370533296,
+        44.51611367714222, 46.98344953841434, 49.14816198176587
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_BAKE_多": {
+    "backtesting_status": {
+      "position": 448.0,
+      "position_price": 0.1115,
+      "position_reduce_price": 0.112615,
+      "position_increase_price": 0.10927,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.27%",
+      "ma_price": 0.1113555555555556,
+      "rsi_array": [
+        45.8333333333334, 48.159509202454096, 39.86328125000006,
+        41.07784254843085, 41.07784254843085, 44.94645829447202,
+        41.978303659795316, 41.00621875286877, 43.80882513667701,
+        43.808825136677015, 42.634320882778056, 44.244107970034634
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_BAKE_空": {
+    "backtesting_status": {
+      "position": -25611.0,
+      "position_price": 0.108405,
+      "position_reduce_price": 0.10732095,
+      "position_increase_price": 0.11707740000000001,
+      "max_loss_value": -143.0,
+      "max_loss_rate": "-5.16%",
+      "ma_price": 0.1113555555555556,
+      "rsi_array": [
+        45.8333333333334, 48.159509202454096, 39.86328125000006,
+        41.07784254843085, 41.07784254843085, 44.94645829447202,
+        41.978303659795316, 41.00621875286877, 43.80882513667701,
+        43.808825136677015, 42.634320882778056, 44.244107970034634
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 04:35:00",
+          "trending_step": 1,
+          "max_loss_value": -31.0,
+          "max_loss_rate": "-8.8%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_OMG_多": {
+    "backtesting_status": {
+      "position": 72.20000000070142,
+      "position_price": 0.6923,
+      "position_reduce_price": 0.699223,
+      "position_increase_price": 0.678454,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.34%",
+      "ma_price": 0.6811222222222224,
+      "rsi_array": [
+        25.31120331950204, 28.505957836846896, 23.169497029551636,
+        26.715395989992412, 26.173363085413975, 30.997955775524595,
+        29.19982780712535, 27.715764919630054, 29.327508170241266,
+        29.327508170241266, 31.454576053603223, 33.60656851025132
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_OMG_空": {
+    "backtesting_status": {
+      "position": -4114.30000000007,
+      "position_price": 0.6863670000000001,
+      "position_reduce_price": 0.6795033300000001,
+      "position_increase_price": 0.7412763600000001,
+      "max_loss_value": -40.0,
+      "max_loss_rate": "-1.4%",
+      "ma_price": 0.6811222222222224,
+      "rsi_array": [
+        25.31120331950204, 28.505957836846896, 23.169497029551636,
+        26.715395989992412, 26.173363085413975, 30.997955775524595,
+        29.19982780712535, 27.715764919630054, 29.327508170241266,
+        29.327508170241266, 31.454576053603223, 33.60656851025132
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 08:55:00",
+          "trending_step": 1,
+          "max_loss_value": -32.0,
+          "max_loss_rate": "-9.26%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_PEOPLE_多": {
+    "backtesting_status": {
+      "position": 3506.0,
+      "position_price": 0.01426,
+      "position_reduce_price": 0.0144026,
+      "position_increase_price": 0.013974799999999999,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.19%",
+      "ma_price": 0.014204444444444445,
+      "rsi_array": [
+        41.81818181818191, 48.831488314883075, 38.20416018950334,
+        40.07675105601719, 38.810223934958806, 43.60824642165353,
+        40.84870820727875, 41.83958572080445, 45.75401132090393,
+        43.395019751515925, 45.41552406895211, 47.436109982048166
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_PEOPLE_空": {
+    "backtesting_status": {
+      "position": -26420.0,
+      "position_price": 0.013247323996971991,
+      "position_reduce_price": 0.01311485075700227,
+      "position_increase_price": 0.014307109916729751,
+      "max_loss_value": -31.0,
+      "max_loss_rate": "-8.85%",
+      "ma_price": 0.014204444444444445,
+      "rsi_array": [
+        41.81818181818191, 48.831488314883075, 38.20416018950334,
+        40.07675105601719, 38.810223934958806, 43.60824642165353,
+        40.84870820727875, 41.83958572080445, 45.75401132090393,
+        43.395019751515925, 45.41552406895211, 47.436109982048166
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ADA_多": {
+    "backtesting_status": {
+      "position": 138.0,
+      "position_price": 0.3632,
+      "position_reduce_price": 0.36683200000000005,
+      "position_increase_price": 0.35593600000000003,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-2.23%",
+      "ma_price": 0.35821111111111115,
+      "rsi_array": [
+        30.45112781954891, 33.92857142857139, 29.84866512976871,
+        30.122879593383317, 29.996606381748194, 32.43666624723861,
+        31.263124741579134, 33.529258305405634, 39.09012605800038,
+        38.89544532683962, 41.70918069790148, 43.27203695012738
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ADA_空": {
+    "backtesting_status": {
+      "position": -967541.0,
+      "position_price": 0.360954,
+      "position_reduce_price": 0.35734446,
+      "position_increase_price": 0.38983032,
+      "max_loss_value": -10300.0,
+      "max_loss_rate": "-2.95%",
+      "ma_price": 0.35821111111111115,
+      "rsi_array": [
+        30.45112781954891, 33.92857142857139, 29.84866512976871,
+        30.122879593383317, 29.996606381748194, 32.43666624723861,
+        31.263124741579134, 33.529258305405634, 39.09012605800038,
+        38.89544532683962, 41.70918069790148, 43.27203695012738
+      ],
+      "trending_step": 3,
+      "next_trending_step": 4,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 00:30:00",
+          "trending_step": 1,
+          "max_loss_value": -52.0,
+          "max_loss_rate": "-14.89%"
+        },
+        {
+          "datetime": "2023-07-14 02:40:00",
+          "trending_step": 2,
+          "max_loss_value": -828.0,
+          "max_loss_rate": "-18.87%"
+        },
+        {
+          "datetime": "2023-07-14 08:35:00",
+          "trending_step": 3,
+          "max_loss_value": -5439.0,
+          "max_loss_rate": "-12.58%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_BCH_多": {
+    "backtesting_status": {
+      "position": 0.5329999999998999,
+      "position_price": 281.28519699812307,
+      "position_reduce_price": 284.0980489681043,
+      "position_increase_price": 270.0337891181981,
+      "max_loss_value": -7.0,
+      "max_loss_rate": "-4.79%",
+      "ma_price": 273.3966666666667,
+      "rsi_array": [
+        43.7679083094557, 44.99838309798423, 39.70681846451014,
+        41.293473310868464, 40.961800449166404, 43.03145390703429,
+        40.04390875778606, 41.20902272538668, 41.87255126473118,
+        44.1901952523786, 45.724920103079626, 48.27780034239959
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_BCH_空": {
+    "backtesting_status": {
+      "position": -0.18399999999989236,
+      "position_price": 271.42,
+      "position_reduce_price": 268.7058,
+      "position_increase_price": 276.8484,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-2.21%",
+      "ma_price": 273.3966666666667,
+      "rsi_array": [
+        43.7679083094557, 44.99838309798423, 39.70681846451014,
+        41.293473310868464, 40.961800449166404, 43.03145390703429,
+        40.04390875778606, 41.20902272538668, 41.87255126473118,
+        44.1901952523786, 45.724920103079626, 48.27780034239959
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ENJ_多": {
+    "backtesting_status": {
+      "position": 155.0,
+      "position_price": 0.3225,
+      "position_reduce_price": 0.325725,
+      "position_increase_price": 0.31605,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.52%",
+      "ma_price": 0.32030000000000003,
+      "rsi_array": [
+        27.338129496402725, 27.89676002196605, 23.93360634943653,
+        30.329105779076, 30.329105779075995, 34.58174647777836,
+        33.48131132963325, 36.73343981669779, 38.87884341451794,
+        37.18154984007619, 38.34108568438966, 36.87505092077753
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ENJ_空": {
+    "backtesting_status": {
+      "position": -1155.0,
+      "position_price": 0.30313359307359306,
+      "position_reduce_price": 0.3001022571428571,
+      "position_increase_price": 0.32738428051948054,
+      "max_loss_value": -29.0,
+      "max_loss_rate": "-8.2%",
+      "ma_price": 0.32030000000000003,
+      "rsi_array": [
+        27.338129496402725, 27.89676002196605, 23.93360634943653,
+        30.329105779076, 30.329105779075995, 34.58174647777836,
+        33.48131132963325, 36.73343981669779, 38.87884341451794,
+        37.18154984007619, 38.34108568438966, 36.87505092077753
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_NEO_多": {
+    "backtesting_status": {
+      "position": 5.150000000023976,
+      "position_price": 9.713,
+      "position_reduce_price": 9.81013,
+      "position_increase_price": 9.51874,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.35%",
+      "ma_price": 9.671666666666669,
+      "rsi_array": [
+        45.06329113924056, 43.067187790805804, 36.68491847660397,
+        38.58205308565254, 37.473611901548225, 39.184162822438,
+        37.420223242163544, 35.793429817978975, 43.07769567467623,
+        40.6547249526174, 44.67609862584387, 45.82908957902973
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_NEO_空": {
+    "backtesting_status": {
+      "position": -38.260000000000375,
+      "position_price": 9.146761630946154,
+      "position_reduce_price": 9.055294014636692,
+      "position_increase_price": 9.878502561421847,
+      "max_loss_value": -25.0,
+      "max_loss_rate": "-7.27%",
+      "ma_price": 9.671666666666669,
+      "rsi_array": [
+        45.06329113924056, 43.067187790805804, 36.68491847660397,
+        38.58205308565254, 37.473611901548225, 39.184162822438,
+        37.420223242163544, 35.793429817978975, 43.07769567467623,
+        40.6547249526174, 44.67609862584387, 45.82908957902973
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_COTI_多": {
+    "backtesting_status": {
+      "position": 873.0,
+      "position_price": 0.05727,
+      "position_reduce_price": 0.057842700000000004,
+      "position_increase_price": 0.056124600000000004,
+      "max_loss_value": -2.0,
+      "max_loss_rate": "-3.34%",
+      "ma_price": 0.056172222222222214,
+      "rsi_array": [
+        43.16239316239315, 42.478162406988005, 37.45419436947318,
+        38.731177568671825, 37.013117162310465, 37.32826225078898,
+        36.734462441177065, 34.56338806023347, 35.31198292944255,
+        33.07108605283512, 34.49548307214489, 32.375417493192685
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_COTI_空": {
+    "backtesting_status": {
+      "position": -97370.0,
+      "position_price": 0.0566973,
+      "position_reduce_price": 0.056130327,
+      "position_increase_price": 0.061233084,
+      "max_loss_value": -210.0,
+      "max_loss_rate": "-3.8%",
+      "ma_price": 0.056172222222222214,
+      "rsi_array": [
+        43.16239316239315, 42.478162406988005, 37.45419436947318,
+        38.731177568671825, 37.013117162310465, 37.32826225078898,
+        36.734462441177065, 34.56338806023347, 35.31198292944255,
+        33.07108605283512, 34.49548307214489, 32.375417493192685
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 01:25:00",
+          "trending_step": 1,
+          "max_loss_value": -70.0,
+          "max_loss_rate": "-20.04%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_EOS_多": {
+    "backtesting_status": {
+      "position": 61.99999999998544,
+      "position_price": 0.806,
+      "position_reduce_price": 0.81406,
+      "position_increase_price": 0.78988,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-2.11%",
+      "ma_price": 0.798888888888889,
+      "rsi_array": [
+        36.36363636363636, 42.038216560509554, 36.23820920737717,
+        38.07831052869599, 39.944762435317514, 43.60594993800471,
+        42.22001095260177, 44.132258692613846, 46.054921879047875,
+        46.054921879047875, 46.054921879047875, 48.278082124843216
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_EOS_空": {
+    "backtesting_status": {
+      "position": -3498.2999999999865,
+      "position_price": 0.792,
+      "position_reduce_price": 0.78408,
+      "position_increase_price": 0.8553600000000001,
+      "max_loss_value": -73.0,
+      "max_loss_rate": "-2.65%",
+      "ma_price": 0.798888888888889,
+      "rsi_array": [
+        36.36363636363636, 42.038216560509554, 36.23820920737717,
+        38.07831052869599, 39.944762435317514, 43.60594993800471,
+        42.22001095260177, 44.132258692613846, 46.054921879047875,
+        46.054921879047875, 46.054921879047875, 48.278082124843216
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 08:05:00",
+          "trending_step": 1,
+          "max_loss_value": -32.0,
+          "max_loss_rate": "-9.08%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_REN_多": {
+    "backtesting_status": {
+      "position": 756.0,
+      "position_price": 0.06614,
+      "position_reduce_price": 0.06680140000000001,
+      "position_increase_price": 0.0648172,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.15%",
+      "ma_price": 0.06590000000000001,
+      "rsi_array": [
+        38.515901060070654, 44.81580873383743, 37.38942556089608,
+        38.80505832041436, 39.64483534682122, 43.60375719860176,
+        41.44646438507471, 42.107440606951535, 44.792037636690644,
+        43.348835333020496, 43.83603707235033, 42.459685178590405
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_REN_空": {
+    "backtesting_status": {
+      "position": -5637.0,
+      "position_price": 0.06208737448997694,
+      "position_reduce_price": 0.061466500745077174,
+      "position_increase_price": 0.0670543644491751,
+      "max_loss_value": -26.0,
+      "max_loss_rate": "-7.48%",
+      "ma_price": 0.06590000000000001,
+      "rsi_array": [
+        38.515901060070654, 44.81580873383743, 37.38942556089608,
+        38.80505832041436, 39.64483534682122, 43.60375719860176,
+        41.44646438507471, 42.107440606951535, 44.792037636690644,
+        43.348835333020496, 43.83603707235033, 42.459685178590405
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_SKL_多": {
+    "backtesting_status": {
+      "position": 1671.0,
+      "position_price": 0.02992,
+      "position_reduce_price": 0.030219199999999998,
+      "position_increase_price": 0.0293216,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.27%",
+      "ma_price": 0.02974222222222225,
+      "rsi_array": [
+        43.396226415094276, 47.65100671140935, 38.03049031726406,
+        39.089963177340756, 38.38325796518711, 41.24319139346089,
+        38.54578254002251, 38.54578254002251, 42.29735073427848,
+        38.88851602490347, 40.81480659679049, 41.47700622472012
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_SKL_空": {
+    "backtesting_status": {
+      "position": -12368.0,
+      "position_price": 0.02829933699870634,
+      "position_reduce_price": 0.028016343628719277,
+      "position_increase_price": 0.03056328395860285,
+      "max_loss_value": -23.0,
+      "max_loss_rate": "-6.57%",
+      "ma_price": 0.02974222222222225,
+      "rsi_array": [
+        43.396226415094276, 47.65100671140935, 38.03049031726406,
+        39.089963177340756, 38.38325796518711, 41.24319139346089,
+        38.54578254002251, 38.54578254002251, 42.29735073427848,
+        38.88851602490347, 40.81480659679049, 41.47700622472012
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_IOTA_多": {
+    "backtesting_status": {
+      "position": 257.9999999986961,
+      "position_price": 0.1938,
+      "position_reduce_price": 0.195738,
+      "position_increase_price": 0.189924,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.1%",
+      "ma_price": 0.19353333333333333,
+      "rsi_array": [
+        40.625000000000014, 39.95271867612284, 33.90955394350977,
+        33.3660439958411, 34.4967071409325, 37.901009433234925,
+        36.53768433977842, 35.17508404448763, 41.08990836057153,
+        38.09526213627374, 42.60035974646803, 40.993955550773705
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_IOTA_空": {
+    "backtesting_status": {
+      "position": -1856.2000000000057,
+      "position_price": 0.1885624178429048,
+      "position_reduce_price": 0.18667679366447576,
+      "position_increase_price": 0.2036474112703372,
+      "max_loss_value": -15.0,
+      "max_loss_rate": "-4.21%",
+      "ma_price": 0.19353333333333333,
+      "rsi_array": [
+        40.625000000000014, 39.95271867612284, 33.90955394350977,
+        33.3660439958411, 34.4967071409325, 37.901009433234925,
+        36.53768433977842, 35.17508404448763, 41.08990836057153,
+        38.09526213627374, 42.60035974646803, 40.993955550773705
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_AUDIO_多": {
+    "backtesting_status": {
+      "position": 252.0,
+      "position_price": 0.1985,
+      "position_reduce_price": 0.20048500000000002,
+      "position_increase_price": 0.19453,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.26%",
+      "ma_price": 0.19845555555555552,
+      "rsi_array": [
+        47.99999999999985, 52.749301025162985, 42.578554481800715,
+        43.94784067158822, 43.39069165603222, 44.895346140621406,
+        43.04706340203429, 44.68209529865519, 46.34105901640472,
+        46.34105901640472, 45.548942917969946, 46.533162642551396
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_AUDIO_空": {
+    "backtesting_status": {
+      "position": -1895.0,
+      "position_price": 0.184655672823219,
+      "position_reduce_price": 0.18280911609498682,
+      "position_increase_price": 0.19942812664907655,
+      "max_loss_value": -29.0,
+      "max_loss_rate": "-8.31%",
+      "ma_price": 0.19845555555555552,
+      "rsi_array": [
+        47.99999999999985, 52.749301025162985, 42.578554481800715,
+        43.94784067158822, 43.39069165603222, 44.895346140621406,
+        43.04706340203429, 44.68209529865519, 46.34105901640472,
+        46.34105901640472, 45.548942917969946, 46.533162642551396
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_FIL_多": {
+    "backtesting_status": {
+      "position": 10.699999999997772,
+      "position_price": 4.671,
+      "position_reduce_price": 4.71771,
+      "position_increase_price": 4.57758,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.01%",
+      "ma_price": 4.669777777777777,
+      "rsi_array": [
+        36.180904522613126, 37.53310631857729, 36.091908986594255,
+        44.88303740686352, 39.091942133982016, 45.5383531894318,
+        43.59402501651651, 38.83254937714595, 39.13087126913575,
+        37.93538344673711, 37.728498641360844, 37.728498641360844
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_FIL_空": {
+    "backtesting_status": {
+      "position": -78.0999999998115,
+      "position_price": 4.479121638925119,
+      "position_reduce_price": 4.434330422535868,
+      "position_increase_price": 4.837451370039129,
+      "max_loss_value": -21.0,
+      "max_loss_rate": "-5.87%",
+      "ma_price": 4.669777777777777,
+      "rsi_array": [
+        36.180904522613126, 37.53310631857729, 36.091908986594255,
+        44.88303740686352, 39.091942133982016, 45.5383531894318,
+        43.59402501651651, 38.83254937714595, 39.13087126913575,
+        37.93538344673711, 37.728498641360844, 37.728498641360844
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_DENT_多": {
+    "backtesting_status": {
+      "position": 59952.0,
+      "position_price": 0.000834,
+      "position_reduce_price": 0.00084234,
+      "position_increase_price": 0.00081732,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.2%",
+      "ma_price": 0.0008348888888888888,
+      "rsi_array": [
+        48.387096774193516, 53.25842696629219, 44.260882057175735,
+        44.260882057175735, 41.54739591187967, 45.16757206922409,
+        45.1675720692241, 45.16757206922411, 49.104515234132315,
+        47.27673558412646, 49.30871990070348, 54.92167729573387
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_DENT_空": {
+    "backtesting_status": {
+      "position": -436864.0,
+      "position_price": 0.0008011637466122179,
+      "position_reduce_price": 0.0007931521091460958,
+      "position_increase_price": 0.0008652568463411954,
+      "max_loss_value": -17.0,
+      "max_loss_rate": "-4.97%",
+      "ma_price": 0.0008348888888888888,
+      "rsi_array": [
+        48.387096774193516, 53.25842696629219, 44.260882057175735,
+        44.260882057175735, 41.54739591187967, 45.16757206922409,
+        45.1675720692241, 45.16757206922411, 49.104515234132315,
+        47.27673558412646, 49.30871990070348, 54.92167729573387
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ZRX_多": {
+    "backtesting_status": {
+      "position": 221.6999999999418,
+      "position_price": 0.2255,
+      "position_reduce_price": 0.227755,
+      "position_increase_price": 0.22099,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.2%",
+      "ma_price": 0.22342222222222213,
+      "rsi_array": [
+        39.325842696629294, 40.05123825789923, 32.51559916804437,
+        34.72013333597885, 34.72013333597885, 35.534257303638434,
+        33.7225962054818, 34.62002328421457, 35.559694568419545,
+        32.53795277090591, 35.48972544397198, 39.303131870794026
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ZRX_空": {
+    "backtesting_status": {
+      "position": -14638.599999999627,
+      "position_price": 0.22106699999999999,
+      "position_reduce_price": 0.21885633,
+      "position_increase_price": 0.23875236,
+      "max_loss_value": -96.0,
+      "max_loss_rate": "-2.96%",
+      "ma_price": 0.22342222222222213,
+      "rsi_array": [
+        39.325842696629294, 40.05123825789923, 32.51559916804437,
+        34.72013333597885, 34.72013333597885, 35.534257303638434,
+        33.7225962054818, 34.62002328421457, 35.559694568419545,
+        32.53795277090591, 35.48972544397198, 39.303131870794026
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 02:15:00",
+          "trending_step": 1,
+          "max_loss_value": -37.0,
+          "max_loss_rate": "-10.61%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_DYDX_多": {
+    "backtesting_status": {
+      "position": 24.400000000065614,
+      "position_price": 2.049,
+      "position_reduce_price": 2.06949,
+      "position_increase_price": 2.0080199999999997,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.27%",
+      "ma_price": 2.0474444444444435,
+      "rsi_array": [
+        44.230769230769205, 48.49726775956284, 40.913120567375934,
+        40.91312056737593, 40.50499395490475, 44.107632945593224,
+        44.10763294559323, 44.10763294559323, 48.03755435422101,
+        43.63237462333009, 46.28475026179192, 45.1410001341386
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_DYDX_空": {
+    "backtesting_status": {
+      "position": -183.39999999998207,
+      "position_price": 1.9088729552889931,
+      "position_reduce_price": 1.8897842257361033,
+      "position_increase_price": 2.061582791712113,
+      "max_loss_value": -30.0,
+      "max_loss_rate": "-8.65%",
+      "ma_price": 2.0474444444444435,
+      "rsi_array": [
+        44.230769230769205, 48.49726775956284, 40.913120567375934,
+        40.91312056737593, 40.50499395490475, 44.107632945593224,
+        44.10763294559323, 44.10763294559323, 48.03755435422101,
+        43.63237462333009, 46.28475026179192, 45.1410001341386
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_XEM_多": {
+    "backtesting_status": {
+      "position": 91219.0,
+      "position_price": 0.03131,
+      "position_reduce_price": 0.0316231,
+      "position_increase_price": 0.0288052,
+      "max_loss_value": -229.0,
+      "max_loss_rate": "-8.02%",
+      "ma_price": 0.030266666666666657,
+      "rsi_array": [
+        37.50000000000003, 41.44144144144143, 38.80597014925374,
+        38.80597014925374, 36.14042490800576, 44.37055861283141,
+        38.96281737324247, 38.96281737324247, 42.991820024777404,
+        42.99182002477741, 39.93463214503526, 44.20729293703023
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-12 22:55:00",
+          "trending_step": 1,
+          "max_loss_value": -32.0,
+          "max_loss_rate": "-9.27%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_XEM_空": {
+    "backtesting_status": {
+      "position": -5085.0,
+      "position_price": 0.029497286135693215,
+      "position_reduce_price": 0.029202313274336283,
+      "position_increase_price": 0.030677177581120943,
+      "max_loss_value": -6.0,
+      "max_loss_rate": "-4.08%",
+      "ma_price": 0.030266666666666657,
+      "rsi_array": [
+        37.50000000000003, 41.44144144144143, 38.80597014925374,
+        38.80597014925374, 36.14042490800576, 44.37055861283141,
+        38.96281737324247, 38.96281737324247, 42.991820024777404,
+        42.99182002477741, 39.93463214503526, 44.20729293703023
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_OGN_多": {
+    "backtesting_status": {
+      "position": 579.0,
+      "position_price": 0.0863,
+      "position_reduce_price": 0.087163,
+      "position_increase_price": 0.084574,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.23%",
+      "ma_price": 0.08673333333333334,
+      "rsi_array": [
+        46.42857142857129, 50.25510204081633, 40.83227040816317,
+        42.758661604176524, 41.31021748485077, 43.37590029470138,
+        41.79182030994843, 40.210384691912424, 46.723674864954695,
+        43.33444278423634, 43.33444278423633, 43.33444278423634
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_OGN_空": {
+    "backtesting_status": {
+      "position": -4246.0,
+      "position_price": 0.08243509185115404,
+      "position_reduce_price": 0.08161074093264249,
+      "position_increase_price": 0.08902989919924637,
+      "max_loss_value": -22.0,
+      "max_loss_rate": "-6.27%",
+      "ma_price": 0.08673333333333334,
+      "rsi_array": [
+        46.42857142857129, 50.25510204081633, 40.83227040816317,
+        42.758661604176524, 41.31021748485077, 43.37590029470138,
+        41.79182030994843, 40.210384691912424, 46.723674864954695,
+        43.33444278423634, 43.33444278423633, 43.33444278423634
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_LINA_多": {
+    "backtesting_status": {
+      "position": 3422.0,
+      "position_price": 0.01461,
+      "position_reduce_price": 0.0147561,
+      "position_increase_price": 0.0143178,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.16%",
+      "ma_price": 0.01453333333333333,
+      "rsi_array": [
+        43.661971830985955, 44.50373532550693, 37.30131425032683,
+        38.19891168813563, 39.137249942197506, 41.06457254965017,
+        39.06618467909033, 42.10057478934966, 45.04760347249387,
+        41.2766753610496, 47.00916470866742, 48.80323146750769
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_LINA_空": {
+    "backtesting_status": {
+      "position": -24829.0,
+      "position_price": 0.014096369567844054,
+      "position_reduce_price": 0.013955405872165613,
+      "position_increase_price": 0.01522407913327158,
+      "max_loss_value": -17.0,
+      "max_loss_rate": "-4.85%",
+      "ma_price": 0.01453333333333333,
+      "rsi_array": [
+        43.661971830985955, 44.50373532550693, 37.30131425032683,
+        38.19891168813563, 39.137249942197506, 41.06457254965017,
+        39.06618467909033, 42.10057478934966, 45.04760347249387,
+        41.2766753610496, 47.00916470866742, 48.80323146750769
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_XRP_多": {
+    "backtesting_status": {
+      "position": 194.20000000011936,
+      "position_price": 0.772361534500537,
+      "position_reduce_price": 0.7800851498455424,
+      "position_increase_price": 0.7414670731205155,
+      "max_loss_value": -6.0,
+      "max_loss_rate": "-3.7%",
+      "ma_price": 0.7612222222222224,
+      "rsi_array": [
+        29.265967588179205, 32.981310359202354, 29.055100685992436,
+        29.82227233042174, 35.61602651930417, 36.216477461859355,
+        37.19765105721956, 37.85942818727211, 39.83193025865893,
+        39.72746439458314, 39.39367275183788, 40.02677446959018
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_XRP_空": {
+    "backtesting_status": {
+      "position": -66.19999999995707,
+      "position_price": 0.7555,
+      "position_reduce_price": 0.747945,
+      "position_increase_price": 0.77061,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.18%",
+      "ma_price": 0.7612222222222224,
+      "rsi_array": [
+        29.265967588179205, 32.981310359202354, 29.055100685992436,
+        29.82227233042174, 35.61602651930417, 36.216477461859355,
+        37.19765105721956, 37.85942818727211, 39.83193025865893,
+        39.72746439458314, 39.39367275183788, 40.02677446959018
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_MATIC_多": {
+    "backtesting_status": {
+      "position": 58.0,
+      "position_price": 0.8614,
+      "position_reduce_price": 0.8700140000000001,
+      "position_increase_price": 0.844172,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.39%",
+      "ma_price": 0.853722222222222,
+      "rsi_array": [
+        29.279279279279137, 32.861842105263165, 28.060585108681558,
+        27.61970978454691, 26.346056199561357, 30.161161987677648,
+        28.56759980265532, 32.57821531458131, 38.25907197026265,
+        37.48168138411688, 37.9905186331173, 36.29388348983818
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_MATIC_空": {
+    "backtesting_status": {
+      "position": -176.0,
+      "position_price": 0.8517181818181818,
+      "position_reduce_price": 0.843201,
+      "position_increase_price": 0.8857869090909091,
+      "max_loss_value": -3.0,
+      "max_loss_rate": "-2.0%",
+      "ma_price": 0.853722222222222,
+      "rsi_array": [
+        29.279279279279137, 32.861842105263165, 28.060585108681558,
+        27.61970978454691, 26.346056199561357, 30.161161987677648,
+        28.56759980265532, 32.57821531458131, 38.25907197026265,
+        37.48168138411688, 37.9905186331173, 36.29388348983818
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ZIL_多": {
+    "backtesting_status": {
+      "position": 2239.0,
+      "position_price": 0.02233,
+      "position_reduce_price": 0.0225533,
+      "position_increase_price": 0.021883399999999997,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.16%",
+      "ma_price": 0.022244444444444445,
+      "rsi_array": [
+        38.75000000000006, 41.8795620437958, 33.94197952218448,
+        36.96913776115169, 36.96913776115169, 43.02521777415484,
+        39.92674152605862, 38.92057972958716, 44.218961838711635,
+        41.45291163934498, 37.88036137382803, 41.00900203520992
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ZIL_空": {
+    "backtesting_status": {
+      "position": -130843.0,
+      "position_price": 0.0221067,
+      "position_reduce_price": 0.021885632999999998,
+      "position_increase_price": 0.023875236,
+      "max_loss_value": -46.0,
+      "max_loss_rate": "-1.6%",
+      "ma_price": 0.022244444444444445,
+      "rsi_array": [
+        38.75000000000006, 41.8795620437958, 33.94197952218448,
+        36.96913776115169, 36.96913776115169, 43.02521777415484,
+        39.92674152605862, 38.92057972958716, 44.218961838711635,
+        41.45291163934498, 37.88036137382803, 41.00900203520992
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 08:55:00",
+          "trending_step": 1,
+          "max_loss_value": -33.0,
+          "max_loss_rate": "-9.51%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_MKR_多": {
+    "backtesting_status": {
+      "position": 0.05299999999998421,
+      "position_price": 947.5,
+      "position_reduce_price": 956.975,
+      "position_increase_price": 928.55,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.31%",
+      "ma_price": 948.5000000000002,
+      "rsi_array": [
+        61.40000000000001, 65.0167317345232, 56.572905778706904,
+        55.373043087214356, 56.280836250955765, 57.76132327176386,
+        55.0032337224214, 53.50255071624823, 59.37181436558636,
+        61.500694911026486, 60.92767213609969, 56.663440866044844
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_MKR_空": {
+    "backtesting_status": {
+      "position": -0.37799999999995704,
+      "position_price": 926.948677248682,
+      "position_reduce_price": 917.6791904761951,
+      "position_increase_price": 1001.1045714285766,
+      "max_loss_value": -12.0,
+      "max_loss_rate": "-3.39%",
+      "ma_price": 948.5000000000002,
+      "rsi_array": [
+        61.40000000000001, 65.0167317345232, 56.572905778706904,
+        55.373043087214356, 56.280836250955765, 57.76132327176386,
+        55.0032337224214, 53.50255071624823, 59.37181436558636,
+        61.500694911026486, 60.92767213609969, 56.663440866044844
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_DGB_多": {
+    "backtesting_status": {
+      "position": 5787.0,
+      "position_price": 0.00864,
+      "position_reduce_price": 0.0087264,
+      "position_increase_price": 0.0084672,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.04%",
+      "ma_price": 0.008607777777777778,
+      "rsi_array": [
+        45.714285714285616, 48.8612836438924, 41.15358819584165,
+        41.15358819584165, 38.788174399110694, 40.62577883956563,
+        39.35349306970182, 41.332138212784145, 41.33213821278415,
+        39.825220033240335, 42.0986177233581, 42.0986177233581
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_DGB_空": {
+    "backtesting_status": {
+      "position": -42974.0,
+      "position_price": 0.008144466886954903,
+      "position_reduce_price": 0.008063022218085355,
+      "position_increase_price": 0.008796024237911296,
+      "max_loss_value": -24.0,
+      "max_loss_rate": "-6.94%",
+      "ma_price": 0.008607777777777778,
+      "rsi_array": [
+        45.714285714285616, 48.8612836438924, 41.15358819584165,
+        41.15358819584165, 38.788174399110694, 40.62577883956563,
+        39.35349306970182, 41.332138212784145, 41.33213821278415,
+        39.825220033240335, 42.0986177233581, 42.0986177233581
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_FTM_多": {
+    "backtesting_status": {
+      "position": 160.0,
+      "position_price": 0.3121,
+      "position_reduce_price": 0.315221,
+      "position_increase_price": 0.30585799999999996,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.19%",
+      "ma_price": 0.31442222222222227,
+      "rsi_array": [
+        48.837209302325704, 49.469964664311014, 40.77974456643522,
+        42.47999464291701, 44.53780573511777, 46.59535527091496,
+        46.59535527091496, 47.35044072502597, 52.74672627324492,
+        54.74480809232725, 55.75226640468325, 58.096344379325075
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_FTM_空": {
+    "backtesting_status": {
+      "position": -11971.0,
+      "position_price": 0.294327,
+      "position_reduce_price": 0.29138373,
+      "position_increase_price": 0.31787316000000004,
+      "max_loss_value": -283.0,
+      "max_loss_rate": "-8.04%",
+      "ma_price": 0.31442222222222227,
+      "rsi_array": [
+        48.837209302325704, 49.469964664311014, 40.77974456643522,
+        42.47999464291701, 44.53780573511777, 46.59535527091496,
+        46.59535527091496, 47.35044072502597, 52.74672627324492,
+        54.74480809232725, 55.75226640468325, 58.096344379325075
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 00:30:00",
+          "trending_step": 1,
+          "max_loss_value": -41.0,
+          "max_loss_rate": "-11.8%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_BAT_多": {
+    "backtesting_status": {
+      "position": 233.09999999926447,
+      "position_price": 0.2145,
+      "position_reduce_price": 0.216645,
+      "position_increase_price": 0.21020999999999998,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.7%",
+      "ma_price": 0.2130333333333334,
+      "rsi_array": [
+        39.74358974358963, 44.353369763205855, 36.77820378761476,
+        39.734109167738595, 37.82936174434208, 38.62152501099385,
+        38.09873816769854, 38.09873816769855, 40.88292754199757,
+        39.604040491686135, 40.604497546298056, 39.89284137602908
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_BAT_空": {
+    "backtesting_status": {
+      "position": -13834.300000000036,
+      "position_price": 0.205623,
+      "position_reduce_price": 0.20356677,
+      "position_increase_price": 0.22207284000000002,
+      "max_loss_value": -144.0,
+      "max_loss_rate": "-5.05%",
+      "ma_price": 0.2130333333333334,
+      "rsi_array": [
+        39.74358974358963, 44.353369763205855, 36.77820378761476,
+        39.734109167738595, 37.82936174434208, 38.62152501099385,
+        38.09873816769854, 38.09873816769855, 40.88292754199757,
+        39.604040491686135, 40.604497546298056, 39.89284137602908
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 02:30:00",
+          "trending_step": 1,
+          "max_loss_value": -34.0,
+          "max_loss_rate": "-9.67%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_MASK_多": {
+    "backtesting_status": {
+      "position": 13.0,
+      "position_price": 3.863,
+      "position_reduce_price": 3.90163,
+      "position_increase_price": 3.78574,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-2.05%",
+      "ma_price": 3.8035555555555556,
+      "rsi_array": [
+        31.410256410256533, 32.80193236714993, 25.98775245834084,
+        25.35743170678903, 27.717479870854877, 28.20639640431625,
+        25.939032921497812, 24.35758902980222, 24.35758902980222,
+        23.43693249822671, 23.43693249822671, 23.436932498226717
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_MASK_空": {
+    "backtesting_status": {
+      "position": -872.0,
+      "position_price": 3.82437,
+      "position_reduce_price": 3.7861263,
+      "position_increase_price": 4.1303196,
+      "max_loss_value": -50.0,
+      "max_loss_rate": "-1.51%",
+      "ma_price": 3.8035555555555556,
+      "rsi_array": [
+        31.410256410256533, 32.80193236714993, 25.98775245834084,
+        25.35743170678903, 27.717479870854877, 28.20639640431625,
+        25.939032921497812, 24.35758902980222, 24.35758902980222,
+        23.43693249822671, 23.43693249822671, 23.436932498226717
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 08:55:00",
+          "trending_step": 1,
+          "max_loss_value": -39.0,
+          "max_loss_rate": "-11.28%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ETH_多": {
+    "backtesting_status": {
+      "position": 0.025000000000000216,
+      "position_price": 2016.91,
+      "position_reduce_price": 2037.0791000000002,
+      "position_increase_price": 1976.5718,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.3%",
+      "ma_price": 2010.362222222223,
+      "rsi_array": [
+        40.246305418719324, 42.86801202854985, 37.90859015908608,
+        39.127739845243944, 38.56642730254564, 40.28954280389507,
+        36.746613327388296, 38.35389741987028, 39.02516087120247,
+        39.891146954235104, 42.78118576626161, 41.850313432411276
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ETH_空": {
+    "backtesting_status": {
+      "position": -0.1819999999999286,
+      "position_price": 1924.9509340659608,
+      "position_reduce_price": 1905.7014247253012,
+      "position_increase_price": 2078.9470087912377,
+      "max_loss_value": -19.0,
+      "max_loss_rate": "-5.52%",
+      "ma_price": 2010.362222222223,
+      "rsi_array": [
+        40.246305418719324, 42.86801202854985, 37.90859015908608,
+        39.127739845243944, 38.56642730254564, 40.28954280389507,
+        36.746613327388296, 38.35389741987028, 39.02516087120247,
+        39.891146954235104, 42.78118576626161, 41.850313432411276
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ETC_多": {
+    "backtesting_status": {
+      "position": 2.4899999999939557,
+      "position_price": 20.111,
+      "position_reduce_price": 20.31211,
+      "position_increase_price": 19.70878,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.03%",
+      "ma_price": 20.10911111111111,
+      "rsi_array": [
+        40.94827586206899, 47.01507338357801, 37.66653628963272,
+        36.627075626779465, 37.22072323699452, 39.82248268383442,
+        36.55914827420207, 37.83915319442582, 39.25335961596323,
+        39.352420632120285, 39.77547731113326, 42.57930653184247
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ETC_空": {
+    "backtesting_status": {
+      "position": -18.309999999925218,
+      "position_price": 19.116302020756876,
+      "position_reduce_price": 18.925139000549308,
+      "position_increase_price": 20.645606182417428,
+      "max_loss_value": -23.0,
+      "max_loss_rate": "-6.44%",
+      "ma_price": 20.10911111111111,
+      "rsi_array": [
+        40.94827586206899, 47.01507338357801, 37.66653628963272,
+        36.627075626779465, 37.22072323699452, 39.82248268383442,
+        36.55914827420207, 37.83915319442582, 39.25335961596323,
+        39.352420632120285, 39.77547731113326, 42.57930653184247
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_STORJ_多": {
+    "backtesting_status": {
+      "position": 1066.0,
+      "position_price": 0.3282757035647279,
+      "position_reduce_price": 0.3315584606003752,
+      "position_increase_price": 0.3020136472795497,
+      "max_loss_value": -22.0,
+      "max_loss_rate": "-6.21%",
+      "ma_price": 0.3228222222222223,
+      "rsi_array": [
+        47.10144927536245, 50.572916666666615, 42.55326321467108,
+        42.252610871938494, 42.68868147057868, 44.494222321308335,
+        42.339512862729194, 41.61606123168465, 42.67098912415091,
+        43.765244970760406, 42.45617975569773, 44.82586608798704
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_STORJ_空": {
+    "backtesting_status": {
+      "position": -473.0,
+      "position_price": 0.3172983086680761,
+      "position_reduce_price": 0.31412532558139533,
+      "position_increase_price": 0.3299902410147992,
+      "max_loss_value": -5.0,
+      "max_loss_rate": "-3.06%",
+      "ma_price": 0.3228222222222223,
+      "rsi_array": [
+        47.10144927536245, 50.572916666666615, 42.55326321467108,
+        42.252610871938494, 42.68868147057868, 44.494222321308335,
+        42.339512862729194, 41.61606123168465, 42.67098912415091,
+        43.765244970760406, 42.45617975569773, 44.82586608798704
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_BNB_多": {
+    "backtesting_status": {
+      "position": 0.1899999999996011,
+      "position_price": 258.45,
+      "position_reduce_price": 261.0345,
+      "position_increase_price": 253.28099999999998,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.08%",
+      "ma_price": 258.74,
+      "rsi_array": [
+        39.38953488372116, 42.79231743351641, 38.121926525889464,
+        43.94077910244362, 44.355133024482654, 58.39638915786149,
+        61.41352340592439, 52.940868256044304, 54.140053863340796,
+        50.96158865255723, 48.801771007301355, 50.03962676497961
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_BNB_空": {
+    "backtesting_status": {
+      "position": -1.4400000000000301,
+      "position_price": 243.7162499999998,
+      "position_reduce_price": 241.2790874999998,
+      "position_increase_price": 263.2135499999998,
+      "max_loss_value": -24.0,
+      "max_loss_rate": "-6.89%",
+      "ma_price": 258.74,
+      "rsi_array": [
+        39.38953488372116, 42.79231743351641, 38.121926525889464,
+        43.94077910244362, 44.355133024482654, 58.39638915786149,
+        61.41352340592439, 52.940868256044304, 54.140053863340796,
+        50.96158865255723, 48.801771007301355, 50.03962676497961
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_GTC_多": {
+    "backtesting_status": {
+      "position": 46.399999999970895,
+      "position_price": 1.078,
+      "position_reduce_price": 1.08878,
+      "position_increase_price": 1.05644,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.46%",
+      "ma_price": 1.0755555555555554,
+      "rsi_array": [
+        44.230769230769255, 47.493036211699284, 40.6622638048066,
+        42.874319018571725, 41.2194930810294, 42.416260173927675,
+        41.506192083757234, 39.67282545003597, 42.41220111991564,
+        40.434870252474276, 40.434870252474276, 42.00282929015982
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_GTC_空": {
+    "backtesting_status": {
+      "position": -4601.0999999999885,
+      "position_price": 1.03158,
+      "position_reduce_price": 1.0212641999999998,
+      "position_increase_price": 1.1141064,
+      "max_loss_value": -269.0,
+      "max_loss_rate": "-5.66%",
+      "ma_price": 1.0755555555555554,
+      "rsi_array": [
+        44.230769230769255, 47.493036211699284, 40.6622638048066,
+        42.874319018571725, 41.2194930810294, 42.416260173927675,
+        41.506192083757234, 39.67282545003597, 42.41220111991564,
+        40.434870252474276, 40.434870252474276, 42.00282929015982
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 02:15:00",
+          "trending_step": 1,
+          "max_loss_value": -56.0,
+          "max_loss_rate": "-16.1%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ATA_多": {
+    "backtesting_status": {
+      "position": 516.0,
+      "position_price": 0.0969,
+      "position_reduce_price": 0.097869,
+      "position_increase_price": 0.094962,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.03%",
+      "ma_price": 0.09675555555555555,
+      "rsi_array": [
+        43.90243902439022, 43.902439024390226, 34.99367307028643,
+        39.407461172375605, 39.407461172375605, 39.407461172375605,
+        38.32413069846318, 37.22216317444915, 40.88334275069223,
+        39.638577564987486, 39.63857756498748, 43.62023300184304
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ATA_空": {
+    "backtesting_status": {
+      "position": -3824.0,
+      "position_price": 0.0915389121338912,
+      "position_reduce_price": 0.09062352301255229,
+      "position_increase_price": 0.09886202510460251,
+      "max_loss_value": -25.0,
+      "max_loss_rate": "-7.17%",
+      "ma_price": 0.09675555555555555,
+      "rsi_array": [
+        43.90243902439022, 43.902439024390226, 34.99367307028643,
+        39.407461172375605, 39.407461172375605, 39.407461172375605,
+        38.32413069846318, 37.22216317444915, 40.88334275069223,
+        39.638577564987486, 39.63857756498748, 43.62023300184304
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_WAVES_多": {
+    "backtesting_status": {
+      "position": 23.900000002979414,
+      "position_price": 2.0955,
+      "position_reduce_price": 2.1164549999999998,
+      "position_increase_price": 2.05359,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.25%",
+      "ma_price": 2.1012,
+      "rsi_array": [
+        56.29562043795627, 58.767050721758764, 48.42195828262053,
+        49.8005388091527, 49.25176506426972, 51.45987865240984,
+        49.639518253479956, 52.83385818395471, 57.13448594236734,
+        56.13756476540155, 59.98555781531309, 62.84990248891996
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_WAVES_空": {
+    "backtesting_status": {
+      "position": -74.20000000447035,
+      "position_price": 2.022030188677117,
+      "position_reduce_price": 2.0018098867903458,
+      "position_increase_price": 2.1029113962242016,
+      "max_loss_value": -7.0,
+      "max_loss_rate": "-4.9%",
+      "ma_price": 2.1012,
+      "rsi_array": [
+        56.29562043795627, 58.767050721758764, 48.42195828262053,
+        49.8005388091527, 49.25176506426972, 51.45987865240984,
+        49.639518253479956, 52.83385818395471, 57.13448594236734,
+        56.13756476540155, 59.98555781531309, 62.84990248891996
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ATOM_多": {
+    "backtesting_status": {
+      "position": 4.989999999991958,
+      "position_price": 10.021,
+      "position_reduce_price": 10.121210000000001,
+      "position_increase_price": 9.820580000000001,
+      "max_loss_value": 0,
+      "max_loss_rate": "",
+      "ma_price": 10.100222222222222,
+      "rsi_array": [
+        62.61682242990675, 66.24107336074462, 57.110667795685764,
+        62.35633826699941, 59.29997087429495, 59.126582526017216,
+        55.78885295856691, 54.910388945785535, 57.093163948505385,
+        58.9479920353922, 69.45051482691673, 61.663778197149746
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ATOM_空": {
+    "backtesting_status": {
+      "position": -284.0000000000003,
+      "position_price": 9.96831,
+      "position_reduce_price": 9.8686269,
+      "position_increase_price": 10.7657748,
+      "max_loss_value": -66.0,
+      "max_loss_rate": "-2.33%",
+      "ma_price": 10.100222222222222,
+      "rsi_array": [
+        62.61682242990675, 66.24107336074462, 57.110667795685764,
+        62.35633826699941, 59.29997087429495, 59.126582526017216,
+        55.78885295856691, 54.910388945785535, 57.093163948505385,
+        58.9479920353922, 69.45051482691673, 61.663778197149746
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 10:25:00",
+          "trending_step": 1,
+          "max_loss_value": -31.0,
+          "max_loss_rate": "-8.76%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_RSR_多": {
+    "backtesting_status": {
+      "position": 21441.0,
+      "position_price": 0.002332,
+      "position_reduce_price": 0.0023553199999999997,
+      "position_increase_price": 0.0022853599999999997,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.03%",
+      "ma_price": 0.002320222222222222,
+      "rsi_array": [
+        43.18181818181815, 50.98039215686258, 42.722411278561125,
+        46.56092778541483, 43.01314883216537, 45.79320370838742,
+        42.65580596807129, 43.25392963479669, 45.693955229530495,
+        42.72619538517354, 43.38616810829828, 41.33440904553569
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_RSR_空": {
+    "backtesting_status": {
+      "position": -1346180.0,
+      "position_price": 0.00230868,
+      "position_reduce_price": 0.0022855932,
+      "position_increase_price": 0.0024933744,
+      "max_loss_value": -41.0,
+      "max_loss_rate": "-1.31%",
+      "ma_price": 0.002320222222222222,
+      "rsi_array": [
+        43.18181818181815, 50.98039215686258, 42.722411278561125,
+        46.56092778541483, 43.01314883216537, 45.79320370838742,
+        42.65580596807129, 43.25392963479669, 45.693955229530495,
+        42.72619538517354, 43.38616810829828, 41.33440904553569
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 09:10:00",
+          "trending_step": 1,
+          "max_loss_value": -36.0,
+          "max_loss_rate": "-10.32%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ZEC_多": {
+    "backtesting_status": {
+      "position": 1.5030000000016366,
+      "position_price": 33.26,
+      "position_reduce_price": 33.5926,
+      "position_increase_price": 32.5948,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.41%",
+      "ma_price": 33.037777777777784,
+      "rsi_array": [
+        52.94117647058827, 51.00261551874452, 42.837830225877354,
+        41.12640551097581, 39.6636852050561, 45.25528583622469,
+        41.383261816733224, 45.09331442854866, 47.06153170909085,
+        48.064000800753305, 49.77120630017482, 46.175100018724414
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ZEC_空": {
+    "backtesting_status": {
+      "position": -89.25600000000001,
+      "position_price": 31.1949,
+      "position_reduce_price": 30.882951,
+      "position_increase_price": 33.690492000000006,
+      "max_loss_value": -216.0,
+      "max_loss_rate": "-7.77%",
+      "ma_price": 33.037777777777784,
+      "rsi_array": [
+        52.94117647058827, 51.00261551874452, 42.837830225877354,
+        41.12640551097581, 39.6636852050561, 45.25528583622469,
+        41.383261816733224, 45.09331442854866, 47.06153170909085,
+        48.064000800753305, 49.77120630017482, 46.175100018724414
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 02:30:00",
+          "trending_step": 1,
+          "max_loss_value": -34.0,
+          "max_loss_rate": "-9.68%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_CELR_多": {
+    "backtesting_status": {
+      "position": 3018.0,
+      "position_price": 0.01657,
+      "position_reduce_price": 0.016735700000000003,
+      "position_increase_price": 0.016238600000000002,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.06%",
+      "ma_price": 0.01660555555555555,
+      "rsi_array": [
+        44.77611940298507, 44.0677966101695, 37.11294927164933,
+        38.99803911929694, 38.3785775215643, 41.38655647140548,
+        39.31957505422936, 37.9585070448738, 41.24399022153515,
+        38.329431526421025, 39.480840761875044, 39.480840761875044
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_CELR_空": {
+    "backtesting_status": {
+      "position": -22409.0,
+      "position_price": 0.015618592976036414,
+      "position_reduce_price": 0.01546240704627605,
+      "position_increase_price": 0.016868080414119326,
+      "max_loss_value": -27.0,
+      "max_loss_rate": "-7.76%",
+      "ma_price": 0.01660555555555555,
+      "rsi_array": [
+        44.77611940298507, 44.0677966101695, 37.11294927164933,
+        38.99803911929694, 38.3785775215643, 41.38655647140548,
+        39.31957505422936, 37.9585070448738, 41.24399022153515,
+        38.329431526421025, 39.480840761875044, 39.480840761875044
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ZEN_多": {
+    "backtesting_status": {
+      "position": 5.599999999993398,
+      "position_price": 8.862,
+      "position_reduce_price": 8.95062,
+      "position_increase_price": 8.68476,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.08%",
+      "ma_price": 8.763777777777776,
+      "rsi_array": [
+        35.38461538461531, 36.26459143968878, 30.086913334988875,
+        30.008268525116083, 31.54976329808973, 33.328743699535806,
+        32.12972318629508, 31.923587684142014, 33.30600287113851,
+        32.02214094668902, 32.53137758281074, 30.675337082219094
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ZEN_空": {
+    "backtesting_status": {
+      "position": -41.79999999999971,
+      "position_price": 8.370765550239236,
+      "position_reduce_price": 8.287057894736844,
+      "position_increase_price": 9.040426794258375,
+      "max_loss_value": -24.0,
+      "max_loss_rate": "-6.91%",
+      "ma_price": 8.763777777777776,
+      "rsi_array": [
+        35.38461538461531, 36.26459143968878, 30.086913334988875,
+        30.008268525116083, 31.54976329808973, 33.328743699535806,
+        32.12972318629508, 31.923587684142014, 33.30600287113851,
+        32.02214094668902, 32.53137758281074, 30.675337082219094
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_XLM_多": {
+    "backtesting_status": {
+      "position": 1015.0,
+      "position_price": 0.14773812807881775,
+      "position_reduce_price": 0.14921550935960592,
+      "position_increase_price": 0.14182860295566505,
+      "max_loss_value": -4.0,
+      "max_loss_rate": "-2.67%",
+      "ma_price": 0.1458611111111111,
+      "rsi_array": [
+        30.341594105827035, 36.85488767455976, 32.97693482279186,
+        31.645619482959862, 35.362366036161035, 38.01809410254779,
+        38.51684126990531, 38.335639898083755, 41.73059418359023,
+        41.2695858699393, 41.323284266444254, 41.32328426644426
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_XLM_空": {
+    "backtesting_status": {
+      "position": -345.0,
+      "position_price": 0.14493,
+      "position_reduce_price": 0.1434807,
+      "position_increase_price": 0.1478286,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.32%",
+      "ma_price": 0.1458611111111111,
+      "rsi_array": [
+        30.341594105827035, 36.85488767455976, 32.97693482279186,
+        31.645619482959862, 35.362366036161035, 38.01809410254779,
+        38.51684126990531, 38.335639898083755, 41.73059418359023,
+        41.2695858699393, 41.323284266444254, 41.32328426644426
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_RUNE_多": {
+    "backtesting_status": {
+      "position": 47.0,
+      "position_price": 1.073,
+      "position_reduce_price": 1.0837299999999999,
+      "position_increase_price": 1.05154,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.09%",
+      "ma_price": 1.073666666666667,
+      "rsi_array": [
+        42.30769230769237, 48.68421052631601, 39.32308698495776,
+        43.24085839333638, 45.147914399963604, 50.51911113074782,
+        47.200774339574, 45.58837159460981, 49.31741822619634,
+        44.401754513127415, 48.114708097449515, 48.11470809744952
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_RUNE_空": {
+    "backtesting_status": {
+      "position": -346.0,
+      "position_price": 1.0109682080924853,
+      "position_reduce_price": 1.0008585260115606,
+      "position_increase_price": 1.0918456647398842,
+      "max_loss_value": -24.0,
+      "max_loss_rate": "-6.93%",
+      "ma_price": 1.073666666666667,
+      "rsi_array": [
+        42.30769230769237, 48.68421052631601, 39.32308698495776,
+        43.24085839333638, 45.147914399963604, 50.51911113074782,
+        47.200774339574, 45.58837159460981, 49.31741822619634,
+        44.401754513127415, 48.114708097449515, 48.11470809744952
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ALGO_多": {
+    "backtesting_status": {
+      "position": 1251.5000000119094,
+      "position_price": 0.11985427087496665,
+      "position_reduce_price": 0.12105281358371632,
+      "position_increase_price": 0.11506010003996799,
+      "max_loss_value": -2.0,
+      "max_loss_rate": "-1.3%",
+      "ma_price": 0.11958888888888891,
+      "rsi_array": [
+        32.14285714285717, 34.65608465608462, 30.589150999880232,
+        33.12462836908391, 33.12462836908391, 37.535114365989756,
+        37.53511436598975, 41.973414065256335, 45.320594542897155,
+        42.05498476919322, 46.99108045988149, 45.59675283090549
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ALGO_空": {
+    "backtesting_status": {
+      "position": -24673.69999999982,
+      "position_price": 0.116424,
+      "position_reduce_price": 0.11525976,
+      "position_increase_price": 0.12573792,
+      "max_loss_value": -177.0,
+      "max_loss_rate": "-6.16%",
+      "ma_price": 0.11958888888888891,
+      "rsi_array": [
+        32.14285714285717, 34.65608465608462, 30.589150999880232,
+        33.12462836908391, 33.12462836908391, 37.535114365989756,
+        37.53511436598975, 41.973414065256335, 45.320594542897155,
+        42.05498476919322, 46.99108045988149, 45.59675283090549
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 02:45:00",
+          "trending_step": 1,
+          "max_loss_value": -38.0,
+          "max_loss_rate": "-10.87%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_UNFI_多": {
+    "backtesting_status": {
+      "position": 13.800000000002376,
+      "position_price": 3.633,
+      "position_reduce_price": 3.66933,
+      "position_increase_price": 3.56034,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-2.06%",
+      "ma_price": 3.6282222222222225,
+      "rsi_array": [
+        41.891891891891916, 41.58926728586177, 33.093297959699406,
+        33.97363663826378, 34.438137082150405, 35.895157150860484,
+        35.056154739770534, 34.195399422652685, 38.01952218450061,
+        36.39267702637496, 39.19466294334835, 39.76616008115438
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_UNFI_空": {
+    "backtesting_status": {
+      "position": -776.300000095379,
+      "position_price": 3.62241,
+      "position_reduce_price": 3.5861859,
+      "position_increase_price": 3.9122028,
+      "max_loss_value": -47.0,
+      "max_loss_rate": "-1.67%",
+      "ma_price": 3.6282222222222225,
+      "rsi_array": [
+        41.891891891891916, 41.58926728586177, 33.093297959699406,
+        33.97363663826378, 34.438137082150405, 35.895157150860484,
+        35.056154739770534, 34.195399422652685, 38.01952218450061,
+        36.39267702637496, 39.19466294334835, 39.76616008115438
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 08:50:00",
+          "trending_step": 1,
+          "max_loss_value": -32.0,
+          "max_loss_rate": "-9.12%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_SFP_多": {
+    "backtesting_status": {
+      "position": 105.0,
+      "position_price": 0.4766,
+      "position_reduce_price": 0.481366,
+      "position_increase_price": 0.46706800000000004,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.04%",
+      "ma_price": 0.47835555555555564,
+      "rsi_array": [
+        54.01459854014593, 55.41643984757756, 44.467591814791184,
+        45.24429062569302, 44.90609644880528, 49.387722265061655,
+        46.779880734518365, 48.45481190005129, 53.56921750459254,
+        54.320153634060766, 55.857831422247706, 55.857831422247706
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_SFP_空": {
+    "backtesting_status": {
+      "position": -771.0,
+      "position_price": 0.45410959792477307,
+      "position_reduce_price": 0.44956850194552533,
+      "position_increase_price": 0.49043836575875493,
+      "max_loss_value": -20.0,
+      "max_loss_rate": "-5.79%",
+      "ma_price": 0.47835555555555564,
+      "rsi_array": [
+        54.01459854014593, 55.41643984757756, 44.467591814791184,
+        45.24429062569302, 44.90609644880528, 49.387722265061655,
+        46.779880734518365, 48.45481190005129, 53.56921750459254,
+        54.320153634060766, 55.857831422247706, 55.857831422247706
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_KAVA_多": {
+    "backtesting_status": {
+      "position": 352.8000000000118,
+      "position_price": 0.9921498866213172,
+      "position_reduce_price": 1.0020713854875303,
+      "position_increase_price": 0.9127778956916118,
+      "max_loss_value": -24.0,
+      "max_loss_rate": "-6.74%",
+      "ma_price": 0.9519222222222221,
+      "rsi_array": [
+        34.82142857142872, 40.01264222503174, 33.472990562967986,
+        37.24468713105081, 34.8153586115329, 39.093639093222606,
+        35.20552091468407, 32.55546218665321, 39.75278250418475,
+        42.80457729196706, 48.23502551281926, 56.129825258999766
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_KAVA_空": {
+    "backtesting_status": {
+      "position": -157.0999999998835,
+      "position_price": 0.95464672183324,
+      "position_reduce_price": 0.9451002546149075,
+      "position_increase_price": 0.9928325907065696,
+      "max_loss_value": -2.0,
+      "max_loss_rate": "-1.42%",
+      "ma_price": 0.9519222222222221,
+      "rsi_array": [
+        34.82142857142872, 40.01264222503174, 33.472990562967986,
+        37.24468713105081, 34.8153586115329, 39.093639093222606,
+        35.20552091468407, 32.55546218665321, 39.75278250418475,
+        42.80457729196706, 48.23502551281926, 56.129825258999766
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_AR_多": {
+    "backtesting_status": {
+      "position": 8.100000000012372,
+      "position_price": 6.147,
+      "position_reduce_price": 6.20847,
+      "position_increase_price": 6.02406,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.07%",
+      "ma_price": 6.123888888888888,
+      "rsi_array": [
+        42.43697478991604, 46.095641646489106, 37.2553816046967,
+        36.247605903560235, 35.364564485089986, 37.28416316032871,
+        34.45082423934756, 34.45082423934757, 42.35394490905694,
+        41.207416892006975, 45.935738591243414, 46.70505313297947
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_AR_空": {
+    "backtesting_status": {
+      "position": -58.69999999999977,
+      "position_price": 5.957764906303238,
+      "position_reduce_price": 5.898187257240205,
+      "position_increase_price": 6.434386098807497,
+      "max_loss_value": -16.0,
+      "max_loss_rate": "-4.57%",
+      "ma_price": 6.123888888888888,
+      "rsi_array": [
+        42.43697478991604, 46.095641646489106, 37.2553816046967,
+        36.247605903560235, 35.364564485089986, 37.28416316032871,
+        34.45082423934756, 34.45082423934757, 42.35394490905694,
+        41.207416892006975, 45.935738591243414, 46.70505313297947
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_AXS_多": {
+    "backtesting_status": {
+      "position": 7.0,
+      "position_price": 6.763,
+      "position_reduce_price": 6.83063,
+      "position_increase_price": 6.62774,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.11%",
+      "ma_price": 6.704888888888891,
+      "rsi_array": [
+        56.91906005221935, 59.748545693375846, 52.08571895959431,
+        50.21833612844636, 46.8583918595892, 43.37265130944344,
+        43.838084691991966, 42.46002613590944, 42.81202624946117,
+        40.79626322176534, 39.722054181376954, 40.77174656140732
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_AXS_空": {
+    "backtesting_status": {
+      "position": -450.0,
+      "position_price": 6.37362,
+      "position_reduce_price": 6.3098838,
+      "position_increase_price": 6.8835096,
+      "max_loss_value": -233.0,
+      "max_loss_rate": "-8.12%",
+      "ma_price": 6.704888888888891,
+      "rsi_array": [
+        56.91906005221935, 59.748545693375846, 52.08571895959431,
+        50.21833612844636, 46.8583918595892, 43.37265130944344,
+        43.838084691991966, 42.46002613590944, 42.81202624946117,
+        40.79626322176534, 39.722054181376954, 40.77174656140732
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 00:40:00",
+          "trending_step": 1,
+          "max_loss_value": -36.0,
+          "max_loss_rate": "-10.32%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_LIT_多": {
+    "backtesting_status": {
+      "position": 65.600000000058,
+      "position_price": 0.762,
+      "position_reduce_price": 0.76962,
+      "position_increase_price": 0.74676,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.18%",
+      "ma_price": 0.7587777777777778,
+      "rsi_array": [
+        41.935483870967744, 45.70765661252899, 36.7168458781362,
+        38.575664479388564, 38.575664479388564, 42.493660405021295,
+        41.08262979015681, 43.116771543627955, 45.155935639530284,
+        43.47745351148191, 45.65296997862129, 45.652969978621286
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_LIT_空": {
+    "backtesting_status": {
+      "position": -477.90000000004784,
+      "position_price": 0.7323917137476419,
+      "position_reduce_price": 0.7250677966101655,
+      "position_increase_price": 0.7909830508474534,
+      "max_loss_value": -17.0,
+      "max_loss_rate": "-5.0%",
+      "ma_price": 0.7587777777777778,
+      "rsi_array": [
+        41.935483870967744, 45.70765661252899, 36.7168458781362,
+        38.575664479388564, 38.575664479388564, 42.493660405021295,
+        41.08262979015681, 43.116771543627955, 45.155935639530284,
+        43.47745351148191, 45.65296997862129, 45.652969978621286
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ALPHA_多": {
+    "backtesting_status": {
+      "position": 460.0,
+      "position_price": 0.10878,
+      "position_reduce_price": 0.1098678,
+      "position_increase_price": 0.1066044,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.84%",
+      "ma_price": 0.10817666666666668,
+      "rsi_array": [
+        32.40093240093243, 38.84833738848326, 32.963484484346644,
+        34.14090272282624, 32.971552301560294, 35.50891621307168,
+        34.11802807748145, 33.939070773156544, 33.65391833718844,
+        32.38417270833809, 34.82851099649885, 32.312577132346725
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ALPHA_空": {
+    "backtesting_status": {
+      "position": -3355.0,
+      "position_price": 0.1043205692995529,
+      "position_reduce_price": 0.10327736360655737,
+      "position_increase_price": 0.11266621484351713,
+      "max_loss_value": -20.0,
+      "max_loss_rate": "-5.86%",
+      "ma_price": 0.10817666666666668,
+      "rsi_array": [
+        32.40093240093243, 38.84833738848326, 32.963484484346644,
+        34.14090272282624, 32.971552301560294, 35.50891621307168,
+        34.11802807748145, 33.939070773156544, 33.65391833718844,
+        32.38417270833809, 34.82851099649885, 32.312577132346725
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_CRV_多": {
+    "backtesting_status": {
+      "position": 58.99999999984421,
+      "position_price": 0.847,
+      "position_reduce_price": 0.85547,
+      "position_increase_price": 0.8300599999999999,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-2.01%",
+      "ma_price": 0.8476666666666665,
+      "rsi_array": [
+        44.11764705882352, 45.83333333333333, 38.24605855855855,
+        41.709934587080944, 43.41886355865976, 48.31444821491389,
+        45.488722134486714, 44.0999040335898, 47.54903580456292,
+        44.58636125383563, 46.38515742710674, 44.81838412083346
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_CRV_空": {
+    "backtesting_status": {
+      "position": -419.7999999999722,
+      "position_price": 0.8336922343973353,
+      "position_reduce_price": 0.825355312053362,
+      "position_increase_price": 0.9003876131491222,
+      "max_loss_value": -10.0,
+      "max_loss_rate": "-2.8%",
+      "ma_price": 0.8476666666666665,
+      "rsi_array": [
+        44.11764705882352, 45.83333333333333, 38.24605855855855,
+        41.709934587080944, 43.41886355865976, 48.31444821491389,
+        45.488722134486714, 44.0999040335898, 47.54903580456292,
+        44.58636125383563, 46.38515742710674, 44.81838412083346
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_FLM_多": {
+    "backtesting_status": {
+      "position": 675.0,
+      "position_price": 0.0741,
+      "position_reduce_price": 0.074841,
+      "position_increase_price": 0.072618,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.62%",
+      "ma_price": 0.07342222222222222,
+      "rsi_array": [
+        40.0, 41.57303370786522, 33.9130434782608, 33.9130434782608,
+        40.29251426324285, 40.29251426324284, 40.29251426324286,
+        39.113577528099846, 45.92875509008357, 42.12074002283911,
+        42.120740022839115, 48.69815270217234
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_FLM_空": {
+    "backtesting_status": {
+      "position": -40189.0,
+      "position_price": 0.071973,
+      "position_reduce_price": 0.07125327,
+      "position_increase_price": 0.07773084,
+      "max_loss_value": -122.0,
+      "max_loss_rate": "-4.21%",
+      "ma_price": 0.07342222222222222,
+      "rsi_array": [
+        40.0, 41.57303370786522, 33.9130434782608, 33.9130434782608,
+        40.29251426324285, 40.29251426324284, 40.29251426324286,
+        39.113577528099846, 45.92875509008357, 42.12074002283911,
+        42.120740022839115, 48.69815270217234
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 08:00:00",
+          "trending_step": 1,
+          "max_loss_value": -31.0,
+          "max_loss_rate": "-8.94%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_SUSHI_多": {
+    "backtesting_status": {
+      "position": 70.0,
+      "position_price": 0.7136,
+      "position_reduce_price": 0.720736,
+      "position_increase_price": 0.699328,
+      "max_loss_value": 0.0,
+      "max_loss_rate": "-0.52%",
+      "ma_price": 0.7101666666666666,
+      "rsi_array": [
+        35.31598513011157, 36.83328679139892, 30.74867748587823,
+        32.53618543498427, 32.80302870401314, 39.035474132497576,
+        37.32666294940626, 36.08930563416551, 38.55696839098079,
+        37.686387837305716, 39.73784960057808, 38.00542155170221
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_SUSHI_空": {
+    "backtesting_status": {
+      "position": -4089.0,
+      "position_price": 0.706464,
+      "position_reduce_price": 0.69939936,
+      "position_increase_price": 0.7629811200000001,
+      "max_loss_value": -73.0,
+      "max_loss_rate": "-2.51%",
+      "ma_price": 0.7101666666666666,
+      "rsi_array": [
+        35.31598513011157, 36.83328679139892, 30.74867748587823,
+        32.53618543498427, 32.80302870401314, 39.035474132497576,
+        37.32666294940626, 36.08930563416551, 38.55696839098079,
+        37.686387837305716, 39.73784960057808, 38.00542155170221
+      ],
+      "trending_step": 1,
+      "next_trending_step": 2,
+      "current_trending_group": [
+        {
+          "datetime": "2023-07-14 08:25:00",
+          "trending_step": 1,
+          "max_loss_value": -32.0,
+          "max_loss_rate": "-9.21%"
+        }
+      ]
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ARPA_多": {
+    "backtesting_status": {
+      "position": 934.0,
+      "position_price": 0.05355,
+      "position_reduce_price": 0.0540855,
+      "position_increase_price": 0.052479,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.14%",
+      "ma_price": 0.05343444444444445,
+      "rsi_array": [
+        44.000000000000064, 48.94810659186541, 40.940263490344684,
+        44.87742620954151, 45.13999381023613, 48.07024780614191,
+        47.82018295837413, 46.26505786676291, 48.94701115953261,
+        46.45030366166798, 47.72652219769824, 48.05979234183814
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_ARPA_空": {
+    "backtesting_status": {
+      "position": -7016.0,
+      "position_price": 0.04988724059293045,
+      "position_reduce_price": 0.049388368187001146,
+      "position_increase_price": 0.05387821984036489,
+      "max_loss_value": -33.0,
+      "max_loss_rate": "-9.35%",
+      "ma_price": 0.05343444444444445,
+      "rsi_array": [
+        44.000000000000064, 48.94810659186541, 40.940263490344684,
+        44.87742620954151, 45.13999381023613, 48.07024780614191,
+        47.82018295837413, 46.26505786676291, 48.94701115953261,
+        46.45030366166798, 47.72652219769824, 48.05979234183814
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_C98_多": {
+    "backtesting_status": {
+      "position": 310.0,
+      "position_price": 0.1614,
+      "position_reduce_price": 0.163014,
+      "position_increase_price": 0.15817199999999998,
+      "max_loss_value": -1.0,
+      "max_loss_rate": "-1.3%",
+      "ma_price": 0.1599777777777777,
+      "rsi_array": [
+        39.70588235294096, 43.29787234042547, 36.80439621591521,
+        37.718844920688454, 36.578813617996126, 39.53115132745148,
+        37.643977683988304, 37.00974025913396, 39.215527837085816,
+        37.1159736506512, 37.115973650651206, 36.36334463616017
+      ],
+      "trending_step": 0,
+      "next_trending_step": 0,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  },
+  "MARTING_BINANCE_C98_空": {
+    "backtesting_status": {
+      "position": -2267.0,
+      "position_price": 0.15438976621085135,
+      "position_reduce_price": 0.15284586854874282,
+      "position_increase_price": 0.16674094750771948,
+      "max_loss_value": -19.0,
+      "max_loss_rate": "-5.38%",
+      "ma_price": 0.1599777777777777,
+      "rsi_array": [
+        39.70588235294096, 43.29787234042547, 36.80439621591521,
+        37.718844920688454, 36.578813617996126, 39.53115132745148,
+        37.643977683988304, 37.00974025913396, 39.215527837085816,
+        37.1159736506512, 37.115973650651206, 36.36334463616017
+      ],
+      "trending_step": 0,
+      "next_trending_step": 1,
+      "current_trending_group": []
+    },
+    "backtesting_to": "2023-07-14 10:50:00"
+  }
+}

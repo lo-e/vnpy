@@ -183,14 +183,16 @@ class CtaTemplate(ABC):
         Callback of new trade data update.
         """
 
-        """ modify by loe """
         try:
+            msg = f'====== 成交 ======\n\n合约：{trade.symbol}\n开平：{trade.offset}\n方向：{trade.direction} \n价格：{trade.price}\n数量：{trade.volume}'
             # 邮件提醒
-            self.send_email(f'====== 成交 ======\n\n合约：{trade.symbol}\n开平：{trade.offset}\n方向：{trade.direction} \n价格：{trade.price}\n数量：{trade.volume}')
+            self.send_email(msg)
+
+            # 钉钉提醒
+            self.send_dingtalk(msg)
         except:
             pass
 
-        """ modify by loe """
         try:
             # 保存成交数据到数据库
             trade_dic = {'symbol':trade.symbol, 'price': trade.price, 'volume': trade.volume, 'direction': trade.direction.value, 'offset': trade.offset.value}
@@ -341,6 +343,13 @@ class CtaTemplate(ABC):
         """
         if self.inited:
             self.cta_engine.send_email(msg, self)
+
+    def send_dingtalk(self, msg):
+        """
+        Send dingtalk to default receiver.
+        """
+        if self.inited:
+            self.cta_engine.send_dingtalk(msg, self)
 
     def sync_data(self):
         """

@@ -228,10 +228,11 @@ def analyse_trending_continuous(
     # 连续趋势追踪程度统计
     print(f"\n****** 连续趋势追踪程度统计 ******")
     continuous_keys = list(continuous_open_dict.keys())
-    continuous_keys = sorted(continuous_keys)
-    for continuous_key in continuous_keys:
-        count = continuous_open_dict[continuous_key]
-        print(f"{continuous_key}\t{count}")
+    continuous_keys_int = [int(item) for item in continuous_keys]
+    continuous_keys_int = sorted(continuous_keys_int)
+    for continuous_key_int in continuous_keys_int:
+        count = continuous_open_dict[f"{continuous_key_int}"]
+        print(f"{continuous_key_int}\t{count}")
 
     if by_month:
         month_keys = list(month_open_symbol_dict.keys())
@@ -322,6 +323,9 @@ def output_symbol_open_result(symbol_open_dict: dict, marting_type:str, exchange
     max_4_symbol_set = set()
     max_5_symbol_set = set()
     max_6_symbol_set = set()
+    max_7_symbol_set = set()
+    max_8_symbol_set = set()
+    max_9_symbol_set = set()
     over_symbol_set = set()
     for symbol, open_dict in symbol_open_dict.items():
         # print(f"\n{symbol}的连续趋势追踪记录")
@@ -329,6 +333,9 @@ def output_symbol_open_result(symbol_open_dict: dict, marting_type:str, exchange
         max_4 = True
         max_5 = True
         max_6 = True
+        max_7 = True
+        max_8 = True
+        max_9 = True
         for continuous_key, data_list in open_dict.items():
             if int(continuous_key) > 3:
                 max_3 = False
@@ -341,6 +348,15 @@ def output_symbol_open_result(symbol_open_dict: dict, marting_type:str, exchange
 
             if int(continuous_key) > 6:
                 max_6 = False
+
+            if int(continuous_key) > 7:
+                max_7 = False
+            
+            if int(continuous_key) > 8:
+                max_8 = False
+            
+            if int(continuous_key) > 9:
+                max_9 = False
 
             # print(f"追踪{continuous_key}\t{len(data_list)}")
 
@@ -355,6 +371,15 @@ def output_symbol_open_result(symbol_open_dict: dict, marting_type:str, exchange
         
         elif max_6:
             max_6_symbol_set.add(symbol)
+
+        elif max_7:
+            max_7_symbol_set.add(symbol)
+
+        elif max_8:
+            max_8_symbol_set.add(symbol)
+
+        elif max_9:
+            max_9_symbol_set.add(symbol)
         
         else:
             over_symbol_set.add(symbol)
@@ -362,38 +387,55 @@ def output_symbol_open_result(symbol_open_dict: dict, marting_type:str, exchange
     print(f"\n最大连续趋势追踪2的合约总数：{len(max_2_symbol_set)}")
     for symbol in max_2_symbol_set:
         print(symbol)
-    print(f"{list(max_2_symbol_set)}")
+    print(f"{sorted(list(max_2_symbol_set))}")
 
     print(f"\n最大连续趋势追踪3的合约总数：{len(max_3_symbol_set)}")
     for symbol in max_3_symbol_set:
         print(symbol)
-    print(f"{list(max_3_symbol_set)}")
+    print(f"{sorted(list(max_3_symbol_set))}")
 
     print(f"\n最大连续趋势追踪4的合约总数：{len(max_4_symbol_set)}")
     for symbol in max_4_symbol_set:
         print(symbol)
-    print(f"{list(max_4_symbol_set)}")
+    print(f"{sorted(list(max_4_symbol_set))}")
 
     print(f"\n最大连续趋势追踪5的合约总数：{len(max_5_symbol_set)}")
     for symbol in max_5_symbol_set:
         print(symbol)
-    print(f"{list(max_5_symbol_set)}")
+    print(f"{sorted(list(max_5_symbol_set))}")
 
     print(f"\n最大连续趋势追踪6的合约总数：{len(max_6_symbol_set)}")
     for symbol in max_6_symbol_set:
         print(symbol)
-    print(f"{list(max_6_symbol_set)}")
+    print(f"{sorted(list(max_6_symbol_set))}")
+
+    print(f"\n最大连续趋势追踪7的合约总数：{len(max_7_symbol_set)}")
+    for symbol in max_7_symbol_set:
+        print(symbol)
+    print(f"{sorted(list(max_7_symbol_set))}")
+
+    print(f"\n最大连续趋势追踪8的合约总数：{len(max_8_symbol_set)}")
+    for symbol in max_8_symbol_set:
+        print(symbol)
+    print(f"{sorted(list(max_8_symbol_set))}")
+
+    print(f"\n最大连续趋势追踪9的合约总数：{len(max_9_symbol_set)}")
+    for symbol in max_9_symbol_set:
+        print(symbol)
+    print(f"{sorted(list(max_9_symbol_set))}")
 
     print(f"\n连续趋势追踪超限的合约总数：{len(over_symbol_set)}")
     for symbol in over_symbol_set:
         print(symbol)
+    print(f"{sorted(list(over_symbol_set))}")
     print("\n")
 
 def output_open_overload_result(open_overload_dict: dict):
     # 筛选合约列表
     target_symbols = []
-    target_symbols = ['ANKRUSDT', 'RLCUSDT', 'DASHUSDT', 'EGLDUSDT', 'FTMUSDT', 'SUSHIUSDT', 'WAVESUSDT', 'BELUSDT', 'YFIUSDT', 'ETCUSDT', 'CHRUSDT', 'ENJUSDT', 'ETHUSDT', 'SFPUSDT', 'DOGEUSDT', 'OGNUSDT', 'AXSUSDT', 'ZILUSDT', 'SXPUSDT', 'STORJUSDT', 'MKRUSDT', 'GALAUSDT', 'SKLUSDT', 'ZRXUSDT', 'OMGUSDT']
-    
+    # target_symbols = ['ANKRUSDT', 'AXSUSDT', 'BELUSDT', 'CHRUSDT', 'DASHUSDT', 'DOGEUSDT', 'EGLDUSDT', 'ENJUSDT', 'ETCUSDT', 'ETHUSDT', 'FTMUSDT', 'GALAUSDT', 'MKRUSDT', 'OGNUSDT', 'OMGUSDT', 'RLCUSDT', 'SFPUSDT', 'SKLUSDT', 'STORJUSDT', 'SUSHIUSDT', 'SXPUSDT', 'WAVESUSDT', 'YFIUSDT', 'ZILUSDT', 'ZRXUSDT']
+    # target_symbols = ['1000SHIBUSDT', '1000XECUSDT', 'AAVEUSDT', 'ADAUSDT', 'ALGOUSDT', 'ALPHAUSDT', 'ANKRUSDT', 'ARPAUSDT', 'ARUSDT', 'ATAUSDT', 'ATOMUSDT', 'AUDIOUSDT', 'AVAXUSDT', 'AXSUSDT', 'BAKEUSDT', 'BATUSDT', 'BCHUSDT', 'BELUSDT', 'BLZUSDT', 'BNBUSDT', 'C98USDT', 'CELRUSDT', 'CHRUSDT', 'COTIUSDT', 'CRVUSDT', 'CTKUSDT', 'CTSIUSDT', 'DASHUSDT', 'DENTUSDT', 'DGBUSDT', 'DOGEUSDT', 'DYDXUSDT', 'EGLDUSDT', 'ENJUSDT', 'EOSUSDT', 'ETCUSDT', 'ETHUSDT', 'FILUSDT', 'FLMUSDT', 'FTMUSDT', 'GALAUSDT', 'GTCUSDT', 'IOSTUSDT', 'IOTAUSDT', 'KAVAUSDT', 'KNCUSDT', 'LINAUSDT', 'LITUSDT', 'LRCUSDT', 'MANAUSDT', 'MASKUSDT', 'MATICUSDT', 'MKRUSDT', 'NEARUSDT', 'NEOUSDT', 'OGNUSDT', 'OMGUSDT', 'ONEUSDT', 'PEOPLEUSDT', 'RENUSDT', 'RLCUSDT', 'RSRUSDT', 'RUNEUSDT', 'SFPUSDT', 'SKLUSDT', 'SOLUSDT', 'STORJUSDT', 'SUSHIUSDT', 'SXPUSDT', 'TRXUSDT', 'UNFIUSDT', 'UNIUSDT', 'WAVESUSDT', 'XEMUSDT', 'XLMUSDT', 'XRPUSDT', 'XTZUSDT', 'YFIUSDT', 'ZECUSDT', 'ZENUSDT', 'ZILUSDT', 'ZRXUSDT']
+
     # 优选合约列表
     continuous_4_symbols = set()
     continuous_5_symbols = set()
@@ -448,12 +490,12 @@ def output_open_overload_result(open_overload_dict: dict):
         print(f"总计：{continuous_total}")
     
     if not target_symbols:
-        print(f"\n强势追踪4的合约数量{len(continuous_4_symbols)}：\n{continuous_4_symbols}")
-        print(f"\n强势追踪5的合约数量{len(continuous_5_symbols)}：\n{continuous_5_symbols}")
-        print(f"\n强势追踪5以上的合约数量{len(over_5_symbols)}：\n{over_5_symbols}")
+        print(f"\n强势追踪4的合约数量{len(continuous_4_symbols)}：\n{sorted(list(continuous_4_symbols))}")
+        print(f"\n强势追踪5的合约数量{len(continuous_5_symbols)}：\n{sorted(list(continuous_5_symbols))}")
+        print(f"\n强势追踪5以上的合约数量{len(over_5_symbols)}：\n{sorted(list(over_5_symbols))}")
 
-        total_symbols = list(set(continuous_4_symbols) | set(continuous_5_symbols) | set(over_5_symbols))
-        print(f"\n并集统计【4 5 6】：{len(total_symbols)}：\n{total_symbols}\n")
+        total_symbols = set(continuous_4_symbols) | set(continuous_5_symbols) | set(over_5_symbols)
+        print(f"\n并集统计【4 5 6】：{len(total_symbols)}：\n{sorted(list(total_symbols))}\n")
 
         # total_symbols_little = list(set(continuous_5_symbols) | set(over_5_symbols))
         # print(f"\n统计【5 6】：{len(total_symbols_little)}：\n{total_symbols_little}\n")

@@ -25,7 +25,7 @@ from vnpy.trader.utility import round_to
 def one():
     # 回测起始日期
     engine = BacktestingEngine()
-    start_dt = datetime(2023, 7, 1)
+    start_dt = datetime(2023, 6, 30)
     end_dt = datetime(2023, 8, 1)
     engine.setPeriod(start_dt, end_dt)
     figSavedName = ""
@@ -70,7 +70,7 @@ def one():
 
     # 回测历史数据文件
     backtesting_history_file = ""
-    backtesting_history_file = "2022-01-01_2023-07-02.json"
+    backtesting_history_file = "2022-01-01_2023-07-01.json"
 
     # 开始回测
     symbolList = []
@@ -247,10 +247,11 @@ def one():
 
         print(f"\n****** 趋势追踪连续统计 ******")
         continuous_keys = list(continuous_open_dict.keys())
-        continuous_keys = sorted(continuous_keys)
-        for continuous_key in continuous_keys:
-            count = continuous_open_dict[continuous_key]
-            print(f"{continuous_key}\t{count}")
+        continuous_keys_int = [int(item) for item in continuous_keys]
+        continuous_keys_int = sorted(continuous_keys_int)
+        for continuous_key_int in continuous_keys_int:
+            count = continuous_open_dict[f"{continuous_key_int}"]
+            print(f"{continuous_key_int}\t{count}")
 
 
         if marting_type == "FORWARD":
