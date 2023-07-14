@@ -346,21 +346,22 @@ def one():
                 backtesting_data[signal_key] = signal.inverse_signal.saved_sync_data
 
                 # 信号组合的最新趋势追踪信息
-                trade_setting = signal_trade_setting.get(signal_key, {})
-                signal_bottom = trade_setting.get("bottom_step", 0)
-                signal_status = signal.inverse_signal.saved_sync_data["backtesting_status"]
-                trending_step = signal_status["trending_step"]
-                data_list = signal_trending_step_dict.get(trending_step, [])
-                
-                direction_v = 1 if signal.direction == Direction.LONG else -1
-                position_pnl = (
-                    (signal.inverse_signal.bar.close_price / signal.inverse_signal.position_price) - 1
-                ) * 100 * direction_v
-                position_pnl = round_to(position_pnl, 0.01)
-                position_pnl = f"{position_pnl}%"
+                signal_status = signal.inverse_signal.saved_sync_data.get("backtesting_status", {})
+                if signal_status:
+                    trade_setting = signal_trade_setting.get(signal_key, {})
+                    signal_bottom = trade_setting.get("bottom_step", 0)
+                    trending_step = signal_status["trending_step"]
+                    data_list = signal_trending_step_dict.get(trending_step, [])
+                    
+                    direction_v = 1 if signal.direction == Direction.LONG else -1
+                    position_pnl = (
+                        (signal.inverse_signal.bar.close_price / signal.inverse_signal.position_price) - 1
+                    ) * 100 * direction_v
+                    position_pnl = round_to(position_pnl, 0.01)
+                    position_pnl = f"{position_pnl}%"
 
-                data_list.append([signal_key, signal_bottom, position_pnl, signal_status])
-                signal_trending_step_dict[trending_step] = data_list
+                    data_list.append([signal_key, signal_bottom, position_pnl, signal_status])
+                    signal_trending_step_dict[trending_step] = data_list
 
         # 保存回测结果的信号状态到json文件
         with open(backtesting_history_json, "w", encoding="utf-8") as file:
