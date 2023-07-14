@@ -228,10 +228,11 @@ def analyse_trending_continuous(
     # 连续趋势追踪程度统计
     print(f"\n****** 连续趋势追踪程度统计 ******")
     continuous_keys = list(continuous_open_dict.keys())
-    continuous_keys = sorted(continuous_keys)
-    for continuous_key in continuous_keys:
-        count = continuous_open_dict[continuous_key]
-        print(f"{continuous_key}\t{count}")
+    continuous_keys_int = [int(item) for item in continuous_keys]
+    continuous_keys_int = sorted(continuous_keys_int)
+    for continuous_key_int in continuous_keys_int:
+        count = continuous_open_dict[f"{continuous_key_int}"]
+        print(f"{continuous_key_int}\t{count}")
 
     if by_month:
         month_keys = list(month_open_symbol_dict.keys())
