@@ -70,7 +70,7 @@ def one():
 
     # 回测历史数据文件
     backtesting_history_file = ""
-    backtesting_history_file = "2022-01-01_2023-07-01.json"
+    backtesting_history_file = "2022-01-01_2023-07-02.json"
 
     # 开始回测
     symbolList = []
