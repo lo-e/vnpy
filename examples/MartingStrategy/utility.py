@@ -256,10 +256,10 @@ def analyse_trending_continuous(
         # output_open_symbol_result(continuous_open_symbol_dict)
 
         # 信号连续趋势追踪统计
-        output_symbol_open_result(continuous_symbol_open_dict, marting_type=marting_type, exchange=exchange)
+        # output_symbol_open_result(continuous_symbol_open_dict, marting_type=marting_type, exchange=exchange)
 
         # 连续趋势追踪<强势>信号统计
-        # output_open_overload_result(continuous_open_overload_dict)
+        output_open_overload_result(continuous_open_overload_dict)
 
     # 生成实盘setting.json
     if for_trade_setting:
@@ -392,8 +392,9 @@ def output_symbol_open_result(symbol_open_dict: dict, marting_type:str, exchange
 def output_open_overload_result(open_overload_dict: dict):
     # 筛选合约列表
     target_symbols = []
-    target_symbols = ['ANKRUSDT', 'RLCUSDT', 'DASHUSDT', 'EGLDUSDT', 'FTMUSDT', 'SUSHIUSDT', 'WAVESUSDT', 'BELUSDT', 'YFIUSDT', 'ETCUSDT', 'CHRUSDT', 'ENJUSDT', 'ETHUSDT', 'SFPUSDT', 'DOGEUSDT', 'OGNUSDT', 'AXSUSDT', 'ZILUSDT', 'SXPUSDT', 'STORJUSDT', 'MKRUSDT', 'GALAUSDT', 'SKLUSDT', 'ZRXUSDT', 'OMGUSDT']
-    
+    # target_symbols = ['ANKRUSDT', 'AXSUSDT', 'BELUSDT', 'CHRUSDT', 'DASHUSDT', 'DOGEUSDT', 'EGLDUSDT', 'ENJUSDT', 'ETCUSDT', 'ETHUSDT', 'FTMUSDT', 'GALAUSDT', 'MKRUSDT', 'OGNUSDT', 'OMGUSDT', 'RLCUSDT', 'SFPUSDT', 'SKLUSDT', 'STORJUSDT', 'SUSHIUSDT', 'SXPUSDT', 'WAVESUSDT', 'YFIUSDT', 'ZILUSDT', 'ZRXUSDT']
+    # target_symbols = ['1000SHIBUSDT', '1000XECUSDT', 'AAVEUSDT', 'ADAUSDT', 'ALGOUSDT', 'ALPHAUSDT', 'ANKRUSDT', 'ARPAUSDT', 'ARUSDT', 'ATAUSDT', 'ATOMUSDT', 'AUDIOUSDT', 'AVAXUSDT', 'AXSUSDT', 'BAKEUSDT', 'BATUSDT', 'BCHUSDT', 'BELUSDT', 'BLZUSDT', 'BNBUSDT', 'C98USDT', 'CELRUSDT', 'CHRUSDT', 'COTIUSDT', 'CRVUSDT', 'CTKUSDT', 'CTSIUSDT', 'DASHUSDT', 'DENTUSDT', 'DGBUSDT', 'DOGEUSDT', 'DYDXUSDT', 'EGLDUSDT', 'ENJUSDT', 'EOSUSDT', 'ETCUSDT', 'ETHUSDT', 'FILUSDT', 'FLMUSDT', 'FTMUSDT', 'GALAUSDT', 'GTCUSDT', 'IOSTUSDT', 'IOTAUSDT', 'KAVAUSDT', 'KNCUSDT', 'LINAUSDT', 'LITUSDT', 'LRCUSDT', 'MANAUSDT', 'MASKUSDT', 'MATICUSDT', 'MKRUSDT', 'NEARUSDT', 'NEOUSDT', 'OGNUSDT', 'OMGUSDT', 'ONEUSDT', 'PEOPLEUSDT', 'RENUSDT', 'RLCUSDT', 'RSRUSDT', 'RUNEUSDT', 'SFPUSDT', 'SKLUSDT', 'SOLUSDT', 'STORJUSDT', 'SUSHIUSDT', 'SXPUSDT', 'TRXUSDT', 'UNFIUSDT', 'UNIUSDT', 'WAVESUSDT', 'XEMUSDT', 'XLMUSDT', 'XRPUSDT', 'XTZUSDT', 'YFIUSDT', 'ZECUSDT', 'ZENUSDT', 'ZILUSDT', 'ZRXUSDT']
+
     # 优选合约列表
     continuous_4_symbols = set()
     continuous_5_symbols = set()
@@ -448,12 +449,12 @@ def output_open_overload_result(open_overload_dict: dict):
         print(f"总计：{continuous_total}")
     
     if not target_symbols:
-        print(f"\n强势追踪4的合约数量{len(continuous_4_symbols)}：\n{continuous_4_symbols}")
-        print(f"\n强势追踪5的合约数量{len(continuous_5_symbols)}：\n{continuous_5_symbols}")
-        print(f"\n强势追踪5以上的合约数量{len(over_5_symbols)}：\n{over_5_symbols}")
+        print(f"\n强势追踪4的合约数量{len(continuous_4_symbols)}：\n{sorted(list(continuous_4_symbols))}")
+        print(f"\n强势追踪5的合约数量{len(continuous_5_symbols)}：\n{sorted(list(continuous_5_symbols))}")
+        print(f"\n强势追踪5以上的合约数量{len(over_5_symbols)}：\n{sorted(list(over_5_symbols))}")
 
-        total_symbols = list(set(continuous_4_symbols) | set(continuous_5_symbols) | set(over_5_symbols))
-        print(f"\n并集统计【4 5 6】：{len(total_symbols)}：\n{total_symbols}\n")
+        total_symbols = set(continuous_4_symbols) | set(continuous_5_symbols) | set(over_5_symbols)
+        print(f"\n并集统计【4 5 6】：{len(total_symbols)}：\n{sorted(list(total_symbols))}\n")
 
         # total_symbols_little = list(set(continuous_5_symbols) | set(over_5_symbols))
         # print(f"\n统计【5 6】：{len(total_symbols_little)}：\n{total_symbols_little}\n")
@@ -637,5 +638,5 @@ if __name__ == "__main__":
 
     # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
     analyse_trending_continuous(
-        exchange="BINANCE", marting_type="INVERSE", min_continuous="1", target_dir="2022-01-01_2023-07-02", by_month=False, for_trade_setting=False
+        exchange="BINANCE", marting_type="FORWARD", min_continuous="1", target_dir="2021-01-01_2022-01-01", by_month=False, for_trade_setting=False
     )
