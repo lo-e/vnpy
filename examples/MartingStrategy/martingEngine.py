@@ -264,6 +264,7 @@ class BacktestingEngine(object):
             'return': returnList,
             'highLevel': highlevel,
             'drawdown': drawdownList,
+            'drawdownSeries': drawdownSeries,
             'ddPercent': ddPercentList,
             'date': dateList,
             'netPnl': netPnlList

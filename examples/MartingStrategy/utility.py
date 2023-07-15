@@ -257,10 +257,10 @@ def analyse_trending_continuous(
         # output_open_symbol_result(continuous_open_symbol_dict)
 
         # 信号连续趋势追踪统计
-        output_symbol_open_result(continuous_symbol_open_dict, marting_type=marting_type, exchange=exchange)
+        # output_symbol_open_result(continuous_symbol_open_dict, marting_type=marting_type, exchange=exchange)
 
         # 连续趋势追踪<强势>信号统计
-        # output_open_overload_result(continuous_open_overload_dict)
+        output_open_overload_result(continuous_open_overload_dict)
 
     # 生成实盘setting.json
     if for_trade_setting:
@@ -433,8 +433,8 @@ def output_symbol_open_result(symbol_open_dict: dict, marting_type:str, exchange
 def output_open_overload_result(open_overload_dict: dict):
     # 筛选合约列表
     target_symbols = []
-    # target_symbols = ['ANKRUSDT', 'AXSUSDT', 'BELUSDT', 'CHRUSDT', 'DASHUSDT', 'DOGEUSDT', 'EGLDUSDT', 'ENJUSDT', 'ETCUSDT', 'ETHUSDT', 'FTMUSDT', 'GALAUSDT', 'MKRUSDT', 'OGNUSDT', 'OMGUSDT', 'RLCUSDT', 'SFPUSDT', 'SKLUSDT', 'STORJUSDT', 'SUSHIUSDT', 'SXPUSDT', 'WAVESUSDT', 'YFIUSDT', 'ZILUSDT', 'ZRXUSDT']
-    # target_symbols = ['1000SHIBUSDT', '1000XECUSDT', 'AAVEUSDT', 'ADAUSDT', 'ALGOUSDT', 'ALPHAUSDT', 'ANKRUSDT', 'ARPAUSDT', 'ARUSDT', 'ATAUSDT', 'ATOMUSDT', 'AUDIOUSDT', 'AVAXUSDT', 'AXSUSDT', 'BAKEUSDT', 'BATUSDT', 'BCHUSDT', 'BELUSDT', 'BLZUSDT', 'BNBUSDT', 'C98USDT', 'CELRUSDT', 'CHRUSDT', 'COTIUSDT', 'CRVUSDT', 'CTKUSDT', 'CTSIUSDT', 'DASHUSDT', 'DENTUSDT', 'DGBUSDT', 'DOGEUSDT', 'DYDXUSDT', 'EGLDUSDT', 'ENJUSDT', 'EOSUSDT', 'ETCUSDT', 'ETHUSDT', 'FILUSDT', 'FLMUSDT', 'FTMUSDT', 'GALAUSDT', 'GTCUSDT', 'IOSTUSDT', 'IOTAUSDT', 'KAVAUSDT', 'KNCUSDT', 'LINAUSDT', 'LITUSDT', 'LRCUSDT', 'MANAUSDT', 'MASKUSDT', 'MATICUSDT', 'MKRUSDT', 'NEARUSDT', 'NEOUSDT', 'OGNUSDT', 'OMGUSDT', 'ONEUSDT', 'PEOPLEUSDT', 'RENUSDT', 'RLCUSDT', 'RSRUSDT', 'RUNEUSDT', 'SFPUSDT', 'SKLUSDT', 'SOLUSDT', 'STORJUSDT', 'SUSHIUSDT', 'SXPUSDT', 'TRXUSDT', 'UNFIUSDT', 'UNIUSDT', 'WAVESUSDT', 'XEMUSDT', 'XLMUSDT', 'XRPUSDT', 'XTZUSDT', 'YFIUSDT', 'ZECUSDT', 'ZENUSDT', 'ZILUSDT', 'ZRXUSDT']
+    # target_symbols = ['ANKRUSDT.BINANCE', 'AXSUSDT.BINANCE', 'BELUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DASHUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'EGLDUSDT.BINANCE', 'ENJUSDT.BINANCE', 'ETCUSDT.BINANCE', 'ETHUSDT.BINANCE', 'FTMUSDT.BINANCE', 'GALAUSDT.BINANCE', 'MKRUSDT.BINANCE', 'OGNUSDT.BINANCE', 'OMGUSDT.BINANCE', 'RLCUSDT.BINANCE', 'SFPUSDT.BINANCE', 'SKLUSDT.BINANCE', 'STORJUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'SXPUSDT.BINANCE', 'WAVESUSDT.BINANCE', 'YFIUSDT.BINANCE', 'ZILUSDT.BINANCE', 'ZRXUSDT.BINANCE']
+    # target_symbols = ['1000SHIBUSDT.BINANCE', '1000XECUSDT.BINANCE', 'AAVEUSDT.BINANCE', 'ADAUSDT.BINANCE', 'ALGOUSDT.BINANCE', 'ALPHAUSDT.BINANCE', 'ANKRUSDT.BINANCE', 'ARPAUSDT.BINANCE', 'ARUSDT.BINANCE', 'ATAUSDT.BINANCE', 'ATOMUSDT.BINANCE', 'AUDIOUSDT.BINANCE', 'AVAXUSDT.BINANCE', 'AXSUSDT.BINANCE', 'BAKEUSDT.BINANCE', 'BATUSDT.BINANCE', 'BCHUSDT.BINANCE', 'BELUSDT.BINANCE', 'BLZUSDT.BINANCE', 'BNBUSDT.BINANCE', 'C98USDT.BINANCE', 'CELRUSDT.BINANCE', 'CHRUSDT.BINANCE', 'COTIUSDT.BINANCE', 'CRVUSDT.BINANCE', 'CTKUSDT.BINANCE', 'CTSIUSDT.BINANCE', 'DASHUSDT.BINANCE', 'DENTUSDT.BINANCE', 'DGBUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'EGLDUSDT.BINANCE', 'ENJUSDT.BINANCE', 'EOSUSDT.BINANCE', 'ETCUSDT.BINANCE', 'ETHUSDT.BINANCE', 'FILUSDT.BINANCE', 'FLMUSDT.BINANCE', 'FTMUSDT.BINANCE', 'GALAUSDT.BINANCE', 'GTCUSDT.BINANCE', 'IOSTUSDT.BINANCE', 'IOTAUSDT.BINANCE', 'KAVAUSDT.BINANCE', 'KNCUSDT.BINANCE', 'LINAUSDT.BINANCE', 'LITUSDT.BINANCE', 'LRCUSDT.BINANCE', 'MANAUSDT.BINANCE', 'MASKUSDT.BINANCE', 'MATICUSDT.BINANCE', 'MKRUSDT.BINANCE', 'NEARUSDT.BINANCE', 'NEOUSDT.BINANCE', 'OGNUSDT.BINANCE', 'OMGUSDT.BINANCE', 'ONEUSDT.BINANCE', 'PEOPLEUSDT.BINANCE', 'RENUSDT.BINANCE', 'RLCUSDT.BINANCE', 'RSRUSDT.BINANCE', 'RUNEUSDT.BINANCE', 'SFPUSDT.BINANCE', 'SKLUSDT.BINANCE', 'SOLUSDT.BINANCE', 'STORJUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'SXPUSDT.BINANCE', 'TRXUSDT.BINANCE', 'UNFIUSDT.BINANCE', 'UNIUSDT.BINANCE', 'WAVESUSDT.BINANCE', 'XEMUSDT.BINANCE', 'XLMUSDT.BINANCE', 'XRPUSDT.BINANCE', 'XTZUSDT.BINANCE', 'YFIUSDT.BINANCE', 'ZECUSDT.BINANCE', 'ZENUSDT.BINANCE', 'ZILUSDT.BINANCE', 'ZRXUSDT.BINANCE']
 
     # 优选合约列表
     continuous_4_symbols = set()
@@ -455,18 +455,17 @@ def output_open_overload_result(open_overload_dict: dict):
         df = df.sort_values("times", ascending=False)
         for _, row in df.iterrows():
             symbol = row["symbol"]
-            pure_symbol = symbol.split(".")[0]
             # 如果有筛选合约，做出筛选
-            if target_symbols and pure_symbol not in target_symbols:
+            if target_symbols and symbol not in target_symbols:
                 continue
             
             # 统计优选合约
             if int(continuous_key) == 4:
-                continuous_4_symbols.add(pure_symbol)
+                continuous_4_symbols.add(symbol)
             if int(continuous_key) == 5:
-                continuous_5_symbols.add(pure_symbol)
+                continuous_5_symbols.add(symbol)
             if int(continuous_key) > 5:
-                over_5_symbols.add(pure_symbol)
+                over_5_symbols.add(symbol)
 
             symbol_data_list = symbol_dict[symbol]
             close_count = int(len(symbol_data_list) / (int(continuous_key) + 1))
@@ -679,5 +678,5 @@ if __name__ == "__main__":
 
     # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
     analyse_trending_continuous(
-        exchange="BINANCE", marting_type="INVERSE", min_continuous="1", target_dir="2022-01-01_2023-07-02", by_month=False, for_trade_setting=False
+        exchange="BINANCE", marting_type="FORWARD", min_continuous="1", target_dir="2022-01-01_2023-07-01", by_month=False, for_trade_setting=False
     )
