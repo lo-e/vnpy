@@ -22,7 +22,7 @@ import json
 from vnpy.trader.utility import round_to
 
 
-def one():
+def backtesting():
     # 回测起始日期
     engine = BacktestingEngine()
     start_dt = datetime(2023, 6, 30)
@@ -382,6 +382,114 @@ def one():
                     print(f"{signal_key}_bottom_{signal_bottom}\t\tp：{p}\tr：{r}\ti：{i}\tpnl：{position_pnl}")
         print("\n")
 
+def combine_backtesting():
+    # 选择回测策略类型
+    marting_type = input('选择类型（默认1）【趋势追踪：1  反转：2】')
+    if not marting_type:
+        marting_type = "1"
+
+    if marting_type == "1":
+        marting_type = "FORWARD"
+
+    elif marting_type == "2":
+        marting_type = "INVERSE"
+
+    else:
+        exit(f"类型选择错误")
+
+    # 选择合约交易所
+    exchange = input('选择交易所（默认1）【Binance：1 Bybit：2】')
+    if not exchange:
+        exchange = "1"
+    if exchange == "1":
+        exchange = "BINANCE"
+        if marting_type == "FORWARD":
+            filename = f"setting_forward{DIR_SYMBOL}setting_binance.csv"
+
+        else:
+            filename = f"setting_inverse{DIR_SYMBOL}setting_binance.csv"
+
+    elif exchange == "2":
+        exchange = "BYBIT"
+        if marting_type == "FORWARD":
+            filename = f"setting_forward{DIR_SYMBOL}setting_bybit.csv"
+
+        else:
+            filename = f"setting_inverse{DIR_SYMBOL}setting_bybit.csv"
+
+    else:
+        exit(f"交易所选择错误")
+    
+    # 筛选的合约列表
+    target_symbol_list = []
+    if marting_type == "FORWARD":
+        # 交集：25
+        # target_symbol_list = ['ANKRUSDT.BINANCE', 'AXSUSDT.BINANCE', 'BELUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DASHUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'EGLDUSDT.BINANCE', 'ENJUSDT.BINANCE', 'ETCUSDT.BINANCE', 'ETHUSDT.BINANCE', 'FTMUSDT.BINANCE', 'GALAUSDT.BINANCE', 'MKRUSDT.BINANCE', 'OGNUSDT.BINANCE', 'OMGUSDT.BINANCE', 'RLCUSDT.BINANCE', 'SFPUSDT.BINANCE', 'SKLUSDT.BINANCE', 'STORJUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'SXPUSDT.BINANCE', 'WAVESUSDT.BINANCE', 'YFIUSDT.BINANCE', 'ZILUSDT.BINANCE', 'ZRXUSDT.BINANCE']
+        # 并集：82
+        target_symbol_list = ['1000SHIBUSDT.BINANCE', '1000XECUSDT.BINANCE', 'AAVEUSDT.BINANCE', 'ADAUSDT.BINANCE', 'ALGOUSDT.BINANCE', 'ALPHAUSDT.BINANCE', 'ANKRUSDT.BINANCE', 'ARPAUSDT.BINANCE', 'ARUSDT.BINANCE', 'ATAUSDT.BINANCE', 'ATOMUSDT.BINANCE', 'AUDIOUSDT.BINANCE', 'AVAXUSDT.BINANCE', 'AXSUSDT.BINANCE', 'BAKEUSDT.BINANCE', 'BATUSDT.BINANCE', 'BCHUSDT.BINANCE', 'BELUSDT.BINANCE', 'BLZUSDT.BINANCE', 'BNBUSDT.BINANCE', 'C98USDT.BINANCE', 'CELRUSDT.BINANCE', 'CHRUSDT.BINANCE', 'COTIUSDT.BINANCE', 'CRVUSDT.BINANCE', 'CTKUSDT.BINANCE', 'CTSIUSDT.BINANCE', 'DASHUSDT.BINANCE', 'DENTUSDT.BINANCE', 'DGBUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'EGLDUSDT.BINANCE', 'ENJUSDT.BINANCE', 'EOSUSDT.BINANCE', 'ETCUSDT.BINANCE', 'ETHUSDT.BINANCE', 'FILUSDT.BINANCE', 'FLMUSDT.BINANCE', 'FTMUSDT.BINANCE', 'GALAUSDT.BINANCE', 'GTCUSDT.BINANCE', 'IOSTUSDT.BINANCE', 'IOTAUSDT.BINANCE', 'KAVAUSDT.BINANCE', 'KNCUSDT.BINANCE', 'LINAUSDT.BINANCE', 'LITUSDT.BINANCE', 'LRCUSDT.BINANCE', 'MANAUSDT.BINANCE', 'MASKUSDT.BINANCE', 'MATICUSDT.BINANCE', 'MKRUSDT.BINANCE', 'NEARUSDT.BINANCE', 'NEOUSDT.BINANCE', 'OGNUSDT.BINANCE', 'OMGUSDT.BINANCE', 'ONEUSDT.BINANCE', 'PEOPLEUSDT.BINANCE', 'RENUSDT.BINANCE', 'RLCUSDT.BINANCE', 'RSRUSDT.BINANCE', 'RUNEUSDT.BINANCE', 'SFPUSDT.BINANCE', 'SKLUSDT.BINANCE', 'SOLUSDT.BINANCE', 'STORJUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'SXPUSDT.BINANCE', 'TRXUSDT.BINANCE', 'UNFIUSDT.BINANCE', 'UNIUSDT.BINANCE', 'WAVESUSDT.BINANCE', 'XEMUSDT.BINANCE', 'XLMUSDT.BINANCE', 'XRPUSDT.BINANCE', 'XTZUSDT.BINANCE', 'YFIUSDT.BINANCE', 'ZECUSDT.BINANCE', 'ZENUSDT.BINANCE', 'ZILUSDT.BINANCE', 'ZRXUSDT.BINANCE']
+
+    else:
+        # （TRENDING_INCREASE_RATE 0.04）最大连续趋势追踪6：8
+        target_symbol_list = ['ALGOUSDT.BINANCE', 'ATOMUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'TRXUSDT.BINANCE']
+
+    # 获取合约列表
+    symbolList = []
+    with open(filename, errors="ignore") as f:
+        r = DictReader(f)
+        for d in r:
+            symbolList.append(d)
+    
+    if target_symbol_list:
+        temp = []
+        for symbol_data in symbolList:
+            symbol = symbol_data["symbol"]
+            if symbol in target_symbol_list:
+                temp.append(symbol_data)
+        symbolList = temp
+
+    if not symbolList:
+        return
+
+    # 随机组合合约列表
+    combineList = combine(symbolList, 5)
+    count = 0
+    resultList = []
+    for l in combineList:
+        engine = BacktestingEngine()
+        start_dt = datetime(2023, 6, 30)
+        end_dt = datetime(2023, 8, 1)
+        engine.setPeriod(start_dt, end_dt)
+
+        engine.initListPortfolio(l, marting_type=marting_type, portfolioValue=10000)
+        engine.loadData()
+        engine.runBacktesting()
+        if not len(engine.resultList):
+            continue
+
+        timeseries, result = engine.calculateResult()
+        drawdown_list = timeseries["drawdown"]
+        dic = {
+            "symbolList": engine.symbolList,
+            "totalPnl": result["totalReturn"]
+        }
+        resultList.append(dic)
+
+        count += 1
+        print("count：\t%s\n" % count)
+
+    if len(resultList):
+        fieldNames = ["symbolList", "totalPnl"]
+        # 文件路径
+        filePath = "result.csv"
+        with open(filePath, "w") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldNames)
+            writer.writeheader()
+            # 写入csv文件
+            writer.writerows(resultList)
+
+    print("=" * 20)
+    print("组合数：%s" % count)
+
 def two():
     filename = "setting.csv"
     count = 0
@@ -438,7 +546,6 @@ def two():
             # 写入csv文件
             writer.writerows(resultList)
 
-
 def three():
     resultDic = OrderedDict()
     dirPath = "resultList"
@@ -477,138 +584,6 @@ def three():
             # 写入csv文件
             writer.writerows(resultList)
 
-
-def four():
-    filename = "setting.csv"
-    symbolList = []
-    with open(filename, errors="ignore") as f:
-        r = DictReader(f)
-        for d in r:
-            symbolList.append(d)
-    if not symbolList:
-        return
-
-    combineList = combine(symbolList, 6)
-    count = 0
-    resultList = []
-    for l in combineList:
-        engine = BacktestingEngine()
-        engine.setPeriod(datetime(2010, 9, 15), datetime(2021, 1, 1))
-        engine.tradingStart = datetime(2011, 1, 1)
-        engine.initListPortfolio(l, 200000)
-
-        engine.loadData()
-        engine.runBacktesting()
-        if not len(engine.resultList):
-            continue
-
-        timeseries, result = engine.calculateResult()
-        dic = {
-            "symbolList": engine.symbolList,
-            "sharpe": result["sharpeRatio"],
-            "totalPnl": result["totalReturn"],
-            "annualizedPnl": result["annualizedReturn"],
-        }
-        resultList.append(dic)
-
-        count += 1
-        print("count：\t%s\n" % count)
-
-    if len(resultList):
-        fieldNames = ["symbolList", "sharpe", "totalPnl", "annualizedPnl"]
-        # 文件路径
-        filePath = "result.csv"
-        with open(filePath, "w") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldNames)
-            writer.writeheader()
-            # 写入csv文件
-            writer.writerows(resultList)
-
-    print("=" * 20)
-    print("组合数：%s" % count)
-
-
-# 年度成交量排名
-def volumeSorted():
-    startDt = datetime(2010, 1, 1)
-    endDt = datetime(2010, 12, 31)
-    underlyingList = [
-        "RB",
-        "CU",
-        "NI",
-        "ZN",
-        "RU",
-        "AL",
-        "HC",
-        "J",
-        "I",
-        "PP",
-        "AP",
-        "TA",
-        "A",
-        "AG",
-        "AU",
-        "B",
-        "BB",
-        "BU",
-        "C",
-        "CF",
-        "CS",
-        "CY",
-        "EG",
-        "FB",
-        "FG",
-        "FU",
-        "JD",
-        "JM",
-        "JR",
-        "L",
-        "LR",
-        "M",
-        "MA",
-        "OI",
-        "P",
-        "PB",
-        "PM",
-        "RI",
-        "RM",
-        "RS",
-        "SC",
-        "SF",
-        "SM",
-        "SN",
-        "SP",
-        "SR",
-        "V",
-        "WH",
-        "WR",
-        "Y",
-        "ZC",
-        "IF",
-        "IC",
-        "IH",
-    ]
-
-    volumeDic = {}
-    # 数据库
-    mc = MongoClient()
-    db = mc[DAILY_DB_NAME]
-    for underlyingSymbol in underlyingList:
-        totalVolume = 0
-        symbol = underlyingSymbol + "99"
-        cl = db[symbol]
-        cl.ensure_index([("datetime", ASCENDING)], unique=True)
-        flt = {"datetime": {"$gte": startDt, "$lte": endDt}}
-
-        cursor = cl.find(flt).sort("datetime")
-        for d in cursor:
-            totalVolume += d["volume"]
-        volumeDic[underlyingSymbol] = totalVolume
-    resultDic = {"volume": volumeDic}
-    df = pd.DataFrame(resultDic).sort_values("volume", ascending=False)
-    print(df.head(10))
-
-
 # 随机组合，l是数组，n是组合的元素数量
 def combine(l, n):
     answers = []
@@ -625,6 +600,9 @@ def combine(l, n):
     next_c()
     return answers
 
-
 if __name__ == "__main__":
-    one()
+    # 合约列表回测
+    # backtesting()
+
+    # 随机组合合约列表回测
+    combine_backtesting()
