@@ -581,7 +581,7 @@ class MartingForwardStrategy(CtaTemplate):
             if open_cross_maker or open_cross_taker:
                 # fake
                 symbol_leverage = self.portfolio.strategys_symbol_leverage.get(self.vt_symbol.split(".")[0], 0)
-                target_value = 5 * symbol_leverage
+                target_value = 20 * symbol_leverage
                 
                 # target_value = self.portfolio.portfolioValue * 2.5
                 self.target_volume = target_value / trade_price
