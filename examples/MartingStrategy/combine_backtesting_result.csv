@@ -1,0 +1,2 @@
+symbolList,totalPnl,max_drawdown,over_drawdown,over_drawdown_count
+"['ALGOUSDT.BINANCE', 'ATOMUSDT.BINANCE', 'CHRUSDT.BINANCE', 'ENSUSDT.BINANCE', 'TRXUSDT.BINANCE']",21459.95%,-331705.3,{'2021-05-19': -331705.3},1

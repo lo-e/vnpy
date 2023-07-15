@@ -455,32 +455,65 @@ def combine_backtesting():
     count = 0
     resultList = []
     for l in combineList:
+        # 开始回测
         engine = BacktestingEngine()
         start_dt = datetime(2023, 6, 30)
         end_dt = datetime(2023, 8, 1)
         engine.setPeriod(start_dt, end_dt)
-
         engine.initListPortfolio(l, marting_type=marting_type, portfolioValue=10000)
         engine.loadData()
         engine.runBacktesting()
         if not len(engine.resultList):
             continue
-
+        
+        # 计算回测结果
         timeseries, result = engine.calculateResult()
-        drawdown_list = timeseries["drawdown"]
+
+        # 统计回撤数据
+        drawdown_series = timeseries["drawdownSeries"]
+        period_drawdown_dict = {}
+        last_drawdown = 0
+        last_drawdown_dt = ""
+        for dt, drawdown in drawdown_series.items():
+            dt = str(dt)
+            if drawdown >= 0:
+                if last_drawdown < 0:
+                    period_drawdown_dict[last_drawdown_dt] = round_to(last_drawdown, 0.01)
+                last_drawdown = drawdown
+                last_drawdown_dt = dt.split(" ")[0]
+                
+            elif drawdown < last_drawdown:
+                last_drawdown = drawdown
+                last_drawdown_dt = dt.split(" ")[0]
+
+        if last_drawdown < 0:
+            period_drawdown_dict[last_drawdown_dt] = round_to(last_drawdown, 0.01)
+
+        # 超出本金的回撤（爆仓）统计
+        over_drawdown_dict = {}
+        for dt, period_drawdown in period_drawdown_dict.items():
+            if period_drawdown <= engine.portfolio.portfolioValue * -1:
+                over_drawdown_dict[dt] = period_drawdown
+
+        # 保存组合回测结果所需的内容
+        totalPnl = round_to(result["totalReturn"], 0.01)
         dic = {
             "symbolList": engine.symbolList,
-            "totalPnl": result["totalReturn"]
+            "totalPnl": f"{totalPnl}%",
+            "max_drawdown": round_to(result["maxDrawdown"], 0.01),
+            "over_drawdown": over_drawdown_dict,
+            "over_drawdown_count": len(over_drawdown_dict),
         }
         resultList.append(dic)
 
         count += 1
         print("count：\t%s\n" % count)
 
+    # 组合回测结果保存到文件
     if len(resultList):
-        fieldNames = ["symbolList", "totalPnl"]
+        fieldNames = ["symbolList", "totalPnl", "max_drawdown", "over_drawdown", "over_drawdown_count"]
         # 文件路径
-        filePath = "result.csv"
+        filePath = "combine_backtesting_result.csv"
         with open(filePath, "w") as f:
             writer = csv.DictWriter(f, fieldnames=fieldNames)
             writer.writeheader()
