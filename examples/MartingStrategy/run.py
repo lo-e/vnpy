@@ -452,13 +452,15 @@ def combine_backtesting():
 
     # 随机组合合约列表
     combineList = combine(symbolList, 5)
+    print(f"\n随机组合总数：{len(combineList)}\n")
+    
     count = 0
     resultList = []
     for l in combineList:
         # 开始回测
         engine = BacktestingEngine()
-        start_dt = datetime(2023, 6, 30)
-        end_dt = datetime(2023, 8, 1)
+        start_dt = datetime(2022, 1, 1)
+        end_dt = datetime(2023, 7, 2)
         engine.setPeriod(start_dt, end_dt)
         engine.initListPortfolio(l, marting_type=marting_type, portfolioValue=10000)
         engine.loadData()
