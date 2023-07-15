@@ -61,26 +61,6 @@
       "start": true
     },
     {
-      "strategy_name": "MARTING_BINANCE_DYDX_多",
-      "class_name": "MartingInverseStrategy",
-      "vt_symbol": "DYDXUSDT.BINANCE",
-      "direction": "多",
-      "init_value_rate": 0.1,
-      "bottom_step": 1,
-      "top_step": 4,
-      "start": true
-    },
-    {
-      "strategy_name": "MARTING_BINANCE_DYDX_空",
-      "class_name": "MartingInverseStrategy",
-      "vt_symbol": "DYDXUSDT.BINANCE",
-      "direction": "空",
-      "init_value_rate": 0.1,
-      "bottom_step": 1,
-      "top_step": 4,
-      "start": true
-    },
-    {
       "strategy_name": "MARTING_BINANCE_ENS_多",
       "class_name": "MartingInverseStrategy",
       "vt_symbol": "ENSUSDT.BINANCE",
@@ -94,46 +74,6 @@
       "strategy_name": "MARTING_BINANCE_ENS_空",
       "class_name": "MartingInverseStrategy",
       "vt_symbol": "ENSUSDT.BINANCE",
-      "direction": "空",
-      "init_value_rate": 0.1,
-      "bottom_step": 1,
-      "top_step": 4,
-      "start": true
-    },
-    {
-      "strategy_name": "MARTING_BINANCE_EOS_多",
-      "class_name": "MartingInverseStrategy",
-      "vt_symbol": "EOSUSDT.BINANCE",
-      "direction": "多",
-      "init_value_rate": 0.1,
-      "bottom_step": 1,
-      "top_step": 4,
-      "start": true
-    },
-    {
-      "strategy_name": "MARTING_BINANCE_EOS_空",
-      "class_name": "MartingInverseStrategy",
-      "vt_symbol": "EOSUSDT.BINANCE",
-      "direction": "空",
-      "init_value_rate": 0.1,
-      "bottom_step": 1,
-      "top_step": 4,
-      "start": true
-    },
-    {
-      "strategy_name": "MARTING_BINANCE_SUSHI_多",
-      "class_name": "MartingInverseStrategy",
-      "vt_symbol": "SUSHIUSDT.BINANCE",
-      "direction": "多",
-      "init_value_rate": 0.1,
-      "bottom_step": 1,
-      "top_step": 4,
-      "start": true
-    },
-    {
-      "strategy_name": "MARTING_BINANCE_SUSHI_空",
-      "class_name": "MartingInverseStrategy",
-      "vt_symbol": "SUSHIUSDT.BINANCE",
       "direction": "空",
       "init_value_rate": 0.1,
       "bottom_step": 1,
