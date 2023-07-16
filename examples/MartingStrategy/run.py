@@ -71,6 +71,7 @@ def backtesting():
     # 回测历史数据文件
     backtesting_history_file = ""
     backtesting_history_file = "2022-01-01_2023-07-02.json"
+    # backtesting_history_file = f"from_history_2022-01-01_2022-02-02{DIR_SYMBOL}2022-02-01_2022-03-02.json"
 
     # 开始回测
     symbolList = []
