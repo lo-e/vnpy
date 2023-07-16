@@ -431,6 +431,10 @@ def combine_backtesting():
     else:
         # （TRENDING_INCREASE_RATE 0.04）最大连续趋势追踪6：8
         target_symbol_list = ['ALGOUSDT.BINANCE', 'ATOMUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'TRXUSDT.BINANCE']
+        # target_symbol_list = ['ALGOUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE']
+        # target_symbol_list = ['ALGOUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE']
+        # target_symbol_list = ['ALGOUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE']
+            
 
     # 获取合约列表
     symbolList = []
@@ -456,11 +460,11 @@ def combine_backtesting():
     
     count = 0
     resultList = []
+    start_dt = datetime(2021, 1, 1)
+    end_dt = datetime(2022, 1, 1)
     for l in combineList:
         # 开始回测
         engine = BacktestingEngine()
-        start_dt = datetime(2022, 1, 1)
-        end_dt = datetime(2023, 7, 2)
         engine.setPeriod(start_dt, end_dt)
         engine.initListPortfolio(l, marting_type=marting_type, portfolioValue=10000)
         engine.loadData()
@@ -513,10 +517,16 @@ def combine_backtesting():
 
     # 组合回测结果保存到文件
     if len(resultList):
+        start_dt_str = start_dt.strftime("%Y-%m-%d")
+        end_dt_str = end_dt.strftime("%Y-%m-%d")
         fieldNames = ["symbolList", "totalPnl", "max_drawdown", "over_drawdown", "over_drawdown_count"]
         # 文件路径
-        filePath = "combine_backtesting_result.csv"
-        with open(filePath, "w") as f:
+        file_dir = f"combine_backtesting_result{DIR_SYMBOL}{marting_type}{DIR_SYMBOL}"
+        if not os.path.exists(file_dir):
+            os.makedirs(file_dir)
+
+        file_path = f"{file_dir}{start_dt_str}_{end_dt_str}.csv"
+        with open(file_path, "w") as f:
             writer = csv.DictWriter(f, fieldnames=fieldNames)
             writer.writeheader()
             # 写入csv文件
@@ -637,7 +647,7 @@ def combine(l, n):
 
 if __name__ == "__main__":
     # 合约列表回测
-    backtesting()
+    # backtesting()
 
     # 随机组合合约列表回测
-    # combine_backtesting()
+    combine_backtesting()
