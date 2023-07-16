@@ -86,7 +86,7 @@ class BacktestingEngine(object):
         # 筛选合约
         if self.target_symbol_list:
             temp = []
-            for symbol in self.portfolio.target_symbol_list:
+            for symbol in self.target_symbol_list:
                 if symbol in self.symbolList:
                     temp.append(symbol)
             self.symbolList = temp

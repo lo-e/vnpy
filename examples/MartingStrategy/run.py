@@ -431,6 +431,7 @@ def combine_backtesting():
     else:
         # （TRENDING_INCREASE_RATE 0.04）最大连续趋势追踪6：8
         target_symbol_list = ['ALGOUSDT.BINANCE', 'ATOMUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'TRXUSDT.BINANCE']
+        target_symbol_list = ['ALGOUSDT.BINANCE', 'ATOMUSDT.BINANCE', 'CHRUSDT.BINANCE', 'ENSUSDT.BINANCE', 'TRXUSDT.BINANCE']
 
     # 获取合约列表
     symbolList = []
@@ -517,8 +518,12 @@ def combine_backtesting():
         end_dt_str = end_dt.strftime("%Y-%m-%d")
         fieldNames = ["symbolList", "totalPnl", "max_drawdown", "over_drawdown", "over_drawdown_count"]
         # 文件路径
-        filePath = f"combine_backtesting_result{DIR_SYMBOL}{marting_type}{DIR_SYMBOL}{start_dt_str}_{end_dt_str}.csv"
-        with open(filePath, "w") as f:
+        file_dir = f"combine_backtesting_result{DIR_SYMBOL}{marting_type}{DIR_SYMBOL}"
+        if not os.path.exists(file_dir):
+            os.makedirs(file_dir)
+
+        file_path = f"{file_dir}{start_dt_str}_{end_dt_str}.csv"
+        with open(file_path, "w") as f:
             writer = csv.DictWriter(f, fieldnames=fieldNames)
             writer.writeheader()
             # 写入csv文件
@@ -639,7 +644,7 @@ def combine(l, n):
 
 if __name__ == "__main__":
     # 合约列表回测
-    backtesting()
+    # backtesting()
 
     # 随机组合合约列表回测
-    # combine_backtesting()
+    combine_backtesting()
