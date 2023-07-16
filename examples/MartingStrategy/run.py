@@ -69,9 +69,11 @@ def backtesting():
         exit(f"交易所选择错误")
 
     # 回测历史数据文件
+    history_from = ""
     backtesting_history_file = ""
+
+    # history_from = f"from_history_2022-10-01_2022-11-02"
     backtesting_history_file = "2022-01-01_2023-07-02.json"
-    # backtesting_history_file = f"from_history_2022-01-01_2022-02-02{DIR_SYMBOL}2022-02-01_2022-03-02.json"
 
     # 开始回测
     symbolList = []
@@ -82,7 +84,7 @@ def backtesting():
     if not symbolList:
         return
 
-    engine.initListPortfolio(symbolList, marting_type=marting_type, portfolioValue=10000, history_file=backtesting_history_file)
+    engine.initListPortfolio(symbolList, marting_type=marting_type, portfolioValue=10000, history_file=f"{history_from}{DIR_SYMBOL}{backtesting_history_file}")
     engine.loadData()
     engine.runBacktesting()
     engine.showResult(figSavedName)
