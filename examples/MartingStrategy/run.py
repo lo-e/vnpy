@@ -456,11 +456,11 @@ def combine_backtesting():
     
     count = 0
     resultList = []
+    start_dt = datetime(2022, 1, 1)
+    end_dt = datetime(2023, 7, 2)
     for l in combineList:
         # 开始回测
         engine = BacktestingEngine()
-        start_dt = datetime(2022, 1, 1)
-        end_dt = datetime(2023, 7, 2)
         engine.setPeriod(start_dt, end_dt)
         engine.initListPortfolio(l, marting_type=marting_type, portfolioValue=10000)
         engine.loadData()
@@ -513,9 +513,11 @@ def combine_backtesting():
 
     # 组合回测结果保存到文件
     if len(resultList):
+        start_dt_str = start_dt.strftime("%Y-%m-%d")
+        end_dt_str = end_dt.strftime("%Y-%m-%d")
         fieldNames = ["symbolList", "totalPnl", "max_drawdown", "over_drawdown", "over_drawdown_count"]
         # 文件路径
-        filePath = "combine_backtesting_result.csv"
+        filePath = f"combine_backtesting_result{DIR_SYMBOL}{marting_type}{DIR_SYMBOL}{start_dt_str}_{end_dt_str}.csv"
         with open(filePath, "w") as f:
             writer = csv.DictWriter(f, fieldnames=fieldNames)
             writer.writeheader()
