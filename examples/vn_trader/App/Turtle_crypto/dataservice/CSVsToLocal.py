@@ -9,8 +9,8 @@ import csv
 from time import time
 from sys import exit
 import re
-from .OneTokenDataService import get_csv_path
 from vnpy.trader.utility import DIR_SYMBOL
+from .utility import get_csv_path
 
 class CSVs1TokenBarLocalEngine(object):
     def __init__(self, duration:str):

@@ -131,6 +131,7 @@ class Exchange(Enum):
     HUOBI = "HUOBI"
     BITFINEX = "BITFINEX"
     BINANCE = "BINANCE"
+    OKX = "OKX"
     BYBIT = "BYBIT"
     COINBASE = "COINBASE"
     DERIBIT = "DERIBIT"

@@ -4,10 +4,8 @@
 立即下载数据到数据库中，用于手动执行更新操作。
 """
 
-from .OneTokenDataService import get_bar_data, get_csv_path
 from .BybitDataService import bybit_get_bar_data, bybit_get_symbol_list, BybitSymbolType, bybit_get_first_bar_datetime
 from .OKExDataService import okex_get_bar_data
-from .FTXDataService import ftx_get_bar_data
 from .BinanceDataService import binance_get_bar_data, Binancetype, binance_get_first_bar_datetime
 from .CSVsToLocal import CSVs1TokenBarLocalEngine, CSVsBybitBarLocalEngine, CSVsOKExBarLocalEngine, CSVsFTXBarLocalEngine, CSVsBinanceBarLocalEngine
 from .BarToLocal import BarLocalEngine
@@ -20,8 +18,7 @@ from threading import Thread
 from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 from pymongo import MongoClient, ASCENDING, DESCENDING
 from enum import Enum
-
-# client = MongoClient("localhost", 27017)
+from .utility import get_csv_path
 
 class ExchangeType(Enum):
     BYBIT = "BYBIT"
@@ -80,45 +77,6 @@ class TurtleCryptoDataDownloading(object):
         print('\n====== 1D数据入数据库 ======')
         engine = CSVsOKExBarLocalEngine(duration=interval)
         engine.startWork()
-
-    def download_from_ftx(self, contract_list, interval:Interval, days=1):
-        # 获取bar数据
-        if interval == Interval.MINUTE:
-            interval_str = '60'
-        elif interval == Interval.DAILY:
-            interval_str = '86400'
-        else:
-            return
-
-        #"""
-        # 先删除原有文件夹，包括其中所有内容
-        csv_path = get_csv_path()
-        if os.path.exists(csv_path):
-            shutil.rmtree(csv_path)
-
-        start_time = datetime.now() - timedelta(days=days)
-        for contract in contract_list:
-            until_time = (datetime.now()).strftime("%Y-%m-%d %H:%M:%S")
-            while until_time:
-                print(f'下载数据：{until_time}\t{contract}')
-                until_time = ftx_get_bar_data(symbol=contract, interval=interval_str, start_time='', end_time=until_time)
-                if until_time and until_time >= start_time:
-                    if interval == Interval.MINUTE:
-                        until_time = until_time - timedelta(minutes=1)
-                    elif interval == Interval.DAILY:
-                        until_time = until_time - timedelta(days=1)
-                    until_time = until_time.strftime('%Y-%m-%d %H:%M:%S')
-                    print('\n')
-                else:
-                    until_time = ''
-        #"""
-
-        #"""
-        #1D数据入数据库
-        print('\n====== 1D数据入数据库 ======')
-        engine = CSVsFTXBarLocalEngine(duration=interval_str)
-        engine.startWork()
-        #"""
 
     def download_from_binance(self, contract_list, days=1, to_date:datetime=None, from_data_base:bool=False, api_check:bool=False):
         if not to_date:
