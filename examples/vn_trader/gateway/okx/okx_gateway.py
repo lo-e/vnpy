@@ -16,6 +16,7 @@ from datetime import datetime
 from urllib.parse import urlencode
 from typing import Any, Dict, List, Set
 from types import TracebackType
+from pytz import timezone
 
 from requests import Response
 
@@ -30,7 +31,7 @@ from vnpy.trader.constant import (
     Status
 )
 from vnpy.trader.gateway import BaseGateway
-from vnpy.trader.utility import round_to, ZoneInfo
+from vnpy.trader.utility import round_to
 from vnpy.trader.object import (
     AccountData,
     BarData,
@@ -44,12 +45,12 @@ from vnpy.trader.object import (
     TickData,
     TradeData
 )
-from vnpy_rest import Request, RestClient
-from vnpy_websocket import WebsocketClient
 
+from ..rest import Request, RestClient
+from ..websocket import WebsocketClient
 
 # 中国时区
-CHINA_TZ: ZoneInfo = ZoneInfo("Asia/Shanghai")
+CHINA_TZ: timezone = timezone("Asia/Shanghai")
 
 # 实盘和模拟盘REST API地址
 REST_HOST: str = "https://www.okx.com"
