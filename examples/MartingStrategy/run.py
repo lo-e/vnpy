@@ -75,6 +75,8 @@ def backtesting():
     # history_from = f"from_history_2022-10-01_2022-11-02"
     backtesting_history_file = "2022-01-01_2023-07-02.json"
 
+    history_file_path = f"{history_from}{DIR_SYMBOL}{backtesting_history_file}" if history_from else backtesting_history_file
+
     # 开始回测
     symbolList = []
     with open(filename, errors="ignore") as f:
@@ -84,7 +86,7 @@ def backtesting():
     if not symbolList:
         return
 
-    engine.initListPortfolio(symbolList, marting_type=marting_type, portfolioValue=10000, history_file=f"{history_from}{DIR_SYMBOL}{backtesting_history_file}")
+    engine.initListPortfolio(symbolList, marting_type=marting_type, portfolioValue=10000, history_file=history_file_path)
     engine.loadData()
     engine.runBacktesting()
     engine.showResult(figSavedName)
