@@ -1,1 +1,6 @@
-from .downloadData import TurtleCryptoDataDownloading, Binancetype, bybit_get_symbol_list, BybitSymbolType
+from .downloadData import (
+    TurtleCryptoDataDownloading,
+    BinanceType,
+    bybit_get_symbol_list,
+    BybitSymbolType,
+)

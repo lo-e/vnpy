@@ -6,26 +6,39 @@ import os
 import csv
 from datetime import datetime, timedelta
 from vnpy.trader.utility import DIR_SYMBOL
+from enum import Enum
 
 main_url = 'https://www.okex.com'
+
+class OKXType(Enum):
+    USDT = "usdt"
+    USDC = "usdc"
+    INVERSE = "inverse"
 
 # ====== 获取bar数据 ======
 # symbol：'BT-CUSD-SWAP'
 # interval：'1m/3m/5m/15m/30m/1H/2H/4H 香港时间开盘价k线：[6H/12H/1D/1W/1M/3M/6M/1Y] UTC时间开盘价k线：[/6Hutc/12Hutc/1Dutc/1Wutc/1Mutc/3Mutc/6Mutc/1Yutc]'
 # from：'%Y-%m-%d %H:%M:%S'
-def okex_get_bar_data(symbol:str, interval:str, from_time:str='', limit:int=1000):
+def okx_get_bar_data(symbol:str, interval:str, from_time:str='', limit:int=100):
     # 获取from_time时间点往前的历史数据，每次请求获取100条，limit为总数据量，
     api = '/api/v5/market/history-candles'
 
     since = ''
     since_ts = ''
-    until = ''
+    until = ''  
     result_list = []
     base_url = f'{main_url}{api}?instId={symbol}&bar={interval}&limit=100'
 
     if from_time:
-        timeArray = time.strptime(from_time, "%Y-%m-%d %H:%M:%S")
+        if interval == "1m":
+            since = (datetime.strptime(from_time, "%Y-%m-%d %H:%M:%S") + timedelta(minutes=limit)).strftime("%Y-%m-%d %H:%M:%S")
+        
+        elif interval == "1D":
+            since = (datetime.strptime(from_time, "%Y-%m-%d %H:%M:%S") + timedelta(days=limit)).strftime("%Y-%m-%d %H:%M:%S")
+
+        timeArray = time.strptime(since, "%Y-%m-%d %H:%M:%S")
         since_ts = int(time.mktime(timeArray)) * 1000
+
     while True:
         if since_ts:
             url = base_url + f'&after={since_ts}'
@@ -37,12 +50,17 @@ def okex_get_bar_data(symbol:str, interval:str, from_time:str='', limit:int=1000
 
         if bar_data_list:
             # 数据整理
+            end = False
             for data in bar_data_list:
-                ts, o, h, l, c, vol, _ = data
+                ts, o, h, l, c, vol, _, __, ___ = data
                 data_dic = {}
                 # 转换时间戳
                 the_timestamp = int(ts) / 1000
                 datetime_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(the_timestamp))
+                if datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S") < datetime.strptime(from_time, "%Y-%m-%d %H:%M:%S"):
+                    end = True
+                    break
+
                 if not until:
                     until = time.strftime("%Y-%m-%d-%H%M%S", time.localtime(the_timestamp))
                 since = time.strftime("%Y-%m-%d-%H%M%S", time.localtime(the_timestamp))
@@ -57,20 +75,20 @@ def okex_get_bar_data(symbol:str, interval:str, from_time:str='', limit:int=1000
                 data_dic['volume'] = str(vol)
                 result_list.insert(0, data_dic)
 
-            print(f'======  {symbol} {since} -> {until} ======')
-
-            sub = len(result_list) - limit
-            if sub >= 0:
-                del result_list[:sub]
+            if end:
                 break
+
         else:
             break
-
+    
     if not len(result_list):
         return None
 
+    # 数据起止时间
+    print(f'======  {symbol} {since} -> {until} ======')
+
     # 写入csv
-    contract = f'OKEX.{symbol}'
+    contract = f'OKX.{symbol}'
     csv_path = get_csv_path()
     dir_path = csv_path + f'{contract}{DIR_SYMBOL}{interval}{DIR_SYMBOL}'
     if not os.path.exists(dir_path):
@@ -83,10 +101,9 @@ def okex_get_bar_data(symbol:str, interval:str, from_time:str='', limit:int=1000
         # 写入csv文件
         writer.writerows(result_list)
 
-    return datetime.strptime(since, "%Y-%m-%d-%H%M%S")
+    return datetime.strptime(until, "%Y-%m-%d-%H%M%S")
 
-def okx_get_symbol_list(need_data: bool = False):
-    # ====== 只支持USDT正向合约 ======
+def okx_get_symbol_list(type:OKXType=OKXType.USDT, need_data: bool = False):
     symbol_list = set()
     symbol_data_dict = {}
 
@@ -97,7 +114,16 @@ def okx_get_symbol_list(need_data: bool = False):
     data = data["data"]
     for d in data:
         symbol: str = d["instId"]
-        if d["ctType"] == "linear" and d["settleCcy"] == "USDT":
+        if d["ctType"] == "linear":
+            if d["settleCcy"] == "USDT" and type == OKXType.USDT:
+                symbol_list.add(symbol)
+                symbol_data_dict[symbol] = d
+
+            elif d["settleCcy"] == "USDC" and type == OKXType.USDC:
+                symbol_list.add(symbol)
+                symbol_data_dict[symbol] = d
+        
+        elif d["ctType"] == "inverse" and type == OKXType.INVERSE:
             symbol_list.add(symbol)
             symbol_data_dict[symbol] = d
 
@@ -111,6 +137,34 @@ def okx_get_symbol_list(need_data: bool = False):
     else:
         return symbol_list
 
+def okx_get_first_bar_datetime(symbol:str, interval:str, start_time:str=''):
+    result = None
+    params: dict = {
+        "symbol": symbol,
+        "interval": interval,
+        "limit": 10
+    }
+
+    api = '/api/v5/market/history-candles'
+    base_url = f'{main_url}{api}'
+
+    url = base_url
+    if start_time:
+        timeArray = time.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+        start_time = int(time.mktime(timeArray))
+        params["startTime"] = start_time * 1000
+
+    resp = requests.get(url, headers={}, params=params)
+    bar_data_list = resp.json()
+
+    if bar_data_list:
+        # 数据整理
+        for data in bar_data_list:
+            ts = data[0]
+            result = datetime.fromtimestamp(int(ts) / 1000)
+            break
+    return result
+
 def get_csv_path():
     path = os.path.abspath(__file__)
     file_name = path.split(DIR_SYMBOL)[-1]
@@ -119,10 +173,10 @@ def get_csv_path():
 
 if __name__ == '__main__':
     #"""
-    symbol = 'BTC-USD-211105'
-    interval = '1D'
-    #from_time = (datetime.now() - timedelta(days=2)).strftime("%Y-%m-%d %H:%M:%S")
+    symbol = 'BTC-USDT-SWAP'
+    interval = '1m'
     from_time = ''
-    okex_get_bar_data(symbol=symbol, interval=interval, from_time=from_time, limit=200)
+    from_time = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
+    okx_get_bar_data(symbol=symbol, interval=interval, from_time=from_time, limit=100)
     print('completed！')
     #"""
