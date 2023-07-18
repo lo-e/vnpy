@@ -391,6 +391,8 @@ class OkxRestApi(RestClient):
                 size=size,
                 pricetick=float(d["tickSz"]),
                 min_volume=min_volume,
+                contract_value=ctValue,
+                contract_min=minSz,
                 futures_type=futures_type,
                 history_data=True,
                 net_position=net_position,
@@ -889,6 +891,9 @@ class OkxWebsocketPrivateApi(WebsocketClient):
         count_str = str(self.order_count).rjust(6, "0")
         orderid = f"{self.connect_time}{count_str}"
 
+        # 订单大小
+        volume = round_to(req.volume / contract.contract_value, contract.contract_min)
+
         # 生成委托请求
         args: dict = {
             "instId": req.symbol,
@@ -896,7 +901,7 @@ class OkxWebsocketPrivateApi(WebsocketClient):
             "side": DIRECTION_VT2OKX[req.direction],
             "ordType": ORDERTYPE_VT2OKX[req.type],
             "px": str(req.price),
-            "sz": str(req.volume)
+            "sz": str(volume)
         }
 
         if contract.product == Product.SPOT:

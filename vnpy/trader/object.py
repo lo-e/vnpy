@@ -314,7 +314,9 @@ class ContractData(BaseData):
     history_data: bool = False      # whether gateway provides bar history data
 
     # 期货相关
-    futures_type:FuturesType = FuturesType.NONE # 期货类型【正向合约、反向合约】
+    futures_type: FuturesType = FuturesType.NONE  # 期货类型【正向合约、反向合约】
+    contract_value: float = 0  # 合约面值
+    contract_min: float = 0  # 合约最小下单张数
 
     # 期权相关
     option_strike: float = 0
