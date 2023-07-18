@@ -5,47 +5,43 @@ from datetime import datetime, timedelta
 from time import sleep
 
 if __name__ == '__main__':
-    """ 1TOKEN"""
-    """
-    contract_list = ['okef/btc.usd.q', 'okef/eth.usd.q', 'okef/eos.usd.q', 'okswap/btc.usd.td', 'okswap/eth.usd.td',
-                    'okswap/eos.usd.td', 'okex/btc.usdt', 'okex/eth.usdt', 'okex/eos.usdt']
-    contract_list = ['okef/btc.usd.t', 'okef/btc.usd.n']
-    days = 20
-    dataDownload = TurtleCryptoDataDownloading()
-    dataDownload.download_from_onetoken(contract_list=contract_list, days=days)
-    result, complete_msg, back_msg, lost_msg = dataDownload.generate_for_onetoken(contract_list=contract_list, days=days)
-    print('\n\n' + lost_msg + back_msg)
-    """
-
-    """ BYBIT """
     #"""
-    exchange = input('选择交易所【Bybit：1  Binance：2】')
-    if exchange == "1":
-        exchange = "BYBIT"
-        mode = input('选择模式【反向：1  正向：2 接口获取：3】')
-        if mode == '1':
-            contract_list = ['BTCUSD', 'ETHUSD']
-
-        elif mode == '2':
+    exchange = input('选择交易所（默认1）【Binance：1 OKX：2 Bybit：3】')
+    if exchange == "2":
+        exchange = "OKX"
+        mode = input('选择模式（默认1）【接口获取：1 正向：2 反向：3】')
+        if mode == '2':
             contract_list = ['BTCUSDT', 'ETHUSDT']
+
+        elif mode == '3':
+            contract_list = ['BTCUSD', 'ETHUSD']
+            
+        else:
+            contract_list = okx_get_symbol_list()
+
+    elif exchange == "3":
+        exchange = "BYBIT"
+        mode = input('选择模式（默认1）【接口获取：1 正向：2 反向：3】')
+        if mode == '2':
+            contract_list = ['BTCUSDT', 'ETHUSDT']
+
+        elif mode == '3':
+            contract_list = ['BTCUSD', 'ETHUSD']
         
         else:
             contract_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
     
-    elif exchange == "2":
+    else:
         exchange = "BINANCE"
-        mode = input('选择模式【反向：1  正向：2 接口获取：3】')
-        if mode == '1':
-            contract_list = ['BTCUSD', 'ETHUSD']
-
-        elif mode == '2':
+        mode = input('选择模式（默认1）【接口获取：1 正向：2 反向：3】')
+        if mode == '2':
             contract_list = ['BTCUSDT', 'ETHUSDT']
+
+        elif mode == '3':
+            contract_list = ['BTCUSD', 'ETHUSD']
             
         else:
             contract_list = binance_get_symbol_list()
-    
-    else:
-        exit(f"交易所选择错误")
 
     print("\n")
     for symbol in contract_list:
