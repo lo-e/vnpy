@@ -82,7 +82,7 @@ if __name__ == "__main__":
             days=days,
             to_date=to_date,
             from_data_base=from_data_base,
-            api_check=False,
+            api_check=True,
         )
 
     elif exchange == "BYBIT":

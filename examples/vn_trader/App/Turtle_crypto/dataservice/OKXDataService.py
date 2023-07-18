@@ -79,7 +79,20 @@ def okx_get_bar_data(symbol:str, interval:str, from_time:str='', limit:int=100):
                 break
 
         else:
-            break
+            first_bar_dt = okx_get_first_bar_datetime(symbol=symbol, from_time=from_time)
+            if first_bar_dt and first_bar_dt > datetime.strptime(from_time, "%Y-%m-%d %H:%M:%S"):
+                from_time = first_bar_dt.strftime("%Y-%m-%d %H:%M:%S")
+                if interval == "1m":
+                    since = (datetime.strptime(from_time, "%Y-%m-%d %H:%M:%S") + timedelta(minutes=limit)).strftime("%Y-%m-%d %H:%M:%S")
+                
+                elif interval == "1D":
+                    since = (datetime.strptime(from_time, "%Y-%m-%d %H:%M:%S") + timedelta(days=limit)).strftime("%Y-%m-%d %H:%M:%S")
+
+                timeArray = time.strptime(since, "%Y-%m-%d %H:%M:%S")
+                since_ts = int(time.mktime(timeArray)) * 1000
+
+            else:
+                break
     
     if not len(result_list):
         return None
@@ -149,8 +162,12 @@ def okx_get_first_bar_datetime(symbol:str, from_time:str=''):
         list_time = contract_data["listTime"]
         list_dt_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(list_time) / 1000))
         list_dt = datetime.strptime(list_dt_str, "%Y-%m-%d %H:%M:%S")
-        from_dt = datetime.strptime(from_time, "%Y-%m-%d %H:%M:%S")
-        result = max(list_dt, from_dt)
+        list_dt = (list_dt + timedelta(minutes=1)).replace(second=0)
+        if from_time:
+            from_dt = datetime.strptime(from_time, "%Y-%m-%d %H:%M:%S")
+            result = max(list_dt, from_dt)
+        else:
+            result = list_dt
     return result
 
 def get_csv_path():
