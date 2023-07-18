@@ -735,7 +735,9 @@ class OkxWebsocketPrivateApi(WebsocketClient):
             trade_volume: float = float(d["fillSz"])
             contract: ContractData = symbol_contract_map.get(order.symbol, None)
             if contract:
+                trade_volume = trade_volume * contract.contract_value if contract.contract_value else trade_volume
                 trade_volume = round_to(trade_volume, contract.min_volume)
+                
 
             trade: TradeData = TradeData(
                 symbol=order.symbol,
@@ -771,14 +773,19 @@ class OkxWebsocketPrivateApi(WebsocketClient):
         data: list = packet["data"]
         for d in data:
             symbol: str = d["instId"]
+            contract: ContractData = symbol_contract_map.get(symbol, None)
+
             pos: int = float(d["pos"])
+            pos = pos * contract.contract_value if contract.contract_value else pos
             price: float = get_float_value(d, "avgPx")
             pnl: float = get_float_value(d, "upl")
+            pos_side = d["posSide"]
+            pos_side = Direction.LONG if pos_side == "long" else Direction.SHORT if pos_side == "short" else Direction.NET
 
             position: PositionData = PositionData(
                 symbol=symbol,
                 exchange=Exchange.OKX,
-                direction=Direction.NET,
+                direction=pos_side,
                 volume=pos,
                 price=price,
                 pnl=pnl,
@@ -892,7 +899,7 @@ class OkxWebsocketPrivateApi(WebsocketClient):
         orderid = f"{self.connect_time}{count_str}"
 
         # 订单大小
-        volume = round_to(req.volume / contract.contract_value, contract.contract_min)
+        volume = round_to(req.volume / contract.contract_value, contract.contract_min) if contract.contract_value and contract.contract_min else req.volume
 
         # 生成委托请求
         args: dict = {
@@ -991,6 +998,12 @@ def parse_order_data(data: dict, gateway_name: str) -> OrderData:
     else:
         order_id: str = data["ordId"]
 
+
+    volume=float(data["sz"])
+    contract: ContractData = symbol_contract_map.get(data["instId"], None)
+    if contract:
+        volume = volume * contract.contract_value if contract.contract_value else volume
+
     order: OrderData = OrderData(
         symbol=data["instId"],
         exchange=Exchange.OKX,
@@ -1000,7 +1013,7 @@ def parse_order_data(data: dict, gateway_name: str) -> OrderData:
         offset=Offset.NONE,
         traded=float(data["accFillSz"]),
         price=float(data["px"]),
-        volume=float(data["sz"]),
+        volume=volume,
         datetime=parse_timestamp(data["cTime"]),
         status=STATUS_OKX2VT[data["state"]],
         gateway_name=gateway_name,
