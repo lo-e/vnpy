@@ -85,6 +85,32 @@ def okex_get_bar_data(symbol:str, interval:str, from_time:str='', limit:int=1000
 
     return datetime.strptime(since, "%Y-%m-%d-%H%M%S")
 
+def okx_get_symbol_list(need_data: bool = False):
+    # ====== 只支持USDT正向合约 ======
+    symbol_list = set()
+    symbol_data_dict = {}
+
+    # 发起请求
+    url = f"{main_url}/api/v5/public/instruments"
+    resp = requests.get(url, headers={}, params={"instType": "SWAP"})
+    data = resp.json()
+    data = data["data"]
+    for d in data:
+        symbol: str = d["instId"]
+        if d["ctType"] == "linear" and d["settleCcy"] == "USDT":
+            symbol_list.add(symbol)
+            symbol_data_dict[symbol] = d
+
+    # 排序
+    symbol_list = sorted(list(symbol_list))
+
+    # 返回结果
+    if need_data:
+        return symbol_list, symbol_data_dict
+
+    else:
+        return symbol_list
+
 def get_csv_path():
     path = os.path.abspath(__file__)
     file_name = path.split(DIR_SYMBOL)[-1]

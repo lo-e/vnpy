@@ -1,5 +1,6 @@
 from dataservice import TurtleCryptoDataDownloading, Binancetype, bybit_get_symbol_list, BybitSymbolType
 from dataservice.BinanceDataService import binance_get_symbol_list
+from dataservice.OKXDataService import okx_get_symbol_list
 from vnpy.trader.constant import Interval
 from datetime import datetime, timedelta
 from time import sleep
@@ -60,13 +61,16 @@ if __name__ == '__main__':
 
     # 开始下载
     dataDownload = TurtleCryptoDataDownloading()
-    if exchange == "BYBIT":
+    if exchange == "BINANCE":
+        dataDownload.download_from_binance(contract_list=contract_list, days=days, to_date=to_date, from_data_base=from_data_base, api_check=True)
+
+    elif exchange == "OKX":
+        dataDownload.download_from_okex(contract_list=contract_list, days=days, to_date=to_date, from_data_base=from_data_base, api_check=True)
+
+    elif exchange == "BYBIT":
         dataDownload.download_from_bybit(contract_list=contract_list, days=days, to_date=to_date, from_data_base=from_data_base, api_check=True)
         # result, complete_msg, back_msg, lost_msg = dataDownload.generate_for_bybit(contract_list=contract_list, days=days)
         # print('\n\n' + lost_msg + back_msg)
-
-    elif exchange == "BINANCE":
-        dataDownload.download_from_binance(contract_list=contract_list, days=days, to_date=to_date, from_data_base=from_data_base, api_check=True)
 
     
     #"""

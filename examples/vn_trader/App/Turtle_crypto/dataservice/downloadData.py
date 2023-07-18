@@ -5,7 +5,7 @@
 """
 
 from .BybitDataService import bybit_get_bar_data, bybit_get_symbol_list, BybitSymbolType, bybit_get_first_bar_datetime
-from .OKExDataService import okex_get_bar_data
+from .OKXDataService import okex_get_bar_data
 from .BinanceDataService import binance_get_bar_data, Binancetype, binance_get_first_bar_datetime
 from .CSVsToLocal import CSVs1TokenBarLocalEngine, CSVsBybitBarLocalEngine, CSVsOKExBarLocalEngine, CSVsFTXBarLocalEngine, CSVsBinanceBarLocalEngine
 from .BarToLocal import BarLocalEngine
@@ -60,7 +60,7 @@ class TurtleCryptoDataDownloading(object):
             sleep(2)
         self.loading_complete = True
 
-    def download_from_okex(self, contract_list, days=1):
+    def download_from_okex(self, contract_list, days=1, to_date:datetime=None, from_data_base:bool=False, api_check:bool=False):
         #"""
         # 先删除原有文件夹，包括其中所有内容
         csv_path = get_csv_path()
