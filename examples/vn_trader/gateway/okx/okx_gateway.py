@@ -109,7 +109,7 @@ OPTION：期权
 # }
 
 PRODUCT_OKX2VT: Dict[str, Product] = {
-    "SWAP": Product.FUTURES,
+    "SWAP": Product.FUTURES
 }
 PRODUCT_VT2OKX: Dict[Product, str] = {v: k for k, v in PRODUCT_OKX2VT.items()}
 
@@ -344,7 +344,8 @@ class OkxRestApi(RestClient):
         data: list = packet["data"]
 
         total_count = 0
-        linear_count = 0
+        usdt_linear_count = 0
+        usdc_linear_count = 0
         inverse_count = 0
         for d in data:
             # 提取信息生成合约对象
@@ -357,11 +358,26 @@ class OkxRestApi(RestClient):
             else:
                 size: float = float(d["ctMult"])
 
+            # 最小下单数量，合约的数量单位是“张”，现货的数量单位是“交易货币”量
+            minSz = float(d["minSz"])
+
+            # 合约面值
+            ctValue = d["ctVal"]
+            ctValue = float(ctValue) if ctValue else 0
+
+            # 最小下单数量（按合约面值计价币种）
+            min_volume = minSz * ctValue if ctValue else minSz
+
+            # 合约类型 
             total_count += 1
             futures_type = FuturesType.NONE
             if d["ctType"] == "linear":
                 futures_type = FuturesType.LINEAR
-                linear_count += 1
+                if d["settleCcy"] == "USDT":
+                    usdt_linear_count += 1
+                
+                elif d["settleCcy"] == "USDC":
+                    usdc_linear_count += 1
 
             elif d["ctType"] == "inverse":
                 futures_type = FuturesType.INVERSE
@@ -374,7 +390,7 @@ class OkxRestApi(RestClient):
                 product=product,
                 size=size,
                 pricetick=float(d["tickSz"]),
-                min_volume=float(d["minSz"]),
+                min_volume=min_volume,
                 futures_type=futures_type,
                 history_data=True,
                 net_position=net_position,
@@ -385,7 +401,7 @@ class OkxRestApi(RestClient):
             symbol_contract_map[contract.symbol] = contract
             self.gateway.on_contract(contract)
 
-        self.gateway.write_log(f"{d['instType']}合约信息查询成功 总计：{total_count} 正向：{linear_count} 反向：{inverse_count}")
+        self.gateway.write_log(f"{d['instType']}合约信息查询成功 总计：{total_count} USDT正向：{usdt_linear_count} USDC正向：{usdc_linear_count} 反向：{inverse_count}")
 
     def on_error(
         self,
