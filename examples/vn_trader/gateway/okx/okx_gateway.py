@@ -94,10 +94,21 @@ INTERVAL_VT2OKX: Dict[Interval, str] = {
 }
 
 # 产品类型映射
+"""
+SPOT：币币
+MARGIN：币币杠杆
+SWAP：永续合约
+FUTURES：交割合约
+OPTION：期权
+"""
+# PRODUCT_OKX2VT: Dict[str, Product] = {
+#     "SWAP": Product.FUTURES,
+#     "SPOT": Product.SPOT,
+#     "FUTURES": Product.FUTURES
+# }
+
 PRODUCT_OKX2VT: Dict[str, Product] = {
     "SWAP": Product.FUTURES,
-    "SPOT": Product.SPOT,
-    "FUTURES": Product.FUTURES
 }
 PRODUCT_VT2OKX: Dict[Product, str] = {v: k for k, v in PRODUCT_OKX2VT.items()}
 
@@ -204,7 +215,7 @@ class OkxGateway(BaseGateway):
 
     def on_order(self, order: OrderData) -> None:
         """推送委托数据"""
-        self.orders[order.orderid] = order  # 先做一次缓存
+        self.orders[order.orderid] = copy(order)  # 先做一次缓存
         super().on_order(order)
 
     def get_order(self, orderid: str) -> OrderData:

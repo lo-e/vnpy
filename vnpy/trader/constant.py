@@ -66,6 +66,13 @@ class OrderType(Enum):
     FOK = "FOK"
     RFQ = "询价"
 
+class FuturesType(Enum):
+    """
+    Futures type.
+    """
+    LINEAR = "正向合约"
+    INVERSE = "反向合约"
+    NONE = ""
 
 class OptionType(Enum):
     """

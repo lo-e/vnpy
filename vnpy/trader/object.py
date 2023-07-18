@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from logging import INFO
 
-from .constant import Direction, Exchange, Interval, Offset, Status, Product, OptionType, OrderType
+from .constant import Direction, Exchange, Interval, Offset, Status, Product, OptionType, OrderType, FuturesType
 
 ACTIVE_STATUSES = set([Status.SUBMITTING, Status.NOTTRADED, Status.PARTTRADED])
 FAILED_STATUSES = set([Status.CANCELLED, Status.REJECTED])
@@ -313,6 +313,10 @@ class ContractData(BaseData):
     net_position: bool = False      # whether gateway uses net position volume
     history_data: bool = False      # whether gateway provides bar history data
 
+    # 期货相关
+    futures_type:FuturesType = FuturesType.NONE # 期货类型【正向合约、反向合约】
+
+    # 期权相关
     option_strike: float = 0
     option_underlying: str = ""     # vt_symbol of underlying contract
     option_type: OptionType = None
