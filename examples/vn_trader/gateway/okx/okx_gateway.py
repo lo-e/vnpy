@@ -28,7 +28,8 @@ from vnpy.trader.constant import (
     Offset,
     OrderType,
     Product,
-    Status
+    Status,
+    FuturesType
 )
 from vnpy.trader.gateway import BaseGateway
 from vnpy.trader.utility import round_to
@@ -342,6 +343,9 @@ class OkxRestApi(RestClient):
         """合约查询回报"""
         data: list = packet["data"]
 
+        total_count = 0
+        linear_count = 0
+        inverse_count = 0
         for d in data:
             # 提取信息生成合约对象
             symbol: str = d["instId"]
@@ -353,6 +357,16 @@ class OkxRestApi(RestClient):
             else:
                 size: float = float(d["ctMult"])
 
+            total_count += 1
+            futures_type = FuturesType.NONE
+            if d["ctType"] == "linear":
+                futures_type = FuturesType.LINEAR
+                linear_count += 1
+
+            elif d["ctType"] == "inverse":
+                futures_type = FuturesType.INVERSE
+                inverse_count += 1
+
             contract: ContractData = ContractData(
                 symbol=symbol,
                 exchange=Exchange.OKX,
@@ -361,6 +375,7 @@ class OkxRestApi(RestClient):
                 size=size,
                 pricetick=float(d["tickSz"]),
                 min_volume=float(d["minSz"]),
+                futures_type=futures_type,
                 history_data=True,
                 net_position=net_position,
                 gateway_name=self.gateway_name,
@@ -370,7 +385,7 @@ class OkxRestApi(RestClient):
             symbol_contract_map[contract.symbol] = contract
             self.gateway.on_contract(contract)
 
-        self.gateway.write_log(f"{d['instType']}合约信息查询成功")
+        self.gateway.write_log(f"{d['instType']}合约信息查询成功 总计：{total_count} 正向：{linear_count} 反向：{inverse_count}")
 
     def on_error(
         self,
