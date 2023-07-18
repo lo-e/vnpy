@@ -304,7 +304,6 @@ class DownloadThread(object):
                     elif self.exchange == ExchangeType.OKX:
                         first_bar_dt = okx_get_first_bar_datetime(
                             symbol=self.contract,
-                            interval=self.interval,
                             from_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"),
                         )
 
