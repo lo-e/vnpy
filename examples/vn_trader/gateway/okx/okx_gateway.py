@@ -1,7 +1,7 @@
 """
 1. 只支持单币种保证金模式
 2. 只支持全仓模式
-3. 只支持单向持仓模式
+3. 只支持双向持仓模式【开平仓模式】
 """
 
 
@@ -903,6 +903,22 @@ class OkxWebsocketPrivateApi(WebsocketClient):
             "px": str(req.price),
             "sz": str(volume)
         }
+
+        if req.offset == Offset.CLOSE or req.offset == Offset.CLOSETODAY or req.offset == Offset.CLOSEYESTERDAY:
+            # 平仓
+            if req.direction == Direction.LONG:
+                args["posSide"] = "short"
+            
+            elif req.direction == Direction.SHORT:
+                args["posSide"] = "long"
+        
+        else:
+            # 开仓
+            if req.direction == Direction.LONG:
+                args["posSide"] = "long"
+            
+            elif req.direction == Direction.SHORT:
+                args["posSide"] = "short"
 
         if contract.product == Product.SPOT:
             args["tdMode"] = "cash"
