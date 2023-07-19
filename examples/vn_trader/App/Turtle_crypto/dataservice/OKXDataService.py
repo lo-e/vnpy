@@ -7,6 +7,8 @@ import csv
 from datetime import datetime, timedelta
 from vnpy.trader.utility import DIR_SYMBOL
 from enum import Enum
+from pymongo import MongoClient, ASCENDING, DESCENDING
+from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 
 main_url = 'https://www.okex.com'
 
@@ -176,6 +178,37 @@ def get_csv_path():
     csv_path = path.rstrip(file_name) + f'CSVs{DIR_SYMBOL}'
     return csv_path
 
+def delete_okex():
+    symbol_list = okx_get_symbol_list(type=OKXType.USDT)
+    # for symbol in symbol_list:
+    #     print(symbol)
+    # print(f"总计：{len(symbol_list)}")
+
+    valid_count = 0
+    client = MongoClient("localhost", 27017)
+    db = client[MINUTE_DB_NAME]
+    index = 0
+    for symbol in symbol_list:
+        index += 1
+        collection_name = f"{symbol}.OKEX"
+        collection = db[collection_name]
+        cursor = collection.find().sort("datetime", ASCENDING)
+        count = len(list(cursor))
+        if count:
+            valid_count += 1
+        print(f"\n{collection_name}：{count}")
+        collection.drop()
+        print(f"删除成功{index}！")
+
+    print(f"\n有效删除统计：{valid_count}")
+
+    # collection_name = f"1INCH-USDT-SWAP.OKEX"
+    # collection = db[collection_name]
+    # cursor = collection.find().sort("datetime", ASCENDING)
+    # print(len(list(cursor)))
+    # result = collection.drop()
+    # print(result)
+
 if __name__ == '__main__':
     """
     symbol = 'BTC-USDT-SWAP'
@@ -186,13 +219,13 @@ if __name__ == '__main__':
     print('completed！')
     """
 
-    #"""
+    """
     # 获取所有合约列表
     symbol_list = okx_get_symbol_list(type=OKXType.USDT)
     for symbol in symbol_list:
         print(symbol)
     print(f"总计：{len(symbol_list)}")
-    #"""
+    """
 
     """
     # 获取合约从某个时间开始最早的交易时间
