@@ -33,31 +33,26 @@ def backtesting():
         figSavedName = f"figSaved{DIR_SYMBOL}{figSavedName}"
 
     # 回测合约
-    marting_type = input('选择类型（默认1）【趋势追踪：1  反转：2】')
+    marting_type = input('选择类型（默认1）【反转：1 趋势追踪：2】')
     if not marting_type:
         marting_type = "1"
 
-    if marting_type == "1":
+    if marting_type == "2":
         marting_type = "FORWARD"
 
-    elif marting_type == "2":
+    else:
         marting_type = "INVERSE"
 
-    else:
-        exit(f"类型选择错误")
-
-    exchange = input('选择交易所（默认1）【Binance：1 Bybit：2】')
-    if not exchange:
-        exchange = "1"
-    if exchange == "1":
-        exchange = "BINANCE"
+    exchange = input('选择交易所（默认1）【Binance：1 OKX：2 Bybit：3】')
+    if exchange == "2":
+        exchange = "OKX"
         if marting_type == "FORWARD":
-            filename = f"setting_forward{DIR_SYMBOL}setting_binance.csv"
+            filename = f"setting_forward{DIR_SYMBOL}setting_okx.csv"
 
         else:
-            filename = f"setting_inverse{DIR_SYMBOL}setting_binance.csv"
+            filename = f"setting_inverse{DIR_SYMBOL}setting_okx.csv"
 
-    elif exchange == "2":
+    elif exchange == "3":
         exchange = "BYBIT"
         if marting_type == "FORWARD":
             filename = f"setting_forward{DIR_SYMBOL}setting_bybit.csv"
@@ -66,11 +61,21 @@ def backtesting():
             filename = f"setting_inverse{DIR_SYMBOL}setting_bybit.csv"
 
     else:
-        exit(f"交易所选择错误")
+        exchange = "BINANCE"
+        if marting_type == "FORWARD":
+            filename = f"setting_forward{DIR_SYMBOL}setting_binance.csv"
+
+        else:
+            filename = f"setting_inverse{DIR_SYMBOL}setting_binance.csv"
 
     # 回测历史数据文件
+    history_from = ""
     backtesting_history_file = ""
+
+    # history_from = f"from_history_2022-10-01_2022-11-02"
     backtesting_history_file = "2022-01-01_2023-07-02.json"
+
+    history_file_path = f"{history_from}{DIR_SYMBOL}{backtesting_history_file}" if history_from else backtesting_history_file
 
     # 开始回测
     symbolList = []
@@ -81,12 +86,13 @@ def backtesting():
     if not symbolList:
         return
 
-    engine.initListPortfolio(symbolList, marting_type=marting_type, portfolioValue=10000, history_file=backtesting_history_file)
+    engine.initListPortfolio(symbolList, marting_type=marting_type, portfolioValue=10000, history_file=history_file_path)
     engine.loadData()
     engine.runBacktesting()
     engine.showResult(figSavedName)
 
     # 输出并保存交易数据
+    close_trade_count = 0
     symbol_trade_dic = {}
     for symbol in engine.symbolList:
         symbol_trade_list = symbol_trade_dic.get(symbol, [])
@@ -104,6 +110,12 @@ def backtesting():
             #         trade.price,
             #     )
             # )
+
+            # 统计平仓次数
+            if trade.offset != Offset.OPEN:
+                close_trade_count += 1
+
+            # 提取成交信息
             trade_data = {
                 "symbol": trade.symbol,
                 "datetime": trade.dt,
@@ -114,6 +126,7 @@ def backtesting():
             }
             symbol_trade_list.append(trade_data)
         symbol_trade_dic[symbol] = symbol_trade_list
+    print(f"总平仓次数：{close_trade_count}")
 
     # 保存合约交易数据
     symbol_trade_dir_path = f"symbol_trades{DIR_SYMBOL}"
@@ -647,7 +660,7 @@ def combine(l, n):
 
 if __name__ == "__main__":
     # 合约列表回测
-    # backtesting()
+    backtesting()
 
     # 随机组合合约列表回测
-    combine_backtesting()
+    # combine_backtesting()

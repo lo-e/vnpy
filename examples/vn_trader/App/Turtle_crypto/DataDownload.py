@@ -1,51 +1,54 @@
-from dataservice import TurtleCryptoDataDownloading, Binancetype, bybit_get_symbol_list, BybitSymbolType
+from dataservice import (
+    TurtleCryptoDataDownloading,
+    BinanceType,
+    bybit_get_symbol_list,
+    BybitSymbolType,
+)
 from dataservice.BinanceDataService import binance_get_symbol_list
+from dataservice.OKXDataService import okx_get_symbol_list, OKXType
 from vnpy.trader.constant import Interval
 from datetime import datetime, timedelta
 from time import sleep
 
-if __name__ == '__main__':
-    """ 1TOKEN"""
-    """
-    contract_list = ['okef/btc.usd.q', 'okef/eth.usd.q', 'okef/eos.usd.q', 'okswap/btc.usd.td', 'okswap/eth.usd.td',
-                    'okswap/eos.usd.td', 'okex/btc.usdt', 'okex/eth.usdt', 'okex/eos.usdt']
-    contract_list = ['okef/btc.usd.t', 'okef/btc.usd.n']
-    days = 20
-    dataDownload = TurtleCryptoDataDownloading()
-    dataDownload.download_from_onetoken(contract_list=contract_list, days=days)
-    result, complete_msg, back_msg, lost_msg = dataDownload.generate_for_onetoken(contract_list=contract_list, days=days)
-    print('\n\n' + lost_msg + back_msg)
-    """
+if __name__ == "__main__":
+    # """
+    exchange = input("选择交易所（默认1）【Binance：1 OKX：2 Bybit：3】")
+    if exchange == "2":
+        exchange = "OKX"
+        mode = input("选择模式（默认1）【接口获取：1 正向：2 反向：3】")
+        if mode == "2":
+            contract_list = ["BTC-USDT-SWAP", "ETH-USDT-SWAP"]
+            contract_list = ["ADA-USDT-SWAP"]
 
-    """ BYBIT """
-    #"""
-    exchange = input('选择交易所【Bybit：1  Binance：2】')
-    if exchange == "1":
+        elif mode == "3":
+            contract_list = ["BTC-USD-SWAP", "ETH-USD-SWAP"]
+
+        else:
+            contract_list = okx_get_symbol_list(type=OKXType.USDT)
+
+    elif exchange == "3":
         exchange = "BYBIT"
-        mode = input('选择模式【反向：1  正向：2 接口获取：3】')
-        if mode == '1':
-            contract_list = ['BTCUSD', 'ETHUSD']
+        mode = input("选择模式（默认1）【接口获取：1 正向：2 反向：3】")
+        if mode == "2":
+            contract_list = ["BTCUSDT", "ETHUSDT"]
 
-        elif mode == '2':
-            contract_list = ['BTCUSDT', 'ETHUSDT']
-        
+        elif mode == "3":
+            contract_list = ["BTCUSD", "ETHUSD"]
+
         else:
             contract_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
-    
-    elif exchange == "2":
-        exchange = "BINANCE"
-        mode = input('选择模式【反向：1  正向：2 接口获取：3】')
-        if mode == '1':
-            contract_list = ['BTCUSD', 'ETHUSD']
 
-        elif mode == '2':
-            contract_list = ['BTCUSDT', 'ETHUSDT']
-            
+    else:
+        exchange = "BINANCE"
+        mode = input("选择模式（默认1）【接口获取：1 正向：2 反向：3】")
+        if mode == "2":
+            contract_list = ["BTCUSDT", "ETHUSDT"]
+
+        elif mode == "3":
+            contract_list = ["BTCUSD", "ETHUSD"]
+
         else:
             contract_list = binance_get_symbol_list()
-    
-    else:
-        exit(f"交易所选择错误")
 
     print("\n")
     for symbol in contract_list:
@@ -53,34 +56,61 @@ if __name__ == '__main__':
     print(f"\n交易所：{exchange}\n合约总数：{len(contract_list)}")
     sleep(2)
 
+    # fake
+    start_ = 0
+    end_ = 20
+    print(f"\n本次下载起止合约：{contract_list[start_]} -> {contract_list[end_-1]}")
+    contract_list = contract_list[start_:end_]
+    print(f"总计：{len(contract_list)}\n")
+
     # 起止日期
-    days = 6
-    to_date = datetime.now() + timedelta(days=2)
-    # days = (datetime.now() - datetime.strptime('2020-12-01', '%Y-%m-%d')).days
-    # to_date = datetime.strptime('2022-01-01', '%Y-%m-%d')
+    # days = 6
+    # to_date = datetime.now() + timedelta(days=2)
+    days = (datetime.now() - datetime.strptime("2020-12-01", "%Y-%m-%d")).days
+    to_date = datetime.strptime("2023-12-31", "%Y-%m-%d")
 
     # 是否从数据库最新数据日期开始
     from_data_base = True
 
     # 开始下载
     dataDownload = TurtleCryptoDataDownloading()
-    if exchange == "BYBIT":
-        dataDownload.download_from_bybit(contract_list=contract_list, days=days, to_date=to_date, from_data_base=from_data_base, api_check=True)
+    if exchange == "BINANCE":
+        dataDownload.download_from_binance(
+            contract_list=contract_list,
+            days=days,
+            to_date=to_date,
+            from_data_base=from_data_base,
+            api_check=True,
+        )
+
+    elif exchange == "OKX":
+        dataDownload.download_from_okx(
+            contract_list=contract_list,
+            days=days,
+            to_date=to_date,
+            from_data_base=from_data_base,
+            api_check=True,
+        )
+
+    elif exchange == "BYBIT":
+        dataDownload.download_from_bybit(
+            contract_list=contract_list,
+            days=days,
+            to_date=to_date,
+            from_data_base=from_data_base,
+            api_check=True,
+        )
         # result, complete_msg, back_msg, lost_msg = dataDownload.generate_for_bybit(contract_list=contract_list, days=days)
         # print('\n\n' + lost_msg + back_msg)
 
-    elif exchange == "BINANCE":
-        dataDownload.download_from_binance(contract_list=contract_list, days=days, to_date=to_date, from_data_base=from_data_base, api_check=True)
+    # """
 
-    
-    #"""
-
-    """ OKEX """
+    """ OKX """
     """
     contract_list = ['BTC-USD-21']
     days = 1200
     dataDownload = TurtleCryptoDataDownloading()
-    dataDownload.download_from_okex(contract_list=contract_list, days=days)
+    dataDownload.download_from_okx(contract_list=contract_list, days=days)
     """
 
     """ FTX """
@@ -97,7 +127,7 @@ if __name__ == '__main__':
     contract_list = ['BTCUSDT']
     days = 3000
     dataDownload = TurtleCryptoDataDownloading()
-    dataDownload.download_from_binance(contract_list=contract_list, days=days, type=Binancetype.USDT)
+    dataDownload.download_from_binance(contract_list=contract_list, days=days, type=BinanceType.USDT)
     """
 
     """ 【分钟】K合成【8H】K"""

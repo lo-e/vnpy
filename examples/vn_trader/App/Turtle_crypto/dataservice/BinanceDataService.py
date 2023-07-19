@@ -1,4 +1,4 @@
-#-- coding: utf-8 --
+# -- coding: utf-8 --
 
 import requests
 import time
@@ -11,18 +11,16 @@ from pymongo import MongoClient, ASCENDING, DESCENDING
 from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 import pandas as pd
 
-main_url_spot = 'https://api.binance.com'
-main_url_inverse = 'https://dapi.binance.com'
-main_url_usdt = 'https://fapi.binance.com'
+main_url_spot = "https://api.binance.com"
+main_url_inverse = "https://dapi.binance.com"
+main_url_usdt = "https://fapi.binance.com"
 
 
-class Binancetype(Enum):
-    """
-    Interval of bar data.
-    """
+class BinanceType(Enum):
     SPOT = "spot"
     INVERSE = "inverse"
     USDT = "usdt"
+
 
 # ====== 获取bar数据 ======
 # symbol：'BTC-PERP'
@@ -30,27 +28,30 @@ class Binancetype(Enum):
 # start：'%Y-%m-%d %H:%M:%S'
 # end：'%Y-%m-%d %H:%M:%S'
 # limit：<= 1500
-def binance_get_bar_data(symbol:str, interval:str, symbol_type:Binancetype, start_time:str='', end_time:str='', limit:int=1500):
-    params: dict = {
-        "symbol": symbol,
-        "interval": interval,
-        "limit": limit
-    }
+def binance_get_bar_data(
+    symbol: str,
+    interval: str,
+    symbol_type: BinanceType,
+    start_time: str = "",
+    end_time: str = "",
+    limit: int = 1500,
+):
+    params: dict = {"symbol": symbol, "interval": interval, "limit": limit}
 
-    since = ''
-    until = ''
+    since = ""
+    until = ""
     result_list = []
-    if symbol_type == Binancetype.SPOT:
+    if symbol_type == BinanceType.SPOT:
         api = "/api/v3/klines"
-        base_url = f'{main_url_spot}{api}'
+        base_url = f"{main_url_spot}{api}"
 
-    elif symbol_type == Binancetype.INVERSE:
-        api = '/dapi/v1/klines'
-        base_url = f'{main_url_inverse}{api}'
+    elif symbol_type == BinanceType.INVERSE:
+        api = "/dapi/v1/klines"
+        base_url = f"{main_url_inverse}{api}"
 
-    elif symbol_type == Binancetype.USDT:
+    elif symbol_type == BinanceType.USDT:
         api = "/fapi/v1/klines"
-        base_url = f'{main_url_usdt}{api}'
+        base_url = f"{main_url_usdt}{api}"
     else:
         return
 
@@ -69,12 +70,12 @@ def binance_get_bar_data(symbol:str, interval:str, symbol_type:Binancetype, star
     if "until" in resp.text:
         i_until = resp.text.index("until")
         i_please = resp.text.index(". Please")
-        timestamp = float(resp.text[i_until + 6:i_please])
-        banned_to = datetime.fromtimestamp(timestamp/1000)
+        timestamp = float(resp.text[i_until + 6 : i_please])
+        banned_to = datetime.fromtimestamp(timestamp / 1000)
         print(f"访问受限：{banned_to}")
         time.sleep(2)
-        raise("访问受限")
-    
+        raise ("访问受限")
+
     bar_data_list = resp.json()
     if bar_data_list:
         # 数据整理
@@ -83,43 +84,44 @@ def binance_get_bar_data(symbol:str, interval:str, symbol_type:Binancetype, star
             data_dic = {}
             # 转换时间戳
             the_timestamp = int(ts) / 1000
-            datetime_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(the_timestamp))
+            datetime_str = time.strftime(
+                "%Y-%m-%d %H:%M:%S", time.localtime(the_timestamp)
+            )
             if not since:
                 since = time.strftime("%Y-%m-%d-%H%M%S", time.localtime(the_timestamp))
             until = time.strftime("%Y-%m-%d-%H%M%S", time.localtime(the_timestamp))
 
-            data_dic['datetime'] = datetime_str
-            if symbol_type == Binancetype.SPOT:
-                data_dic['symbol'] = symbol + '_SPOT'
+            data_dic["datetime"] = datetime_str
+            if symbol_type == BinanceType.SPOT:
+                data_dic["symbol"] = symbol + "_SPOT"
 
-            elif symbol_type == Binancetype.INVERSE:
-                data_dic['symbol'] = symbol + '_INV'
-
+            elif symbol_type == BinanceType.INVERSE:
+                data_dic["symbol"] = symbol + "_INV"
 
             else:
-                data_dic['symbol'] = symbol
+                data_dic["symbol"] = symbol
 
-            data_dic['open'] = str(o)
-            data_dic['high'] = str(h)
-            data_dic['low'] = str(l)
-            data_dic['close'] = str(c)
-            data_dic['volume'] = str(vol)
+            data_dic["open"] = str(o)
+            data_dic["high"] = str(h)
+            data_dic["low"] = str(l)
+            data_dic["close"] = str(c)
+            data_dic["volume"] = str(vol)
             result_list.append(data_dic)
 
-        print(f'======  {symbol} {since} -> {until} ======')
+        print(f"======  {symbol} {since} -> {until} ======")
 
     if not len(result_list):
         return None
 
     # 写入csv
-    contract = f'BINANCE.{symbol}'
+    contract = f"BINANCE.{symbol}"
     csv_path = get_csv_path()
-    dir_path = csv_path + f'{contract}{DIR_SYMBOL}{interval}{DIR_SYMBOL}'
+    dir_path = csv_path + f"{contract}{DIR_SYMBOL}{interval}{DIR_SYMBOL}"
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
-    file_path = dir_path + f'{since}__{until}.csv'
-    field_names = ['datetime', 'symbol', 'open', 'high', 'low', 'close', 'volume']
-    with open(file_path, 'w') as f:
+    file_path = dir_path + f"{since}__{until}.csv"
+    field_names = ["datetime", "symbol", "open", "high", "low", "close", "volume"]
+    with open(file_path, "w") as f:
         writer = csv.DictWriter(f, fieldnames=field_names)
         writer.writeheader()
         # 写入csv文件
@@ -127,25 +129,24 @@ def binance_get_bar_data(symbol:str, interval:str, symbol_type:Binancetype, star
 
     return datetime.strptime(until, "%Y-%m-%d-%H%M%S")
 
-def binance_get_first_bar_datetime(symbol:str, interval:str, symbol_type:Binancetype, start_time:str=''):
+
+def binance_get_first_bar_datetime(
+    symbol: str, interval: str, symbol_type: BinanceType, start_time: str = ""
+):
     result = None
-    params: dict = {
-        "symbol": symbol,
-        "interval": interval,
-        "limit": 10
-    }
+    params: dict = {"symbol": symbol, "interval": interval, "limit": 10}
 
-    if symbol_type == Binancetype.SPOT:
+    if symbol_type == BinanceType.SPOT:
         api = "/api/v3/klines"
-        base_url = f'{main_url_spot}{api}'
+        base_url = f"{main_url_spot}{api}"
 
-    elif symbol_type == Binancetype.INVERSE:
-        api = '/dapi/v1/klines'
-        base_url = f'{main_url_inverse}{api}'
+    elif symbol_type == BinanceType.INVERSE:
+        api = "/dapi/v1/klines"
+        base_url = f"{main_url_inverse}{api}"
 
-    elif symbol_type == Binancetype.USDT:
+    elif symbol_type == BinanceType.USDT:
         api = "/fapi/v1/klines"
-        base_url = f'{main_url_usdt}{api}'
+        base_url = f"{main_url_usdt}{api}"
     else:
         return
 
@@ -165,6 +166,7 @@ def binance_get_first_bar_datetime(symbol:str, interval:str, symbol_type:Binance
             result = datetime.fromtimestamp(int(ts) / 1000)
             break
     return result
+
 
 def binance_get_symbol_list(need_data: bool = False):
     # ====== 只支持USDT正向合约 ======
@@ -195,11 +197,10 @@ def binance_get_symbol_list(need_data: bool = False):
     else:
         return symbol_list
 
+
 def binance_marting_setting(min_value_filter: float = 0):
     # 获取交易对最小交易价值
-    usdt_symbol_list, data = binance_get_symbol_list(
-        need_data=True
-    )
+    usdt_symbol_list, data = binance_get_symbol_list(need_data=True)
     print(f"\n所有USDT永续交易对：{len(usdt_symbol_list)}")
 
     filter_count = 0
@@ -279,13 +280,15 @@ def binance_marting_setting(min_value_filter: float = 0):
 
     return rusult_list
 
+
 def get_csv_path():
     path = os.path.abspath(__file__)
     file_name = path.split(DIR_SYMBOL)[-1]
-    csv_path = path.rstrip(file_name) + f'CSVs{DIR_SYMBOL}'
+    csv_path = path.rstrip(file_name) + f"CSVs{DIR_SYMBOL}"
     return csv_path
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     """
     # 下载分钟Bar数据
     symbol = 'BTCUSDT'
@@ -298,7 +301,7 @@ if __name__ == '__main__':
     start_time = '2020-01-01 00:00:00'
     end_time = (datetime.now() + timedelta(days=2)).strftime("%Y-%m-%d") + ' 00:00:00'
 
-    binance_get_bar_data(symbol=symbol, interval=interval, symbol_type=Binancetype.USDT, start_time=start_time, end_time=end_time, limit=1500)
+    binance_get_bar_data(symbol=symbol, interval=interval, symbol_type=BinanceType.USDT, start_time=start_time, end_time=end_time, limit=1500)
     print('completed！')
     """
 
@@ -311,7 +314,7 @@ if __name__ == '__main__':
     # 获取指定时间段的合约最初交易时间
     # symbol_list = ['GALAUSDT', 'ZRXUSDT', 'BAKEUSDT', 'SFPUSDT', 'LINAUSDT', 'OMGUSDT', 'RENUSDT', 'KNCUSDT', 'BATUSDT', 'BELUSDT', 'WAVESUSDT', 'ZENUSDT', 'SXPUSDT', 'RLCUSDT', 'PEOPLEUSDT', 'CHRUSDT', 'ARUSDT', 'ARPAUSDT', 'ATAUSDT', 'UNFIUSDT', 'DYDXUSDT', 'OGNUSDT', 'DASHUSDT', 'AUDIOUSDT', 'LRCUSDT', 'SKLUSDT', 'ETHUSDT', 'AXSUSDT', 'MASKUSDT', 'AAVEUSDT', 'ZILUSDT', 'SUSHIUSDT', 'STORJUSDT', 'FTMUSDT', 'ETCUSDT', 'CTSIUSDT', 'KAVAUSDT', 'DOGEUSDT', 'EGLDUSDT', 'SOLUSDT', 'C98USDT', 'CRVUSDT', 'YFIUSDT', 'ALGOUSDT', 'RSRUSDT', 'MKRUSDT', 'ENJUSDT']
     # for symbol in symbol_list:
-    #     start_dt = binance_get_first_bar_datetime(symbol=symbol, interval="1m", symbol_type=Binancetype.USDT, start_time="2020-12-01 00:00:00")
+    #     start_dt = binance_get_first_bar_datetime(symbol=symbol, interval="1m", symbol_type=BinanceType.USDT, start_time="2020-12-01 00:00:00")
     #     print(f"{symbol}\t{start_dt}")
 
     # 生成马丁策略回测参数
