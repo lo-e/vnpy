@@ -33,31 +33,26 @@ def backtesting():
         figSavedName = f"figSaved{DIR_SYMBOL}{figSavedName}"
 
     # 回测合约
-    marting_type = input('选择类型（默认1）【趋势追踪：1  反转：2】')
+    marting_type = input('选择类型（默认1）【反转：1 趋势追踪：2】')
     if not marting_type:
         marting_type = "1"
 
-    if marting_type == "1":
+    if marting_type == "2":
         marting_type = "FORWARD"
 
-    elif marting_type == "2":
+    else:
         marting_type = "INVERSE"
 
-    else:
-        exit(f"类型选择错误")
-
-    exchange = input('选择交易所（默认1）【Binance：1 Bybit：2】')
-    if not exchange:
-        exchange = "1"
-    if exchange == "1":
-        exchange = "BINANCE"
+    exchange = input('选择交易所（默认1）【Binance：1 OKX：2 Bybit：3】')
+    if exchange == "2":
+        exchange = "OKX"
         if marting_type == "FORWARD":
-            filename = f"setting_forward{DIR_SYMBOL}setting_binance.csv"
+            filename = f"setting_forward{DIR_SYMBOL}setting_okx.csv"
 
         else:
-            filename = f"setting_inverse{DIR_SYMBOL}setting_binance.csv"
+            filename = f"setting_inverse{DIR_SYMBOL}setting_okx.csv"
 
-    elif exchange == "2":
+    elif exchange == "3":
         exchange = "BYBIT"
         if marting_type == "FORWARD":
             filename = f"setting_forward{DIR_SYMBOL}setting_bybit.csv"
@@ -66,7 +61,12 @@ def backtesting():
             filename = f"setting_inverse{DIR_SYMBOL}setting_bybit.csv"
 
     else:
-        exit(f"交易所选择错误")
+        exchange = "BINANCE"
+        if marting_type == "FORWARD":
+            filename = f"setting_forward{DIR_SYMBOL}setting_binance.csv"
+
+        else:
+            filename = f"setting_inverse{DIR_SYMBOL}setting_binance.csv"
 
     # 回测历史数据文件
     history_from = ""
