@@ -134,7 +134,6 @@ class Exchange(Enum):
 
     # CryptoCurrency
     BITMEX = "BITMEX"
-    OKEX = "OKEX"
     HUOBI = "HUOBI"
     BITFINEX = "BITFINEX"
     BINANCE = "BINANCE"

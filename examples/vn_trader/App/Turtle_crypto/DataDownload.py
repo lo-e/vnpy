@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
     # """
 
-    """ OKEX """
+    """ OKX """
     """
     contract_list = ['BTC-USD-21']
     days = 1200

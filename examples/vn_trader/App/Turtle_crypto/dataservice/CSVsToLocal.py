@@ -209,7 +209,7 @@ class CSVsOKXBarLocalEngine(object):
                                 print("=" * 6, symbol, "\t", theFile, "=" * 6)
 
                             # 转换symbol
-                            symbol = f"{symbol}.OKEX"
+                            symbol = f"{symbol}.OKX"
                             # 数据库collection
                             collection = self.bar_db[symbol]
                             collection.create_index("datetime")
