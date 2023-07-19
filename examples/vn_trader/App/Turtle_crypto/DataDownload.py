@@ -77,7 +77,7 @@ if __name__ == "__main__":
         )
 
     elif exchange == "OKX":
-        dataDownload.download_from_okex(
+        dataDownload.download_from_okx(
             contract_list=contract_list,
             days=days,
             to_date=to_date,
@@ -103,7 +103,7 @@ if __name__ == "__main__":
     contract_list = ['BTC-USD-21']
     days = 1200
     dataDownload = TurtleCryptoDataDownloading()
-    dataDownload.download_from_okex(contract_list=contract_list, days=days)
+    dataDownload.download_from_okx(contract_list=contract_list, days=days)
     """
 
     """ FTX """

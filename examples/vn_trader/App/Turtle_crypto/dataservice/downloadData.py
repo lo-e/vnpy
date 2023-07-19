@@ -92,7 +92,7 @@ class TurtleCryptoDataDownloading(object):
             sleep(2)
         self.loading_complete = True
 
-    def download_from_okex(
+    def download_from_okx(
         self,
         contract_list,
         days=1,
