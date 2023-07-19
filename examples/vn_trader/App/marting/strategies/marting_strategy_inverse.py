@@ -168,6 +168,9 @@ class MartingInverseStrategy(CtaTemplate):
         )
 
     def on_init(self):
+        # fake
+        self.init_value_rate = 0.2
+        
         # 回测历史记录如果数据库没有记录，从json文件中获取
         if not self.backtesting_status or not self.backtesting_to:
             backtesting_history = self.portfolio.strategys_backtesting_history.get(
