@@ -56,6 +56,13 @@ if __name__ == "__main__":
     print(f"\n交易所：{exchange}\n合约总数：{len(contract_list)}")
     sleep(2)
 
+    # fake
+    start_ = 0
+    end_ = 20
+    print(f"\n本次下载起止合约：{contract_list[start_]} -> {contract_list[end_-1]}")
+    contract_list = contract_list[start_:end_]
+    print(f"总计：{len(contract_list)}\n")
+
     # 起止日期
     # days = 6
     # to_date = datetime.now() + timedelta(days=2)
