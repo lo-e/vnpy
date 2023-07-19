@@ -187,8 +187,16 @@ if __name__ == '__main__':
     """
 
     #"""
+    # 获取所有合约列表
+    symbol_list = okx_get_symbol_list(type=OKXType.USDT)
+    for symbol in symbol_list:
+        print(symbol)
+    print(f"总计：{len(symbol_list)}")
+    #"""
+
+    """
     # 获取合约从某个时间开始最早的交易时间
     symbol = 'BTC-USDT-SWAP'
     from_time = "2019-01-01 00:00:00"
     okx_get_first_bar_datetime(symbol=symbol, from_time=from_time)
-    #"""
+    """
