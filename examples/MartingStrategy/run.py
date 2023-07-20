@@ -88,7 +88,7 @@ def backtesting():
 
     engine.initListPortfolio(symbolList, marting_type=marting_type, portfolioValue=10000, history_file=history_file_path)
     engine.loadData()
-    engine.runBacktesting()
+    engine.runBacktesting(daily_mode=True)
     engine.showResult(figSavedName)
 
     # 输出并保存交易数据

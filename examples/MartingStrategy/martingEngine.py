@@ -3,7 +3,7 @@
 from __future__ import print_function
 
 from csv import DictReader
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import OrderedDict, defaultdict
 
 import numpy as np
@@ -128,21 +128,39 @@ class BacktestingEngine(object):
         
         self.output(u'全部数据加载完成')
     
-    def runBacktesting(self):
+    def runBacktesting(self, daily_mode:bool=False):
         """运行回测"""
         self.output(u'开始回放K线数据')
         
-        for dt, barDict in self.dataDict.items():
+        for i in range(len(self.dataDict)):
+            dt = list(self.dataDict.keys())[i]
+            barDict = self.dataDict[dt]
             self.currentDt = dt
+            
+            # 确认是否更新Result
+            result_update = True
+            if daily_mode and self.result:
+                last_dt = self.result.date
+                if last_dt.hour < 8:
+                    next_dt = last_dt.replace(hour=8, minute=0, second=0, microsecond=0)
 
-            previousResult = self.result
+                else:
+                    next_dt = (last_dt + timedelta(days=1)).replace(hour=8, minute=0, second=0, microsecond=0)
+                
+                if dt < next_dt:
+                    result_update = False
             
-            self.result = DailyResult(dt)
-            self.result.updatePos(self.portfolio.posDict)
-            self.resultList.append(self.result)
-            
-            if previousResult:
-                self.result.updatePreviousClose(previousResult.closeDict)
+            # 最后的数据必须更新Result
+            if i == len(self.dataDict) - 1:
+                result_update = True
+
+            if result_update:
+                previousResult = self.result
+                self.result = DailyResult(dt)
+                self.result.updatePos(self.portfolio.posDict)
+                self.resultList.append(self.result)
+                if previousResult:
+                    self.result.updatePreviousClose(previousResult.closeDict)
             
             for bar in barDict.values():
                 self.portfolio.onBar(bar)
