@@ -86,7 +86,7 @@ def backtesting():
     if not symbolList:
         return
 
-    engine.initListPortfolio(symbolList, marting_type=marting_type, portfolioValue=10000, history_file=history_file_path)
+    engine.initListPortfolio(symbolList, marting_type=marting_type, exchange=exchange, portfolioValue=10000, history_file=history_file_path)
     engine.loadData()
     engine.runBacktesting(daily_mode=True)
     engine.showResult(figSavedName)
