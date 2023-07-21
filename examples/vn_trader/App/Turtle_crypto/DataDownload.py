@@ -57,12 +57,12 @@ if __name__ == "__main__":
     sleep(2)
 
     # fake
-    # start_ = 0
-    # end_ = 20
-    # print(f"\n本次下载起止合约：{contract_list[start_]} -> {contract_list[end_-1]}")
-    # contract_list = contract_list[start_:end_]
-    # print(contract_list)
-    # print(f"总计：{len(contract_list)}\n")
+    start_ = 0
+    end_ = 20
+    print(f"\n本次下载起止合约：{contract_list[start_]} -> {contract_list[end_-1]}")
+    contract_list = contract_list[start_:end_]
+    print(contract_list)
+    print(f"总计：{len(contract_list)}\n")
 
     # 起止日期
     # days = 6
@@ -91,7 +91,7 @@ if __name__ == "__main__":
             days=days,
             to_date=to_date,
             from_data_base=from_data_base,
-            api_check=True,
+            api_check=False,
         )
 
     elif exchange == "BYBIT":
