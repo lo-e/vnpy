@@ -26,6 +26,7 @@ from App.Turtle_crypto.dataservice.BybitDataService import (
 )
 
 from App.Turtle_crypto.dataservice.BinanceDataService import binance_get_symbol_list
+from App.Turtle_crypto.dataservice.OKXDataService import okx_get_symbol_list, OKXType
 
 
 class BarGenerator:
@@ -478,17 +479,18 @@ def get_full_symbol(symbol_list):
 
 
 if __name__ == "__main__":
-    exchange = input('选择交易所【Bybit：1  Binance：2】')
-    if exchange == "1":
+    exchange = input('选择交易所【Binance：1 OKX：2 Bybit：3】')
+    if exchange == "2":
+        exchange = "OKX"
+        symbol_list = okx_get_symbol_list(type=OKXType.USDT)
+    
+    elif exchange == "3":
         exchange = "BYBIT"
         symbol_list = bybit_get_symbol_list(type=BybitSymbolType.USDT)
-    
-    elif exchange == "2":
-        exchange = "BINANCE"
-        symbol_list = binance_get_symbol_list()
 
     else:
-        exit(f"交易所选择错误")
+        exchange = "BINANCE"
+        symbol_list = binance_get_symbol_list()
     
     print("\n")
     for symbol in symbol_list:
