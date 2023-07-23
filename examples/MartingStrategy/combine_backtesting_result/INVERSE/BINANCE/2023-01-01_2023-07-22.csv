@@ -1,0 +1,2 @@
+symbolList,totalPnl,max_drawdown,over_drawdown,over_drawdown_count
+"['BCHUSDT.BINANCE', 'BANDUSDT.BINANCE', 'SNXUSDT.BINANCE']",4187.56%,-688114.07,"{'2023-03-09': -16475.17, '2023-03-10': -688114.07, '2023-07-14': -604259.42}",3

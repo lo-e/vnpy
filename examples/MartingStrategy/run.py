@@ -447,7 +447,8 @@ def combine_backtesting():
             # target_symbol_list = ['ALGOUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE']
             # target_symbol_list = ['ALGOUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE']
             target_symbol_list = ['BTCUSDT.BINANCE', 'ETHUSDT.BINANCE', 'LINKUSDT.BINANCE', 'XRPUSDT.BINANCE', 'XLMUSDT.BINANCE', 'SOLUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'MKRUSDT.BINANCE', 'BCHUSDT.BINANCE', 'LTCUSDT.BINANCE', 'COMPUSDT.BINANCE', 'MATICUSDT.BINANCE', 'OPUSDT.BINANCE', 'SNXUSDT.BINANCE', 'ARBUSDT.BINANCE', 'BANDUSDT.BINANCE', 'FILUSDT.BINANCE', 'BNBUSDT.BINANCE', 'DOTUSDT.BINANCE', 'APEUSDT.BINANCE']
-            
+            target_symbol_list = ['BCHUSDT.BINANCE', 'BANDUSDT.BINANCE', 'SNXUSDT.BINANCE']
+
         elif exchange == "OKX":
             target_symbol_list = ['ALGO-USDT-SWAP.OKX', 'DYDX-USDT-SWAP.OKX', 'ENS-USDT-SWAP.OKX', 'EOS-USDT-SWAP.OKX', 'SUSHI-USDT-SWAP.OKX']
 
@@ -503,15 +504,18 @@ def combine_backtesting():
                     # 记录三天内最大的回撤
                     period_min_dd = last_drawdown
                     period_min_dd_dt = last_drawdown_dt
+
                     for i in range(3):
                         dt_before = (datetime.strptime(last_drawdown_dt, "%Y-%m-%d") - timedelta(days=i)).strftime("%Y-%m-%d")
-                        dd_before = period_drawdown_dict.get(dt_before, 0)
-                        if dd_before < period_min_dd:
+                        if dt_before in period_drawdown_dict:
+                            dd_before = period_drawdown_dict[dt_before]
+                            # 选取三天内最大回撤
+                            if dd_before < period_min_dd:
+                                period_min_dd = dd_before
+                                period_min_dd_dt = dt_before
                             # 去除原有的回撤记录，只记录三天内最大的
-                            if period_min_dd_dt in period_drawdown_dict:
-                                period_drawdown_dict.pop(period_min_dd_dt)
-                            period_min_dd = dd_before
-                            period_min_dd_dt = dt_before
+                            period_drawdown_dict.pop(dt_before)
+
                     period_drawdown_dict[period_min_dd_dt] = round_to(period_min_dd, 0.01)
 
                 last_drawdown = drawdown
@@ -522,6 +526,8 @@ def combine_backtesting():
                 last_drawdown_dt = dt.split(" ")[0]
 
         if last_drawdown < 0:
+            # 保留当天最大回撤
+            last_drawdown = min(last_drawdown, period_drawdown_dict.get(last_drawdown_dt, 0))
             period_drawdown_dict[last_drawdown_dt] = round_to(last_drawdown, 0.01)
 
         # 超出本金的回撤（爆仓）统计
