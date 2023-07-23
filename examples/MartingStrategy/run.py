@@ -25,8 +25,8 @@ from vnpy.trader.utility import round_to
 def backtesting():
     # 回测起始日期
     engine = BacktestingEngine()
-    start_dt = datetime(2023, 6, 30)
-    end_dt = datetime(2023, 8, 1)
+    start_dt = datetime(2023, 1, 1)
+    end_dt = datetime(2023, 7, 22)
     engine.setPeriod(start_dt, end_dt)
     figSavedName = ""
     if figSavedName:
@@ -73,7 +73,7 @@ def backtesting():
     backtesting_history_file = ""
 
     # history_from = f"from_history_2022-10-01_2022-11-02"
-    backtesting_history_file = "2022-01-01_2023-07-02.json"
+    # backtesting_history_file = "2022-01-01_2023-07-02.json"
 
     history_file_path = f"{history_from}{DIR_SYMBOL}{backtesting_history_file}" if history_from else backtesting_history_file
 
@@ -88,7 +88,7 @@ def backtesting():
 
     engine.initListPortfolio(symbolList, marting_type=marting_type, exchange=exchange, portfolioValue=10000, history_file=history_file_path)
     engine.loadData()
-    engine.runBacktesting(daily_mode=True)
+    engine.runBacktesting(daily_mode=False)
     engine.showResult(figSavedName)
 
     # 输出并保存交易数据
@@ -446,6 +446,7 @@ def combine_backtesting():
             # target_symbol_list = ['ALGOUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE']
             # target_symbol_list = ['ALGOUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE']
             # target_symbol_list = ['ALGOUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE']
+            target_symbol_list = ['BTCUSDT.BINANCE', 'ETHUSDT.BINANCE', 'LINKUSDT.BINANCE', 'XRPUSDT.BINANCE', 'XLMUSDT.BINANCE', 'SOLUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'MKRUSDT.BINANCE', 'BCHUSDT.BINANCE', 'LTCUSDT.BINANCE', 'COMPUSDT.BINANCE', 'MATICUSDT.BINANCE', 'OPUSDT.BINANCE', 'SNXUSDT.BINANCE', 'ARBUSDT.BINANCE', 'BANDUSDT.BINANCE', 'FILUSDT.BINANCE', 'BNBUSDT.BINANCE', 'DOTUSDT.BINANCE', 'APEUSDT.BINANCE']
 
         elif exchange == "OKX":
             target_symbol_list = ['ALGO-USDT-SWAP.OKX', 'DYDX-USDT-SWAP.OKX', 'ENS-USDT-SWAP.OKX', 'EOS-USDT-SWAP.OKX', 'SUSHI-USDT-SWAP.OKX']
@@ -463,19 +464,20 @@ def combine_backtesting():
             symbol = symbol_data["symbol"]
             if symbol in target_symbol_list:
                 temp.append(symbol_data)
+
         symbolList = temp
 
     if not symbolList:
         return
 
     # 随机组合合约列表
-    combineList = combine(symbolList, 5)
+    combineList = combine(symbolList, 3)
     print(f"\n随机组合总数：{len(combineList)}\n")
     
     count = 0
     resultList = []
-    start_dt = datetime(2021, 1, 1)
-    end_dt = datetime(2022, 1, 1)
+    start_dt = datetime(2023, 1, 1)
+    end_dt = datetime(2023, 7, 22)
     for l in combineList:
         # 开始回测
         engine = BacktestingEngine()
@@ -525,26 +527,25 @@ def combine_backtesting():
             "over_drawdown_count": len(over_drawdown_dict),
         }
         resultList.append(dic)
-
         count += 1
         print("count：\t%s\n" % count)
 
-    # 组合回测结果保存到文件
-    if len(resultList):
-        start_dt_str = start_dt.strftime("%Y-%m-%d")
-        end_dt_str = end_dt.strftime("%Y-%m-%d")
-        fieldNames = ["symbolList", "totalPnl", "max_drawdown", "over_drawdown", "over_drawdown_count"]
-        # 文件路径
-        file_dir = f"combine_backtesting_result{DIR_SYMBOL}{marting_type}{DIR_SYMBOL}{exchange}{DIR_SYMBOL}"
-        if not os.path.exists(file_dir):
-            os.makedirs(file_dir)
+        # 组合回测结果保存到文件
+        if len(resultList):
+            start_dt_str = start_dt.strftime("%Y-%m-%d")
+            end_dt_str = end_dt.strftime("%Y-%m-%d")
+            fieldNames = ["symbolList", "totalPnl", "max_drawdown", "over_drawdown", "over_drawdown_count"]
+            # 文件路径
+            file_dir = f"combine_backtesting_result{DIR_SYMBOL}{marting_type}{DIR_SYMBOL}{exchange}{DIR_SYMBOL}"
+            if not os.path.exists(file_dir):
+                os.makedirs(file_dir)
 
-        file_path = f"{file_dir}{start_dt_str}_{end_dt_str}.csv"
-        with open(file_path, "w") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldNames)
-            writer.writeheader()
-            # 写入csv文件
-            writer.writerows(resultList)
+            file_path = f"{file_dir}{start_dt_str}_{end_dt_str}.csv"
+            with open(file_path, "w") as f:
+                writer = csv.DictWriter(f, fieldnames=fieldNames)
+                writer.writeheader()
+                # 写入csv文件
+                writer.writerows(resultList)
 
     print("=" * 20)
     print("组合数：%s" % count)
@@ -661,7 +662,7 @@ def combine(l, n):
 
 if __name__ == "__main__":
     # 合约列表回测
-    backtesting()
+    # backtesting()
 
     # 随机组合合约列表回测
-    # combine_backtesting()
+    combine_backtesting()

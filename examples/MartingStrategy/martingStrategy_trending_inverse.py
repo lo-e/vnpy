@@ -405,7 +405,7 @@ class MartingInverseSignal(object):
 
     def calculate_phase_positions(self):
         self.phase_position_values = []
-        total_phase_count = 3
+        total_phase_count = 1
         for i in range(total_phase_count):
             phase_position = self.unit_value * (2 ** (i + 1) - 1)
             self.phase_position_values.append(phase_position)
@@ -416,7 +416,7 @@ class MartingInverseSignal(object):
             phase_positon_value = self.phase_position_values[i]
             if current_phase_position_value <= phase_positon_value * 1.1:
                 return i
-        return len(self.phase_position_values) - 1
+        return len(self.phase_position_values)
 
     def calculate_max_loss(self):
         if self.direction == Direction.LONG:
@@ -695,24 +695,28 @@ class MartingInverseSignal(object):
 
             # ====== 加仓价格 ======
             if self.direction == Direction.LONG:
-                if current_phase == 0:
-                    self.position_increase_price = self.position_price * (1 - 0.02)
+                # if current_phase == 0:
+                #     self.position_increase_price = self.position_price * (1 - 0.02)
 
-                elif current_phase == 1:
-                    self.position_increase_price = self.position_price * (1 - 0.04)
+                # elif current_phase == 1:
+                #     self.position_increase_price = self.position_price * (1 - 0.04)
 
-                else:
-                    self.position_increase_price = self.position_price * (1 - TRENDING_INCREASE_RATE)
+                # else:
+                #     self.position_increase_price = self.position_price * (1 - TRENDING_INCREASE_RATE)
+
+                self.position_increase_price = self.position_price * (1 - TRENDING_INCREASE_RATE)
 
             elif self.direction == Direction.SHORT:
-                if current_phase == 0:
-                    self.position_increase_price = self.position_price * (1 + 0.02)
+                # if current_phase == 0:
+                #     self.position_increase_price = self.position_price * (1 + 0.02)
 
-                elif current_phase == 1:
-                    self.position_increase_price = self.position_price * (1 + 0.04)
+                # elif current_phase == 1:
+                #     self.position_increase_price = self.position_price * (1 + 0.04)
 
-                else:
-                    self.position_increase_price = self.position_price * (1 + TRENDING_INCREASE_RATE)
+                # else:
+                #     self.position_increase_price = self.position_price * (1 + TRENDING_INCREASE_RATE)
+                
+                self.position_increase_price = self.position_price * (1 + TRENDING_INCREASE_RATE)
 
     def save_sync_data(self):
         status = {}
