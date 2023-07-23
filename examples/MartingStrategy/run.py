@@ -474,11 +474,39 @@ def combine_backtesting():
     combineList = combine(symbolList, 3)
     print(f"\n随机组合总数：{len(combineList)}\n")
     
-    count = 0
-    resultList = []
+    # 回测时间
     start_dt = datetime(2023, 1, 1)
     end_dt = datetime(2023, 7, 22)
+
+    # 获取历史数据
+    start_dt_str = start_dt.strftime("%Y-%m-%d")
+    end_dt_str = end_dt.strftime("%Y-%m-%d")
+    file_dir = f"combine_backtesting_result{DIR_SYMBOL}{marting_type}{DIR_SYMBOL}{exchange}{DIR_SYMBOL}"
+    if not os.path.exists(file_dir):
+        os.makedirs(file_dir)
+        
+    file_path = f"{file_dir}{start_dt_str}_{end_dt_str}.csv"
+    resultList = []
+    history_symbols_key = []
+    if os.path.exists(file_path):
+        history_data = pd.read_csv(file_path)
+        for _, row in history_data.iterrows():
+            row_dict = dict(row)
+            history_symbols_key.append(row_dict["symbols"])
+            resultList.append(row_dict)
+
+    # 开始回测
+    count = 0
     for l in combineList:
+        # 判断该组合是否有历史记录，如果有则不重复回测
+        symbols_list = []
+        for data in l:
+            symbols_list.append(data["symbol"])
+        symbols_list = sorted(symbols_list)
+        symbols_key = (", ").join(symbols_list)
+        if symbols_key in history_symbols_key:
+            continue
+
         # 开始回测
         engine = BacktestingEngine()
         engine.setPeriod(start_dt, end_dt)
@@ -536,10 +564,10 @@ def combine_backtesting():
                 over_drawdown_dict[dt] = period_drawdown
 
         # 保存组合回测结果所需的内容
-        totalPnl = round_to(result["totalReturn"], 0.01)
+        total_pnl = round_to(result["totalReturn"], 0.01)
         dic = {
-            "symbolList": engine.symbolList,
-            "totalPnl": f"{totalPnl}%",
+            "symbols": symbols_key,
+            "total_pnl": f"{total_pnl}%",
             "max_drawdown": round_to(result["maxDrawdown"], 0.01),
             "over_drawdown": over_drawdown_dict,
             "over_drawdown_count": len(over_drawdown_dict),
@@ -550,15 +578,7 @@ def combine_backtesting():
 
         # 组合回测结果保存到文件
         if len(resultList):
-            start_dt_str = start_dt.strftime("%Y-%m-%d")
-            end_dt_str = end_dt.strftime("%Y-%m-%d")
-            fieldNames = ["symbolList", "totalPnl", "max_drawdown", "over_drawdown", "over_drawdown_count"]
-            # 文件路径
-            file_dir = f"combine_backtesting_result{DIR_SYMBOL}{marting_type}{DIR_SYMBOL}{exchange}{DIR_SYMBOL}"
-            if not os.path.exists(file_dir):
-                os.makedirs(file_dir)
-
-            file_path = f"{file_dir}{start_dt_str}_{end_dt_str}.csv"
+            fieldNames = ["symbols", "total_pnl", "max_drawdown", "over_drawdown", "over_drawdown_count"]
             with open(file_path, "w") as f:
                 writer = csv.DictWriter(f, fieldnames=fieldNames)
                 writer.writeheader()
