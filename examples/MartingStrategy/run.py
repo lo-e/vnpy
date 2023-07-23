@@ -508,6 +508,9 @@ def combine_backtesting():
                         dt_before = (datetime.strptime(last_drawdown_dt, "%Y-%m-%d") - timedelta(days=i)).strftime("%Y-%m-%d")
                         dd_before = period_drawdown_dict.get(dt_before, 0)
                         if dd_before < period_min_dd:
+                            # 去除原有的回撤记录，只记录三天内最大的
+                            if period_min_dd_dt in period_drawdown_dict:
+                                period_drawdown_dict.pop(period_min_dd_dt)
                             period_min_dd = dd_before
                             period_min_dd_dt = dt_before
                     period_drawdown_dict[period_min_dd_dt] = round_to(period_min_dd, 0.01)
