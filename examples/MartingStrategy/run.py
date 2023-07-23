@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
 import copy
@@ -500,7 +500,17 @@ def combine_backtesting():
             dt = str(dt)
             if drawdown >= 0:
                 if last_drawdown < 0:
-                    period_drawdown_dict[last_drawdown_dt] = round_to(last_drawdown, 0.01)
+                    # 记录三天内最大的回撤
+                    period_min_dd = last_drawdown
+                    period_min_dd_dt = last_drawdown_dt
+                    for i in range(3):
+                        dt_before = datetime.strptime(last_drawdown_dt, "%Y-%m-%d") - timedelta(days=i)
+                        dd_before = period_drawdown_dict.get(dt_before, 0)
+                        if dd_before < period_min_dd:
+                            period_min_dd = dd_before
+                            period_min_dd_dt = dt_before.strftime("%Y-%m-%d")
+                    period_drawdown_dict[period_min_dd_dt] = round_to(period_min_dd, 0.01)
+
                 last_drawdown = drawdown
                 last_drawdown_dt = dt.split(" ")[0]
                 
