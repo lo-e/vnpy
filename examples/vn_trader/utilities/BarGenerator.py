@@ -497,6 +497,16 @@ if __name__ == "__main__":
         print(symbol)
     print(f"\n交易所：{exchange}\n合约总数：{len(symbol_list)}")
     sleep(2)
+
+    # fake
+    start_ = 20
+    end_ = 40
+    print(f"\n本次下载起止合约：{symbol_list[start_]} -> {symbol_list[end_-1]}")
+    symbol_list = symbol_list[start_:end_]
+    print(symbol_list)
+    print(f"总计：{len(symbol_list)}\n")
+    sleep(2)
+
     symbol_list = [f"{symbol}.{exchange}" for symbol in symbol_list]
     processor = MultiThreadsMinuteBarProcessor(
         symbol_list=symbol_list,

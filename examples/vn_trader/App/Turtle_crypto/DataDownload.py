@@ -57,8 +57,8 @@ if __name__ == "__main__":
     sleep(2)
 
     # fake
-    start_ = 20
-    end_ = 40
+    start_ = 40
+    end_ = 60
     print(f"\n本次下载起止合约：{contract_list[start_]} -> {contract_list[end_-1]}")
     contract_list = contract_list[start_:end_]
     print(contract_list)

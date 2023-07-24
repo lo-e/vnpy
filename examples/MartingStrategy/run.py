@@ -505,6 +505,9 @@ def combine_backtesting():
         symbols_list = sorted(symbols_list)
         symbols_key = (", ").join(symbols_list)
         if symbols_key in history_symbols_key:
+            count += 1
+            print(f"{symbols_key} 回测结果已记录")
+            print("count：\t%s\n" % count)
             continue
 
         # 开始回测
