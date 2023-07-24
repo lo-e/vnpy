@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import numpy as np
 import matplotlib.pyplot as plt
 import copy
@@ -25,8 +25,8 @@ from vnpy.trader.utility import round_to
 def backtesting():
     # 回测起始日期
     engine = BacktestingEngine()
-    start_dt = datetime(2023, 6, 30)
-    end_dt = datetime(2023, 8, 1)
+    start_dt = datetime(2023, 1, 1)
+    end_dt = datetime(2023, 7, 22)
     engine.setPeriod(start_dt, end_dt)
     figSavedName = ""
     if figSavedName:
@@ -73,7 +73,7 @@ def backtesting():
     backtesting_history_file = ""
 
     # history_from = f"from_history_2022-10-01_2022-11-02"
-    backtesting_history_file = "2022-01-01_2023-07-02.json"
+    # backtesting_history_file = "2022-01-01_2023-07-02.json"
 
     history_file_path = f"{history_from}{DIR_SYMBOL}{backtesting_history_file}" if history_from else backtesting_history_file
 
@@ -86,9 +86,9 @@ def backtesting():
     if not symbolList:
         return
 
-    engine.initListPortfolio(symbolList, marting_type=marting_type, portfolioValue=10000, history_file=history_file_path)
+    engine.initListPortfolio(symbolList, marting_type=marting_type, exchange=exchange, portfolioValue=10000, history_file=history_file_path)
     engine.loadData()
-    engine.runBacktesting()
+    engine.runBacktesting(daily_mode=False)
     engine.showResult(figSavedName)
 
     # 输出并保存交易数据
@@ -397,32 +397,24 @@ def backtesting():
 
 def combine_backtesting():
     # 选择回测策略类型
-    marting_type = input('选择类型（默认1）【趋势追踪：1  反转：2】')
-    if not marting_type:
-        marting_type = "1"
-
-    if marting_type == "1":
+    marting_type = input('选择类型（默认1）【反转：1 趋势追踪：2】')
+    if marting_type == "2":
         marting_type = "FORWARD"
 
-    elif marting_type == "2":
+    else:
         marting_type = "INVERSE"
 
-    else:
-        exit(f"类型选择错误")
-
     # 选择合约交易所
-    exchange = input('选择交易所（默认1）【Binance：1 Bybit：2】')
-    if not exchange:
-        exchange = "1"
-    if exchange == "1":
-        exchange = "BINANCE"
+    exchange = input('选择交易所（默认1）【Binance：1 OKX：2 Bybit：3】')
+    if exchange == "2":
+        exchange = "OKX"
         if marting_type == "FORWARD":
-            filename = f"setting_forward{DIR_SYMBOL}setting_binance.csv"
+            filename = f"setting_forward{DIR_SYMBOL}setting_okx.csv"
 
         else:
-            filename = f"setting_inverse{DIR_SYMBOL}setting_binance.csv"
+            filename = f"setting_inverse{DIR_SYMBOL}setting_okx.csv"
 
-    elif exchange == "2":
+    elif exchange == "3":
         exchange = "BYBIT"
         if marting_type == "FORWARD":
             filename = f"setting_forward{DIR_SYMBOL}setting_bybit.csv"
@@ -431,23 +423,33 @@ def combine_backtesting():
             filename = f"setting_inverse{DIR_SYMBOL}setting_bybit.csv"
 
     else:
-        exit(f"交易所选择错误")
+        exchange = "BINANCE"
+        if marting_type == "FORWARD":
+            filename = f"setting_forward{DIR_SYMBOL}setting_binance.csv"
+
+        else:
+            filename = f"setting_inverse{DIR_SYMBOL}setting_binance.csv"
     
     # 筛选的合约列表
     target_symbol_list = []
     if marting_type == "FORWARD":
-        # 交集：25
-        # target_symbol_list = ['ANKRUSDT.BINANCE', 'AXSUSDT.BINANCE', 'BELUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DASHUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'EGLDUSDT.BINANCE', 'ENJUSDT.BINANCE', 'ETCUSDT.BINANCE', 'ETHUSDT.BINANCE', 'FTMUSDT.BINANCE', 'GALAUSDT.BINANCE', 'MKRUSDT.BINANCE', 'OGNUSDT.BINANCE', 'OMGUSDT.BINANCE', 'RLCUSDT.BINANCE', 'SFPUSDT.BINANCE', 'SKLUSDT.BINANCE', 'STORJUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'SXPUSDT.BINANCE', 'WAVESUSDT.BINANCE', 'YFIUSDT.BINANCE', 'ZILUSDT.BINANCE', 'ZRXUSDT.BINANCE']
-        # 并集：82
-        target_symbol_list = ['1000SHIBUSDT.BINANCE', '1000XECUSDT.BINANCE', 'AAVEUSDT.BINANCE', 'ADAUSDT.BINANCE', 'ALGOUSDT.BINANCE', 'ALPHAUSDT.BINANCE', 'ANKRUSDT.BINANCE', 'ARPAUSDT.BINANCE', 'ARUSDT.BINANCE', 'ATAUSDT.BINANCE', 'ATOMUSDT.BINANCE', 'AUDIOUSDT.BINANCE', 'AVAXUSDT.BINANCE', 'AXSUSDT.BINANCE', 'BAKEUSDT.BINANCE', 'BATUSDT.BINANCE', 'BCHUSDT.BINANCE', 'BELUSDT.BINANCE', 'BLZUSDT.BINANCE', 'BNBUSDT.BINANCE', 'C98USDT.BINANCE', 'CELRUSDT.BINANCE', 'CHRUSDT.BINANCE', 'COTIUSDT.BINANCE', 'CRVUSDT.BINANCE', 'CTKUSDT.BINANCE', 'CTSIUSDT.BINANCE', 'DASHUSDT.BINANCE', 'DENTUSDT.BINANCE', 'DGBUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'EGLDUSDT.BINANCE', 'ENJUSDT.BINANCE', 'EOSUSDT.BINANCE', 'ETCUSDT.BINANCE', 'ETHUSDT.BINANCE', 'FILUSDT.BINANCE', 'FLMUSDT.BINANCE', 'FTMUSDT.BINANCE', 'GALAUSDT.BINANCE', 'GTCUSDT.BINANCE', 'IOSTUSDT.BINANCE', 'IOTAUSDT.BINANCE', 'KAVAUSDT.BINANCE', 'KNCUSDT.BINANCE', 'LINAUSDT.BINANCE', 'LITUSDT.BINANCE', 'LRCUSDT.BINANCE', 'MANAUSDT.BINANCE', 'MASKUSDT.BINANCE', 'MATICUSDT.BINANCE', 'MKRUSDT.BINANCE', 'NEARUSDT.BINANCE', 'NEOUSDT.BINANCE', 'OGNUSDT.BINANCE', 'OMGUSDT.BINANCE', 'ONEUSDT.BINANCE', 'PEOPLEUSDT.BINANCE', 'RENUSDT.BINANCE', 'RLCUSDT.BINANCE', 'RSRUSDT.BINANCE', 'RUNEUSDT.BINANCE', 'SFPUSDT.BINANCE', 'SKLUSDT.BINANCE', 'SOLUSDT.BINANCE', 'STORJUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'SXPUSDT.BINANCE', 'TRXUSDT.BINANCE', 'UNFIUSDT.BINANCE', 'UNIUSDT.BINANCE', 'WAVESUSDT.BINANCE', 'XEMUSDT.BINANCE', 'XLMUSDT.BINANCE', 'XRPUSDT.BINANCE', 'XTZUSDT.BINANCE', 'YFIUSDT.BINANCE', 'ZECUSDT.BINANCE', 'ZENUSDT.BINANCE', 'ZILUSDT.BINANCE', 'ZRXUSDT.BINANCE']
+        if exchange == "BINANCE":
+            # 交集：25
+            # target_symbol_list = ['ANKRUSDT.BINANCE', 'AXSUSDT.BINANCE', 'BELUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DASHUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'EGLDUSDT.BINANCE', 'ENJUSDT.BINANCE', 'ETCUSDT.BINANCE', 'ETHUSDT.BINANCE', 'FTMUSDT.BINANCE', 'GALAUSDT.BINANCE', 'MKRUSDT.BINANCE', 'OGNUSDT.BINANCE', 'OMGUSDT.BINANCE', 'RLCUSDT.BINANCE', 'SFPUSDT.BINANCE', 'SKLUSDT.BINANCE', 'STORJUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'SXPUSDT.BINANCE', 'WAVESUSDT.BINANCE', 'YFIUSDT.BINANCE', 'ZILUSDT.BINANCE', 'ZRXUSDT.BINANCE']
+            # 并集：82
+            target_symbol_list = ['1000SHIBUSDT.BINANCE', '1000XECUSDT.BINANCE', 'AAVEUSDT.BINANCE', 'ADAUSDT.BINANCE', 'ALGOUSDT.BINANCE', 'ALPHAUSDT.BINANCE', 'ANKRUSDT.BINANCE', 'ARPAUSDT.BINANCE', 'ARUSDT.BINANCE', 'ATAUSDT.BINANCE', 'ATOMUSDT.BINANCE', 'AUDIOUSDT.BINANCE', 'AVAXUSDT.BINANCE', 'AXSUSDT.BINANCE', 'BAKEUSDT.BINANCE', 'BATUSDT.BINANCE', 'BCHUSDT.BINANCE', 'BELUSDT.BINANCE', 'BLZUSDT.BINANCE', 'BNBUSDT.BINANCE', 'C98USDT.BINANCE', 'CELRUSDT.BINANCE', 'CHRUSDT.BINANCE', 'COTIUSDT.BINANCE', 'CRVUSDT.BINANCE', 'CTKUSDT.BINANCE', 'CTSIUSDT.BINANCE', 'DASHUSDT.BINANCE', 'DENTUSDT.BINANCE', 'DGBUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'EGLDUSDT.BINANCE', 'ENJUSDT.BINANCE', 'EOSUSDT.BINANCE', 'ETCUSDT.BINANCE', 'ETHUSDT.BINANCE', 'FILUSDT.BINANCE', 'FLMUSDT.BINANCE', 'FTMUSDT.BINANCE', 'GALAUSDT.BINANCE', 'GTCUSDT.BINANCE', 'IOSTUSDT.BINANCE', 'IOTAUSDT.BINANCE', 'KAVAUSDT.BINANCE', 'KNCUSDT.BINANCE', 'LINAUSDT.BINANCE', 'LITUSDT.BINANCE', 'LRCUSDT.BINANCE', 'MANAUSDT.BINANCE', 'MASKUSDT.BINANCE', 'MATICUSDT.BINANCE', 'MKRUSDT.BINANCE', 'NEARUSDT.BINANCE', 'NEOUSDT.BINANCE', 'OGNUSDT.BINANCE', 'OMGUSDT.BINANCE', 'ONEUSDT.BINANCE', 'PEOPLEUSDT.BINANCE', 'RENUSDT.BINANCE', 'RLCUSDT.BINANCE', 'RSRUSDT.BINANCE', 'RUNEUSDT.BINANCE', 'SFPUSDT.BINANCE', 'SKLUSDT.BINANCE', 'SOLUSDT.BINANCE', 'STORJUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'SXPUSDT.BINANCE', 'TRXUSDT.BINANCE', 'UNFIUSDT.BINANCE', 'UNIUSDT.BINANCE', 'WAVESUSDT.BINANCE', 'XEMUSDT.BINANCE', 'XLMUSDT.BINANCE', 'XRPUSDT.BINANCE', 'XTZUSDT.BINANCE', 'YFIUSDT.BINANCE', 'ZECUSDT.BINANCE', 'ZENUSDT.BINANCE', 'ZILUSDT.BINANCE', 'ZRXUSDT.BINANCE']
 
     else:
-        # （TRENDING_INCREASE_RATE 0.04）最大连续趋势追踪6：8
-        target_symbol_list = ['ALGOUSDT.BINANCE', 'ATOMUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'TRXUSDT.BINANCE']
-        # target_symbol_list = ['ALGOUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE']
-        # target_symbol_list = ['ALGOUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE']
-        # target_symbol_list = ['ALGOUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE']
+        if exchange == "BINANCE":
+            # （TRENDING_INCREASE_RATE 0.04）最大连续趋势追踪6：8
+            target_symbol_list = ['ALGOUSDT.BINANCE', 'ATOMUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'TRXUSDT.BINANCE']
+            # target_symbol_list = ['ALGOUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE']
+            # target_symbol_list = ['ALGOUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE']
+            # target_symbol_list = ['ALGOUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE']
+            target_symbol_list = ['BTCUSDT.BINANCE', 'ETHUSDT.BINANCE', 'LINKUSDT.BINANCE', 'XRPUSDT.BINANCE', 'XLMUSDT.BINANCE', 'SOLUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'MKRUSDT.BINANCE', 'BCHUSDT.BINANCE', 'LTCUSDT.BINANCE', 'COMPUSDT.BINANCE', 'MATICUSDT.BINANCE', 'OPUSDT.BINANCE', 'SNXUSDT.BINANCE', 'ARBUSDT.BINANCE', 'BANDUSDT.BINANCE', 'FILUSDT.BINANCE', 'BNBUSDT.BINANCE', 'DOTUSDT.BINANCE', 'APEUSDT.BINANCE']
             
+        elif exchange == "OKX":
+            target_symbol_list = ['ALGO-USDT-SWAP.OKX', 'DYDX-USDT-SWAP.OKX', 'ENS-USDT-SWAP.OKX', 'EOS-USDT-SWAP.OKX', 'SUSHI-USDT-SWAP.OKX']
 
     # 获取合约列表
     symbolList = []
@@ -462,24 +464,56 @@ def combine_backtesting():
             symbol = symbol_data["symbol"]
             if symbol in target_symbol_list:
                 temp.append(symbol_data)
+
         symbolList = temp
 
     if not symbolList:
         return
 
     # 随机组合合约列表
-    combineList = combine(symbolList, 5)
+    combineList = combine(symbolList, 3)
     print(f"\n随机组合总数：{len(combineList)}\n")
     
-    count = 0
+    # 回测时间
+    start_dt = datetime(2023, 1, 1)
+    end_dt = datetime(2023, 7, 22)
+
+    # 获取历史数据
+    start_dt_str = start_dt.strftime("%Y-%m-%d")
+    end_dt_str = end_dt.strftime("%Y-%m-%d")
+    file_dir = f"combine_backtesting_result{DIR_SYMBOL}{marting_type}{DIR_SYMBOL}{exchange}{DIR_SYMBOL}"
+    if not os.path.exists(file_dir):
+        os.makedirs(file_dir)
+        
+    file_path = f"{file_dir}{start_dt_str}_{end_dt_str}.csv"
     resultList = []
-    start_dt = datetime(2021, 1, 1)
-    end_dt = datetime(2022, 1, 1)
+    history_symbols_key = []
+    if os.path.exists(file_path):
+        history_data = pd.read_csv(file_path)
+        for _, row in history_data.iterrows():
+            row_dict = dict(row)
+            history_symbols_key.append(row_dict["symbols"])
+            resultList.append(row_dict)
+
+    # 开始回测
+    count = 0
     for l in combineList:
+        # 判断该组合是否有历史记录，如果有则不重复回测
+        symbols_list = []
+        for data in l:
+            symbols_list.append(data["symbol"])
+        symbols_list = sorted(symbols_list)
+        symbols_key = (", ").join(symbols_list)
+        if symbols_key in history_symbols_key:
+            count += 1
+            print(f"{symbols_key} 回测结果已记录")
+            print("count：\t%s\n" % count)
+            continue
+
         # 开始回测
         engine = BacktestingEngine()
         engine.setPeriod(start_dt, end_dt)
-        engine.initListPortfolio(l, marting_type=marting_type, portfolioValue=10000)
+        engine.initListPortfolio(l, marting_type=marting_type, exchange=exchange, portfolioValue=10000)
         engine.loadData()
         engine.runBacktesting()
         if not len(engine.resultList):
@@ -497,7 +531,23 @@ def combine_backtesting():
             dt = str(dt)
             if drawdown >= 0:
                 if last_drawdown < 0:
-                    period_drawdown_dict[last_drawdown_dt] = round_to(last_drawdown, 0.01)
+                    # 记录三天内最大的回撤
+                    period_min_dd = last_drawdown
+                    period_min_dd_dt = last_drawdown_dt
+
+                    for i in range(3):
+                        dt_before = (datetime.strptime(last_drawdown_dt, "%Y-%m-%d") - timedelta(days=i)).strftime("%Y-%m-%d")
+                        if dt_before in period_drawdown_dict:
+                            dd_before = period_drawdown_dict[dt_before]
+                            # 选取三天内最大回撤
+                            if dd_before < period_min_dd:
+                                period_min_dd = dd_before
+                                period_min_dd_dt = dt_before
+                            # 去除原有的回撤记录，只记录三天内最大的
+                            period_drawdown_dict.pop(dt_before)
+
+                    period_drawdown_dict[period_min_dd_dt] = round_to(period_min_dd, 0.01)
+
                 last_drawdown = drawdown
                 last_drawdown_dt = dt.split(" ")[0]
                 
@@ -506,6 +556,8 @@ def combine_backtesting():
                 last_drawdown_dt = dt.split(" ")[0]
 
         if last_drawdown < 0:
+            # 保留当天最大回撤
+            last_drawdown = min(last_drawdown, period_drawdown_dict.get(last_drawdown_dt, 0))
             period_drawdown_dict[last_drawdown_dt] = round_to(last_drawdown, 0.01)
 
         # 超出本金的回撤（爆仓）统计
@@ -515,35 +567,26 @@ def combine_backtesting():
                 over_drawdown_dict[dt] = period_drawdown
 
         # 保存组合回测结果所需的内容
-        totalPnl = round_to(result["totalReturn"], 0.01)
+        total_pnl = round_to(result["totalReturn"], 0.01)
         dic = {
-            "symbolList": engine.symbolList,
-            "totalPnl": f"{totalPnl}%",
+            "symbols": symbols_key,
+            "total_pnl": f"{total_pnl}%",
             "max_drawdown": round_to(result["maxDrawdown"], 0.01),
             "over_drawdown": over_drawdown_dict,
             "over_drawdown_count": len(over_drawdown_dict),
         }
         resultList.append(dic)
-
         count += 1
         print("count：\t%s\n" % count)
 
-    # 组合回测结果保存到文件
-    if len(resultList):
-        start_dt_str = start_dt.strftime("%Y-%m-%d")
-        end_dt_str = end_dt.strftime("%Y-%m-%d")
-        fieldNames = ["symbolList", "totalPnl", "max_drawdown", "over_drawdown", "over_drawdown_count"]
-        # 文件路径
-        file_dir = f"combine_backtesting_result{DIR_SYMBOL}{marting_type}{DIR_SYMBOL}"
-        if not os.path.exists(file_dir):
-            os.makedirs(file_dir)
-
-        file_path = f"{file_dir}{start_dt_str}_{end_dt_str}.csv"
-        with open(file_path, "w") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldNames)
-            writer.writeheader()
-            # 写入csv文件
-            writer.writerows(resultList)
+        # 组合回测结果保存到文件
+        if len(resultList):
+            fieldNames = ["symbols", "total_pnl", "max_drawdown", "over_drawdown", "over_drawdown_count"]
+            with open(file_path, "w") as f:
+                writer = csv.DictWriter(f, fieldnames=fieldNames)
+                writer.writeheader()
+                # 写入csv文件
+                writer.writerows(resultList)
 
     print("=" * 20)
     print("组合数：%s" % count)
@@ -660,7 +703,7 @@ def combine(l, n):
 
 if __name__ == "__main__":
     # 合约列表回测
-    backtesting()
+    # backtesting()
 
     # 随机组合合约列表回测
-    # combine_backtesting()
+    combine_backtesting()

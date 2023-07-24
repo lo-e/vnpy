@@ -18,7 +18,7 @@ if __name__ == "__main__":
         mode = input("选择模式（默认1）【接口获取：1 正向：2 反向：3】")
         if mode == "2":
             contract_list = ["BTC-USDT-SWAP", "ETH-USDT-SWAP"]
-            contract_list = ["ADA-USDT-SWAP"]
+            contract_list = ['ALGO-USDT-SWAP', 'DYDX-USDT-SWAP', 'ENS-USDT-SWAP', 'EOS-USDT-SWAP', 'SUSHI-USDT-SWAP']
 
         elif mode == "3":
             contract_list = ["BTC-USD-SWAP", "ETH-USD-SWAP"]
@@ -57,10 +57,11 @@ if __name__ == "__main__":
     sleep(2)
 
     # fake
-    start_ = 0
-    end_ = 20
+    start_ = 40
+    end_ = 60
     print(f"\n本次下载起止合约：{contract_list[start_]} -> {contract_list[end_-1]}")
     contract_list = contract_list[start_:end_]
+    print(contract_list)
     print(f"总计：{len(contract_list)}\n")
 
     # 起止日期
@@ -68,6 +69,7 @@ if __name__ == "__main__":
     # to_date = datetime.now() + timedelta(days=2)
     days = (datetime.now() - datetime.strptime("2020-12-01", "%Y-%m-%d")).days
     to_date = datetime.strptime("2023-12-31", "%Y-%m-%d")
+    sleep(2)
 
     # 是否从数据库最新数据日期开始
     from_data_base = True
@@ -89,7 +91,7 @@ if __name__ == "__main__":
             days=days,
             to_date=to_date,
             from_data_base=from_data_base,
-            api_check=True,
+            api_check=False,
         )
 
     elif exchange == "BYBIT":
