@@ -16,6 +16,7 @@ import os
 from pathlib import Path
 import json
 
+UNIT_RATE = 0.1 # 初始开仓价值比率
 REDUCE_RATE = 0.005 # 盈利平仓比率
 TRENDING_INCREASE_RATE = 0.02 # 持续加仓比率
 TOP_STEP = 8
@@ -27,7 +28,6 @@ class MartingInverseSignal(object):
         symbol,
         direction,
         ma_window,
-        unit_rate,
         history_data: dict = {},
     ):
         # 常量
@@ -35,7 +35,7 @@ class MartingInverseSignal(object):
         self.symbol = symbol  # 合约代码
         self.direction = direction  # 交易方向
         self.ma_window = ma_window  # 均线参数
-        self.unit_value = self.portfolio.portfolioValue * unit_rate  # 单位持仓价值
+        self.unit_value = self.portfolio.portfolioValue * UNIT_RATE  # 单位持仓价值
         self.symbol_min_volume = self.portfolio.engine.min_volume_dict[
             self.symbol
         ]  # 合约最小交易数量
@@ -383,13 +383,13 @@ class MartingInversePortfolio(object):
             long_signal_key = f"{signal_key}_{Direction.LONG.value}"
             long_history_data = history_data.get(long_signal_key, {})
             signal1 = MartingInverseSignal(
-                self, symbol, Direction.LONG, 9, 0.015, history_data=long_history_data
+                self, symbol, Direction.LONG, 9, history_data=long_history_data
             )
 
             short_signal_key = f"{signal_key}_{Direction.SHORT.value}"
             short_history_data = history_data.get(short_signal_key, {})
             signal2 = MartingInverseSignal(
-                self, symbol, Direction.SHORT, 9, 0.015, history_data=short_history_data
+                self, symbol, Direction.SHORT, 9, history_data=short_history_data
             )
 
             l = self.signalDict[symbol]

@@ -353,7 +353,7 @@ def backtesting():
             for signal in signal_list:
                 # 数据来源
                 data_object = signal
-                
+
                 # 信号的状态
                 symbol = signal.symbol
                 pure_symbol = symbol[:symbol.index('USDT')] 
