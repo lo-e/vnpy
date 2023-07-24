@@ -14,7 +14,8 @@ from vnpy.trader.object import BarData
 from vnpy.trader.constant import Direction, Exchange
 
 from martingStrategy_trending_forward import MartingForwardPortfolio
-from martingStrategy_trending_inverse import MartingInversePortfolio
+# from martingStrategy_trending_inverse import MartingInversePortfolio
+from martingStrategy_trending_inverse_test import MartingInversePortfolio
 
 from vnpy.app.cta_strategy.base import DAILY_DB_NAME, MINUTE_DB_NAME, HOUR_DB_NAME, MinuteDataBaseName, HourDataBaseName
 import pandas as pd
@@ -86,7 +87,7 @@ class BacktestingEngine(object):
                 self.target_symbol_list = ['ALGOUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE']
                 # self.target_symbol_list = ['ALGOUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE']
                 # self.target_symbol_list = ['ALGOUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE']
-                self.target_symbol_list = []
+                self.target_symbol_list = ["LINKUSDT.BINANCE"]
             
             elif exchange == "OKX":
                 self.target_symbol_list = ['ALGO-USDT-SWAP.OKX', 'DYDX-USDT-SWAP.OKX', 'ENS-USDT-SWAP.OKX', 'EOS-USDT-SWAP.OKX', 'SUSHI-USDT-SWAP.OKX']
