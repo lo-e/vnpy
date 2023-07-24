@@ -352,7 +352,7 @@ def backtesting():
         for _, signal_list in engine.portfolio.signalDict.items():
             for signal in signal_list:
                 # 数据来源
-                data_object = signal
+                data_object = signal.inverse_signal
 
                 # 信号的状态
                 symbol = signal.symbol
