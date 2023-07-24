@@ -351,15 +351,18 @@ def backtesting():
         signal_trending_step_dict = {} # 回测结果中信号的趋势追踪信息
         for _, signal_list in engine.portfolio.signalDict.items():
             for signal in signal_list:
+                # 数据来源
+                data_object = signal
+                
                 # 信号的状态
                 symbol = signal.symbol
                 pure_symbol = symbol[:symbol.index('USDT')] 
                 direction = signal.direction
                 signal_key = f"MARTING_{exchange}_{pure_symbol}_{direction.value}"
-                backtesting_data[signal_key] = signal.inverse_signal.saved_sync_data
+                backtesting_data[signal_key] = data_object.saved_sync_data
 
                 # 信号组合的最新趋势追踪信息
-                signal_status = signal.inverse_signal.saved_sync_data.get("backtesting_status", {})
+                signal_status = data_object.saved_sync_data.get("backtesting_status", {})
                 if signal_status:
                     trade_setting = signal_trade_setting.get(signal_key, {})
                     signal_bottom = trade_setting.get("bottom_step", 0)
@@ -368,8 +371,8 @@ def backtesting():
                     
                     direction_v = 1 if signal.direction == Direction.LONG else -1
                     position_pnl = (
-                        (signal.inverse_signal.bar.close_price / signal.inverse_signal.position_price) - 1
-                    ) * 100 * direction_v
+                        (data_object.bar.close_price / data_object.position_price) - 1
+                    ) * 100 * direction_v if data_object.position_price else 0
                     position_pnl = round_to(position_pnl, 0.01)
                     position_pnl = f"{position_pnl}%"
 

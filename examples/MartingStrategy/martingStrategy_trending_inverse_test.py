@@ -183,22 +183,14 @@ class MartingInverseSignal(object):
             if reduce_price_cross:
                 """ 满足减仓条件 """
 
-                # 发出订单
-                if self.direction == Direction.LONG:
-                    self.portfolio.newSignal(
-                        Direction.SHORT,
-                        Offset.CLOSE,
-                        trade_price,
-                        abs(self.position),
-                    )
+                # 在变量更新前进行组合策略更新，已获取仓位变更前的状态数据
+                self.portfolio.update_trending(self, False)
 
-                elif self.direction == Direction.SHORT:
-                    self.portfolio.newSignal(
-                        Direction.LONG,
-                        Offset.CLOSE,
-                        trade_price,
-                        abs(self.position),
-                    )
+                # 组合策略检查最高等级
+                self.portfolio.check_top_step(self, False)
+
+                # 成交数量
+                trade_volume = abs(self.position)
 
                 # 变量更新
                 self.position = 0
@@ -207,11 +199,24 @@ class MartingInverseSignal(object):
                 self.trending_step = 0
                 self.current_trending_group = []
 
-                # 组合策略更新
-                self.portfolio.update_trending(self, False)
+                # 变量更新后发出订单，已获取仓位变更后的状态数据
+                if self.direction == Direction.LONG:
+                    self.portfolio.newSignal(
+                        self,
+                        Direction.SHORT,
+                        Offset.CLOSE,
+                        trade_price,
+                        trade_volume,
+                    )
 
-                # 组合策略检查最高等级
-                self.portfolio.check_top_step(self, False)
+                elif self.direction == Direction.SHORT:
+                    self.portfolio.newSignal(
+                        self,
+                        Direction.LONG,
+                        Offset.CLOSE,
+                        trade_price,
+                        trade_volume,
+                    )
 
                 # 更新持仓最大亏损
                 self.max_loss_value = 0
@@ -252,50 +257,56 @@ class MartingInverseSignal(object):
                 """ 满足加仓条件 """
 
                 # 加仓的合约数量
-                changed_volume = 0
+                trade_volume = 0
 
                 # 当前持仓价值、目标持仓价值
                 current_position_value = abs(self.position) * self.position_price
                 target_position_value = current_position_value * 2 if current_position_value else self.unit_value
 
                 # 计算加仓的合约数量
-                changed_volume = ((target_position_value - current_position_value)) / trade_price
-                changed_volume = round_to(changed_volume, self.symbol_min_volume)
+                trade_volume = ((target_position_value - current_position_value)) / trade_price
+                trade_volume = round_to(trade_volume, self.symbol_min_volume)
 
                 # 加仓数量检查
-                if changed_volume <= 0:
+                if trade_volume <= 0:
                     exit("加仓数量错误，检查代码！")
 
-                # 发起订单
+                # 在变量更新前进行组合策略更新，已获取仓位变更前的状态数据
+                self.portfolio.update_trending(self, True)
+
+                # 变量更新
                 if self.direction == Direction.LONG:
-                    self.position = abs(self.position) + changed_volume
-                    self.portfolio.newSignal(
-                        Direction.LONG,
-                        Offset.OPEN,
-                        trade_price,
-                        changed_volume,
-                    )
+                    self.position = abs(self.position) + trade_volume
 
                 elif self.direction == Direction.SHORT:
-                    self.position = (abs(self.position) + changed_volume) * -1
-                    self.portfolio.newSignal(
-                        Direction.SHORT,
-                        Offset.OPEN,
-                        trade_price,
-                        changed_volume,
-                    )
-                
-                # 变量更新
-                self.position_price = ((changed_volume * trade_price) + current_position_value) / abs(self.position)
+                    self.position = (abs(self.position) + trade_volume) * -1
+
+                self.position_price = ((trade_volume * trade_price) + current_position_value) / abs(self.position)
                 self.tag_price = trade_price
                 self.trending_step += 1
                 self.current_trending_group.append({"datetime":bar.datetime.strftime("%Y-%m-%d %H:%M:%S"),
                                                     "trending_step":self.trending_step,
                                                     "max_loss_value":self.max_loss_value,
                                                     "max_loss_rate":self.max_loss_rate})
+                
+                # 变量更新后发出订单，已获取仓位变更后的状态数据
+                if self.direction == Direction.LONG:
+                    self.portfolio.newSignal(
+                        self,
+                        Direction.LONG,
+                        Offset.OPEN,
+                        trade_price,
+                        trade_volume,
+                    )
 
-                # 组合策略更新
-                self.portfolio.update_trending(self, True)
+                elif self.direction == Direction.SHORT:
+                    self.portfolio.newSignal(
+                        self,
+                        Direction.SHORT,
+                        Offset.OPEN,
+                        trade_price,
+                        trade_volume,
+                    )
                 
                 # 更新持仓最大亏损
                 self.max_loss_value = 0
@@ -309,19 +320,19 @@ class MartingInverseSignal(object):
         self.ma_price = self.am.sma(self.ma_window)
 
         # 标记价格
+        self.tag_price = self.tag_price if self.tag_price else self.ma_price
         if self.direction == Direction.LONG:
             self.tag_price = max(self.tag_price, self.ma_price)
         
         elif self.direction == Direction.SHORT:
             self.tag_price = min(self.tag_price, self.ma_price)
 
-        if self.position_price:
-            # 减仓价格
-            if self.direction == Direction.LONG:
-                self.position_reduce_price = self.position_price * (1 + REDUCE_RATE)
+        # 减仓价格
+        if self.direction == Direction.LONG:
+            self.position_reduce_price = self.position_price * (1 + REDUCE_RATE)
 
-            elif self.direction == Direction.SHORT:
-                self.position_reduce_price = self.position_price * (1 - REDUCE_RATE)
+        elif self.direction == Direction.SHORT:
+            self.position_reduce_price = self.position_price * (1 - REDUCE_RATE)
 
         # 加仓价格
         if self.direction == Direction.LONG:
@@ -430,37 +441,35 @@ class MartingInversePortfolio(object):
         for trending_update_data in self.trending_update_list:
             signal = trending_update_data["signal"]
             trending = trending_update_data["trending"]
-            max_loss_value = trending_update_data["max_loss_value"]
-            max_loss_rate = trending_update_data["max_loss_rate"]
             last_position_price = trending_update_data["last_position_price"]
+            last_max_loss_value = trending_update_data["last_max_loss_value"]
+            last_max_loss_rate = trending_update_data["last_max_loss_rate"]
 
             # 缓存趋势追踪记录
             signal_key = f"{signal.symbol}_{signal.direction.value}"
 
-            # 趋势策略当前持仓均价
-            position_price = signal.position_price
-
             # 趋势策略当前持仓价值
-            position_value = abs(round_to(signal.position * signal.position_price, 1))
+            position_value = abs(round_to(abs(signal.position) * signal.position_price, 1))
 
             # 平仓盈亏
             close_pnl = 0
             if not trending:
                 direction_v = 1 if signal.direction == Direction.LONG else -1
-                close_pnl = ((position_price / last_position_price) - 1) * 100 * direction_v
+                close_pnl = ((signal.tag_price / last_position_price) - 1) * 100 * direction_v
                 close_pnl = round_to(close_pnl, 0.01)
                 close_pnl = f"{close_pnl}%"
 
             data = {
                 "datetime": self.dt,
                 "signal": signal_key,
-                "position_price": position_price,
+                "position_price": signal.position_price,
                 "position_value": position_value,
                 "close_pnl": close_pnl,
-                "max_loss_value": max_loss_value,
-                "max_loss_rate": max_loss_rate,
+                "max_loss_value": last_max_loss_value,
+                "max_loss_rate": last_max_loss_rate,
                 "trending": trending,
             }
+            # "tag_price": signal.tag_price,
             signal_trending_list = self.trending_history_dict.get(signal_key, [])
             signal_trending_list.append(data)
             self.trending_history_dict[signal_key] = signal_trending_list
@@ -470,15 +479,12 @@ class MartingInversePortfolio(object):
 
     def update_trending(self, signal, trending):
         # ====== 趋势策略信号的开仓/平仓都会调用这个方法，先缓存更新内容，在on_daily完成更新 ======
-        max_loss_value = signal.max_loss_value
-        max_loss_rate = signal.max_loss_rate
         trending_data = {
             "signal": signal,
             "trending": trending,
-            "tag_price": signal.tag_price,
             "last_position_price": signal.position_price,
-            "max_loss_value": max_loss_value,
-            "max_loss_rate": max_loss_rate,
+            "last_max_loss_value": signal.max_loss_value,
+            "last_max_loss_rate": signal.max_loss_rate,
         }
         self.trending_update_list.append(trending_data)
 
@@ -555,8 +561,8 @@ class MartingInversePortfolio(object):
             "signal_position_value": round_to(
                 abs(signal.position) * signal.position_price, 1
             ),
-            "max_loss_value": signal.inverse_signal.max_loss_value,
-            "max_loss_rate": signal.inverse_signal.max_loss_rate,
+            "max_loss_value": signal.max_loss_value,
+            "max_loss_rate": signal.max_loss_rate,
         }
         signal_trades_list.append(trade_data)
         self.signalTradesDict[signal_key] = signal_trades_list
