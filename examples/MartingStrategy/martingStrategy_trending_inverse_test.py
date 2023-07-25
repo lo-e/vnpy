@@ -247,71 +247,72 @@ class MartingInverseSignal(object):
                     and bar.high_price >= trade_price
                 ):
                     increase_price_cross = True
-            
-            # 检查最高等级
-            top_cross = True
-            if self.trending_step + 1 >= TOP_STEP:
-                top_cross = self.portfolio.check_top_step(self, True)
 
-            if increase_price_cross and top_cross:
+            if increase_price_cross:
                 """ 满足加仓条件 """
 
-                # 加仓的合约数量
-                trade_volume = 0
+                # 检查最高等级
+                top_cross = True
+                if self.trending_step + 1 >= TOP_STEP:
+                    top_cross = self.portfolio.check_top_step(self, True)
 
-                # 当前持仓价值、目标持仓价值
-                current_position_value = abs(self.position) * self.position_price
-                target_position_value = current_position_value * 2 if current_position_value else self.unit_value
+                if top_cross:
+                    # 加仓的合约数量
+                    trade_volume = 0
 
-                # 计算加仓的合约数量
-                trade_volume = ((target_position_value - current_position_value)) / trade_price
-                trade_volume = round_to(trade_volume, self.symbol_min_volume)
+                    # 当前持仓价值、目标持仓价值
+                    current_position_value = abs(self.position) * self.position_price
+                    target_position_value = current_position_value * 2 if current_position_value else self.unit_value
 
-                # 加仓数量检查
-                if trade_volume <= 0:
-                    exit("加仓数量错误，检查代码！")
+                    # 计算加仓的合约数量
+                    trade_volume = ((target_position_value - current_position_value)) / trade_price
+                    trade_volume = round_to(trade_volume, self.symbol_min_volume)
 
-                # 在变量更新前进行组合策略更新，已获取仓位变更前的状态数据
-                self.portfolio.update_trending(self, True)
+                    # 加仓数量检查
+                    if trade_volume <= 0:
+                        exit("加仓数量错误，检查代码！")
 
-                # 变量更新
-                if self.direction == Direction.LONG:
-                    self.position = abs(self.position) + trade_volume
+                    # 在变量更新前进行组合策略更新，已获取仓位变更前的状态数据
+                    self.portfolio.update_trending(self, True)
 
-                elif self.direction == Direction.SHORT:
-                    self.position = (abs(self.position) + trade_volume) * -1
+                    # 变量更新
+                    if self.direction == Direction.LONG:
+                        self.position = abs(self.position) + trade_volume
 
-                self.position_price = ((trade_volume * trade_price) + current_position_value) / abs(self.position)
-                self.tag_price = trade_price
-                self.trending_step += 1
-                self.current_trending_group.append({"datetime":bar.datetime.strftime("%Y-%m-%d %H:%M:%S"),
-                                                    "trending_step":self.trending_step,
-                                                    "max_loss_value":self.max_loss_value,
-                                                    "max_loss_rate":self.max_loss_rate})
-                
-                # 变量更新后发出订单，已获取仓位变更后的状态数据
-                if self.direction == Direction.LONG:
-                    self.portfolio.newSignal(
-                        self,
-                        Direction.LONG,
-                        Offset.OPEN,
-                        trade_price,
-                        trade_volume,
-                    )
+                    elif self.direction == Direction.SHORT:
+                        self.position = (abs(self.position) + trade_volume) * -1
 
-                elif self.direction == Direction.SHORT:
-                    self.portfolio.newSignal(
-                        self,
-                        Direction.SHORT,
-                        Offset.OPEN,
-                        trade_price,
-                        trade_volume,
-                    )
-                
-                # 更新持仓最大亏损
-                self.max_loss_value = 0
-                self.max_loss_rate = ""
-                self.calculate_max_loss()
+                    self.position_price = ((trade_volume * trade_price) + current_position_value) / abs(self.position)
+                    self.tag_price = trade_price
+                    self.trending_step += 1
+                    self.current_trending_group.append({"datetime":bar.datetime.strftime("%Y-%m-%d %H:%M:%S"),
+                                                        "trending_step":self.trending_step,
+                                                        "max_loss_value":self.max_loss_value,
+                                                        "max_loss_rate":self.max_loss_rate})
+                    
+                    # 变量更新后发出订单，已获取仓位变更后的状态数据
+                    if self.direction == Direction.LONG:
+                        self.portfolio.newSignal(
+                            self,
+                            Direction.LONG,
+                            Offset.OPEN,
+                            trade_price,
+                            trade_volume,
+                        )
+
+                    elif self.direction == Direction.SHORT:
+                        self.portfolio.newSignal(
+                            self,
+                            Direction.SHORT,
+                            Offset.OPEN,
+                            trade_price,
+                            trade_volume,
+                        )
+                    
+                    # 更新持仓最大亏损
+                    self.max_loss_value = 0
+                    self.max_loss_rate = ""
+                    self.calculate_max_loss()
 
     def calculate_indicator(self):
         """计算入场指标"""
