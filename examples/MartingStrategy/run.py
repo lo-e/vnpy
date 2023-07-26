@@ -475,12 +475,12 @@ def combine_backtesting():
         return
 
     # 随机组合合约列表
-    combineList = combine(symbolList, 3)
+    combineList = combine(symbolList, 1)
     print(f"\n随机组合总数：{len(combineList)}\n")
     
     # 回测时间
     start_dt = datetime(2023, 1, 1)
-    end_dt = datetime(2023, 7, 22)
+    end_dt = datetime(2023, 7, 25)
 
     # 获取历史数据
     start_dt_str = start_dt.strftime("%Y-%m-%d")
@@ -707,7 +707,7 @@ def combine(l, n):
 
 if __name__ == "__main__":
     # 合约列表回测
-    backtesting()
+    # backtesting()
 
     # 随机组合合约列表回测
-    # combine_backtesting()
+    combine_backtesting()
