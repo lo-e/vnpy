@@ -1,7 +1,6 @@
 # encoding: UTF-8
 
 from collections import defaultdict
-from inspect import currentframe
 from vnpy.trader.constant import Direction, Offset, Exchange
 from vnpy.trader.utility import ArrayManager
 from datetime import datetime, timedelta
@@ -16,9 +15,11 @@ import os
 from pathlib import Path
 import json
 
-UNIT_RATE = 0.1 # 初始开仓价值比率
+UNIT_RATE = 0.2 # 初始开仓价值比率
 REDUCE_RATE = 0.005 # 盈利平仓比率
-TRENDING_INCREASE_RATE = 0.02 # 持续加仓比率
+CONTINUOUS_INCREASE_RATE = 0.02 # 持续加仓比率
+TRENDING_INCREASE_RATE = 0.04 # 趋势加仓比率
+TRENDING_OPEN_LOSS_RATE = 0.02 # 趋势加仓时的持仓亏损比率
 TOP_STEP = 8
 
 class MartingInverseSignal(object):
@@ -157,6 +158,9 @@ class MartingInverseSignal(object):
         要注意在任何一个数据点：buy/sell/short/cover只允许执行一类动作
         """
 
+        if "BCH" in self.symbol and self.direction == Direction.SHORT and bar.datetime >= datetime.strptime("2023-06-30 20:00:00", "%Y-%m-%d %H:%M:%S"):
+            a = 2
+
         # 检查减仓
         if self.position_reduce_price:
             # 成交价格
@@ -251,17 +255,16 @@ class MartingInverseSignal(object):
             if increase_price_cross:
                 """ 满足加仓条件 """
 
-                # 检查最高等级
-                top_cross = True
-                if self.trending_step + 1 >= TOP_STEP:
-                    top_cross = self.portfolio.check_top_step(self, True)
+                # 加仓的合约数量
+                trade_volume = 0
 
-                if top_cross:
-                    # 加仓的合约数量
-                    trade_volume = 0
+                # 当前持仓价值、目标持仓价值
+                current_position_value = abs(self.position) * self.position_price
+                
+                if self.trending_step + 1 < TOP_STEP:
+                    """ 固定倍数加仓 """
 
-                    # 当前持仓价值、目标持仓价值
-                    current_position_value = abs(self.position) * self.position_price
+                    # 目标持仓价值
                     target_position_value = current_position_value * 2 if current_position_value else self.unit_value
 
                     # 计算加仓的合约数量
@@ -272,6 +275,30 @@ class MartingInverseSignal(object):
                     if trade_volume <= 0:
                         exit("加仓数量错误，检查代码！")
 
+                else:
+                    """ 根据持仓价格百分比加仓 """
+
+                    # 检查最高等级
+                    top_cross = self.portfolio.check_top_step(self, True)
+                    if top_cross:
+                        # 计算加仓数量
+                        if self.direction == Direction.LONG:
+                            target_positon_price = trade_price * (1 + TRENDING_OPEN_LOSS_RATE)
+
+                        elif self.direction == Direction.SHORT:
+                            target_positon_price = trade_price * (1 - TRENDING_OPEN_LOSS_RATE)
+
+                        trade_volume = (
+                            abs(self.position) * target_positon_price
+                            - current_position_value
+                        ) / (trade_price - target_positon_price)
+                        trade_volume = round_to(trade_volume, self.symbol_min_volume)
+                        
+                        # 加仓数量检查
+                        if trade_volume <= 0:
+                            exit("加仓数量错误，检查代码！")
+
+                if trade_volume > 0:
                     # 在变量更新前进行组合策略更新，已获取仓位变更前的状态数据
                     self.portfolio.update_trending(self, True)
 
@@ -336,11 +363,19 @@ class MartingInverseSignal(object):
             self.position_reduce_price = self.position_price * (1 - REDUCE_RATE)
 
         # 加仓价格
-        if self.direction == Direction.LONG:
-            self.position_increase_price = self.tag_price * (1 - TRENDING_INCREASE_RATE)
+        if self.trending_step + 1 < TOP_STEP:
+            if self.direction == Direction.LONG:
+                self.position_increase_price = self.tag_price * (1 - CONTINUOUS_INCREASE_RATE)
 
-        elif self.direction == Direction.SHORT:
-            self.position_increase_price = self.tag_price * (1 + TRENDING_INCREASE_RATE)
+            elif self.direction == Direction.SHORT:
+                self.position_increase_price = self.tag_price * (1 + CONTINUOUS_INCREASE_RATE)
+        
+        else:
+            if self.direction == Direction.LONG:
+                self.position_increase_price = self.position_price * (1 - TRENDING_INCREASE_RATE)
+
+            elif self.direction == Direction.SHORT:
+                self.position_increase_price = self.position_price * (1 + TRENDING_INCREASE_RATE)
 
     def save_sync_data(self):
         status = {}
@@ -442,6 +477,7 @@ class MartingInversePortfolio(object):
         for trending_update_data in self.trending_update_list:
             signal = trending_update_data["signal"]
             trending = trending_update_data["trending"]
+            trade_price = trending_update_data["trade_price"]
             last_position_price = trending_update_data["last_position_price"]
             last_max_loss_value = trending_update_data["last_max_loss_value"]
             last_max_loss_rate = trending_update_data["last_max_loss_rate"]
@@ -456,7 +492,7 @@ class MartingInversePortfolio(object):
             close_pnl = 0
             if not trending:
                 direction_v = 1 if signal.direction == Direction.LONG else -1
-                close_pnl = ((signal.tag_price / last_position_price) - 1) * 100 * direction_v
+                close_pnl = ((trade_price / last_position_price) - 1) * 100 * direction_v
                 close_pnl = round_to(close_pnl, 0.01)
                 close_pnl = f"{close_pnl}%"
 
@@ -483,6 +519,7 @@ class MartingInversePortfolio(object):
         trending_data = {
             "signal": signal,
             "trending": trending,
+            "trade_price": round_to(signal.ma_price, signal.symbol_price_tick),
             "last_position_price": signal.position_price,
             "last_max_loss_value": signal.max_loss_value,
             "last_max_loss_rate": signal.max_loss_rate,
