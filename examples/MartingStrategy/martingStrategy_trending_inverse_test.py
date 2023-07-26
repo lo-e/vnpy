@@ -20,7 +20,7 @@ REDUCE_RATE = 0.005 # 盈利平仓比率
 CONTINUOUS_INCREASE_RATE = 0.02 # 持续加仓比率
 TRENDING_INCREASE_RATE = 0.04 # 趋势加仓比率
 TRENDING_OPEN_LOSS_RATE = 0.02 # 趋势加仓时的持仓亏损比率
-TOP_STEP = 8
+TOP_STEP = 6
 
 class MartingInverseSignal(object):
     def __init__(
