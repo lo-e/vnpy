@@ -99,6 +99,7 @@ class BacktestingEngine(object):
                 if symbol in self.symbolList:
                     temp.append(symbol)
             self.symbolList = temp
+        self.symbolList = sorted(self.symbolList)
         self.portfolio.init(portfolioValue, self.symbolList, history_file=history_file)
         self.portfolio.tradingStart = self.tradingStart
 
