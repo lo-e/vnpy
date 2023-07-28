@@ -219,8 +219,16 @@ class BacktestingEngine(object):
             endBalance += result.netPnl
             balanceList.append(endBalance)
             returnList.append(endBalance/prevBalance - 1)
+
             
             highlevel = max(highlevel, endBalance)
+            if result.posDict:
+                pos_value = 0
+                for symbol, pos in result.posDict.items():
+                    symbol_price = result.closeDict.get(symbol, 0)
+                    pos_value += symbol_price * abs(pos)
+                if pos_value < self.portfolio.portfolioValue and highlevel - endBalance > self.portfolio.portfolioValue * 0.5:
+                    highlevel = endBalance
             highlevelList.append(highlevel)
 
             dateList.append(result.date)

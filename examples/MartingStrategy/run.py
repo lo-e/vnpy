@@ -479,8 +479,8 @@ def combine_backtesting():
     print(f"\n随机组合总数：{len(combineList)}\n")
     
     # 回测时间
-    start_dt = datetime(2023, 1, 1)
-    end_dt = datetime(2023, 7, 25)
+    start_dt = datetime(2022, 1, 1)
+    end_dt = datetime(2023, 1, 1)
 
     # 获取历史数据
     start_dt_str = start_dt.strftime("%Y-%m-%d")
