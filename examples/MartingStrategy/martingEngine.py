@@ -15,7 +15,7 @@ from vnpy.trader.constant import Direction, Exchange
 
 from martingStrategy_trending_forward import MartingForwardPortfolio
 # from martingStrategy_trending_inverse import MartingInversePortfolio
-from martingStrategy_trending_inverse_test import MartingInversePortfolio
+from martingStrategy_trending_inverse_beta import MartingInversePortfolio
 
 from vnpy.app.cta_strategy.base import DAILY_DB_NAME, MINUTE_DB_NAME, HOUR_DB_NAME, MinuteDataBaseName, HourDataBaseName
 import pandas as pd
