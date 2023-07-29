@@ -73,6 +73,8 @@ class MartingInverseSignal(object):
         self.max_loss_rate = ""  # 当前持仓最大亏损比率
         self.ma_price = 0  # 均线价格
         self.trending_step = 0  # 追踪趋势的等级
+        self.open_waitting = False # 等待正在交易的反方向信号平仓才能开仓，且只能从初始仓位开始
+        self.top_open = False # 是否允许突破加仓，根据反方向信号的趋势追踪等级判断
         self.current_trending_group = []
 
         # 初始化状态
@@ -157,8 +159,9 @@ class MartingInverseSignal(object):
         判断交易信号
         要注意在任何一个数据点：buy/sell/short/cover只允许执行一类动作
         """
-
-        if "BCH" in self.symbol and self.direction == Direction.SHORT and bar.datetime >= datetime.strptime("2023-06-30 20:00:00", "%Y-%m-%d %H:%M:%S"):
+        
+        # fake
+        if "DOT" in self.symbol and self.direction == Direction.SHORT and bar.datetime >= datetime.strptime("2022-01-02 22:20:00", "%Y-%m-%d %H:%M:%S"):
             a = 2
 
         # 检查减仓
@@ -203,24 +206,35 @@ class MartingInverseSignal(object):
                 self.trending_step = 0
                 self.current_trending_group = []
 
-                # 变量更新后发出订单，已获取仓位变更后的状态数据
-                if self.direction == Direction.LONG:
-                    self.portfolio.newSignal(
-                        self,
-                        Direction.SHORT,
-                        Offset.CLOSE,
-                        trade_price,
-                        trade_volume,
-                    )
+                if not self.open_waitting:
+                    # 变量更新后发出订单，已获取仓位变更后的状态数据
+                    if self.direction == Direction.LONG:
+                        self.portfolio.newSignal(
+                            self,
+                            Direction.SHORT,
+                            Offset.CLOSE,
+                            trade_price,
+                            trade_volume,
+                        )
 
-                elif self.direction == Direction.SHORT:
-                    self.portfolio.newSignal(
-                        self,
-                        Direction.LONG,
-                        Offset.CLOSE,
-                        trade_price,
-                        trade_volume,
-                    )
+                    elif self.direction == Direction.SHORT:
+                        self.portfolio.newSignal(
+                            self,
+                            Direction.LONG,
+                            Offset.CLOSE,
+                            trade_price,
+                            trade_volume,
+                        )
+                
+                else:
+                    # 判断开仓等待
+                    signal_key = f"{self.symbol}_{self.direction.value}"
+                    signal_pos = self.portfolio.signalPosDict.get(signal_key, 0)
+                    if signal_pos:
+                        exit("开仓等待信号有仓位，检查代码！")
+
+                # 取消开仓等待
+                self.open_waitting = False
 
                 # 更新持仓最大亏损
                 self.max_loss_value = 0
@@ -231,26 +245,56 @@ class MartingInverseSignal(object):
 
         # 检查加仓
         if self.position_increase_price:
+            # 获取反方向信号
+            oppsite_signal = self.portfolio.get_oppsite_signal(self)
+            
+            # 判断开仓等待
+            oppsite_signal_key = f"{oppsite_signal.symbol}_{oppsite_signal.direction.value}"
+            oppsite_signal_pos = self.portfolio.signalPosDict.get(oppsite_signal_key, 0)
+            if abs(oppsite_signal_pos) > 0:
+                self.open_waitting = True
+
             # 成交价格
             trade_price = round_to(self.ma_price, self.symbol_price_tick)
 
             # 是否达到目标价位
             increase_price_cross = False
-            if self.direction == Direction.LONG:
-                if (
-                    self.ma_price <= self.position_increase_price
-                    and bar.high_price >= trade_price
-                    and bar.low_price <= trade_price
-                ):
-                    increase_price_cross = True
 
-            if self.direction == Direction.SHORT:
-                if (
-                    self.ma_price >= self.position_increase_price
-                    and bar.low_price <= trade_price
-                    and bar.high_price >= trade_price
-                ):
-                    increase_price_cross = True
+            if self.trending_step + 1 < TOP_STEP or self.open_waitting:
+                if self.direction == Direction.LONG:
+                    if (
+                        self.ma_price <= self.position_increase_price
+                        and bar.high_price >= trade_price
+                        and bar.low_price <= trade_price
+                    ):
+                        increase_price_cross = True
+
+                if self.direction == Direction.SHORT:
+                    if (
+                        self.ma_price >= self.position_increase_price
+                        and bar.low_price <= trade_price
+                        and bar.high_price >= trade_price
+                    ):
+                        increase_price_cross = True
+            
+            elif self.top_open:
+                if self.direction == Direction.LONG:
+                    if (
+                        self.ma_price <= self.position_increase_price
+                        and bar.high_price >= trade_price
+                        and bar.low_price <= trade_price
+                    ):
+                        increase_price_cross = True
+                        self.top_open = False
+
+                if self.direction == Direction.SHORT:
+                    if (
+                        self.ma_price >= self.position_increase_price
+                        and bar.low_price <= trade_price
+                        and bar.high_price >= trade_price
+                    ):
+                        increase_price_cross = True
+                        self.top_open = False
 
             if increase_price_cross:
                 """ 满足加仓条件 """
@@ -278,8 +322,14 @@ class MartingInverseSignal(object):
                 else:
                     """ 根据持仓价格百分比加仓 """
 
+                    # 正在交易的反向信号允许突破加仓
+                    if self.open_waitting and oppsite_signal.trending_step + 1 >= TOP_STEP:
+                        oppsite_signal.top_open = True
+
                     # 检查最高等级
-                    top_cross = self.portfolio.check_top_step(self, True)
+                    top_cross = True
+                    if not self.open_waitting:
+                        top_cross = self.portfolio.check_top_step(self, True)
                     if top_cross:
                         # 计算加仓数量
                         if self.direction == Direction.LONG:
@@ -317,24 +367,25 @@ class MartingInverseSignal(object):
                                                         "max_loss_value":self.max_loss_value,
                                                         "max_loss_rate":self.max_loss_rate})
                     
-                    # 变量更新后发出订单，已获取仓位变更后的状态数据
-                    if self.direction == Direction.LONG:
-                        self.portfolio.newSignal(
-                            self,
-                            Direction.LONG,
-                            Offset.OPEN,
-                            trade_price,
-                            trade_volume,
-                        )
+                    if not self.open_waitting:
+                        # 变量更新后发出订单，已获取仓位变更后的状态数据
+                        if self.direction == Direction.LONG:
+                            self.portfolio.newSignal(
+                                self,
+                                Direction.LONG,
+                                Offset.OPEN,
+                                trade_price,
+                                trade_volume,
+                            )
 
-                    elif self.direction == Direction.SHORT:
-                        self.portfolio.newSignal(
-                            self,
-                            Direction.SHORT,
-                            Offset.OPEN,
-                            trade_price,
-                            trade_volume,
-                        )
+                        elif self.direction == Direction.SHORT:
+                            self.portfolio.newSignal(
+                                self,
+                                Direction.SHORT,
+                                Offset.OPEN,
+                                trade_price,
+                                trade_volume,
+                            )
                     
                     # 更新持仓最大亏损
                     self.max_loss_value = 0
@@ -543,6 +594,13 @@ class MartingInversePortfolio(object):
             else:
                 return False
     
+    def get_oppsite_signal(self, signal):
+        l = self.signalDict[signal.symbol]
+        for target in l:
+            if target != signal:
+                return target
+        return None
+
     def newSignal(self, signal, direction, offset, price, volume):
         # 策略当前持仓数量
         signal_key = f"{signal.symbol}_{signal.direction.value}"
