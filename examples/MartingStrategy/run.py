@@ -475,7 +475,7 @@ def combine_backtesting():
         return
 
     # 随机组合合约列表
-    combineList = combine(symbolList, 5)
+    combineList = combine(symbolList, 1)
     print(f"\n随机组合总数：{len(combineList)}\n")
     
     # 回测时间
