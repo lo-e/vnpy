@@ -59,6 +59,7 @@ class MartingStrategy(CtaTemplate):
         "current_pnl_rate",
         "trending_step",
         "target_volume",
+        "open_waitting",
     ]
 
     # 同步列表，保存了需要保存到数据库的变量名称
@@ -98,6 +99,7 @@ class MartingStrategy(CtaTemplate):
         self.tag_price = 0 # 标记价格
         self.tag_price_dt = None # 标记时间
         self.target_volume = -1  # 目标持仓
+        self.open_waitting = False # 实盘交易等待
         self.window_bar_list = []  # 基于实时Tick数据生成的周期Bar数据列表
         self.monitor_dict = {} # 最新的同步和监控的变量数据，用于检查是否更新，如更新及时同步数据库和刷新UI
         self.open_email_suspend = False # 加仓超限email发送暂停
@@ -163,65 +165,93 @@ class MartingStrategy(CtaTemplate):
             return
         self.is_backtesting = True
 
-        try:
-            # 载入历史数据
-            data_from = datetime.now - timedelta(hours=2)
-            backtesting_data = self.cta_engine.load_bar(
-                vt_symbol=self.vt_symbol,
-                data_from=data_from,
-                interval=Interval.MINUTE,
-                window=5,
-                callback=None,
-            )
+        # 载入历史数据
+        data_from = datetime.now - timedelta(hours=2)
+        backtesting_data = self.cta_engine.load_bar(
+            vt_symbol=self.vt_symbol,
+            data_from=data_from,
+            interval=Interval.MINUTE,
+            window=5,
+            callback=None,
+        )
 
-            # 剔除最后一个Bar数据，保证数据的准确性
-            backtesting_data = backtesting_data[0:-1]
-            if len(backtesting_data):
-                # 添加实时Bar数据
-                live_data = []
-                last_bar = backtesting_data[-1]
-                next_bar_dt = last_bar.datetime + timedelta(minutes=self.interval_window)
-                for i in range(len(self.window_bar_list)):
-                    bar = self.window_bar_list[i]
-                    if bar.datetime == next_bar_dt:
-                        live_data = self.window_bar_list[i:]
-                        break
-                backtesting_data += live_data
+        # 剔除最后一个Bar数据，保证数据的准确性
+        backtesting_data = backtesting_data[0:-1]
+        if len(backtesting_data):
+            # 添加实时Bar数据
+            live_data = []
+            last_bar = backtesting_data[-1]
+            next_bar_dt = last_bar.datetime + timedelta(minutes=self.interval_window)
+            for i in range(len(self.window_bar_list)):
+                bar = self.window_bar_list[i]
+                if bar.datetime == next_bar_dt:
+                    live_data = self.window_bar_list[i:]
+                    break
+            backtesting_data += live_data
 
-            # 开始数据回测
-            self.am = ArrayManager(self.ma_window)
-            for bar in backtesting_data:
-                if not bar.check_valid():
-                    raise ("Bar数据校验不通过！！")
-                self.am.update_bar(bar)
+        # 开始数据回测
+        self.am = ArrayManager(self.ma_window)
+        self.ma_price = 0
+        self.bar_dt = None
+        for bar in backtesting_data:
+            if not bar.check_valid():
+                raise ("Bar数据校验不通过！！")
+            self.am.update_bar(bar)
 
-                if self.am.inited:
-                    # 最新Bar时间
-                    self.bar_dt = bar.datetime
+            if self.am.inited:
+                # 均线价格
+                self.ma_price = self.am.sma(self.ma_window)
+                self.bar_dt = bar.datetime
 
-                    # 均线价格
-                    self.ma_price = self.am.sma(self.ma_window)
+                # 标记价格
+                if self.tag_price and bar.datetime > self.tag_price_dt:
+                    if self.direction == Direction.LONG:
+                        self.tag_price = max(self.tag_price, self.ma_price)
+                    
+                    elif self.direction == Direction.SHORT:
+                        self.tag_price = min(self.tag_price, self.ma_price)
+                    self.tag_price_dt = bar.datetime
 
-                    # 标记价格
-                    if not self.tag_price:
-                        self.tag_price = self.ma_price
-                        self.tag_price_dt = bar.datetime
-
-                    if bar.datetime > self.tag_price_dt:
-                        if self.direction == Direction.LONG:
-                            self.tag_price = max(self.tag_price, self.ma_price)
-                        
-                        elif self.direction == Direction.SHORT:
-                            self.tag_price = min(self.tag_price, self.ma_price)
-
-        except:
-            pass
+        # 计算入场指标
+        self.calculate_indicator()
 
         # 结束回测
         self.is_backtesting = False
         self.backtesting_wait = 0
-        print(f"回测结束：{self.bar_dt}")
         self.put_timer_event()
+
+    def calculate_indicator(self):
+        """计算入场指标"""
+
+        if not self.am.inited:
+            return
+        
+        # 初始化标记价格
+        if not self.tag_price:
+            self.tag_price = self.ma_price
+            self.tag_price_dt = self.bar_dt
+
+        # 减仓价格
+        if self.direction == Direction.LONG:
+            self.position_reduce_price = self.position_price * (1 + REDUCE_RATE)
+
+        elif self.direction == Direction.SHORT:
+            self.position_reduce_price = self.position_price * (1 - REDUCE_RATE)
+
+        # 加仓价格
+        if self.trending_step + 1 < TOP_STEP:
+            if self.direction == Direction.LONG:
+                self.position_increase_price = self.tag_price * (1 - CONTINUOUS_INCREASE_RATE)
+
+            elif self.direction == Direction.SHORT:
+                self.position_increase_price = self.tag_price * (1 + CONTINUOUS_INCREASE_RATE)
+        
+        else:
+            if self.direction == Direction.LONG:
+                self.position_increase_price = self.position_price * (1 - TRENDING_INCREASE_RATE)
+
+            elif self.direction == Direction.SHORT:
+                self.position_increase_price = self.position_price * (1 + TRENDING_INCREASE_RATE)
 
     def on_timer(self):
         # 回测等待
@@ -334,167 +364,72 @@ class MartingStrategy(CtaTemplate):
         if self.target_volume >= 0:
             return
 
-        # 策略成交价格
-        strategy_ma_price = self.strategy_status["ma_price"]
-        trade_price = round_to(strategy_ma_price, self.symbol_price_tick)
-        if not strategy_ma_price:
-            self.raise_error(f"均线价格异常")
+        # 均线判断
+        if not self.ma_price:
+            return
 
         # 邮件通知内容
         email_msg = ""
 
-        if self.pos:
-            # ====== 检查平仓 ======
-            if not self.position_close_price:
-                self.raise_error(f"平仓价格异常")
-            
-            # 平仓价格
-            target_close_price = self.position_close_price
+        # 获取反方向信号
+        oppsite_strategy = self.get_oppsite_strategy()
 
-            # 选择盈利最大化平仓价格
-            strategy_reduce_price = self.strategy_status["position_reduce_price"]
-            strategy_trending_step = self.strategy_status["trending_step"]
-            if self.trending_step == strategy_trending_step:
-                if self.direction == Direction.LONG:
-                    target_close_price = max(self.position_close_price, strategy_reduce_price)
-                
-                if self.direction == Direction.SHORT:
-                    target_close_price = min(self.position_close_price, strategy_reduce_price)
+        if self.position_close_price:
+            # ====== 检查平仓 ======
 
             # 是否达到目标价位
             if self.direction == Direction.LONG:
                 if (
-                    strategy_ma_price >= target_close_price
-                    and tick.last_price <= trade_price
-                    and tick.last_price > trade_price - self.symbol_price_tick * 5
+                    self.ma_price >= self.position_close_price
+                    and tick.last_price <= self.ma_price
+                    and tick.last_price > self.ma_price - self.symbol_price_tick * 5
                 ):
                     self.target_volume = 0
 
             if self.direction == Direction.SHORT:
                 if (
-                    strategy_ma_price <= target_close_price
-                    and tick.last_price >= trade_price
-                    and tick.last_price < trade_price + self.symbol_price_tick * 5
+                    self.ma_price <= self.position_close_price
+                    and tick.last_price >= self.ma_price
+                    and tick.last_price < self.ma_price + self.symbol_price_tick * 5
                 ):
                     self.target_volume = 0
-
-            if self.target_volume == 0:
-                # 邮件提醒
-                position_value = abs(self.pos) * self.position_price
-                email_msg += f"\n反转平仓：当前趋势追踪等级{self.trending_step} 持仓价值{position_value}"
 
         # 下一实盘趋势追踪等级
         next_trending_step = 0
         if self.target_volume < 0:
-            # ====== 检查建仓加仓 ======
-            strategy_trending_step = self.strategy_status["trending_step"]
-            strategy_next_trending_step = self.strategy_status["next_trending_step"]
-            strategy_position_increase_price = self.strategy_status[
-                "position_increase_price"
-            ]
+            if self.trending_step + 1 < TOP_STEP or self.open_waitting:
 
-            if not strategy_position_increase_price:
+            # ====== 检查建仓加仓 ======
+            if not self.position_increase_price:
                 self.raise_error(f"建仓加仓价格异常")
 
-            # 回测下一趋势追踪等级满足指定条件
-            if (
-                strategy_next_trending_step >= self.bottom_step
-                and strategy_next_trending_step > self.trending_step
-            ): 
-                # 策略组合最多只能有一个趋势追踪最高等级
-                trending_top_cross = True
-                if strategy_next_trending_step >= self.top_step and self.portfolio.trending_top_strategies and self.strategy_name not in self.portfolio.trending_top_strategies:
-                    trending_top_cross = False
-
-                if trending_top_cross:
-                    # 是否达到目标价位
-                    if self.direction == Direction.LONG:
-                        if (
-                            strategy_ma_price <= strategy_position_increase_price
-                            and tick.last_price >= trade_price
-                            and tick.last_price < trade_price + self.symbol_price_tick * 5
-                        ):
-                            next_trending_step = strategy_next_trending_step
-
-                    elif self.direction == Direction.SHORT:
-                        if (
-                            strategy_ma_price >= strategy_position_increase_price
-                            and tick.last_price <= trade_price
-                            and tick.last_price > trade_price - self.symbol_price_tick * 5
-                        ):
-                            next_trending_step = strategy_next_trending_step
-
-                    if next_trending_step:
-                        # 邮件提醒
-                        email_msg += f"\n反转加仓【下一趋势等级】：当前{self.trending_step} 即将：{next_trending_step}"
-
-            # 回测当前趋势追踪等级比当前实盘的高
-            if not next_trending_step:
+            # 是否达到目标价位
+            if self.direction == Direction.LONG:
                 if (
-                    strategy_trending_step >= self.bottom_step
-                    and strategy_trending_step > self.trending_step
+                    self.ma_price <= self.position_increase_price
+                    and tick.last_price >= self.ma_price
+                    and tick.last_price < self.ma_price + self.symbol_price_tick * 5
                 ):
-                    # 策略组合最多只能有一个趋势追踪最高等级
-                    trending_top_cross = True
-                    if strategy_trending_step >= self.top_step and self.portfolio.trending_top_strategies and self.strategy_name not in self.portfolio.trending_top_strategies:
-                        trending_top_cross = False
+                    next_trending_step = self.trending_step + 1
 
-                    if trending_top_cross:
-                        # 判断当前回测持仓盈亏是否满足指定条件
-                        strategy_position_price = self.strategy_status["position_price"]
-
-                        if self.direction == Direction.LONG:
-                            if (
-                                strategy_ma_price <= strategy_position_price * (1 - TRENDING_OPEN_LOSS_RATE)
-                                and tick.last_price >= trade_price
-                                and tick.last_price < trade_price + self.symbol_price_tick * 5
-                            ):
-                                next_trending_step = strategy_trending_step
-
-                        elif self.direction == Direction.SHORT:
-                            if (
-                                strategy_ma_price >= strategy_position_price * (1 + TRENDING_OPEN_LOSS_RATE)
-                                and tick.last_price <= trade_price
-                                and tick.last_price > trade_price - self.symbol_price_tick * 5
-                            ):
-                                next_trending_step = strategy_trending_step
-
-                        if next_trending_step:
-                            # 邮件提醒
-                            email_msg += f"\n反转加仓【当前趋势等级】：当前{self.trending_step} 即将：{next_trending_step}"
-
-            # 回测趋势追踪等级与实盘不匹配，以实盘加仓标准再次判断
-            if not next_trending_step:
-                target_trending_step = self.trending_step + 1
-                if strategy_trending_step != self.trending_step and target_trending_step >= self.bottom_step and self.position_increase_price:
-                    # 策略组合最多只能有一个趋势追踪最高等级
-                    trending_top_cross = True
-                    if target_trending_step >= self.top_step and self.portfolio.trending_top_strategies and self.strategy_name not in self.portfolio.trending_top_strategies:
-                        trending_top_cross = False
-
-                    if trending_top_cross:
-                        # 是否达到目标价位
-                        if self.direction == Direction.LONG:
-                            if (
-                                strategy_ma_price <= self.position_increase_price
-                                and tick.last_price >= trade_price
-                                and tick.last_price < trade_price + self.symbol_price_tick * 5
-                            ):
-                                next_trending_step = target_trending_step
-
-                        elif self.direction == Direction.SHORT:
-                            if (
-                                strategy_ma_price >= self.position_increase_price
-                                and tick.last_price <= trade_price
-                                and tick.last_price > trade_price - self.symbol_price_tick * 5
-                            ):
-                                next_trending_step = target_trending_step
-
-                        if next_trending_step:
-                            # 邮件提醒
-                            email_msg = f"\n反转加仓【实盘下一趋势等级】：当前{self.trending_step} 即将：{next_trending_step}"
+            elif self.direction == Direction.SHORT:
+                if (
+                    self.ma_price >= self.position_increase_price
+                    and tick.last_price <= self.ma_price
+                    and tick.last_price > self.ma_price - self.symbol_price_tick * 5
+                ):
+                    next_trending_step = self.trending_step + 1
 
             if next_trending_step:
+                # 邮件提醒
+                email_msg = f"\n马丁策略加仓：\n当前等级{self.trending_step}\n加仓后等级：{next_trending_step}"
+
+            if next_trending_step:
+                # 策略组合仓位限制
+                # trending_top_cross = True
+                # if target_trending_step >= self.top_step and self.portfolio.trending_top_strategies and self.strategy_name not in self.portfolio.trending_top_strategies:
+                #     trending_top_cross = False
+
                 # 当前持仓价值
                 current_position_value = abs(self.pos) * self.position_price
 
@@ -586,7 +521,9 @@ class MartingStrategy(CtaTemplate):
                 self.portfolio.update_trending_top()
 
                 # 邮件通知
-                if email_msg:
+                if self.pos:
+                    position_value = abs(self.pos) * self.position_price
+                    email_msg += f"\n马丁策略平仓：\n当前趋势追踪等级{self.trending_step}\n平仓价值{position_value}"
                     self.send_email(content=email_msg)
 
                 # 提交订单
@@ -714,3 +651,14 @@ class MartingStrategy(CtaTemplate):
     def send_email(self, content):
         # 邮件发送通知
         self.cta_engine.send_email(msg=content, subject=f"马丁策略{self.strategy_name}")
+    
+    def get_oppsite_strategy(self):
+        oppsite_strategy_name = ""
+        if self.direction == Direction.LONG:
+            oppsite_strategy_name = self.strategy_name.replace("多", "空")
+
+        elif self.direction == Direction.SHORT:
+            oppsite_strategy_name = self.strategy_name.replace("空", "多")
+
+        oppsite_strategy = self.cta_engine.strategies.get(oppsite_strategy_name, None)
+        return oppsite_strategy
