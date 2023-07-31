@@ -19,9 +19,12 @@ from App.marting.martingPortfolio import BAR_DOWNLOAD_GENERATE_COMPLETE
 from vnpy.event import Event
 from copy import copy
 
-TRENDING_OPEN_LOSS_RATE = 0.02 # 趋势加仓时的持仓亏损比率
+UNIT_RATE = 0.1 # 初始开仓价值比率
 REDUCE_RATE = 0.005 # 盈利平仓比率
+CONTINUOUS_INCREASE_RATE = 0.01 # 持续加仓比率
 TRENDING_INCREASE_RATE = 0.04 # 趋势加仓比率
+TRENDING_OPEN_LOSS_RATE = 0.02 # 趋势加仓时的持仓亏损比率
+TOP_STEP = 3
 
 class MartingStrategy(CtaTemplate):
     """马丁策略"""
@@ -32,7 +35,6 @@ class MartingStrategy(CtaTemplate):
     # 策略参数
     interval_window = 5  # 数据的时间周期5分钟
     ma_window = 9  # 均线参数
-    rsi_window = 14  # RSI参数
 
     # 参数列表，保存了参数的名称
     parameters = [
@@ -40,7 +42,6 @@ class MartingStrategy(CtaTemplate):
         "vt_symbol",
         "direction",
         "ma_window",
-        "rsi_window",
         "init_value_rate",
         "bottom_step",
         "top_step",
@@ -224,7 +225,6 @@ class MartingStrategy(CtaTemplate):
                 vt_symbol=self.vt_symbol,
                 direction=self.direction,
                 ma_window=self.ma_window,
-                rsi_window=self.rsi_window,
                 symbol_min_volume=self.symbol_min_volume,
                 symbol_price_tick=self.symbol_price_tick,
                 init_status=copy(self.backtesting_status),
@@ -848,7 +848,6 @@ class MartingBacktesting(object):
         vt_symbol: str,
         direction: Direction,
         ma_window: int,
-        rsi_window: int,
         symbol_min_volume: float,
         symbol_price_tick: float,
         init_status: dict,
@@ -860,7 +859,6 @@ class MartingBacktesting(object):
         self.vt_symbol = vt_symbol  # 合约代码
         self.direction = direction  # 交易方向
         self.ma_window = ma_window  # 均线参数
-        self.rsi_window = rsi_window  # RSI参数
         self.symbol_min_volume = symbol_min_volume  # 合约最小交易数量
         self.symbol_price_tick = symbol_price_tick  # 合约最小价格变动
         self.init_status = init_status  # 回测初始状态
@@ -873,7 +871,7 @@ class MartingBacktesting(object):
             False if self.init_status else True
         )  # 开始回测开关，当有初始状态时，回测Bar数据需要从start_dt开始
         self.bar: BarData = None  # 最新K线
-        self.am = ArrayManager(max(self.ma_window, self.rsi_window + 12))  # K线容器
+        self.am = ArrayManager(self.ma_window)  # K线容器
         self.position = 0  # 持仓量
         self.position_price = 0  # 持仓均价
         self.position_reduce_price = 0  # 减仓价格
@@ -881,7 +879,6 @@ class MartingBacktesting(object):
         self.max_loss_value = 0  # 当前持仓最大亏损价值
         self.max_loss_rate = ""  # 当前持仓最大亏损比率
         self.ma_price = 0  # 均线价格
-        self.rsi_array = []
         self.trending_step = 0  # 趋势追踪等级
         self.next_trending_step = 0  # 下一个趋势追踪等级
         self.current_trending_group = []
@@ -896,7 +893,6 @@ class MartingBacktesting(object):
             "max_loss_value",
             "max_loss_rate",
             "ma_price",
-            "rsi_array",
             "trending_step",
             "next_trending_step",
             "current_trending_group",
@@ -1216,13 +1212,6 @@ class MartingBacktesting(object):
 
         # 均线价格
         self.ma_price = self.am.sma(self.ma_window)
-
-        # RSI指标
-        self.rsi_array = []
-        rsi_result = self.am.rsi(self.rsi_window, True)
-        for rsi in rsi_result:
-            if not np.isnan(rsi):
-                self.rsi_array.append(rsi)
 
         if self.position_price:
             # ====== 减仓价格 ======

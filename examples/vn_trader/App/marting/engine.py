@@ -62,7 +62,6 @@ import re
 from collections import OrderedDict
 from time import sleep
 from decimal import Decimal
-from .base import StrategyExecuteMode
 
 STOP_STATUS_MAP = {
     Status.SUBMITTING: StopOrderStatus.WAITING,
@@ -84,15 +83,9 @@ from .base import EVENT_MARTING_PORTFOLIO
 
 class MartingEngine(BaseEngine):
     """"""
-    execute_mode = StrategyExecuteMode.INVERSE_ONLY
-
     engine_type = EngineType.LIVE  # live trading engine
 
-    if execute_mode == StrategyExecuteMode.FORWARD_ONLY:
-        setting_filename = "marting_setting_forward.json"
-    
-    elif execute_mode == StrategyExecuteMode.INVERSE_ONLY:
-        setting_filename = "marting_setting_inverse.json"
+    setting_filename = "marting_setting.json"
 
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
         """"""
