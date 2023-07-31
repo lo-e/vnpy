@@ -279,10 +279,13 @@ class MartingPortfolio(object):
     def update_trending_top(self):
         self.trending_top_strategies = []
         for _, strategy in self.engine.strategies.items():
-            if strategy.trending_step >= strategy.top_step:
+            if strategy.trending_step >= strategy.top_step and not strategy.open_waitting:
                 self.trending_top_strategies.append(strategy.strategy_name)
 
-    def check_open_cross(self, open_value):
+    def check_open_cross(self, strategy, open_value):
+        if strategy.open_waitting:
+            return True
+        
         self.update_strategys_position_value()
         result_value = self.total_strategy_value + open_value
         if result_value >= self.portfolioValue * 20:
