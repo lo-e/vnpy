@@ -322,27 +322,32 @@ class MartingInverseSignal(object):
                 else:
                     """ 根据持仓价格百分比加仓 """
 
-                    # 检查最高等级
-                    top_cross = True
+                    # 计算加仓数量
+                    if self.direction == Direction.LONG:
+                        target_positon_price = trade_price * (1 + TRENDING_OPEN_LOSS_RATE)
+
+                    elif self.direction == Direction.SHORT:
+                        target_positon_price = trade_price * (1 - TRENDING_OPEN_LOSS_RATE)
+
+                    trade_volume = (
+                        abs(self.position) * target_positon_price
+                        - current_position_value
+                    ) / (trade_price - target_positon_price)
+                    trade_volume = round_to(trade_volume, self.symbol_min_volume)
+                    
+                    # 加仓数量检查
+                    if trade_volume <= 0:
+                        exit("加仓数量错误，检查代码！")
+
+                    # 控制组合总持仓价值
                     if not self.open_waitting:
-                        top_cross = self.portfolio.check_top_step(self, True)
-                    if top_cross:
-                        # 计算加仓数量
-                        if self.direction == Direction.LONG:
-                            target_positon_price = trade_price * (1 + TRENDING_OPEN_LOSS_RATE)
-
-                        elif self.direction == Direction.SHORT:
-                            target_positon_price = trade_price * (1 - TRENDING_OPEN_LOSS_RATE)
-
-                        trade_volume = (
-                            abs(self.position) * target_positon_price
-                            - current_position_value
-                        ) / (trade_price - target_positon_price)
-                        trade_volume = round_to(trade_volume, self.symbol_min_volume)
-                        
-                        # 加仓数量检查
-                        if trade_volume <= 0:
-                            exit("加仓数量错误，检查代码！")
+                        # 目标持仓价值
+                        target_position_value = (abs(self.position) + trade_volume) * target_positon_price
+                        if target_position_value >= self.portfolio.portfolioValue:
+                            # 检查最高等级
+                            top_cross = self.portfolio.check_top_step(self, True)
+                            if not top_cross:
+                                trade_volume = 0
 
                 if trade_volume > 0:
                     # 在变量更新前进行组合策略更新，已获取仓位变更前的状态数据
