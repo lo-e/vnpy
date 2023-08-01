@@ -559,6 +559,8 @@ class MartingStrategy(CtaTemplate):
                 self.tag_price_dt = self.bar_dt
                 self.trending_step = 0
                 self.open_waitting = False
+                if not oppsite_strategy.trending_step:
+                    oppsite_strategy.open_waitting = False
 
                 # 更新策略组合
                 self.portfolio.update_trending_top()

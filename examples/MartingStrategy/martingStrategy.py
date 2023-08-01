@@ -161,7 +161,7 @@ class MartingSignal(object):
         """
         
         # fake
-        if "DOT" in self.symbol and self.direction == Direction.LONG and bar.datetime >= datetime.strptime("2023-02-22 23:40:00", "%Y-%m-%d %H:%M:%S"):
+        if "LINK" in self.symbol and self.direction == Direction.LONG and bar.datetime >= datetime.strptime("2023-06-28 01:10:00", "%Y-%m-%d %H:%M:%S"):
             a = 2
 
         # 获取反方向信号
@@ -241,6 +241,8 @@ class MartingSignal(object):
 
                 # 取消开仓等待
                 self.open_waitting = False
+                if not oppsite_signal.trending_step:
+                    oppsite_signal.open_waitting = False
 
                 # 更新持仓最大亏损
                 self.max_loss_value = 0
