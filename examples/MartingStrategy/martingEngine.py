@@ -75,7 +75,7 @@ class BacktestingEngine(object):
             self.target_symbol_list = ['ALGOUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE']
             # self.target_symbol_list = ['ALGOUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE']
             # self.target_symbol_list = ['ALGOUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE']
-            self.target_symbol_list = ['LINKUSDT.BINANCE']
+            self.target_symbol_list = ['DOTUSDT.BINANCE']
             # ['DOTUSDT.BINANCE', 'XRPUSDT.BINANCE', 'EOSUSDT.BINANCE', 'LINKUSDT.BINANCE', 'DOGEUSDT.BINANCE']
         
         elif exchange == "OKX":

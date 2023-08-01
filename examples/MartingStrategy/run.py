@@ -25,8 +25,8 @@ from vnpy.trader.utility import round_to
 def backtesting():
     # 回测起始日期
     engine = BacktestingEngine()
-    start_dt = datetime(2023, 6, 26)
-    end_dt = datetime(2023, 7, 27)
+    start_dt = datetime(2023, 1, 1)
+    end_dt = datetime(2023, 8, 1)
     engine.setPeriod(start_dt, end_dt)
     figSavedName = ""
     if figSavedName:
