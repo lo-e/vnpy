@@ -99,6 +99,7 @@ class MartingStrategy(CtaTemplate):
         self.position_increase_price = 0 # 加仓价格
         self.current_pnl_rate = ""  # 当前持仓亏损比率【基于Tick数据实时计算】
         self.trending_step = 0  # 趋势追踪等级
+        self.ma_price = 0 # 均线
         self.bar_dt = None # 最新的bar时间
         self.tick_dt = None # 最新的tick时间
         self.tick_trade_enable = False  # Tick数据时间在回测后的指定范围内允许交易
