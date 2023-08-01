@@ -51,6 +51,7 @@ class MartingStrategy(CtaTemplate):
         "symbol_min_volume",
         "tag_price",
         "tag_price_dt",
+        "ma_price",
         "bar_dt",
         "tick_dt",
         "tick_trade_enable",
