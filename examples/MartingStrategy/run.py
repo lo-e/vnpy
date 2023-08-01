@@ -26,7 +26,7 @@ def backtesting():
     # 回测起始日期
     engine = BacktestingEngine()
     start_dt = datetime(2023, 1, 1)
-    end_dt = datetime(2023, 8, 1)
+    end_dt = datetime(2023, 8, 2)
     engine.setPeriod(start_dt, end_dt)
     figSavedName = ""
     if figSavedName:
@@ -474,7 +474,7 @@ def combine_backtesting():
     
     # 回测时间
     start_dt = datetime(2022, 1, 1)
-    end_dt = datetime(2023, 7, 25)
+    end_dt = datetime(2023, 8, 2)
 
     # 获取历史数据
     start_dt_str = start_dt.strftime("%Y-%m-%d")
@@ -701,7 +701,7 @@ def combine(l, n):
 
 if __name__ == "__main__":
     # 合约列表回测
-    backtesting()
+    # backtesting()
 
     # 随机组合合约列表回测
-    # combine_backtesting()
+    combine_backtesting()

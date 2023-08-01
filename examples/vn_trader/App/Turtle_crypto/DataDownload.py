@@ -57,19 +57,19 @@ if __name__ == "__main__":
     sleep(2)
 
     # fake
-    start_ = 40
-    end_ = 60
-    print(f"\n本次下载起止合约：{contract_list[start_]} -> {contract_list[end_-1]}")
-    contract_list = contract_list[start_:end_]
-    print(contract_list)
-    print(f"总计：{len(contract_list)}\n")
-    sleep(2)
+    # start_ = 40
+    # end_ = 60
+    # print(f"\n本次下载起止合约：{contract_list[start_]} -> {contract_list[end_-1]}")
+    # contract_list = contract_list[start_:end_]
+    # print(contract_list)
+    # print(f"总计：{len(contract_list)}\n")
+    # sleep(2)
 
     # 起止日期
-    # days = 6
-    # to_date = datetime.now() + timedelta(days=2)
-    days = (datetime.now() - datetime.strptime("2020-12-01", "%Y-%m-%d")).days
-    to_date = datetime.strptime("2023-12-31", "%Y-%m-%d")
+    days = 6
+    to_date = datetime.now() + timedelta(days=2)
+    # days = (datetime.now() - datetime.strptime("2020-12-01", "%Y-%m-%d")).days
+    # to_date = datetime.strptime("2023-12-31", "%Y-%m-%d")
 
     # 是否从数据库最新数据日期开始
     from_data_base = True
