@@ -257,6 +257,7 @@ class MartingPortfolio(object):
             self.strategys_backtesting_history = history_data
 
     def save_backtesting_history(self):
+        return
         # 策略历史数据回测保存到json文件中
         for _, strategy in self.engine.strategies.items():
             if strategy.backtesting_status and strategy.backtesting_to:

@@ -24,7 +24,7 @@ REDUCE_RATE = 0.005 # 盈利平仓比率
 CONTINUOUS_INCREASE_RATE = 0.01 # 持续加仓比率
 TRENDING_INCREASE_RATE = 0.04 # 趋势加仓比率
 TRENDING_OPEN_LOSS_RATE = 0.02 # 趋势加仓时的持仓亏损比率
-TOP_STEP = 3
+TOP_STEP = 6
 
 class MartingStrategy(CtaTemplate):
     """马丁策略"""
@@ -49,6 +49,8 @@ class MartingStrategy(CtaTemplate):
         "strategy_name",
         "symbol_price_tick",
         "symbol_min_volume",
+        "tag_price",
+        "tag_price_dt",
         "bar_dt",
         "tick_dt",
         "tick_trade_enable",
@@ -108,6 +110,8 @@ class MartingStrategy(CtaTemplate):
         self.window_bar_list = []  # 基于实时Tick数据生成的周期Bar数据列表
         self.monitor_dict = {} # 最新的同步和监控的变量数据，用于检查是否更新，如更新及时同步数据库和刷新UI
         self.open_email_suspend = False # 加仓超限email发送暂停
+        self.is_backtesting = False # 是否正在回测
+        self.backtesting_wait = 100 # 回测缓冲时间
 
         self.am = ArrayManager(self.ma_window)  # K线容器
         self.window_bar_generator = BarGenerator(
@@ -171,7 +175,7 @@ class MartingStrategy(CtaTemplate):
         self.is_backtesting = True
 
         # 载入历史数据
-        data_from = datetime.now - timedelta(hours=2)
+        data_from = datetime.now() - timedelta(days=2)
         backtesting_data = self.cta_engine.load_bar(
             vt_symbol=self.vt_symbol,
             data_from=data_from,
@@ -510,6 +514,7 @@ class MartingStrategy(CtaTemplate):
                         self.send_email(content=email_msg)
 
                     self.tag_price = self.ma_price
+                    self.tag_price_dt = self.bar_dt
                     self.trending_step = next_trending_step
 
                     # 更新策略组合
@@ -549,6 +554,7 @@ class MartingStrategy(CtaTemplate):
                     self.send_email(content=email_msg)
 
                 self.tag_price = self.ma_price
+                self.tag_price_dt = self.bar_dt
                 self.trending_step = 0
                 self.open_waitting = False
 
