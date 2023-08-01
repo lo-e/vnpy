@@ -566,9 +566,11 @@ def combine_backtesting():
 
         # 保存组合回测结果所需的内容
         total_pnl = round_to(result["totalReturn"], 0.01)
+        totalCloseTradeCount = result["totalCloseTradeCount"]
         dic = {
             "symbols": symbols_key,
             "total_pnl": f"{total_pnl}%",
+            "close_trade":totalCloseTradeCount,
             "max_drawdown": round_to(result["maxDrawdown"], 0.01),
             "over_drawdown": over_drawdown_dict,
             "over_drawdown_count": len(over_drawdown_dict),
@@ -579,7 +581,7 @@ def combine_backtesting():
 
         # 组合回测结果保存到文件
         if len(resultList):
-            fieldNames = ["symbols", "total_pnl", "max_drawdown", "over_drawdown", "over_drawdown_count"]
+            fieldNames = ["symbols", "total_pnl", "close_trade", "max_drawdown", "over_drawdown", "over_drawdown_count"]
             with open(file_path, "w") as f:
                 writer = csv.DictWriter(f, fieldnames=fieldNames)
                 writer.writeheader()
