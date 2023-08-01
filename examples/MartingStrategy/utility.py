@@ -170,6 +170,7 @@ def analyse_trending_continuous(
                                 trending = row["trending"]
                                 if trending == "加仓" and i <= 2:
                                     max_loss_rate = row["max_loss_rate"].replace("%", "")
+                                    max_loss_rate = max_loss_rate if max_loss_rate else 0
                                     max_loss_rate = float(max_loss_rate)
 
                                     if (max_loss_rate <= -15.0 and int(continuous_key) >= 3):
@@ -209,6 +210,7 @@ def analyse_trending_continuous(
                                 trending = row["trending"]
                                 if trending == "加仓" and i <= 2:
                                     max_loss_rate = row["max_loss_rate"].replace("%", "")
+                                    max_loss_rate = max_loss_rate if max_loss_rate else 0
                                     max_loss_rate = float(max_loss_rate)
 
                                     if (max_loss_rate <= -15.0 and int(continuous_key) >= 3):
@@ -509,7 +511,7 @@ def generate_setting(symbol_open_dict: dict, marting_type:str, exchange:str):
 
     # INVERSE目标合约
     # target_symbols = ['TRXUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'ENSUSDT.BINANCE', 'CHRUSDT.BINANCE', 'ALGOUSDT.BINANCE', 'EOSUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ATOMUSDT.BINANCE']
-    target_symbols = ['ALGOUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE']
+    target_symbols = ['BNBUSDT.BINANCE', 'TRXUSDT.BINANCE', 'BCHUSDT.BINANCE', 'DOTUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'XRPUSDT.BINANCE']
 
     # 获取合约最小交易价值
     symbol_min_value_dict = {}
@@ -565,7 +567,7 @@ def generate_setting(symbol_open_dict: dict, marting_type:str, exchange:str):
     portfolioValue = 100
     setting_dict = {
         "signal": [],
-        "portfolio": {"name": f"MARTING_{marting_type}_{exchange}", "portfolioValue": portfolioValue},
+        "portfolio": {"name": f"MARTING_{exchange}", "portfolioValue": portfolioValue},
     }
     max_leverage = 10
     strategy_min_value = 1
@@ -644,25 +646,17 @@ def generate_setting(symbol_open_dict: dict, marting_type:str, exchange:str):
                 pure_symbol = symbol[:symbol.index('USDT')]
                 data_long = {
                     "strategy_name": f"MARTING_{exchange}_{pure_symbol}_多",
-                    "class_name": "MartingInverseStrategy",
+                    "class_name": "MartingStrategy",
                     "vt_symbol": symbol,
-                    "direction": "多",
-                    "init_value_rate": init_value_rate,
-                    "bottom_step": bottom_step,
-                    "top_step": top_step,
-                    "start": True
+                    "direction": "多"
                     }
                 symbol_setting_list.append(data_long)
 
                 data_short = {
                     "strategy_name": f"MARTING_{exchange}_{pure_symbol}_空",
-                    "class_name": "MartingInverseStrategy",
+                    "class_name": "MartingStrategy",
                     "vt_symbol": symbol,
-                    "direction": "空",
-                    "init_value_rate": init_value_rate,
-                    "bottom_step": bottom_step,
-                    "top_step": top_step,
-                    "start": True
+                    "direction": "空"
                     }
                 symbol_setting_list.append(data_short)
                 result_symbol_count += 1
@@ -686,5 +680,5 @@ if __name__ == "__main__":
 
     # 分析trending_continuous下的趋势追踪结果，并生成实盘参数
     analyse_trending_continuous(
-        exchange="BINANCE", marting_type="INVERSE", min_continuous="1", target_dir="2022-01-01_2023-07-02", by_month=False, for_trade_setting=False
+        exchange="BINANCE", marting_type="INVERSE", min_continuous="1", target_dir="2023-01-01_2023-02-01", by_month=False, for_trade_setting=True
     )
