@@ -22,7 +22,7 @@ TRENDING_INCREASE_RATE = 0.04 # 趋势加仓比率
 TRENDING_OPEN_LOSS_RATE = 0.02 # 趋势加仓时的持仓亏损比率
 TOP_STEP = 3
 
-class MartingInverseSignal(object):
+class MartingSignal(object):
     def __init__(
         self,
         portfolio,
@@ -442,7 +442,7 @@ class MartingInverseSignal(object):
         }
 
 
-class MartingInversePortfolio(object):
+class MartingPortfolio(object):
     def __init__(self, engine):
         self.engine = engine
         self.portfolioValue = 0  # 组合市值
@@ -473,13 +473,13 @@ class MartingInversePortfolio(object):
 
             long_signal_key = f"{signal_key}_{Direction.LONG.value}"
             long_history_data = history_data.get(long_signal_key, {})
-            signal1 = MartingInverseSignal(
+            signal1 = MartingSignal(
                 self, symbol, Direction.LONG, 9, history_data=long_history_data
             )
 
             short_signal_key = f"{signal_key}_{Direction.SHORT.value}"
             short_history_data = history_data.get(short_signal_key, {})
-            signal2 = MartingInverseSignal(
+            signal2 = MartingSignal(
                 self, symbol, Direction.SHORT, 9, history_data=short_history_data
             )
 
