@@ -92,7 +92,6 @@ def backtesting():
     engine.showResult(figSavedName)
 
     # 输出并保存交易数据
-    close_trade_count = 0
     symbol_trade_dic = {}
     for symbol in engine.symbolList:
         symbol_trade_list = symbol_trade_dic.get(symbol, [])
@@ -111,10 +110,6 @@ def backtesting():
             #     )
             # )
 
-            # 统计平仓次数
-            if trade.offset != Offset.OPEN:
-                close_trade_count += 1
-
             # 提取成交信息
             trade_data = {
                 "symbol": trade.symbol,
@@ -126,7 +121,6 @@ def backtesting():
             }
             symbol_trade_list.append(trade_data)
         symbol_trade_dic[symbol] = symbol_trade_list
-    print(f"总平仓次数：{close_trade_count}")
 
     # 保存合约交易数据
     symbol_trade_dir_path = f"symbol_trades{DIR_SYMBOL}"
@@ -381,9 +375,9 @@ def backtesting():
                     signal_trending_step_dict[trending_step] = data_list
 
         # 保存回测结果的信号状态到json文件
-        with open(backtesting_history_json, "w", encoding="utf-8") as file:
-            file.write(json.dumps(backtesting_data, ensure_ascii=False))
-        print(f"\n已保存回测历史到{start_dt_str}_{end_dt_str}.json\t总数：{len(backtesting_data)}")
+        # with open(backtesting_history_json, "w", encoding="utf-8") as file:
+        #     file.write(json.dumps(backtesting_data, ensure_ascii=False))
+        # print(f"\n已保存回测历史到{start_dt_str}_{end_dt_str}.json\t总数：{len(backtesting_data)}")
         
         # 输出回测结果的趋势追踪信号信息
         trending_step_list = sorted(list(signal_trending_step_dict.keys()))
