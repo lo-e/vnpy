@@ -20,7 +20,7 @@ REDUCE_RATE = 0.005 # 盈利平仓比率
 CONTINUOUS_INCREASE_RATE = 0.01 # 持续加仓比率
 TRENDING_INCREASE_RATE = 0.04 # 趋势加仓比率
 TRENDING_OPEN_LOSS_RATE = 0.02 # 趋势加仓时的持仓亏损比率
-TOP_STEP = 3
+TOP_STEP = 6
 
 class MartingSignal(object):
     def __init__(
@@ -264,7 +264,6 @@ class MartingSignal(object):
 
             # 是否达到目标价位
             increase_price_cross = False
-
             if self.trending_step + 1 < TOP_STEP or self.open_waitting:
                 if self.direction == Direction.LONG:
                     if (
@@ -281,6 +280,14 @@ class MartingSignal(object):
                         and bar.high_price >= trade_price
                     ):
                         increase_price_cross = True
+
+                # 反向信号有等级，判断建仓
+                if (
+                    oppsite_signal.trending_step
+                    and bar.low_price <= trade_price
+                    and bar.high_price >= trade_price
+                ):
+                    increase_price_cross = True
 
             # 趋势加仓判断
             if (self.trending_step + 1 >= TOP_STEP) and (not self.open_waitting) and (self.top_open_price):
