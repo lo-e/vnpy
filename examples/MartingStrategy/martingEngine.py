@@ -19,6 +19,7 @@ from martingStrategy_trending_inverse_beta import MartingInversePortfolio
 
 from vnpy.app.cta_strategy.base import DAILY_DB_NAME, MINUTE_DB_NAME, HOUR_DB_NAME, MinuteDataBaseName, HourDataBaseName
 import pandas as pd
+from vnpy.trader.constant import Offset
 
 PRICETICK_DICT = {}
 VARIABLE_COMMISSION_DICT = {}
@@ -199,6 +200,7 @@ class BacktestingEngine(object):
         totalCommission = 0
         totalSlippage = 0
         totalTradeCount = 0
+        totalCloseTradeCount = 0
         
         netPnlList = []
         balanceList = []
@@ -246,6 +248,7 @@ class BacktestingEngine(object):
             totalCommission += result.commission
             totalSlippage += result.slippage
             totalTradeCount += result.tradeCount
+            totalCloseTradeCount += result.closeTradeCount
             totalNetPnl += result.netPnl
 
         drawdownSeries = pd.Series(drawdownList, index=dateList)
@@ -299,6 +302,7 @@ class BacktestingEngine(object):
             'dailySlippage': totalSlippage/totalDays,
             'totalTradeCount': totalTradeCount,
             'dailyTradeCount': totalTradeCount*1.0/totalDays,
+            'totalCloseTradeCount': totalCloseTradeCount,
             'totalReturn': totalReturn,
             'annualizedReturn': annualizedReturn,
             'dailyReturn': dailyReturn,
@@ -322,7 +326,7 @@ class BacktestingEngine(object):
     def showResult(self, figSavedPath=''):
         """显示回测结果"""
         timeseries, result = self.calculateResult()
-        
+
         # 输出统计结果
         self.output('-' * 30)
         self.output(u'首个交易日：\t%s' % result['startDate'])
@@ -346,6 +350,7 @@ class BacktestingEngine(object):
         self.output(u'总手续费：\t%s' % formatNumber(result['totalCommission']))
         self.output(u'总滑点：\t%s' % formatNumber(result['totalSlippage']))
         self.output(u'总成交笔数：\t%s' % formatNumber(result['totalTradeCount']))
+        self.output(u'总平仓笔数：\t%s' % formatNumber(result['totalCloseTradeCount']))
         
         self.output(u'日均盈亏：\t%s' % formatNumber(result['dailyNetPnl']))
         self.output(u'日均手续费：\t%s' % formatNumber(result['dailyCommission']))
@@ -446,6 +451,7 @@ class DailyResult(object):
         self.slippage = 0                       # 滑点
         self.netPnl = 0                         # 净盈亏
         self.tradeCount = 0                     # 成交笔数
+        self.closeTradeCount = 0                # 平仓笔数
     
     #----------------------------------------------------------------------
     def updateTrade(self, trade):
@@ -453,6 +459,8 @@ class DailyResult(object):
         l = self.tradeDict[trade.symbol]
         l.append(trade)
         self.tradeCount += 1
+        if trade.offset != Offset.OPEN:
+            self.closeTradeCount += 1
         
     #----------------------------------------------------------------------
     def updatePos(self, d):
