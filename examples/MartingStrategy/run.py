@@ -26,7 +26,7 @@ def backtesting():
     # 回测起始日期
     engine = BacktestingEngine()
     start_dt = datetime(2023, 1, 1)
-    end_dt = datetime(2023, 7, 22)
+    end_dt = datetime(2023, 2, 1)
     engine.setPeriod(start_dt, end_dt)
     figSavedName = ""
     if figSavedName:
