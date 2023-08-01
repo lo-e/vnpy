@@ -4,73 +4,85 @@
       "strategy_name": "MARTING_BINANCE_BCH_多",
       "class_name": "MartingStrategy",
       "vt_symbol": "BCHUSDT.BINANCE",
-      "direction": "多"
+      "direction": "多",
+      "start": true
     },
     {
       "strategy_name": "MARTING_BINANCE_BCH_空",
       "class_name": "MartingStrategy",
       "vt_symbol": "BCHUSDT.BINANCE",
-      "direction": "空"
+      "direction": "空",
+      "start": true
     },
     {
       "strategy_name": "MARTING_BINANCE_BNB_多",
       "class_name": "MartingStrategy",
       "vt_symbol": "BNBUSDT.BINANCE",
-      "direction": "多"
+      "direction": "多",
+      "start": true
     },
     {
       "strategy_name": "MARTING_BINANCE_BNB_空",
       "class_name": "MartingStrategy",
       "vt_symbol": "BNBUSDT.BINANCE",
-      "direction": "空"
+      "direction": "空",
+      "start": true
     },
     {
       "strategy_name": "MARTING_BINANCE_DOGE_多",
       "class_name": "MartingStrategy",
       "vt_symbol": "DOGEUSDT.BINANCE",
-      "direction": "多"
+      "direction": "多",
+      "start": true
     },
     {
       "strategy_name": "MARTING_BINANCE_DOGE_空",
       "class_name": "MartingStrategy",
       "vt_symbol": "DOGEUSDT.BINANCE",
-      "direction": "空"
+      "direction": "空",
+      "start": true
     },
     {
       "strategy_name": "MARTING_BINANCE_DOT_多",
       "class_name": "MartingStrategy",
       "vt_symbol": "DOTUSDT.BINANCE",
-      "direction": "多"
+      "direction": "多",
+      "start": true
     },
     {
       "strategy_name": "MARTING_BINANCE_DOT_空",
       "class_name": "MartingStrategy",
       "vt_symbol": "DOTUSDT.BINANCE",
-      "direction": "空"
+      "direction": "空",
+      "start": true
     },
     {
       "strategy_name": "MARTING_BINANCE_TRX_多",
       "class_name": "MartingStrategy",
       "vt_symbol": "TRXUSDT.BINANCE",
-      "direction": "多"
+      "direction": "多",
+      "start": true
     },
     {
       "strategy_name": "MARTING_BINANCE_TRX_空",
       "class_name": "MartingStrategy",
       "vt_symbol": "TRXUSDT.BINANCE",
-      "direction": "空"
+      "direction": "空",
+      "start": true
     },
     {
       "strategy_name": "MARTING_BINANCE_XRP_多",
       "class_name": "MartingStrategy",
       "vt_symbol": "XRPUSDT.BINANCE",
-      "direction": "多"
+      "direction": "多",
+      "start": true
     },
     {
       "strategy_name": "MARTING_BINANCE_XRP_空",
       "class_name": "MartingStrategy",
       "vt_symbol": "XRPUSDT.BINANCE",
-      "direction": "空"
+      "direction": "空",
+      "start": true
     }
   ],
   "portfolio": { "name": "MARTING_BINANCE", "portfolioValue": 100 }

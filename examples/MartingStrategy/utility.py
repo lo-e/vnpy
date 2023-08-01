@@ -648,7 +648,8 @@ def generate_setting(symbol_open_dict: dict, marting_type:str, exchange:str):
                     "strategy_name": f"MARTING_{exchange}_{pure_symbol}_多",
                     "class_name": "MartingStrategy",
                     "vt_symbol": symbol,
-                    "direction": "多"
+                    "direction": "多",
+                    "start": True
                     }
                 symbol_setting_list.append(data_long)
 
@@ -656,7 +657,8 @@ def generate_setting(symbol_open_dict: dict, marting_type:str, exchange:str):
                     "strategy_name": f"MARTING_{exchange}_{pure_symbol}_空",
                     "class_name": "MartingStrategy",
                     "vt_symbol": symbol,
-                    "direction": "空"
+                    "direction": "空",
+                    "start": True
                     }
                 symbol_setting_list.append(data_short)
                 result_symbol_count += 1
