@@ -114,6 +114,7 @@ class MartingStrategy(CtaTemplate):
         self.open_email_suspend = False # 加仓超限email发送暂停
         self.is_backtesting = False # 是否正在回测
         self.backtesting_wait = 100 # 回测缓冲时间
+        self.strategy_event_wait = 0 # 策略事件缓冲时间
 
         self.am = ArrayManager(self.ma_window)  # K线容器
         self.window_bar_generator = BarGenerator(
@@ -229,6 +230,7 @@ class MartingStrategy(CtaTemplate):
         # 结束回测
         self.is_backtesting = False
         self.backtesting_wait = 0
+        self.strategy_event_wait = 0
         self.put_timer_event()
 
     def calculate_indicator(self):
@@ -265,8 +267,11 @@ class MartingStrategy(CtaTemplate):
                 self.position_increase_price = self.position_price * (1 + TRENDING_INCREASE_RATE)
 
     def on_timer(self):
-        # 回测等待
+        # 回测缓冲
         self.backtesting_wait += 1
+
+        # 策略事件缓冲
+        self.strategy_event_wait += 1
 
         # 周期首尾分钟，手动update_tick
         dt = datetime.now()
@@ -284,8 +289,14 @@ class MartingStrategy(CtaTemplate):
             self.cancel_all()
             self.target_volume = -1
 
-        # 检查同步数据
-        self.put_sync_event()
+        # 策略事件发出判断
+        if self.strategy_event_wait >= 5:
+            self.strategy_event_wait = 0
+            self.put_timer_event()
+
+        else:
+            self.put_sync_event()
+
         super().on_timer()
 
     def put_sync_event(self):
@@ -368,6 +379,9 @@ class MartingStrategy(CtaTemplate):
         else:
             # Tick不允许交易
             self.tick_trade_enable = False
+        
+        # 信号判断结束后取消立即开仓交易
+        self.top_open_immediate = False
 
     # 生成交易信号
     def generate_signal(self, tick):
@@ -534,7 +548,7 @@ class MartingStrategy(CtaTemplate):
                 else:
                     if not self.open_email_suspend:
                         self.open_email_suspend = True
-                        email_msg += f"\n\n加仓不通过【组合持仓价值超过限制】 当前组合持仓价值：{self.portfolio.total_strategy_value} 加仓价值：{open_value}"
+                        email_msg += f"\n\n加仓不通过【组合持仓价值超过限制】\n策略名称：{self.strategy_name}\n策略持仓价值：{self.position_value}\n加仓价值：{open_value}\n组合持仓价值：{self.portfolio.total_strategy_value}"
                         self.send_email(content=email_msg)
 
                         # 取消正在进行的所有订单

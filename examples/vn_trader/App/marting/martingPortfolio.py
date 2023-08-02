@@ -289,7 +289,7 @@ class MartingPortfolio(object):
         
         self.update_strategys_position_value()
         result_value = self.total_strategy_value + open_value
-        if result_value >= self.portfolioValue * 20:
+        if result_value >= self.portfolioValue * 25:
             return False
         else:
             return True
