@@ -262,7 +262,7 @@ class MartingSignal(object):
             # 成交价格
             trade_price = round_to(self.ma_price, self.symbol_price_tick)
 
-            # 是否达到目标价位
+            # 普通加仓判断
             increase_price_cross = False
             if self.trending_step + 1 < TOP_STEP or self.open_waitting:
                 if self.direction == Direction.LONG:
@@ -280,15 +280,6 @@ class MartingSignal(object):
                         and bar.high_price >= trade_price
                     ):
                         increase_price_cross = True
-
-                # 反向信号有等级，判断建仓
-                if (
-                    not self.trending_step
-                    and oppsite_signal.trending_step
-                    and bar.low_price <= trade_price
-                    and bar.high_price >= trade_price
-                ):
-                    increase_price_cross = True
 
             # 趋势加仓判断
             if (self.trending_step + 1 >= TOP_STEP) and (not self.open_waitting) and (self.top_open_price):
