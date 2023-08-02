@@ -164,8 +164,12 @@ class MartingSignal(object):
         if "LINK" in self.symbol and self.direction == Direction.LONG and bar.datetime >= datetime.strptime("2023-06-28 01:10:00", "%Y-%m-%d %H:%M:%S"):
             a = 2
 
-        # 获取反方向信号
+        # 获取反方向信号，判断开仓等待
         oppsite_signal = self.portfolio.get_oppsite_signal(self)
+        oppsite_signal_key = f"{oppsite_signal.symbol}_{oppsite_signal.direction.value}"
+        oppsite_signal_pos = self.portfolio.signalPosDict.get(oppsite_signal_key, 0)
+        if abs(oppsite_signal_pos) > 0:
+            self.open_waitting = True
 
         # 检查减仓
         if self.position_reduce_price:
@@ -253,12 +257,6 @@ class MartingSignal(object):
 
         # 检查加仓
         if self.position_increase_price:
-            # 判断开仓等待
-            oppsite_signal_key = f"{oppsite_signal.symbol}_{oppsite_signal.direction.value}"
-            oppsite_signal_pos = self.portfolio.signalPosDict.get(oppsite_signal_key, 0)
-            if abs(oppsite_signal_pos) > 0:
-                self.open_waitting = True
-
             # 成交价格
             trade_price = round_to(self.ma_price, self.symbol_price_tick)
 

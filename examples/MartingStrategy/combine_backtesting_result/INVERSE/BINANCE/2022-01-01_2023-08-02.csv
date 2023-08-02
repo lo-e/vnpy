@@ -1,3 +1,4 @@
 symbols,total_pnl,close_trade,max_drawdown,over_drawdown,over_drawdown_count
 BCHUSDT.BINANCE,475.64%,680,-27597.99,{'2023-01-14': -27597.99},1
 ADAUSDT.BINANCE,326.87%,748,-13357.86,"{'2022-01-18': -11568.46, '2022-03-25': -13357.86, '2023-06-10': -11292.45}",3
+BANDUSDT.BINANCE,1321.68%,1050,-29333.27,"{'2022-08-21': -20983.63, '2022-11-04': -29333.27}",2
