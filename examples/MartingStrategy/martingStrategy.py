@@ -298,6 +298,13 @@ class MartingSignal(object):
             if increase_price_cross:
                 """ 满足加仓条件 """
 
+                # 反方向交易信号已平仓，当前等待信号允许从初始仓位开始建仓
+                if self.open_waitting and not oppsite_signal.trending_step:
+                    self.open_waitting = False
+                    self.position = 0
+                    self.position_price = 0
+                    self.trending_step = 0
+
                 # 加仓的合约数量
                 trade_volume = 0
 
