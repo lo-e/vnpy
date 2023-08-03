@@ -72,8 +72,6 @@ class MartingStrategy(CtaTemplate):
         "position_value",
         "position_price",
         "position",
-        "position_close_price",
-        "position_increase_price",
         "trending_step",
         "tag_price",
         "tag_price_dt",
