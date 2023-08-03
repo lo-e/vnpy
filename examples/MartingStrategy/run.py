@@ -495,7 +495,7 @@ def combine_backtesting():
     
     # 回测时间
     start_dt = datetime(2022, 1, 1)
-    end_dt = datetime(2023, 8, 5)
+    end_dt = datetime(2023, 8, 2)
 
     # 获取历史数据
     start_dt_str = start_dt.strftime("%Y-%m-%d")
