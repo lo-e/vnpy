@@ -1,33 +1,61 @@
 {
   "signal": [
     {
-      "strategy_name": "MARTING_BINANCE_ETC_多",
+      "strategy_name": "MARTING_BINANCE_AVAX_多",
       "class_name": "MartingStrategy",
-      "vt_symbol": "ETCUSDT.BINANCE",
+      "vt_symbol": "AVAXUSDT.BINANCE",
       "direction": "多",
       "start": true
     },
     {
-      "strategy_name": "MARTING_BINANCE_ETC_空",
+      "strategy_name": "MARTING_BINANCE_AVAX_空",
       "class_name": "MartingStrategy",
-      "vt_symbol": "ETCUSDT.BINANCE",
+      "vt_symbol": "AVAXUSDT.BINANCE",
       "direction": "空",
       "start": true
     },
     {
-      "strategy_name": "MARTING_BINANCE_DOT_多",
+      "strategy_name": "MARTING_BINANCE_BCH_多",
       "class_name": "MartingStrategy",
-      "vt_symbol": "DOTUSDT.BINANCE",
+      "vt_symbol": "BCHUSDT.BINANCE",
       "direction": "多",
       "start": true
     },
     {
-      "strategy_name": "MARTING_BINANCE_DOT_空",
+      "strategy_name": "MARTING_BINANCE_BCH_空",
       "class_name": "MartingStrategy",
-      "vt_symbol": "DOTUSDT.BINANCE",
+      "vt_symbol": "BCHUSDT.BINANCE",
+      "direction": "空",
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BINANCE_DOGE_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "DOGEUSDT.BINANCE",
+      "direction": "多",
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BINANCE_DOGE_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "DOGEUSDT.BINANCE",
+      "direction": "空",
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BINANCE_EOS_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "EOSUSDT.BINANCE",
+      "direction": "多",
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BINANCE_EOS_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "EOSUSDT.BINANCE",
       "direction": "空",
       "start": true
     }
   ],
-  "portfolio": { "name": "MARTING_BINANCE", "portfolioValue": 60 }
+  "portfolio": { "name": "MARTING_BINANCE", "portfolioValue": 100 }
 }
