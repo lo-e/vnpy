@@ -136,6 +136,7 @@ def backtesting():
     for _, l in engine.tradeDict.items():
         for trade in l:
             if trade.offset != Offset.OPEN:
+                value = round_to(trade.volume * trade.price, 1)
                 trade_data = {
                     "symbol": trade.symbol,
                     "datetime": trade.dt,
@@ -143,6 +144,7 @@ def backtesting():
                     "offset": trade.offset.value,
                     "volume": trade.volume,
                     "price": trade.price,
+                    "value": value,
                 }
                 close_trade_list.append(trade_data)
 
@@ -160,6 +162,7 @@ def backtesting():
         "offset",
         "volume",
         "price",
+        "value",
     ]
     filePath = f"{close_trade_dir_path}close_trade.csv"
     with open(filePath, "w") as f:
