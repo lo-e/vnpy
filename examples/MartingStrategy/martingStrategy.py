@@ -345,15 +345,36 @@ class MartingSignal(object):
                     if trade_volume <= 0:
                         exit("加仓数量错误，检查代码！")
 
-                    # 控制组合总持仓价值
-                    if not self.open_waitting:
-                        # 目标持仓价值
-                        target_position_value = (abs(self.position) + trade_volume) * target_positon_price
-                        if target_position_value >= self.portfolio.portfolioValue:
-                            # 检查最高等级
-                            top_cross = self.portfolio.check_top_step(self, True)
-                            if not top_cross:
-                                trade_volume = 0
+                if not self.open_waitting:
+                    # 控制单个交易信号持仓价值
+                    # target_position_value = (abs(trade_volume) * trade_price) + current_position_value
+                    # if target_position_value >= self.portfolio.portfolioValue * 0.3:
+                    #     top_cross = self.portfolio.check_top_step(self, True)
+                    #     if not top_cross:
+                    #         trade_volume = 0
+
+                    # 控制组合的持仓信号总数量
+                    trading_signal_count = 0
+                    signal_key = f"{self.symbol}_{self.direction.value}"
+                    signal_trading = False
+                    for key_, pos in self.portfolio.signalPosDict.items():
+                        if abs(pos) > 0:
+                            trading_signal_count += 1
+                            if signal_key == key_:
+                                signal_trading = True
+                                break
+                    if not signal_trading and trading_signal_count >= 5:
+                        trade_volume = 0
+
+                    # 控制组合的持仓总价值
+                    # total_positon_value = 0
+                    # for _, l in self.portfolio.signalDict.items():
+                    #     for signal in l:
+                    #         if not signal.open_waitting:
+                    #             total_positon_value += abs(signal.position) * signal.position_price
+                    # total_positon_value_after = total_positon_value + abs(trade_volume) * trade_price
+                    # if total_positon_value_after >= self.portfolio.portfolioValue * 25:
+                    #     trade_volume = 0
 
                 if trade_volume > 0:
                     # 在变量更新前进行组合策略更新，已获取仓位变更前的状态数据
