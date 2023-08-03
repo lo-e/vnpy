@@ -1,16 +1,16 @@
 {
   "signal": [
     {
-      "strategy_name": "MARTING_BINANCE_AVAX_多",
+      "strategy_name": "MARTING_BINANCE_BAND_多",
       "class_name": "MartingStrategy",
-      "vt_symbol": "AVAXUSDT.BINANCE",
+      "vt_symbol": "BANDUSDT.BINANCE",
       "direction": "多",
       "start": true
     },
     {
-      "strategy_name": "MARTING_BINANCE_AVAX_空",
+      "strategy_name": "MARTING_BINANCE_BAND_空",
       "class_name": "MartingStrategy",
-      "vt_symbol": "AVAXUSDT.BINANCE",
+      "vt_symbol": "BANDUSDT.BINANCE",
       "direction": "空",
       "start": true
     },
@@ -39,6 +39,20 @@
       "strategy_name": "MARTING_BINANCE_DOGE_空",
       "class_name": "MartingStrategy",
       "vt_symbol": "DOGEUSDT.BINANCE",
+      "direction": "空",
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BINANCE_DOT_多",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "DOTUSDT.BINANCE",
+      "direction": "多",
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BINANCE_DOT_空",
+      "class_name": "MartingStrategy",
+      "vt_symbol": "DOTUSDT.BINANCE",
       "direction": "空",
       "start": true
     },
