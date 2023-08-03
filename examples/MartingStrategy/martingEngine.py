@@ -70,13 +70,8 @@ class BacktestingEngine(object):
 
         self.portfolio = MartingPortfolio(self)
         if exchange == "BINANCE":
-            # （TRENDING_INCREASE_RATE 0.04）最大连续趋势追踪6：8
-            self.target_symbol_list = ['ALGOUSDT.BINANCE', 'ATOMUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'TRXUSDT.BINANCE']
-            self.target_symbol_list = ['ALGOUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE']
-            # self.target_symbol_list = ['ALGOUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ENSUSDT.BINANCE', 'EOSUSDT.BINANCE']
-            # self.target_symbol_list = ['ALGOUSDT.BINANCE', 'CHRUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'EOSUSDT.BINANCE', 'SUSHIUSDT.BINANCE']
-            self.target_symbol_list = []
-            # ['DOTUSDT.BINANCE', 'XRPUSDT.BINANCE', 'EOSUSDT.BINANCE', 'LINKUSDT.BINANCE', 'DOGEUSDT.BINANCE']
+            # self.target_symbol_list = []
+            self.target_symbol_list = ['AVAXUSDT.BINANCE', 'BCHUSDT.BINANCE', 'EOSUSDT.BINANCE', 'DOGEUSDT.BINANCE']
         
         elif exchange == "OKX":
             self.target_symbol_list = ['ALGO-USDT-SWAP.OKX', 'DYDX-USDT-SWAP.OKX', 'ENS-USDT-SWAP.OKX', 'EOS-USDT-SWAP.OKX', 'SUSHI-USDT-SWAP.OKX']
