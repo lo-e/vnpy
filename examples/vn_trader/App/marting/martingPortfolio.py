@@ -353,13 +353,13 @@ class MartingPortfolio(object):
         trading_content = (
             f"\n{main_content}\n" + trading_content
         )
-        self.engine.send_email(msg=trading_content, subject=f"马丁策略组合状态信息：{trading_count}】")
+        self.engine.send_email(msg=trading_content, subject=f"马丁策略组合状态信息：{trading_count}")
 
         if top_count:
             top_content = (
                 f"\n{main_content}\n" + top_content
             )
-            self.engine.send_email(msg=top_content, subject=f"马丁策略组合状态信息【TOP】：{top_count}】")
+            self.engine.send_email(msg=top_content, subject=f"马丁策略组合状态信息【TOP】：{top_count}")
 
     def run_strategy_backtesting(self):
         while True:
