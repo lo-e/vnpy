@@ -91,26 +91,12 @@ def backtesting():
     engine.runBacktesting(daily_mode=False)
     engine.showResult(figSavedName)
 
-    # 输出并保存交易数据
+    # 获取合约交易数据
     symbol_trade_dic = {}
     for symbol in engine.symbolList:
         symbol_trade_list = symbol_trade_dic.get(symbol, [])
         trade_data_list = engine.getTradeData(symbol)
-        # print(f"\n****** {symbol} ******")
         for trade in trade_data_list:
-            # print(
-            #     "%s\t%s\t%s\t%s\t%s\t%s"
-            #     % (
-            #         trade.symbol,
-            #         trade.dt,
-            #         trade.direction.value,
-            #         trade.offset.value,
-            #         trade.volume,
-            #         trade.price,
-            #     )
-            # )
-
-            # 提取成交信息
             trade_data = {
                 "symbol": trade.symbol,
                 "datetime": trade.dt,
@@ -124,7 +110,6 @@ def backtesting():
 
     # 保存合约交易数据
     symbol_trade_dir_path = f"symbol_trades{DIR_SYMBOL}"
-    # 先删除原有文件夹，包括其中所有内容
     if os.path.exists(symbol_trade_dir_path):
         shutil.rmtree(symbol_trade_dir_path)
         os.makedirs(symbol_trade_dir_path)
@@ -140,17 +125,50 @@ def backtesting():
                 "volume",
                 "price",
             ]
-            # 文件路径
             filePath = f"{symbol_trade_dir_path}{symbol}.csv"
             with open(filePath, "w") as f:
                 writer = csv.DictWriter(f, fieldnames=fieldNames)
                 writer.writeheader()
-                # 写入csv文件
                 writer.writerows(trade_list)
+    
+    # 获取平仓交易数据
+    close_trade_list = []
+    for _, l in engine.tradeDict.items():
+        for trade in l:
+            if trade.offset != Offset.OPEN:
+                trade_data = {
+                    "symbol": trade.symbol,
+                    "datetime": trade.dt,
+                    "direction": trade.direction.value,
+                    "offset": trade.offset.value,
+                    "volume": trade.volume,
+                    "price": trade.price,
+                }
+                close_trade_list.append(trade_data)
+
+    # 保存平仓交易数据
+    close_trade_dir_path = f"close_trades{DIR_SYMBOL}"
+    if os.path.exists(close_trade_dir_path):
+        shutil.rmtree(close_trade_dir_path)
+        os.makedirs(close_trade_dir_path)
+    else:
+        os.makedirs(close_trade_dir_path)
+    fieldNames = [
+        "datetime",
+        "symbol",
+        "direction",
+        "offset",
+        "volume",
+        "price",
+    ]
+    filePath = f"{close_trade_dir_path}close_trade.csv"
+    with open(filePath, "w") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldNames)
+        writer.writeheader()
+        writer.writerows(close_trade_list)
 
     # 保存信号交易数据
     signal_trade_dir_path = f"signal_trades{DIR_SYMBOL}"
-    # 先删除原有文件夹，包括其中所有内容
     if os.path.exists(signal_trade_dir_path):
         shutil.rmtree(signal_trade_dir_path)
         os.makedirs(signal_trade_dir_path)
