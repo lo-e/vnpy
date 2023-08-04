@@ -76,8 +76,6 @@ class MartingPortfolio(object):
         # 回测相关
         self.backtesting_count_down = 10  # 通知策略回测倒计时（秒）
         self.backtesting_preparing = False  # 准备通知策略回测，倒计时的开关
-        self.backtesting_saved_count_down = 60  # 保存策略回测历史倒计时（秒）
-        self.backtesting_saved_preparing = False  # 准备保存策略回测历史，倒计时的开关
 
         self.backtesting_thread = Thread(target=self.run_strategy_backtesting)
         self.backtesting_thread.start()
@@ -101,8 +99,9 @@ class MartingPortfolio(object):
                     d[key] = setting[key]
 
         # 策略回测历史
-        self.strategys_backtesting_history = {}
-        self.load_backtesting_history()
+        self.strategies_sync_data = {}
+        self.strategies_sync_cross = False
+        self.load_strategies_sync_data()
 
         # 策略组合合约杠杆
         self.strategys_symbol_leverage = {}
@@ -113,14 +112,6 @@ class MartingPortfolio(object):
         self.engine.savePortfolioSyncData()
 
     def on_timer(self):
-        # 保存策略回测历史
-        if self.backtesting_saved_preparing:
-            self.backtesting_saved_count_down -= 1
-            if self.backtesting_saved_count_down <= 0:
-                self.backtesting_saved_count_down = 60
-                self.backtesting_saved_preparing = False
-                self.save_backtesting_history()
-
         # 通知策略回测
         if self.backtesting_preparing:
             self.backtesting_count_down -= 1
@@ -129,10 +120,6 @@ class MartingPortfolio(object):
                 self.backtesting_preparing = False
                 event = Event(BAR_DOWNLOAD_GENERATE_COMPLETE)
                 self.engine.event_engine.put(event)
-
-                # 准备保存策略回测历史
-                self.backtesting_saved_preparing = True
-                self.backtesting_saved_count_down = 60
 
         # 合成结束
         if self.bar_generate_engine.loading_complete:
@@ -206,6 +193,11 @@ class MartingPortfolio(object):
 
         # 更新组合持仓价值
         self.update_strategys_position_value()
+
+        # 检查保存策略同步信息
+        if self.strategies_sync_cross:
+            self.strategies_sync_cross = False
+            self.save_strategies_sync_data()
         
         # 组合状态更新
         self.engine.put_portfolio_event()
@@ -237,44 +229,41 @@ class MartingPortfolio(object):
         self.bar_generate_engine.symbol_list = self.strategy_symbols
         self.bar_generate_engine.start()
 
-    def get_backtesting_history_file_path(self):
-        exchange = self.name.split("_")[-1]
+    def get_strategies_sync_file_path(self):
         dir = os.path.dirname(os.path.realpath(__file__))
-        dir_path = Path(dir).joinpath(f"backtesting_history{DIR_SYMBOL}")
+        dir_path = Path(dir).joinpath(f"strategies_sync_data{DIR_SYMBOL}")
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
-        file_path = dir_path.joinpath(f"{exchange}.json")
+        file_path = dir_path.joinpath(f"{self.name}.json")
         return file_path
 
-    def load_backtesting_history(self):
+    def load_strategies_sync_data(self):
         # 从json文件获取策略回测历史
         history_data = {}
-        json_file = self.get_backtesting_history_file_path()
+        json_file = self.get_strategies_sync_file_path()
         if json_file.exists():
             with open(json_file, mode="r", encoding="UTF-8") as f:
                 history_data = json.load(f)
         if history_data:
-            self.strategys_backtesting_history = history_data
+            self.strategies_sync_data = history_data
 
-    def save_backtesting_history(self):
-        return
+    def save_strategies_sync_data_timer(self):
+        self.strategies_sync_cross = True
+
+    def save_strategies_sync_data(self):
         # 策略历史数据回测保存到json文件中
         for _, strategy in self.engine.strategies.items():
-            if strategy.backtesting_status and strategy.backtesting_to:
-                strategy_backtesting_data = {
-                    "backtesting_status": strategy.backtesting_status,
-                    "backtesting_to": strategy.backtesting_to.strftime(
-                        "%Y-%m-%d %H:%M:%S"
-                    ),
-                }
-                self.strategys_backtesting_history[
-                    f"{strategy.strategy_name}"
-                ] = strategy_backtesting_data
+            sync_data = {}
+            for key in strategy.syncs:
+                sync_data[key] = strategy.__getattribute__(key)
+            self.strategies_sync_data[
+                f"{strategy.strategy_name}"
+            ] = sync_data
 
-        json_file = self.get_backtesting_history_file_path()
+        json_file = self.get_strategies_sync_file_path()
         with open(json_file, "w", encoding="utf-8") as file:
             file.write(
-                json.dumps(self.strategys_backtesting_history, ensure_ascii=False)
+                json.dumps(self.strategies_sync_data, ensure_ascii=False)
             )
 
     def update_trending_top(self):

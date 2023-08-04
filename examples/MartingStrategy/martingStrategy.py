@@ -312,10 +312,13 @@ class MartingSignal(object):
                 current_position_value = abs(self.position) * self.position_price
                 
                 if self.trending_step + 1 < TOP_STEP:
-                    """ 固定倍数加仓 """
+                    """ 普通加仓 """
 
-                    # 目标持仓价值
+                    # 目标持仓价值【倍数加仓】
                     target_position_value = current_position_value * 2 if current_position_value else self.unit_value
+
+                    # 目标持仓价值【定额加仓】
+                    # target_position_value = current_position_value + self.unit_value
 
                     # 计算加仓的合约数量
                     trade_volume = ((target_position_value - current_position_value)) / trade_price

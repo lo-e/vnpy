@@ -939,6 +939,9 @@ class MartingEngine(BaseEngine):
             callback=self.strategyDbUpdateCallback,
         )
 
+        # 策略组合保存同步数据到文件
+        self.martingPortfolio.save_strategies_sync_data_timer()
+
     def strategyDbUpdateCallback(self, back_data=None):
         try:
             if isinstance(back_data, dict):

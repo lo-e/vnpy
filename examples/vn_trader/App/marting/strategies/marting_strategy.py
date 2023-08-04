@@ -564,7 +564,7 @@ class MartingStrategy(CtaTemplate):
                     self.position_value = 0
 
                 else:
-                    email_msg += f"\n马丁策略平仓：\n当前趋势追踪等级{self.trending_step}\n平仓价值{position_value}"
+                    email_msg += f"\n马丁策略平仓：\n当前趋势追踪等级{self.trending_step}\n平仓价值{self.position_value}"
                     self.send_email(content=email_msg)
 
                 self.tag_price = self.ma_price
