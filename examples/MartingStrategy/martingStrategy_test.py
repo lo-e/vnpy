@@ -262,7 +262,7 @@ class MartingSignal(object):
 
             # 正在交易的信号趋势加仓判断
             increase_price_cross = False
-            if not self.open_waitting and self.top_open_price:
+            if not self.open_waitting and self.top_open_price and self.position_price:
                 # 基于目标价格的亏损比率
                 loss_rate = 0
                 if self.direction == Direction.LONG:
@@ -305,11 +305,12 @@ class MartingSignal(object):
                 
                 # 基于成交价格的亏损比率
                 loss_rate = 0
-                if self.direction == Direction.LONG:
-                    loss_rate = (trade_price / self.position_price) - 1
+                if self.position_price:
+                    if self.direction == Direction.LONG:
+                        loss_rate = (trade_price / self.position_price) - 1
 
-                elif self.direction == Direction.SHORT:
-                    loss_rate = 1 - (trade_price / self.position_price)
+                    elif self.direction == Direction.SHORT:
+                        loss_rate = 1 - (trade_price / self.position_price)
 
                 if loss_rate > (TRENDING_INCREASE_RATE * -1):
                     """ 普通加仓 """
