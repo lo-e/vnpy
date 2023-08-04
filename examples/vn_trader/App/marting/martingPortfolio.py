@@ -255,7 +255,10 @@ class MartingPortfolio(object):
         for _, strategy in self.engine.strategies.items():
             sync_data = {}
             for key in strategy.syncs:
-                sync_data[key] = strategy.__getattribute__(key)
+                value = strategy.__getattribute__(key)
+                if isinstance(value, datetime):
+                    value = value.strftime("%Y-%m-%d %H:%M:%S")
+                sync_data[key] = value
             self.strategies_sync_data[
                 f"{strategy.strategy_name}"
             ] = sync_data
