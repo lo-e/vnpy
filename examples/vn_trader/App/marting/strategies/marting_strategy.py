@@ -216,11 +216,14 @@ class MartingStrategy(CtaTemplate):
                 # 标记价格
                 if self.tag_price and bar.datetime > self.tag_price_dt:
                     if self.direction == Direction.LONG:
-                        self.tag_price = max(self.tag_price, self.ma_price)
+                        if self.ma_price > self.tag_price:
+                            self.tag_price = self.ma_price
+                            self.tag_price_dt = bar.datetime
                     
                     elif self.direction == Direction.SHORT:
-                        self.tag_price = min(self.tag_price, self.ma_price)
-                    self.tag_price_dt = bar.datetime
+                        if self.ma_price < self.tag_price:
+                            self.tag_price = self.ma_price
+                            self.tag_price_dt = bar.datetime
 
         # 更新指标
         self.calculate_indicator()
