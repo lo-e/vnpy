@@ -511,7 +511,7 @@ def generate_setting(symbol_open_dict: dict, marting_type:str, exchange:str):
 
     # INVERSE目标合约
     # target_symbols = ['TRXUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'ENSUSDT.BINANCE', 'CHRUSDT.BINANCE', 'ALGOUSDT.BINANCE', 'EOSUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'ATOMUSDT.BINANCE']
-    target_symbols = ['DOGEUSDT.BINANCE', 'DOTUSDT.BINANCE', 'ETCUSDT.BINANCE', 'AAVEUSDT.BINANCE', 'ADAUSDT.BINANCE', 'BANDUSDT.BINANCE']
+    target_symbols = ['DOGEUSDT.BINANCE', 'DOTUSDT.BINANCE', 'ETCUSDT.BINANCE', 'AAVEUSDT.BINANCE', 'ADAUSDT.BINANCE', 'AXSUSDT.BINANCE']
 
     # 获取合约最小交易价值
     symbol_min_value_dict = {}
