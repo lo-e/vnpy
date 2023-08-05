@@ -1,85 +1,85 @@
 {
   "signal": [
     {
+      "strategy_name": "MARTING_BINANCE_AAVE_多",
+      "class_name": "MartingDCAStrategy",
+      "vt_symbol": "AAVEUSDT.BINANCE",
+      "direction": "多",
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BINANCE_AAVE_空",
+      "class_name": "MartingDCAStrategy",
+      "vt_symbol": "AAVEUSDT.BINANCE",
+      "direction": "空",
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BINANCE_ADA_多",
+      "class_name": "MartingDCAStrategy",
+      "vt_symbol": "ADAUSDT.BINANCE",
+      "direction": "多",
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BINANCE_ADA_空",
+      "class_name": "MartingDCAStrategy",
+      "vt_symbol": "ADAUSDT.BINANCE",
+      "direction": "空",
+      "start": true
+    },
+    {
       "strategy_name": "MARTING_BINANCE_BAND_多",
-      "class_name": "MartingStrategy",
+      "class_name": "MartingDCAStrategy",
       "vt_symbol": "BANDUSDT.BINANCE",
       "direction": "多",
       "start": true
     },
     {
       "strategy_name": "MARTING_BINANCE_BAND_空",
-      "class_name": "MartingStrategy",
+      "class_name": "MartingDCAStrategy",
       "vt_symbol": "BANDUSDT.BINANCE",
       "direction": "空",
       "start": true
     },
     {
-      "strategy_name": "MARTING_BINANCE_BCH_多",
-      "class_name": "MartingStrategy",
-      "vt_symbol": "BCHUSDT.BINANCE",
-      "direction": "多",
-      "start": true
-    },
-    {
-      "strategy_name": "MARTING_BINANCE_BCH_空",
-      "class_name": "MartingStrategy",
-      "vt_symbol": "BCHUSDT.BINANCE",
-      "direction": "空",
-      "start": true
-    },
-    {
       "strategy_name": "MARTING_BINANCE_DOGE_多",
-      "class_name": "MartingStrategy",
+      "class_name": "MartingDCAStrategy",
       "vt_symbol": "DOGEUSDT.BINANCE",
       "direction": "多",
       "start": true
     },
     {
       "strategy_name": "MARTING_BINANCE_DOGE_空",
-      "class_name": "MartingStrategy",
+      "class_name": "MartingDCAStrategy",
       "vt_symbol": "DOGEUSDT.BINANCE",
       "direction": "空",
       "start": true
     },
     {
       "strategy_name": "MARTING_BINANCE_DOT_多",
-      "class_name": "MartingStrategy",
+      "class_name": "MartingDCAStrategy",
       "vt_symbol": "DOTUSDT.BINANCE",
       "direction": "多",
       "start": true
     },
     {
       "strategy_name": "MARTING_BINANCE_DOT_空",
-      "class_name": "MartingStrategy",
+      "class_name": "MartingDCAStrategy",
       "vt_symbol": "DOTUSDT.BINANCE",
       "direction": "空",
       "start": true
     },
     {
-      "strategy_name": "MARTING_BINANCE_EOS_多",
-      "class_name": "MartingStrategy",
-      "vt_symbol": "EOSUSDT.BINANCE",
-      "direction": "多",
-      "start": true
-    },
-    {
-      "strategy_name": "MARTING_BINANCE_EOS_空",
-      "class_name": "MartingStrategy",
-      "vt_symbol": "EOSUSDT.BINANCE",
-      "direction": "空",
-      "start": true
-    },
-    {
       "strategy_name": "MARTING_BINANCE_ETC_多",
-      "class_name": "MartingStrategy",
+      "class_name": "MartingDCAStrategy",
       "vt_symbol": "ETCUSDT.BINANCE",
       "direction": "多",
       "start": true
     },
     {
       "strategy_name": "MARTING_BINANCE_ETC_空",
-      "class_name": "MartingStrategy",
+      "class_name": "MartingDCAStrategy",
       "vt_symbol": "ETCUSDT.BINANCE",
       "direction": "空",
       "start": true

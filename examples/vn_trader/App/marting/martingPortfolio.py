@@ -251,7 +251,8 @@ class MartingPortfolio(object):
         self.strategies_sync_cross = True
 
     def save_strategies_sync_data(self):
-        # 策略历史数据回测保存到json文件中
+        # 保存策略同步信息到json文件中
+        self.strategies_sync_data = {}
         for _, strategy in self.engine.strategies.items():
             sync_data = {}
             for key in strategy.syncs:
