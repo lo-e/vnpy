@@ -331,7 +331,7 @@ class MartingPortfolio(object):
 
             # 正在交易的策略信息
             if strategy.trending_step and not strategy.open_waitting:
-                content = f"\nsignal_name:{strategy.strategy_name}\nsignal_pos:{strategy.pos}\nsignal_position_price:{strategy.position_price}\nsignal_position_value:{position_value}\nsignal_pnl:{strategy.current_pnl_rate}\nsignal_top: {strategy.top_step}\nsignal_step: {strategy.trending_step}"
+                content = f"\nsignal_name:{strategy.strategy_name}\nsignal_pos:{strategy.pos}\nsignal_position_price:{strategy.position_price}\nsignal_position_value:{position_value}\nsignal_pnl:{strategy.current_pnl_rate}\nsignal_step: {strategy.trending_step}"
                 trading_content += content
                 trading_content += "\n\n" + "-" * 10 + "\n\n"
                 trading_count += 1
