@@ -25,10 +25,10 @@ CONTINUOUS_INCREASE_RATE = 0.005 # 持续加仓比率
 TRENDING_INCREASE_RATE = 0.04 # 趋势加仓比率
 TRENDING_OPEN_LOSS_RATE = 0.02 # 趋势加仓时的持仓亏损比率
 
-class MartingStrategy(CtaTemplate):
+class MartingDCAStrategy(CtaTemplate):
     """马丁策略"""
 
-    className = "MartingStrategy"
+    className = "MartingDCAStrategy"
     author = "loe"
 
     # 策略参数
@@ -123,7 +123,7 @@ class MartingStrategy(CtaTemplate):
         )  # 1分钟Bar生成工具
 
         # 完成setting.json参数的配置
-        super(MartingStrategy, self).__init__(
+        super(MartingDCAStrategy, self).__init__(
             cta_engine=ctaEngine, strategy_name="", vt_symbol="", setting=setting
         )
 
@@ -682,7 +682,7 @@ class MartingStrategy(CtaTemplate):
         self.calculate_indicator()
 
         # 邮件提醒
-        super(MartingStrategy, self).on_trade(trade)
+        super(MartingDCAStrategy, self).on_trade(trade)
 
     def raise_error(self, content):
         # 推送钉钉消息
