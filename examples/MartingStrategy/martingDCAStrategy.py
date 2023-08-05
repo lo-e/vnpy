@@ -415,10 +415,6 @@ class MartingDCASignal(object):
                                 trade_volume,
                             )
                     
-                    # elif self.trending_step == 1:
-                    #     # 正在交易的反方向信号趋势加仓
-                    #     oppsite_signal.top_open_price = trade_price
-                    
                     # 更新持仓最大亏损
                     self.max_loss_value = 0
                     self.max_loss_rate = ""
