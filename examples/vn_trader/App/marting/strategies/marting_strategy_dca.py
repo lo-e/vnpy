@@ -24,7 +24,6 @@ REDUCE_RATE = 0.003 # 盈利平仓比率
 CONTINUOUS_INCREASE_RATE = 0.005 # 持续加仓比率
 TRENDING_INCREASE_RATE = 0.04 # 趋势加仓比率
 TRENDING_OPEN_LOSS_RATE = 0.02 # 趋势加仓时的持仓亏损比率
-TOP_STEP = 3
 
 class MartingStrategy(CtaTemplate):
     """马丁策略"""
@@ -35,7 +34,6 @@ class MartingStrategy(CtaTemplate):
     # 策略参数
     interval_window = 5  # 数据的时间周期5分钟
     ma_window = 9  # 均线参数
-    top_step = TOP_STEP
 
     # 参数列表，保存了参数的名称
     parameters = [
@@ -418,8 +416,23 @@ class MartingStrategy(CtaTemplate):
         if self.target_volume < 0 and self.position_increase_price:
             """ 检查加仓 """
 
+            # 基于当前价格的亏损比率
+            current_loss_rate = 0
+            if self.position_price:
+                if self.direction == Direction.LONG:
+                    current_loss_rate = (tick.last_price / self.position_price) - 1
+
+                elif self.direction == Direction.SHORT:
+                    current_loss_rate = 1 - (tick.last_price / self.position_price)
+
+            # 趋势加仓判断
+            if not self.open_waitting and self.top_open_immediate:
+                # 亏损是否达到目标值
+                if current_loss_rate <= (TRENDING_INCREASE_RATE * -1):
+                    next_trending_step = self.trending_step + 1
+
             # 普通加仓判断
-            if self.trending_step + 1 < TOP_STEP or self.open_waitting:
+            if not next_trending_step:
                 if self.direction == Direction.LONG:
                     if (
                         self.ma_price <= self.position_increase_price
@@ -435,20 +448,6 @@ class MartingStrategy(CtaTemplate):
                         and tick.last_price > self.ma_price - self.symbol_price_tick * 5
                     ):
                         next_trending_step = self.trending_step + 1
-            
-            # 趋势加仓判断
-            if (self.trending_step + 1 >= TOP_STEP) and (not self.open_waitting) and (self.top_open_immediate):
-                if self.direction == Direction.LONG:
-                    if (
-                        tick.last_price <= self.position_increase_price
-                    ):
-                        next_trending_step = self.trending_step + 1
-
-                if self.direction == Direction.SHORT:
-                    if (
-                        tick.last_price >= self.position_increase_price
-                    ):
-                        next_trending_step = self.trending_step + 1
 
             if next_trending_step:
 
@@ -458,11 +457,11 @@ class MartingStrategy(CtaTemplate):
                 # 加仓的数量
                 changed_volume = 0
 
-                if self.trending_step + 1 < TOP_STEP:
+                if current_loss_rate > (TRENDING_INCREASE_RATE * -1):
                     """ 固定倍数加仓 """
 
                     # 目标持仓价值
-                    target_position_value = current_position_value * 2 if current_position_value else self.portfolio.portfolioValue * UNIT_RATE
+                    target_position_value = current_position_value + self.portfolio.portfolioValue * UNIT_RATE
                     trade_value = target_position_value - current_position_value
                     trade_value = max(trade_value, tick.last_price * self.symbol_min_volume, 5.1)
 
@@ -470,7 +469,7 @@ class MartingStrategy(CtaTemplate):
                     changed_volume = trade_value / tick.last_price
                     changed_volume = ceil_to(changed_volume, self.symbol_min_volume)
 
-                else:
+                elif self.open_waitting or self.top_open_immediate:
                     """ 根据持仓价格百分比加仓 """
 
                     # 目标持仓价格
@@ -525,9 +524,6 @@ class MartingStrategy(CtaTemplate):
                     self.tag_price = self.ma_price
                     self.tag_price_dt = self.bar_dt
                     self.trending_step = next_trending_step
-
-                    # 更新策略组合
-                    self.portfolio.update_trending_top()
                     
                     # 取消加仓邮件暂停
                     self.open_email_suspend = False
@@ -568,9 +564,6 @@ class MartingStrategy(CtaTemplate):
                 self.open_waitting = False
                 if not oppsite_strategy.trending_step:
                     oppsite_strategy.open_waitting = False
-
-                # 更新策略组合
-                self.portfolio.update_trending_top()
 
                 # 更新指标
                 self.calculate_indicator()
