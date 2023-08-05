@@ -16,11 +16,11 @@ from pathlib import Path
 import json
 
 UNIT_RATE = 0.1 # 初始开仓价值比率
-REDUCE_RATE = 0.003 # 盈利平仓比率
-CONTINUOUS_INCREASE_RATE = 0.005 # 持续加仓比率
+REDUCE_RATE = 0.005 # 盈利平仓比率
+CONTINUOUS_INCREASE_RATE = 0.01 # 持续加仓比率
 TRENDING_INCREASE_RATE = 0.04 # 趋势加仓比率
 TRENDING_OPEN_LOSS_RATE = 0.02 # 趋势加仓时的持仓亏损比率
-TOP_STEP = 21
+TOP_STEP = 3
 
 class MartingSignal(object):
     def __init__(
@@ -315,10 +315,7 @@ class MartingSignal(object):
                     """ 普通加仓 """
 
                     # 目标持仓价值【倍数加仓】
-                    # target_position_value = current_position_value * 2 if current_position_value else self.unit_value
-
-                    # 目标持仓价值【定额加仓】
-                    target_position_value = current_position_value + self.unit_value
+                    target_position_value = current_position_value * 2 if current_position_value else self.unit_value
 
                     # 计算加仓的合约数量
                     trade_volume = ((target_position_value - current_position_value)) / trade_price

@@ -20,9 +20,8 @@ REDUCE_RATE = 0.003 # 盈利平仓比率
 CONTINUOUS_INCREASE_RATE = 0.005 # 持续加仓比率
 TRENDING_INCREASE_RATE = 0.04 # 趋势加仓比率
 TRENDING_OPEN_LOSS_RATE = 0.02 # 趋势加仓时的持仓亏损比率
-TOP_STEP = 21
 
-class MartingSignal(object):
+class MartingDCASignal(object):
     def __init__(
         self,
         portfolio,
@@ -315,9 +314,6 @@ class MartingSignal(object):
                 if loss_rate > (TRENDING_INCREASE_RATE * -1):
                     """ 普通加仓 """
 
-                    # 目标持仓价值【倍数加仓】
-                    # target_position_value = current_position_value * 2 if current_position_value else self.unit_value
-
                     # 目标持仓价值【定额加仓】
                     target_position_value = current_position_value + self.unit_value
 
@@ -419,6 +415,10 @@ class MartingSignal(object):
                                 trade_volume,
                             )
                     
+                    # elif self.trending_step == 1:
+                    #     # 正在交易的反方向信号趋势加仓
+                    #     oppsite_signal.top_open_price = trade_price
+                    
                     # 更新持仓最大亏损
                     self.max_loss_value = 0
                     self.max_loss_rate = ""
@@ -465,7 +465,7 @@ class MartingSignal(object):
         }
 
 
-class MartingPortfolio(object):
+class MartingDCAPortfolio(object):
     def __init__(self, engine):
         self.engine = engine
         self.portfolioValue = 0  # 组合市值
@@ -496,38 +496,19 @@ class MartingPortfolio(object):
 
             long_signal_key = f"{signal_key}_{Direction.LONG.value}"
             long_history_data = history_data.get(long_signal_key, {})
-            signal1 = MartingSignal(
+            signal1 = MartingDCASignal(
                 self, symbol, Direction.LONG, 9, history_data=long_history_data
             )
 
             short_signal_key = f"{signal_key}_{Direction.SHORT.value}"
             short_history_data = history_data.get(short_signal_key, {})
-            signal2 = MartingSignal(
+            signal2 = MartingDCASignal(
                 self, symbol, Direction.SHORT, 9, history_data=short_history_data
             )
 
             l = self.signalDict[symbol]
             l.append(signal1)
             l.append(signal2)
-
-            # # 根据历史回测数据给策略组合持仓初始化
-            # long_signal_position = 0
-            # if long_history_data:
-            #     long_signal_position = long_history_data["backtesting_status"][
-            #         "position"
-            #     ]
-            #     long_signal_position_key = f"{symbol}_{Direction.LONG.value}"
-            #     self.signalPosDict[long_signal_position_key] = long_signal_position
-
-            # short_signal_position = 0
-            # if short_history_data:
-            #     short_signal_position = short_history_data["backtesting_status"][
-            #         "position"
-            #     ]
-            #     short_signal_position_key = f"{symbol}_{Direction.SHORT.value}"
-            #     self.signalPosDict[short_signal_position_key] = short_signal_position
-
-            # self.posDict[symbol] = long_signal_position + short_signal_position
 
     def load_backtesting_history_data(self, exchange: str, file_name: str):
         history_data = {}
