@@ -29,16 +29,16 @@
       "start": true
     },
     {
-      "strategy_name": "MARTING_BINANCE_BAND_多",
+      "strategy_name": "MARTING_BINANCE_AXS_多",
       "class_name": "MartingDCAStrategy",
-      "vt_symbol": "BANDUSDT.BINANCE",
+      "vt_symbol": "AXSUSDT.BINANCE",
       "direction": "多",
       "start": true
     },
     {
-      "strategy_name": "MARTING_BINANCE_BAND_空",
+      "strategy_name": "MARTING_BINANCE_AXS_空",
       "class_name": "MartingDCAStrategy",
-      "vt_symbol": "BANDUSDT.BINANCE",
+      "vt_symbol": "AXSUSDT.BINANCE",
       "direction": "空",
       "start": true
     },
