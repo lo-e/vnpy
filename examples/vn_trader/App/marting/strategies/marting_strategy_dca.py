@@ -20,8 +20,8 @@ from vnpy.event import Event
 from copy import copy
 
 UNIT_RATE = 0.1 # 初始开仓价值比率
-REDUCE_RATE = 0.005 # 盈利平仓比率
-CONTINUOUS_INCREASE_RATE = 0.01 # 持续加仓比率
+REDUCE_RATE = 0.003 # 盈利平仓比率
+CONTINUOUS_INCREASE_RATE = 0.005 # 持续加仓比率
 TRENDING_INCREASE_RATE = 0.04 # 趋势加仓比率
 TRENDING_OPEN_LOSS_RATE = 0.02 # 趋势加仓时的持仓亏损比率
 TOP_STEP = 3
@@ -253,19 +253,11 @@ class MartingStrategy(CtaTemplate):
             self.position_close_price = self.position_price * (1 - REDUCE_RATE)
 
         # 加仓价格
-        if self.trending_step + 1 < TOP_STEP:
-            if self.direction == Direction.LONG:
-                self.position_increase_price = self.tag_price * (1 - CONTINUOUS_INCREASE_RATE)
+        if self.direction == Direction.LONG:
+            self.position_increase_price = self.tag_price * (1 - CONTINUOUS_INCREASE_RATE)
 
-            elif self.direction == Direction.SHORT:
-                self.position_increase_price = self.tag_price * (1 + CONTINUOUS_INCREASE_RATE)
-        
-        else:
-            if self.direction == Direction.LONG:
-                self.position_increase_price = self.position_price * (1 - TRENDING_INCREASE_RATE)
-
-            elif self.direction == Direction.SHORT:
-                self.position_increase_price = self.position_price * (1 + TRENDING_INCREASE_RATE)
+        elif self.direction == Direction.SHORT:
+            self.position_increase_price = self.tag_price * (1 + CONTINUOUS_INCREASE_RATE)
 
     def on_timer(self):
         # 回测缓冲
