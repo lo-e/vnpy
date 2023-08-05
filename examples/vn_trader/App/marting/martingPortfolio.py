@@ -336,7 +336,7 @@ class MartingPortfolio(object):
                 trading_content += "\n\n" + "-" * 10 + "\n\n"
                 trading_count += 1
 
-                if strategy.trending_step >= strategy.top_step:
+                if strategy.className == "MartingStrategy" and strategy.trending_step >= strategy.top_step:
                     top_content += content
                     top_content += "\n\n" + "-" * 10 + "\n\n"
                     top_count += 1
