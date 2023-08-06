@@ -73,6 +73,7 @@ class MartingDCAStrategy(CtaTemplate):
         "trending_step",
         "tag_price",
         "tag_price_dt",
+        "open_waitting",
     ]
 
     # 监控列表

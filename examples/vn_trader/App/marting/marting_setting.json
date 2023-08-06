@@ -69,20 +69,6 @@
       "vt_symbol": "DOTUSDT.BINANCE",
       "direction": "空",
       "start": true
-    },
-    {
-      "strategy_name": "MARTING_BINANCE_ETC_多",
-      "class_name": "MartingDCAStrategy",
-      "vt_symbol": "ETCUSDT.BINANCE",
-      "direction": "多",
-      "start": true
-    },
-    {
-      "strategy_name": "MARTING_BINANCE_ETC_空",
-      "class_name": "MartingDCAStrategy",
-      "vt_symbol": "ETCUSDT.BINANCE",
-      "direction": "空",
-      "start": true
     }
   ],
   "portfolio": { "name": "MARTING_BINANCE", "portfolioValue": 100 }
