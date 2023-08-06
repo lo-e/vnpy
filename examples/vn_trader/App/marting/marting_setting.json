@@ -41,20 +41,6 @@
       "vt_symbol": "AXSUSDT.BINANCE",
       "direction": "空",
       "start": true
-    },
-    {
-      "strategy_name": "MARTING_BINANCE_DOGE_多",
-      "class_name": "MartingDCAStrategy",
-      "vt_symbol": "DOGEUSDT.BINANCE",
-      "direction": "多",
-      "start": true
-    },
-    {
-      "strategy_name": "MARTING_BINANCE_DOGE_空",
-      "class_name": "MartingDCAStrategy",
-      "vt_symbol": "DOGEUSDT.BINANCE",
-      "direction": "空",
-      "start": true
     }
   ],
   "portfolio": { "name": "MARTING_BINANCE", "portfolioValue": 100 }
