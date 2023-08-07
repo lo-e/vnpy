@@ -254,10 +254,13 @@ class MartingPortfolio(object):
             ] = sync_data
 
         json_file = self.get_strategies_sync_file_path()
-        with open(json_file, "w", encoding="utf-8") as file:
-            file.write(
-                json.dumps(self.strategies_sync_data, ensure_ascii=False)
-            )
+        try:
+            with open(json_file, "w", encoding="utf-8") as file:
+                file.write(
+                    json.dumps(self.strategies_sync_data, ensure_ascii=False)
+                )
+        except:
+            pass
 
     def update_trending_top(self):
         self.trending_top_strategies = []
