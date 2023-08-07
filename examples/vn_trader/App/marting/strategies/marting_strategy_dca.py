@@ -74,6 +74,7 @@ class MartingDCAStrategy(CtaTemplate):
         "tag_price",
         "tag_price_dt",
         "open_waitting",
+        "trending_group",
     ]
 
     # 监控列表
@@ -112,6 +113,7 @@ class MartingDCAStrategy(CtaTemplate):
         self.is_backtesting = False # 是否正在回测
         self.backtesting_wait = 100 # 回测缓冲时间
         self.strategy_event_wait = 0 # 策略事件缓冲时间
+        self.trending_group = [] # 当前完整开平仓时的变量状态
 
         self.am = ArrayManager(self.ma_window)  # K线容器
         self.window_bar_generator = BarGenerator(
@@ -499,12 +501,29 @@ class MartingDCAStrategy(CtaTemplate):
         # 有正在执行的开平仓操作，立即发出订单
         if self.target_volume >= 0:
             if self.target_volume > 0:
+                """ 开/加仓 """
 
-                """ 组合持仓限制判断 """
+                # 组合持仓限制判断
                 changed_volume = self.target_volume - abs(self.position)
                 open_value = changed_volume * tick.last_price
                 open_cross = self.portfolio.check_open_cross(strategy=self, open_value=open_value)
                 if open_cross:
+                    # 记录当前开平仓状态
+                    current_status = {"action":"OPEN",
+                                      "trending_step": self.trending_step,
+                                      "position_price": self.position_price,
+                                      "position_value": self.position_value,
+                                      "position_close_price": self.position_close_price,
+                                      "position_increase_price": self.position_increase_price,
+                                      "tag_price": self.tag_price,
+                                      "tag_price_dt": self.tag_price_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                                      "trade_price": tick.last_price,
+                                      "ma_price": self.ma_price}
+                    if self.trending_step == 0:
+                        self.trending_group = [current_status]
+                    else:
+                        self.trending_group.append(current_status)
+
                     # 变量更新
                     if self.open_waitting:
                         if self.direction == Direction.LONG:
@@ -547,6 +566,19 @@ class MartingDCAStrategy(CtaTemplate):
             
             else:
                 """ 平仓 """
+
+                # 记录当前开平仓状态
+                current_status = {"action":"CLOSE",
+                                  "trending_step": self.trending_step,
+                                  "position_price": self.position_price,
+                                  "position_value": self.position_value,
+                                  "position_close_price": self.position_close_price,
+                                  "position_increase_price": self.position_increase_price,
+                                  "tag_price": self.tag_price,
+                                  "tag_price_dt": self.tag_price_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                                  "trade_price": tick.last_price,
+                                  "ma_price": self.ma_price}
+                self.trending_group.append(current_status)
                 
                 # 变量更新
                 if self.open_waitting:
