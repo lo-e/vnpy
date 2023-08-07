@@ -44,7 +44,7 @@ class MartingPortfolio(object):
         "strategy_backtesting_cost",
         "total_strategy_value",
     ]
-    syncList = ["today"]
+    syncList = []
 
     def __init__(self, engine, setting):
         self.engine = engine
