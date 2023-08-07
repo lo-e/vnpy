@@ -909,8 +909,9 @@ class MartingEngine(BaseEngine):
     def loadSyncData(self, strategy):
         """从数据库载入策略的持仓情况"""
         flt = {"strategy_name": strategy.strategy_name, "vt_symbol": strategy.vt_symbol}
+        colleciton_name = f"{strategy.__class__.__name__}_{self.martingPortfolio.name}"
         syncData = self.main_engine.dbQuery(
-            POSITION_DB_NAME, strategy.__class__.__name__, flt
+            POSITION_DB_NAME, colleciton_name, flt
         )
 
         if not syncData:
@@ -924,15 +925,19 @@ class MartingEngine(BaseEngine):
 
     def saveSyncData(self, strategy):
         """保存策略的持仓情况到数据库"""
+        if not strategy.inited:
+            return
+        
         flt = {"strategy_name": strategy.strategy_name, "vt_symbol": strategy.vt_symbol}
 
         d = copy(flt)
         for key in strategy.syncs:
             d[key] = strategy.__getattribute__(key)
 
+        colleciton_name = f"{strategy.__class__.__name__}_{self.martingPortfolio.name}"
         self.main_engine.dbUpdate(
             POSITION_DB_NAME,
-            strategy.__class__.__name__,
+            colleciton_name,
             d,
             flt,
             True,
