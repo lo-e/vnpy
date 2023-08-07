@@ -42,10 +42,9 @@ class MartingPortfolio(object):
         "generating_cost",
         "strategy_backtesting",
         "strategy_backtesting_cost",
-        "trending_top_strategies",
         "total_strategy_value",
     ]
-    syncList = ["today", "trending_top_strategies"]
+    syncList = ["today"]
 
     def __init__(self, engine, setting):
         self.engine = engine
@@ -86,7 +85,6 @@ class MartingPortfolio(object):
 
         # 其它
         self.strategy_symbols = []  # 策略合约列表
-        self.trending_top_strategies = []  # 策略组合中已经达到趋势追踪最高级别的策略名称列表
         self.all_inited = False  # 是否所有策略完成初始化
         self.strategy_info_count_down = 10 * 60  # 每隔一段时间发送策略状态信息通知
         self.total_strategy_value = 0 # 当前策略总持仓价值
@@ -261,12 +259,6 @@ class MartingPortfolio(object):
                 )
         except:
             pass
-
-    def update_trending_top(self):
-        self.trending_top_strategies = []
-        for _, strategy in self.engine.strategies.items():
-            if strategy.trending_step >= strategy.top_step and not strategy.open_waitting:
-                self.trending_top_strategies.append(strategy.strategy_name)
 
     def check_open_cross(self, strategy, open_value):
         if strategy.open_waitting:
