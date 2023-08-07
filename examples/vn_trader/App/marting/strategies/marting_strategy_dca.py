@@ -143,6 +143,17 @@ class MartingDCAStrategy(CtaTemplate):
         )
 
     def on_init(self):
+        # 检查数据库同步数据是否存在，如果不存在，从.json文件获取
+        if not self.tag_price and self.portfolio.strategies_sync_data:
+            sync_data = self.portfolio.strategies_sync_data.get(self.strategy_name, {})
+            for key in self.syncs:
+                if key in sync_data:
+                    value = sync_data[key]
+                    # 特殊类型属性处理
+                    if key == "tag_price_dt":
+                        value = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+                    self.__setattr__(key, value)
+
         # 回测数据
         self.start_backtesting()
         self.write_log(f"{self.strategy_name}\t策略初始化")

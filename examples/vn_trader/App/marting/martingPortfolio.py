@@ -99,6 +99,7 @@ class MartingPortfolio(object):
         # 策略回测历史
         self.strategies_sync_data = {}
         self.strategies_sync_cross = False
+        self.load_strategies_sync_data()
 
         # 策略组合合约杠杆
         self.strategys_symbol_leverage = {}
@@ -233,6 +234,16 @@ class MartingPortfolio(object):
             os.makedirs(dir_path)
         file_path = dir_path.joinpath(f"{self.name}.json")
         return file_path
+    
+    def load_strategies_sync_data(self):
+        # 从json文件获取策略回测历史
+        history_data = {}
+        json_file = self.get_strategies_sync_file_path()
+        if json_file.exists():
+            with open(json_file, mode="r", encoding="UTF-8") as f:
+                history_data = json.load(f)
+        if history_data:
+            self.strategies_sync_data = history_data
 
     def save_strategies_sync_data_timer(self):
         self.strategies_sync_cross = True
