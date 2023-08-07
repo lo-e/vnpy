@@ -967,15 +967,16 @@ class MartingEngine(BaseEngine):
         d = {}
         for key in self.martingPortfolio.syncList:
             d[key] = self.martingPortfolio.__getattribute__(key)
-
-        self.main_engine.dbUpdate(
-            PORTFOLIO_DB_NAME,
-            self.martingPortfolio.name,
-            d,
-            {},
-            True,
-            callback=self.portfolioDbUpdateCallback,
-        )
+        
+        if d:
+            self.main_engine.dbUpdate(
+                PORTFOLIO_DB_NAME,
+                self.martingPortfolio.name,
+                d,
+                {},
+                True,
+                callback=self.portfolioDbUpdateCallback,
+            )
 
     def portfolioDbUpdateCallback(self, back_data=None):
         try:
