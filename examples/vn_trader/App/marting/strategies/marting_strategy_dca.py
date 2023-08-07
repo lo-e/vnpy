@@ -510,6 +510,8 @@ class MartingDCAStrategy(CtaTemplate):
                 if open_cross:
                     # 记录当前开平仓状态
                     current_status = {"action":"OPEN",
+                                      "trade_time": tick.datetime.strftime("%Y-%m-%d %H:%M:%S"),
+                                      "trade_price": tick.last_price,
                                       "trending_step": self.trending_step,
                                       "position_price": self.position_price,
                                       "position_value": self.position_value,
@@ -517,7 +519,6 @@ class MartingDCAStrategy(CtaTemplate):
                                       "position_increase_price": self.position_increase_price,
                                       "tag_price": self.tag_price,
                                       "tag_price_dt": self.tag_price_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                                      "trade_price": tick.last_price,
                                       "ma_price": self.ma_price}
                     if self.trending_step == 0:
                         self.trending_group = [current_status]
@@ -569,6 +570,8 @@ class MartingDCAStrategy(CtaTemplate):
 
                 # 记录当前开平仓状态
                 current_status = {"action":"CLOSE",
+                                  "trade_time": tick.datetime.strftime("%Y-%m-%d %H:%M:%S"),
+                                  "trade_price": tick.last_price,
                                   "trending_step": self.trending_step,
                                   "position_price": self.position_price,
                                   "position_value": self.position_value,
@@ -576,7 +579,6 @@ class MartingDCAStrategy(CtaTemplate):
                                   "position_increase_price": self.position_increase_price,
                                   "tag_price": self.tag_price,
                                   "tag_price_dt": self.tag_price_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                                  "trade_price": tick.last_price,
                                   "ma_price": self.ma_price}
                 self.trending_group.append(current_status)
                 
