@@ -1,14 +1,28 @@
 {
   "MARTING_BINANCE_AAVE_多": {
-    "pos": 0.4,
-    "position_value": 26.144,
-    "position_price": 65.35999999999999,
-    "position": 0.4,
-    "trending_step": 2,
-    "tag_price": 65.08111111111111,
-    "tag_price_dt": "2023-08-07 21:30:00",
+    "pos": 0.6,
+    "position_value": 39.096000000000004,
+    "position_price": 65.16000000000001,
+    "position": 0.6,
+    "trending_step": 3,
+    "tag_price": 64.75333333333334,
+    "tag_price_dt": "2023-08-07 22:35:00",
     "open_waitting": false,
-    "trending_group": []
+    "trending_group": [
+      {
+        "action": "OPEN",
+        "trade_time": "2023-08-07 22:48:51",
+        "trade_price": 64.77,
+        "trending_step": 2,
+        "position_price": 65.35999999999999,
+        "position_value": 26.144,
+        "position_close_price": 65.55607999999998,
+        "position_increase_price": 64.75570555555555,
+        "tag_price": 65.08111111111111,
+        "tag_price_dt": "2023-08-07 21:30:00",
+        "ma_price": 64.75333333333334
+      }
+    ]
   },
   "MARTING_BINANCE_AAVE_空": {
     "pos": 0,
@@ -16,32 +30,60 @@
     "position_price": 0,
     "position": 0,
     "trending_step": 0,
-    "tag_price": 64.75333333333334,
-    "tag_price_dt": "2023-08-07 22:35:00",
+    "tag_price": 64.44666666666666,
+    "tag_price_dt": "2023-08-07 23:30:00",
     "open_waitting": true,
     "trending_group": []
   },
   "MARTING_BINANCE_ADA_多": {
-    "pos": 0.0,
-    "position_value": 0,
-    "position_price": 0,
-    "position": 0.0,
-    "trending_step": 0,
-    "tag_price": 0.2938888888888889,
-    "tag_price_dt": "2023-08-07 20:50:00",
+    "pos": 35.0,
+    "position_value": 10.213000000000001,
+    "position_price": 0.2918,
+    "position": 35.0,
+    "trending_step": 1,
+    "tag_price": 0.2917333333333334,
+    "tag_price_dt": "2023-08-07 23:10:00",
     "open_waitting": false,
-    "trending_group": []
+    "trending_group": [
+      {
+        "action": "OPEN",
+        "trade_time": "2023-08-07 23:12:41",
+        "trade_price": 0.2918,
+        "trending_step": 0,
+        "position_price": 0,
+        "position_value": 0,
+        "position_close_price": 0.0,
+        "position_increase_price": 0.29241944444444445,
+        "tag_price": 0.2938888888888889,
+        "tag_price_dt": "2023-08-07 20:50:00",
+        "ma_price": 0.2917111111111111
+      }
+    ]
   },
   "MARTING_BINANCE_ADA_空": {
     "pos": 0.0,
-    "position_value": 10.2445,
-    "position_price": 0.2927,
-    "position": -35.0,
-    "trending_step": 1,
-    "tag_price": 0.2924555555555556,
-    "tag_price_dt": "2023-08-07 22:35:00",
+    "position_value": 0,
+    "position_price": 0,
+    "position": 0,
+    "trending_step": 0,
+    "tag_price": 0.2903,
+    "tag_price_dt": "2023-08-07 23:30:00",
     "open_waitting": true,
-    "trending_group": []
+    "trending_group": [
+      {
+        "action": "CLOSE",
+        "trade_time": "2023-08-07 23:12:41",
+        "trade_price": 0.2918,
+        "trending_step": 1,
+        "position_price": 0.2927,
+        "position_value": 10.2445,
+        "position_close_price": 0.2918219,
+        "position_increase_price": 0.2931696666666666,
+        "tag_price": 0.2917111111111111,
+        "tag_price_dt": "2023-08-07 23:05:00",
+        "ma_price": 0.2917111111111111
+      }
+    ]
   },
   "MARTING_BINANCE_AXS_多": {
     "pos": 0,
@@ -60,8 +102,8 @@
     "position_price": 0,
     "position": 0.0,
     "trending_step": 0,
-    "tag_price": 5.785777777777778,
-    "tag_price_dt": "2023-08-07 22:35:00",
+    "tag_price": 5.736444444444444,
+    "tag_price_dt": "2023-08-07 23:30:00",
     "open_waitting": false,
     "trending_group": []
   }
