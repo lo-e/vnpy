@@ -252,12 +252,12 @@ class CSVsOKXBarLocalEngine(object):
 
 
 class CSVsBinanceBarLocalEngine(object):
-    def __init__(self, duration: str, contract: str):
+    def __init__(self, duration: str, contract: str, target_dir: str=""):
         super(CSVsBinanceBarLocalEngine, self).__init__()
         # 周期
         self.duration = duration
         # 项目路径
-        csv_path = get_csv_path()
+        csv_path = get_csv_path(target_dir=target_dir)
         contract = f"BINANCE.{contract}"
         self.walkingDir = csv_path + f"{contract}{DIR_SYMBOL}{duration}"
         # 获取数据库

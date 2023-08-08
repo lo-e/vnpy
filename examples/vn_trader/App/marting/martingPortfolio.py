@@ -210,7 +210,7 @@ class MartingPortfolio(object):
 
         if exchange == "BINANCE":
             self.download_engine.download_from_binance(
-                contract_list=contract_list, days=5, from_data_base=True
+                contract_list=contract_list, days=5, from_data_base=True, save_to=self.name
             )
 
         elif exchange == "OKX":
