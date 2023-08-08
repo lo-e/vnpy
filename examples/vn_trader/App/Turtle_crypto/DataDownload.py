@@ -18,7 +18,7 @@ if __name__ == "__main__":
         mode = input("选择模式（默认1）【接口获取：1 正向：2 反向：3】")
         if mode == "2":
             contract_list = ["BTC-USDT-SWAP", "ETH-USDT-SWAP"]
-            contract_list = ['ALGO-USDT-SWAP', 'DYDX-USDT-SWAP', 'ENS-USDT-SWAP', 'EOS-USDT-SWAP', 'SUSHI-USDT-SWAP']
+            contract_list = ['LINK-USDT-SWAP']
 
         elif mode == "3":
             contract_list = ["BTC-USD-SWAP", "ETH-USD-SWAP"]
