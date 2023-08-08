@@ -377,9 +377,10 @@ class MartingPortfolio(object):
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
         json_file = dir_path.joinpath(f"{exchange}.json")
-        with open(json_file, "r", encoding="utf-8") as f:
-            json_data = json.load(f)
-            if json_data:
-                self.strategys_symbol_leverage = json_data
+        if os.path.exists(json_file):
+            with open(json_file, "r", encoding="utf-8") as f:
+                json_data = json.load(f)
+                if json_data:
+                    self.strategys_symbol_leverage = json_data
 
     

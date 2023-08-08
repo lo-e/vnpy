@@ -200,19 +200,24 @@ class MartingPortfolioManager(QtWidgets.QGroupBox):
         self.paramMonitor.setFixedHeight(height)
         self.varMonitor.setFixedHeight(height)
 
-        buttonLoad = QtWidgets.QPushButton("加载组合")
+        hbox0 = QtWidgets.QHBoxLayout()
+        labelLoad = QtWidgets.QLabel("加载组合")
+        hbox0.addWidget(labelLoad)
+        for setting_file in self.martingEngine.setting_files:
+            buttonLoad = QtWidgets.QPushButton(setting_file)
+            buttonLoad.clicked.connect(lambda: self.load(self.sender().text()))
+            hbox0.addWidget(buttonLoad)
+        hbox0.addStretch()
+
         buttonInit = QtWidgets.QPushButton(text.INIT)
         buttonStart = QtWidgets.QPushButton(text.START)
         buttonStop = QtWidgets.QPushButton(text.STOP)
         buttonReinit = QtWidgets.QPushButton(text.RE_INIT)
-        buttonLoad.clicked.connect(self.load)
         buttonInit.clicked.connect(self.init)
         buttonStart.clicked.connect(self.start)
         buttonStop.clicked.connect(self.stop)
         buttonReinit.clicked.connect(self.reinit)
-
         hbox1 = QtWidgets.QHBoxLayout()
-        hbox1.addWidget(buttonLoad)
         hbox1.addWidget(buttonInit)
         hbox1.addWidget(buttonStart)
         hbox1.addWidget(buttonStop)
@@ -226,6 +231,7 @@ class MartingPortfolioManager(QtWidgets.QGroupBox):
         hbox3.addWidget(self.varMonitor)
 
         vbox = QtWidgets.QVBoxLayout()
+        vbox.addLayout(hbox0)
         vbox.addLayout(hbox1)
         vbox.addLayout(hbox2)
         vbox.addLayout(hbox3)
@@ -257,10 +263,10 @@ class MartingPortfolioManager(QtWidgets.QGroupBox):
         self.eventEngine.register(EVENT_MARTING_PORTFOLIO, self.signal.emit)
 
     # ----------------------------------------------------------------------
-    def load(self):
+    def load(self, setting_file):
         """加载组合"""
         if not self.strategyLoaded:
-            self.martingEngine.init_engine()
+            self.martingEngine.init_engine(setting_file)
             # 加载组合
             self.updateMonitor()
             # 加载信号

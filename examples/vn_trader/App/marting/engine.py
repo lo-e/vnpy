@@ -42,6 +42,7 @@ from vnpy.trader.utility import (
     extract_vt_symbol,
     round_to,
 )
+from vnpy.trader.utility import DIR_SYMBOL
 
 from .base import APP_NAME
 from vnpy.app.cta_strategy.base import (
@@ -85,8 +86,6 @@ class MartingEngine(BaseEngine):
     """"""
     engine_type = EngineType.LIVE  # live trading engine
 
-    setting_filename = "marting_setting.json"
-
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
         """"""
         super(MartingEngine, self).__init__(main_engine, event_engine, APP_NAME)
@@ -108,6 +107,12 @@ class MartingEngine(BaseEngine):
 
         self.offset_converter = OffsetConverter(self.main_engine)
 
+        # 获取settings下所有策略参数设置文件列表
+        dir = os.path.dirname(os.path.realpath(__file__))
+        dir = f"{dir}{DIR_SYMBOL}settings"
+        self.setting_files = os.listdir(dir)
+        self.setting_file = ""
+
         # 当前日期【指的是市场交易日期，不是日历日期】
         now_hour = datetime.now().hour
         if now_hour >= 8:
@@ -128,8 +133,13 @@ class MartingEngine(BaseEngine):
             generate_time="8:00:01",
         )
 
-    def init_engine(self):
+    def init_engine(self, setting_file:str):
         """ """
+        if not setting_file:
+            self.write_log("马丁引擎初始化失败：setting_file缺失")
+            return
+        
+        self.setting_file = setting_file
         self.load_strategy_class()
         self.load_strategy_setting()
         self.register_event()
@@ -845,8 +855,9 @@ class MartingEngine(BaseEngine):
         Load setting file.
         """
         dir = os.path.dirname(os.path.realpath(__file__))
+        dir = f"{dir}{DIR_SYMBOL}settings"
         file_path = Path(dir)
-        file_path = file_path.joinpath(self.setting_filename)
+        file_path = file_path.joinpath(self.setting_file)
         l = load_json_path(file_path)
 
         # 马丁组合初始化

@@ -1,0 +1,47 @@
+{
+  "signal": [
+    {
+      "strategy_name": "MARTING_OKX_AAVE_多",
+      "class_name": "MartingDCAStrategy",
+      "vt_symbol": "AAVE-USDT-SWAP.OKX",
+      "direction": "多",
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_OKX_AAVE_空",
+      "class_name": "MartingDCAStrategy",
+      "vt_symbol": "AAVE-USDT-SWAP.OKX",
+      "direction": "空",
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_OKX_DOGE_多",
+      "class_name": "MartingDCAStrategy",
+      "vt_symbol": "DOGE-USDT-SWAP.OKX",
+      "direction": "多",
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_OKX_DOGE_空",
+      "class_name": "MartingDCAStrategy",
+      "vt_symbol": "DOGE-USDT-SWAP.OKX",
+      "direction": "空",
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_OKX_LINK_多",
+      "class_name": "MartingDCAStrategy",
+      "vt_symbol": "LINK-USDT-SWAP.OKX",
+      "direction": "多",
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_OKX_LINK_空",
+      "class_name": "MartingDCAStrategy",
+      "vt_symbol": "LINK-USDT-SWAP.OKX",
+      "direction": "空",
+      "start": true
+    }
+  ],
+  "portfolio": { "name": "MARTING_OKX_[AAVE_DOGE_LINK]", "portfolioValue": 100 }
+}
