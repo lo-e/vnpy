@@ -35,7 +35,7 @@ class BybitSymbolType(Enum):
 # interval：'1', '3', '5', '15', '30', '60', '120', '240', '360', '720', 'D', 'M', 'W', 'Y'
 # from：'%Y-%m-%d %H:%M:%S'
 # limit：<= 200
-def bybit_get_bar_data(symbol: str, interval: str, from_time: str, limit: int = 200):
+def bybit_get_bar_data(symbol: str, interval: str, from_time: str, limit: int = 200, save_to:str=""):
     timeArray = time.strptime(from_time, "%Y-%m-%d %H:%M:%S")
     timeStamp = int(time.mktime(timeArray))
     if "USDT" in symbol:
@@ -80,7 +80,7 @@ def bybit_get_bar_data(symbol: str, interval: str, from_time: str, limit: int = 
 
     # 写入csv
     contract = f"BYBIT.{symbol}"
-    csv_path = get_csv_path()
+    csv_path = get_csv_path(target_dir=save_to)
     dir_path = csv_path + f"{contract}{DIR_SYMBOL}{interval}{DIR_SYMBOL}"
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
@@ -361,10 +361,13 @@ def bybit_marting_setting(min_value_filter: float = 0):
     return rusult_list
 
 
-def get_csv_path():
+def get_csv_path(target_dir: str = ""):
     path = os.path.abspath(__file__)
     file_name = path.split(DIR_SYMBOL)[-1]
-    csv_path = path.rstrip(file_name) + f"CSVs{DIR_SYMBOL}"
+    if target_dir:
+        csv_path = path.rstrip(file_name) + f"CSVs_{DIR_SYMBOL}" + f"{target_dir}{DIR_SYMBOL}"
+    else:
+        csv_path = path.rstrip(file_name) + f"CSVs{DIR_SYMBOL}"
     return csv_path
 
 

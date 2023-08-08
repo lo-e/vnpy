@@ -220,7 +220,7 @@ class MartingPortfolio(object):
         
         elif exchange == "BYBIT":
             self.download_engine.download_from_bybit(
-                contract_list=contract_list, days=5, from_data_base=True
+                contract_list=contract_list, days=5, from_data_base=True, save_to=self.name
             )
 
     def download_initing(self):

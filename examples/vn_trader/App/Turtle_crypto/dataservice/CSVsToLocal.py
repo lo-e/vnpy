@@ -19,12 +19,12 @@ from vnpy.trader.utility import DIR_SYMBOL
 from .utility import get_csv_path
 
 class CSVsBybitBarLocalEngine(object):
-    def __init__(self, duration: str, contract: str):
+    def __init__(self, duration: str, contract: str, target_dir: str=""):
         super(CSVsBybitBarLocalEngine, self).__init__()
         # 周期
         self.duration = duration
         # 项目路径
-        csv_path = get_csv_path()
+        csv_path = get_csv_path(target_dir=target_dir)
         contract = f"BYBIT.{contract}"
         self.walkingDir = csv_path + f"{contract}{DIR_SYMBOL}{duration}"
         # 获取数据库

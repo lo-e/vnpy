@@ -58,12 +58,13 @@ class TurtleCryptoDataDownloading(object):
         to_date: datetime = None,
         from_data_base: bool = False,
         api_check: bool = False,
+        save_to: str = "",
     ):
         if not to_date:
             to_date = datetime.now() + timedelta(days=2)
 
         # 先删除原有文件夹，包括其中所有内容
-        csv_path = get_csv_path()
+        csv_path = get_csv_path(target_dir=save_to)
         if os.path.exists(csv_path):
             shutil.rmtree(csv_path)
 
@@ -82,6 +83,7 @@ class TurtleCryptoDataDownloading(object):
                 to_date=to_date,
                 from_data_base=from_data_base,
                 api_check=api_check,
+                save_to=save_to,
             )
             self.threads.append(thread)
             thread.start()
@@ -409,6 +411,7 @@ class DownloadThread(object):
                         symbol=self.contract,
                         interval=self.interval,
                         from_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"),
+                        save_to=self.save_to,
                     )
 
                 else:
@@ -436,7 +439,7 @@ class DownloadThread(object):
             engine.startWork()
 
         elif self.exchange == ExchangeType.BYBIT:
-            engine = CSVsBybitBarLocalEngine(duration="1", contract=self.contract)
+            engine = CSVsBybitBarLocalEngine(duration="1", contract=self.contract, target_dir=self.save_to)
             engine.startWork()
         
         # 终止线程
