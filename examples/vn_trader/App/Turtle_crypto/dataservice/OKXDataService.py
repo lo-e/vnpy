@@ -22,7 +22,7 @@ class OKXType(Enum):
 # symbol：'BT-CUSD-SWAP'
 # interval：'1m/3m/5m/15m/30m/1H/2H/4H 香港时间开盘价k线：[6H/12H/1D/1W/1M/3M/6M/1Y] UTC时间开盘价k线：[/6Hutc/12Hutc/1Dutc/1Wutc/1Mutc/3Mutc/6Mutc/1Yutc]'
 # from：'%Y-%m-%d %H:%M:%S'
-def okx_get_bar_data(symbol:str, interval:str, from_time:str='', limit:int=100):
+def okx_get_bar_data(symbol:str, interval:str, from_time:str='', limit:int=100, save_to:str=""):
     # 获取from_time时间点往前的历史数据，每次请求获取100条，limit为总数据量，
     api = '/api/v5/market/history-candles'
 
@@ -105,7 +105,7 @@ def okx_get_bar_data(symbol:str, interval:str, from_time:str='', limit:int=100):
 
     # 写入csv
     contract = f'OKX.{symbol}'
-    csv_path = get_csv_path()
+    csv_path = get_csv_path(target_dir=save_to)
     dir_path = csv_path + f'{contract}{DIR_SYMBOL}{interval}{DIR_SYMBOL}'
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
@@ -262,10 +262,13 @@ def okx_marting_setting(min_value_filter: float = 0):
 
     return rusult_list
 
-def get_csv_path():
+def get_csv_path(target_dir: str = ""):
     path = os.path.abspath(__file__)
     file_name = path.split(DIR_SYMBOL)[-1]
-    csv_path = path.rstrip(file_name) + f'CSVs{DIR_SYMBOL}'
+    if target_dir:
+        csv_path = path.rstrip(file_name) + f"CSVs_{DIR_SYMBOL}" + f"{target_dir}{DIR_SYMBOL}"
+    else:
+        csv_path = path.rstrip(file_name) + f"CSVs{DIR_SYMBOL}"
     return csv_path
 
 def delete_okex():

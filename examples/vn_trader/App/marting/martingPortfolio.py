@@ -208,13 +208,18 @@ class MartingPortfolio(object):
             if not exchange:
                 exchange = symbol.split(".")[-1]
 
-        if exchange == "BYBIT":
-            self.download_engine.download_from_bybit(
+        if exchange == "BINANCE":
+            self.download_engine.download_from_binance(
                 contract_list=contract_list, days=5, from_data_base=True
             )
 
-        elif exchange == "BINANCE":
-            self.download_engine.download_from_binance(
+        elif exchange == "OKX":
+            self.download_engine.download_from_okx(
+                contract_list=contract_list, days=5, from_data_base=True, save_to=self.name
+            )
+        
+        elif exchange == "BYBIT":
+            self.download_engine.download_from_bybit(
                 contract_list=contract_list, days=5, from_data_base=True
             )
 
