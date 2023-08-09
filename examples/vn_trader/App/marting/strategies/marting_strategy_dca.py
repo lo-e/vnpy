@@ -150,7 +150,7 @@ class MartingDCAStrategy(CtaTemplate):
                 if key in sync_data:
                     value = sync_data[key]
                     # 特殊类型属性处理
-                    if key == "tag_price_dt":
+                    if key == "tag_price_dt" and value:
                         value = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
                     self.__setattr__(key, value)
 
