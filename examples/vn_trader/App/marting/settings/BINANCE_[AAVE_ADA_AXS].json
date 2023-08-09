@@ -15,20 +15,6 @@
       "start": true
     },
     {
-      "strategy_name": "MARTING_BINANCE_ADA_多",
-      "class_name": "MartingDCAStrategy",
-      "vt_symbol": "ADAUSDT.BINANCE",
-      "direction": "多",
-      "start": true
-    },
-    {
-      "strategy_name": "MARTING_BINANCE_ADA_空",
-      "class_name": "MartingDCAStrategy",
-      "vt_symbol": "ADAUSDT.BINANCE",
-      "direction": "空",
-      "start": true
-    },
-    {
       "strategy_name": "MARTING_BINANCE_AXS_多",
       "class_name": "MartingDCAStrategy",
       "vt_symbol": "AXSUSDT.BINANCE",
@@ -39,6 +25,20 @@
       "strategy_name": "MARTING_BINANCE_AXS_空",
       "class_name": "MartingDCAStrategy",
       "vt_symbol": "AXSUSDT.BINANCE",
+      "direction": "空",
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BINANCE_LINK_多",
+      "class_name": "MartingDCAStrategy",
+      "vt_symbol": "LINKUSDT.BINANCE",
+      "direction": "多",
+      "start": true
+    },
+    {
+      "strategy_name": "MARTING_BINANCE_LINK_空",
+      "class_name": "MartingDCAStrategy",
+      "vt_symbol": "LINKUSDT.BINANCE",
       "direction": "空",
       "start": true
     }
