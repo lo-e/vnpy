@@ -30,6 +30,7 @@ def okx_get_bar_data(symbol:str, interval:str, from_time:str='', limit:int=100, 
     since_ts = ''
     until = ''  
     result_list = []
+    first_bar_dt = None
     base_url = f'{main_url}{api}?instId={symbol}&bar={interval}&limit=100'
 
     if from_time:
@@ -98,6 +99,8 @@ def okx_get_bar_data(symbol:str, interval:str, from_time:str='', limit:int=100, 
                 break
     
     if not len(result_list):
+        if interval == "1m" and first_bar_dt and datetime.strptime(from_time, "%Y-%m-%d %H:%M:%S") < datetime.now() - timedelta(minutes=1):
+            raise("数据下载空")
         return None
 
     # 数据起止时间
