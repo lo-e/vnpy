@@ -73,6 +73,7 @@ class BacktestingEngine(object):
         if exchange == "BINANCE":
             self.target_symbol_list = []
             self.target_symbol_list = ['AAVEUSDT.BINANCE', 'AXSUSDT.BINANCE', 'LINKUSDT.BINANCE']
+            self.target_symbol_list = ['1000SHIBUSDT.BINANCE', 'CHZUSDT.BINANCE', 'DOGEUSDT.BINANCE']
         
         elif exchange == "OKX":
             self.target_symbol_list = ['AAVE-USDT-SWAP.OKX', 'AXS-USDT-SWAP.OKX', 'LINK-USDT-SWAP.OKX']
