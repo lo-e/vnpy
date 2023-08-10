@@ -1,20 +1,6 @@
 {
   "signal": [
     {
-      "strategy_name": "MARTING_BINANCE_AAVE_多",
-      "class_name": "MartingDCAStrategy",
-      "vt_symbol": "AAVEUSDT.BINANCE",
-      "direction": "多",
-      "start": true
-    },
-    {
-      "strategy_name": "MARTING_BINANCE_AAVE_空",
-      "class_name": "MartingDCAStrategy",
-      "vt_symbol": "AAVEUSDT.BINANCE",
-      "direction": "空",
-      "start": true
-    },
-    {
       "strategy_name": "MARTING_BINANCE_ADA_多",
       "class_name": "MartingDCAStrategy",
       "vt_symbol": "ADAUSDT.BINANCE",
@@ -25,20 +11,6 @@
       "strategy_name": "MARTING_BINANCE_ADA_空",
       "class_name": "MartingDCAStrategy",
       "vt_symbol": "ADAUSDT.BINANCE",
-      "direction": "空",
-      "start": true
-    },
-    {
-      "strategy_name": "MARTING_BINANCE_AXS_多",
-      "class_name": "MartingDCAStrategy",
-      "vt_symbol": "AXSUSDT.BINANCE",
-      "direction": "多",
-      "start": true
-    },
-    {
-      "strategy_name": "MARTING_BINANCE_AXS_空",
-      "class_name": "MartingDCAStrategy",
-      "vt_symbol": "AXSUSDT.BINANCE",
       "direction": "空",
       "start": true
     },
@@ -57,30 +29,16 @@
       "start": true
     },
     {
-      "strategy_name": "MARTING_BINANCE_DOT_多",
+      "strategy_name": "MARTING_BINANCE_MATIC_多",
       "class_name": "MartingDCAStrategy",
-      "vt_symbol": "DOTUSDT.BINANCE",
+      "vt_symbol": "MATICUSDT.BINANCE",
       "direction": "多",
       "start": true
     },
     {
-      "strategy_name": "MARTING_BINANCE_DOT_空",
+      "strategy_name": "MARTING_BINANCE_MATIC_空",
       "class_name": "MartingDCAStrategy",
-      "vt_symbol": "DOTUSDT.BINANCE",
-      "direction": "空",
-      "start": true
-    },
-    {
-      "strategy_name": "MARTING_BINANCE_ETC_多",
-      "class_name": "MartingDCAStrategy",
-      "vt_symbol": "ETCUSDT.BINANCE",
-      "direction": "多",
-      "start": true
-    },
-    {
-      "strategy_name": "MARTING_BINANCE_ETC_空",
-      "class_name": "MartingDCAStrategy",
-      "vt_symbol": "ETCUSDT.BINANCE",
+      "vt_symbol": "MATICUSDT.BINANCE",
       "direction": "空",
       "start": true
     }

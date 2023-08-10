@@ -1,47 +1,47 @@
 {
   "signal": [
     {
-      "strategy_name": "MARTING_OKX_AAVE_多",
+      "strategy_name": "MARTING_BINANCE_ADA_多",
       "class_name": "MartingDCAStrategy",
-      "vt_symbol": "AAVE-USDT-SWAP.OKX",
+      "vt_symbol": "ADAUSDT.BINANCE",
       "direction": "多",
       "start": true
     },
     {
-      "strategy_name": "MARTING_OKX_AAVE_空",
+      "strategy_name": "MARTING_BINANCE_ADA_空",
       "class_name": "MartingDCAStrategy",
-      "vt_symbol": "AAVE-USDT-SWAP.OKX",
+      "vt_symbol": "ADAUSDT.BINANCE",
       "direction": "空",
       "start": true
     },
     {
-      "strategy_name": "MARTING_OKX_DOGE_多",
+      "strategy_name": "MARTING_BINANCE_DOGE_多",
       "class_name": "MartingDCAStrategy",
-      "vt_symbol": "DOGE-USDT-SWAP.OKX",
+      "vt_symbol": "DOGEUSDT.BINANCE",
       "direction": "多",
       "start": true
     },
     {
-      "strategy_name": "MARTING_OKX_DOGE_空",
+      "strategy_name": "MARTING_BINANCE_DOGE_空",
       "class_name": "MartingDCAStrategy",
-      "vt_symbol": "DOGE-USDT-SWAP.OKX",
+      "vt_symbol": "DOGEUSDT.BINANCE",
       "direction": "空",
       "start": true
     },
     {
-      "strategy_name": "MARTING_OKX_LINK_多",
+      "strategy_name": "MARTING_BINANCE_MATIC_多",
       "class_name": "MartingDCAStrategy",
-      "vt_symbol": "LINK-USDT-SWAP.OKX",
+      "vt_symbol": "MATICUSDT.BINANCE",
       "direction": "多",
       "start": true
     },
     {
-      "strategy_name": "MARTING_OKX_LINK_空",
+      "strategy_name": "MARTING_BINANCE_MATIC_空",
       "class_name": "MartingDCAStrategy",
-      "vt_symbol": "LINK-USDT-SWAP.OKX",
+      "vt_symbol": "MATICUSDT.BINANCE",
       "direction": "空",
       "start": true
     }
   ],
-  "portfolio": { "name": "MARTING_OKX_[AAVE_DOGE_LINK]", "portfolioValue": 100 }
+  "portfolio": { "name": "MARTING_BINANCE", "portfolioValue": 100 }
 }
