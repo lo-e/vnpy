@@ -565,7 +565,10 @@ class MartingDCAStrategy(CtaTemplate):
                     self.calculate_indicator()
 
                     # 提交订单
-                    self.check_order()
+                    if self.open_waitting:
+                        self.target_volume = -1
+                    else:
+                        self.check_order()
 
                 else:
                     if not self.open_email_suspend:
@@ -609,15 +612,20 @@ class MartingDCAStrategy(CtaTemplate):
                 self.tag_price = self.ma_price
                 self.tag_price_dt = self.bar_dt
                 self.trending_step = 0
-                self.open_waitting = False
-                if not oppsite_strategy.trending_step:
-                    oppsite_strategy.open_waitting = False
 
                 # 更新指标
                 self.calculate_indicator()
 
                 # 提交订单
-                self.check_order()
+                if self.open_waitting:
+                    self.target_volume = -1
+                else:
+                    self.check_order()
+
+                # 更新开仓等待
+                self.open_waitting = False
+                if not oppsite_strategy.trending_step:
+                    oppsite_strategy.open_waitting = False
 
     def on_bar(self, bar):
         """基于实时Tick数据生成的周期Bar数据推送"""
@@ -684,11 +692,7 @@ class MartingDCAStrategy(CtaTemplate):
                         price,
                         abs(changed_volume),
                     )
-
-        # 开仓等待状态下自动完成仓位
-        if self.open_waitting:
-            self.target_volume = -1
-
+        
     def on_trade(self, trade):
         """成交推送"""
         # 持仓精度自动修正
