@@ -414,7 +414,7 @@ class MartingDCAStrategy(CtaTemplate):
                 if (
                     self.ma_price >= self.position_close_price
                     and tick.last_price <= self.ma_price
-                    and tick.last_price > self.ma_price - self.symbol_price_tick * 5
+                    and tick.last_price > self.ma_price - self.symbol_price_tick * 2
                 ):
                     self.target_volume = 0
 
@@ -422,7 +422,7 @@ class MartingDCAStrategy(CtaTemplate):
                 if (
                     self.ma_price <= self.position_close_price
                     and tick.last_price >= self.ma_price
-                    and tick.last_price < self.ma_price + self.symbol_price_tick * 5
+                    and tick.last_price < self.ma_price + self.symbol_price_tick * 2
                 ):
                     self.target_volume = 0
 
@@ -451,7 +451,7 @@ class MartingDCAStrategy(CtaTemplate):
                     if (
                         self.ma_price <= self.position_increase_price
                         and tick.last_price >= self.ma_price
-                        and tick.last_price < self.ma_price + self.symbol_price_tick * 5
+                        and tick.last_price < self.ma_price + self.symbol_price_tick * 2
                     ):
                         next_trending_step = self.trending_step + 1
 
@@ -459,7 +459,7 @@ class MartingDCAStrategy(CtaTemplate):
                     if (
                         self.ma_price >= self.position_increase_price
                         and tick.last_price <= self.ma_price
-                        and tick.last_price > self.ma_price - self.symbol_price_tick * 5
+                        and tick.last_price > self.ma_price - self.symbol_price_tick * 2
                     ):
                         next_trending_step = self.trending_step + 1
 

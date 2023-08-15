@@ -180,18 +180,20 @@ class MartingDCASignal(object):
             if self.direction == Direction.LONG:
                 if (
                     self.ma_price >= self.position_reduce_price
-                    and bar.low_price <= trade_price
-                    and bar.high_price >= trade_price
+                    and bar.low_price <= self.ma_price
+                    and bar.high_price >= self.ma_price
                 ):
                     reduce_price_cross = True
+                    trade_price = floor_to(self.ma_price, self.symbol_price_tick)
 
             if self.direction == Direction.SHORT:
                 if (
                     self.ma_price <= self.position_reduce_price
-                    and bar.high_price >= trade_price
-                    and bar.low_price <= trade_price
+                    and bar.high_price >= self.ma_price
+                    and bar.low_price <= self.ma_price
                 ):
                     reduce_price_cross = True
+                    trade_price = ceil_to(self.ma_price, self.symbol_price_tick)
 
             if reduce_price_cross:
                 """ 满足减仓条件 """
@@ -280,18 +282,20 @@ class MartingDCASignal(object):
                 if self.direction == Direction.LONG:
                     if (
                         self.ma_price <= self.position_increase_price
-                        and bar.high_price >= trade_price
-                        and bar.low_price <= trade_price
+                        and bar.high_price >= self.ma_price
+                        and bar.low_price <= self.ma_price
                     ):
                         increase_price_cross = True
+                        trade_price = ceil_to(self.ma_price, self.symbol_price_tick)
 
                 if self.direction == Direction.SHORT:
                     if (
                         self.ma_price >= self.position_increase_price
-                        and bar.low_price <= trade_price
-                        and bar.high_price >= trade_price
+                        and bar.low_price <= self.ma_price
+                        and bar.high_price >= self.ma_price
                     ):
                         increase_price_cross = True
+                        trade_price = floor_to(self.ma_price, self.symbol_price_tick)
 
             if increase_price_cross:
                 """ 满足加仓条件 """
