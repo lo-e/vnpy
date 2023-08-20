@@ -43,9 +43,9 @@ class MartingDCASignal(object):
             self.symbol
         ]  # 合约最小价格变动
 
-        self.init_status = history_data.get("backtesting_status", {})  # 回测初始状态
+        self.init_status = history_data.get("sync_status", {})  # 回测初始状态
         self.start_dt = None  # 回测开始时间
-        backtesting_to = history_data.get("backtesting_to", "")
+        backtesting_to = history_data.get("sync_dt", "")
         if backtesting_to:
             self.start_dt = datetime.strptime(
                 backtesting_to, "%Y-%m-%d %H:%M:%S"
