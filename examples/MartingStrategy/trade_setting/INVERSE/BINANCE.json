@@ -1,45 +1,51 @@
 {
   "signal": [
     {
-      "strategy_name": "MARTING_BINANCE_ADA_多",
+      "strategy_name": "MARTING_BINANCE_AAVE_多",
       "class_name": "MartingDCAStrategy",
-      "vt_symbol": "ADAUSDT.BINANCE",
+      "vt_symbol": "AAVEUSDT.BINANCE",
       "direction": "多",
+      "force_trade": false,
       "start": true
     },
     {
-      "strategy_name": "MARTING_BINANCE_ADA_空",
+      "strategy_name": "MARTING_BINANCE_AAVE_空",
       "class_name": "MartingDCAStrategy",
-      "vt_symbol": "ADAUSDT.BINANCE",
+      "vt_symbol": "AAVEUSDT.BINANCE",
       "direction": "空",
+      "force_trade": false,
       "start": true
     },
     {
-      "strategy_name": "MARTING_BINANCE_DOGE_多",
+      "strategy_name": "MARTING_BINANCE_AXS_多",
       "class_name": "MartingDCAStrategy",
-      "vt_symbol": "DOGEUSDT.BINANCE",
+      "vt_symbol": "AXSUSDT.BINANCE",
       "direction": "多",
+      "force_trade": false,
       "start": true
     },
     {
-      "strategy_name": "MARTING_BINANCE_DOGE_空",
+      "strategy_name": "MARTING_BINANCE_AXS_空",
       "class_name": "MartingDCAStrategy",
-      "vt_symbol": "DOGEUSDT.BINANCE",
+      "vt_symbol": "AXSUSDT.BINANCE",
       "direction": "空",
+      "force_trade": false,
       "start": true
     },
     {
-      "strategy_name": "MARTING_BINANCE_MATIC_多",
+      "strategy_name": "MARTING_BINANCE_LINK_多",
       "class_name": "MartingDCAStrategy",
-      "vt_symbol": "MATICUSDT.BINANCE",
+      "vt_symbol": "LINKUSDT.BINANCE",
       "direction": "多",
+      "force_trade": false,
       "start": true
     },
     {
-      "strategy_name": "MARTING_BINANCE_MATIC_空",
+      "strategy_name": "MARTING_BINANCE_LINK_空",
       "class_name": "MartingDCAStrategy",
-      "vt_symbol": "MATICUSDT.BINANCE",
+      "vt_symbol": "LINKUSDT.BINANCE",
       "direction": "空",
+      "force_trade": false,
       "start": true
     }
   ],
