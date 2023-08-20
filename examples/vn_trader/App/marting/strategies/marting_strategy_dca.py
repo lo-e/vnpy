@@ -40,6 +40,7 @@ class MartingDCAStrategy(CtaTemplate):
         "strategy_name",
         "vt_symbol",
         "direction",
+        "force_waitting",
     ]
 
     # 变量列表，保存了变量的名称
@@ -63,6 +64,7 @@ class MartingDCAStrategy(CtaTemplate):
         "trending_step",
         "target_volume",
         "open_waitting",
+        "force_waitting",
     ]
 
     # 同步列表，保存了需要保存到数据库的变量名称
@@ -113,6 +115,7 @@ class MartingDCAStrategy(CtaTemplate):
         self.is_backtesting = False # 是否正在回测
         self.backtesting_wait = 100 # 回测缓冲时间
         self.strategy_event_wait = 0 # 策略事件缓冲时间
+        self.force_waitting = 0 # -1：强制取消等待 0：自动 1：强制等待
         self.trending_group = [] # 当前完整开平仓时的变量状态
 
         self.am = ArrayManager(self.ma_window)  # K线容器
@@ -403,8 +406,15 @@ class MartingDCAStrategy(CtaTemplate):
 
         # 获取反方向信号
         oppsite_strategy = self.get_oppsite_strategy()
-        if oppsite_strategy.pos:
-            self.open_waitting = True
+
+        # 交易等待判断
+        if not self.trending_step:
+            if oppsite_strategy.pos:
+                self.open_waitting = True
+            if self.force_waitting == -1:
+                self.open_waitting = False
+            elif self.force_waitting == 1:
+                self.open_waitting = True
 
         if self.position_close_price:
             """ 检查平仓 """
