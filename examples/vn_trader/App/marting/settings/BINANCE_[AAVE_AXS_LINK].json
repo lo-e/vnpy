@@ -21,7 +21,7 @@
       "class_name": "MartingDCAStrategy",
       "vt_symbol": "AXSUSDT.BINANCE",
       "direction": "多",
-      "force_waitting": 1,
+      "force_waitting": 0,
       "start": true
     },
     {
@@ -29,7 +29,7 @@
       "class_name": "MartingDCAStrategy",
       "vt_symbol": "AXSUSDT.BINANCE",
       "direction": "空",
-      "force_waitting": -1,
+      "force_waitting": 0,
       "start": true
     },
     {
@@ -37,7 +37,7 @@
       "class_name": "MartingDCAStrategy",
       "vt_symbol": "LINKUSDT.BINANCE",
       "direction": "多",
-      "force_waitting": 1,
+      "force_waitting": 0,
       "start": true
     },
     {
@@ -45,7 +45,7 @@
       "class_name": "MartingDCAStrategy",
       "vt_symbol": "LINKUSDT.BINANCE",
       "direction": "空",
-      "force_waitting": -1,
+      "force_waitting": 0,
       "start": true
     }
   ],
