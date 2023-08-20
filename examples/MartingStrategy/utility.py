@@ -510,7 +510,7 @@ def generate_setting(symbol_open_dict: dict, marting_type:str, exchange:str):
     # target_symbols = ['1000SHIBUSDT.BINANCE', '1000XECUSDT.BINANCE', 'AAVEUSDT.BINANCE', 'ADAUSDT.BINANCE', 'ALGOUSDT.BINANCE', 'ALPHAUSDT.BINANCE', 'ANKRUSDT.BINANCE', 'ARPAUSDT.BINANCE', 'ARUSDT.BINANCE', 'ATAUSDT.BINANCE', 'ATOMUSDT.BINANCE', 'AUDIOUSDT.BINANCE', 'AVAXUSDT.BINANCE', 'AXSUSDT.BINANCE', 'BAKEUSDT.BINANCE', 'BATUSDT.BINANCE', 'BCHUSDT.BINANCE', 'BELUSDT.BINANCE', 'BLZUSDT.BINANCE', 'BNBUSDT.BINANCE', 'C98USDT.BINANCE', 'CELRUSDT.BINANCE', 'CHRUSDT.BINANCE', 'COTIUSDT.BINANCE', 'CRVUSDT.BINANCE', 'CTKUSDT.BINANCE', 'CTSIUSDT.BINANCE', 'DASHUSDT.BINANCE', 'DENTUSDT.BINANCE', 'DGBUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'EGLDUSDT.BINANCE', 'ENJUSDT.BINANCE', 'EOSUSDT.BINANCE', 'ETCUSDT.BINANCE', 'ETHUSDT.BINANCE', 'FILUSDT.BINANCE', 'FLMUSDT.BINANCE', 'FTMUSDT.BINANCE', 'GALAUSDT.BINANCE', 'GTCUSDT.BINANCE', 'IOSTUSDT.BINANCE', 'IOTAUSDT.BINANCE', 'KAVAUSDT.BINANCE', 'KNCUSDT.BINANCE', 'LINAUSDT.BINANCE', 'LITUSDT.BINANCE', 'LRCUSDT.BINANCE', 'MANAUSDT.BINANCE', 'MASKUSDT.BINANCE', 'MATICUSDT.BINANCE', 'MKRUSDT.BINANCE', 'NEARUSDT.BINANCE', 'NEOUSDT.BINANCE', 'OGNUSDT.BINANCE', 'OMGUSDT.BINANCE', 'ONEUSDT.BINANCE', 'PEOPLEUSDT.BINANCE', 'RENUSDT.BINANCE', 'RLCUSDT.BINANCE', 'RSRUSDT.BINANCE', 'RUNEUSDT.BINANCE', 'SFPUSDT.BINANCE', 'SKLUSDT.BINANCE', 'SOLUSDT.BINANCE', 'STORJUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'SXPUSDT.BINANCE', 'TRXUSDT.BINANCE', 'UNFIUSDT.BINANCE', 'UNIUSDT.BINANCE', 'WAVESUSDT.BINANCE', 'XEMUSDT.BINANCE', 'XLMUSDT.BINANCE', 'XRPUSDT.BINANCE', 'XTZUSDT.BINANCE', 'YFIUSDT.BINANCE', 'ZECUSDT.BINANCE', 'ZENUSDT.BINANCE', 'ZILUSDT.BINANCE', 'ZRXUSDT.BINANCE']
 
     # INVERSE目标合约
-    target_symbols = ['AAVEUSDT.BINANCE', 'AXSUSDT.BINANCE', 'LINKUSDT.BINANCE']
+    target_symbols = ['ADAUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'MATICUSDT.BINANCE']
 
     # 获取合约最小交易价值
     symbol_min_value_dict = {}
@@ -648,7 +648,7 @@ def generate_setting(symbol_open_dict: dict, marting_type:str, exchange:str):
                     "class_name": "MartingDCAStrategy",
                     "vt_symbol": symbol,
                     "direction": "多",
-                    "force_trade": False,
+                    "force_waitting": 0,
                     "start": True
                     }
                 symbol_setting_list.append(data_long)
@@ -658,7 +658,7 @@ def generate_setting(symbol_open_dict: dict, marting_type:str, exchange:str):
                     "class_name": "MartingDCAStrategy",
                     "vt_symbol": symbol,
                     "direction": "空",
-                    "force_trade": False,
+                    "force_waitting": 0,
                     "start": True
                     }
                 symbol_setting_list.append(data_short)

@@ -5,7 +5,7 @@
       "class_name": "MartingDCAStrategy",
       "vt_symbol": "ADAUSDT.BINANCE",
       "direction": "多",
-      "force_trade": false,
+      "force_waitting": 0,
       "start": true
     },
     {
@@ -13,7 +13,7 @@
       "class_name": "MartingDCAStrategy",
       "vt_symbol": "ADAUSDT.BINANCE",
       "direction": "空",
-      "force_trade": false,
+      "force_waitting": 0,
       "start": true
     },
     {
@@ -21,7 +21,7 @@
       "class_name": "MartingDCAStrategy",
       "vt_symbol": "DOGEUSDT.BINANCE",
       "direction": "多",
-      "force_trade": false,
+      "force_waitting": 0,
       "start": true
     },
     {
@@ -29,7 +29,7 @@
       "class_name": "MartingDCAStrategy",
       "vt_symbol": "DOGEUSDT.BINANCE",
       "direction": "空",
-      "force_trade": false,
+      "force_waitting": 0,
       "start": true
     },
     {
@@ -37,7 +37,7 @@
       "class_name": "MartingDCAStrategy",
       "vt_symbol": "MATICUSDT.BINANCE",
       "direction": "多",
-      "force_trade": false,
+      "force_waitting": 0,
       "start": true
     },
     {
@@ -45,7 +45,7 @@
       "class_name": "MartingDCAStrategy",
       "vt_symbol": "MATICUSDT.BINANCE",
       "direction": "空",
-      "force_trade": false,
+      "force_waitting": 0,
       "start": true
     }
   ],
