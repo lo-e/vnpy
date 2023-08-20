@@ -648,6 +648,7 @@ def generate_setting(symbol_open_dict: dict, marting_type:str, exchange:str):
                     "class_name": "MartingDCAStrategy",
                     "vt_symbol": symbol,
                     "direction": "多",
+                    "force_waitting": 0,
                     "start": True
                     }
                 symbol_setting_list.append(data_long)
@@ -657,6 +658,7 @@ def generate_setting(symbol_open_dict: dict, marting_type:str, exchange:str):
                     "class_name": "MartingDCAStrategy",
                     "vt_symbol": symbol,
                     "direction": "空",
+                    "force_waitting": 0,
                     "start": True
                     }
                 symbol_setting_list.append(data_short)
