@@ -378,10 +378,9 @@ def backtesting():
                 backtesting_data[signal_key] = data_object.saved_sync_data
 
                 # 信号组合的最新趋势追踪信息
-                signal_status = data_object.saved_sync_data.get("backtesting_status", {})
+                signal_status = data_object.saved_sync_data.get("sync_status", {})
                 if signal_status:
                     trade_setting = signal_trade_setting.get(signal_key, {})
-                    signal_bottom = trade_setting.get("bottom_step", 0)
                     trending_step = signal_status["trending_step"]
                     data_list = signal_trending_step_dict.get(trending_step, [])
                     
@@ -392,13 +391,13 @@ def backtesting():
                     position_pnl = round_to(position_pnl, 0.01)
                     position_pnl = f"{position_pnl}%"
 
-                    data_list.append([signal_key, signal_bottom, position_pnl, signal_status])
+                    data_list.append([signal_key, position_pnl, signal_status])
                     signal_trending_step_dict[trending_step] = data_list
 
         # 保存回测结果的信号状态到json文件
-        # with open(backtesting_history_json, "w", encoding="utf-8") as file:
-        #     file.write(json.dumps(backtesting_data, ensure_ascii=False))
-        # print(f"\n已保存回测历史到{start_dt_str}_{end_dt_str}.json\t总数：{len(backtesting_data)}")
+        with open(backtesting_history_json, "w", encoding="utf-8") as file:
+            file.write(json.dumps(backtesting_data, ensure_ascii=False))
+        print(f"\n已保存回测历史到{start_dt_str}_{end_dt_str}.json\t总数：{len(backtesting_data)}")
         
         # 输出回测结果的趋势追踪信号信息
         trending_step_list = sorted(list(signal_trending_step_dict.keys()))
@@ -407,11 +406,11 @@ def backtesting():
                 print(f"\n趋势追踪{trending_step}")
                 data_list = signal_trending_step_dict[trending_step]
                 for signal_data in data_list:
-                    signal_key, signal_bottom, position_pnl, signal_status = signal_data
+                    signal_key, position_pnl, signal_status = signal_data
                     p = signal_status["position_price"]
                     r = signal_status["position_reduce_price"]
                     i = signal_status["position_increase_price"]
-                    print(f"{signal_key}_bottom_{signal_bottom}\t\tp：{p}\tr：{r}\ti：{i}\tpnl：{position_pnl}")
+                    print(f"{signal_key}\t\tp：{p}\tr：{r}\ti：{i}\tpnl：{position_pnl}")
         print("\n")
 
 def combine_backtesting():

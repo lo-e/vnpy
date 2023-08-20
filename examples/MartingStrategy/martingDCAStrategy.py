@@ -91,6 +91,7 @@ class MartingDCASignal(object):
             "max_loss_rate",
             "ma_price",
             "trending_step",
+            "open_waitting",
             "current_trending_group",
         ]
         self.saved_sync_data = {}
