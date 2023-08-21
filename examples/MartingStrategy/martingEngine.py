@@ -57,7 +57,7 @@ class BacktestingEngine(object):
         self.startDt = startDt
         self.endDt = endDt
     
-    def initListPortfolio(self, l, marting_type:str, exchange:str, portfolioValue=10000000, history_file:str=""):
+    def initListPortfolio(self, l, marting_type:str, exchange:str, portfolioValue=10000000, history_file:str="", params:dict = {}):
         """初始化投资组合"""
         self.portfolioValue = portfolioValue
 
@@ -72,7 +72,7 @@ class BacktestingEngine(object):
         self.portfolio = MartingDCAPortfolio(self)
         if exchange == "BINANCE":
             self.target_symbol_list = []
-            self.target_symbol_list = ['AAVEUSDT.BINANCE', 'AXSUSDT.BINANCE', 'LINKUSDT.BINANCE']
+            # self.target_symbol_list = ['AAVEUSDT.BINANCE', 'AXSUSDT.BINANCE', 'LINKUSDT.BINANCE']
             # self.target_symbol_list = ['ADAUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'MATICUSDT.BINANCE']
         
         elif exchange == "OKX":
@@ -86,7 +86,7 @@ class BacktestingEngine(object):
                     temp.append(symbol)
             self.symbolList = temp
         self.symbolList = sorted(self.symbolList)
-        self.portfolio.init(portfolioValue, self.symbolList, history_file=history_file)
+        self.portfolio.init(portfolioValue, self.symbolList, history_file=history_file, params=params)
         self.portfolio.tradingStart = self.tradingStart
 
         self.output(f"投资组合的合约代码：{len(self.symbolList)}\n{self.symbolList}")
