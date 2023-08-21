@@ -482,7 +482,7 @@ def combine_backtesting():
         return
 
     # 随机组合合约列表
-    combineList = combine(symbolList, 3)
+    combineList = combine_symbols(symbolList, 3)
     print(f"\n随机组合总数：{len(combineList)}\n")
     
     # 回测时间
@@ -698,8 +698,8 @@ def three():
             # 写入csv文件
             writer.writerows(resultList)
 
-# 随机组合，l是数组，n是组合的元素数量
-def combine(l, n):
+# 随机组合合约，l是合约数组，n是组合的合约数量
+def combine_symbols(l, n):
     answers = []
     one = [0] * n
 
@@ -713,6 +713,15 @@ def combine(l, n):
 
     next_c()
     return answers
+
+# 随机组合参数，l是参数数组字典，例如：{a:[1, 2, 3], b:["x", "y", "z"]}
+# def combine_params(l):
+#     result = []
+#     for param in l
+#     for i in list_a:
+#         for j in list_b:
+#             for k in list_c:
+#                 result.append([i, j, k])
 
 if __name__ == "__main__":
     # 合约列表回测
