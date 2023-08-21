@@ -16,10 +16,6 @@ from pathlib import Path
 import json
 
 UNIT_RATE = 0.1 # 初始开仓价值比率
-REDUCE_RATE = 0.003 # 盈利平仓比率
-CONTINUOUS_INCREASE_RATE = 0.005 # 持续加仓比率
-TRENDING_INCREASE_RATE = 0.04 # 趋势加仓比率
-TRENDING_OPEN_LOSS_RATE = 0.02 # 趋势加仓时的持仓亏损比率
 
 class MartingDCASignal(object):
     def __init__(
@@ -29,6 +25,7 @@ class MartingDCASignal(object):
         direction,
         ma_window,
         history_data: dict = {},
+        params:dict = {},
     ):
         # 常量
         self.portfolio = portfolio  # 投资组合
@@ -36,6 +33,11 @@ class MartingDCASignal(object):
         self.direction = direction  # 交易方向
         self.ma_window = ma_window  # 均线参数
         self.unit_value = self.portfolio.portfolioValue * UNIT_RATE  # 单位持仓价值
+        self.reduce_rate = params.get("reduce_rate", 0.003) # 盈利平仓比率
+        self.continuous_increase_rate = params.get("continuous_increase_rate", 0.005) # 持续加仓比率
+        self.trending_increase_rate = params.get("trending_increase_rate", 0.04) # 趋势加仓比率
+        self.trending_open_loss_rate = params.get("trending_open_loss_rate", 0.02) # 趋势加仓时的持仓亏损比率
+
         self.symbol_min_volume = self.portfolio.engine.min_volume_dict[
             self.symbol
         ]  # 合约最小交易数量
@@ -281,7 +283,7 @@ class MartingDCASignal(object):
                     loss_rate = 1 - (self.top_open_price / self.position_price)
                 
                 # 亏损是否达到目标值
-                if loss_rate <= (TRENDING_INCREASE_RATE * -1):
+                if loss_rate <= (self.trending_increase_rate * -1):
                     increase_price_cross = True
                     trade_price = self.top_open_price
             
@@ -323,7 +325,7 @@ class MartingDCASignal(object):
                     elif self.direction == Direction.SHORT:
                         loss_rate = 1 - (trade_price / self.position_price)
 
-                if loss_rate > (TRENDING_INCREASE_RATE * -1):
+                if loss_rate > (self.trending_increase_rate * -1):
                     """ 普通加仓 """
 
                     # 目标持仓价值【定额加仓】
@@ -342,10 +344,10 @@ class MartingDCASignal(object):
 
                     # 计算加仓数量
                     if self.direction == Direction.LONG:
-                        target_positon_price = trade_price * (1 + TRENDING_OPEN_LOSS_RATE)
+                        target_positon_price = trade_price * (1 + self.trending_open_loss_rate)
 
                     elif self.direction == Direction.SHORT:
-                        target_positon_price = trade_price * (1 - TRENDING_OPEN_LOSS_RATE)
+                        target_positon_price = trade_price * (1 - self.trending_open_loss_rate)
 
                     trade_volume = (
                         abs(self.position) * target_positon_price
@@ -448,17 +450,17 @@ class MartingDCASignal(object):
 
         # 减仓价格
         if self.direction == Direction.LONG:
-            self.position_reduce_price = self.position_price * (1 + REDUCE_RATE)
+            self.position_reduce_price = self.position_price * (1 + self.reduce_rate)
 
         elif self.direction == Direction.SHORT:
-            self.position_reduce_price = self.position_price * (1 - REDUCE_RATE)
+            self.position_reduce_price = self.position_price * (1 - self.reduce_rate)
 
         # 加仓价格
         if self.direction == Direction.LONG:
-            self.position_increase_price = self.tag_price * (1 - CONTINUOUS_INCREASE_RATE)
+            self.position_increase_price = self.tag_price * (1 - self.continuous_increase_rate)
 
         elif self.direction == Direction.SHORT:
-            self.position_increase_price = self.tag_price * (1 + CONTINUOUS_INCREASE_RATE)
+            self.position_increase_price = self.tag_price * (1 + self.continuous_increase_rate)
 
         # 趋势加仓价格初始化
         self.top_open_price = 0
