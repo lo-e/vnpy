@@ -490,7 +490,7 @@ class MartingDCAPortfolio(object):
         self.top_step_signal = None
         self.trending_open = True
 
-    def init(self, portfolioValue, symbolList, history_file: str = ""):
+    def init(self, portfolioValue, symbolList, history_file: str = "", params:dict = {}):
         self.portfolioValue = portfolioValue
 
         # 回测历史数据
@@ -507,13 +507,13 @@ class MartingDCAPortfolio(object):
             long_signal_key = f"{signal_key}_{Direction.LONG.value}"
             long_history_data = history_data.get(long_signal_key, {})
             signal1 = MartingDCASignal(
-                self, symbol, Direction.LONG, 9, history_data=long_history_data
+                self, symbol, Direction.LONG, 9, history_data=long_history_data, params=params
             )
 
             short_signal_key = f"{signal_key}_{Direction.SHORT.value}"
             short_history_data = history_data.get(short_signal_key, {})
             signal2 = MartingDCASignal(
-                self, symbol, Direction.SHORT, 9, history_data=short_history_data
+                self, symbol, Direction.SHORT, 9, history_data=short_history_data, params=params
             )
 
             l = self.signalDict[symbol]

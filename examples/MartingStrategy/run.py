@@ -604,7 +604,7 @@ def combine_symbols_backtesting():
     print("=" * 20)
     print("组合数：%s" % count)
 
-def combine_params_backtesting(symbol:str):
+def combine_params_backtesting(target_symbol:str):
     # 选择回测策略类型
     marting_type = input('选择类型（默认1）【反转：1 趋势追踪：2】')
     if marting_type == "2":
@@ -638,20 +638,6 @@ def combine_params_backtesting(symbol:str):
 
         else:
             filename = f"setting_inverse{DIR_SYMBOL}setting_binance.csv"
-    
-    # 筛选的合约列表
-    target_symbol_list = []
-    if marting_type == "FORWARD":
-        if exchange == "BINANCE":
-            target_symbol_list = ['1000SHIBUSDT.BINANCE', '1000XECUSDT.BINANCE', 'AAVEUSDT.BINANCE', 'ADAUSDT.BINANCE', 'ALGOUSDT.BINANCE', 'ALPHAUSDT.BINANCE', 'ANKRUSDT.BINANCE', 'ARPAUSDT.BINANCE', 'ARUSDT.BINANCE', 'ATAUSDT.BINANCE', 'ATOMUSDT.BINANCE', 'AUDIOUSDT.BINANCE', 'AVAXUSDT.BINANCE', 'AXSUSDT.BINANCE', 'BAKEUSDT.BINANCE', 'BATUSDT.BINANCE', 'BCHUSDT.BINANCE', 'BELUSDT.BINANCE', 'BLZUSDT.BINANCE', 'BNBUSDT.BINANCE', 'C98USDT.BINANCE', 'CELRUSDT.BINANCE', 'CHRUSDT.BINANCE', 'COTIUSDT.BINANCE', 'CRVUSDT.BINANCE', 'CTKUSDT.BINANCE', 'CTSIUSDT.BINANCE', 'DASHUSDT.BINANCE', 'DENTUSDT.BINANCE', 'DGBUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'EGLDUSDT.BINANCE', 'ENJUSDT.BINANCE', 'EOSUSDT.BINANCE', 'ETCUSDT.BINANCE', 'ETHUSDT.BINANCE', 'FILUSDT.BINANCE', 'FLMUSDT.BINANCE', 'FTMUSDT.BINANCE', 'GALAUSDT.BINANCE', 'GTCUSDT.BINANCE', 'IOSTUSDT.BINANCE', 'IOTAUSDT.BINANCE', 'KAVAUSDT.BINANCE', 'KNCUSDT.BINANCE', 'LINAUSDT.BINANCE', 'LITUSDT.BINANCE', 'LRCUSDT.BINANCE', 'MANAUSDT.BINANCE', 'MASKUSDT.BINANCE', 'MATICUSDT.BINANCE', 'MKRUSDT.BINANCE', 'NEARUSDT.BINANCE', 'NEOUSDT.BINANCE', 'OGNUSDT.BINANCE', 'OMGUSDT.BINANCE', 'ONEUSDT.BINANCE', 'PEOPLEUSDT.BINANCE', 'RENUSDT.BINANCE', 'RLCUSDT.BINANCE', 'RSRUSDT.BINANCE', 'RUNEUSDT.BINANCE', 'SFPUSDT.BINANCE', 'SKLUSDT.BINANCE', 'SOLUSDT.BINANCE', 'STORJUSDT.BINANCE', 'SUSHIUSDT.BINANCE', 'SXPUSDT.BINANCE', 'TRXUSDT.BINANCE', 'UNFIUSDT.BINANCE', 'UNIUSDT.BINANCE', 'WAVESUSDT.BINANCE', 'XEMUSDT.BINANCE', 'XLMUSDT.BINANCE', 'XRPUSDT.BINANCE', 'XTZUSDT.BINANCE', 'YFIUSDT.BINANCE', 'ZECUSDT.BINANCE', 'ZENUSDT.BINANCE', 'ZILUSDT.BINANCE', 'ZRXUSDT.BINANCE']
-
-    else:
-        if exchange == "BINANCE":
-            target_symbol_list = ['BTCUSDT.BINANCE', 'ETHUSDT.BINANCE', 'LINKUSDT.BINANCE', 'XRPUSDT.BINANCE', 'XLMUSDT.BINANCE', 'SOLUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'MKRUSDT.BINANCE', 'BCHUSDT.BINANCE', 'LTCUSDT.BINANCE', 'COMPUSDT.BINANCE', 'MATICUSDT.BINANCE', 'OPUSDT.BINANCE', 'SNXUSDT.BINANCE', 'BANDUSDT.BINANCE', 'FILUSDT.BINANCE', 'BNBUSDT.BINANCE', 'DOTUSDT.BINANCE', 'APEUSDT.BINANCE', 'STMXUSDT.BINANCE', '1000SHIBUSDT.BINANCE', 'KNCUSDT.BINANCE', 'OGNUSDT.BINANCE', 'UNIUSDT.BINANCE', 'ADAUSDT.BINANCE', 'IMXUSDT.BINANCE', 'AXSUSDT.BINANCE', 'CHZUSDT.BINANCE', 'STORJUSDT.BINANCE', 'TRXUSDT.BINANCE', 'MASKUSDT.BINANCE', 'ANKRUSDT.BINANCE', 'ETCUSDT.BINANCE', 'EOSUSDT.BINANCE', 'GALAUSDT.BINANCE', 'AAVEUSDT.BINANCE', 'XEMUSDT.BINANCE', 'DYDXUSDT.BINANCE', 'AVAXUSDT.BINANCE']
-            target_symbol_list = ['ADAUSDT.BINANCE', 'AAVEUSDT.BINANCE', 'AXSUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'LINKUSDT.BINANCE', 'BNBUSDT.BINANCE', 'UNIUSDT.BINANCE', 'BANDUSDT.BINANCE', 'ETHUSDT.BINANCE', 'EOSUSDT.BINANCE', 'DOTUSDT.BINANCE', 'MATICUSDT.BINANCE', 'LTCUSDT.BINANCE', 'XRPUSDT.BINANCE', 'CHZUSDT.BINANCE', 'OGNUSDT.BINANCE', '1000SHIBUSDT.BINANCE']
-
-        elif exchange == "OKX":
-            target_symbol_list = ['ALGO-USDT-SWAP.OKX', 'DYDX-USDT-SWAP.OKX', 'ENS-USDT-SWAP.OKX', 'EOS-USDT-SWAP.OKX', 'SUSHI-USDT-SWAP.OKX']
 
     # 获取合约列表
     symbolList = []
@@ -660,62 +646,60 @@ def combine_params_backtesting(symbol:str):
         for d in r:
             symbolList.append(d)
     
-    if target_symbol_list:
-        temp = []
-        for symbol_data in symbolList:
-            symbol = symbol_data["symbol"]
-            if symbol in target_symbol_list:
-                temp.append(symbol_data)
-
-        symbolList = temp
-
+    temp = []
+    for symbol_data in symbolList:
+        symbol = symbol_data["symbol"]
+        if symbol == target_symbol:
+            temp.append(symbol_data)
+            break
+    symbolList = temp
     if not symbolList:
         return
 
     # 随机组合合约列表
-    combineList = combine_symbols(symbolList, 3)
+    combineList = combine_params()
     print(f"\n随机组合总数：{len(combineList)}\n")
     
     # 回测时间
-    start_dt = datetime(2023, 1, 1)
-    end_dt = datetime(2023, 8, 9)
+    start_dt = datetime(2023, 8, 1)
+    end_dt = datetime(2023, 8, 20)
 
     # 获取历史数据
     start_dt_str = start_dt.strftime("%Y-%m-%d")
     end_dt_str = end_dt.strftime("%Y-%m-%d")
-    file_dir = f"combine_symbols_backtesting_result{DIR_SYMBOL}{marting_type}{DIR_SYMBOL}{exchange}{DIR_SYMBOL}"
+    file_dir = f"combine_params_backtesting_result{DIR_SYMBOL}{marting_type}{DIR_SYMBOL}{exchange}{DIR_SYMBOL}{target_symbol}{DIR_SYMBOL}"
     if not os.path.exists(file_dir):
         os.makedirs(file_dir)
         
     file_path = f"{file_dir}{start_dt_str}_{end_dt_str}.csv"
     resultList = []
-    history_symbols_key = []
+    history_params_key = []
     if os.path.exists(file_path):
         history_data = pd.read_csv(file_path)
         for _, row in history_data.iterrows():
             row_dict = dict(row)
-            history_symbols_key.append(row_dict["symbols"])
+            history_params_key.append(row_dict["params"])
             resultList.append(row_dict)
 
     # 开始回测
     count = 0
-    for l in combineList:
+    for params_data in combineList:
         # 判断该组合是否有历史记录，如果有则不重复回测
-        symbols_list = []
-        for data in l:
-            symbols_list.append(data["symbol"])
-        symbols_list = sorted(symbols_list)
-        symbols_key = (", ").join(symbols_list)
-        if symbols_key in history_symbols_key:
+        params_list = []
+        for param, param_value in params_data.items():
+            params_list.append(f"{param}_{param_value}")
+        params_list = sorted(params_list)
+        params_key = (", ").join(params_list)
+        if params_key in history_params_key:
             count += 1
-            print(f"{symbols_key} 回测结果已记录")
+            print(f"{params_key} 回测结果已记录")
             print("count：\t%s\n" % count)
             continue
 
         # 开始回测
         engine = BacktestingEngine()
         engine.setPeriod(start_dt, end_dt)
-        engine.initListPortfolio(l, marting_type=marting_type, exchange=exchange, portfolioValue=10000)
+        engine.initListPortfolio(symbolList, marting_type=marting_type, exchange=exchange, portfolioValue=10000, params=params_data)
         engine.loadData()
         engine.runBacktesting()
         if not len(engine.resultList):
@@ -772,7 +756,7 @@ def combine_params_backtesting(symbol:str):
         total_pnl = round_to(result["totalReturn"], 0.01)
         totalCloseTradeCount = result["totalCloseTradeCount"]
         dic = {
-            "symbols": symbols_key,
+            "params": params_key,
             "total_pnl": f"{total_pnl}%",
             "close_trade":totalCloseTradeCount,
             "max_drawdown": round_to(result["maxDrawdown"], 0.01),
@@ -785,7 +769,7 @@ def combine_params_backtesting(symbol:str):
 
         # 组合回测结果保存到文件
         if len(resultList):
-            fieldNames = ["symbols", "total_pnl", "close_trade", "max_drawdown", "over_drawdown", "over_drawdown_count"]
+            fieldNames = ["params", "total_pnl", "close_trade", "max_drawdown", "over_drawdown", "over_drawdown_count"]
             with open(file_path, "w") as f:
                 writer = csv.DictWriter(f, fieldnames=fieldNames)
                 writer.writeheader()
@@ -931,4 +915,4 @@ if __name__ == "__main__":
     # combine_symbols_backtesting()
 
     # 随机组合合约参数回测
-    combine_params_backtesting(symbol="AAVEUSDT.BINANCE")
+    combine_params_backtesting(target_symbol="AAVEUSDT.BINANCE")
