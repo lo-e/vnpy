@@ -25,8 +25,8 @@ from vnpy.trader.utility import round_to
 def backtesting():
     # 回测起始日期
     engine = BacktestingEngine()
-    start_dt = datetime(2023, 1, 1)
-    end_dt = datetime(2023, 8, 21)
+    start_dt = datetime(2023, 8, 20)
+    end_dt = datetime(2023, 12, 31)
     engine.setPeriod(start_dt, end_dt)
     figSavedName = ""
     if figSavedName:
@@ -73,7 +73,7 @@ def backtesting():
     backtesting_history_file = ""
 
     # history_from = f"from_history_2022-10-01_2022-11-02"
-    # backtesting_history_file = "2022-01-01_2023-07-02.json"
+    backtesting_history_file = "2023-01-01_2023-08-21.json"
 
     history_file_path = f"{history_from}{DIR_SYMBOL}{backtesting_history_file}" if history_from else backtesting_history_file
 
@@ -378,10 +378,9 @@ def backtesting():
                 backtesting_data[signal_key] = data_object.saved_sync_data
 
                 # 信号组合的最新趋势追踪信息
-                signal_status = data_object.saved_sync_data.get("backtesting_status", {})
+                signal_status = data_object.saved_sync_data.get("sync_status", {})
                 if signal_status:
                     trade_setting = signal_trade_setting.get(signal_key, {})
-                    signal_bottom = trade_setting.get("bottom_step", 0)
                     trending_step = signal_status["trending_step"]
                     data_list = signal_trending_step_dict.get(trending_step, [])
                     
@@ -392,13 +391,13 @@ def backtesting():
                     position_pnl = round_to(position_pnl, 0.01)
                     position_pnl = f"{position_pnl}%"
 
-                    data_list.append([signal_key, signal_bottom, position_pnl, signal_status])
+                    data_list.append([signal_key, position_pnl, signal_status])
                     signal_trending_step_dict[trending_step] = data_list
 
         # 保存回测结果的信号状态到json文件
-        # with open(backtesting_history_json, "w", encoding="utf-8") as file:
-        #     file.write(json.dumps(backtesting_data, ensure_ascii=False))
-        # print(f"\n已保存回测历史到{start_dt_str}_{end_dt_str}.json\t总数：{len(backtesting_data)}")
+        with open(backtesting_history_json, "w", encoding="utf-8") as file:
+            file.write(json.dumps(backtesting_data, ensure_ascii=False))
+        print(f"\n已保存回测历史到{start_dt_str}_{end_dt_str}.json\t总数：{len(backtesting_data)}")
         
         # 输出回测结果的趋势追踪信号信息
         trending_step_list = sorted(list(signal_trending_step_dict.keys()))
@@ -407,11 +406,11 @@ def backtesting():
                 print(f"\n趋势追踪{trending_step}")
                 data_list = signal_trending_step_dict[trending_step]
                 for signal_data in data_list:
-                    signal_key, signal_bottom, position_pnl, signal_status = signal_data
+                    signal_key, position_pnl, signal_status = signal_data
                     p = signal_status["position_price"]
                     r = signal_status["position_reduce_price"]
                     i = signal_status["position_increase_price"]
-                    print(f"{signal_key}_bottom_{signal_bottom}\t\tp：{p}\tr：{r}\ti：{i}\tpnl：{position_pnl}")
+                    print(f"{signal_key}\t\tp：{p}\tr：{r}\ti：{i}\tpnl：{position_pnl}")
         print("\n")
 
 def combine_backtesting():
@@ -483,7 +482,7 @@ def combine_backtesting():
         return
 
     # 随机组合合约列表
-    combineList = combine(symbolList, 3)
+    combineList = combine_symbols(symbolList, 3)
     print(f"\n随机组合总数：{len(combineList)}\n")
     
     # 回测时间
@@ -699,8 +698,8 @@ def three():
             # 写入csv文件
             writer.writerows(resultList)
 
-# 随机组合，l是数组，n是组合的元素数量
-def combine(l, n):
+# 随机组合合约，l是合约数组，n是组合的合约数量
+def combine_symbols(l, n):
     answers = []
     one = [0] * n
 
@@ -714,6 +713,15 @@ def combine(l, n):
 
     next_c()
     return answers
+
+# 随机组合参数，l是参数数组字典，例如：{a:[1, 2, 3], b:["x", "y", "z"]}
+# def combine_params(l):
+#     result = []
+#     for param in l
+#     for i in list_a:
+#         for j in list_b:
+#             for k in list_c:
+#                 result.append([i, j, k])
 
 if __name__ == "__main__":
     # 合约列表回测

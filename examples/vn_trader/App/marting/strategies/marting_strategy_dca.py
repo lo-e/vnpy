@@ -491,7 +491,10 @@ class MartingDCAStrategy(CtaTemplate):
 
                     # 计算加仓的合约数量
                     changed_volume = trade_value / tick.last_price
-                    changed_volume = ceil_to(changed_volume, self.symbol_min_volume)
+                    changed_volume_floor = floor_to(changed_volume, self.symbol_min_volume)
+                    changed_volume_ceil = ceil_to(changed_volume, self.symbol_min_volume)
+                    temp_value = max(trade_value * 0.9, tick.last_price * self.symbol_min_volume, 5.1)
+                    changed_volume = changed_volume_floor if changed_volume_floor * tick.last_price > temp_value else changed_volume_ceil
 
                 elif self.open_waitting or self.top_open_immediate:
                     """ 根据持仓价格百分比加仓 """

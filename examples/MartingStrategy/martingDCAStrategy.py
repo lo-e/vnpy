@@ -43,9 +43,9 @@ class MartingDCASignal(object):
             self.symbol
         ]  # 合约最小价格变动
 
-        self.init_status = history_data.get("backtesting_status", {})  # 回测初始状态
+        self.init_status = history_data.get("sync_status", {})  # 回测初始状态
         self.start_dt = None  # 回测开始时间
-        backtesting_to = history_data.get("backtesting_to", "")
+        backtesting_to = history_data.get("sync_dt", "")
         if backtesting_to:
             self.start_dt = datetime.strptime(
                 backtesting_to, "%Y-%m-%d %H:%M:%S"
@@ -80,6 +80,9 @@ class MartingDCASignal(object):
         for name, value in self.init_status.items():
             self.__setattr__(name, value)
 
+        # 初始化历史回测的仓位状态
+        self.init_status_close = False if self.position else True
+
         # 保存到backtesting_history.json的变量
         self.syncs = [
             "position",
@@ -91,6 +94,7 @@ class MartingDCASignal(object):
             "max_loss_rate",
             "ma_price",
             "trending_step",
+            "open_waitting",
             "current_trending_group",
         ]
         self.saved_sync_data = {}
@@ -215,24 +219,25 @@ class MartingDCASignal(object):
                 self.current_trending_group = []
 
                 if not self.open_waitting:
-                    # 变量更新后发出订单，已获取仓位变更后的状态数据
-                    if self.direction == Direction.LONG:
-                        self.portfolio.newSignal(
-                            self,
-                            Direction.SHORT,
-                            Offset.CLOSE,
-                            trade_price,
-                            trade_volume,
-                        )
+                    if self.init_status_close:
+                        # 变量更新后发出订单，已获取仓位变更后的状态数据
+                        if self.direction == Direction.LONG:
+                            self.portfolio.newSignal(
+                                self,
+                                Direction.SHORT,
+                                Offset.CLOSE,
+                                trade_price,
+                                trade_volume,
+                            )
 
-                    elif self.direction == Direction.SHORT:
-                        self.portfolio.newSignal(
-                            self,
-                            Direction.LONG,
-                            Offset.CLOSE,
-                            trade_price,
-                            trade_volume,
-                        )
+                        elif self.direction == Direction.SHORT:
+                            self.portfolio.newSignal(
+                                self,
+                                Direction.LONG,
+                                Offset.CLOSE,
+                                trade_price,
+                                trade_volume,
+                            )
                 
                 else:
                     # 正在交易的反方向信号趋势加仓
@@ -243,6 +248,9 @@ class MartingDCASignal(object):
                     signal_pos = self.portfolio.signalPosDict.get(signal_key, 0)
                     if signal_pos:
                         exit("开仓等待信号有仓位，检查代码！")
+
+                # 初始化历史回测的仓位状态更新
+                self.init_status_close = True
 
                 # 取消开仓等待
                 self.open_waitting = False
