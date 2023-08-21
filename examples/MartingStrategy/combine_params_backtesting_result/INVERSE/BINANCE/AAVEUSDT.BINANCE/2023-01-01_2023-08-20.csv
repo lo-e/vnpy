@@ -36,3 +36,20 @@ params,total_pnl,close_trade,max_drawdown,over_drawdown,over_drawdown_count
 "continuous_increase_rate_0.005, reduce_rate_0.001, trending_increase_rate_0.05, trending_open_loss_rate_0.01",210.62%,694,-21769.87,{'2023-05-12': -21769.87},1
 "continuous_increase_rate_0.005, reduce_rate_0.001, trending_increase_rate_0.05, trending_open_loss_rate_0.02",93.48%,671,-8337.2,{},0
 "continuous_increase_rate_0.005, reduce_rate_0.001, trending_increase_rate_0.06, trending_open_loss_rate_0.01",390.56%,657,-64125.44,{'2023-06-25': -64125.44},1
+"continuous_increase_rate_0.005, reduce_rate_0.001, trending_increase_rate_0.06, trending_open_loss_rate_0.02",186.77%,627,-36481.68,{'2023-06-25': -36481.68},1
+"continuous_increase_rate_0.005, reduce_rate_0.001, trending_increase_rate_0.07, trending_open_loss_rate_0.01",379.51%,625,-64125.44,{'2023-06-25': -64125.44},1
+"continuous_increase_rate_0.005, reduce_rate_0.001, trending_increase_rate_0.07, trending_open_loss_rate_0.02",167.7%,615,-36481.68,{'2023-06-25': -36481.68},1
+"continuous_increase_rate_0.006, reduce_rate_0.001, trending_increase_rate_0.03, trending_open_loss_rate_0.01",203.4%,706,-7126.43,{},0
+"continuous_increase_rate_0.006, reduce_rate_0.001, trending_increase_rate_0.03, trending_open_loss_rate_0.02",87.59%,673,-8719.37,{},0
+"continuous_increase_rate_0.006, reduce_rate_0.001, trending_increase_rate_0.04, trending_open_loss_rate_0.01",223.04%,705,-15150.61,{'2023-04-22': -15150.61},1
+"continuous_increase_rate_0.006, reduce_rate_0.001, trending_increase_rate_0.04, trending_open_loss_rate_0.02",85.81%,673,-5279.22,{},0
+"continuous_increase_rate_0.006, reduce_rate_0.001, trending_increase_rate_0.05, trending_open_loss_rate_0.01",102.59%,661,-15035.36,{'2023-04-26': -15035.36},1
+"continuous_increase_rate_0.006, reduce_rate_0.001, trending_increase_rate_0.05, trending_open_loss_rate_0.02",81.04%,661,-5560.58,{},0
+"continuous_increase_rate_0.006, reduce_rate_0.001, trending_increase_rate_0.06, trending_open_loss_rate_0.01",328.91%,670,-50558.9,{'2023-06-25': -50558.9},1
+"continuous_increase_rate_0.006, reduce_rate_0.001, trending_increase_rate_0.06, trending_open_loss_rate_0.02",152.73%,647,-29278.21,{'2023-06-25': -29278.21},1
+"continuous_increase_rate_0.006, reduce_rate_0.001, trending_increase_rate_0.07, trending_open_loss_rate_0.01",416.5%,645,-50558.9,"{'2023-01-16': -41499.67, '2023-06-25': -50558.9}",2
+"continuous_increase_rate_0.006, reduce_rate_0.001, trending_increase_rate_0.07, trending_open_loss_rate_0.02",165.26%,626,-29278.21,"{'2023-01-16': -29102.0, '2023-06-25': -29278.21}",2
+"continuous_increase_rate_0.002, reduce_rate_0.002, trending_increase_rate_0.03, trending_open_loss_rate_0.01",2377.86%,718,-49514.35,{'2023-06-26': -49514.35},1
+"continuous_increase_rate_0.002, reduce_rate_0.002, trending_increase_rate_0.03, trending_open_loss_rate_0.02",575.84%,694,-20145.84,{'2023-06-25': -20145.84},1
+"continuous_increase_rate_0.002, reduce_rate_0.002, trending_increase_rate_0.04, trending_open_loss_rate_0.01",2300.48%,687,-49555.65,{'2023-06-26': -49555.65},1
+"continuous_increase_rate_0.002, reduce_rate_0.002, trending_increase_rate_0.04, trending_open_loss_rate_0.02",482.41%,669,-15317.75,{'2023-06-25': -15317.75},1
