@@ -10,7 +10,7 @@
       "max_loss_rate": "-0.66%",
       "ma_price": 55.24888888888888,
       "trending_step": 2,
-      "open_waitting": true,
+      "open_waitting": false,
       "current_trending_group": [
         {
           "datetime": "2023-08-22 08:05:00",
@@ -39,7 +39,7 @@
       "max_loss_rate": "",
       "ma_price": 55.24888888888888,
       "trending_step": 0,
-      "open_waitting": false,
+      "open_waitting": true,
       "current_trending_group": []
     },
     "sync_dt": "2023-08-22 11:00:00"
