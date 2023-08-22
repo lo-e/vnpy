@@ -31,9 +31,9 @@ def backtesting():
 
     # 自定义策略参数
     params = {}
-    # params = {"reduce_rate":0.001,
-    #           "continuous_increase_rate":0.002,
-    #           "trending_increase_rate":0.03,
+    # params = {"continuous_increase_rate":0.002,
+    #           "reduce_rate":0.001,
+    #           "trending_increase_rate":0.06,
     #           "trending_open_loss_rate":0.01}
 
     # 回测历史数据文件
