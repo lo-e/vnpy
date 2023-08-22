@@ -410,24 +410,25 @@ class MartingDCASignal(object):
                                                         "max_loss_rate":self.max_loss_rate})
                     
                     if not self.open_waitting:
-                        # 变量更新后发出订单，已获取仓位变更后的状态数据
-                        if self.direction == Direction.LONG:
-                            self.portfolio.newSignal(
-                                self,
-                                Direction.LONG,
-                                Offset.OPEN,
-                                trade_price,
-                                trade_volume,
-                            )
+                        if self.init_status_close:
+                            # 变量更新后发出订单，已获取仓位变更后的状态数据
+                            if self.direction == Direction.LONG:
+                                self.portfolio.newSignal(
+                                    self,
+                                    Direction.LONG,
+                                    Offset.OPEN,
+                                    trade_price,
+                                    trade_volume,
+                                )
 
-                        elif self.direction == Direction.SHORT:
-                            self.portfolio.newSignal(
-                                self,
-                                Direction.SHORT,
-                                Offset.OPEN,
-                                trade_price,
-                                trade_volume,
-                            )
+                            elif self.direction == Direction.SHORT:
+                                self.portfolio.newSignal(
+                                    self,
+                                    Direction.SHORT,
+                                    Offset.OPEN,
+                                    trade_price,
+                                    trade_volume,
+                                )
                     
                     # 更新持仓最大亏损
                     self.max_loss_value = 0
