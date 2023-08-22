@@ -166,7 +166,7 @@ class MartingDCASignal(object):
         """
         
         # fake
-        if "LINK" in self.symbol and self.direction == Direction.LONG and bar.datetime >= datetime.strptime("2023-06-28 01:10:00", "%Y-%m-%d %H:%M:%S"):
+        if "AAVE" in self.symbol and self.direction == Direction.SHORT and bar.datetime >= datetime.strptime("2023-08-20 19:25:00", "%Y-%m-%d %H:%M:%S"):
             a = 2
 
         # 获取反方向信号，判断开仓等待

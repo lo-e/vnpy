@@ -74,3 +74,7 @@ params,total_pnl,close_trade,max_drawdown,over_drawdown,over_drawdown_count
 "continuous_increase_rate_0.004, reduce_rate_0.002, trending_increase_rate_0.04, trending_open_loss_rate_0.01",1231.05%,586,-24635.62,"{'2023-06-26': -24635.62, '2023-08-18': -11683.04}",2
 "continuous_increase_rate_0.004, reduce_rate_0.002, trending_increase_rate_0.04, trending_open_loss_rate_0.02",272.58%,574,-7211.3,{},0
 "continuous_increase_rate_0.004, reduce_rate_0.002, trending_increase_rate_0.05, trending_open_loss_rate_0.01",337.49%,585,-21921.82,{'2023-06-25': -21921.82},1
+"continuous_increase_rate_0.004, reduce_rate_0.002, trending_increase_rate_0.05, trending_open_loss_rate_0.02",267.46%,572,-7214.36,{},0
+"continuous_increase_rate_0.004, reduce_rate_0.002, trending_increase_rate_0.06, trending_open_loss_rate_0.01",2054.21%,562,-465064.27,{'2023-06-25': -465064.27},1
+"continuous_increase_rate_0.004, reduce_rate_0.002, trending_increase_rate_0.06, trending_open_loss_rate_0.02",467.02%,556,-145479.48,{'2023-06-25': -145479.48},1
+"continuous_increase_rate_0.004, reduce_rate_0.002, trending_increase_rate_0.07, trending_open_loss_rate_0.01",2047.31%,547,-465064.27,{'2023-06-25': -465064.27},1
