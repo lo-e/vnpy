@@ -72,7 +72,7 @@ class BacktestingEngine(object):
         self.portfolio = MartingDCAPortfolio(self)
         if exchange == "BINANCE":
             self.target_symbol_list = []
-            self.target_symbol_list = ['AAVEUSDT.BINANCE', 'AXSUSDT.BINANCE', 'LINKUSDT.BINANCE']
+            # self.target_symbol_list = ['AAVEUSDT.BINANCE', 'AXSUSDT.BINANCE', 'LINKUSDT.BINANCE']
             # self.target_symbol_list = ['ADAUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'MATICUSDT.BINANCE']
         
         elif exchange == "OKX":

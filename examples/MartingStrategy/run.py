@@ -919,10 +919,10 @@ def combine_params():
 
 if __name__ == "__main__":
     # 合约列表回测
-    backtesting()
+    # backtesting()
 
     # 随机组合合约列表回测
     # combine_symbols_backtesting()
 
     # 随机组合合约参数回测
-    # combine_params_backtesting(target_symbol="AAVEUSDT.BINANCE")
+    combine_params_backtesting(target_symbol="AAVEUSDT.BINANCE")
