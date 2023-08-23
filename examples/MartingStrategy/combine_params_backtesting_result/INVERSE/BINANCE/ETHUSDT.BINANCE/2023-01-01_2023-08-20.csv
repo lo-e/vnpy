@@ -142,3 +142,4 @@ params,total_pnl,close_trade,max_drawdown,over_drawdown,over_drawdown_count
 "continuous_increase_rate_0.006, reduce_rate_0.003, trending_increase_rate_0.03, trending_open_loss_rate_0.01",400.01%,268,-69829.71,{'2023-01-14': -69829.71},1
 "continuous_increase_rate_0.006, reduce_rate_0.003, trending_increase_rate_0.03, trending_open_loss_rate_0.02",81.01%,265,-17500.01,"{'2023-01-14': -17500.01, '2023-03-15': -10010.69}",2
 "continuous_increase_rate_0.006, reduce_rate_0.003, trending_increase_rate_0.04, trending_open_loss_rate_0.01",413.22%,273,-72363.65,{'2023-01-14': -72363.65},1
+"continuous_increase_rate_0.006, reduce_rate_0.003, trending_increase_rate_0.04, trending_open_loss_rate_0.02",83.85%,263,-18498.15,"{'2023-01-14': -18498.15, '2023-03-15': -10147.69}",2
