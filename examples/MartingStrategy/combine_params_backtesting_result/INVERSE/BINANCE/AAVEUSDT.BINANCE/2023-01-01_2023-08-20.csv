@@ -240,3 +240,12 @@ params,total_pnl,close_trade,max_drawdown,over_drawdown,over_drawdown_count
 "continuous_increase_rate_0.005, reduce_rate_0.005, trending_increase_rate_0.07, trending_open_loss_rate_0.01",1825.04%,368,-405102.96,{'2023-06-25': -405102.96},1
 "continuous_increase_rate_0.005, reduce_rate_0.005, trending_increase_rate_0.07, trending_open_loss_rate_0.02",447.34%,361,-126680.74,"{'2023-06-25': -126680.74, '2023-07-14': -10539.79}",2
 "continuous_increase_rate_0.006, reduce_rate_0.005, trending_increase_rate_0.03, trending_open_loss_rate_0.01",1713.03%,358,-32712.86,"{'2023-06-26': -32712.86, '2023-07-14': -28413.29}",2
+"continuous_increase_rate_0.006, reduce_rate_0.005, trending_increase_rate_0.03, trending_open_loss_rate_0.02",5024.02%,338,-240050.49,"{'2023-06-25': -240050.49, '2023-07-14': -29893.44}",2
+"continuous_increase_rate_0.006, reduce_rate_0.005, trending_increase_rate_0.04, trending_open_loss_rate_0.01",818.48%,354,-31193.79,"{'2023-06-25': -30117.54, '2023-07-14': -31193.79}",2
+"continuous_increase_rate_0.006, reduce_rate_0.005, trending_increase_rate_0.04, trending_open_loss_rate_0.02",3440.02%,335,-160960.07,"{'2023-06-25': -160960.07, '2023-07-14': -19710.44}",2
+"continuous_increase_rate_0.006, reduce_rate_0.005, trending_increase_rate_0.05, trending_open_loss_rate_0.01",478.66%,340,-30166.03,"{'2023-06-25': -30166.03, '2023-07-14': -15262.43}",2
+"continuous_increase_rate_0.006, reduce_rate_0.005, trending_increase_rate_0.05, trending_open_loss_rate_0.02",972.19%,330,-170400.57,{'2023-06-25': -170400.57},1
+"continuous_increase_rate_0.006, reduce_rate_0.005, trending_increase_rate_0.06, trending_open_loss_rate_0.01",2404.05%,341,-300004.97,"{'2023-06-25': -300004.97, '2023-07-14': -15258.2}",2
+"continuous_increase_rate_0.006, reduce_rate_0.005, trending_increase_rate_0.06, trending_open_loss_rate_0.02",599.45%,332,-97199.11,{'2023-06-25': -97199.11},1
+"continuous_increase_rate_0.006, reduce_rate_0.005, trending_increase_rate_0.07, trending_open_loss_rate_0.01",2475.34%,322,-300004.97,"{'2023-01-15': -27030.75, '2023-06-25': -300004.97}",2
+"continuous_increase_rate_0.006, reduce_rate_0.005, trending_increase_rate_0.07, trending_open_loss_rate_0.02",612.03%,317,-97199.11,"{'2023-01-16': -30126.62, '2023-06-25': -97199.11, '2023-07-14': -10150.49}",3
