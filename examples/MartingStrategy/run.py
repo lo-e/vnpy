@@ -28,6 +28,25 @@ def backtesting():
     start_dt = datetime(2023, 8, 20)
     end_dt = datetime(2023, 12, 31)
     engine.setPeriod(start_dt, end_dt)
+
+    # 自定义策略参数
+    params = {}
+    # params = {"continuous_increase_rate":0.002,
+    #           "reduce_rate":0.001,
+    #           "trending_increase_rate":0.06,
+    #           "trending_open_loss_rate":0.01}
+
+    # 回测历史数据文件
+    history_from = ""
+    backtesting_history_file = ""
+    # history_from = f"from_history_2022-10-01_2022-11-02"
+    backtesting_history_file = "2023-01-01_2023-08-21.json"
+    history_file_path = f"{history_from}{DIR_SYMBOL}{backtesting_history_file}" if history_from else backtesting_history_file
+
+    # 是否按日统计盈亏
+    daily_mode = False
+
+    # 回测结果图表保存位置
     figSavedName = ""
     if figSavedName:
         figSavedName = f"figSaved{DIR_SYMBOL}{figSavedName}"
@@ -68,15 +87,6 @@ def backtesting():
         else:
             filename = f"setting_inverse{DIR_SYMBOL}setting_binance.csv"
 
-    # 回测历史数据文件
-    history_from = ""
-    backtesting_history_file = ""
-
-    # history_from = f"from_history_2022-10-01_2022-11-02"
-    backtesting_history_file = "2023-01-01_2023-08-21.json"
-
-    history_file_path = f"{history_from}{DIR_SYMBOL}{backtesting_history_file}" if history_from else backtesting_history_file
-
     # 开始回测
     symbolList = []
     with open(filename, errors="ignore") as f:
@@ -86,14 +96,9 @@ def backtesting():
     if not symbolList:
         return
 
-    params = {}
-    # params = {"reduce_rate":0.001,
-    #           "continuous_increase_rate":0.002,
-    #           "trending_increase_rate":0.03,
-    #           "trending_open_loss_rate":0.01}
     engine.initListPortfolio(symbolList, marting_type=marting_type, exchange=exchange, portfolioValue=10000, history_file=history_file_path, params=params)
     engine.loadData()
-    engine.runBacktesting(daily_mode=False)
+    engine.runBacktesting(daily_mode=daily_mode)
     engine.showResult(figSavedName)
 
     # 获取合约交易数据
