@@ -1,15 +1,15 @@
 {
   "MARTING_BINANCE_AAVE_多": {
     "sync_status": {
-      "position": 84.9,
-      "position_price": 58.96454652532391,
-      "position_reduce_price": 59.141440164899876,
-      "position_increase_price": 58.31695,
-      "tag_price": 58.61,
-      "max_loss_value": -39.0,
-      "max_loss_rate": "-0.77%",
-      "ma_price": 58.60111111111111,
-      "trending_step": 5,
+      "position": 136.7,
+      "position_price": 58.53986832479884,
+      "position_reduce_price": 58.71548792977323,
+      "position_increase_price": 57.1727,
+      "tag_price": 57.46,
+      "max_loss_value": -179.0,
+      "max_loss_rate": "-2.24%",
+      "ma_price": 57.36666666666666,
+      "trending_step": 8,
       "open_waitting": true,
       "current_trending_group": [
         {
@@ -41,77 +41,107 @@
           "trending_step": 5,
           "max_loss_value": -53.0,
           "max_loss_rate": "-1.33%"
+        },
+        {
+          "datetime": "2023-08-30 20:45:00",
+          "trending_step": 6,
+          "max_loss_value": -72.0,
+          "max_loss_rate": "-1.43%"
+        },
+        {
+          "datetime": "2023-08-30 23:15:00",
+          "trending_step": 7,
+          "max_loss_value": -163.0,
+          "max_loss_rate": "-2.71%"
+        },
+        {
+          "datetime": "2023-08-31 08:50:00",
+          "trending_step": 8,
+          "max_loss_value": -162.0,
+          "max_loss_rate": "-2.31%"
         }
       ]
     },
-    "sync_dt": "2023-08-30 18:15:00"
+    "sync_dt": "2023-08-31 10:40:00"
   },
   "MARTING_BINANCE_AAVE_空": {
     "sync_status": {
       "position": 0,
       "position_price": 0,
       "position_reduce_price": 0.0,
-      "position_increase_price": 58.833816666666664,
-      "tag_price": 58.541111111111114,
+      "position_increase_price": 57.62558333333333,
+      "tag_price": 57.338888888888896,
       "max_loss_value": 0,
       "max_loss_rate": "",
-      "ma_price": 58.60111111111111,
+      "ma_price": 57.36666666666666,
       "trending_step": 0,
       "open_waitting": false,
       "current_trending_group": []
     },
-    "sync_dt": "2023-08-30 18:15:00"
+    "sync_dt": "2023-08-31 10:40:00"
   },
   "MARTING_BINANCE_AXS_多": {
+    "sync_status": {
+      "position": 613.0,
+      "position_price": 4.885975530179445,
+      "position_reduce_price": 4.900633456769984,
+      "position_increase_price": 4.818785,
+      "tag_price": 4.843,
+      "max_loss_value": -35.0,
+      "max_loss_rate": "-1.17%",
+      "ma_price": 4.838777777777777,
+      "trending_step": 3,
+      "open_waitting": true,
+      "current_trending_group": [
+        {
+          "datetime": "2023-08-30 19:35:00",
+          "trending_step": 1,
+          "max_loss_value": 0,
+          "max_loss_rate": ""
+        },
+        {
+          "datetime": "2023-08-30 23:15:00",
+          "trending_step": 2,
+          "max_loss_value": -25.0,
+          "max_loss_rate": "-2.47%"
+        },
+        {
+          "datetime": "2023-08-31 09:30:00",
+          "trending_step": 3,
+          "max_loss_value": -29.0,
+          "max_loss_rate": "-1.44%"
+        }
+      ]
+    },
+    "sync_dt": "2023-08-31 10:40:00"
+  },
+  "MARTING_BINANCE_AXS_空": {
     "sync_status": {
       "position": 0,
       "position_price": 0,
       "position_reduce_price": 0.0,
-      "position_increase_price": 4.946918888888889,
-      "tag_price": 4.971777777777778,
+      "position_increase_price": 4.862971666666665,
+      "tag_price": 4.838777777777777,
       "max_loss_value": 0,
       "max_loss_rate": "",
-      "ma_price": 4.963444444444445,
+      "ma_price": 4.838777777777777,
       "trending_step": 0,
-      "open_waitting": true,
+      "open_waitting": false,
       "current_trending_group": []
     },
-    "sync_dt": "2023-08-30 18:15:00"
-  },
-  "MARTING_BINANCE_AXS_空": {
-    "sync_status": {
-      "position": -202.0,
-      "position_price": 4.96,
-      "position_reduce_price": 4.94512,
-      "position_increase_price": 4.984465,
-      "tag_price": 4.959666666666667,
-      "max_loss_value": -5.0,
-      "max_loss_rate": "-0.5%",
-      "ma_price": 4.963444444444445,
-      "trending_step": 1,
-      "open_waitting": false,
-      "current_trending_group": [
-        {
-          "datetime": "2023-08-30 15:45:00",
-          "trending_step": 1,
-          "max_loss_value": 0,
-          "max_loss_rate": ""
-        }
-      ]
-    },
-    "sync_dt": "2023-08-30 18:15:00"
+    "sync_dt": "2023-08-31 10:40:00"
   },
   "MARTING_BINANCE_LINK_多": {
     "sync_status": {
-      "position": 977.6299999999999,
-      "position_price": 6.137335904176426,
-      "position_reduce_price": 6.155747911888955,
-      "position_increase_price": 6.018312777777777,
-      "tag_price": 6.048555555555555,
-      "max_loss_value": -102.0,
-      "max_loss_rate": "-1.7%",
-      "ma_price": 6.048555555555555,
-      "trending_step": 6,
+      "position": 1648.4499999999998,
+      "position_price": 6.0663334101731925,
+      "position_reduce_price": 6.084532410403711,
+      "position_increase_price": 5.8980283333333325,
+      "tag_price": 5.927666666666666,
+      "max_loss_value": -286.0,
+      "max_loss_rate": "-2.86%",
+      "ma_price": 5.927666666666666,
+      "trending_step": 10,
       "open_waitting": true,
       "current_trending_group": [
         {
@@ -149,25 +179,49 @@
           "trending_step": 6,
           "max_loss_value": -107.0,
           "max_loss_rate": "-2.13%"
+        },
+        {
+          "datetime": "2023-08-30 20:15:00",
+          "trending_step": 7,
+          "max_loss_value": -144.0,
+          "max_loss_rate": "-2.4%"
+        },
+        {
+          "datetime": "2023-08-30 22:05:00",
+          "trending_step": 8,
+          "max_loss_value": -208.0,
+          "max_loss_rate": "-2.98%"
+        },
+        {
+          "datetime": "2023-08-30 23:15:00",
+          "trending_step": 9,
+          "max_loss_value": -316.0,
+          "max_loss_rate": "-3.95%"
+        },
+        {
+          "datetime": "2023-08-31 08:25:00",
+          "trending_step": 10,
+          "max_loss_value": -273.0,
+          "max_loss_rate": "-3.03%"
         }
       ]
     },
-    "sync_dt": "2023-08-30 18:15:00"
+    "sync_dt": "2023-08-31 10:45:00"
   },
   "MARTING_BINANCE_LINK_空": {
     "sync_status": {
       "position": 0,
       "position_price": 0,
       "position_reduce_price": 0.0,
-      "position_increase_price": 6.07288,
-      "tag_price": 6.042666666666667,
+      "position_increase_price": 5.9301699999999995,
+      "tag_price": 5.900666666666667,
       "max_loss_value": 0,
       "max_loss_rate": "",
-      "ma_price": 6.048555555555555,
+      "ma_price": 5.927666666666666,
       "trending_step": 0,
       "open_waitting": false,
       "current_trending_group": []
     },
-    "sync_dt": "2023-08-30 18:15:00"
+    "sync_dt": "2023-08-31 10:45:00"
   }
 }
