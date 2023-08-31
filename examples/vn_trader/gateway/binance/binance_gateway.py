@@ -204,7 +204,7 @@ class BinanceUsdtGateway(BaseGateway):
     def process_timer_event(self, event: Event) -> None:
         """定时事件处理"""
         self.rest_api.keep_user_stream()
-        self.rest_api.check_trade_ws()
+        # self.rest_api.check_trade_ws()
 
     def on_order(self, order: OrderData) -> None:
         """推送委托数据"""
