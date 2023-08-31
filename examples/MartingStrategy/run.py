@@ -672,7 +672,7 @@ def combine_params_backtesting(target_symbol:str):
     
     # 回测时间
     start_dt = datetime(2023, 1, 1)
-    end_dt = datetime(2023, 8, 20)
+    end_dt = datetime(2023, 8, 30)
 
     # 获取历史数据
     start_dt_str = start_dt.strftime("%Y-%m-%d")
