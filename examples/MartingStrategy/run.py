@@ -40,21 +40,21 @@ def backtesting():
 
     params = {
         "AAVEUSDT.BINANCE": {
-            "continuous_increase_rate": 0.002,
+            "continuous_increase_rate": 0.005,
             "reduce_rate": 0.001,
-            "trending_increase_rate": 0.06,
+            "trending_increase_rate": 0.03,
             "trending_open_loss_rate": 0.01,
         },
         "AXSUSDT.BINANCE": {
-            "continuous_increase_rate": 0.002,
+            "continuous_increase_rate": 0.006,
             "reduce_rate": 0.001,
-            "trending_increase_rate": 0.06,
-            "trending_open_loss_rate": 0.01,
+            "trending_increase_rate": 0.05,
+            "trending_open_loss_rate": 0.02,
         },
         "LINKUSDT.BINANCE": {
-            "continuous_increase_rate": 0.002,
+            "continuous_increase_rate": 0.005,
             "reduce_rate": 0.001,
-            "trending_increase_rate": 0.06,
+            "trending_increase_rate": 0.03,
             "trending_open_loss_rate": 0.01,
         }
     }
