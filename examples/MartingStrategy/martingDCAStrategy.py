@@ -33,6 +33,8 @@ class MartingDCASignal(object):
         self.direction = direction  # 交易方向
         self.ma_window = ma_window  # 均线参数
         self.unit_value = self.portfolio.portfolioValue * UNIT_RATE  # 单位持仓价值
+        if self.symbol in params:
+            params = params[self.symbol]
         self.reduce_rate = params.get("reduce_rate", 0.003) # 盈利平仓比率
         self.continuous_increase_rate = params.get("continuous_increase_rate", 0.005) # 持续加仓比率
         self.trending_increase_rate = params.get("trending_increase_rate", 0.04) # 趋势加仓比率
