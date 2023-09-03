@@ -925,4 +925,4 @@ if __name__ == "__main__":
     # combine_symbols_backtesting()
 
     # 随机组合合约参数回测
-    combine_params_backtesting(target_symbol="AAVEUSDT.BINANCE")
+    combine_params_backtesting(target_symbol="LINKUSDT.BINANCE")
