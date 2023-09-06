@@ -25,7 +25,7 @@ from vnpy.trader.utility import round_to
 def backtesting():
     # 回测起始日期
     engine = BacktestingEngine()
-    start_dt = datetime(2023, 8, 20)
+    start_dt = datetime(2023, 1, 1)
     end_dt = datetime(2023, 12, 31)
     engine.setPeriod(start_dt, end_dt)
 
@@ -40,20 +40,20 @@ def backtesting():
 
     params = {
         "AAVEUSDT.BINANCE": {
-            "continuous_increase_rate": 0.005,
+            "continuous_increase_rate": 0.004,
             "reduce_rate": 0.001,
-            "trending_increase_rate": 0.03,
+            "trending_increase_rate": 0.04,
             "trending_open_loss_rate": 0.01,
         },
         "AXSUSDT.BINANCE": {
-            "continuous_increase_rate": 0.006,
-            "reduce_rate": 0.001,
-            "trending_increase_rate": 0.05,
+            "continuous_increase_rate": 0.003,
+            "reduce_rate": 0.005,
+            "trending_increase_rate": 0.06,
             "trending_open_loss_rate": 0.02,
         },
         "LINKUSDT.BINANCE": {
-            "continuous_increase_rate": 0.005,
-            "reduce_rate": 0.001,
+            "continuous_increase_rate": 0.006,
+            "reduce_rate": 0.005,
             "trending_increase_rate": 0.03,
             "trending_open_loss_rate": 0.01,
         }
@@ -63,7 +63,7 @@ def backtesting():
     history_from = ""
     backtesting_history_file = ""
     # history_from = f"from_history_2022-10-01_2022-11-02"
-    backtesting_history_file = "2023-01-01_2023-08-21.json"
+    # backtesting_history_file = "2023-01-01_2023-08-21.json"
     history_file_path = (
         f"{history_from}{DIR_SYMBOL}{backtesting_history_file}"
         if history_from
@@ -282,6 +282,8 @@ def backtesting():
                     continuous_open += 1
 
                 else:
+                    if continuous_open >= 50:
+                        a = 2
                     continuous_key = str(continuous_open)
                     count = continuous_open_dict.get(continuous_key, 0)
                     count += 1
