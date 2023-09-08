@@ -444,7 +444,7 @@ class MartingDCAStrategy(CtaTemplate):
         if error:
             if not self.tick_error_suspend:
                 self.tick_error_suspend = True
-                message = f"！！马丁策略Tick数据异常！！\n\nlast_minute_bar_dt：{self.last_minute_bar_dt}\nlast_minute_tick_count：{self.last_minute_tick_count}"
+                message = f"！！马丁策略Tick数据异常！！\n\nlast_minute：{self.last_minute_bar_dt}\nlast_count：{self.last_minute_tick_count}"
                 self.send_dingtalk(message)
 
         else:
