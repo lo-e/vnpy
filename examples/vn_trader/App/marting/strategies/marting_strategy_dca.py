@@ -117,6 +117,11 @@ class MartingDCAStrategy(CtaTemplate):
         self.strategy_event_wait = 0 # 策略事件缓冲时间
         self.force_waitting = 0 # -1：强制取消等待 0：自动 1：强制等待
         self.trending_group = [] # 当前完整开平仓时的变量状态
+        self.last_minute_bar_dt = None # 前分钟bar时间
+        self.minute_bar_dt = None # 分钟bar时间
+        self.last_minute_tick_count = 0 # 前分钟tick数量
+        self.minute_tick_count = 0 # 分钟tick数量
+        self.tick_error_suspend = False # tick数据异常通知暂停
 
         self.am = ArrayManager(self.ma_window)  # K线容器
         self.window_bar_generator = BarGenerator(
@@ -275,37 +280,45 @@ class MartingDCAStrategy(CtaTemplate):
             self.position_increase_price = self.tag_price * (1 + CONTINUOUS_INCREASE_RATE)
 
     def on_timer(self):
-        # 回测缓冲
-        self.backtesting_wait += 1
+        try:
+            # 回测缓冲
+            self.backtesting_wait += 1
 
-        # 策略事件缓冲
-        self.strategy_event_wait += 1
+            # 策略事件缓冲
+            self.strategy_event_wait += 1
 
-        # 周期首尾分钟，手动update_tick
-        dt = datetime.now()
-        if (not (dt.minute + 1) % self.interval_window) and self.tick and (self.tick.datetime.minute != dt.minute):
-            manual_tick = copy(self.tick)
-            manual_tick.datetime = dt
-            self.on_tick(manual_tick)
-            
-        if (not dt.minute % self.interval_window) and self.tick and (self.tick.datetime.minute != dt.minute):
-            manual_tick = copy(self.tick)
-            manual_tick.datetime = dt
-            self.on_tick(manual_tick)
+            # 周期首尾分钟，手动update_tick
+            dt = datetime.now()
+            if (not (dt.minute + 1) % self.interval_window) and self.tick and (self.tick.datetime.minute != dt.minute):
+                manual_tick = copy(self.tick)
+                manual_tick.datetime = dt
+                self.on_tick(manual_tick)
+                
+            if (not dt.minute % self.interval_window) and self.tick and (self.tick.datetime.minute != dt.minute):
+                manual_tick = copy(self.tick)
+                manual_tick.datetime = dt
+                self.on_tick(manual_tick)
 
-            # 新周期开始，取消未成交的所有订单
-            self.cancel_all()
-            self.target_volume = -1
+                # 新周期开始，取消未成交的所有订单
+                self.cancel_all()
+                self.target_volume = -1
 
-        # 策略事件发出判断
-        if self.strategy_event_wait >= 5:
-            self.strategy_event_wait = 0
-            self.put_timer_event()
+            # 策略事件发出判断
+            if self.strategy_event_wait >= 5:
+                self.strategy_event_wait = 0
+                self.put_timer_event()
 
-        else:
-            self.put_sync_event()
+            else:
+                self.put_sync_event()
 
-        super().on_timer()
+            # 检查tick数据推送是否异常
+            self.check_tick_data()
+
+            super().on_timer()
+
+        except Exception as e:
+            message = f"！！马丁策略on_timer异常！！\n\n{e}"
+            self.send_dingtalk(message)
 
     def put_sync_event(self):
         updated = False
@@ -338,6 +351,19 @@ class MartingDCAStrategy(CtaTemplate):
 
         # 去除时区，避免不必要的麻烦
         tick.datetime = tick.datetime.replace(tzinfo=None)
+        
+        # 统计分钟tick数量
+        if self.tick:
+            if self.tick.datetime.minute != tick.datetime.minute:
+                # 分钟bar时间
+                self.last_minute_bar_dt = self.minute_bar_dt
+                self.minute_bar_dt = tick.datetime.replace(second=0, microsecond=0)
+
+                # 分钟tick数量
+                self.last_minute_tick_count = self.minute_tick_count
+                self.minute_tick_count = 1
+            else:
+                self.minute_tick_count += 1
 
         # 给分钟Bar生成器推送数据
         if (self.tick_dt and tick.datetime >= self.tick_dt) or not self.tick_dt:
@@ -390,6 +416,28 @@ class MartingDCAStrategy(CtaTemplate):
         
         # 信号判断结束后取消立即开仓交易
         self.top_open_immediate = False
+
+    # 检查tick数据是否异常
+    def check_tick_data(self):
+        error = False
+        # 分钟tick数量异常
+        if self.last_minute_bar_dt and 0 < self.last_minute_tick_count < 5:
+            error = True
+        
+        # 分钟bar时间异常
+        sub = datetime.now() - self.last_minute_bar_dt
+        if abs(sub.total_seconds()) >= 2 * 60:
+            error = True
+
+        if error:
+            if not self.tick_error_suspend:
+                self.tick_error_suspend = True
+                message = f"！！马丁策略Tick数据异常！！\n\nlast_minute_bar_dt：{self.last_minute_bar_dt}\nlast_minute_tick_count：{self.last_minute_tick_count}"
+                self.send_dingtalk(message)
+        
+        else:
+            self.tick_error_suspend = False
+
 
     # 生成交易信号
     def generate_signal(self, tick):
