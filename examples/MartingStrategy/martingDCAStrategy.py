@@ -216,11 +216,20 @@ class MartingDCASignal(object):
                 trade_volume = abs(self.position)
 
                 # 变量更新
+                self.current_trending_group.append({"action": "CLOSE",
+                                                    "datetime":bar.datetime.strftime("%Y-%m-%d %H:%M:%S"),
+                                                    "trending_step":self.trending_step,
+                                                    "trade_price":trade_price,
+                                                    "position_reduce_price":self.position_reduce_price,
+                                                    "position_increase_price":self.position_increase_price,
+                                                    "tag_price":self.tag_price,
+                                                    "ma_price":self.ma_price,
+                                                    "max_loss_value":self.max_loss_value,
+                                                    "max_loss_rate":self.max_loss_rate})
                 self.position = 0
                 self.position_price = 0
                 self.tag_price = trade_price
                 self.trending_step = 0
-                self.current_trending_group = []
 
                 if not self.open_waitting:
                     if self.init_status_close:
@@ -397,6 +406,21 @@ class MartingDCASignal(object):
                     self.portfolio.update_trending(self, True)
 
                     # 变量更新
+                    current_status = {"action": "OPEN",
+                                      "datetime":bar.datetime.strftime("%Y-%m-%d %H:%M:%S"),
+                                      "trending_step":self.trending_step,
+                                      "trade_price":trade_price,
+                                      "position_reduce_price":self.position_reduce_price,
+                                      "position_increase_price":self.position_increase_price,
+                                      "tag_price":self.tag_price,
+                                      "ma_price":self.ma_price,
+                                      "max_loss_value":self.max_loss_value,
+                                      "max_loss_rate":self.max_loss_rate}
+                    if self.trending_step == 0:
+                        self.current_trending_group = [current_status]
+                    else:
+                        self.current_trending_group.append(current_status)
+                    
                     if self.direction == Direction.LONG:
                         self.position = abs(self.position) + trade_volume
 
@@ -406,10 +430,6 @@ class MartingDCASignal(object):
                     self.position_price = ((trade_volume * trade_price) + current_position_value) / abs(self.position)
                     self.tag_price = trade_price
                     self.trending_step += 1
-                    self.current_trending_group.append({"datetime":bar.datetime.strftime("%Y-%m-%d %H:%M:%S"),
-                                                        "trending_step":self.trending_step,
-                                                        "max_loss_value":self.max_loss_value,
-                                                        "max_loss_rate":self.max_loss_rate})
                     
                     if not self.open_waitting:
                         if self.init_status_close:
