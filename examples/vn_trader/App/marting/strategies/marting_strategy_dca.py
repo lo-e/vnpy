@@ -56,6 +56,8 @@ class MartingDCAStrategy(CtaTemplate):
         "latest_tick_dt",
         "tick_trade_enable",
         "tick_price",
+        "last_minute_bar_dt",
+        "last_minute_tick_count",
         "position_value",
         "position_price",
         "position",
@@ -440,7 +442,7 @@ class MartingDCAStrategy(CtaTemplate):
 
         # 分钟bar时间异常
         sub = datetime.now() - self.last_minute_bar_dt
-        if abs(sub.total_seconds()) >= 2 * 60:
+        if abs(sub.total_seconds()) >= 3 * 60:
             error = True
 
         if error:
