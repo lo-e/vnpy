@@ -53,9 +53,11 @@ class MartingDCAStrategy(CtaTemplate):
         "tag_price_dt",
         "ma_price",
         "bar_dt",
-        "tick_dt",
+        "latest_tick_dt",
         "tick_trade_enable",
-        "latest_price",
+        "tick_price",
+        "last_minute_bar_dt",
+        "last_minute_tick_count",
         "position_value",
         "position_price",
         "position",
@@ -89,7 +91,8 @@ class MartingDCAStrategy(CtaTemplate):
 
         # 策略参数、变量
         self.direction: Direction = Direction.NET  # 交易方向
-        self.tick: TickData = None
+        self.tick: TickData = None # 收到最新的tick
+        self.latest_tick: TickData = None # 时间最新的tick
         self.symbol_min_volume: float = 0.0
         self.symbol_price_tick: float = 0.0
         self.bar: BarData = None  # 最新K线
@@ -102,9 +105,9 @@ class MartingDCAStrategy(CtaTemplate):
         self.trending_step = 0  # 趋势追踪等级
         self.ma_price = 0  # 均线
         self.bar_dt = None  # 最新的bar时间
-        self.tick_dt = None  # 最新的tick时间
+        self.latest_tick_dt = None  # 时间最新的tick时间
         self.tick_trade_enable = False  # Tick数据时间在回测后的指定范围内允许交易
-        self.latest_price = 0  # 最新的tick价格
+        self.tick_price = 0  # 收到最新的tick价格
         self.tag_price = 0  # 标记价格
         self.tag_price_dt = None  # 标记时间
         self.target_volume = -1  # 目标持仓
@@ -365,33 +368,34 @@ class MartingDCAStrategy(CtaTemplate):
         # 去除时区，避免不必要的麻烦
         tick.datetime = tick.datetime.replace(tzinfo=None)
 
-        if (self.tick_dt and tick.datetime >= self.tick_dt) or not self.tick_dt:
+        if (self.latest_tick_dt and tick.datetime >= self.latest_tick_dt) or not self.latest_tick_dt:
             # 给分钟Bar生成器推送数据
             self.minute_bar_generator.update_tick(tick=tick)
 
-            if self.tick and self.tick.datetime.minute != tick.datetime.minute:
+            if self.latest_tick and self.latest_tick.datetime.minute != tick.datetime.minute:
                 # 分钟bar时间
                 self.last_minute_bar_dt = self.minute_bar_dt
                 self.minute_bar_dt = tick.datetime.replace(second=0, microsecond=0)
 
-                # 统计分钟tick数量
+                # 分钟tick数量
                 self.last_minute_tick_count = self.minute_tick_count
                 self.minute_tick_count = 1
             else:
                 self.minute_tick_count += 1
+
+            # 时间最新的tick
+            self.latest_tick = copy(tick)
+            self.latest_tick_dt = tick.datetime
+
+        # 收到的最新tick
+        self.tick = copy(tick)
+        self.tick_price = tick.last_price
 
         # 第一个五分钟周期起始，下载数据
         if (not self.window_bar_list) and (
             not tick.datetime.minute % self.interval_window
         ):
             self.portfolio.download_initing()
-
-        # 更新tick相关变量
-        self.tick = copy(tick)
-        self.tick_dt = (
-            max(self.tick_dt, tick.datetime) if self.tick_dt else tick.datetime
-        )
-        self.latest_price = tick.last_price
 
         # 计算当前持仓盈亏比率
         if self.position_price:
@@ -438,13 +442,13 @@ class MartingDCAStrategy(CtaTemplate):
 
         # 分钟bar时间异常
         sub = datetime.now() - self.last_minute_bar_dt
-        if abs(sub.total_seconds()) >= 2 * 60:
+        if abs(sub.total_seconds()) >= 3 * 60:
             error = True
 
         if error:
             if not self.tick_error_suspend:
                 self.tick_error_suspend = True
-                message = f"！！马丁策略Tick数据异常！！\n\nlast_minute_bar_dt：{self.last_minute_bar_dt}\nlast_minute_tick_count：{self.last_minute_tick_count}"
+                message = f"！！马丁策略Tick数据异常！！\n\nlast_minute：{self.last_minute_bar_dt}\nlast_count：{self.last_minute_tick_count}"
                 self.send_dingtalk(message)
 
         else:
