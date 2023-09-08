@@ -365,22 +365,20 @@ class MartingDCAStrategy(CtaTemplate):
         # 去除时区，避免不必要的麻烦
         tick.datetime = tick.datetime.replace(tzinfo=None)
 
-        # 统计分钟tick数量
-        if self.tick:
-            if self.tick.datetime.minute != tick.datetime.minute:
+        if (self.tick_dt and tick.datetime >= self.tick_dt) or not self.tick_dt:
+            # 给分钟Bar生成器推送数据
+            self.minute_bar_generator.update_tick(tick=tick)
+
+            if self.tick and self.tick.datetime.minute != tick.datetime.minute:
                 # 分钟bar时间
                 self.last_minute_bar_dt = self.minute_bar_dt
                 self.minute_bar_dt = tick.datetime.replace(second=0, microsecond=0)
 
-                # 分钟tick数量
+                # 统计分钟tick数量
                 self.last_minute_tick_count = self.minute_tick_count
                 self.minute_tick_count = 1
             else:
                 self.minute_tick_count += 1
-
-        # 给分钟Bar生成器推送数据
-        if (self.tick_dt and tick.datetime >= self.tick_dt) or not self.tick_dt:
-            self.minute_bar_generator.update_tick(tick=tick)
 
         # 第一个五分钟周期起始，下载数据
         if (not self.window_bar_list) and (
@@ -430,9 +428,12 @@ class MartingDCAStrategy(CtaTemplate):
 
     # 检查tick数据是否异常
     def check_tick_data(self):
+        if not self.last_minute_bar_dt:
+            return
+        
         error = False
         # 分钟tick数量异常
-        if self.last_minute_bar_dt and 0 < self.last_minute_tick_count < 5:
+        if 0 < self.last_minute_tick_count < 5:
             error = True
 
         # 分钟bar时间异常
