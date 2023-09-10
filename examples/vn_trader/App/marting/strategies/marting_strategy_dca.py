@@ -380,6 +380,7 @@ class MartingDCAStrategy(CtaTemplate):
                 # 分钟tick数量
                 self.last_minute_tick_count = self.minute_tick_count
                 self.minute_tick_count = 1
+                
             else:
                 self.minute_tick_count += 1
 
@@ -432,7 +433,7 @@ class MartingDCAStrategy(CtaTemplate):
 
     # 检查tick数据是否异常
     def check_tick_data(self):
-        if not self.last_minute_bar_dt:
+        if (self.direction == Direction.SHORT) or (not self.last_minute_bar_dt):
             return
         
         error = False
@@ -448,7 +449,8 @@ class MartingDCAStrategy(CtaTemplate):
         if error:
             if not self.tick_error_suspend:
                 self.tick_error_suspend = True
-                message = f"！！马丁策略Tick数据异常！！\n\nlast_minute：{self.last_minute_bar_dt}\nlast_count：{self.last_minute_tick_count}"
+                message = f"\n{datetime.now()}\t！！马丁策略Tick数据异常！！\nlast_minute：{self.last_minute_bar_dt}\ncurrent_minute：{self.minute_bar_dt}\nlast_count：{self.last_minute_tick_count}\ncurrent_count：{self.minute_tick_count}\n"
+                print(message)
                 self.send_dingtalk(message)
 
         else:
