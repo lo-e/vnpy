@@ -438,8 +438,8 @@ class MartingDCAStrategy(CtaTemplate):
         
         error = False
         # 分钟tick数量异常
-        if 0 < self.last_minute_tick_count < 5:
-            error = True
+        # if 0 < self.last_minute_tick_count < 5:
+        #     error = True
 
         # 分钟bar时间异常
         sub = datetime.now() - self.last_minute_bar_dt
