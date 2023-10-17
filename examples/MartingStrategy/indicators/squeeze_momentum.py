@@ -5,7 +5,7 @@ from vnpy.trader.constant import Direction
 import talib
 import numpy as np
 from pymongo import MongoClient
-from vnpy.app.cta_strategy.base import MinuteDataBaseName
+from vnpy.app.cta_strategy.base import HOUR_DB_NAME, MinuteDataBaseName
 from datetime import datetime
 from enum import Enum
 
@@ -84,7 +84,7 @@ class SqueezeMomentum(object):
 
 
 if __name__ == "__main__":
-    indicator = SqueezeMomentum(bb_length=3, bb_factor=2, kc_length=3, kc_factor=1.5)
+    indicator = SqueezeMomentum(bb_length=20, bb_factor=2, kc_length=20, kc_factor=1.5)
     symbol = f"BTCUSDT.BINANCE"
     start_dt = datetime.strptime(f"2023-10-01 00:00:00", f"%Y-%m-%d %H:%M:%S")
     end_dt = datetime.strptime(f"2023-12-31 00:00:00", f"%Y-%m-%d %H:%M:%S")
@@ -99,3 +99,5 @@ if __name__ == "__main__":
         bar.__dict__ = d
         indicator.update_bar(bar)
         signal = indicator.generate_signal()
+        if signal != Direction.NET:
+            print(f"{bar.datetime}\t{signal}")

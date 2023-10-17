@@ -309,7 +309,7 @@ class MartingDCASignal(object):
     def on_hour_bar(self, bar: BarData):
         self.sm_indicator.update_bar(bar)
         sm_signal = self.sm_indicator.generate_signal()
-        if sm_signal != Direction.NET:
+        if sm_signal == self.direction:
             print(f"{bar.datetime}\t{sm_signal}")
 
     def calculate_max_loss(self):
