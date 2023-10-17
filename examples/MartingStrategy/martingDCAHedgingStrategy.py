@@ -257,6 +257,12 @@ class MartingDCASignal(object):
         self.top_open_price = 0 # 趋势加仓价格
         self.current_trending_group = []
 
+        # 对冲信号相关
+        self.sm_indicator = SqueezeMomentum(bb_length=20,
+                                            bb_factor=2,
+                                            kc_length=20,
+                                            kc_factor=1.5)
+
         # 初始化状态
         for name, value in self.init_status.items():
             self.__setattr__(name, value)
@@ -312,12 +318,8 @@ class MartingDCASignal(object):
         self.save_sync_data()
 
     def on_hour_bar(self, bar:BarData):
-        indicator = SqueezeMomentum(bb_length=20,
-                                    bb_factor=2,
-                                    kc_length=20,
-                                    kc_factor=1.5)
-        indicator.update_bar(bar)
-        sm_signal = indicator.generate_signal()
+        self.sm_indicator.update_bar(bar)
+        sm_signal = self.sm_indicator.generate_signal()
         if sm_signal != Direction.NET:
             print(f"{bar.datetime}\t{sm_signal}")
 
