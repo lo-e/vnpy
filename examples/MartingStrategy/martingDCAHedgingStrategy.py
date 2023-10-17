@@ -1,7 +1,7 @@
 # encoding: UTF-8
 
 from collections import defaultdict
-from vnpy.trader.constant import Direction, Offset, Exchange
+from vnpy.trader.constant import Direction, Offset, Exchange, Interval
 from vnpy.trader.utility import ArrayManager
 from datetime import datetime, timedelta
 from pymongo import MongoClient, ASCENDING
@@ -14,8 +14,183 @@ import numpy as np
 import os
 from pathlib import Path
 import json
+from typing import Callable
 
 UNIT_RATE = 0.1 # 初始开仓价值比率
+
+class BarGenerator:
+    def __init__(
+        self,
+        window: int = 0,
+        on_window_bar: Callable = None,
+        interval: Interval = Interval.MINUTE
+    ):
+        self.bar: BarData = None
+        self.hour_bar: BarData = None
+        self.window_bar: BarData = None
+
+        self.window: int = window
+        self.on_window_bar: Callable = on_window_bar
+        self.interval: Interval = interval
+        self.interval_count: int = 0
+
+    def update_bar(self, bar: BarData) -> None:
+        """
+        使用分钟Bar生成目标周期Bar
+        """
+        if self.interval == Interval.MINUTE:
+            self.update_bar_minute_window(bar)
+        else:
+            self.update_bar_hour_window(bar)
+
+    def update_bar_minute_window(self, bar: BarData) -> None:
+        # If not inited, create window bar object
+        if not self.window_bar:
+            dt = bar.datetime.replace(second=0, microsecond=0)
+            self.window_bar = BarData(
+                symbol=bar.symbol,
+                exchange=bar.exchange,
+                datetime=dt,
+                gateway_name=bar.gateway_name,
+                open_price=bar.open_price,
+                high_price=bar.high_price,
+                low_price=bar.low_price
+            )
+        # Otherwise, update high/low price into window bar
+        else:
+            self.window_bar.high_price = max(
+                self.window_bar.high_price,
+                bar.high_price
+            )
+            self.window_bar.low_price = min(
+                self.window_bar.low_price,
+                bar.low_price
+            )
+
+        # Update close price/volume/turnover into window bar
+        self.window_bar.close_price = bar.close_price
+        self.window_bar.volume += bar.volume
+        self.window_bar.turnover += bar.turnover
+        self.window_bar.open_interest = bar.open_interest
+
+        # Check if window bar completed
+        if not (bar.datetime.minute + 1) % self.window:
+            self.on_window_bar(self.window_bar)
+            self.window_bar = None
+
+    def update_bar_hour_window(self, bar: BarData) -> None:
+        if not self.hour_bar:
+            dt = bar.datetime.replace(minute=0, second=0, microsecond=0)
+            self.hour_bar = BarData(
+                symbol=bar.symbol,
+                exchange=bar.exchange,
+                datetime=dt,
+                gateway_name=bar.gateway_name,
+                open_price=bar.open_price,
+                high_price=bar.high_price,
+                low_price=bar.low_price,
+                close_price=bar.close_price,
+                volume=bar.volume,
+                turnover=bar.turnover,
+                open_interest=bar.open_interest
+            )
+            return
+
+        finished_bar = None
+
+        # 原始Bar数据为1分钟周期，59分为小时分界点
+        # 原始Bar数据为5分钟周期，55分为小时分界点
+        if bar.datetime.minute == 55:
+            self.hour_bar.high_price = max(
+                self.hour_bar.high_price,
+                bar.high_price
+            )
+            self.hour_bar.low_price = min(
+                self.hour_bar.low_price,
+                bar.low_price
+            )
+
+            self.hour_bar.close_price = bar.close_price
+            self.hour_bar.volume += bar.volume
+            self.hour_bar.turnover += bar.turnover
+            self.hour_bar.open_interest = bar.open_interest
+
+            finished_bar = self.hour_bar
+            self.hour_bar = None
+
+        # If minute bar of new hour, then push existing window bar
+        elif bar.datetime.hour != self.hour_bar.datetime.hour:
+            finished_bar = self.hour_bar
+
+            dt = bar.datetime.replace(minute=0, second=0, microsecond=0)
+            self.hour_bar = BarData(
+                symbol=bar.symbol,
+                exchange=bar.exchange,
+                datetime=dt,
+                gateway_name=bar.gateway_name,
+                open_price=bar.open_price,
+                high_price=bar.high_price,
+                low_price=bar.low_price,
+                close_price=bar.close_price,
+                volume=bar.volume,
+                turnover=bar.turnover,
+                open_interest=bar.open_interest
+            )
+        # Otherwise only update minute bar
+        else:
+            self.hour_bar.high_price = max(
+                self.hour_bar.high_price,
+                bar.high_price
+            )
+            self.hour_bar.low_price = min(
+                self.hour_bar.low_price,
+                bar.low_price
+            )
+
+            self.hour_bar.close_price = bar.close_price
+            self.hour_bar.volume += bar.volume
+            self.hour_bar.turnover += bar.turnover
+            self.hour_bar.open_interest = bar.open_interest
+
+        # Push finished window bar
+        if finished_bar:
+            self.on_hour_bar(finished_bar)
+
+    def on_hour_bar(self, bar: BarData) -> None:
+        if self.window == 1:
+            self.on_window_bar(bar)
+
+        else:
+            if not self.window_bar:
+                self.window_bar = BarData(
+                    symbol=bar.symbol,
+                    exchange=bar.exchange,
+                    datetime=bar.datetime,
+                    gateway_name=bar.gateway_name,
+                    open_price=bar.open_price,
+                    high_price=bar.high_price,
+                    low_price=bar.low_price
+                )
+            else:
+                self.window_bar.high_price = max(
+                    self.window_bar.high_price,
+                    bar.high_price
+                )
+                self.window_bar.low_price = min(
+                    self.window_bar.low_price,
+                    bar.low_price
+                )
+
+            self.window_bar.close_price = bar.close_price
+            self.window_bar.volume += bar.volume
+            self.window_bar.turnover += bar.turnover
+            self.window_bar.open_interest = bar.open_interest
+
+            self.interval_count += 1
+            if not self.interval_count % self.window:
+                self.interval_count = 0
+                self.on_window_bar(self.window_bar)
+                self.window_bar = None
 
 class MartingDCASignal(object):
     def __init__(
@@ -67,6 +242,7 @@ class MartingDCASignal(object):
         )  # 开始回测开关，当有初始状态时，回测Bar数据需要从start_dt开始
         self.bar: BarData = None  # 最新K线
         self.am = ArrayManager(self.ma_window)  # K线容器
+        self.bm = BarGenerator(window=1, on_window_bar=self.on_hour_bar, interval=Interval.HOUR)  # K线生成器
         self.position = 0  # 持仓量
         self.position_price = 0  # 持仓均价
         self.position_reduce_price = 0  # 减仓价格
@@ -108,6 +284,7 @@ class MartingDCASignal(object):
             raise ("Bar数据校验不通过！！")
         self.bar = bar
         self.am.update_bar(bar)
+        self.bm.update_bar(bar)
         if not self.am.inited:
             return
 
@@ -132,6 +309,9 @@ class MartingDCASignal(object):
         self.generate_signal(bar)
         self.calculate_indicator()
         self.save_sync_data()
+
+    def on_hour_bar(self, bar):
+        a = 2
 
     def calculate_max_loss(self):
         if self.direction == Direction.LONG:
