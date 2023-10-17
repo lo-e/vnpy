@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 import json
 from typing import Callable
+from indicators.squeeze_momentum import SqueezeMomentum
 
 UNIT_RATE = 0.1 # 初始开仓价值比率
 
@@ -310,8 +311,15 @@ class MartingDCASignal(object):
         self.calculate_indicator()
         self.save_sync_data()
 
-    def on_hour_bar(self, bar):
-        a = 2
+    def on_hour_bar(self, bar:BarData):
+        indicator = SqueezeMomentum(bb_length=20,
+                                    bb_factor=2,
+                                    kc_length=20,
+                                    kc_factor=1.5)
+        indicator.update_bar(bar)
+        sm_signal = indicator.generate_signal()
+        if sm_signal != Direction.NET:
+            print(f"{bar.datetime}\t{sm_signal}")
 
     def calculate_max_loss(self):
         if self.direction == Direction.LONG:
