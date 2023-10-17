@@ -63,7 +63,7 @@ def backtesting():
     history_from = ""
     backtesting_history_file = ""
     # history_from = f"from_history_2022-10-01_2022-11-02"
-    backtesting_history_file = "2023-01-01_2023-08-21.json"
+    # backtesting_history_file = "2023-01-01_2023-08-21.json"
     history_file_path = (
         f"{history_from}{DIR_SYMBOL}{backtesting_history_file}"
         if history_from

@@ -13,7 +13,8 @@ from pymongo import MongoClient
 from vnpy.trader.object import BarData
 from vnpy.trader.constant import Direction, Exchange
 
-from martingDCAStrategy import MartingDCAPortfolio
+# from martingDCAStrategy import MartingDCAPortfolio
+from martingDCAHedgingStrategy import MartingDCAPortfolio
 
 from vnpy.app.cta_strategy.base import DAILY_DB_NAME, MINUTE_DB_NAME, HOUR_DB_NAME, MinuteDataBaseName, HourDataBaseName
 import pandas as pd
@@ -71,9 +72,9 @@ class BacktestingEngine(object):
         self.portfolio = MartingDCAPortfolio(self)
         if exchange == "BINANCE":
             self.target_symbol_list = []
-            self.target_symbol_list = ['AAVEUSDT.BINANCE', 'AXSUSDT.BINANCE', 'LINKUSDT.BINANCE']
-            # self.target_symbol_list = ['ADAUSDT.BINANCE', 'DOGEUSDT.BINANCE', 'MATICUSDT.BINANCE']
-        
+            # self.target_symbol_list = ['AAVEUSDT.BINANCE', 'AXSUSDT.BINANCE', 'LINKUSDT.BINANCE']
+            self.target_symbol_list = ['BTCUSDT.BINANCE']
+
         elif exchange == "OKX":
             self.target_symbol_list = ['AAVE-USDT-SWAP.OKX', 'AXS-USDT-SWAP.OKX', 'LINK-USDT-SWAP.OKX']
             
