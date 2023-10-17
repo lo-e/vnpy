@@ -50,6 +50,10 @@ class SqueezeMomentum(object):
                 self.kc_length, self.kc_factor
             )
 
+            # fake
+            if bar.datetime >= datetime.strptime(f"2023-10-15 17:00:00", f"%Y-%m-%d %H:%M:%S"):
+                a = 2
+
             # 挤压状态
             self.pre_sqz = self.sqz
             if (lower_bb > lower_kc) and (upper_bb < upper_kc):
