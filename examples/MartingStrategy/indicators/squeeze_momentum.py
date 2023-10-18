@@ -35,7 +35,8 @@ class SqueezeMomentum(object):
         self.pre_mmt = 0.0
         self.inited = False
         self.bar = None
-        self.array_manager = ArrayManager(max(bb_length, kc_length) + 1)
+        self.array_manager = ArrayManager()
+        # self.array_manager = ArrayManager(max(bb_length, kc_length) + 1)
 
     def update_bar(self, bar: BarData) -> None:
         self.bar = bar
@@ -76,6 +77,10 @@ class SqueezeMomentum(object):
             )[-1]
 
     def generate_signal(self) -> Direction:
+        # fake
+        # if self.bar.datetime >= datetime.strptime(f"2023-10-01 17:00:00", f"%Y-%m-%d %H:%M:%S"):
+        #     print(f"{self.bar.datetime}\t{self.sqz}\t{self.mmt}")
+
         direction = Direction.NET
         if self.pre_sqz == SqueezeStatus.sqz_on and self.sqz == SqueezeStatus.sqz_off:
             if self.mmt > 0 and self.mmt > self.pre_mmt:
