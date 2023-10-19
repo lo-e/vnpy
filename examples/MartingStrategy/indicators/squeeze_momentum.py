@@ -52,8 +52,8 @@ class SqueezeMomentum(object):
             )
 
             # fake
-            if bar.datetime >= datetime.strptime(f"2023-10-15 17:00:00", f"%Y-%m-%d %H:%M:%S"):
-                a = 2
+            # if bar.datetime >= datetime.strptime(f"2023-10-15 17:00:00", f"%Y-%m-%d %H:%M:%S"):
+            #     print(f"{self.bar.datetime}\tupper：{upper_kc}\tlower：{lower_kc}")
 
             # 挤压状态
             self.pre_sqz = self.sqz
