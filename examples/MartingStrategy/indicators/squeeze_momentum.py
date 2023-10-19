@@ -51,10 +51,6 @@ class SqueezeMomentum(object):
                 self.kc_length, self.kc_factor
             )
 
-            # fake
-            # if bar.datetime >= datetime.strptime(f"2023-10-15 17:00:00", f"%Y-%m-%d %H:%M:%S"):
-            #     print(f"{self.bar.datetime}\tupper：{upper_kc}\tlower：{lower_kc}")
-
             # 挤压状态
             self.pre_sqz = self.sqz
             if (lower_bb > lower_kc) and (upper_bb < upper_kc):
@@ -77,10 +73,6 @@ class SqueezeMomentum(object):
             )[-1]
 
     def generate_signal(self) -> Direction:
-        # fake
-        # if self.bar.datetime >= datetime.strptime(f"2023-10-01 17:00:00", f"%Y-%m-%d %H:%M:%S"):
-        #     print(f"{self.bar.datetime}\t{self.sqz}\t{self.mmt}")
-
         direction = Direction.NET
         if self.pre_sqz == SqueezeStatus.sqz_on and self.sqz == SqueezeStatus.sqz_off:
             if self.mmt > 0 and self.mmt > self.pre_mmt:
