@@ -16,7 +16,7 @@ class RsiRangeMomentum(object):
     RSI空头动量：RSI过去N天内的极值低点小于30
     """
     # 统计回望窗口
-    back_window: int = 100
+    back_window: int = 20
 
     # 计算RSI指标的窗口
     rsi_window: int = 14
