@@ -17,6 +17,9 @@ class SqueezeStatus(Enum):
 
 
 class SqueezeMomentum(object):
+    """
+    挤压状态与动量趋势指标（来自：TraderView）
+    """
     def __init__(
         self,
         bb_length: int = 20,
