@@ -16,6 +16,7 @@ from pathlib import Path
 import json
 from typing import Callable
 from indicators.squeeze_momentum import SqueezeMomentum
+from indicators.rsi_range_momentum import RsiRangeMomentum
 
 UNIT_RATE = 0.1  # 初始开仓价值比率
 
@@ -251,6 +252,7 @@ class MartingDCASignal(object):
         self.sm_indicator = SqueezeMomentum(
             bb_length=20, bb_factor=2, kc_length=20, kc_factor=1.5
         )
+        self.rsi_rm_indicator = RsiRangeMomentum()
 
         # 初始化状态
         for name, value in self.init_status.items():
@@ -307,10 +309,17 @@ class MartingDCASignal(object):
         self.save_sync_data()
 
     def on_hour_bar(self, bar: BarData):
+        # 挤压动量指标
         self.sm_indicator.update_bar(bar)
         sm_signal = self.sm_indicator.generate_signal()
         # if sm_signal == self.direction:
         #     print(f"{bar.datetime}\t{sm_signal}")
+
+        # RSI区域动量指标
+        self.rsi_rm_indicator.update_bar(bar)
+        rsi_rm_signal = self.rsi_rm_indicator.generate_signal()
+        # if rsi_rm_signal == self.direction:
+        #     print(f"{bar.datetime}\t{rsi_rm_signal}")
 
     def calculate_max_loss(self):
         if self.direction == Direction.LONG:
