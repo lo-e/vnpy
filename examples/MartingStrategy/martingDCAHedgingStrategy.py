@@ -17,6 +17,7 @@ import json
 from typing import Callable
 from indicators.squeeze_momentum import SqueezeMomentum
 from indicators.rsi_range_momentum import RsiRangeMomentum
+from indicators.adx_di import AdxDi
 
 UNIT_RATE = 0.1  # 初始开仓价值比率
 
@@ -252,7 +253,8 @@ class MartingDCASignal(object):
         self.sm_indicator = SqueezeMomentum(
             bb_length=20, bb_factor=2, kc_length=20, kc_factor=1.5
         )
-        self.rsi_rm_indicator = RsiRangeMomentum()
+        self.rsi_rm_indicator = RsiRangeMomentum(back_window=20, rsi_window=14)
+        self.adx_di_indicator = AdxDi(back_window=14)
 
         # 初始化状态
         for name, value in self.init_status.items():
@@ -320,6 +322,12 @@ class MartingDCASignal(object):
         rsi_rm_signal = self.rsi_rm_indicator.generate_signal()
         # if rsi_rm_signal == self.direction:
         #     print(f"{bar.datetime}\t{rsi_rm_signal}")
+
+        # ADX趋势强度指标
+        self.adx_di_indicator.update_bar(bar)
+        adx_di_signal = self.adx_di_indicator.generate_signal()
+        # if adx_di_signal == self.direction:
+        #     print(f"{bar.datetime}\t{adx_di_signal}")
 
     def calculate_max_loss(self):
         if self.direction == Direction.LONG:

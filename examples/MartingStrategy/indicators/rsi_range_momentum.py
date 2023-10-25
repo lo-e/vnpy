@@ -15,11 +15,6 @@ class RsiRangeMomentum(object):
     RSI空头范围：RSI过去N天内在60到0之间波动
     RSI空头动量：RSI过去N天内的极值低点小于30
     """
-    # 统计回望窗口
-    back_window: int = 20
-
-    # 计算RSI指标的窗口
-    rsi_window: int = 14
 
     # 趋势做多RSI低阈值
     long_rsi_lower: int = 40
@@ -37,7 +32,12 @@ class RsiRangeMomentum(object):
 
     def __init__(
         self,
+        back_window:int = 20,
+        rsi_window:int = 14
     ) -> None:
+        self.back_window = back_window # 统计回望窗口
+        self.rsi_window = rsi_window # 计算RSI指标的窗口
+
         self.long_range_signal: bool = False # 多头区域信号
         self.long_mmt_signal: bool = False # 多头动量信号
         self.short_range_signal: bool = False # 空头区域信号

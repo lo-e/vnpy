@@ -10,15 +10,16 @@ class AdxDi(object):
     """
     ADX趋势强度和DI趋势方向指标（来自：TraderView）
     """
-    # 统计回望窗口
-    back_window: int = 14
 
     # ADX趋势强弱阈值
     threshold: int = 20
 
     def __init__(
         self,
+        back_window:int = 14
     ) -> None:
+        self.back_window = back_window # 统计回望窗口
+
         self.inited = False
         self.adx = 0
         self.plus_di = 0
