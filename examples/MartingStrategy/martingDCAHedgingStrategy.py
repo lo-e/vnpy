@@ -314,20 +314,20 @@ class MartingDCASignal(object):
         # 挤压动量指标
         self.sm_indicator.update_bar(bar)
         sm_signal = self.sm_indicator.generate_signal()
-        # if sm_signal == self.direction:
+        # if (sm_signal == self.direction) or (sm_signal == Direction.NET and self.direction == Direction.LONG):
         #     print(f"{bar.datetime}\t{sm_signal}")
 
         # RSI区域动量指标
         self.rsi_rm_indicator.update_bar(bar)
         rsi_rm_signal = self.rsi_rm_indicator.generate_signal()
-        # if rsi_rm_signal == self.direction:
+        # if (rsi_rm_signal == self.direction) or (rsi_rm_signal == Direction.NET and self.direction == Direction.LONG):
         #     print(f"{bar.datetime}\t{rsi_rm_signal}")
 
         # ADX趋势强度指标
         self.adx_di_indicator.update_bar(bar)
         adx_di_signal = self.adx_di_indicator.generate_signal()
-        if (adx_di_signal == self.direction) or (adx_di_signal == Direction.NET and self.direction == Direction.LONG) :
-            print(f"{bar.datetime}\t{adx_di_signal}")
+        # if (adx_di_signal == self.direction) or (adx_di_signal == Direction.NET and self.direction == Direction.LONG) :
+        #     print(f"{bar.datetime}\t{adx_di_signal}")
 
     def calculate_max_loss(self):
         if self.direction == Direction.LONG:
