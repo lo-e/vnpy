@@ -326,8 +326,8 @@ class MartingDCASignal(object):
         # ADX趋势强度指标
         self.adx_di_indicator.update_bar(bar)
         adx_di_signal = self.adx_di_indicator.generate_signal()
-        # if adx_di_signal == self.direction:
-        #     print(f"{bar.datetime}\t{adx_di_signal}")
+        if (adx_di_signal == self.direction) or (adx_di_signal == Direction.NET and self.direction == Direction.LONG) :
+            print(f"{bar.datetime}\t{adx_di_signal}")
 
     def calculate_max_loss(self):
         if self.direction == Direction.LONG:
