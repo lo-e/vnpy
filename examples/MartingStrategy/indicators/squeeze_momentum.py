@@ -71,13 +71,17 @@ class SqueezeMomentum(object):
             sma = self.array_manager.sma(self.kc_length)
             avg = (((high + low) / 2.0) + sma) / 2.0
             self.pre_mmt = self.mmt
-            self.mmt = talib.LINEARREG(
+            self.mmt = talib.LINEARREG_SLOPE(
                 self.array_manager.close_array - avg, self.kc_length
             )[-1]
 
+            # fake
+            if self.bar.datetime >= datetime.strptime("2023-10-16 20:00:00", "%Y-%m-%d %H:%M:%S"):
+                a = 2
+
     def generate_signal(self) -> Direction:
         direction = Direction.NET
-        if self.pre_sqz == SqueezeStatus.sqz_on and self.sqz == SqueezeStatus.sqz_off:
+        if self.sqz == SqueezeStatus.sqz_off:
             if self.mmt > 0 and self.mmt > self.pre_mmt:
                 direction = Direction.LONG
 
