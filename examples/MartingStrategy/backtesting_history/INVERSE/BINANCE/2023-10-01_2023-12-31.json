@@ -1,0 +1,84 @@
+{
+  "MARTING_BINANCE_BTC_多": {
+    "sync_status": {
+      "position": 0.029,
+      "position_price": 34007.3,
+      "position_reduce_price": 34109.3219,
+      "position_increase_price": 33845.698888888895,
+      "tag_price": 34015.77777777778,
+      "max_loss_value": -2.0,
+      "max_loss_rate": "-0.22%",
+      "ma_price": 33987.51111111111,
+      "trending_step": 1,
+      "open_waitting": true,
+      "current_trending_group": [
+        {
+          "action": "OPEN",
+          "datetime": "2023-10-29 10:05:00",
+          "trending_step": 0,
+          "trade_price": 34007.3,
+          "position_reduce_price": 0.0,
+          "position_increase_price": 34015.40166666667,
+          "tag_price": 34186.333333333336,
+          "ma_price": 34007.25555555555,
+          "max_loss_value": 0,
+          "max_loss_rate": ""
+        }
+      ]
+    },
+    "sync_dt": "2023-10-29 12:05:00"
+  },
+  "MARTING_BINANCE_BTC_空": {
+    "sync_status": {
+      "position": -0.088,
+      "position_price": 34029.103409090916,
+      "position_reduce_price": 33927.01609886364,
+      "position_increase_price": 34157.44866666666,
+      "tag_price": 33987.51111111111,
+      "max_loss_value": -19.0,
+      "max_loss_rate": "-0.64%",
+      "ma_price": 33987.51111111111,
+      "trending_step": 3,
+      "open_waitting": false,
+      "current_trending_group": [
+        {
+          "action": "OPEN",
+          "datetime": "2023-10-28 05:00:00",
+          "trending_step": 0,
+          "trade_price": 33794.5,
+          "position_reduce_price": 0.0,
+          "position_increase_price": 33724.584,
+          "tag_price": 33556.8,
+          "ma_price": 33794.53333333333,
+          "max_loss_value": 0,
+          "max_loss_rate": ""
+        },
+        {
+          "action": "OPEN",
+          "datetime": "2023-10-28 11:40:00",
+          "trending_step": 1,
+          "trade_price": 34067.1,
+          "position_reduce_price": 33693.1165,
+          "position_increase_price": 33963.472499999996,
+          "tag_price": 33794.5,
+          "ma_price": 34067.11111111111,
+          "max_loss_value": -12.0,
+          "max_loss_rate": "-1.17%"
+        },
+        {
+          "action": "OPEN",
+          "datetime": "2023-10-28 19:40:00",
+          "trending_step": 2,
+          "trade_price": 34233.8,
+          "position_reduce_price": 33826.70436101696,
+          "position_increase_price": 34222.059,
+          "tag_price": 34051.8,
+          "ma_price": 34233.84444444445,
+          "max_loss_value": -36.0,
+          "max_loss_rate": "-1.79%"
+        }
+      ]
+    },
+    "sync_dt": "2023-10-29 12:05:00"
+  }
+}
