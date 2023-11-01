@@ -187,7 +187,7 @@ class MartingDCASignal(object):
         history_data: dict = {},
         params: dict = {},
     ):
-        # 常量
+        # =================== 常量 ===================
         self.portfolio = portfolio  # 投资组合
         self.symbol = symbol  # 合约代码
         self.direction = direction  # 交易方向
@@ -227,7 +227,7 @@ class MartingDCASignal(object):
         if self.direction != Direction.LONG and self.direction != Direction.SHORT:
             exit("检查代码！")
 
-        # 变量
+        # =================== 变量 ===================
         self.start = (
             False if self.init_status else True
         )  # 开始回测开关，当有初始状态时，回测Bar数据需要从start_dt开始
@@ -248,6 +248,7 @@ class MartingDCASignal(object):
         self.open_waitting = False  # 等待正在交易的反方向信号平仓才能开仓，且只能从初始仓位开始
         self.top_open_price = 0  # 趋势加仓价格
         self.current_trending_group = []
+        self.market_status = Direction.NET # 市场趋势强弱状态
 
         # 对冲信号相关
         self.sm_indicator = SqueezeMomentum(
@@ -328,6 +329,9 @@ class MartingDCASignal(object):
         adx_di_signal = self.adx_di_indicator.generate_signal()
         # if (adx_di_signal == self.direction) or (adx_di_signal == Direction.NET and self.direction == Direction.LONG) :
         #     print(f"{bar.datetime}\t{adx_di_signal}")
+
+        # 使用相应的指标描述当前市场趋势强弱状态
+        self.market_status = sm_signal
 
     def calculate_max_loss(self):
         if self.direction == Direction.LONG:
