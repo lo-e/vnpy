@@ -12,7 +12,10 @@ class AdxDi(object):
     """
 
     # ADX趋势强弱阈值
-    threshold: int = 20
+    adx_threshold: int = 20
+
+    # DI趋势方向阈值
+    di_threshold: int = 15
 
     def __init__(
         self,
@@ -43,7 +46,7 @@ class AdxDi(object):
     def generate_signal(self) -> Direction:
         direction = Direction.NET
         if self.inited:
-            if self.adx > self.threshold:
+            if self.adx > self.adx_threshold and abs(self.plus_di - self.minus_di) > self.di_threshold:
                 if self.plus_di > self.minus_di:
                     direction = Direction.LONG
                 
