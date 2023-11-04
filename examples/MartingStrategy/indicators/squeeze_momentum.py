@@ -79,14 +79,17 @@ class SqueezeMomentum(object):
             if self.bar.datetime >= datetime.strptime("2023-10-16 20:00:00", "%Y-%m-%d %H:%M:%S"):
                 a = 2
 
-    def generate_signal(self) -> Direction:
-        direction = Direction.NET
+    def generate_signal(self) -> None:
+        direction = None
         if self.sqz == SqueezeStatus.sqz_off:
             if self.mmt > 0 and self.mmt > self.pre_mmt:
                 direction = Direction.LONG
 
             if self.mmt < 0 and self.mmt < self.pre_mmt:
                 direction = Direction.SHORT
+        
+        else:
+            direction = Direction.NET
 
         return direction
 
