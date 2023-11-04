@@ -248,7 +248,9 @@ class MartingDCASignal(object):
         self.open_waitting = False  # 等待正在交易的反方向信号平仓才能开仓，且只能从初始仓位开始
         self.top_open_price = 0  # 趋势加仓价格
         self.current_trending_group = []
-        self.market_status = Direction.NET # 市场趋势强弱状态
+        self.market_status = None # 市场趋势震荡状态
+        self.adx_di_signal = None # adx_di信号
+        self.sm_signal = None # sm信号
 
         # 对冲信号相关
         self.sm_indicator = SqueezeMomentum(
@@ -312,9 +314,16 @@ class MartingDCASignal(object):
         self.save_sync_data()
 
     def on_hour_bar(self, bar: BarData):
+        # ADX趋势强度指标
+        self.adx_di_indicator.update_bar(bar)
+        pre_adx_di_signal = self.adx_di_signal
+        self.adx_di_signal = self.adx_di_indicator.generate_signal()
+        # if (adx_di_signal == self.direction) or (adx_di_signal == Direction.NET and self.direction == Direction.LONG) :
+        #     print(f"{bar.datetime}\t{adx_di_signal}")
+
         # 挤压动量指标
         self.sm_indicator.update_bar(bar)
-        sm_signal = self.sm_indicator.generate_signal()
+        self.sm_signal = self.sm_indicator.generate_signal()
         # if (sm_signal == self.direction) or (sm_signal == Direction.NET and self.direction == Direction.LONG):
         #     print(f"{bar.datetime}\t{sm_signal}")
 
@@ -324,14 +333,15 @@ class MartingDCASignal(object):
         # if (rsi_rm_signal == self.direction) or (rsi_rm_signal == Direction.NET and self.direction == Direction.LONG):
         #     print(f"{bar.datetime}\t{rsi_rm_signal}")
 
-        # ADX趋势强度指标
-        self.adx_di_indicator.update_bar(bar)
-        adx_di_signal = self.adx_di_indicator.generate_signal()
-        # if (adx_di_signal == self.direction) or (adx_di_signal == Direction.NET and self.direction == Direction.LONG) :
-        #     print(f"{bar.datetime}\t{adx_di_signal}")
-
-        # 使用相应的指标描述当前市场趋势强弱状态
-        self.market_status = sm_signal
+        # 使用相应的指标描述当前市场趋势震荡状态（adx_di指标确定市场趋势，sm指标确定市场震荡）
+        if self.adx_di_indicator and self.adx_di_indicator != Direction.NET and pre_adx_di_signal == Direction.NET:
+            self.market_status = self.adx_di_indicator
+        
+        elif self.sm_signal == Direction.NET:
+            self.market_status = Direction.NET
+        
+        else:
+            self.market_status = None
 
     def calculate_max_loss(self):
         if self.direction == Direction.LONG:
@@ -515,8 +525,9 @@ class MartingDCASignal(object):
                         and bar.high_price >= self.ma_price
                         and bar.low_price <= self.ma_price
                     ):
-                        increase_price_cross = True
-                        trade_price = ceil_to(self.ma_price, self.symbol_price_tick)
+                        if not self.position_price or self.ma_price <= self.position_price:
+                            increase_price_cross = True
+                            trade_price = ceil_to(self.ma_price, self.symbol_price_tick)
 
                 if self.direction == Direction.SHORT:
                     if (
@@ -524,8 +535,9 @@ class MartingDCASignal(object):
                         and bar.low_price <= self.ma_price
                         and bar.high_price >= self.ma_price
                     ):
-                        increase_price_cross = True
-                        trade_price = floor_to(self.ma_price, self.symbol_price_tick)
+                        if not self.position_price or self.ma_price >= self.position_price:
+                            increase_price_cross = True
+                            trade_price = floor_to(self.ma_price, self.symbol_price_tick)
 
             if increase_price_cross:
                 """满足加仓条件"""
