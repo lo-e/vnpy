@@ -287,7 +287,6 @@ class MartingDCASignal(object):
             raise ("Bar数据校验不通过！！")
         self.bar = bar
         self.am.update_bar(bar)
-        self.bm.update_bar(bar)
         if not self.am.inited:
             return
 
@@ -312,14 +311,15 @@ class MartingDCASignal(object):
         self.generate_signal(bar)
         self.calculate_indicator()
         self.save_sync_data()
+        self.bm.update_bar(bar)
 
     def on_hour_bar(self, bar: BarData):
         # ADX趋势强度指标
         self.adx_di_indicator.update_bar(bar)
         pre_adx_di_signal = self.adx_di_signal
         self.adx_di_signal = self.adx_di_indicator.generate_signal()
-        # if (adx_di_signal == self.direction) or (adx_di_signal == Direction.NET and self.direction == Direction.LONG) :
-        #     print(f"{bar.datetime}\t{adx_di_signal}")
+        # if (self.adx_di_signal == self.direction) or (self.adx_di_signal == Direction.NET and self.direction == Direction.LONG) :
+        #     print(f"{bar.datetime}\t{self.adx_di_signal}")
 
         # 挤压动量指标
         self.sm_indicator.update_bar(bar)
@@ -335,13 +335,15 @@ class MartingDCASignal(object):
 
         # 使用相应的指标描述当前市场趋势震荡状态（adx_di指标确定市场趋势，sm指标确定市场震荡）
         if self.adx_di_indicator and self.adx_di_indicator != Direction.NET and pre_adx_di_signal == Direction.NET:
-            self.market_status = self.adx_di_indicator
+            self.market_status = self.adx_di_signal
         
         elif self.sm_signal == Direction.NET:
             self.market_status = Direction.NET
         
         else:
             self.market_status = None
+        if self.direction == Direction.LONG:
+            print(f"{bar.datetime}\t{self.market_status}")
 
     def calculate_max_loss(self):
         if self.direction == Direction.LONG:
@@ -385,13 +387,6 @@ class MartingDCASignal(object):
             >= datetime.strptime("2023-08-20 19:25:00", "%Y-%m-%d %H:%M:%S")
         ):
             a = 2
-
-        # 获取反方向信号，判断开仓等待
-        oppsite_signal = self.portfolio.get_oppsite_signal(self)
-        oppsite_signal_key = f"{oppsite_signal.symbol}_{oppsite_signal.direction.value}"
-        oppsite_signal_pos = self.portfolio.signalPosDict.get(oppsite_signal_key, 0)
-        if abs(oppsite_signal_pos) > 0:
-            self.open_waitting = True
 
         # 检查减仓
         if self.position_reduce_price:
@@ -450,44 +445,28 @@ class MartingDCASignal(object):
                 self.tag_price = trade_price
                 self.trending_step = 0
 
-                if not self.open_waitting:
-                    if self.init_status_close:
-                        # 变量更新后发出订单，已获取仓位变更后的状态数据
-                        if self.direction == Direction.LONG:
-                            self.portfolio.newSignal(
-                                self,
-                                Direction.SHORT,
-                                Offset.CLOSE,
-                                trade_price,
-                                trade_volume,
-                            )
+                if self.init_status_close:
+                    # 变量更新后发出订单，已获取仓位变更后的状态数据
+                    if self.direction == Direction.LONG:
+                        self.portfolio.newSignal(
+                            self,
+                            Direction.SHORT,
+                            Offset.CLOSE,
+                            trade_price,
+                            trade_volume,
+                        )
 
-                        elif self.direction == Direction.SHORT:
-                            self.portfolio.newSignal(
-                                self,
-                                Direction.LONG,
-                                Offset.CLOSE,
-                                trade_price,
-                                trade_volume,
-                            )
-
-                else:
-                    # 正在交易的反方向信号趋势加仓
-                    oppsite_signal.top_open_price = trade_price
-
-                    # 判断开仓等待
-                    signal_key = f"{self.symbol}_{self.direction.value}"
-                    signal_pos = self.portfolio.signalPosDict.get(signal_key, 0)
-                    if signal_pos:
-                        exit("开仓等待信号有仓位，检查代码！")
+                    elif self.direction == Direction.SHORT:
+                        self.portfolio.newSignal(
+                            self,
+                            Direction.LONG,
+                            Offset.CLOSE,
+                            trade_price,
+                            trade_volume,
+                        )
 
                 # 初始化历史回测的仓位状态更新
                 self.init_status_close = True
-
-                # 取消开仓等待
-                self.open_waitting = False
-                if not oppsite_signal.trending_step:
-                    oppsite_signal.open_waitting = False
 
                 # 更新持仓最大亏损
                 self.max_loss_value = 0
@@ -498,46 +477,45 @@ class MartingDCASignal(object):
 
         # 检查加仓
         if self.position_increase_price:
-            # 成交价格
-            trade_price = round_to(self.ma_price, self.symbol_price_tick)
-
-            # 正在交易的信号趋势加仓判断
-            increase_price_cross = False
-            if not self.open_waitting and self.top_open_price and self.position_price:
-                # 基于目标价格的亏损比率
-                loss_rate = 0
+            # 确定成交价格
+            trade_price = 0
+            if (bar.high_price >= self.ma_price and bar.low_price <= self.ma_price):
                 if self.direction == Direction.LONG:
-                    loss_rate = (self.top_open_price / self.position_price) - 1
-
-                elif self.direction == Direction.SHORT:
-                    loss_rate = 1 - (self.top_open_price / self.position_price)
-
-                # 亏损是否达到目标值
-                if loss_rate <= (self.trending_increase_rate * -1):
-                    increase_price_cross = True
-                    trade_price = self.top_open_price
-
-            # 普通加仓判断
-            if not increase_price_cross:
-                if self.direction == Direction.LONG:
-                    if (
-                        self.ma_price <= self.position_increase_price
-                        and bar.high_price >= self.ma_price
-                        and bar.low_price <= self.ma_price
-                    ):
-                        if not self.position_price or self.ma_price <= self.position_price:
-                            increase_price_cross = True
-                            trade_price = ceil_to(self.ma_price, self.symbol_price_tick)
+                    trade_price = ceil_to(self.ma_price, self.symbol_price_tick)
 
                 if self.direction == Direction.SHORT:
-                    if (
-                        self.ma_price >= self.position_increase_price
-                        and bar.low_price <= self.ma_price
-                        and bar.high_price >= self.ma_price
-                    ):
-                        if not self.position_price or self.ma_price >= self.position_price:
+                    trade_price = floor_to(self.ma_price, self.symbol_price_tick)
+
+            if not trade_price:
+                return
+
+            # 基于当前价格的亏损比率
+            loss_rate = 0
+            if self.position_price:
+                if self.direction == Direction.LONG:
+                    loss_rate = (trade_price / self.position_price) - 1
+
+                elif self.direction == Direction.SHORT:
+                    loss_rate = 1 - (trade_price / self.position_price)
+
+            # 加仓条件是否满足
+            increase_price_cross = False
+
+            # 趋势加仓判断
+            if (self.market_status == self.direction) and (loss_rate <= (self.trending_increase_rate * -1)):
+                increase_price_cross = True
+
+            # 普通加仓判断
+            if not increase_price_cross and self.market_status == Direction.NET:
+                if self.direction == Direction.LONG:
+                    if trade_price <= self.position_increase_price:
+                        if not self.position_price or trade_price <= self.position_price:
                             increase_price_cross = True
-                            trade_price = floor_to(self.ma_price, self.symbol_price_tick)
+
+                if self.direction == Direction.SHORT:
+                    if trade_price >= self.position_increase_price:
+                        if not self.position_price or trade_price >= self.position_price:
+                            increase_price_cross = True
 
             if increase_price_cross:
                 """满足加仓条件"""
@@ -548,34 +526,8 @@ class MartingDCASignal(object):
                 # 当前持仓价值、目标持仓价值
                 current_position_value = abs(self.position) * self.position_price
 
-                # 基于成交价格的亏损比率
-                loss_rate = 0
-                if self.position_price:
-                    if self.direction == Direction.LONG:
-                        loss_rate = (trade_price / self.position_price) - 1
-
-                    elif self.direction == Direction.SHORT:
-                        loss_rate = 1 - (trade_price / self.position_price)
-
-                if loss_rate > (self.trending_increase_rate * -1):
-                    """普通加仓"""
-
-                    # 目标持仓价值【定额加仓】
-                    target_position_value = current_position_value + self.unit_value
-
-                    # 计算加仓的合约数量
-                    trade_volume = (
-                        (target_position_value - current_position_value)
-                    ) / trade_price
-                    trade_volume = round_to(trade_volume, self.symbol_min_volume)
-
-                    # 加仓数量检查
-                    if trade_volume <= 0:
-                        exit("加仓数量错误，检查代码！")
-
-                elif self.open_waitting or self.top_open_price:
-                    """根据持仓价格百分比加仓"""
-
+                if (self.market_status == self.direction) and (loss_rate <= (self.trending_increase_rate * -1)):
+                    """ 趋势加仓 """
                     # 计算加仓数量
                     if self.direction == Direction.LONG:
                         target_positon_price = trade_price * (
@@ -597,36 +549,50 @@ class MartingDCASignal(object):
                     if trade_volume <= 0:
                         exit("加仓数量错误，检查代码！")
 
-                if not self.open_waitting:
-                    # 控制单个交易信号持仓价值
-                    # target_position_value = (abs(trade_volume) * trade_price) + current_position_value
-                    # if target_position_value >= self.portfolio.portfolioValue * 0.3:
-                    #     top_cross = self.portfolio.check_top_step(self, True)
-                    #     if not top_cross:
-                    #         trade_volume = 0
+                else:
+                    """普通加仓"""
+                    # 目标持仓价值【定额加仓】
+                    target_position_value = current_position_value + self.unit_value
 
-                    # 控制组合的持仓信号总数量
-                    trading_signal_count = 0
-                    signal_key = f"{self.symbol}_{self.direction.value}"
-                    signal_trading = False
-                    for key_, pos in self.portfolio.signalPosDict.items():
-                        if abs(pos) > 0:
-                            trading_signal_count += 1
-                            if signal_key == key_:
-                                signal_trading = True
-                                break
-                    if not signal_trading and trading_signal_count >= 5:
-                        trade_volume = 0
+                    # 计算加仓的合约数量
+                    trade_volume = (
+                        (target_position_value - current_position_value)
+                    ) / trade_price
+                    trade_volume = round_to(trade_volume, self.symbol_min_volume)
 
-                    # 控制组合的持仓总价值
-                    # total_positon_value = 0
-                    # for _, l in self.portfolio.signalDict.items():
-                    #     for signal in l:
-                    #         if not signal.open_waitting:
-                    #             total_positon_value += abs(signal.position) * signal.position_price
-                    # total_positon_value_after = total_positon_value + abs(trade_volume) * trade_price
-                    # if total_positon_value_after >= self.portfolio.portfolioValue * 25:
-                    #     trade_volume = 0
+                    # 加仓数量检查
+                    if trade_volume <= 0:
+                        exit("加仓数量错误，检查代码！")
+
+                # 控制单个交易信号持仓价值
+                # target_position_value = (abs(trade_volume) * trade_price) + current_position_value
+                # if target_position_value >= self.portfolio.portfolioValue * 0.3:
+                #     top_cross = self.portfolio.check_top_step(self, True)
+                #     if not top_cross:
+                #         trade_volume = 0
+
+                # 控制组合的持仓信号总数量
+                # trading_signal_count = 0
+                # signal_key = f"{self.symbol}_{self.direction.value}"
+                # signal_trading = False
+                # for key_, pos in self.portfolio.signalPosDict.items():
+                #     if abs(pos) > 0:
+                #         trading_signal_count += 1
+                #         if signal_key == key_:
+                #             signal_trading = True
+                #             break
+                # if not signal_trading and trading_signal_count >= 5:
+                #     trade_volume = 0
+
+                # 控制组合的持仓总价值
+                # total_positon_value = 0
+                # for _, l in self.portfolio.signalDict.items():
+                #     for signal in l:
+                #         if not signal.open_waitting:
+                #             total_positon_value += abs(signal.position) * signal.position_price
+                # total_positon_value_after = total_positon_value + abs(trade_volume) * trade_price
+                # if total_positon_value_after >= self.portfolio.portfolioValue * 25:
+                #     trade_volume = 0
 
                 if trade_volume > 0:
                     # 在变量更新前进行组合策略更新，已获取仓位变更前的状态数据
@@ -662,26 +628,25 @@ class MartingDCASignal(object):
                     self.tag_price = trade_price
                     self.trending_step += 1
 
-                    if not self.open_waitting:
-                        if self.init_status_close:
-                            # 变量更新后发出订单，已获取仓位变更后的状态数据
-                            if self.direction == Direction.LONG:
-                                self.portfolio.newSignal(
-                                    self,
-                                    Direction.LONG,
-                                    Offset.OPEN,
-                                    trade_price,
-                                    trade_volume,
-                                )
+                    if self.init_status_close:
+                        # 变量更新后发出订单，已获取仓位变更后的状态数据
+                        if self.direction == Direction.LONG:
+                            self.portfolio.newSignal(
+                                self,
+                                Direction.LONG,
+                                Offset.OPEN,
+                                trade_price,
+                                trade_volume,
+                            )
 
-                            elif self.direction == Direction.SHORT:
-                                self.portfolio.newSignal(
-                                    self,
-                                    Direction.SHORT,
-                                    Offset.OPEN,
-                                    trade_price,
-                                    trade_volume,
-                                )
+                        elif self.direction == Direction.SHORT:
+                            self.portfolio.newSignal(
+                                self,
+                                Direction.SHORT,
+                                Offset.OPEN,
+                                trade_price,
+                                trade_volume,
+                            )
 
                     # 更新持仓最大亏损
                     self.max_loss_value = 0
