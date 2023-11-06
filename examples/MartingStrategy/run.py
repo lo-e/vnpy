@@ -25,7 +25,7 @@ from vnpy.trader.utility import round_to
 def backtesting():
     # 回测起始日期
     engine = BacktestingEngine()
-    start_dt = datetime(2023, 10, 1)
+    start_dt = datetime(2023, 8, 20)
     end_dt = datetime(2023, 12, 31)
     engine.setPeriod(start_dt, end_dt)
 
@@ -63,7 +63,7 @@ def backtesting():
     history_from = ""
     backtesting_history_file = ""
     # history_from = f"from_history_2022-10-01_2022-11-02"
-    # backtesting_history_file = "2023-01-01_2023-08-21.json"
+    backtesting_history_file = "2023-01-01_2023-08-21.json"
     history_file_path = (
         f"{history_from}{DIR_SYMBOL}{backtesting_history_file}"
         if history_from
