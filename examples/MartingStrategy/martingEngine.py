@@ -13,8 +13,8 @@ from pymongo import MongoClient
 from vnpy.trader.object import BarData
 from vnpy.trader.constant import Direction, Exchange
 
-from martingDCAStrategy import MartingDCAPortfolio
-# from martingDCAHedgingStrategy import MartingDCAPortfolio
+# from martingDCAStrategy import MartingDCAPortfolio
+from martingDCAHedgingStrategy import MartingDCAPortfolio
 
 from vnpy.app.cta_strategy.base import DAILY_DB_NAME, MINUTE_DB_NAME, HOUR_DB_NAME, MinuteDataBaseName, HourDataBaseName
 import pandas as pd
