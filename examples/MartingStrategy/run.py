@@ -31,12 +31,12 @@ def backtesting():
 
     # 自定义策略参数
     params = {}
-    # params = {
-    #     "continuous_increase_rate": 0.002,
-    #     "reduce_rate": 0.001,
-    #     "trending_increase_rate": 0.06,
-    #     "trending_open_loss_rate": 0.01,
-    # }
+    params = {
+        "continuous_increase_rate": 0.002,
+        "reduce_rate": 0.002,
+        "trending_increase_rate": 0.07,
+        "trending_open_loss_rate": 0.01,
+    }
 
     # params = {
     #     "AAVEUSDT.BINANCE": {
