@@ -133,6 +133,7 @@ class BinanceUsdtGateway(BaseGateway):
     default_name: str = "BINANCE_USDT"
 
     default_setting: Dict[str, Any] = {
+        "账户名称":"",
         "key": "",
         "secret": "",
         "服务器": ["REAL", "TESTNET"],
@@ -544,6 +545,7 @@ class BinanceUsdtRestApi(RestClient):
                 position: PositionData = PositionData(
                     symbol=d["symbol"],
                     exchange=Exchange.BINANCE,
+                    exchange_user=self.gateway.account_name,
                     direction=direction,
                     volume=volume,
                     price=float(d["entryPrice"]),
@@ -841,6 +843,7 @@ class BinanceUsdtTradeWebsocketApi(WebsocketClient):
             position: PositionData = PositionData(
                 symbol=pos_data["s"],
                 exchange=Exchange.BINANCE,
+                exchange_user=self.gateway.account_name,
                 direction=direction,
                 volume=volume,
                 price=float(pos_data["ep"]),
