@@ -569,14 +569,15 @@ class PositionMonitor(BaseMonitor):
 
     headers = {
         "symbol": {"display": "代码", "cell": BaseCell, "update": False},
-        "exchange": {"display": "交易所", "cell": EnumCell, "update": False},
+        "exchange": {"display": "交易所", "cell": EnumCell, "update": True},
+        "exchange_user": {"display": "账户名称", "cell": BaseCell, "update": True},
         "direction": {"display": "方向", "cell": DirectionCell, "update": False},
         "volume": {"display": "数量", "cell": BaseCell, "update": True},
         "yd_volume": {"display": "昨仓", "cell": BaseCell, "update": True},
         "frozen": {"display": "冻结", "cell": BaseCell, "update": True},
         "price": {"display": "均价", "cell": BaseCell, "update": True},
         "pnl": {"display": "盈亏", "cell": PnlCell, "update": True},
-        "gateway_name": {"display": "接口", "cell": BaseCell, "update": False},
+        "gateway_name": {"display": "接口", "cell": BaseCell, "update": True},
     }
 
     """ modify by loe """

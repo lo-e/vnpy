@@ -128,6 +128,7 @@ class OkxGateway(BaseGateway):
     default_name = "OKX"
 
     default_setting: Dict[str, Any] = {
+        "账户名称":"",
         "API Key": "",
         "Secret Key": "",
         "Passphrase": "",
@@ -785,6 +786,7 @@ class OkxWebsocketPrivateApi(WebsocketClient):
             position: PositionData = PositionData(
                 symbol=symbol,
                 exchange=Exchange.OKX,
+                exchange_user=self.gateway.account_name,
                 direction=pos_side,
                 volume=pos,
                 price=price,

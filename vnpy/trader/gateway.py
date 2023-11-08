@@ -91,6 +91,7 @@ class BaseGateway(ABC):
         self.gateway_name: str = gateway_name
         """ modify by loe """
         self.orderid_createtime_map = {}
+        self.account_name = ""
 
     def on_event(self, type: str, data: Any = None) -> None:
         """

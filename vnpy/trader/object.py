@@ -234,6 +234,7 @@ class PositionData(BaseData):
     exchange: Exchange
     direction: Direction
 
+    exchange_user:str = ""
     volume: float = 0
     frozen: float = 0
     price: float = 0

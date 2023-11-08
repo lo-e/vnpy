@@ -185,6 +185,7 @@ class MainEngine:
         gateway = self.get_gateway(gateway_name)
         self.gateway_setting[gateway_name] = setting
         if gateway:
+            gateway.account_name = setting.get("账户名称", "")
             gateway.connect(setting)
 
     """" modify by loe """
