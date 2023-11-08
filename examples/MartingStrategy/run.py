@@ -25,7 +25,7 @@ from vnpy.trader.utility import round_to
 def backtesting():
     # 回测起始日期
     engine = BacktestingEngine()
-    start_dt = datetime(2023, 10, 1)
+    start_dt = datetime(2023, 8, 1)
     end_dt = datetime(2023, 12, 31)
     engine.setPeriod(start_dt, end_dt)
 
