@@ -75,6 +75,7 @@ from App.Turtle_crypto import TurtleCryptoApp
 from App.algo_trading import AlgoTradingApp
 # from App.cta_strategy import CtaStrategyApp
 from App.marting import MartingApp
+from App.copytrade import CopytradeApp
 
 def main():
     """"""
@@ -133,6 +134,7 @@ def main():
     # main_engine.add_app(TurtleApp)
     main_engine.add_app(TurtleCryptoApp)
     main_engine.add_app(MartingApp)
+    main_engine.add_app(CopytradeApp)
     # main_engine.add_app(CtaStrategyApp)
     # main_engine.add_app(CtaBacktesterApp)
     # main_engine.add_app(SpreadTradingApp)
