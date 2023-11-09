@@ -149,6 +149,7 @@ class BybitGateway(BaseGateway):
     gateway_name = "BYBIT"
 
     default_setting: Dict[str, str] = {
+        "账户名称":"",
         "ID": "",
         "Secret": "",
         "服务器": ["REAL", "TESTNET"],
