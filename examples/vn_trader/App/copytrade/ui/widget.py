@@ -9,7 +9,7 @@ from vnpy.trader.ui import QtGui, QtCore, QtWidgets
 from vnpy.app.cta_strategy.base import EVENT_CTA_LOG, EVENT_CTA_STRATEGY
 from .language import text
 from vnpy.trader.engine import MainEngine
-from ..base import APP_NAME
+from ..base import APP_NAME, EVENT_COPYTRADE_PORTFOLIO
 
 
 class CtaValueMonitor(QtWidgets.QTableWidget):
@@ -65,11 +65,11 @@ class CtaStrategyManager(QtWidgets.QGroupBox):
     signal = QtCore.pyqtSignal(Event)
 
     # ----------------------------------------------------------------------
-    def __init__(self, martingEngine, eventEngine, name, parent=None):
+    def __init__(self, copytradeEngine, eventEngine, name, parent=None):
         """Constructor"""
         super(CtaStrategyManager, self).__init__(parent)
 
-        self.martingEngine = martingEngine
+        self.copytradeEngine = copytradeEngine
         self.eventEngine = eventEngine
         self.name = name
 
@@ -80,53 +80,50 @@ class CtaStrategyManager(QtWidgets.QGroupBox):
     # ----------------------------------------------------------------------
     def initUi(self):
         """初始化界面"""
-        self.paramMonitor = CtaValueMonitor(self)
-        self.varMonitor = CtaValueMonitor(self)
-
         height = 120
         width = 5000
-        self.paramMonitor.setFixedHeight(height)
-        self.paramMonitor.setFixedWidth(width)
-        self.varMonitor.setFixedHeight(height)
-        self.varMonitor.setFixedWidth(width)
+        vbox = QtWidgets.QVBoxLayout()
 
-        buttonInit = QtWidgets.QPushButton(text.INIT)
-        buttonStart = QtWidgets.QPushButton(text.START)
-        buttonStop = QtWidgets.QPushButton(text.STOP)
-        buttonReinit = QtWidgets.QPushButton(text.RE_INIT)
-        buttonInit.clicked.connect(self.init)
-        buttonStart.clicked.connect(self.start)
-        buttonStop.clicked.connect(self.stop)
-        buttonReinit.clicked.connect(self.reinit)
-
+        # buttonInit = QtWidgets.QPushButton(text.INIT)
+        # buttonStart = QtWidgets.QPushButton(text.START)
+        # buttonStop = QtWidgets.QPushButton(text.STOP)
+        # buttonReinit = QtWidgets.QPushButton(text.RE_INIT)
+        # buttonInit.clicked.connect(self.init)
+        # buttonStart.clicked.connect(self.start)
+        # buttonStop.clicked.connect(self.stop)
+        # buttonReinit.clicked.connect(self.reinit)
         # hbox1 = QtWidgets.QHBoxLayout()
         # hbox1.addWidget(buttonInit)
         # hbox1.addWidget(buttonStart)
         # hbox1.addWidget(buttonStop)
         # hbox1.addWidget(buttonReinit)
         # hbox1.addStretch()
+        # vbox.addLayout(hbox1)
 
+        self.paramMonitor = CtaValueMonitor(self)
+        self.paramMonitor.setFixedHeight(height)
+        self.paramMonitor.setFixedWidth(width)
         hbox2 = QtWidgets.QHBoxLayout()
         hbox2.addWidget(self.paramMonitor)
-
-        # hbox3 = QtWidgets.QHBoxLayout()
-        # hbox3.addWidget(self.varMonitor)
-
-        vbox = QtWidgets.QVBoxLayout()
-        # vbox.addLayout(hbox1)
         vbox.addLayout(hbox2)
-        # vbox.addLayout(hbox3)
+
+        self.varMonitor = CtaValueMonitor(self)
+        self.varMonitor.setFixedHeight(height)
+        self.varMonitor.setFixedWidth(width)
+        hbox3 = QtWidgets.QHBoxLayout()
+        hbox3.addWidget(self.varMonitor)
+        vbox.addLayout(hbox3)
 
         self.setLayout(vbox)
 
     # ----------------------------------------------------------------------
     def updateMonitor(self):
         """显示策略最新状态"""
-        paramDict = self.martingEngine.get_strategy_parameters(self.name)
+        paramDict = self.copytradeEngine.get_strategy_parameters(self.name)
         if paramDict:
             self.paramMonitor.updateData(paramDict)
 
-        varDict = self.martingEngine.get_strategy_variables(self.name)
+        varDict = self.copytradeEngine.get_strategy_variables(self.name)
         if varDict:
             self.varMonitor.updateData(varDict)
 
@@ -147,39 +144,39 @@ class CtaStrategyManager(QtWidgets.QGroupBox):
     # ----------------------------------------------------------------------
     def init(self):
         """初始化策略"""
-        self.martingEngine.init_strategy(self.name)
+        self.copytradeEngine.init_strategy(self.name)
 
     # ----------------------------------------------------------------------
     def start(self):
         """启动策略"""
-        self.martingEngine.start_strategy(self.name)
+        self.copytradeEngine.start_strategy(self.name)
 
     # ----------------------------------------------------------------------
     def stop(self):
         """停止策略"""
-        self.martingEngine.stop_strategy(self.name)
+        self.copytradeEngine.stop_strategy(self.name)
 
     """ modify by loe """
 
     # ----------------------------------------------------------------------
     def reinit(self):
         """重新初始化策略"""
-        self.martingEngine.reinit_strategie(self.name)
+        self.copytradeEngine.reinit_strategie(self.name)
 
 
-class MartingPortfolioManager(QtWidgets.QGroupBox):
-    """马丁组合管理组件"""
+class CopytradePortfolioManager(QtWidgets.QGroupBox):
+    """跟单交易组合管理组件"""
 
     signal = QtCore.pyqtSignal(Event)
 
     # ----------------------------------------------------------------------
-    def __init__(self, martingEngine, eventEngine, martingManager, parent=None):
+    def __init__(self, copytradeEngine, eventEngine, copytradeManager, parent=None):
         """Constructor"""
-        super(MartingPortfolioManager, self).__init__(parent)
+        super(CopytradePortfolioManager, self).__init__(parent)
 
-        self.martingEngine = martingEngine
+        self.copytradeEngine = copytradeEngine
         self.eventEngine = eventEngine
-        self.martingManager = martingManager
+        self.copytradeManager = copytradeManager
 
         self.strategyLoaded = False
 
@@ -190,60 +187,52 @@ class MartingPortfolioManager(QtWidgets.QGroupBox):
     def initUi(self):
         """初始化界面"""
         self.setTitle("组合管理")
+        vbox = QtWidgets.QVBoxLayout()
 
-        self.paramMonitor = CtaValueMonitor(self)
-        self.varMonitor = CtaValueMonitor(self)
-
-        height = 100
-        self.paramMonitor.setFixedHeight(height)
-        self.varMonitor.setFixedHeight(height)
-
-        hbox0 = QtWidgets.QHBoxLayout()
-        labelLoad = QtWidgets.QLabel("加载组合")
-        hbox0.addWidget(labelLoad)
-        for setting_file in self.martingEngine.setting_files:
-            buttonLoad = QtWidgets.QPushButton(setting_file)
-            buttonLoad.clicked.connect(lambda: self.load(self.sender().text()))
-            hbox0.addWidget(buttonLoad)
-        hbox0.addStretch()
-
+        buttonLoad = QtWidgets.QPushButton('加载组合')
         buttonInit = QtWidgets.QPushButton(text.INIT)
         buttonStart = QtWidgets.QPushButton(text.START)
         buttonStop = QtWidgets.QPushButton(text.STOP)
         buttonReinit = QtWidgets.QPushButton(text.RE_INIT)
+        buttonLoad.clicked.connect(self.load)
         buttonInit.clicked.connect(self.init)
         buttonStart.clicked.connect(self.start)
         buttonStop.clicked.connect(self.stop)
         buttonReinit.clicked.connect(self.reinit)
         hbox1 = QtWidgets.QHBoxLayout()
+        hbox1.addWidget(buttonLoad)
         hbox1.addWidget(buttonInit)
         hbox1.addWidget(buttonStart)
         hbox1.addWidget(buttonStop)
         hbox1.addWidget(buttonReinit)
         hbox1.addStretch()
-
-        hbox2 = QtWidgets.QHBoxLayout()
-        hbox2.addWidget(self.paramMonitor)
-
-        hbox3 = QtWidgets.QHBoxLayout()
-        hbox3.addWidget(self.varMonitor)
-
-        vbox = QtWidgets.QVBoxLayout()
-        vbox.addLayout(hbox0)
         vbox.addLayout(hbox1)
-        vbox.addLayout(hbox2)
-        vbox.addLayout(hbox3)
+
+        # height = 100
+        # self.paramMonitor = CtaValueMonitor(self)
+        # self.paramMonitor.setFixedHeight(height)
+        # hbox2 = QtWidgets.QHBoxLayout()
+        # hbox2.addWidget(self.paramMonitor)
+        # vbox.addLayout(hbox2)
+
+        # self.varMonitor = CtaValueMonitor(self)
+        # self.varMonitor.setFixedHeight(height)
+        # hbox3 = QtWidgets.QHBoxLayout()
+        # hbox3.addWidget(self.varMonitor)
+        # vbox.addLayout(hbox3)
 
         self.setLayout(vbox)
 
     # ----------------------------------------------------------------------
     def updateMonitor(self):
         """显示组合最新状态"""
-        paramDict = self.martingEngine.get_portfolio_parameters()
+        return
+    
+        paramDict = self.copytradeEngine.get_portfolio_parameters()
         if paramDict:
             self.paramMonitor.updateData(paramDict)
 
-        varDict = self.martingEngine.get_portfolio_variables()
+        varDict = self.copytradeEngine.get_portfolio_variables()
         if varDict:
             self.varMonitor.updateData(varDict)
 
@@ -258,42 +247,43 @@ class MartingPortfolioManager(QtWidgets.QGroupBox):
     def registerEvent(self):
         """注册事件监听"""
         self.signal.connect(self.updateVar)
-        self.eventEngine.register(EVENT_MARTING_PORTFOLIO, self.signal.emit)
+        self.eventEngine.register(EVENT_COPYTRADE_PORTFOLIO, self.signal.emit)
 
     # ----------------------------------------------------------------------
     def load(self, setting_file):
         """加载组合"""
         if not self.strategyLoaded:
-            self.martingEngine.init_engine(setting_file)
+            self.copytradeEngine.init_engine()
+
             # 加载组合
             self.updateMonitor()
+
             # 加载信号
-            self.martingManager.initStrategyManager()
+            self.copytradeManager.initStrategyManager()
 
             self.strategyLoaded = True
-            self.martingEngine.write_log(text.STRATEGY_LOADED)
+            self.copytradeEngine.write_log(text.STRATEGY_LOADED)
 
     # ----------------------------------------------------------------------
     def init(self):
         """初始化组合"""
-        self.martingEngine.initPortfolio()
+        self.copytradeEngine.initPortfolio()
 
     # ----------------------------------------------------------------------
     def start(self):
         """启动组合"""
-        self.martingEngine.startPortfolio()
+        self.copytradeEngine.startPortfolio()
 
     # ----------------------------------------------------------------------
     def stop(self):
         """停止组合"""
-        self.martingEngine.stopPortfolio()
-
-    """ modify by loe """
+        self.copytradeEngine.stopPortfolio()
 
     # ----------------------------------------------------------------------
     def reinit(self):
         """重新初始化策略"""
-        self.martingEngine.reinit_strategies()
+        return
+        self.copytradeEngine.reinit_strategies()
 
 
 class CopytradeManager(QtWidgets.QWidget):
@@ -302,24 +292,24 @@ class CopytradeManager(QtWidgets.QWidget):
     signal = QtCore.pyqtSignal(Event)
 
     def __init__(self, mainEngine: MainEngine, eventEngine: EventEngine, parent=None):
-        super(MartingManager, self).__init__(parent)
+        super(CopytradeManager, self).__init__(parent)
 
-        self.martingEngine = mainEngine.get_engine(APP_NAME)
+        self.copytradeEngine = mainEngine.get_engine(APP_NAME)
         self.eventEngine = eventEngine
 
         self.initUi()
         self.registerEvent()
 
         # 记录日志
-        self.martingEngine.write_log(text.CTA_ENGINE_STARTED)
+        self.copytradeEngine.write_log(text.CTA_ENGINE_STARTED)
 
     def initUi(self):
         """初始化界面"""
-        self.setWindowTitle("马丁趋势追踪交易")
+        self.setWindowTitle("跟单交易")
 
-        # 马丁组合
-        portfolioManager = MartingPortfolioManager(
-            self.martingEngine, self.eventEngine, self
+        # 组合管理
+        portfolioManager = CopytradePortfolioManager(
+            self.copytradeEngine, self.eventEngine, self
         )
         portfolioManager.setMaximumHeight(600)
 
@@ -345,10 +335,10 @@ class CopytradeManager(QtWidgets.QWidget):
         w = QtWidgets.QWidget()
         vbox = QtWidgets.QVBoxLayout()
 
-        l = self.martingEngine.get_strategy_names()
+        l = self.copytradeEngine.get_strategy_names()
         for name in l:
             strategyManager = CtaStrategyManager(
-                self.martingEngine, self.eventEngine, name
+                self.copytradeEngine, self.eventEngine, name
             )
             vbox.addWidget(strategyManager)
 
@@ -361,18 +351,18 @@ class CopytradeManager(QtWidgets.QWidget):
 
     def initAll(self):
         """全部初始化"""
-        self.martingEngine.initAll()
+        self.copytradeEngine.initAll()
 
         # ----------------------------------------------------------------------
 
     def startAll(self):
         """全部启动"""
-        self.martingEngine.startAll()
+        self.copytradeEngine.startAll()
 
     # ----------------------------------------------------------------------
     def stopAll(self):
         """全部停止"""
-        self.martingEngine.stopAll()
+        self.copytradeEngine.stopAll()
 
     # ----------------------------------------------------------------------
     def updateCtaLog(self, event):

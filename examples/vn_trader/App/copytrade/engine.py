@@ -81,7 +81,6 @@ from vnpy.app.cta_strategy.base import (
 )
 
 class CopytradeEngine(BaseEngine):
-    """"""
     engine_type = EngineType.LIVE  # live trading engine
 
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
@@ -101,7 +100,7 @@ class CopytradeEngine(BaseEngine):
         self.offset_converter = OffsetConverter(self.main_engine)
 
     def init_engine(self):
-        setting = {}
+        setting = {"strategy_name": "COPYTRADE", "start": True}
         self.add_strategy(setting)
         self.register_event()
         self.write_log("跟单交易引擎初始化成功")
