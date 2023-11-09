@@ -139,8 +139,6 @@ class MainEngine:
         """
         gateway_dict = self.gateways.get(gateway_name, {})
         gateway = gateway_dict.get(account_name, None)
-        if not gateway:
-            self.write_log(f"找不到底层接口：{gateway_name}")
         return gateway
     
     def get_default_gateway(self, gateway_name: str) -> BaseGateway:
@@ -197,13 +195,15 @@ class MainEngine:
         """
         Start connection of a specific gateway.
         """
-        account_name = setting.get("账户名称", "")
-        gateway = self.get_gateway(gateway_name, account_name)
-        if gateway:
-            gateway.close()
 
         gateway_class = self.gateway_classes.get(gateway_name)
         if gateway_class:
+            # 断开已有的连接
+            account_name = setting.get("账户名称", "")
+            gateway = self.get_gateway(gateway_name, account_name)
+            if gateway:
+                gateway.close()
+
             # 创建gateway并连接
             gateway = gateway_class(self.event_engine)
             gateway.account_name = setting.get("账户名称", "")
