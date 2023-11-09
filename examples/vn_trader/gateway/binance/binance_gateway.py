@@ -506,6 +506,7 @@ class BinanceUsdtRestApi(RestClient):
                 balance=float(asset["walletBalance"]),
                 frozen=float(asset["maintMargin"]),
                 gateway_name=self.gateway_name,
+                exchange_user=self.gateway.account_name,
             )
 
             if account.balance:
@@ -811,6 +812,7 @@ class BinanceUsdtTradeWebsocketApi(WebsocketClient):
                 balance=float(acc_data["wb"]),
                 frozen=float(acc_data["wb"]) - float(acc_data["cw"]),
                 gateway_name=self.gateway_name,
+                exchange_user=self.gateway.account_name,
             )
 
             if account.balance:

@@ -572,6 +572,7 @@ class BybitInverseRestApi(RestClient):
                     balance=value["wallet_balance"],
                     frozen=value["used_margin"],
                     gateway_name=self.gateway_name,
+                    exchange_user=self.gateway.account_name,
                 )
                 self.gateway.on_account(account)
                 self.gateway.write_log(f"{key}资金信息查询成功")
@@ -1194,6 +1195,7 @@ class BybitInversePrivateWebsocketApi(WebsocketClient):
                 balance=balance,
                 frozen=frozen,
                 gateway_name=self.gateway_name,
+                exchange_user=self.gateway.account_name,
             )
             self.gateway.on_account(account)
 
@@ -1477,6 +1479,7 @@ class BybitUsdtRestApi(RestClient):
                     balance=value["wallet_balance"],
                     frozen=value["used_margin"],
                     gateway_name=self.gateway_name,
+                    exchange_user=self.gateway.account_name,
                 )
                 self.gateway.on_account(account)
                 self.gateway.write_log(f"{key}资金信息查询成功")
@@ -2042,6 +2045,7 @@ class BybitUsdtPrivateWebsocketApi(WebsocketClient):
                 balance=d["wallet_balance"],
                 frozen=d["wallet_balance"] - d["available_balance"],
                 gateway_name=self.gateway_name,
+                exchange_user=self.gateway.account_name,
             )
             self.gateway.on_account(account)
 
@@ -2370,6 +2374,7 @@ class BybitSpotRestApi(RestClient):
                 balance=float(balance_data["total"]),
                 frozen=float(balance_data["locked"]),
                 gateway_name=self.gateway_name,
+                exchange_user=self.gateway.account_name,
             )
             self.gateway.on_account(account)
             self.gateway.write_log(f"{coin}资金信息查询成功")
@@ -2805,6 +2810,7 @@ class BybitSpotPrivateWebsocketApi(WebsocketClient):
                     balance=float(d["f"]) + float(d["l"]),
                     frozen=float(d["l"]),
                     gateway_name=self.gateway_name,
+                    exchange_user=self.gateway.account_name,
                 )
                 self.gateway.on_account(account)
 
