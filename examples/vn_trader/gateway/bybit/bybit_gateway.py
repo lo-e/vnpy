@@ -518,6 +518,7 @@ class BybitInverseRestApi(RestClient):
                 position: PositionData = PositionData(
                     symbol=d["symbol"],
                     exchange=Exchange.BYBIT,
+                    exchange_user=self.gateway.account_name,
                     direction=Direction.NET,
                     volume=volume,
                     price=d["entry_price"],
@@ -1178,6 +1179,7 @@ class BybitInversePrivateWebsocketApi(WebsocketClient):
             position: PositionData = PositionData(
                 symbol=d["symbol"],
                 exchange=Exchange.BYBIT,
+                exchange_user=self.gateway.account_name,
                 direction=Direction.NET,
                 volume=volume,
                 price=float(d["entry_price"]),
@@ -1426,6 +1428,7 @@ class BybitUsdtRestApi(RestClient):
                 position: PositionData = PositionData(
                     symbol=d["symbol"],
                     exchange=Exchange.BYBIT,
+                    exchange_user=self.gateway.account_name,
                     direction=DIRECTION_BYBIT2VT[d["side"]],
                     volume=d["size"],
                     price=d["entry_price"],
@@ -2101,6 +2104,7 @@ class BybitUsdtPrivateWebsocketApi(WebsocketClient):
             position: PositionData = PositionData(
                 symbol=d["symbol"],
                 exchange=Exchange.BYBIT,
+                exchange_user=self.gateway.account_name,
                 direction=DIRECTION_BYBIT2VT[d["side"]],
                 volume=d["size"],
                 price=float(d["entry_price"]),
