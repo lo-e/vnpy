@@ -675,6 +675,7 @@ class ConnectDialog(QtWidgets.QDialog):
         self.main_engine: MainEngine = main_engine
         self.gateway_name: str = gateway_name
         self.filename: str = f"connect_{gateway_name.lower()}.json"
+        self.connect_setting = load_json(self.filename)
 
         self.widgets: Dict[str, QtWidgets.QWidget] = {}
 
@@ -683,16 +684,23 @@ class ConnectDialog(QtWidgets.QDialog):
     def init_ui(self) -> None:
         """"""
         self.setWindowTitle(f"连接{self.gateway_name}")
+        
+        # 获取文件配置内容
+        account_list = sorted(list(self.connect_setting.keys()))
+        loaded_setting = self.connect_setting[account_list[0]] if account_list else {}
 
         # Default setting provides field name, field data type and field default value.
         default_setting = self.main_engine.get_default_setting(
             self.gateway_name)
 
-        # Saved setting provides field data used last time.
-        loaded_setting = load_json(self.filename)
-
         # Initialize line edits and form layout based on setting.
         form = QtWidgets.QFormLayout()
+
+        # 账户显示
+        for account in account_list:
+            button = QtWidgets.QPushButton(account)
+            button.clicked.connect(lambda: self.select_account(self.sender().text()))
+            form.addRow(button)
 
         for field_name, field_value in default_setting.items():
             field_type = type(field_value)
@@ -728,6 +736,20 @@ class ConnectDialog(QtWidgets.QDialog):
 
         self.setLayout(form)
 
+    def select_account(self, account) -> None:
+        setting = self.connect_setting[account]
+        for field_name, field_value in setting.items():
+            widget, field_type = self.widgets[field_name]
+            if not widget:
+                continue
+
+            if field_type == list:
+                ix = widget.findText(field_value)
+                widget.setCurrentIndex(ix)
+
+            else:
+                widget.setText(str(field_value))
+
     def connect(self) -> None:
         """
         Get setting value from line edits and connect the gateway.
@@ -744,7 +766,9 @@ class ConnectDialog(QtWidgets.QDialog):
                     field_value = field_type()
             setting[field_name] = field_value
 
-        save_json(self.filename, setting)
+        account_name = setting.get("账户名称", "")
+        self.connect_setting[account_name] = setting
+        save_json(self.filename, self.connect_setting)
 
         self.main_engine.connect(setting, self.gateway_name)
         self.accept()
