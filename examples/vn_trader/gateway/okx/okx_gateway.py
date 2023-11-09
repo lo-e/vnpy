@@ -765,6 +765,7 @@ class OkxWebsocketPrivateApi(WebsocketClient):
                 accountid=detail["ccy"],
                 balance=float(detail["eq"]),
                 gateway_name=self.gateway_name,
+                exchange_user=self.gateway.account_name
             )
             account.available = float(detail["availEq"]) if len(detail["availEq"]) != 0 else 0.0
             account.frozen = account.balance - account.available

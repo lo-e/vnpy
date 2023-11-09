@@ -265,11 +265,12 @@ class AccountData(BaseData):
     trade_commission = 0                # 交易手续费
     close_profit = 0                    # 平仓盈亏
     position_profit: float = 0          # 持仓盈亏
+    exchange_user:str = ""              # 账户名称
 
     def __post_init__(self):
         """"""
         self.available = self.balance - self.frozen
-        self.vt_accountid = f"{self.gateway_name}.{self.accountid}"
+        self.vt_accountid = f"{self.gateway_name}.{self.exchange_user}.{self.accountid}"
 
 @dataclass
 class FundingData(BaseData):
