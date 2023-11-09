@@ -795,8 +795,8 @@ class OkxWebsocketPrivateApi(WebsocketClient):
             )
             self.gateway.on_position(position)
             # fake
-            # print(f"{datetime.now()}\t{position.symbol}\t{position.exchange.value}\t{position.exchange_user}\{position.direction.value}\t{position.volume}\t{position.price}")
-        # print(f"\n")
+            print(f"{datetime.now()}\t{self.gateway.account_name}\t{position.symbol}\t{position.exchange.value}\t{position.exchange_user}\{position.direction.value}\t{position.volume}\t{position.price}")
+        print(f"\n")
 
     def on_send_order(self, packet: dict) -> None:
         """委托下单回报"""
