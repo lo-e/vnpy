@@ -240,13 +240,13 @@ class TurtleStrategy(CtaTemplate):
         if tick.vt_symbol == self.last_symbol:
             if self.lastSymbolClearNeed:
                 if self.lastClearPos > 0:
-                    orderList = self.sendSymbolOrder(self.last_symbol, Direction.SHORT, Offset.CLOSE, self.bestLimitOrderPrice(tick, Direction.SHORT),
+                    orderList = self.send_symbol_order(self.last_symbol, Direction.SHORT, Offset.CLOSE, self.bestLimitOrderPrice(tick, Direction.SHORT),
                                          abs(self.lastClearPos))
                     if len(orderList):
                         self.pos += self.lastClearPos
 
                 elif self.lastClearPos < 0:
-                    orderList = self.sendSymbolOrder(self.last_symbol, Direction.LONG, Offset.CLOSE, self.bestLimitOrderPrice(tick, Direction.LONG),
+                    orderList = self.send_symbol_order(self.last_symbol, Direction.LONG, Offset.CLOSE, self.bestLimitOrderPrice(tick, Direction.LONG),
                                          abs(self.lastClearPos))
                     if len(orderList):
                         self.pos += self.lastClearPos

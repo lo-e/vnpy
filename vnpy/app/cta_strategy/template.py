@@ -359,7 +359,7 @@ class CtaTemplate(ABC):
             self.cta_engine.sync_strategy_data(self)
 
     """ modify by loe """
-    def sendSymbolOrder(self, symbol, direction, offset, price, volume, stop=False):
+    def send_symbol_order(self, symbol, direction, offset, price, volume, stop=False):
         """发送委托"""
         if self.trading:
             vt_orderids = self.cta_engine.send_symbol_order(

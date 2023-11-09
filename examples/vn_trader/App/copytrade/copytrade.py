@@ -1,7 +1,7 @@
 # encoding: UTF-8
 
 """
-使用马丁式加仓的趋势追踪策略
+跟单策略
 """
 
 from vnpy.trader.constant import Direction, Offset
@@ -18,6 +18,7 @@ from utilities.BarGenerator import BarGenerator
 from App.marting.martingPortfolio import BAR_DOWNLOAD_GENERATE_COMPLETE
 from vnpy.event import Event
 from copy import copy
+from vnpy.trader.event import EVENT_MAINENGINE_POSITION_UPDATED
 
 class CopytradeStrategy(CtaTemplate):
     """ 跟单交易策略 """
@@ -49,6 +50,7 @@ class CopytradeStrategy(CtaTemplate):
         )
 
     def on_init(self):
+        self.cta_engine.event_engine.register(EVENT_MAINENGINE_POSITION_UPDATED, self.on_mainengine_position_updated)
         pass
 
     def on_start(self):
@@ -56,6 +58,12 @@ class CopytradeStrategy(CtaTemplate):
 
     def on_timer(self):
         pass
+
+    def on_mainengine_position_updated(self, event):
+        oms_engine = self.cta_engine.main_engine.engines["oms"]
+        for vt_positionid, position in oms_engine.positions.items():
+            print(f"{datetime.now()}\t{vt_positionid}\t{position.symbol}\t{position.exchange.value}\t{position.exchange_user}\t{position.direction.value}\t{position.volume}\t{position.price}")
+        print(f"\n")
 
     def on_tick(self, tick):
         if not self.trading:

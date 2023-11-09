@@ -244,7 +244,7 @@ class PositionData(BaseData):
     def __post_init__(self):
         """"""
         self.vt_symbol = f"{self.symbol}.{self.exchange.value}"
-        self.vt_positionid = f"{self.vt_symbol}.{self.direction.value}.{self.exchange.value}.{self.exchange_user}"
+        self.vt_positionid = f"{self.vt_symbol}.{self.exchange_user}.{self.direction.value}"
 
 
 @dataclass
@@ -270,7 +270,7 @@ class AccountData(BaseData):
     def __post_init__(self):
         """"""
         self.available = self.balance - self.frozen
-        self.vt_accountid = f"{self.gateway_name}.{self.exchange_user}.{self.accountid}"
+        self.vt_accountid = f"{self.accountid}.{self.gateway_name}.{self.exchange_user}"
 
 @dataclass
 class FundingData(BaseData):

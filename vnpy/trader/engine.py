@@ -22,7 +22,8 @@ from .event import (
     EVENT_ACCOUNT,
     EVENT_CONTRACT,
     EVENT_LOG,
-    EVENT_QUOTE
+    EVENT_QUOTE,
+    EVENT_MAINENGINE_POSITION_UPDATED
 )
 from .gateway import BaseGateway
 from .object import (
@@ -576,6 +577,10 @@ class OmsEngine(BaseEngine):
         """"""
         position: PositionData = event.data
         self.positions[position.vt_positionid] = position
+
+        # 持仓更新，发出事件通知
+        event = Event(EVENT_MAINENGINE_POSITION_UPDATED, data=None)
+        self.event_engine.put(event)
 
     def process_account_event(self, event: Event) -> None:
         """"""
