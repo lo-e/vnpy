@@ -70,7 +70,8 @@ class MainEngine:
             self.event_engine = EventEngine()
         self.event_engine.start()
 
-        self.gateways: Dict[str, BaseGateway] = {}
+        self.gateway_classes = {}
+        self.gateways: Dict[str, dict] = {}
         self.engines: Dict[str, BaseEngine] = {}
         self.apps: Dict[str, BaseApp] = {}
         self.exchanges: List[Exchange] = []
@@ -95,15 +96,13 @@ class MainEngine:
         """
         Add gateway.
         """
-        gateway = gateway_class(self.event_engine)
-        self.gateways[gateway.gateway_name] = gateway
+        self.gateway_classes[gateway_class.gateway_name] = gateway_class
+        self.gateways[gateway_class.gateway_name] = {}
 
         # Add gateway supported exchanges into engine
-        for exchange in gateway.exchanges:
+        for exchange in gateway_class.exchanges:
             if exchange not in self.exchanges:
                 self.exchanges.append(exchange)
-
-        return gateway
 
     def add_app(self, app_class: Type[BaseApp]) -> "BaseEngine":
         """
@@ -133,14 +132,29 @@ class MainEngine:
         event = Event(EVENT_LOG, log)
         self.event_engine.put(event)
 
-    def get_gateway(self, gateway_name: str) -> BaseGateway:
+    def get_gateway(self, gateway_name: str, account_name: str) -> BaseGateway:
         """
-        Return gateway object by name.
+        Return gateway object by name and account_name.
         """
-        gateway = self.gateways.get(gateway_name, None)
+        gateway_dict = self.gateways.get(gateway_name, {})
+        gateway = gateway_dict.get(account_name, None)
         if not gateway:
             self.write_log(f"找不到底层接口：{gateway_name}")
         return gateway
+    
+    def get_default_gateway(self, gateway_name: str) -> BaseGateway:
+        """
+        Return gateway object by name.
+        """
+        gateway_dict = self.gateways.get(gateway_name, {})
+        if gateway_dict:
+            account_selected = sorted(list(gateway_dict.keys()))[0]
+            gateway = gateway_dict[account_selected]
+            return gateway
+        
+        else:
+            self.write_log(f"找不到底层接口：{gateway_name}")
+            return None
 
     def get_engine(self, engine_name: str) -> "BaseEngine":
         """
@@ -155,9 +169,9 @@ class MainEngine:
         """
         Get default setting dict of a specific gateway.
         """
-        gateway = self.get_gateway(gateway_name)
-        if gateway:
-            return gateway.get_default_setting()
+        gateway_class = self.gateway_classes.get(gateway_name, None)
+        if gateway_class:
+            return gateway_class.default_setting
         return None
 
     def get_all_gateway_names(self) -> List[str]:
@@ -182,30 +196,46 @@ class MainEngine:
         """
         Start connection of a specific gateway.
         """
-        gateway = self.get_gateway(gateway_name)
-        self.gateway_setting[gateway_name] = setting
+        account_name = setting.get("账户名称", "")
+        gateway = self.get_gateway(gateway_name, account_name)
         if gateway:
+            gateway.close()
+
+        gateway_class = self.gateway_classes.get(gateway_name)
+        if gateway_class:
+            # 创建gateway并连接
+            gateway = gateway_class(self.event_engine)
             gateway.account_name = setting.get("账户名称", "")
             gateway.connect(setting)
 
+            # 缓存gateway对象
+            gateway_dict = self.gateways.get(gateway_name, {})
+            gateway_dict[account_name] = gateway
+
+            # 缓存gateway参数
+            gateway_setting_dict = self.gateway_setting.get(gateway_name, {})
+            gateway_setting_dict[account_name] = setting
+
     """" modify by loe """
-    def reconnect(self, gateway_name:str):
-        gateway = self.get_gateway(gateway_name)
-        setting = self.gateway_setting.get(gateway_name, None)
+    def reconnect(self, gateway_name:str, account_name:str):
+        gateway_setting_dict = self.gateway_setting.get(gateway_name, {})
+        setting = gateway_setting_dict.get(account_name, {})
         if not setting:
             return False, f'gateway setting 连接参数缺失【{gateway_name}】'
         self.connect(setting, gateway_name)
-        sleep(20)
-        if gateway.md_api.connect_status and gateway.md_api.login_status and gateway.td_api.connect_status and gateway.td_api.login_status and gateway.td_api.auth_status:
-            return True, f'gateway 重新连接成功【{gateway_name}】'
-        else:
-            return False, f'gateway 重新连接失败【{gateway_name}】'
+        
+        # sleep(20)
+        # gateway = self.get_gateway(gateway_name, account_name)
+        # if gateway.md_api.connect_status and gateway.md_api.login_status and gateway.td_api.connect_status and gateway.td_api.login_status and gateway.td_api.auth_status:
+        #     return True, f'gateway 重新连接成功【{gateway_name}】'
+        # else:
+        #     return False, f'gateway 重新连接失败【{gateway_name}】'
 
     def subscribe(self, req: SubscribeRequest, gateway_name: str) -> None:
         """
         Subscribe tick data update of a specific gateway.
         """
-        gateway = self.get_gateway(gateway_name)
+        gateway = self.get_default_gateway(gateway_name)
         if gateway:
             gateway.subscribe(req)
 
@@ -213,7 +243,7 @@ class MainEngine:
         """
         Send new order request to a specific gateway.
         """
-        gateway = self.get_gateway(gateway_name)
+        gateway = self.get_default_gateway(gateway_name)
         if gateway:
             return gateway.send_order(req)
         else:
@@ -223,7 +253,7 @@ class MainEngine:
         """
         Send cancel order request to a specific gateway.
         """
-        gateway = self.get_gateway(gateway_name)
+        gateway = self.get_default_gateway(gateway_name)
         if gateway:
             gateway.cancel_order(req)
 
@@ -231,7 +261,7 @@ class MainEngine:
         """
         Send new quote request to a specific gateway.
         """
-        gateway = self.get_gateway(gateway_name)
+        gateway = self.get_default_gateway(gateway_name)
         if gateway:
             return gateway.send_quote(req)
         else:
@@ -241,7 +271,7 @@ class MainEngine:
         """
         Send cancel quote request to a specific gateway.
         """
-        gateway = self.get_gateway(gateway_name)
+        gateway = self.get_default_gateway(gateway_name)
         if gateway:
             gateway.cancel_quote(req)
 
@@ -249,7 +279,7 @@ class MainEngine:
         """
         Query bar history data from a specific gateway.
         """
-        gateway = self.get_gateway(gateway_name)
+        gateway = self.get_default_gateway(gateway_name)
         if gateway:
             return gateway.query_history(req)
         else:

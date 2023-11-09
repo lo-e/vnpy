@@ -78,6 +78,7 @@ class BaseGateway(ABC):
 
 
     """
+    gateway_name = "BASE"
 
     # Fields required in setting dict for connect function.
     default_setting: Dict[str, Any] = {}
@@ -85,10 +86,10 @@ class BaseGateway(ABC):
     # Exchanges supported in the gateway.
     exchanges: List[Exchange] = []
 
-    def __init__(self, event_engine: EventEngine, gateway_name: str):
+    def __init__(self, event_engine: EventEngine):
         """"""
         self.event_engine: EventEngine = event_engine
-        self.gateway_name: str = gateway_name
+
         """ modify by loe """
         self.orderid_createtime_map = {}
         self.account_name = ""

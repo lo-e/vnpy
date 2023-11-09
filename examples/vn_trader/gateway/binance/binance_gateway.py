@@ -130,7 +130,7 @@ class BinanceUsdtGateway(BaseGateway):
     vn.py用于对接币安正向合约的交易接口。
     """
 
-    default_name: str = "BINANCE_USDT"
+    gateway_name: str = "BINANCE"
 
     default_setting: Dict[str, Any] = {
         "账户名称":"",
@@ -144,10 +144,10 @@ class BinanceUsdtGateway(BaseGateway):
     exchanges: Exchange = [Exchange.BINANCE]
 
     def __init__(
-        self, event_engine: EventEngine, gateway_name: str = "BINANCE"
+        self, event_engine: EventEngine
     ) -> None:
         """构造函数"""
-        super().__init__(event_engine, gateway_name)
+        super().__init__(event_engine)
 
         self.trade_ws_api: "BinanceUsdtTradeWebsocketApi" = (
             BinanceUsdtTradeWebsocketApi(self)

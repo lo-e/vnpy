@@ -75,8 +75,9 @@ STATUS_OKX2VT: Dict[str, Status] = {
 # 委托类型映射
 ORDERTYPE_OKX2VT: Dict[str, OrderType] = {
     "limit": OrderType.LIMIT,
+    "market": OrderType.MARKET,
     "fok": OrderType.FOK,
-    "ioc": OrderType.FAK
+    "ioc": OrderType.FAK,
 }
 ORDERTYPE_VT2OKX: Dict[OrderType, str] = {v: k for k, v in ORDERTYPE_OKX2VT.items()}
 
@@ -125,7 +126,7 @@ class OkxGateway(BaseGateway):
     vn.py用于对接OKX统一账户的交易接口。
     """
 
-    default_name = "OKX"
+    gateway_name = "OKX"
 
     default_setting: Dict[str, Any] = {
         "账户名称":"",
@@ -139,9 +140,9 @@ class OkxGateway(BaseGateway):
 
     exchanges: Exchange = [Exchange.OKX]
 
-    def __init__(self, event_engine: EventEngine, gateway_name: str = "OKX") -> None:
+    def __init__(self, event_engine: EventEngine) -> None:
         """构造函数"""
-        super().__init__(event_engine, gateway_name)
+        super().__init__(event_engine)
 
         self.rest_api: "OkxRestApi" = OkxRestApi(self)
         self.ws_public_api: "OkxWebsocketPublicApi" = OkxWebsocketPublicApi(self)
@@ -1009,6 +1010,7 @@ def parse_order_data(data: dict, gateway_name: str) -> OrderData:
     if contract:
         volume = volume * contract.contract_value if contract.contract_value else volume
 
+    price = float(data["px"]) if data["px"] else 0
     order: OrderData = OrderData(
         symbol=data["instId"],
         exchange=Exchange.OKX,
@@ -1017,7 +1019,7 @@ def parse_order_data(data: dict, gateway_name: str) -> OrderData:
         direction=DIRECTION_OKX2VT[data["side"]],
         offset=Offset.NONE,
         traded=float(data["accFillSz"]),
-        price=float(data["px"]),
+        price=price,
         volume=volume,
         datetime=parse_timestamp(data["cTime"]),
         status=STATUS_OKX2VT[data["state"]],

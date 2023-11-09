@@ -146,6 +146,8 @@ class BybitGateway(BaseGateway):
     vn.py用于对接Bybit交易所的交易接口。
     """
 
+    gateway_name = "BYBIT"
+
     default_setting: Dict[str, str] = {
         "ID": "",
         "Secret": "",
@@ -157,9 +159,9 @@ class BybitGateway(BaseGateway):
 
     exchanges: List[Exchange] = [Exchange.BYBIT]
 
-    def __init__(self, event_engine: EventEngine, gateway_name: str = "BYBIT") -> None:
+    def __init__(self, event_engine: EventEngine) -> None:
         """构造函数"""
-        super().__init__(event_engine, gateway_name)
+        super().__init__(event_engine)
 
         self.rest_api = None
         self.private_ws_api = None

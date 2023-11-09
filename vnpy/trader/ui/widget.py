@@ -965,9 +965,10 @@ class TradingWidget(QtWidgets.QWidget):
 
             # 合约订阅数量【暂时只支持币安】
             gateway_subscribe = 0
-            for gateway_name, gateway in self.main_engine.gateways.items():
+            for gateway_name, gateway_dict in self.main_engine.gateways.items():
                 if gateway_name == "BINANCE":
-                    gateway_subscribe = len(gateway.market_ws_api.ticks)
+                    for _, gateway in gateway_dict.items():
+                        gateway_subscribe += len(gateway.market_ws_api.ticks)
                     break
             self.subscribe_count_label.setText(f'订阅成功合约：{gateway_subscribe}')
 
