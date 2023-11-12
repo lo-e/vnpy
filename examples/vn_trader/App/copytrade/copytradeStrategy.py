@@ -62,6 +62,8 @@ class CopytradeStrategy(CtaTemplate):
     def on_mainengine_position_updated(self, event):
         oms_engine = self.cta_engine.main_engine.engines["oms"]
         for vt_positionid, position in oms_engine.positions.items():
+            exchange = position.exchange
+            exhcange_user = position.exchange_user
             print(f"{datetime.now()}\t{vt_positionid}\t{position.volume}\t{position.price}")
         print(f"\n")
 
