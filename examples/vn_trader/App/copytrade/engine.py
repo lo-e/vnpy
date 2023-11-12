@@ -62,7 +62,7 @@ import re
 from collections import OrderedDict
 from time import sleep
 from decimal import Decimal
-from .copytrade import CopytradeStrategy
+from .copytradeStrategy import CopytradeStrategy
 
 STOP_STATUS_MAP = {
     Status.SUBMITTING: StopOrderStatus.WAITING,
