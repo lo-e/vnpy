@@ -1,14 +1,22 @@
 {
-  "OKX": {
-    "lo-e": {
-      "trader": "从小有个百万梦",
-      "copy_assets": "400",
-      "trade_assets": "200"
-    },
-    "wawjlc": {
-      "trader": "小风险大收益",
-      "copy_assets": "50",
-      "trade_assets": "200"
+  "vt_symbols": ["BTCUSDT.BINANCE", "ETHUSDT.BINANCE"],
+  "copy_setting": {
+    "OKX": {
+      "lo-e（test）": {
+        "trader": "test_trader",
+        "copy_assets": 400,
+        "trade_assets": 200
+      },
+      "lo-e": {
+        "trader": "从小有个百万梦",
+        "copy_assets": 400,
+        "trade_assets": 200
+      },
+      "wawjlc": {
+        "trader": "小风险大收益",
+        "copy_assets": 50,
+        "trade_assets": 200
+      }
     }
   }
 }
