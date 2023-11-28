@@ -103,6 +103,7 @@ class CopytradeStrategy(CtaTemplate):
                 pure_symbol = position.symbol.split("-")[0]
                 if pure_symbol in ["PEPE", "SHIB"]:
                     binance_symbol = f"1000{pure_symbol}USDT.BINANCE"
+                    target_pos = target_pos / 1000
                     
                 else:
                     binance_symbol = f"{pure_symbol}USDT.BINANCE"
@@ -218,6 +219,15 @@ class CopytradeStrategy(CtaTemplate):
                     value_cross = False
 
                 if "ETH" in symbol and order_value <= 20:
+                    value_cross = False
+                
+                if "BCH" in symbol and order_value <= 20:
+                    value_cross = False
+
+                if "ETC" in symbol and order_value <= 20:
+                    value_cross = False
+
+                if "LINK" in symbol and order_value <= 20:
                     value_cross = False
 
                 if order_value <= 5:

@@ -28,7 +28,8 @@
     "UNIUSDT.BINANCE",
     "WAVESUSDT.BINANCE",
     "XRPUSDT.BINANCE",
-    "YGGUSDT.BINANCE"
+    "YGGUSDT.BINANCE",
+    "SUIUSDT.BINANCE"
   ],
   "copy_setting": {
     "OKX": {
