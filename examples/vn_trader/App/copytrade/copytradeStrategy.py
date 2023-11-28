@@ -144,61 +144,63 @@ class CopytradeStrategy(CtaTemplate):
                         self.cancel_order(order.vt_orderid)
 
                     # 发出订单
+                    long_order_price = tick.last_price + contract.pricetick*20
+                    short_order_price = tick.last_price - contract.pricetick*20
                     current_pos = self.symbol_pos_dict.get(vt_symbol, 0)
                     if target_pos > 0:
                         if current_pos < 0:
                             # 先平空
-                            self.send_symbol_order(vt_symbol, Direction.LONG, Offset.CLOSE, tick.last_price + contract.pricetick*20, abs(current_pos))
+                            self.send_symbol_order(vt_symbol, Direction.LONG, Offset.CLOSE, long_order_price, abs(current_pos))
 
                             # 再开多
-                            self.send_symbol_order(vt_symbol, Direction.LONG, Offset.OPEN, tick.last_price + contract.pricetick*20, abs(target_pos))
+                            self.send_symbol_order(vt_symbol, Direction.LONG, Offset.OPEN, long_order_price, abs(target_pos))
                         
                         elif current_pos == 0:
                             # 开多
-                            self.send_symbol_order(vt_symbol, Direction.LONG, Offset.OPEN, tick.last_price + contract.pricetick*20, abs(target_pos))
+                            self.send_symbol_order(vt_symbol, Direction.LONG, Offset.OPEN, long_order_price, abs(target_pos))
                         
                         else:
                             if target_pos > current_pos:
                                 # 开多（加仓）
                                 volume = target_pos - current_pos
-                                self.send_symbol_order(vt_symbol, Direction.LONG, Offset.OPEN, tick.last_price + contract.pricetick*20, abs(volume))
+                                self.send_symbol_order(vt_symbol, Direction.LONG, Offset.OPEN, long_order_price, abs(volume))
                             
                             elif target_pos < current_pos:
                                 # 平多（减仓）
                                 volume = target_pos - current_pos
-                                self.send_symbol_order(vt_symbol, Direction.SHORT, Offset.CLOSE, tick.last_price - contract.pricetick*20, abs(volume))
+                                self.send_symbol_order(vt_symbol, Direction.SHORT, Offset.CLOSE, short_order_price, abs(volume))
 
                     elif target_pos == 0:
                         if current_pos > 0:
                             # 平多
-                            self.send_symbol_order(vt_symbol, Direction.SHORT, Offset.CLOSE, tick.last_price - contract.pricetick*20, abs(current_pos))
+                            self.send_symbol_order(vt_symbol, Direction.SHORT, Offset.CLOSE, short_order_price, abs(current_pos))
 
                         elif current_pos < 0:
                             # 平空
-                            self.send_symbol_order(vt_symbol, Direction.LONG, Offset.CLOSE, tick.last_price + contract.pricetick*20, abs(current_pos))
+                            self.send_symbol_order(vt_symbol, Direction.LONG, Offset.CLOSE, long_order_price, abs(current_pos))
 
                     else:
                         if current_pos > 0:
                             # 先平多
-                            self.send_symbol_order(vt_symbol, Direction.SHORT, Offset.CLOSE, tick.last_price - contract.pricetick*20, abs(current_pos))
+                            self.send_symbol_order(vt_symbol, Direction.SHORT, Offset.CLOSE, short_order_price, abs(current_pos))
 
                             # 再开空
-                            self.send_symbol_order(vt_symbol, Direction.SHORT, Offset.OPEN, tick.last_price - contract.pricetick*20, abs(target_pos))
+                            self.send_symbol_order(vt_symbol, Direction.SHORT, Offset.OPEN, short_order_price, abs(target_pos))
                         
                         elif current_pos == 0:
                             # 开空
-                            self.send_symbol_order(vt_symbol, Direction.SHORT, Offset.OPEN, tick.last_price - contract.pricetick*20, abs(target_pos))
+                            self.send_symbol_order(vt_symbol, Direction.SHORT, Offset.OPEN, short_order_price, abs(target_pos))
                         
                         else:
                             if target_pos < current_pos:
                                 # 开空（加仓）
                                 volume = target_pos - current_pos
-                                self.send_symbol_order(vt_symbol, Direction.SHORT, Offset.OPEN, tick.last_price - contract.pricetick*20, abs(volume))
+                                self.send_symbol_order(vt_symbol, Direction.SHORT, Offset.OPEN, short_order_price, abs(volume))
                             
                             elif target_pos > current_pos:
                                 # 平空（减仓）
                                 volume = target_pos - current_pos
-                                self.send_symbol_order(vt_symbol, Direction.LONG, Offset.CLOSE, tick.last_price + contract.pricetick*20, abs(volume))
+                                self.send_symbol_order(vt_symbol, Direction.LONG, Offset.CLOSE, long_order_price, abs(volume))
 
         self.put_timer_event()
 
