@@ -1,5 +1,35 @@
 {
-  "vt_symbols": ["BTCUSDT.BINANCE", "ETHUSDT.BINANCE"],
+  "vt_symbols": [
+    "BTCUSDT.BINANCE",
+    "ETHUSDT.BINANCE",
+    "BCHUSDT.BINANCE",
+    "SOLUSDT.BINANCE",
+    "DOGEUSDT.BINANCE",
+    "AAVEUSDT.BINANCE",
+    "ADAUSDT.BINANCE",
+    "APTUSDT.BINANCE",
+    "ARBUSDT.BINANCE",
+    "AVAXUSDT.BINANCE",
+    "CFXUSDT.BINANCE",
+    "COMPUSDT.BINANCE",
+    "ETCUSDT.BINANCE",
+    "FTMUSDT.BINANCE",
+    "LDOUSDT.BINANCE",
+    "LINKUSDT.BINANCE",
+    "MANAUSDT.BINANCE",
+    "MASKUSDT.BINANCE",
+    "MATICUSDT.BINANCE",
+    "OPUSDT.BINANCE",
+    "ORDIUSDT.BINANCE",
+    "1000PEPEUSDT.BINANCE",
+    "1000SHIBUSDT.BINANCE",
+    "TRBUSDT.BINANCE",
+    "TRXUSDT.BINANCE",
+    "UNIUSDT.BINANCE",
+    "WAVESUSDT.BINANCE",
+    "XRPUSDT.BINANCE",
+    "YGGUSDT.BINANCE"
+  ],
   "copy_setting": {
     "OKX": {
       "lo-e（test）": {
@@ -16,11 +46,6 @@
         "trader": "从小有个百万梦",
         "copy_assets": 400,
         "trade_assets": 200
-      },
-      "loesuperman": {
-        "trader": "小风险大收益",
-        "copy_assets": 50,
-        "trade_assets": 50
       }
     }
   }

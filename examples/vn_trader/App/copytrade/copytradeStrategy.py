@@ -98,10 +98,14 @@ class CopytradeStrategy(CtaTemplate):
                 target_pos = position.volume * trade_assets / copy_assets
                 if position.direction == Direction.SHORT:
                     target_pos = abs(target_pos) * -1
-                
+
                 # 转换合约
                 pure_symbol = position.symbol.split("-")[0]
-                binance_symbol = f"{pure_symbol}USDT.BINANCE"
+                if pure_symbol in ["PEPE", "SHIB"]:
+                    binance_symbol = f"1000{pure_symbol}USDT.BINANCE"
+                    
+                else:
+                    binance_symbol = f"{pure_symbol}USDT.BINANCE"
 
                 # 持仓统计
                 target_symbol_pos_dict[binance_symbol] = target_symbol_pos_dict.get(binance_symbol, 0) + target_pos
