@@ -46,6 +46,7 @@ from vnpy.trader.object import (
     TickData,
     TradeData
 )
+from threading import Thread
 
 from ..rest import Request, RestClient
 from ..websocket import WebsocketClient
@@ -185,6 +186,20 @@ class OkxGateway(BaseGateway):
             proxy_port,
             server
         )
+        self.auto_thread = Thread(target=self.auto_subscribe)
+        self.auto_thread.start()
+
+    def auto_subscribe(self):
+        while True:
+            if self.ws_public_api.connected:
+                contract: ContractData = symbol_contract_map.get("BTC-USDT-SWAP", None)
+                if contract:
+                    # 主动订阅BTC-USDT-SWAP，避免无订阅状态下自动断开重连问题
+                    req = SubscribeRequest(
+                        symbol=contract.symbol, exchange=contract.exchange
+                    )
+                    self.subscribe(req)
+                    break
 
     def subscribe(self, req: SubscribeRequest) -> None:
         """订阅行情"""
@@ -500,6 +515,7 @@ class OkxWebsocketPublicApi(WebsocketClient):
     def __init__(self, gateway: OkxGateway) -> None:
         """构造函数"""
         super().__init__()
+        self.connected = False
 
         self.gateway: OkxGateway = gateway
         self.gateway_name: str = gateway.gateway_name
@@ -558,6 +574,7 @@ class OkxWebsocketPublicApi(WebsocketClient):
     def on_connected(self) -> None:
         """连接成功回报"""
         self.gateway.write_log("Websocket Public API连接成功")
+        self.connected = True
 
         for req in list(self.subscribed.values()):
             self.subscribe(req)
@@ -565,6 +582,7 @@ class OkxWebsocketPublicApi(WebsocketClient):
     def on_disconnected(self) -> None:
         """连接断开回报"""
         self.gateway.write_log("Websocket Public API连接断开")
+        self.connected = False
 
     def on_packet(self, packet: dict) -> None:
         """推送数据回报"""
