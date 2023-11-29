@@ -63,6 +63,7 @@ from collections import OrderedDict
 from time import sleep
 from decimal import Decimal
 from .copytradeStrategy import CopytradeStrategy
+import json
 
 STOP_STATUS_MAP = {
     Status.SUBMITTING: StopOrderStatus.WAITING,
@@ -588,6 +589,7 @@ class CopytradeEngine(BaseEngine):
         for key in strategy.syncs:
             d[key] = strategy.__getattribute__(key)
 
+        # 保存到数据库
         colleciton_name = f"{strategy.__class__.__name__}"
         self.main_engine.dbUpdate(
             POSITION_DB_NAME,
@@ -598,6 +600,24 @@ class CopytradeEngine(BaseEngine):
             callback=self.strategyDbUpdateCallback,
         )
 
+        # 保存到文件
+        json_file = self.get_strategie_sync_file_path(strategy)
+        try:
+            with open(json_file, "w", encoding="utf-8") as file:
+                file.write(
+                    json.dumps(d, ensure_ascii=False)
+                )
+        except:
+            pass
+    
+    def get_strategie_sync_file_path(self, strategy):
+        dir = os.path.dirname(os.path.realpath(__file__))
+        dir_path = Path(dir).joinpath(f"strategie_sync_data{DIR_SYMBOL}BaiduSyncdisk{DIR_SYMBOL}")
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        file_path = dir_path.joinpath(f"{strategy.strategy_name}.json")
+        return file_path
+    
     def strategyDbUpdateCallback(self, back_data=None):
         try:
             if isinstance(back_data, dict):

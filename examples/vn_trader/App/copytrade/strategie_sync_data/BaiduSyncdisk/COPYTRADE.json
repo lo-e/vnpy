@@ -1,0 +1,7 @@
+{
+  "strategy_name": "COPYTRADE",
+  "vt_symbol": "",
+  "pos": 0,
+  "symbol_pos_dict": { "ETHUSDT.BINANCE": 0.0 },
+  "target_symbol_pos_dict": { "ETHUSDT.BINANCE": 0.0 }
+}
