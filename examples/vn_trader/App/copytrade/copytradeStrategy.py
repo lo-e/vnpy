@@ -245,6 +245,7 @@ class CopytradeStrategy(CtaTemplate):
 
     def on_trade(self, trade):
         """成交推送"""
+        super().on_trade(trade)
         self.put_timer_event()
     
     def send_ding_talk(self, content):
