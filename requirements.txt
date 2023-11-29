@@ -1,16 +1,16 @@
 six
 wheel
 tzlocal==2.0.0
-PyQt5==5.14.1
+PyQt5
 pyqtgraph
 qdarkstyle
 requests
 websocket-client
-numpy==1.18.2
+numpy
 pandas
 matplotlib
 seaborn
-PyCryptodome==3.9.9
+PyCryptodome
 futu-api
 ta-lib
 ibapi
@@ -18,7 +18,7 @@ deap
 pyzmq
 DingtalkChatbot
 wmi
-QScintilla==2.11.4
+QScintilla
 tushare
 jqdatasdk
 plotly
@@ -70,7 +70,6 @@ vnpy_postgresql==1.0.0
 vnpy_mongodb==1.0.0
 vnpy_influxdb==1.0.1
 vnpy_dolphindb==1.0.1
-vnpy_arctic==1.0.1
 vnpy_leveldb==1.0.0
 
 vnpy_rqdata==2.9.38.1
