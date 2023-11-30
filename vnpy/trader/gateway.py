@@ -300,6 +300,12 @@ class BaseGateway(ABC):
         """
         return self.default_setting
 
+    def check_connected(self) -> Dict[str, Any]:
+        """
+        检查连接状态
+        """
+        res = {"gateway":self.gateway_name, "connected":False, "msg":"check_connected未实现"}
+        return res
 
 class LocalOrderManager:
     """
