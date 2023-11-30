@@ -281,6 +281,23 @@ class BybitGateway(BaseGateway):
         if len(cached_order_dict) >= 20:
             cached_order_dict.popitem(last=False)
 
+    def check_connected(self) -> Dict[str, Any]:
+        """检查连接状态"""
+        connected = True
+        msg = ""
+        if not self.public_ws_api.connected:
+            connected = False
+            msg += "行情Websocket API连接断开"
+        
+        if not self.private_ws_api.connected:
+            connected = False
+            if msg:
+                msg += "\n"
+            msg += "交易Websocket API连接断开"
+
+        res = {"gateway":self.gateway_name, "connected":connected, "msg":msg}
+        return res
+
 # ====== 反向合约 ======
 class BybitInverseRestApi(RestClient):
     """反向合约的REST接口"""
@@ -817,6 +834,7 @@ class BybitInversePublicWebsocketApi(WebsocketClient):
     def on_connected(self) -> None:
         """连接成功回报"""
         self.gateway.write_log("行情Websocket API连接成功")
+        self.connected = True
 
         if self.subscribed:
             for req in self.subscribed.values():
@@ -826,6 +844,7 @@ class BybitInversePublicWebsocketApi(WebsocketClient):
     def on_disconnected(self) -> None:
         """连接断开回报"""
         self.gateway.write_log("行情Websocket API连接断开")
+        self.connected = False
 
     """ modify by loe """
     # 增加了for_reconnect参数
@@ -1081,6 +1100,7 @@ class BybitInversePrivateWebsocketApi(WebsocketClient):
     def on_disconnected(self) -> None:
         """连接断开回报"""
         self.gateway.write_log("交易Websocket API连接断开")
+        self.connected = False
 
     def on_packet(self, packet: dict) -> None:
         """推送数据回报"""
@@ -1113,6 +1133,7 @@ class BybitInversePrivateWebsocketApi(WebsocketClient):
         success: bool = packet.get("success", False)
         if success:
             self.gateway.write_log("交易Websocket API登录成功")
+            self.connected = True
 
             self.subscribe_topic("order", self.on_order)
             self.subscribe_topic("execution", self.on_trade)
@@ -1733,6 +1754,7 @@ class BybitUsdtPublicWebsocketApi(WebsocketClient):
     def on_connected(self) -> None:
         """连接成功回报"""
         self.gateway.write_log("行情Websocket API连接成功")
+        self.connected = True
 
         if self.subscribed:
             for req in self.subscribed.values():
@@ -1741,6 +1763,7 @@ class BybitUsdtPublicWebsocketApi(WebsocketClient):
     def on_disconnected(self) -> None:
         """连接断开回报"""
         self.gateway.write_log("行情Websocket API连接断开")
+        self.connected = False
 
     """ modify by loe """
     # 增加了for_reconnect参数
@@ -1995,6 +2018,7 @@ class BybitUsdtPrivateWebsocketApi(WebsocketClient):
     def on_disconnected(self) -> None:
         """连接断开回报"""
         self.gateway.write_log("交易Websocket API连接断开")
+        self.connected = False
 
     def on_packet(self, packet: dict) -> None:
         """推送数据回报"""
@@ -2028,6 +2052,7 @@ class BybitUsdtPrivateWebsocketApi(WebsocketClient):
         success: bool = packet.get("success", False)
         if success:
             self.gateway.write_log("交易Websocket API登录成功")
+            self.connected = True
 
             self.subscribe_topic("order", self.on_order)
             self.subscribe_topic("execution", self.on_trade)
@@ -2510,6 +2535,7 @@ class BybitSpotPublicWebsocketApi(WebsocketClient):
     def on_connected(self) -> None:
         """连接成功回报"""
         self.gateway.write_log("行情Websocket API连接成功")
+        self.connected = True
 
         if self.subscribed:
             for req in self.subscribed.values():
@@ -2518,6 +2544,7 @@ class BybitSpotPublicWebsocketApi(WebsocketClient):
     def on_disconnected(self) -> None:
         """连接断开回报"""
         self.gateway.write_log("行情Websocket API连接断开")
+        self.connected = False
 
     """ modify by loe """
     # 增加了for_reconnect参数
@@ -2754,6 +2781,7 @@ class BybitSpotPrivateWebsocketApi(WebsocketClient):
     def on_disconnected(self) -> None:
         """连接断开回报"""
         self.gateway.write_log("交易Websocket API连接断开")
+        self.connected = False
 
     def on_packet(self, packet: dict) -> None:
         """推送数据回报"""
@@ -2791,6 +2819,7 @@ class BybitSpotPrivateWebsocketApi(WebsocketClient):
         success: bool = packet.get("success", False)
         if success:
             self.gateway.write_log("交易Websocket API登录成功")
+            self.connected = True
 
             self.subscribe_topic("order", self.on_order)
             self.subscribe_topic("ticketInfo", self.on_trade)
