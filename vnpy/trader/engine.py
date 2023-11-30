@@ -83,6 +83,7 @@ class MainEngine:
         """ modify by loe """
         self.dbClient = None
         self.gateway_setting = {}
+        self.waiting_check_gateway_names = set()
         self.thread_executor = ThreadPoolExecutor(max_workers=10)
 
     def add_engine(self, engine_class: Any) -> "BaseEngine":
@@ -141,9 +142,16 @@ class MainEngine:
         gateway = gateway_dict.get(account_name, None)
         return gateway
     
+    def get_all_gateway(self, gateway_name: str) -> BaseGateway:
+        """
+        Return all gateway object by name.
+        """
+        gateway_dict = self.gateways.get(gateway_name, {})
+        return list(gateway_dict.values())
+    
     def get_default_gateway(self, gateway_name: str) -> BaseGateway:
         """
-        Return gateway object by name.
+        Return default gateway object by name.
         """
         gateway_dict = self.gateways.get(gateway_name, {})
         if gateway_dict:
@@ -401,6 +409,29 @@ class MainEngine:
             if callback:
                 back_data['result'] = False
                 callback(back_data)
+
+    def check_gateway_connected(self, gateway_name:str):
+        if gateway_name not in self.waiting_check_gateway_names:
+            self.waiting_check_gateway_names.add(gateway_name)
+            self.thread_executor.submit(self.waiting_check_gateway_connected, gateway_name)
+
+    def waiting_check_gateway_connected(self, gateway_name:str):
+        # 等待
+        sleep(5)
+        
+        # 检查是否连接
+        gateways = self.get_all_gateway(gateway_name)
+        for gateway in gateways:
+            res = gateway.check_connected()
+            connected = res.get("connected", False)
+            if not connected:
+                msg = res.get("msg", "")
+                content = f"gateway_name：{gateway_name}\nmsg：{msg}"
+                self.send_ding_talk(content)
+        
+        # 从等待检查名单中清除
+        if gateway_name in self.waiting_check_gateway_names:
+            self.waiting_check_gateway_names.remove(gateway_name)
 
 class BaseEngine(ABC):
     """
@@ -826,11 +857,16 @@ class DingTalkEngine(BaseEngine):
                 enable = True
                 break
         if enable:
-            content = ''
-            for key, value in content_dic.items():
-                content += f'{key}：{value}\n'
+            gateway_name = content_dic.get("gateway_name", "")
+            if "连接断开" in msg and gateway_name:
+                self.main_engine.check_gateway_connected(gateway_name)
 
-            self.send_ding_talk(content=content)
+            else:
+                content = ''
+                for key, value in content_dic.items():
+                    content += f'{key}：{value}\n'
+
+                self.send_ding_talk(content=content)
 
     def send_ding_talk(self, content):
         # 内容添加电脑名称、时间

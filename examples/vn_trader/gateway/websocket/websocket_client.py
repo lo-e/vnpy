@@ -42,6 +42,7 @@ class WebsocketClient:
         self._last_received_text: str = ""
 
         self._connect_id = ''
+        self.connected = False
 
     def init(
         self,

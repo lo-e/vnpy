@@ -240,6 +240,22 @@ class OkxGateway(BaseGateway):
         """查询委托数据"""
         return self.orders.get(orderid, None)
 
+    def check_connected(self) -> Dict[str, Any]:
+        """检查连接状态"""
+        connected = True
+        msg = ""
+        if not self.ws_public_api.connected:
+            connected = False
+            msg += "Websocket Public API连接断开"
+        
+        if not self.ws_private_api.connected:
+            connected = False
+            if msg:
+                msg += "\n"
+            msg += "Websocket Private API连接断开"
+
+        res = {"gateway":self.gateway_name, "connected":connected, "msg":msg}
+        return res
 
 class OkxRestApi(RestClient):
     """"""
@@ -515,7 +531,6 @@ class OkxWebsocketPublicApi(WebsocketClient):
     def __init__(self, gateway: OkxGateway) -> None:
         """构造函数"""
         super().__init__()
-        self.connected = False
 
         self.gateway: OkxGateway = gateway
         self.gateway_name: str = gateway.gateway_name
@@ -703,6 +718,7 @@ class OkxWebsocketPrivateApi(WebsocketClient):
     def on_disconnected(self) -> None:
         """连接断开回报"""
         self.gateway.write_log("Websocket Private API连接断开")
+        self.connected = False
 
     def on_packet(self, packet: dict) -> None:
         """推送数据回报"""
@@ -736,6 +752,7 @@ class OkxWebsocketPrivateApi(WebsocketClient):
         """用户登录请求回报"""
         if packet["code"] == '0':
             self.gateway.write_log("Websocket Private API登录成功")
+            self.connected = True
             self.subscribe_topic()
         else:
             self.gateway.write_log("Websocket Private API登录失败")
