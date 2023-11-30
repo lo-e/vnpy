@@ -184,6 +184,8 @@ class CopytradeEngine(BaseEngine):
             strategy.symbol_pos_dict[trade.vt_symbol] = float(
                 Decimal(str(strategy.symbol_pos_dict.get(trade.vt_symbol, 0))) - Decimal(str(trade.volume))
             )
+        if trade.vt_symbol in strategy.symbol_pos_dict and not strategy.symbol_pos_dict[trade.vt_symbol]:
+            strategy.symbol_pos_dic.pop(trade.vt_symbol)
 
         self.call_strategy_func(strategy, strategy.on_trade, trade)
         self.put_strategy_event(strategy)

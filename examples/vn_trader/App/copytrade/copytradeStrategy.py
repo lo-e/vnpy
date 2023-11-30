@@ -136,7 +136,10 @@ class CopytradeStrategy(CtaTemplate):
                 else:
                     # 合约目标持仓更新
                     target_pos = checking_pos
-                    self.target_symbol_pos_dict[vt_symbol] = target_pos
+                    if target_pos:
+                        self.target_symbol_pos_dict[vt_symbol] = target_pos
+                    else:
+                        self.target_symbol_pos_dict.pop(vt_symbol)
 
                     # 取消该合约正在进行中的订单
                     active_orders = oms_engine.get_all_active_orders(vt_symbol)
