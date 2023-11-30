@@ -216,6 +216,22 @@ class BinanceUsdtGateway(BaseGateway):
         """查询委托数据"""
         return self.orders.get(orderid, None)
 
+    def check_connected(self) -> Dict[str, Any]:
+        """检查连接状态"""
+        connected = True
+        msg = ""
+        if not self.market_ws_api.connected:
+            connected = False
+            msg += "行情Websocket API连接断开"
+        
+        if not self.trade_ws_api.connected:
+            connected = False
+            if msg:
+                msg += "\n"
+            msg += "交易Websocket API连接断开"
+
+        res = {"gateway":self.gateway_name, "connected":connected, "msg":msg}
+        return res
 
 class BinanceUsdtRestApi(RestClient):
     """币安正向合约的REST API"""
@@ -774,10 +790,19 @@ class BinanceUsdtTradeWebsocketApi(WebsocketClient):
         """连接Websocket交易频道"""
         self.init(url, proxy_host, proxy_port)
         self.start()
+    
+    def disconnect(self) -> None:
+        """ "主动断开webscoket链接"""
+        self._active = False
+        ws = self._ws
+        if ws:
+            coro = ws.close()
+            run_coroutine_threadsafe(coro, self._loop)
 
     def on_connected(self) -> None:
         """连接成功回报"""
         self.gateway.write_log("交易Websocket API连接成功")
+        self.connected = True
 
     def on_packet(self, packet: dict) -> None:
         """推送数据回报"""
@@ -795,14 +820,6 @@ class BinanceUsdtTradeWebsocketApi(WebsocketClient):
         """ListenKey过期"""
         self.gateway.write_log("listenKey过期")
         self.disconnect()
-
-    def disconnect(self) -> None:
-        """ "主动断开webscoket链接"""
-        self._active = False
-        ws = self._ws
-        if ws:
-            coro = ws.close()
-            run_coroutine_threadsafe(coro, self._loop)
 
     def on_account(self, packet: dict) -> None:
         """资金更新推送"""
@@ -909,7 +926,8 @@ class BinanceUsdtTradeWebsocketApi(WebsocketClient):
 
     def on_disconnected(self) -> None:
         """连接断开回报"""
-        self.gateway.write_log("交易Websocket API断开")
+        self.gateway.write_log("交易Websocket API连接断开")
+        self.connected = False
         self.gateway.rest_api.start_user_stream()
 
     def ping(self):
@@ -945,6 +963,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
     def on_connected(self) -> None:
         """连接成功回报"""
         self.gateway.write_log("行情Websocket API连接成功")
+        self.connected = True
 
         # 重新订阅行情
         if self.ticks:
@@ -1020,7 +1039,8 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
 
     def on_disconnected(self) -> None:
         """连接断开回报"""
-        self.gateway.write_log("行情Websocket API断开")
+        self.gateway.write_log("行情Websocket API连接断开")
+        self.connected = False
     
     def run_subscribe(self):
         while True:

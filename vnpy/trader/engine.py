@@ -858,7 +858,7 @@ class DingTalkEngine(BaseEngine):
                 break
         if enable:
             gateway_name = content_dic.get("gateway_name", "")
-            if "连接断开" in msg and gateway_name:
+            if "断开" in msg and gateway_name:
                 self.main_engine.check_gateway_connected(gateway_name)
 
             else:
