@@ -35,13 +35,13 @@
     "OKX": {
       "lo-e": {
         "trader": "墙头草",
-        "copy_assets": 1000,
-        "trade_assets": 390
+        "copy_assets": 500,
+        "trade_assets": 295
       },
       "wawjlc": {
         "trader": "从小有个百万梦",
         "copy_assets": 400,
-        "trade_assets": 235
+        "trade_assets": 330
       }
     }
   }
