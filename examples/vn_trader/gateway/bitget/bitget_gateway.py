@@ -41,11 +41,11 @@ from vnpy.trader.object import (
     HistoryRequest
 )
 from vnpy.trader.event import EVENT_TIMER
-from vnpy.trader.utility import ZoneInfo
+from pytz import timezone
 
 
 # 中国时区
-CHINA_TZ = ZoneInfo("Asia/Shanghai")
+CHINA_TZ: timezone = timezone("Asia/Shanghai")
 
 REST_HOST = "https://api.bitget.com"
 WEBSOCKET_DATA_HOST = "wss://ws.bitget.com/mix/v1/stream"               # Market Data
@@ -108,9 +108,10 @@ class BitGetSGateway(BaseGateway):
     * 单向持仓模式
     """
     
-    default_name: str = "BITGET_USDT"
+    gateway_name: str = "BITGET"
 
     default_setting: Dict[str, Any] = {
+        "账户名称":"",
         "API Key": "",
         "Secret Key": "",
         "Passphrase":"",
@@ -121,10 +122,10 @@ class BitGetSGateway(BaseGateway):
 
     exchanges = [Exchange.BITGET]        #由main_engine add_gateway调用
     #------------------------------------------------------------------------------------------------- 
-    def __init__(self, event_engine: EventEngine, gateway_name: str):
+    def __init__(self, event_engine: EventEngine):
         """
         """
-        super(BitGetSGateway,self).__init__(event_engine, gateway_name)
+        super(BitGetSGateway,self).__init__(event_engine)
         self.orders: Dict[str, OrderData] = {}
         self.rest_api = BitGetSRestApi(self)
         self.trade_ws_api = BitGetSTradeWebsocketApi(self)
