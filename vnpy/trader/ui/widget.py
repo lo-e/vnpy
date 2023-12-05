@@ -1043,11 +1043,15 @@ class TradingWidget(QtWidgets.QWidget):
         """
         Set the tick depth data to monitor by vt_symbol.
         """
+        # Update gateway combo box.
+        ix = self.gateway_combo.findText(gateway_name)
+        self.gateway_combo.setCurrentIndex(ix)
+
+        # Generate vt_symbol from symbol and exchange
         symbol = str(self.symbol_line.text())
         if not symbol:
             return
 
-        # Generate vt_symbol from symbol and exchange
         exchange_value = str(self.exchange_combo.currentText())
         vt_symbol = f"{symbol}.{exchange_value}"
 
@@ -1059,28 +1063,23 @@ class TradingWidget(QtWidgets.QWidget):
         contract = self.main_engine.get_contract(vt_symbol)
         if not contract:
             self.name_line.setText("")
-            gateway_name = self.gateway_combo.currentText()
+
         else:
             self.name_line.setText(contract.name)
-            gateway_name = contract.gateway_name
-
-            # Update gateway combo box.
-            ix = self.gateway_combo.findText(gateway_name)
-            self.gateway_combo.setCurrentIndex(ix)
 
             # Update price digits
             self.price_digits = get_digits(contract.pricetick)
 
+            # Subscribe tick data
+            req = SubscribeRequest(
+                symbol=symbol, exchange=Exchange(exchange_value)
+            )
+            gateway_name = contract.gateway_name
+            self.main_engine.subscribe(req, gateway_name)
+
         self.clear_label_text()
         self.volume_line.setText("")
         self.price_line.setText("")
-
-        # Subscribe tick data
-        req = SubscribeRequest(
-            symbol=symbol, exchange=Exchange(exchange_value)
-        )
-
-        self.main_engine.subscribe(req, gateway_name)
 
     def clear_label_text(self) -> None:
         """
