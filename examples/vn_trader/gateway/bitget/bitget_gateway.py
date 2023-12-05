@@ -302,7 +302,7 @@ class BitGetSRestApi(RestClient):
         self.init(REST_HOST, proxy_host, proxy_port)
         self.start(session_number)
 
-        self.gateway.write_log(f"交易接口：{self.gateway_name}，REST API启动成功")
+        self.gateway.write_log(f"REST API启动成功")
 
         self.query_contract()
         self.query_account()
@@ -585,17 +585,23 @@ class BitGetSRestApi(RestClient):
         """
         if self.check_error(data, "查询账户"):
             return
+        
+        account_type_set = set()
         for account_data in data["data"]:
+            margin_coin = account_data["marginCoin"]
+            account_type_set.add(margin_coin)
             account = AccountData(
-                accountid=account_data["marginCoin"] + "_" + self.gateway_name,
+                accountid=margin_coin,
                 balance= float(account_data["equity"]),
                 frozen=float(account_data["locked"]),
                 gateway_name=self.gateway_name,
+                exchange_user=self.gateway.account_name
             )
             if account.balance:
                 self.gateway.on_account(account)
-                
-        self.gateway.write_log("账户资金查询成功")
+
+        for account_type in account_type_set:
+            self.gateway.write_log(f"{account_type}账户资金查询成功")
 
     def on_query_order(self, data: dict, request: Request) -> None:
         """
@@ -691,7 +697,7 @@ class BitGetSRestApi(RestClient):
             if contract.vt_symbol not in self.all_contracts:
                 self.all_contracts.append(contract.vt_symbol)
         product_type = contract_data["supportMarginCoins"][0]
-        self.gateway.write_log(f"交易接口：{self.gateway_name}，{product_type}合约信息查询成功")
+        self.gateway.write_log(f"{product_type}合约信息查询成功")
         self.contract_inited = True
      
     def on_send_order(self, data: dict, request: Request) -> None:
@@ -894,7 +900,7 @@ class BitGetSWebsocketApiBase(WebsocketClient):
         """
         """
         msg = packet["msg"]
-        self.gateway.write_log(f"交易接口：{self.gateway_name} WebSocket API收到错误回报，回报信息：{msg}")
+        self.gateway.write_log(f"WebSocket API收到错误回报，回报信息：{msg}")
 
 class BitGetSDataWebsocketApi(BitGetSWebsocketApiBase):
     """
@@ -929,7 +935,7 @@ class BitGetSDataWebsocketApi(BitGetSWebsocketApiBase):
     def on_connected(self) -> None:
         """
         """
-        self.gateway.write_log(f"交易接口：{self.gateway_name}，行情Websocket API连接成功")
+        self.gateway.write_log(f"行情Websocket API连接成功")
 
         for inst_id in list(self.ticks):
             self.subscribe_data(inst_id)
@@ -938,7 +944,7 @@ class BitGetSDataWebsocketApi(BitGetSWebsocketApiBase):
         """
         ws行情断开回调
         """
-        self.gateway.write_log(f"交易接口：{self.gateway_name}，行情Websocket API连接断开")
+        self.gateway.write_log(f"行情Websocket API连接断开")
     
     def subscribe(self, req: SubscribeRequest) -> None:
         """
@@ -1135,19 +1141,19 @@ class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
     def on_connected(self) -> None:
         """
         """
-        self.gateway.write_log(f"交易接口：{self.gateway_name}，交易Websocket API连接成功")
+        self.gateway.write_log(f"交易Websocket API连接成功")
         self.login()
     
     def on_disconnected(self):
         """
         ws交易断开回调
         """
-        self.gateway.write_log(f"交易接口：{self.gateway_name}，交易Websocket API连接断开")
+        self.gateway.write_log(f"交易Websocket API连接断开")
     
     def on_login(self) -> None:
         """
         """
-        self.gateway.write_log(f"交易接口：{self.gateway_name}，交易Websocket API登录成功")
+        self.gateway.write_log(f"交易Websocket API登录成功")
         self.subscribe_private()
    
     def on_packet(self, packet:Union[str,dict]) -> None:
@@ -1163,9 +1169,6 @@ class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
                 self.on_error_msg(packet)
         else:
             self.on_data(packet)
-        ######在日志显示所有ws包
-        self.gateway.write_log(packet)
-        ########################
 
     def on_data(self, packet) -> None:
         """
@@ -1278,6 +1281,7 @@ class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
             position = PositionData(
                 symbol = pos_data["instId"],
                 exchange = Exchange.BITGET,
+                exchange_user=self.gateway.account_name,
                 direction = HOLDSIDE_BITGETS2VT[pos_data["holdSide"]],
                 volume = float(pos_data["available"]),
                 price = float(pos_data["averageOpenPrice"]),
