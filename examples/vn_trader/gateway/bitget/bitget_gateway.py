@@ -12,7 +12,7 @@ from typing import Dict, List, Any,Union
 
 from vnpy.event import Event,EventEngine
 from vnpy_rest import RestClient, Request
-from vnpy_websocket import WebsocketClient
+from ..websocket import WebsocketClient
 from types import coroutine
 from asyncio import (
     run_coroutine_threadsafe,
@@ -78,8 +78,8 @@ ORDERTYPE_VT2BITGETS: Dict[OrderType, Any] = {
 ORDERTYPE_BITGETS2VT: Dict[Any, OrderType] = {v: k for k, v in ORDERTYPE_VT2BITGETS.items()}
 
 DIRECTION_VT2BITGETS: Dict[Direction, str] = {
-    Direction.LONG: "buy_single",
-    Direction.SHORT: "sell_single",
+    Direction.LONG: "buy",
+    Direction.SHORT: "sell ",
 }
 DIRECTION_BITGETS2VT: Dict[str, Direction] = {v: k for k, v in DIRECTION_VT2BITGETS.items()}
 
@@ -100,8 +100,6 @@ TIMEDELTA_MAP: Dict[Interval, timedelta] = {
     Interval.DAILY: timedelta(days=1),
 }
 
-
-
 class BitGetSGateway(BaseGateway):
     """
     * bitget接口
@@ -109,7 +107,7 @@ class BitGetSGateway(BaseGateway):
     """
     
     gateway_name: str = "BITGET"
-
+    exchanges = [Exchange.BITGET]
     default_setting: Dict[str, Any] = {
         "账户名称":"",
         "API Key": "",
@@ -119,9 +117,7 @@ class BitGetSGateway(BaseGateway):
         "代理地址": "",
         "代理端口": "",
     }
-
-    exchanges = [Exchange.BITGET]        #由main_engine add_gateway调用
-    #------------------------------------------------------------------------------------------------- 
+    
     def __init__(self, event_engine: EventEngine):
         """
         """
@@ -131,7 +127,7 @@ class BitGetSGateway(BaseGateway):
         self.trade_ws_api = BitGetSTradeWebsocketApi(self)
         self.market_ws_api = BitGetSDataWebsocketApi(self)
         self.count = 0  #轮询计时:秒
-    #------------------------------------------------------------------------------------------------- 
+    
     def connect(self,setting:dict = {}):
         """
         """
@@ -149,60 +145,60 @@ class BitGetSGateway(BaseGateway):
         self.market_ws_api.connect(key, secret,passphrase,proxy_host, proxy_port)
 
         self.init_query()
-    #------------------------------------------------------------------------------------------------- 
+    
     def subscribe(self, req: SubscribeRequest) -> None:
         """
         订阅合约
         """
         self.market_ws_api.subscribe(req)
-    #------------------------------------------------------------------------------------------------- 
+    
     def send_order(self, req: OrderRequest) -> str:
         """
         发送委托单
         """
         return self.rest_api.send_order(req)
-    #------------------------------------------------------------------------------------------------- 
+     
     def cancel_order(self, req: CancelRequest) -> Request:
         """
         取消委托单
         """
         self.rest_api.cancel_order(req)
-    #------------------------------------------------------------------------------------------------- 
+    
     def query_account(self) -> Request:
         """
         查询账户
         """
         self.rest_api.query_account()
-    #------------------------------------------------------------------------------------------------- 
+     
     def query_order(self,symbol:str):
         """
         查询活动委托单
         """
         self.rest_api.query_order(symbol)
-    #-------------------------------------------------------------------------------------------------  
+     
     def query_position(self, symbol: str):
         """
         查询持仓
         """
         pass
-    #-------------------------------------------------------------------------------------------------   
+       
     def query_history(self, req: HistoryRequest) -> List[BarData]:
         """查询历史数据"""
         return self.rest_api.query_history(req)
-    #---------------------------------------------------------------------------------------
+    
     def on_order(self, order: OrderData) -> None:
         """
         收到委托单推送，BaseGateway推送数据
         """
         self.orders[order.orderid] = copy(order)
         super().on_order(order)
-    #---------------------------------------------------------------------------------------
+    
     def get_order(self, orderid: str) -> OrderData:
         """
         用vt_orderid获取委托单数据
         """
         return self.orders.get(orderid, None)
-    #------------------------------------------------------------------------------------------------- 
+    
     def close(self) -> None:
         """
         关闭接口
@@ -210,19 +206,19 @@ class BitGetSGateway(BaseGateway):
         self.rest_api.stop()
         self.trade_ws_api.stop()
         self.market_ws_api.stop()
-    #------------------------------------------------------------------------------------------------- 
+    
     def process_timer_event(self, event: Event):
         """
         处理定时任务
         """
         pass
-    #------------------------------------------------------------------------------------------------- 
+    
     def init_query(self):
         """
         初始化定时查询
         """
         self.event_engine.register(EVENT_TIMER, self.process_timer_event)
-#------------------------------------------------------------------------------------------------- 
+
 class BitGetSRestApi(RestClient):
     """
     BITGET REST API
@@ -255,7 +251,7 @@ class BitGetSRestApi(RestClient):
         }
         self.delivery_date_map:Dict[str,str] = {}
         self.contract_inited:bool = False
-    #------------------------------------------------------------------------------------------------- 
+    
     def sign(self, request) -> Request:
         """
         生成签名
@@ -283,7 +279,7 @@ class BitGetSRestApi(RestClient):
             request.headers["ACCESS-PASSPHRASE"] = self.passphrase
             request.headers["Content-Type"] = "application/json"
         return request
-    #------------------------------------------------------------------------------------------------- 
+    
     def connect(
         self,
         key: str,
@@ -311,7 +307,7 @@ class BitGetSRestApi(RestClient):
         self.query_contract()
         self.query_account()
         self.query_order()
-    #------------------------------------------------------------------------------------------------- 
+
     def get_margin_coin(self,symbol:str):
         """
         获取保证金币种
@@ -321,7 +317,7 @@ class BitGetSRestApi(RestClient):
         if not margin_coin:
             margin_coin = symbol.split("USD")[0]
         return margin_coin
-    #------------------------------------------------------------------------------------------------- 
+    
     def set_leverage(self,symbol:str):
         """
         设置杠杆
@@ -338,10 +334,10 @@ class BitGetSRestApi(RestClient):
             callback=self.on_leverage,
             data = data
         )
-    #------------------------------------------------------------------------------------------------- 
+    
     def on_leverage(self,data:dict,request: Request):
         pass
-    #------------------------------------------------------------------------------------------------- 
+    
     def query_account(self) -> Request:
         """
         查询账户数据
@@ -354,7 +350,7 @@ class BitGetSRestApi(RestClient):
                 callback=self.on_query_account,
                 params= params
             )
-    #------------------------------------------------------------------------------------------------- 
+    
     def query_order(self):
         """
         查询合约活动委托单
@@ -377,7 +373,6 @@ class BitGetSRestApi(RestClient):
                 params=params
             )
 
-    #------------------------------------------------------------------------------------------------- 
     def query_contract(self) -> Request:
         """
         获取合约信息
@@ -390,7 +385,7 @@ class BitGetSRestApi(RestClient):
                 params = params,
                 callback=self.on_query_contract,
             )
-    #------------------------------------------------------------------------------------------------- 
+    
     def query_history(self, req: HistoryRequest) -> List[BarData]:
         """
         查询历史数据
@@ -476,7 +471,7 @@ class BitGetSRestApi(RestClient):
 
                 start = bar.datetime
         return history
-    #------------------------------------------------------------------------------------------------- 
+    
     def new_local_orderid(self) -> str:
         """
         生成local_orderid
@@ -485,7 +480,7 @@ class BitGetSRestApi(RestClient):
             self.order_count += 1
             local_orderid = str(self.connect_time+self.order_count)
             return local_orderid
-    #------------------------------------------------------------------------------------------------- 
+        
     def send_order(self, req: OrderRequest) -> str:
         """
         发送委托单
@@ -546,7 +541,7 @@ class BitGetSRestApi(RestClient):
 
         self.gateway.on_order(order)
         return order.vt_orderid
-    #------------------------------------------------------------------------------------------------- 
+    
     def cancel_order(self, req: CancelRequest) -> Request:
         """
         取消委托单
@@ -583,7 +578,7 @@ class BitGetSRestApi(RestClient):
                 data=data,
                 extra=order
             )
-    #------------------------------------------------------------------------------------------------- 
+    
     def on_query_account(self, data: dict, request: Request) -> None:
         """
         收到账户数据回报
@@ -602,7 +597,6 @@ class BitGetSRestApi(RestClient):
                 
         self.gateway.write_log("账户资金查询成功")
 
-    #------------------------------------------------------------------------------------------------- 
     def on_query_order(self, data: dict, request: Request) -> None:
         """
         收到委托回报
@@ -635,6 +629,7 @@ class BitGetSRestApi(RestClient):
             self.gateway.on_order(order)
 
         self.gateway.write_log("当前委托信息查询成功")
+    
     def on_query_order_Algo(self, data: dict, request: Request) -> None:
         """
         收到委托回报
@@ -666,7 +661,7 @@ class BitGetSRestApi(RestClient):
             self.gateway.on_order(order)
 
         self.gateway.write_log("计划委托信息查询成功")
-    #------------------------------------------------------------------------------------------------- 
+    
     def on_query_contract(self, data: dict, request: Request) -> None:
         """
         收到合约参数回报
@@ -682,6 +677,7 @@ class BitGetSRestApi(RestClient):
                 pricetick=float(contract_data["priceEndStep"]) * float(f"1e-{price_place}"),
                 size=20,    # 合约杠杆
                 min_volume=float(contract_data["minTradeNum"]),
+                min_trade_usdt=float(contract_data["minTradeUSDT"]),
                 product=Product.FUTURES,
                 net_position=True,
                 history_data=True,
@@ -697,7 +693,7 @@ class BitGetSRestApi(RestClient):
         product_type = contract_data["supportMarginCoins"][0]
         self.gateway.write_log(f"交易接口：{self.gateway_name}，{product_type}合约信息查询成功")
         self.contract_inited = True
-    #------------------------------------------------------------------------------------------------- 
+     
     def on_send_order(self, data: dict, request: Request) -> None:
         """
         """
@@ -706,7 +702,7 @@ class BitGetSRestApi(RestClient):
         if self.check_error(data, "委托"):
             order.status = Status.REJECTED
             self.gateway.on_order(order)
-    #------------------------------------------------------------------------------------------------- 
+     
     def on_send_order_failed(self, status_code, request: Request) -> None:
         """
         收到委托失败回报
@@ -717,7 +713,7 @@ class BitGetSRestApi(RestClient):
 
         msg = f"委托失败，状态码：{status_code}，信息：{request.response.text}"
         self.gateway.write_log(msg)
-    #------------------------------------------------------------------------------------------------- 
+   
     def on_send_order_error(
         self,
         exception_type: type,
@@ -735,12 +731,12 @@ class BitGetSRestApi(RestClient):
         # Record exception if not ConnectionError
         if not issubclass(exception_type, ConnectionError):
             self.on_error(exception_type, exception_value, tb, request)
-    #------------------------------------------------------------------------------------------------- 
+    
     def on_cancel_order(self, data: dict, request: Request) -> None:
         """
         """
         self.check_error(data, "撤单")
-    #------------------------------------------------------------------------------------------------- 
+    
     def on_cancel_order_failed(
         self,
         status_code,
@@ -755,7 +751,7 @@ class BitGetSRestApi(RestClient):
             self.gateway.on_order(order)
         msg = f"撤单失败，状态码：{status_code}，信息：{request.response.text}"
         self.gateway.write_log(msg)
-    #------------------------------------------------------------------------------------------------- 
+    
     def on_error(
         self,
         exception_type: type,
@@ -772,7 +768,7 @@ class BitGetSRestApi(RestClient):
         sys.stderr.write(
             self.exception_detail(exception_type, exception_value, tb, request)
         )
-    #------------------------------------------------------------------------------------------------- 
+     
     def check_error(self, data: dict, func: str = "") -> bool:
         """
         """
@@ -784,7 +780,6 @@ class BitGetSRestApi(RestClient):
         self.gateway.write_log(f"{func}请求出错，代码：{error_code}，信息：{error_msg}")
         return True
 
-#------------------------------------------------------------------------------------------------- 
 class BitGetSWebsocketApiBase(WebsocketClient):
     """
     """
@@ -817,6 +812,7 @@ class BitGetSWebsocketApiBase(WebsocketClient):
 
             coro: coroutine = self._ws.send_str(text)
             run_coroutine_threadsafe(coro, self._loop)
+    
     def unpack_data(self, data: str):
         """
         对字符串数据进行json格式解包
@@ -827,7 +823,7 @@ class BitGetSWebsocketApiBase(WebsocketClient):
             return data
         else:
             return json.loads(data)
-    #------------------------------------------------------------------------------------------------- 
+    
     def connect(
         self,
         key: str,
@@ -846,14 +842,14 @@ class BitGetSWebsocketApiBase(WebsocketClient):
         self.init(url, proxy_host, proxy_port)
         self.start()
         self.gateway.event_engine.register(EVENT_TIMER,self.send_ping)
-    #------------------------------------------------------------------------------------------------- 
+    
     def send_ping(self,event):
         self.count +=1
         if self.count < 20:
             return
         self.count = 0
         self.send_packet("ping")
-    #------------------------------------------------------------------------------------------------- 
+    
     def login(self) -> int:
         """
         """
@@ -872,15 +868,15 @@ class BitGetSWebsocketApiBase(WebsocketClient):
             ]
         }
         return self.send_packet(params)
-    #------------------------------------------------------------------------------------------------- 
+    
     def on_login(self, packet) -> None:
         """
         """
         pass
-    #------------------------------------------------------------------------------------------------- 
+    
     def on_data(self, packet):
         pass
-    #------------------------------------------------------------------------------------------------- 
+    
     def on_packet(self, packet:Union[str,dict]) -> None:
         """
         """
@@ -893,13 +889,13 @@ class BitGetSWebsocketApiBase(WebsocketClient):
                 self.on_error_msg(packet)
         else:
             self.on_data(packet)
-    #------------------------------------------------------------------------------------------------- 
+   
     def on_error_msg(self, packet) -> None:
         """
         """
         msg = packet["msg"]
         self.gateway.write_log(f"交易接口：{self.gateway_name} WebSocket API收到错误回报，回报信息：{msg}")
-#------------------------------------------------------------------------------------------------- 
+
 class BitGetSDataWebsocketApi(BitGetSWebsocketApiBase):
     """
     """
@@ -910,7 +906,7 @@ class BitGetSDataWebsocketApi(BitGetSWebsocketApiBase):
         super().__init__(gateway)
 
         self.ticks:Dict[str,TickData] = {}
-    #------------------------------------------------------------------------------------------------- 
+    
     def connect(
         self,
         key: str,
@@ -929,7 +925,7 @@ class BitGetSDataWebsocketApi(BitGetSWebsocketApiBase):
             proxy_host,
             proxy_port
         )
-    #------------------------------------------------------------------------------------------------- 
+    
     def on_connected(self) -> None:
         """
         """
@@ -937,13 +933,13 @@ class BitGetSDataWebsocketApi(BitGetSWebsocketApiBase):
 
         for inst_id in list(self.ticks):
             self.subscribe_data(inst_id)
-    #-------------------------------------------------------------------------------------------------
+    
     def on_disconnected(self):
         """
         ws行情断开回调
         """
         self.gateway.write_log(f"交易接口：{self.gateway_name}，行情Websocket API连接断开")
-    #------------------------------------------------------------------------------------------------- 
+    
     def subscribe(self, req: SubscribeRequest) -> None:
         """
         订阅合约
@@ -968,7 +964,7 @@ class BitGetSDataWebsocketApi(BitGetSWebsocketApiBase):
             inst_id = symbol.split("_")[0]
         self.ticks[inst_id] = tick
         self.subscribe_data(inst_id)
-    #------------------------------------------------------------------------------------------------- 
+    
     def topic_subscribe(self,channel:str,inst_id:str):
         """
         主题订阅
@@ -984,7 +980,7 @@ class BitGetSDataWebsocketApi(BitGetSWebsocketApiBase):
             ]
         }
         self.send_packet(req)
-    #------------------------------------------------------------------------------------------------- 
+   
     def subscribe_data(self, inst_id: str) -> None:
         """
         订阅市场深度主题
@@ -996,7 +992,7 @@ class BitGetSDataWebsocketApi(BitGetSWebsocketApiBase):
         channels = ["ticker","books5","tradeNew"]
         for channel in channels:
             self.topic_subscribe(channel,inst_id)
-    #------------------------------------------------------------------------------------------------- 
+    
     def on_data(self, packet) -> None:
         """
         """
@@ -1008,7 +1004,7 @@ class BitGetSDataWebsocketApi(BitGetSWebsocketApiBase):
                 self.on_depth(packet)
             elif channel == "tradeNew":
                 self.on_public_trade(packet)
-    #------------------------------------------------------------------------------------------------- 
+   
     def on_tick(self, data: dict) -> None:
         """
         收到tick数据推送
@@ -1029,7 +1025,7 @@ class BitGetSDataWebsocketApi(BitGetSWebsocketApiBase):
             tick.ask_price_1 = float(tick_data["bestAsk"])
             tick.ask_volume_1 = float(tick_data["askSz"])
             self.gateway.on_tick(copy(tick))
-    #------------------------------------------------------------------------------------------------- 
+   
     def on_depth(self, packet: dict) -> None:
         """
         行情深度推送
@@ -1054,7 +1050,7 @@ class BitGetSDataWebsocketApi(BitGetSWebsocketApiBase):
 
         if tick.last_price:
             self.gateway.on_tick(copy(tick))
-    #------------------------------------------------------------------------------------------------- 
+   
     def on_public_trade(self,packet):
         """
         收到公开成交回报
@@ -1064,7 +1060,7 @@ class BitGetSDataWebsocketApi(BitGetSWebsocketApiBase):
         tick = self.ticks[inst_id]
         tick.last_price = float(data["p"])
         tick.datetime = get_local_datetime(data["ts"])
-#------------------------------------------------------------------------------------------------- 
+
 class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
     """
     """
@@ -1073,7 +1069,7 @@ class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
         """
         self.trade_count = 0
         super().__init__(gateway)
-    #------------------------------------------------------------------------------------------------- 
+   
     def connect(
         self,
         key: str,
@@ -1092,12 +1088,13 @@ class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
             proxy_host,
             proxy_port
         )
-    #------------------------------------------------------------------------------------------------- 
+    
     def subscribe_private(self) -> int:
         """
         订阅私有频道
         """
         inst_types = ["UMCBL","SUMCBL"]  #产品类型 UMCBL:专业合约私有频道,DMCBL:混合合约私有频道(币本位合约),CMCBL:USDC专业合约,SUMCBL模拟盘
+
         # 订阅持仓
         for inst_type in inst_types:
             req = {
@@ -1109,6 +1106,7 @@ class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
                 }]
             }
             self.send_packet(req)
+
         # 订阅委托
         for inst_type in inst_types:
             req = {
@@ -1120,6 +1118,7 @@ class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
                 }]
             }
             self.send_packet(req)
+
         # 订阅计划委托
         for inst_type in inst_types:
             req = {
@@ -1130,26 +1129,27 @@ class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
                     "instId": "default"
                 }]
             }
+
         self.send_packet(req)
-    #------------------------------------------------------------------------------------------------- 
+    
     def on_connected(self) -> None:
         """
         """
         self.gateway.write_log(f"交易接口：{self.gateway_name}，交易Websocket API连接成功")
         self.login()
-    #-------------------------------------------------------------------------------------------------
+    
     def on_disconnected(self):
         """
         ws交易断开回调
         """
         self.gateway.write_log(f"交易接口：{self.gateway_name}，交易Websocket API连接断开")
-    #------------------------------------------------------------------------------------------------- 
+    
     def on_login(self) -> None:
         """
         """
         self.gateway.write_log(f"交易接口：{self.gateway_name}，交易Websocket API登录成功")
         self.subscribe_private()
-    #------------------------------------------------------------------------------------------------- 
+   
     def on_packet(self, packet:Union[str,dict]) -> None:
         """
         """
@@ -1158,6 +1158,7 @@ class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
         if "event" in packet:
             if packet["event"] == "login" and packet["code"] == 0:
                 self.on_login()
+
             elif packet["event"] == "error":
                 self.on_error_msg(packet)
         else:
@@ -1165,6 +1166,7 @@ class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
         ######在日志显示所有ws包
         self.gateway.write_log(packet)
         ########################
+
     def on_data(self, packet) -> None:
         """
         """
@@ -1173,11 +1175,13 @@ class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
         if "action" in packet:
             if channel == "positions":
                 self.on_position(data)
+
             elif channel == "orders":
                 self.on_order(data)
+
             elif channel == "ordersAlgo":
                 self.on_order_Algo(data)
-    #------------------------------------------------------------------------------------------------- 
+   
     def on_order(self, raw: dict) -> None:
         """
         收到委托回报
@@ -1221,7 +1225,7 @@ class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
                 gateway_name=self.gateway_name,
             )
             self.gateway.on_trade(trade)
-    #------------------------------------------------------------------------------------------------- 
+   
     def on_order_Algo(self, raw: dict) -> None:
         """
         收到计划委托回报
@@ -1265,7 +1269,7 @@ class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
                 gateway_name=self.gateway_name,
             )
             self.gateway.on_trade(trade)
-    #------------------------------------------------------------------------------------------------- 
+    
     def on_position(self,data:dict):
         """
         收到持仓回报
@@ -1281,7 +1285,7 @@ class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
                 gateway_name = self.gateway_name
             )
             self.gateway.on_position(position)
-#------------------------------------------------------------------------------------------------- 
+
 def create_signature(secret:str,message:str):
     mac = hmac.new(bytes(secret, encoding='utf8'), bytes(message, encoding='utf-8'), digestmod='sha256').digest()
     sign_str =  base64.b64encode(mac).decode()

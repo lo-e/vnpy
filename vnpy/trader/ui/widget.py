@@ -1043,9 +1043,6 @@ class TradingWidget(QtWidgets.QWidget):
         """
         Set the tick depth data to monitor by vt_symbol.
         """
-        # Update gateway combo box.
-        ix = self.gateway_combo.findText(gateway_name)
-        self.gateway_combo.setCurrentIndex(ix)
 
         # Generate vt_symbol from symbol and exchange
         symbol = str(self.symbol_line.text())
@@ -1066,6 +1063,11 @@ class TradingWidget(QtWidgets.QWidget):
 
         else:
             self.name_line.setText(contract.name)
+            
+            # Update gateway combo box.
+            gateway_name = contract.gateway_name
+            ix = self.gateway_combo.findText(gateway_name)
+            self.gateway_combo.setCurrentIndex(ix)
 
             # Update price digits
             self.price_digits = get_digits(contract.pricetick)
@@ -1074,7 +1076,6 @@ class TradingWidget(QtWidgets.QWidget):
             req = SubscribeRequest(
                 symbol=symbol, exchange=Exchange(exchange_value)
             )
-            gateway_name = contract.gateway_name
             self.main_engine.subscribe(req, gateway_name)
 
         self.clear_label_text()
