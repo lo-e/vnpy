@@ -218,7 +218,24 @@ class BitGetSGateway(BaseGateway):
         初始化定时查询
         """
         self.event_engine.register(EVENT_TIMER, self.process_timer_event)
+    
+    def check_connected(self) -> Dict[str, Any]:
+        """检查连接状态"""
+        connected = True
+        msg = ""
+        if not self.market_ws_api.connected:
+            connected = False
+            msg += "行情Websocket API连接断开"
+        
+        if not self.trade_ws_api.connected:
+            connected = False
+            if msg:
+                msg += "\n"
+            msg += "交易Websocket API连接断开"
 
+        res = {"gateway":self.gateway_name, "connected":connected, "msg":msg}
+        return res
+    
 class BitGetSRestApi(RestClient):
     """
     BITGET REST API
@@ -936,6 +953,7 @@ class BitGetSDataWebsocketApi(BitGetSWebsocketApiBase):
         """
         """
         self.gateway.write_log(f"行情Websocket API连接成功")
+        self.connected = True
 
         for inst_id in list(self.ticks):
             self.subscribe_data(inst_id)
@@ -945,6 +963,7 @@ class BitGetSDataWebsocketApi(BitGetSWebsocketApiBase):
         ws行情断开回调
         """
         self.gateway.write_log(f"行情Websocket API连接断开")
+        self.connected = False
     
     def subscribe(self, req: SubscribeRequest) -> None:
         """
@@ -1149,11 +1168,13 @@ class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
         ws交易断开回调
         """
         self.gateway.write_log(f"交易Websocket API连接断开")
+        self.connected = False
     
     def on_login(self) -> None:
         """
         """
         self.gateway.write_log(f"交易Websocket API登录成功")
+        self.connected = True
         self.subscribe_private()
    
     def on_packet(self, packet:Union[str,dict]) -> None:
