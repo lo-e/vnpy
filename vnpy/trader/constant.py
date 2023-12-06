@@ -138,6 +138,7 @@ class Exchange(Enum):
     BITFINEX = "BITFINEX"
     BINANCE = "BINANCE"
     OKX = "OKX"
+    BITGET = "BITGET"
     BYBIT = "BYBIT"
     COINBASE = "COINBASE"
     DERIBIT = "DERIBIT"
