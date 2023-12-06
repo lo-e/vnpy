@@ -48,11 +48,13 @@ from pytz import timezone
 CHINA_TZ: timezone = timezone("Asia/Shanghai")
 
 REST_HOST = "https://api.bitget.com"
-WEBSOCKET_DATA_HOST = "wss://ws.bitget.com/mix/v1/stream"               # Market Data
-WEBSOCKET_TRADE_HOST = "wss://ws.bitget.com/mix/v1/stream"    # Account and Order
+# WEBSOCKET_DATA_HOST = "wss://ws.bitget.com/mix/v1/stream"               # Market Data
+# WEBSOCKET_TRADE_HOST = "wss://ws.bitget.com/mix/v1/stream"    # Account and Order
+WEBSOCKET_DATA_HOST = "wss://ws.bitget.com/v2/ws/public"               # Market Data
+WEBSOCKET_TRADE_HOST = "wss://ws.bitget.com/v2/ws/private"    # Account and Order
 
 STATUS_BITGETS2VT: Dict[int, Status] = {
-    "init": Status.NOTTRADED,
+    "live": Status.NOTTRADED,
     "new": Status.NOTTRADED,
     "partially_filled": Status.PARTTRADED,
     "partial-fill": Status.PARTTRADED,
@@ -257,16 +259,19 @@ class BitGetSRestApi(RestClient):
         self.connect_time: int = 0
 
         self.all_contracts:List[str] = []          #所有vt_symbol合约列表
-        self.product_types = ["umcbl","sumcbl"]   # USDT,USDC,币本位合约："umcbl","cmcbl","dmcbl","sumcbl"
-        self.product_coin_map = {
-            "UMCBL": "USDT",
-            "CMCBL": "USDC",
-            "SUMCBL": "SUSDT",
-            "umcbl": "USDT",
-            "cmcbl": "USDC",
-            "sumcbl": "SUSDT",
-        }
-        self.delivery_date_map:Dict[str,str] = {}
+        self.symbol_margin_coin = {}
+
+        """
+        USDT-FUTURES USDT专业合约
+        COIN-FUTURES 混合合约
+        USDC-FUTURES USDC专业合约
+        SUSDT-FUTURES USDT专业合约模拟盘
+        SCOIN-FUTURES 混合合约模拟盘
+        SUSDC-FUTURES USDC专业合约模拟盘
+        """
+        self.product_types = ["USDT-FUTURES","SUSDT-FUTURES"]
+        self.margin_coin_product_type = {"USDT": "USDT-FUTURES",
+                                         "SUSDT": "SUSDT-FUTURES",}
         self.contract_inited:bool = False
     
     def sign(self, request) -> Request:
@@ -325,35 +330,14 @@ class BitGetSRestApi(RestClient):
         self.query_account()
         self.query_order()
 
-    def get_margin_coin(self,symbol:str):
+    def get_margin_coin(self, symbol:str):
         """
         获取保证金币种
         """
-        product_type = symbol.split("_")[1]
-        margin_coin = self.product_coin_map.get(product_type,None)
+        margin_coin = self.symbol_margin_coin.get(symbol, "")
         if not margin_coin:
-            margin_coin = symbol.split("USD")[0]
+            margin_coin = "USDT"
         return margin_coin
-    
-    def set_leverage(self,symbol:str):
-        """
-        设置杠杆
-        """
-        
-        data = {
-            "symbol":symbol,
-            "marginCoin":self.get_margin_coin(symbol),
-            "leverage":20,
-        }
-        self.add_request(
-            method="POST",
-            path="/api/mix/v1/account/setLeverage",
-            callback=self.on_leverage,
-            data = data
-        )
-    
-    def on_leverage(self,data:dict,request: Request):
-        pass
     
     def query_account(self) -> Request:
         """
@@ -363,7 +347,7 @@ class BitGetSRestApi(RestClient):
             params = {"productType":product}
             self.add_request(
                 method="GET",
-                path="/api/mix/v1/account/accounts",
+                path="/api/v2/mix/account/accounts",
                 callback=self.on_query_account,
                 params= params
             )
@@ -374,19 +358,12 @@ class BitGetSRestApi(RestClient):
         """
         for product in self.product_types:
             params = {
-                "productType": product,
-                "marginCoin":self.product_coin_map.get(product,None)
+                "productType": product
                 }
             self.add_request(
                 method="GET",
-                path="/api/mix/v1/order/marginCoinCurrent",
+                path="/api/v2/mix/order/orders-pending",
                 callback=self.on_query_order,
-                params=params
-            )
-            self.add_request(
-                method="GET",
-                path="/api/mix/v1/plan/currentPlan",
-                callback=self.on_query_order_Algo,
                 params=params
             )
 
@@ -398,7 +375,7 @@ class BitGetSRestApi(RestClient):
             params = {"productType":product}    
             self.add_request(
                 method="GET",
-                path="/api/mix/v1/market/contracts",
+                path="/api/v2/mix/market/contracts",
                 params = params,
                 callback=self.on_query_contract,
             )
@@ -507,24 +484,52 @@ class BitGetSRestApi(RestClient):
             local_orderid,
             self.gateway_name
         )
+
+        marginCoin = self.get_margin_coin(req.symbol)
+        product_type = self.margin_coin_product_type.get(marginCoin, "USDT-FUTURES")
+        side = ""
+        tradeSide = ""
+        if req.direction == Direction.LONG:
+            if req.offset == Offset.OPEN:
+                # 开多
+                side = "buy"
+                tradeSide = "open"
+            
+            else:
+                # 平空
+                side = "sell"
+                tradeSide = "close"
+
+        else:
+            if req.offset == Offset.OPEN:
+                # 开空
+                side = "sell"
+                tradeSide = "open"
+            
+            else:
+                # 平多
+                side = "buy"
+                tradeSide = "close"
+
         if order.type==OrderType.STOP:
             data = {
                 "symbol": req.symbol,
-                "marginCoin":self.get_margin_coin(req.symbol),
+                "planType": "normal_plan",
+                "productType": product_type,
+                "marginMode": "crossed",
+                "marginCoin":marginCoin,
                 "clientOid": local_orderid,
                 "triggerPrice": str(req.price),
                 "triggerType":"fill_price",
                 "size": str(req.volume),
-                "side": DIRECTION_VT2BITGETS.get(req.direction),
+                "side": side,
+                "tradeSide":tradeSide,
                 "orderType": ORDERTYPE_VT2BITGETS.get(OrderType.MARKET),
             }
 
-            if req.offset == Offset.CLOSE:
-                data["reduceOnly"] = True
-
             self.add_request(
                 method="POST",
-                path="/api/mix/v1/plan/placePlan",
+                path="/api/v2/mix/order/place-plan-order",
                 callback=self.on_send_order,
                 data=data,
                 extra=order,
@@ -534,21 +539,21 @@ class BitGetSRestApi(RestClient):
         else:
             data = {
                 "symbol": req.symbol,
-                "marginCoin":self.get_margin_coin(req.symbol),
+                "productType": product_type,
+                "marginMode": "crossed",
+                "marginCoin": marginCoin,
                 "clientOid": local_orderid,
                 "price": str(req.price),
                 "size": str(req.volume),
-                "side": DIRECTION_VT2BITGETS.get(req.direction),
+                "side": side,
+                "tradeSide":tradeSide,
                 "orderType": ORDERTYPE_VT2BITGETS.get(req.type),
-                "timeInForceValue": "normal"
+                "force": "gtc"
             }
-
-            if req.offset == Offset.CLOSE:
-                data["reduceOnly"] = True
 
             self.add_request(
                 method="POST",
-                path="/api/mix/v1/order/placeOrder",
+                path="/api/v2/mix/order/place-order",
                 callback=self.on_send_order,
                 data=data,
                 extra=order,
@@ -609,7 +614,7 @@ class BitGetSRestApi(RestClient):
             account_type_set.add(margin_coin)
             account = AccountData(
                 accountid=margin_coin,
-                balance= float(account_data["equity"]),
+                balance= float(account_data["accountEquity"]),
                 frozen=float(account_data["locked"]),
                 gateway_name=self.gateway_name,
                 exchange_user=self.gateway.account_name
@@ -627,11 +632,28 @@ class BitGetSRestApi(RestClient):
 
         if self.check_error(data, "查询活动委托"):
             return
-        data = data["data"]
+        data = data["data"]["entrustedList"]
         if not data:
             return
         for order_data in data:
             order_datetime =  get_local_datetime(int(order_data["cTime"]))
+
+            side = order_data["side"]
+            if order_data["reduceOnly"] == "YES":
+                offset = Offset.CLOSE
+                if side == "buy":
+                    direction = Direction.SHORT
+
+                else:
+                    direction = Direction.LONG
+
+            else:
+                offset = Offset.OPEN
+                if side == "buy":
+                    direction = Direction.LONG
+
+                else:
+                    direction = Direction.SHORT
 
             order = OrderData(
                 orderid=order_data["clientOid"],
@@ -640,50 +662,16 @@ class BitGetSRestApi(RestClient):
                 price=order_data["price"],
                 volume=order_data["size"],
                 type=ORDERTYPE_BITGETS2VT[order_data["orderType"]],
-                direction=DIRECTION_BITGETS2VT[order_data["side"]],
-                traded=float(order_data["filledQty"]),
-                status=STATUS_BITGETS2VT[order_data["state"]],
+                offset=offset,
+                direction=direction,
+                traded=float(order_data["baseVolume"]),
+                status=STATUS_BITGETS2VT[order_data["status"]],
                 datetime= order_datetime,
                 gateway_name=self.gateway_name,
             )
-            if order_data["reduceOnly"]:
-                order.offset = Offset.CLOSE
-
             self.gateway.on_order(order)
 
         self.gateway.write_log("当前委托信息查询成功")
-    
-    def on_query_order_Algo(self, data: dict, request: Request) -> None:
-        """
-        收到委托回报
-        """
-
-        if self.check_error(data, "查询活动委托"):
-            return
-        data = data["data"]
-        if not data:
-            return
-        for order_data in data:
-            order_datetime =  get_local_datetime(int(order_data["cTime"]))
-
-            order = OrderData(
-                orderid=order_data["clientOid"],
-                symbol=order_data["symbol"],
-                exchange=Exchange.BITGET,
-                price=order_data["triggerPrice"],
-                volume=order_data["size"],
-                type=OrderType.STOP,
-                direction=DIRECTION_BITGETS2VT[order_data["side"]],
-                traded=0.0,
-                status=PLANSTATUS_BITGETS2VT[order_data["status"]],
-                datetime= order_datetime,
-                gateway_name=self.gateway_name,
-            )
-            if order_data["reduceOnly"]:
-                order.offset = Offset.CLOSE
-            self.gateway.on_order(order)
-
-        self.gateway.write_log("计划委托信息查询成功")
     
     def on_query_contract(self, data: dict, request: Request) -> None:
         """
@@ -692,13 +680,14 @@ class BitGetSRestApi(RestClient):
         if self.check_error(data, "查询合约"):
             return
         for contract_data in data["data"]:
+            symbol=contract_data["symbol"]
             price_place = contract_data["pricePlace"]
             contract = ContractData(
-                symbol=contract_data["symbol"],
+                symbol=symbol,
                 exchange=Exchange.BITGET,
-                name=contract_data["symbolName"],
+                name=symbol,
                 pricetick=float(contract_data["priceEndStep"]) * float(f"1e-{price_place}"),
-                size=20,    # 合约杠杆
+                size=1,
                 min_volume=float(contract_data["minTradeNum"]),
                 min_trade_usdt=float(contract_data["minTradeUSDT"]),
                 product=Product.FUTURES,
@@ -707,14 +696,15 @@ class BitGetSRestApi(RestClient):
                 gateway_name=self.gateway_name,
                 stop_supported=True
             )
-            # 保存交割合约名称
-            if contract.name[-1].isdigit():
-                self.delivery_date_map[contract.symbol] = contract.name
+
             self.gateway.on_contract(contract)
             if contract.vt_symbol not in self.all_contracts:
                 self.all_contracts.append(contract.vt_symbol)
-        product_type = contract_data["supportMarginCoins"][0]
-        self.gateway.write_log(f"{product_type}合约信息查询成功")
+
+        margin_coin = contract_data["supportMarginCoins"][0]
+        self.symbol_margin_coin[contract.symbol] = margin_coin
+
+        self.gateway.write_log(f"{margin_coin}合约信息查询成功")
         self.contract_inited = True
      
     def on_send_order(self, data: dict, request: Request) -> None:
@@ -980,13 +970,7 @@ class BitGetSDataWebsocketApi(BitGetSWebsocketApiBase):
             datetime=datetime.now(CHINA_TZ),
             gateway_name=self.gateway_name,
         )
-        symbol = tick.symbol
-        
-        # 交割合约inst_id赋值
-        if symbol[-1].isdigit():
-            inst_id = self.gateway.rest_api.delivery_date_map.get(symbol,"")
-        else:
-            inst_id = symbol.split("_")[0]
+        inst_id = tick.symbol
         self.ticks[inst_id] = tick
         self.subscribe_data(inst_id)
     
