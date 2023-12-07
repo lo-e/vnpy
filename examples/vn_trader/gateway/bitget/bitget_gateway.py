@@ -634,10 +634,11 @@ class BitGetSRestApi(RestClient):
             account = AccountData(
                 accountid=margin_coin,
                 balance= float(account_data["accountEquity"]),
-                frozen=float(account_data["locked"]),
                 gateway_name=self.gateway_name,
                 exchange_user=self.gateway.account_name
             )
+            account.available = float(account_data["available"])
+            account.frozen = account.balance - account.available
             if account.balance:
                 self.gateway.on_account(account)
 
@@ -1365,13 +1366,21 @@ class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
             )
             self.gateway.on_order(order)
     
-    def on_account(self, data:dict):
+    def on_account(self, data:list):
         """
         收到账户回报
         """
-
-        a = 1
-        pass
+        for account_data in data:
+            margin_coin = account_data["marginCoin"]
+            account = AccountData(
+                accountid=margin_coin,
+                balance= float(account_data["equity"]),
+                gateway_name=self.gateway_name,
+                exchange_user=self.gateway.account_name
+            )
+            account.available = float(account_data["available"])
+            account.frozen = account.balance - account.available
+            self.gateway.on_account(account)
     
     def on_position(self,data:dict):
         """
