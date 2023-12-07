@@ -79,12 +79,6 @@ ORDERTYPE_VT2BITGETS: Dict[OrderType, Any] = {
 }
 ORDERTYPE_BITGETS2VT: Dict[Any, OrderType] = {v: k for k, v in ORDERTYPE_VT2BITGETS.items()}
 
-DIRECTION_VT2BITGETS: Dict[Direction, str] = {
-    Direction.LONG: "buy",
-    Direction.SHORT: "sell ",
-}
-DIRECTION_BITGETS2VT: Dict[str, Direction] = {v: k for k, v in DIRECTION_VT2BITGETS.items()}
-
 HOLDSIDE_BITGETS2VT: Dict[str,Direction] = {
     "long":Direction.LONG,
     "short":Direction.SHORT
@@ -644,7 +638,7 @@ class BitGetSRestApi(RestClient):
             order_datetime =  get_local_datetime(int(order_data["cTime"]))
 
             side = order_data["side"]
-            if order_data["reduceOnly"] == "YES":
+            if order_data["reduceOnly"] in ["yes", "YES"]:
                 offset = Offset.CLOSE
                 if side == "buy":
                     direction = Direction.SHORT
@@ -1158,16 +1152,16 @@ class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
             }
             self.send_packet(req)
 
-        # # 订阅计划委托
-        # for inst_type in PRODUCT_TYPES:
-        #     req = {
-        #         "op": "subscribe",
-        #         "args": [{
-        #             "instType": inst_type,
-        #             "channel": "orders-algo",
-        #             "instId": "default"
-        #         }]
-        #     }
+        # 订阅计划委托
+        for inst_type in PRODUCT_TYPES:
+            req = {
+                "op": "subscribe",
+                "args": [{
+                    "instType": inst_type,
+                    "channel": "orders-algo",
+                    "instId": "default"
+                }]
+            }
 
         self.send_packet(req)
     
@@ -1216,15 +1210,33 @@ class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
         for data in raw:
             order_datetime = get_local_datetime(data["uTime"])
             orderid = data["clientOid"]
+            side = data["side"]
+            if data["reduceOnly"] in ["yes", "YES"]:
+                offset = Offset.CLOSE
+                if side == "buy":
+                    direction = Direction.SHORT
+
+                else:
+                    direction = Direction.LONG
+
+            else:
+                offset = Offset.OPEN
+                if side == "buy":
+                    direction = Direction.LONG
+
+                else:
+                    direction = Direction.SHORT
+
             order = OrderData(
                 symbol=data["instId"],
                 exchange=Exchange.BITGET,
                 orderid=orderid,
-                type=ORDERTYPE_BITGETS2VT[data["ordType"]],
-                direction=DIRECTION_BITGETS2VT[data["tS"]],
+                type=ORDERTYPE_BITGETS2VT[data["orderType"]],
+                offset=offset,
+                direction=direction,
                 price=float(data["price"]),
-                volume=float(data["sz"]),
-                traded=float(data["accFillSz"]),
+                volume=float(data["size"]),
+                traded=float(data["accBaseVolume"]),
                 status=STATUS_BITGETS2VT[data["status"]],
                 datetime = order_datetime,
                 gateway_name=self.gateway_name
@@ -1242,8 +1254,8 @@ class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
                 tradeid=str(self.trade_count),
                 direction=order.direction,
                 offset=order.offset,
-                price=float(data["fillPx"]),
-                volume=float(data["fillSz"]),
+                price=float(data["priceAvg"]),
+                volume=float(data["accBaseVolume"]),
                 datetime= get_local_datetime(int(data["fillTime"])),
                 gateway_name=self.gateway_name,
             )
