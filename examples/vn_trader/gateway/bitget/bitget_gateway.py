@@ -65,12 +65,15 @@ STATUS_BITGETS2VT: Dict[int, Status] = {
 }
 
 PLANSTATUS_BITGETS2VT: Dict[int, Status] = {
+    "live": Status.NOTTRADED,
     "not_trigger": Status.NOTTRADED,
-    "triggered":Status.ALLTRADED,
-    "fail_trigger": Status.REJECTED,
-    "cancel": Status.CANCELLED,
     "executing":Status.NOTTRADED,
-    
+    "triggered":Status.ALLTRADED,
+    "executed":Status.ALLTRADED,
+    "fail_trigger": Status.REJECTED,
+    "fail_execute": Status.REJECTED,
+    "canceled": Status.CANCELLED,
+    "cancelled": Status.CANCELLED,
 }
 
 ORDERTYPE_VT2BITGETS: Dict[OrderType, Any] = {
@@ -322,6 +325,7 @@ class BitGetSRestApi(RestClient):
         self.query_contract()
         self.query_account()
         self.query_order()
+        self.query_order_algo()
 
     def get_margin_coin(self, symbol:str):
         """
@@ -357,6 +361,22 @@ class BitGetSRestApi(RestClient):
                 method="GET",
                 path="/api/v2/mix/order/orders-pending",
                 callback=self.on_query_order,
+                params=params
+            )
+
+    def query_order_algo(self):
+        """
+        查询合约活动计划委托单
+        """
+        for product in PRODUCT_TYPES:
+            params = {
+                "productType": product,
+                "planType": "normal_plan"
+                }
+            self.add_request(
+                method="GET",
+                path="/api/v2/mix/order/orders-plan-pending",
+                callback=self.on_query_order_algo,
                 params=params
             )
 
@@ -486,23 +506,23 @@ class BitGetSRestApi(RestClient):
             if req.offset == Offset.OPEN:
                 # 开多
                 side = "buy"
-                tradeSide = "open"
+                trade_side = "open"
             
             else:
                 # 平空
                 side = "sell"
-                tradeSide = "close"
+                trade_side = "close"
 
         else:
             if req.offset == Offset.OPEN:
                 # 开空
                 side = "sell"
-                tradeSide = "open"
+                trade_side = "open"
             
             else:
                 # 平多
                 side = "buy"
-                tradeSide = "close"
+                trade_side = "close"
 
         if order.type==OrderType.STOP:
             data = {
@@ -635,7 +655,7 @@ class BitGetSRestApi(RestClient):
         if not data:
             return
         for order_data in data:
-            order_datetime =  get_local_datetime(int(order_data["cTime"]))
+            order_datetime =  get_local_datetime(int(order_data["uTime"]))
 
             side = order_data["side"]
             if order_data["reduceOnly"] in ["yes", "YES"]:
@@ -669,8 +689,52 @@ class BitGetSRestApi(RestClient):
                 gateway_name=self.gateway_name,
             )
             self.gateway.on_order(order)
+    
+    def on_query_order_algo(self, data: dict, request: Request) -> None:
+        """
+        收到计划委托回报
+        """
 
-        self.gateway.write_log("当前委托信息查询成功")
+        if self.check_error(data, "查询活动计划委托"):
+            return
+        data = data["data"]["entrustedList"]
+        if not data:
+            return
+        for order_data in data:
+            order_datetime =  get_local_datetime(int(order_data["uTime"]))
+
+            # 开平仓、交易方向
+            side = order_data["side"]
+            if order_data["tradeSide"] == "open":
+                offset = Offset.OPEN
+                if side == "buy":
+                    direction = Direction.LONG
+
+                else:
+                    direction = Direction.SHORT
+
+            else:
+                offset = Offset.CLOSE
+                if side == "buy":
+                    direction = Direction.SHORT
+
+                else:
+                    direction = Direction.LONG
+
+            order = OrderData(
+                symbol=order_data["symbol"],
+                exchange=Exchange.BITGET,
+                orderid=order_data["clientOid"],
+                type=OrderType.STOP,
+                offset=offset,
+                direction=direction,
+                price=float(order_data["triggerPrice"]),
+                volume=float(order_data["size"]),
+                status=PLANSTATUS_BITGETS2VT[order_data["planStatus"]],
+                datetime = order_datetime,
+                gateway_name=self.gateway_name
+            )
+            self.gateway.on_order(order)
     
     def on_query_contract(self, data: dict, request: Request) -> None:
         """
@@ -1266,44 +1330,40 @@ class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
         收到计划委托回报
         """
         for data in raw:
-            order_datetime = get_local_datetime(int(data["cTime"]))
-            orderid = data["cOid"]
-            if PLANSTATUS_BITGETS2VT[data["state"]]==Status.ALLTRADED:
-                traded=float(data["sz"])
+            order_datetime = get_local_datetime(int(data["uTime"]))
+
+            # 开平仓、交易方向
+            side = data["side"]
+            if data["tradeSide"] == "open":
+                offset = Offset.OPEN
+                if side == "buy":
+                    direction = Direction.LONG
+
+                else:
+                    direction = Direction.SHORT
+
             else:
-                traded=None
+                offset = Offset.CLOSE
+                if side == "buy":
+                    direction = Direction.SHORT
+
+                else:
+                    direction = Direction.LONG
+
             order = OrderData(
                 symbol=data["instId"],
                 exchange=Exchange.BITGET,
-                orderid=orderid,
+                orderid=data["clientOid"],
                 type=OrderType.STOP,
-                direction=DIRECTION_BITGETS2VT[data["tS"]],
-                price=float(data["ordPx"]),
-                volume=float(data["sz"]),
-                traded=traded,
-                status=PLANSTATUS_BITGETS2VT[data["state"]],
+                offset=offset,
+                direction=direction,
+                price=float(data["triggerPrice"]),
+                volume=float(data["size"]),
+                status=PLANSTATUS_BITGETS2VT[data["status"]],
                 datetime = order_datetime,
                 gateway_name=self.gateway_name
             )
             self.gateway.on_order(order)
-
-            # 推送成交事件
-            if not order.traded:
-                return
-            self.trade_count += 1
-            trade = TradeData(
-                symbol=order.symbol,
-                exchange=Exchange.BITGET,
-                orderid=order.orderid,
-                tradeid=str(self.trade_count),
-                direction=order.direction,
-                offset=order.offset,
-                price=float(data["ordPx"]),
-                volume=float(data["sz"]),
-                datetime= get_local_datetime(int(data["uTime"])),
-                gateway_name=self.gateway_name,
-            )
-            self.gateway.on_trade(trade)
     
     def on_account(self, data:dict):
         """
@@ -1318,13 +1378,15 @@ class BitGetSTradeWebsocketApi(BitGetSWebsocketApiBase):
         收到持仓回报
         """
         for pos_data in data:
+            volume = float(pos_data["available"])
+            price = float(pos_data["openPriceAvg"]) if volume else 0
             position = PositionData(
                 symbol = pos_data["instId"],
                 exchange = Exchange.BITGET,
                 exchange_user=self.gateway.account_name,
                 direction = HOLDSIDE_BITGETS2VT[pos_data["holdSide"]],
-                volume = float(pos_data["available"]),
-                price = float(pos_data["openPriceAvg"]),
+                volume = volume,
+                price = price,
                 pnl = float(pos_data["unrealizedPL"]),
                 gateway_name = self.gateway_name
             )
