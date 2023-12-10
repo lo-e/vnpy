@@ -30,9 +30,9 @@
     "XRPUSDT.BINANCE",
     "YGGUSDT.BINANCE",
     "SUIUSDT.BINANCE",
-    "BIGTIME.BINANCE",
-    "BLUR.BINANCE",
-    "GMX.BINANCE"
+    "BIGTIMEUSDT.BINANCE",
+    "BLURUSDT.BINANCE",
+    "GMXUSDT.BINANCE"
   ],
   "copy_setting": {
     "OKX": {
