@@ -42,6 +42,11 @@
         "trader": "从小有个百万梦",
         "copy_assets": 400,
         "trade_assets": 482
+      },
+      "loesuperman": {
+        "trader": "banama",
+        "copy_assets": 200,
+        "trade_assets": 100
       }
     }
   }
