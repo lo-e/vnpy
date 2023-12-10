@@ -52,6 +52,7 @@ class CopytradeStrategy(CtaTemplate):
     def __init__(self, ctaEngine, setting):
         self.symbol_pos_dict = {} # 合约持仓字典
         self.target_symbol_pos_dict = {} #  合约目标持仓字典
+        self.wait_tick_symbols = set() # 等待行情数据的合约集合
 
         # 跟单设置
         self.copy_setting = {}
@@ -81,6 +82,10 @@ class CopytradeStrategy(CtaTemplate):
                 self.cta_engine.main_engine.subscribe(req, contract.gateway_name)
             else:
                 self.write_log(f"行情订阅失败，找不到合约{vt_symbol}")
+        
+        # 开启新线程等待行情数据
+        t = Thread(target=self.wait_symbol_tick)
+        t.start()
 
         # oms_engine = self.cta_engine.main_engine.engines["oms"]
         # all_contracts = oms_engine.get_all_contracts()
@@ -151,9 +156,8 @@ class CopytradeStrategy(CtaTemplate):
                     )
                     self.cta_engine.main_engine.subscribe(req, contract.gateway_name)
                     
-                    # 开启新线程等待最新tick
-                    t = Thread(target=self.wait_symbol_tick, args=(vt_symbol,))
-                    t.start()
+                    # 行情数据监控
+                    self.wait_tick_symbols.add(vt_symbol)
 
                 else:
                     # 合约目标持仓更新
@@ -234,10 +238,11 @@ class CopytradeStrategy(CtaTemplate):
     def wait_symbol_tick(self, vt_symbol:str):
         oms_engine = self.cta_engine.main_engine.engines["oms"]
         while True:
-            tick = oms_engine.ticks.get(vt_symbol, None)
-            if tick:
-                self.on_mainengine_position_updated(event=None)
-                break
+            for vt_symbol in list(self.wait_tick_symbols):
+                tick = oms_engine.ticks.get(vt_symbol, None)
+                if tick:
+                    self.on_mainengine_position_updated(event=None)
+                    self.wait_tick_symbols.remove(vt_symbol)
             sleep(0.1)
 
     def send_symbol_order(self, symbol, direction, offset, price, volume, stop=False):
