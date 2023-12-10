@@ -101,7 +101,7 @@ class CopytradeStrategy(CtaTemplate):
 
                 # 转换合约
                 pure_symbol = position.symbol.split("-")[0]
-                if pure_symbol in ["PEPE", "SHIB"]:
+                if pure_symbol in ["PEPE", "SHIB", "XEC", "LUNC", "FLOKI", "BONK"]:
                     binance_symbol = f"1000{pure_symbol}USDT.BINANCE"
                     target_pos = target_pos / 1000
                     
@@ -123,6 +123,9 @@ class CopytradeStrategy(CtaTemplate):
         oms_engine = self.cta_engine.main_engine.engines["oms"]
         for vt_symbol, checking_pos in checking_data.items():
             contract = self.cta_engine.main_engine.get_contract(vt_symbol)
+            if not contract:
+                self.send_ding_talk(f"交易合约{vt_symbol}不存在")
+                return
 
             # 检查合约目标持仓是否发生变化
             checking_pos = round_to(checking_pos, contract.min_volume)

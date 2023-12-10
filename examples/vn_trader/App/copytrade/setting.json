@@ -29,7 +29,10 @@
     "WAVESUSDT.BINANCE",
     "XRPUSDT.BINANCE",
     "YGGUSDT.BINANCE",
-    "SUIUSDT.BINANCE"
+    "SUIUSDT.BINANCE",
+    "BIGTIME.BINANCE",
+    "BLUR.BINANCE",
+    "GMX.BINANCE"
   ],
   "copy_setting": {
     "OKX": {
