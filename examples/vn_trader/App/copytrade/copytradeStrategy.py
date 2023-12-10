@@ -71,15 +71,23 @@ class CopytradeStrategy(CtaTemplate):
         self.copy_setting = setting.get("copy_setting", {})
 
         # 订阅合约
-        for vt_symbol in setting.get("vt_symbols", []):
-            contract = self.cta_engine.main_engine.get_contract(vt_symbol)
-            if contract:
-                req = SubscribeRequest(
-                    symbol=contract.symbol, exchange=contract.exchange
-                )
-                self.cta_engine.main_engine.subscribe(req, contract.gateway_name)
-            else:
-                self.write_log(f"行情订阅失败，找不到合约{vt_symbol}")
+        # for vt_symbol in setting.get("vt_symbols", []):
+        #     contract = self.cta_engine.main_engine.get_contract(vt_symbol)
+        #     if contract:
+        #         req = SubscribeRequest(
+        #             symbol=contract.symbol, exchange=contract.exchange
+        #         )
+        #         self.cta_engine.main_engine.subscribe(req, contract.gateway_name)
+        #     else:
+        #         self.write_log(f"行情订阅失败，找不到合约{vt_symbol}")
+
+        oms_engine = self.cta_engine.main_engine.engines["oms"]
+        all_contracts = oms_engine.get_all_contracts()
+        for contract in all_contracts:
+            req = SubscribeRequest(
+                symbol=contract.symbol, exchange=contract.exchange
+            )
+            self.cta_engine.main_engine.subscribe(req, contract.gateway_name)
 
     def on_mainengine_position_updated(self, event):
         # 合约的目标仓位
