@@ -71,15 +71,23 @@ class CopytradeStrategy(CtaTemplate):
         self.copy_setting = setting.get("copy_setting", {})
 
         # 订阅合约
-        for vt_symbol in setting.get("vt_symbols", []):
-            contract = self.cta_engine.main_engine.get_contract(vt_symbol)
-            if contract:
-                req = SubscribeRequest(
-                    symbol=contract.symbol, exchange=contract.exchange
-                )
-                self.cta_engine.main_engine.subscribe(req, contract.gateway_name)
-            else:
-                self.write_log(f"行情订阅失败，找不到合约{vt_symbol}")
+        # for vt_symbol in setting.get("vt_symbols", []):
+        #     contract = self.cta_engine.main_engine.get_contract(vt_symbol)
+        #     if contract:
+        #         req = SubscribeRequest(
+        #             symbol=contract.symbol, exchange=contract.exchange
+        #         )
+        #         self.cta_engine.main_engine.subscribe(req, contract.gateway_name)
+        #     else:
+        #         self.write_log(f"行情订阅失败，找不到合约{vt_symbol}")
+
+        oms_engine = self.cta_engine.main_engine.engines["oms"]
+        all_contracts = oms_engine.get_all_contracts()
+        for contract in all_contracts:
+            req = SubscribeRequest(
+                symbol=contract.symbol, exchange=contract.exchange
+            )
+            self.cta_engine.main_engine.subscribe(req, contract.gateway_name)
 
     def on_mainengine_position_updated(self, event):
         # 合约的目标仓位
@@ -101,7 +109,7 @@ class CopytradeStrategy(CtaTemplate):
 
                 # 转换合约
                 pure_symbol = position.symbol.split("-")[0]
-                if pure_symbol in ["PEPE", "SHIB"]:
+                if pure_symbol in ["PEPE", "SHIB", "XEC", "LUNC", "FLOKI", "BONK"]:
                     binance_symbol = f"1000{pure_symbol}USDT.BINANCE"
                     target_pos = target_pos / 1000
                     
@@ -123,6 +131,9 @@ class CopytradeStrategy(CtaTemplate):
         oms_engine = self.cta_engine.main_engine.engines["oms"]
         for vt_symbol, checking_pos in checking_data.items():
             contract = self.cta_engine.main_engine.get_contract(vt_symbol)
+            if not contract:
+                self.send_ding_talk(f"交易合约{vt_symbol}不存在")
+                return
 
             # 检查合约目标持仓是否发生变化
             checking_pos = round_to(checking_pos, contract.min_volume)

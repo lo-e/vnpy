@@ -29,7 +29,10 @@
     "WAVESUSDT.BINANCE",
     "XRPUSDT.BINANCE",
     "YGGUSDT.BINANCE",
-    "SUIUSDT.BINANCE"
+    "SUIUSDT.BINANCE",
+    "BIGTIME.BINANCE",
+    "BLUR.BINANCE",
+    "GMX.BINANCE"
   ],
   "copy_setting": {
     "OKX": {
@@ -42,6 +45,11 @@
         "trader": "从小有个百万梦",
         "copy_assets": 400,
         "trade_assets": 482
+      },
+      "loesuperman": {
+        "trader": "banama",
+        "copy_assets": 200,
+        "trade_assets": 433
       }
     }
   }

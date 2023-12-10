@@ -513,7 +513,7 @@ if __name__ == "__main__":
         window=5,
         interval=Interval.MINUTE,
         start_date="2020-1-1",
-        end_date="2023-12-31",
+        end_date="2123-12-31",
         from_data_base=True,
     )
     processor.start()
