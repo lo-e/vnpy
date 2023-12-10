@@ -87,14 +87,6 @@ class CopytradeStrategy(CtaTemplate):
         t = Thread(target=self.wait_symbol_tick)
         t.start()
 
-        # oms_engine = self.cta_engine.main_engine.engines["oms"]
-        # all_contracts = oms_engine.get_all_contracts()
-        # for contract in all_contracts:
-        #     req = SubscribeRequest(
-        #         symbol=contract.symbol, exchange=contract.exchange
-        #     )
-        #     self.cta_engine.main_engine.subscribe(req, contract.gateway_name)
-
     def on_mainengine_position_updated(self, event):
         # 合约的目标仓位
         target_symbol_pos_dict = {}
@@ -235,7 +227,7 @@ class CopytradeStrategy(CtaTemplate):
 
         self.put_timer_event()
 
-    def wait_symbol_tick(self, vt_symbol:str):
+    def wait_symbol_tick(self):
         oms_engine = self.cta_engine.main_engine.engines["oms"]
         while True:
             for vt_symbol in list(self.wait_tick_symbols):
