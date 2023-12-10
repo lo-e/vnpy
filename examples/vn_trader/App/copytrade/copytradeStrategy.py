@@ -23,6 +23,7 @@ import os
 from pathlib import Path
 from vnpy.trader.constant import Exchange
 from vnpy.trader.object import SubscribeRequest
+from time import sleep
 
 class CopytradeStrategy(CtaTemplate):
     """ 跟单交易策略 """
@@ -144,6 +145,16 @@ class CopytradeStrategy(CtaTemplate):
                 if not tick:
                     self.send_ding_talk(f"交易合约{vt_symbol}行情数据缺失")
 
+                    # 订阅合约行情
+                    req = SubscribeRequest(
+                        symbol=contract.symbol, exchange=contract.exchange
+                    )
+                    self.cta_engine.main_engine.subscribe(req, contract.gateway_name)
+                    
+                    # 开启新线程等待最新tick
+                    t = Thread(target=self.wait_symbol_tick, args=(vt_symbol,))
+                    t.start()
+
                 else:
                     # 合约目标持仓更新
                     target_pos = checking_pos
@@ -219,6 +230,15 @@ class CopytradeStrategy(CtaTemplate):
                                 self.send_symbol_order(vt_symbol, Direction.LONG, Offset.CLOSE, long_close_price, abs(volume))
 
         self.put_timer_event()
+
+    def wait_symbol_tick(self, vt_symbol:str):
+        oms_engine = self.cta_engine.main_engine.engines["oms"]
+        while True:
+            tick = oms_engine.ticks.get(vt_symbol, None)
+            if tick:
+                self.on_mainengine_position_updated(event=None)
+                break
+            sleep(0.1)
 
     def send_symbol_order(self, symbol, direction, offset, price, volume, stop=False):
         contract = self.cta_engine.main_engine.get_contract(symbol)
