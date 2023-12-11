@@ -44,12 +44,12 @@
       "wawjlc": {
         "trader": "从小有个百万梦",
         "copy_assets": 400,
-        "trade_assets": 482
+        "trade_assets": 500
       },
       "loesuperman": {
-        "trader": "banama",
-        "copy_assets": 200,
-        "trade_assets": 433
+        "trader": "",
+        "copy_assets": 0,
+        "trade_assets": 0
       }
     }
   }
