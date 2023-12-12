@@ -37,9 +37,9 @@
   "copy_setting": {
     "OKX": {
       "lo-e": {
-        "trader": "",
-        "copy_assets": 0,
-        "trade_assets": 0
+        "trader": "墙头草",
+        "copy_assets": 500,
+        "trade_assets": 250
       },
       "wawjlc": {
         "trader": "从小有个百万梦",
