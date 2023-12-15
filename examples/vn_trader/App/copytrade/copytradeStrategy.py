@@ -107,7 +107,7 @@ class CopytradeStrategy(CtaTemplate):
 
                 # 转换合约
                 pure_symbol = position.symbol.split("-")[0]
-                if pure_symbol in ["PEPE", "SHIB", "XEC", "LUNC", "FLOKI", "BONK"]:
+                if pure_symbol in ["PEPE", "SHIB", "XEC", "LUNC", "FLOKI", "BONK", "SATS"]:
                     binance_symbol = f"1000{pure_symbol}USDT.BINANCE"
                     target_pos = target_pos / 1000
                     
