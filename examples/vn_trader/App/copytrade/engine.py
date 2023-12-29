@@ -602,15 +602,23 @@ class CopytradeEngine(BaseEngine):
             callback=self.strategyDbUpdateCallback,
         )
 
-        # 保存到文件
+        # 保存到文件（数据有变化时才保存）
         json_file = self.get_strategie_sync_file_path(strategy)
+        history_data = {}
         try:
-            with open(json_file, "w", encoding="utf-8") as file:
-                file.write(
-                    json.dumps(d, ensure_ascii=False)
-                )
+            with open(json_file, 'r') as f:
+                history_data = json.load(f)
         except:
             pass
+        
+        if history_data != d:
+            try:
+                with open(json_file, "w", encoding="utf-8") as file:
+                    file.write(
+                        json.dumps(d, ensure_ascii=False)
+                    )
+            except:
+                pass
     
     def get_strategie_sync_file_path(self, strategy):
         dir = os.path.dirname(os.path.realpath(__file__))
