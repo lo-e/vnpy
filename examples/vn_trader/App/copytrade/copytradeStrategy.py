@@ -24,6 +24,12 @@ from pathlib import Path
 from vnpy.trader.constant import Exchange
 from vnpy.trader.object import SubscribeRequest
 from time import sleep
+from enum import Enum
+from decimal import Decimal
+
+class CopytradePositionMode(Enum):
+    REAL = "真实仓位"
+    ORDER = "订单仓位"
 
 class CopytradeStrategy(CtaTemplate):
     """ 跟单交易策略 """
@@ -35,6 +41,7 @@ class CopytradeStrategy(CtaTemplate):
     parameters = [
         "strategy_name",
         "vt_symbol",
+        "pos_mode"
     ]
 
     # 变量列表，保存了变量的名称
@@ -50,6 +57,7 @@ class CopytradeStrategy(CtaTemplate):
     ]
 
     def __init__(self, ctaEngine, setting):
+        self.pos_mode = CopytradePositionMode.ORDER # 仓位统计模式
         self.symbol_pos_dict = {} # 合约持仓字典
         self.target_symbol_pos_dict = {} #  合约目标持仓字典
         self.wait_tick_symbols = set() # 等待行情数据的合约集合
@@ -159,10 +167,11 @@ class CopytradeStrategy(CtaTemplate):
                     else:
                         self.target_symbol_pos_dict.pop(vt_symbol)
 
-                    # 取消该合约正在进行中的订单
-                    active_orders = oms_engine.get_all_active_orders(vt_symbol)
-                    for order in active_orders:
-                        self.cancel_order(order.vt_orderid)
+                    # 仓位统计模式为实盘模式，取消该合约正在进行中的订单
+                    if self.pos_mode == CopytradePositionMode.REAL:
+                        active_orders = oms_engine.get_all_active_orders(vt_symbol)
+                        for order in active_orders:
+                            self.cancel_order(order.vt_orderid)
 
                     # 发出订单
                     long_open_price = tick.last_price + contract.pricetick*100
@@ -271,7 +280,21 @@ class CopytradeStrategy(CtaTemplate):
                 if not value_cross:
                     self.send_ding_talk(f"开仓订单价值未满足要求\n合约：{symbol}\n价格：{tick.last_price}\n数量：{volume}\n价值：{order_value}")
                     return
-                
+        
+        # 仓位统计模式为订单模式，手动统计仓位
+        if self.pos_mode == CopytradePositionMode.ORDER:
+            if direction == Direction.LONG:
+                self.symbol_pos_dict[symbol] = float(
+                    Decimal(str(self.symbol_pos_dict.get(symbol, 0))) + Decimal(str(volume))
+                )
+
+            else:
+                self.symbol_pos_dict[symbol] = float(
+                    Decimal(str(self.symbol_pos_dict.get(symbol, 0))) - Decimal(str(volume))
+                )
+            if symbol in self.symbol_pos_dict and not self.symbol_pos_dict[symbol]:
+                self.symbol_pos_dict.pop(symbol)
+
         super().send_symbol_order(symbol, direction, offset, price, volume, stop)
 
     def on_trade(self, trade):

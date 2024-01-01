@@ -62,7 +62,7 @@ import re
 from collections import OrderedDict
 from time import sleep
 from decimal import Decimal
-from .copytradeStrategy import CopytradeStrategy
+from .copytradeStrategy import CopytradeStrategy, CopytradePositionMode
 import json
 
 STOP_STATUS_MAP = {
@@ -175,17 +175,19 @@ class CopytradeEngine(BaseEngine):
         if not strategy:
             return
 
-        if trade.direction == Direction.LONG:
-            strategy.symbol_pos_dict[trade.vt_symbol] = float(
-                Decimal(str(strategy.symbol_pos_dict.get(trade.vt_symbol, 0))) + Decimal(str(trade.volume))
-            )
+        # 仓位统计模式为实盘模式，根据实盘成交统计仓位
+        if strategy.pos_mode == CopytradePositionMode.REAL:
+            if trade.direction == Direction.LONG:
+                strategy.symbol_pos_dict[trade.vt_symbol] = float(
+                    Decimal(str(strategy.symbol_pos_dict.get(trade.vt_symbol, 0))) + Decimal(str(trade.volume))
+                )
 
-        else:
-            strategy.symbol_pos_dict[trade.vt_symbol] = float(
-                Decimal(str(strategy.symbol_pos_dict.get(trade.vt_symbol, 0))) - Decimal(str(trade.volume))
-            )
-        if trade.vt_symbol in strategy.symbol_pos_dict and not strategy.symbol_pos_dict[trade.vt_symbol]:
-            strategy.symbol_pos_dict.pop(trade.vt_symbol)
+            else:
+                strategy.symbol_pos_dict[trade.vt_symbol] = float(
+                    Decimal(str(strategy.symbol_pos_dict.get(trade.vt_symbol, 0))) - Decimal(str(trade.volume))
+                )
+            if trade.vt_symbol in strategy.symbol_pos_dict and not strategy.symbol_pos_dict[trade.vt_symbol]:
+                strategy.symbol_pos_dict.pop(trade.vt_symbol)
 
         self.call_strategy_func(strategy, strategy.on_trade, trade)
         self.put_strategy_event(strategy)
