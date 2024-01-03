@@ -1,1 +1,1 @@
-{"strategy_name": "COPYTRADE", "vt_symbol": "", "pos": 0, "symbol_pos_dict": {"ETHUSDT.BINANCE": 0.188, "BTCUSDT.BINANCE": 0.025}, "target_symbol_pos_dict": {"BTCUSDT.BINANCE": 0.025, "ETHUSDT.BINANCE": 0.188}}
+{"strategy_name": "COPYTRADE", "vt_symbol": "", "pos": 0, "symbol_pos_dict": {}, "target_symbol_pos_dict": {}}
