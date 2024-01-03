@@ -57,7 +57,7 @@ class CopytradeStrategy(CtaTemplate):
     ]
 
     def __init__(self, ctaEngine, setting):
-        self.pos_mode = CopytradePositionMode.ORDER # 仓位统计模式
+        self.pos_mode = CopytradePositionMode.REAL # 仓位统计模式
         self.symbol_pos_dict = {} # 合约持仓字典
         self.target_symbol_pos_dict = {} #  合约目标持仓字典
         self.wait_tick_symbols = set() # 等待行情数据的合约集合
