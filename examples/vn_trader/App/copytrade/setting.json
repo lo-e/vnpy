@@ -1,4 +1,5 @@
 {
+  "strategy_name": "COPYTRADE",
   "vt_symbols": [
     "BTCUSDT.BINANCE",
     "ETHUSDT.BINANCE",
@@ -29,5 +30,6 @@
         "trade_assets": 700
       }
     }
-  }
+  },
+  "start": true
 }

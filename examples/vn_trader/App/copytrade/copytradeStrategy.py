@@ -40,8 +40,9 @@ class CopytradeStrategy(CtaTemplate):
     # 参数列表，保存了参数的名称
     parameters = [
         "strategy_name",
-        "vt_symbol",
-        "pos_mode"
+        "pos_mode",
+        "portfolio_value",
+        "stop_loss"
     ]
 
     # 变量列表，保存了变量的名称
@@ -62,8 +63,16 @@ class CopytradeStrategy(CtaTemplate):
         self.target_symbol_pos_dict = {} #  合约目标持仓字典
         self.wait_tick_symbols = set() # 等待行情数据的合约集合
 
-        # 跟单设置
-        self.copy_setting = {}
+        # 导入跟单设置
+        self.copy_setting = setting.get("copy_setting", {})
+
+        # 投资组合设置
+        portfolio_setting = setting.get("portfolio", {})
+        self.portfolio_value = portfolio_setting.get("capital", 1000000000)
+        self.stop_loss = portfolio_setting.get("stop_loss", 1)
+
+        # 默认合约列表
+        self.default_vt_symbols = setting.get("vt_symbols", [])
 
         # 完成setting.json参数的配置
         super(CopytradeStrategy, self).__init__(
@@ -74,14 +83,8 @@ class CopytradeStrategy(CtaTemplate):
         # 订阅交易所仓位更新
         self.cta_engine.event_engine.register(EVENT_MAINENGINE_POSITION_UPDATED, self.on_mainengine_position_updated)
 
-        # 导入跟单设置
-        dir_path = Path(os.path.dirname(os.path.realpath(__file__)))
-        file_path = dir_path.joinpath("setting.json")
-        setting = load_json_path(file_path)
-        self.copy_setting = setting.get("copy_setting", {})
-
         # 订阅合约
-        for vt_symbol in setting.get("vt_symbols", []):
+        for vt_symbol in self.default_vt_symbols:
             contract = self.cta_engine.main_engine.get_contract(vt_symbol)
             if contract:
                 req = SubscribeRequest(
@@ -239,11 +242,14 @@ class CopytradeStrategy(CtaTemplate):
     def wait_symbol_tick(self):
         oms_engine = self.cta_engine.main_engine.engines["oms"]
         while True:
-            for vt_symbol in list(self.wait_tick_symbols):
-                tick = oms_engine.ticks.get(vt_symbol, None)
-                if tick:
-                    self.on_mainengine_position_updated(event=None)
-                    self.wait_tick_symbols.remove(vt_symbol)
+            try:
+                for vt_symbol in list(self.wait_tick_symbols):
+                    tick = oms_engine.ticks.get(vt_symbol, None)
+                    if tick:
+                        self.on_mainengine_position_updated(event=None)
+                        self.wait_tick_symbols.remove(vt_symbol)
+            except Exception as e:
+                pass
             sleep(0.1)
 
     def send_symbol_order(self, symbol, direction, offset, price, volume, stop=False):

@@ -101,17 +101,17 @@ class CopytradeEngine(BaseEngine):
         self.offset_converter = OffsetConverter(self.main_engine)
 
     def init_engine(self):
-        setting = {"strategy_name": "COPYTRADE", "start": True}
+        dir_path = Path(os.path.dirname(os.path.realpath(__file__)))
+        file_path = dir_path.joinpath("setting.json")
+        setting = load_json_path(file_path)
         self.add_strategy(setting)
         self.register_event()
         self.write_log("跟单交易引擎初始化成功")
 
     def close(self):
-        """"""
         self.stop_all_strategies()
 
     def register_event(self):
-        """"""
         self.event_engine.register(EVENT_TICK, self.process_tick_event)
         self.event_engine.register(EVENT_ORDER, self.process_order_event)
         self.event_engine.register(EVENT_TRADE, self.process_trade_event)
