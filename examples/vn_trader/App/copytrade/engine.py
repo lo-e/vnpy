@@ -62,7 +62,7 @@ import re
 from collections import OrderedDict
 from time import sleep
 from decimal import Decimal
-from .copytradeStrategy import CopytradeStrategy, CopytradePositionMode
+from .copytradeStrategy import CopytradeStrategy
 import json
 
 STOP_STATUS_MAP = {
@@ -101,17 +101,17 @@ class CopytradeEngine(BaseEngine):
         self.offset_converter = OffsetConverter(self.main_engine)
 
     def init_engine(self):
-        setting = {"strategy_name": "COPYTRADE", "start": True}
+        dir_path = Path(os.path.dirname(os.path.realpath(__file__)))
+        file_path = dir_path.joinpath("setting.json")
+        setting = load_json_path(file_path)
         self.add_strategy(setting)
         self.register_event()
         self.write_log("跟单交易引擎初始化成功")
 
     def close(self):
-        """"""
         self.stop_all_strategies()
 
     def register_event(self):
-        """"""
         self.event_engine.register(EVENT_TICK, self.process_tick_event)
         self.event_engine.register(EVENT_ORDER, self.process_order_event)
         self.event_engine.register(EVENT_TRADE, self.process_trade_event)
@@ -174,21 +174,74 @@ class CopytradeEngine(BaseEngine):
         strategy = self.orderid_strategy_map.get(trade.vt_orderid, None)
         if not strategy:
             return
+        
+        # 统计合约净持仓
+        if trade.direction == Direction.LONG:
+            strategy.symbol_pos_dict[trade.vt_symbol] = float(
+                Decimal(str(strategy.symbol_pos_dict.get(trade.vt_symbol, 0))) + Decimal(str(trade.volume))
+            )
 
-        # 仓位统计模式为实盘模式，根据实盘成交统计仓位
-        if strategy.pos_mode == CopytradePositionMode.REAL:
+        else:
+            strategy.symbol_pos_dict[trade.vt_symbol] = float(
+                Decimal(str(strategy.symbol_pos_dict.get(trade.vt_symbol, 0))) - Decimal(str(trade.volume))
+            )
+        if trade.vt_symbol in strategy.symbol_pos_dict and not strategy.symbol_pos_dict[trade.vt_symbol]:
+            strategy.symbol_pos_dict.pop(trade.vt_symbol)
+
+        # 统计合约多空持仓
+        # data_example = {"BTCUSDT.BINANCE":{"long":{"volume":1, "price":100},
+        #                                    "short":{"volume":2, "price":200}}}
+        absolute_pos_data = strategy.symbol_absolute_pos_dict.get(trade.vt_symbol, {})
+        long_data = absolute_pos_data.get("long", {})
+        long_volume = long_data.get("volume", 0)
+        long_price = long_data.get("price", 0)
+        long_value = abs(long_volume * long_price)
+
+        short_data = absolute_pos_data.get("short", {})
+        short_volume = short_data.get("volume", 0)
+        short_price = short_data.get("price", 0)
+        short_value = abs(short_volume * short_price)
+
+        if trade.offset == Offset.OPEN:
             if trade.direction == Direction.LONG:
-                strategy.symbol_pos_dict[trade.vt_symbol] = float(
-                    Decimal(str(strategy.symbol_pos_dict.get(trade.vt_symbol, 0))) + Decimal(str(trade.volume))
+                long_volume = float(
+                    Decimal(str(long_volume)) + Decimal(str(trade.volume))
+                )
+                long_value += abs(trade.price * trade.volume)
+                long_price = long_value / abs(long_volume)
+
+            else:
+                short_volume = float(
+                    Decimal(str(short_volume)) + Decimal(str(trade.volume))
+                )
+                short_value += abs(trade.price * trade.volume)
+                short_price = short_value / abs(short_volume)
+        
+        elif trade.offset == Offset.CLOSE or trade.offset == Offset.CLOSETODAY or trade.offset == Offset.CLOSEYESTERDAY:
+            if trade.direction == Direction.LONG:
+                short_volume = float(
+                    Decimal(str(short_volume)) - Decimal(str(trade.volume))
                 )
 
             else:
-                strategy.symbol_pos_dict[trade.vt_symbol] = float(
-                    Decimal(str(strategy.symbol_pos_dict.get(trade.vt_symbol, 0))) - Decimal(str(trade.volume))
+                long_volume = float(
+                    Decimal(str(long_volume)) - Decimal(str(trade.volume))
                 )
-            if trade.vt_symbol in strategy.symbol_pos_dict and not strategy.symbol_pos_dict[trade.vt_symbol]:
-                strategy.symbol_pos_dict.pop(trade.vt_symbol)
+        
+        pos_data = {}
+        if long_volume:
+            pos_data["long"] = {"volume":long_volume, "price":long_price}
 
+        if short_volume:
+            pos_data["short"] = {"volume":short_volume, "price":short_price}
+
+        if pos_data:
+            strategy.symbol_absolute_pos_dict[trade.vt_symbol] = pos_data
+        
+        elif trade.vt_symbol in strategy.symbol_absolute_pos_dict:
+            strategy.symbol_absolute_pos_dict.pop(trade.vt_symbol)
+
+        # 策略响应成交事件
         self.call_strategy_func(strategy, strategy.on_trade, trade)
         self.put_strategy_event(strategy)
 
@@ -380,17 +433,6 @@ class CopytradeEngine(BaseEngine):
 
             # Call on_init function of strategy
             self.call_strategy_func(strategy, strategy.on_init)
-
-            # Subscribe market data
-            for vt_symbol in strategy.symbol_pos_dict.keys():
-                contract = self.main_engine.get_contract(vt_symbol)
-                if contract:
-                    req = SubscribeRequest(
-                        symbol=contract.symbol, exchange=contract.exchange
-                    )
-                    self.main_engine.subscribe(req, contract.gateway_name)
-                else:
-                    self.write_log(f"行情订阅失败，找不到合约{strategy.vt_symbol}", strategy)
 
             # Put event to update init completed status.
             strategy.inited = True

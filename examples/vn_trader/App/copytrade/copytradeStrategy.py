@@ -27,10 +27,6 @@ from time import sleep
 from enum import Enum
 from decimal import Decimal
 
-class CopytradePositionMode(Enum):
-    REAL = "真实仓位"
-    ORDER = "订单仓位"
-
 class CopytradeStrategy(CtaTemplate):
     """ 跟单交易策略 """
 
@@ -40,30 +36,46 @@ class CopytradeStrategy(CtaTemplate):
     # 参数列表，保存了参数的名称
     parameters = [
         "strategy_name",
-        "vt_symbol",
-        "pos_mode"
+        "portfolio_value",
+        "stop_loss"
     ]
 
     # 变量列表，保存了变量的名称
     variables = [
         "symbol_pos_dict",
-        "target_symbol_pos_dict"
+        "target_symbol_pos_dict",
+        "symbol_absolute_pos_dict",
+        "position_pnl",
+        "position_pnl_rate"
     ]
 
     # 同步列表，保存了需要保存到数据库的变量名称
     syncs = [
         "symbol_pos_dict",
-        "target_symbol_pos_dict"
+        "target_symbol_pos_dict",
+        "symbol_absolute_pos_dict",
+        "position_pnl",
+        "position_pnl_rate"
     ]
 
     def __init__(self, ctaEngine, setting):
-        self.pos_mode = CopytradePositionMode.REAL # 仓位统计模式
-        self.symbol_pos_dict = {} # 合约持仓字典
-        self.target_symbol_pos_dict = {} #  合约目标持仓字典
+        self.symbol_pos_dict = {} # 合约净持仓
+        self.target_symbol_pos_dict = {} #  合约目标净持仓
+        self.symbol_absolute_pos_dict = {} # 合约双向持仓数据
         self.wait_tick_symbols = set() # 等待行情数据的合约集合
+        self.position_pnl = 0 # 持仓盈亏
+        self.position_pnl_rate = "" # 持仓盈亏占比（相对投资组合总资金）
 
-        # 跟单设置
-        self.copy_setting = {}
+        # 导入跟单设置
+        self.copy_setting = setting.get("copy_setting", {})
+
+        # 投资组合设置
+        portfolio_setting = setting.get("portfolio", {})
+        self.portfolio_value = portfolio_setting.get("capital", 1000000000)
+        self.stop_loss = portfolio_setting.get("stop_loss", 1)
+
+        # 默认合约列表
+        self.default_vt_symbols = setting.get("vt_symbols", [])
 
         # 完成setting.json参数的配置
         super(CopytradeStrategy, self).__init__(
@@ -74,14 +86,9 @@ class CopytradeStrategy(CtaTemplate):
         # 订阅交易所仓位更新
         self.cta_engine.event_engine.register(EVENT_MAINENGINE_POSITION_UPDATED, self.on_mainengine_position_updated)
 
-        # 导入跟单设置
-        dir_path = Path(os.path.dirname(os.path.realpath(__file__)))
-        file_path = dir_path.joinpath("setting.json")
-        setting = load_json_path(file_path)
-        self.copy_setting = setting.get("copy_setting", {})
-
         # 订阅合约
-        for vt_symbol in setting.get("vt_symbols", []):
+        subscribe_vt_symbols = set(self.default_vt_symbols + list(self.symbol_pos_dict.keys()))
+        for vt_symbol in subscribe_vt_symbols:
             contract = self.cta_engine.main_engine.get_contract(vt_symbol)
             if contract:
                 req = SubscribeRequest(
@@ -93,6 +100,10 @@ class CopytradeStrategy(CtaTemplate):
         
         # 开启新线程等待行情数据
         t = Thread(target=self.wait_symbol_tick)
+        t.start()
+
+        # 开启新线程统计 当前盈亏
+        t = Thread(target=self.calculate_pnl)
         t.start()
 
     def on_mainengine_position_updated(self, event):
@@ -109,9 +120,9 @@ class CopytradeStrategy(CtaTemplate):
             trade_assets = target_setting.get("trade_assets", 0)
             if copy_assets and trade_assets:
                 # 计算目标持仓
-                target_pos = position.volume * trade_assets / copy_assets
+                target_pos = abs(position.volume * trade_assets / copy_assets)
                 if position.direction == Direction.SHORT:
-                    target_pos = abs(target_pos) * -1
+                    target_pos = target_pos * -1
 
                 # 转换合约
                 pure_symbol = position.symbol.split("-")[0]
@@ -167,11 +178,10 @@ class CopytradeStrategy(CtaTemplate):
                     else:
                         self.target_symbol_pos_dict.pop(vt_symbol)
 
-                    # 仓位统计模式为实盘模式，取消该合约正在进行中的订单
-                    if self.pos_mode == CopytradePositionMode.REAL:
-                        active_orders = oms_engine.get_all_active_orders(vt_symbol)
-                        for order in active_orders:
-                            self.cancel_order(order.vt_orderid)
+                    # 取消该合约正在进行中的订单
+                    active_orders = oms_engine.get_all_active_orders(vt_symbol)
+                    for order in active_orders:
+                        self.cancel_order(order.vt_orderid)
 
                     # 发出订单
                     long_open_price = tick.last_price + contract.pricetick*100
@@ -239,12 +249,45 @@ class CopytradeStrategy(CtaTemplate):
     def wait_symbol_tick(self):
         oms_engine = self.cta_engine.main_engine.engines["oms"]
         while True:
-            for vt_symbol in list(self.wait_tick_symbols):
-                tick = oms_engine.ticks.get(vt_symbol, None)
-                if tick:
-                    self.on_mainengine_position_updated(event=None)
-                    self.wait_tick_symbols.remove(vt_symbol)
+            try:
+                for vt_symbol in list(self.wait_tick_symbols):
+                    tick = oms_engine.ticks.get(vt_symbol, None)
+                    if tick:
+                        self.on_mainengine_position_updated(event=None)
+                        self.wait_tick_symbols.remove(vt_symbol)
+            except Exception as e:
+                pass
             sleep(0.1)
+
+    def calculate_pnl(self):
+        while True:
+            pnl = 0
+            try:
+                oms_engine = self.cta_engine.main_engine.engines["oms"]
+                for vt_symbol in list(self.symbol_absolute_pos_dict.keys()):
+                    pos_data = self.symbol_absolute_pos_dict[vt_symbol]
+                    tick = oms_engine.ticks.get(vt_symbol, None)
+                    if tick:
+                        long_data = pos_data.get("long", {})
+                        long_volume = abs(long_data.get("volume", 0))
+                        long_price = long_data.get("price", 0)
+                        if long_volume and long_price and tick.last_price:
+                            long_pnl = long_volume * (tick.last_price - long_price)
+                            pnl += long_pnl
+
+                        short_data = pos_data.get("short", {})
+                        short_volume = abs(short_data.get("volume", 0))
+                        short_price = short_data.get("price", 0)
+                        if short_volume and short_price and tick.last_price:
+                            short_pnl = short_volume * (short_price - tick.last_price)
+                            pnl += short_pnl
+                
+                self.position_pnl = round(pnl, 2)
+                self.position_pnl_rate = f"{round(pnl / self.portfolio_value * 100, 2)}%"
+
+            except Exception as e:
+                pass
+            sleep(1)
 
     def send_symbol_order(self, symbol, direction, offset, price, volume, stop=False):
         contract = self.cta_engine.main_engine.get_contract(symbol)
@@ -281,20 +324,6 @@ class CopytradeStrategy(CtaTemplate):
                     self.send_ding_talk(f"开仓订单价值未满足要求\n合约：{symbol}\n价格：{tick.last_price}\n数量：{volume}\n价值：{order_value}")
                     return
         
-        # 仓位统计模式为订单模式，手动统计仓位
-        if self.pos_mode == CopytradePositionMode.ORDER:
-            if direction == Direction.LONG:
-                self.symbol_pos_dict[symbol] = float(
-                    Decimal(str(self.symbol_pos_dict.get(symbol, 0))) + Decimal(str(volume))
-                )
-
-            else:
-                self.symbol_pos_dict[symbol] = float(
-                    Decimal(str(self.symbol_pos_dict.get(symbol, 0))) - Decimal(str(volume))
-                )
-            if symbol in self.symbol_pos_dict and not self.symbol_pos_dict[symbol]:
-                self.symbol_pos_dict.pop(symbol)
-
         super().send_symbol_order(symbol, direction, offset, price, volume, stop)
 
     def on_trade(self, trade):
