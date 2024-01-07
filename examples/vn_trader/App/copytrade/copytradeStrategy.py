@@ -44,14 +44,18 @@ class CopytradeStrategy(CtaTemplate):
     variables = [
         "symbol_pos_dict",
         "target_symbol_pos_dict",
-        "symbol_absolute_pos_dict"
+        "symbol_absolute_pos_dict",
+        "position_pnl",
+        "position_pnl_rate"
     ]
 
     # 同步列表，保存了需要保存到数据库的变量名称
     syncs = [
         "symbol_pos_dict",
         "target_symbol_pos_dict",
-        "symbol_absolute_pos_dict"
+        "symbol_absolute_pos_dict",
+        "position_pnl",
+        "position_pnl_rate"
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -59,6 +63,8 @@ class CopytradeStrategy(CtaTemplate):
         self.target_symbol_pos_dict = {} #  合约目标净持仓
         self.symbol_absolute_pos_dict = {} # 合约双向持仓数据
         self.wait_tick_symbols = set() # 等待行情数据的合约集合
+        self.position_pnl = 0 # 持仓盈亏
+        self.position_pnl_rate = "" # 持仓盈亏占比（相对投资组合总资金）
 
         # 导入跟单设置
         self.copy_setting = setting.get("copy_setting", {})
@@ -94,6 +100,10 @@ class CopytradeStrategy(CtaTemplate):
         
         # 开启新线程等待行情数据
         t = Thread(target=self.wait_symbol_tick)
+        t.start()
+
+        # 开启新线程统计 当前盈亏
+        t = Thread(target=self.calculate_pnl)
         t.start()
 
     def on_mainengine_position_updated(self, event):
@@ -248,6 +258,34 @@ class CopytradeStrategy(CtaTemplate):
             except Exception as e:
                 pass
             sleep(0.1)
+
+    def calculate_pnl(self):
+        while True:
+            pnl = 0
+            try:
+                oms_engine = self.cta_engine.main_engine.engines["oms"]
+                for vt_symbol in list(self.symbol_absolute_pos_dict.keys()):
+                    pos_data = self.symbol_absolute_pos_dict[vt_symbol]
+                    tick = oms_engine.ticks.get(vt_symbol, None)
+                    if tick:
+                        long_data = pos_data.get("long", {})
+                        long_volume = abs(long_data.get("volume", 0))
+                        long_price = long_data.get("price", 0)
+                        long_pnl = long_volume * (tick.last_price - long_price)
+
+                        short_data = pos_data.get("short", {})
+                        short_volume = abs(short_data.get("volume", 0))
+                        short_price = short_data.get("price", 0)
+                        short_pnl = short_volume * (short_price - tick.last_price)
+                        
+                        pnl += long_pnl + short_pnl
+                
+                self.position_pnl = round(pnl, 2)
+                self.position_pnl_rate = f"{round(pnl / self.portfolio_value * 100, 2)}%"
+
+            except Exception as e:
+                pass
+            sleep(1)
 
     def send_symbol_order(self, symbol, direction, offset, price, volume, stop=False):
         contract = self.cta_engine.main_engine.get_contract(symbol)
