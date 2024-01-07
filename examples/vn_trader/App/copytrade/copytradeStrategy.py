@@ -84,7 +84,8 @@ class CopytradeStrategy(CtaTemplate):
         self.cta_engine.event_engine.register(EVENT_MAINENGINE_POSITION_UPDATED, self.on_mainengine_position_updated)
 
         # 订阅合约
-        for vt_symbol in self.default_vt_symbols:
+        subscribe_vt_symbols = set(self.default_vt_symbols + list(self.symbol_pos_dict.keys()))
+        for vt_symbol in subscribe_vt_symbols:
             contract = self.cta_engine.main_engine.get_contract(vt_symbol)
             if contract:
                 req = SubscribeRequest(

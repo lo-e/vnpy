@@ -381,17 +381,6 @@ class CopytradeEngine(BaseEngine):
             # Call on_init function of strategy
             self.call_strategy_func(strategy, strategy.on_init)
 
-            # Subscribe market data
-            for vt_symbol in strategy.symbol_pos_dict.keys():
-                contract = self.main_engine.get_contract(vt_symbol)
-                if contract:
-                    req = SubscribeRequest(
-                        symbol=contract.symbol, exchange=contract.exchange
-                    )
-                    self.main_engine.subscribe(req, contract.gateway_name)
-                else:
-                    self.write_log(f"行情订阅失败，找不到合约{strategy.vt_symbol}", strategy)
-
             # Put event to update init completed status.
             strategy.inited = True
             self.put_strategy_event(strategy)
