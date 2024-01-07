@@ -62,7 +62,7 @@ import re
 from collections import OrderedDict
 from time import sleep
 from decimal import Decimal
-from .copytradeStrategy import CopytradeStrategy, CopytradePositionMode
+from .copytradeStrategy import CopytradeStrategy
 import json
 
 STOP_STATUS_MAP = {
@@ -175,34 +175,32 @@ class CopytradeEngine(BaseEngine):
         if not strategy:
             return
 
-        # 仓位统计模式为实盘模式，根据实盘成交统计仓位
-        if strategy.pos_mode == CopytradePositionMode.REAL:
-            # 获取原始持仓数据
-            pos_data = strategy.symbol_pos_dict.get(trade.vt_symbol, {})
-            pos = pos_data.get("pos", 0)
-            price = pos_data.get("price", 0)
+        # 获取原始持仓数据
+        pos_data = strategy.symbol_pos_dict.get(trade.vt_symbol, {})
+        pos = pos_data.get("pos", 0)
+        price = pos_data.get("price", 0)
 
-            # 计算最新持仓数量
-            if trade.direction == Direction.LONG:
-                pos = float(
-                    Decimal(str(pos)) + Decimal(str(trade.volume))
-                )
+        # 计算最新持仓数量
+        if trade.direction == Direction.LONG:
+            pos = float(
+                Decimal(str(pos)) + Decimal(str(trade.volume))
+            )
 
-            else:
-                pos = float(
-                    Decimal(str(pos)) - Decimal(str(trade.volume))
-                )
+        else:
+            pos = float(
+                Decimal(str(pos)) - Decimal(str(trade.volume))
+            )
 
-            # 计算最新持仓均价
-            
-            # 更新持仓数据
-            pos_data = {"pos": pos,
-                        "price": price}
-            strategy.symbol_pos_dict[trade.vt_symbol] = pos_data
+        # 计算最新持仓均价
+        
+        # 更新持仓数据
+        pos_data = {"pos": pos,
+                    "price": price}
+        strategy.symbol_pos_dict[trade.vt_symbol] = pos_data
 
-            # 清除已平仓记录
-            if trade.vt_symbol in strategy.symbol_pos_dict and not pos:
-                strategy.symbol_pos_dict.pop(trade.vt_symbol)
+        # 清除已平仓记录
+        if trade.vt_symbol in strategy.symbol_pos_dict and not pos:
+            strategy.symbol_pos_dict.pop(trade.vt_symbol)
 
         self.call_strategy_func(strategy, strategy.on_trade, trade)
         self.put_strategy_event(strategy)
