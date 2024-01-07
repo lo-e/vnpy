@@ -271,14 +271,16 @@ class CopytradeStrategy(CtaTemplate):
                         long_data = pos_data.get("long", {})
                         long_volume = abs(long_data.get("volume", 0))
                         long_price = long_data.get("price", 0)
-                        long_pnl = long_volume * (tick.last_price - long_price)
+                        if long_volume and long_price and tick.last_price:
+                            long_pnl = long_volume * (tick.last_price - long_price)
+                            pnl += long_pnl
 
                         short_data = pos_data.get("short", {})
                         short_volume = abs(short_data.get("volume", 0))
                         short_price = short_data.get("price", 0)
-                        short_pnl = short_volume * (short_price - tick.last_price)
-                        
-                        pnl += long_pnl + short_pnl
+                        if short_volume and short_price and tick.last_price:
+                            short_pnl = short_volume * (short_price - tick.last_price)
+                            pnl += short_pnl
                 
                 self.position_pnl = round(pnl, 2)
                 self.position_pnl_rate = f"{round(pnl / self.portfolio_value * 100, 2)}%"
