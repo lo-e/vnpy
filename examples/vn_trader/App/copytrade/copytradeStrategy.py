@@ -43,18 +43,21 @@ class CopytradeStrategy(CtaTemplate):
     # 变量列表，保存了变量的名称
     variables = [
         "symbol_pos_dict",
-        "target_symbol_pos_dict"
+        "target_symbol_pos_dict",
+        "symbol_absolute_pos_dict"
     ]
 
     # 同步列表，保存了需要保存到数据库的变量名称
     syncs = [
         "symbol_pos_dict",
-        "target_symbol_pos_dict"
+        "target_symbol_pos_dict",
+        "symbol_absolute_pos_dict"
     ]
 
     def __init__(self, ctaEngine, setting):
-        self.symbol_pos_dict = {} # 合约持仓字典
-        self.target_symbol_pos_dict = {} #  合约目标持仓字典
+        self.symbol_pos_dict = {} # 合约净持仓
+        self.target_symbol_pos_dict = {} #  合约目标净持仓
+        self.symbol_absolute_pos_dict = {} # 合约双向持仓数据
         self.wait_tick_symbols = set() # 等待行情数据的合约集合
 
         # 导入跟单设置
@@ -107,9 +110,9 @@ class CopytradeStrategy(CtaTemplate):
             trade_assets = target_setting.get("trade_assets", 0)
             if copy_assets and trade_assets:
                 # 计算目标持仓
-                target_pos = position.volume * trade_assets / copy_assets
+                target_pos = abs(position.volume * trade_assets / copy_assets)
                 if position.direction == Direction.SHORT:
-                    target_pos = abs(target_pos) * -1
+                    target_pos = target_pos * -1
 
                 # 转换合约
                 pure_symbol = position.symbol.split("-")[0]

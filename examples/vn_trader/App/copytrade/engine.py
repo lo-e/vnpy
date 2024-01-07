@@ -174,34 +174,74 @@ class CopytradeEngine(BaseEngine):
         strategy = self.orderid_strategy_map.get(trade.vt_orderid, None)
         if not strategy:
             return
-
-        # 获取原始持仓数据
-        pos_data = strategy.symbol_pos_dict.get(trade.vt_symbol, {})
-        pos = pos_data.get("pos", 0)
-        price = pos_data.get("price", 0)
-
-        # 计算最新持仓数量
+        
+        # 统计合约净持仓
         if trade.direction == Direction.LONG:
-            pos = float(
-                Decimal(str(pos)) + Decimal(str(trade.volume))
+            strategy.symbol_pos_dict[trade.vt_symbol] = float(
+                Decimal(str(strategy.symbol_pos_dict.get(trade.vt_symbol, 0))) + Decimal(str(trade.volume))
             )
 
         else:
-            pos = float(
-                Decimal(str(pos)) - Decimal(str(trade.volume))
+            strategy.symbol_pos_dict[trade.vt_symbol] = float(
+                Decimal(str(strategy.symbol_pos_dict.get(trade.vt_symbol, 0))) - Decimal(str(trade.volume))
             )
-
-        # 计算最新持仓均价
-        
-        # 更新持仓数据
-        pos_data = {"pos": pos,
-                    "price": price}
-        strategy.symbol_pos_dict[trade.vt_symbol] = pos_data
-
-        # 清除已平仓记录
-        if trade.vt_symbol in strategy.symbol_pos_dict and not pos:
+        if trade.vt_symbol in strategy.symbol_pos_dict and not strategy.symbol_pos_dict[trade.vt_symbol]:
             strategy.symbol_pos_dict.pop(trade.vt_symbol)
 
+        # 统计合约多空持仓
+        # data_example = {"BTCUSDT.BINANCE":{"long":{"volume":1, "price":100},
+        #                                    "short":{"volume":2, "price":200}}}
+        absolute_pos_data = strategy.symbol_absolute_pos_dict.get(trade.vt_symbol, {})
+        long_data = absolute_pos_data.get("long", {})
+        long_volume = long_data.get("volume", 0)
+        long_price = long_data.get("price", 0)
+        long_value = abs(long_volume * long_price)
+
+        short_data = absolute_pos_data.get("short", {})
+        short_volume = short_data.get("volume", 0)
+        short_price = short_data.get("price", 0)
+        short_value = abs(short_volume * short_price)
+
+        if trade.offset == Offset.OPEN:
+            if trade.direction == Direction.LONG:
+                long_volume = float(
+                    Decimal(str(long_volume)) + Decimal(str(trade.volume))
+                )
+                long_value += abs(trade.price * trade.volume)
+                long_price = long_value / abs(long_volume)
+
+            else:
+                short_volume = float(
+                    Decimal(str(short_volume)) + Decimal(str(trade.volume))
+                )
+                short_value += abs(trade.price * trade.volume)
+                short_price = short_value / abs(short_volume)
+        
+        elif trade.offset == Offset.CLOSE or trade.offset == Offset.CLOSETODAY or trade.offset == Offset.CLOSEYESTERDAY:
+            if trade.direction == Direction.LONG:
+                short_volume = float(
+                    Decimal(str(short_volume)) - Decimal(str(trade.volume))
+                )
+
+            else:
+                long_volume = float(
+                    Decimal(str(long_volume)) - Decimal(str(trade.volume))
+                )
+        
+        pos_data = {}
+        if long_volume:
+            pos_data["long"] = {"volume":long_volume, "price":long_price}
+
+        if short_volume:
+            pos_data["short"] = {"volume":short_volume, "price":short_price}
+
+        if pos_data:
+            strategy.symbol_absolute_pos_dict[trade.vt_symbol] = pos_data
+        
+        elif trade.vt_symbol in strategy.symbol_absolute_pos_dict:
+            strategy.symbol_absolute_pos_dict.pop(trade.vt_symbol)
+
+        # 策略响应成交事件
         self.call_strategy_func(strategy, strategy.on_trade, trade)
         self.put_strategy_event(strategy)
 
