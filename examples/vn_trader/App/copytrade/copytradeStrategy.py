@@ -284,7 +284,8 @@ class CopytradeStrategy(CtaTemplate):
                 
                 self.position_pnl = round(pnl, 2)
                 self.position_pnl_rate = f"{round(pnl / self.portfolio_value * 100, 2)}%"
-
+                self.put_timer_event()
+                
             except Exception as e:
                 pass
             sleep(1)
