@@ -53,9 +53,7 @@ class CopytradeStrategy(CtaTemplate):
     syncs = [
         "symbol_pos_dict",
         "target_symbol_pos_dict",
-        "symbol_absolute_pos_dict",
-        "position_pnl",
-        "position_pnl_rate"
+        "symbol_absolute_pos_dict"
     ]
 
     def __init__(self, ctaEngine, setting):
