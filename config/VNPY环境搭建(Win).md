@@ -120,3 +120,9 @@ can't import name 'Qsci' from 'PyQt5'
 ```
 重装QSintilla
 ```
+
+requests.exceptions.ProxyError: HTTPSConnectionPool(host='api.telegram.org', port=443)
+
+```
+重装requests（建议版本requests==2.22.0）
+```
