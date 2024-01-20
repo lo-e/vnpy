@@ -327,14 +327,6 @@ class OkxRestApi(RestClient):
         self.query_order()
         self.query_instrument()
 
-    def query_order(self) -> None:
-        """查询未成交委托"""
-        self.add_request(
-            "GET",
-            "/api/v5/trade/orders-pending",
-            callback=self.on_query_order,
-        )
-
     def query_time(self) -> None:
         """查询时间"""
         self.add_request(
@@ -343,16 +335,13 @@ class OkxRestApi(RestClient):
             callback=self.on_query_time
         )
 
-    def on_query_order(self, packet: dict, request: Request) -> None:
-        """未成交委托查询回报"""
-        for order_info in packet["data"]:
-            order: OrderData = parse_order_data(
-                order_info,
-                self.gateway_name
-            )
-            self.gateway.on_order(order)
-
-        self.gateway.write_log("委托信息查询成功")
+    def query_order(self) -> None:
+        """查询未成交委托"""
+        self.add_request(
+            "GET",
+            "/api/v5/trade/orders-pending",
+            callback=self.on_query_order,
+        )
 
     def query_instrument(self) -> None:
         """查询合约"""
@@ -364,6 +353,77 @@ class OkxRestApi(RestClient):
                 params={"instType": inst_type}
             )
 
+    def query_history(self, req: HistoryRequest) -> List[BarData]:
+        """
+        查询历史数据
+
+        K线数据每个粒度最多可获取最近1440条
+        """
+        buf: Dict[datetime, BarData] = {}
+        end_time: str = ""
+        path: str = "/api/v5/market/candles"
+
+        for i in range(15):
+            # 创建查询参数
+            params: dict = {
+                "instId": req.symbol,
+                "bar": INTERVAL_VT2OKX[req.interval]
+            }
+
+            if end_time:
+                params["after"] = end_time
+
+            # 从服务器获取响应
+            resp: Response = self.request(
+                "GET",
+                path,
+                params=params
+            )
+
+            # 如果请求失败则终止循环
+            if resp.status_code // 100 != 2:
+                msg = f"获取历史数据失败，状态码：{resp.status_code}，信息：{resp.text}"
+                self.gateway.write_log(msg)
+                break
+            else:
+                data: dict = resp.json()
+
+                if not data["data"]:
+                    m = data["msg"]
+                    msg = f"获取历史数据为空，{m}"
+                    break
+
+                for bar_list in data["data"]:
+                    ts, o, h, l, c, vol, _ = bar_list
+                    dt = parse_timestamp(ts)
+                    bar: BarData = BarData(
+                        symbol=req.symbol,
+                        exchange=req.exchange,
+                        datetime=dt,
+                        interval=req.interval,
+                        volume=float(vol),
+                        open_price=float(o),
+                        high_price=float(h),
+                        low_price=float(l),
+                        close_price=float(c),
+                        gateway_name=self.gateway_name
+                    )
+                    buf[bar.datetime] = bar
+
+                begin: str = data["data"][-1][0]
+                end: str = data["data"][0][0]
+                msg: str = f"获取历史数据成功，{req.symbol} - {req.interval.value}，{parse_timestamp(begin)} - {parse_timestamp(end)}"
+                self.gateway.write_log(msg)
+
+                # 更新结束时间
+                end_time = begin
+
+        index: List[datetime] = list(buf.keys())
+        index.sort()
+
+        history: List[BarData] = [buf[i] for i in index]
+        return history
+
     def on_query_time(self, packet: dict, request: Request) -> None:
         """时间查询回报"""
         timestamp: int = int(packet["data"][0]["ts"])
@@ -371,6 +431,17 @@ class OkxRestApi(RestClient):
         local_time: datetime = datetime.now()
         msg: str = f"服务器时间：{server_time}，本机时间：{local_time}"
         self.gateway.write_log(msg)
+
+    def on_query_order(self, packet: dict, request: Request) -> None:
+        """未成交委托查询回报"""
+        for order_info in packet["data"]:
+            order: OrderData = parse_order_data(
+                order_info,
+                self.gateway_name
+            )
+            self.gateway.on_order(order)
+
+        self.gateway.write_log("委托信息查询成功")
 
     def on_query_instrument(self, packet: dict, request: Request) -> None:
         """合约查询回报"""
@@ -452,78 +523,6 @@ class OkxRestApi(RestClient):
         sys.stderr.write(
             self.exception_detail(exception_type, exception_value, tb, request)
         )
-
-    def query_history(self, req: HistoryRequest) -> List[BarData]:
-        """
-        查询历史数据
-
-        K线数据每个粒度最多可获取最近1440条
-        """
-        buf: Dict[datetime, BarData] = {}
-        end_time: str = ""
-        path: str = "/api/v5/market/candles"
-
-        for i in range(15):
-            # 创建查询参数
-            params: dict = {
-                "instId": req.symbol,
-                "bar": INTERVAL_VT2OKX[req.interval]
-            }
-
-            if end_time:
-                params["after"] = end_time
-
-            # 从服务器获取响应
-            resp: Response = self.request(
-                "GET",
-                path,
-                params=params
-            )
-
-            # 如果请求失败则终止循环
-            if resp.status_code // 100 != 2:
-                msg = f"获取历史数据失败，状态码：{resp.status_code}，信息：{resp.text}"
-                self.gateway.write_log(msg)
-                break
-            else:
-                data: dict = resp.json()
-
-                if not data["data"]:
-                    m = data["msg"]
-                    msg = f"获取历史数据为空，{m}"
-                    break
-
-                for bar_list in data["data"]:
-                    ts, o, h, l, c, vol, _ = bar_list
-                    dt = parse_timestamp(ts)
-                    bar: BarData = BarData(
-                        symbol=req.symbol,
-                        exchange=req.exchange,
-                        datetime=dt,
-                        interval=req.interval,
-                        volume=float(vol),
-                        open_price=float(o),
-                        high_price=float(h),
-                        low_price=float(l),
-                        close_price=float(c),
-                        gateway_name=self.gateway_name
-                    )
-                    buf[bar.datetime] = bar
-
-                begin: str = data["data"][-1][0]
-                end: str = data["data"][0][0]
-                msg: str = f"获取历史数据成功，{req.symbol} - {req.interval.value}，{parse_timestamp(begin)} - {parse_timestamp(end)}"
-                self.gateway.write_log(msg)
-
-                # 更新结束时间
-                end_time = begin
-
-        index: List[datetime] = list(buf.keys())
-        index.sort()
-
-        history: List[BarData] = [buf[i] for i in index]
-        return history
-
 
 class OkxWebsocketPublicApi(WebsocketClient):
     """"""
@@ -655,7 +654,6 @@ class OkxWebsocketPublicApi(WebsocketClient):
 
             tick.datetime = parse_timestamp(d["ts"])
             self.gateway.on_tick(copy(tick))
-
 
 class OkxWebsocketPrivateApi(WebsocketClient):
     """"""
@@ -1011,11 +1009,9 @@ class OkxWebsocketPrivateApi(WebsocketClient):
         }
         self.send_packet(okx_req)
 
-
 def generate_signature(msg: str, secret_key: str) -> bytes:
     """生成签名"""
     return base64.b64encode(hmac.new(secret_key, msg.encode(), hashlib.sha256).digest())
-
 
 def generate_timestamp() -> str:
     """生成时间戳"""
@@ -1023,12 +1019,10 @@ def generate_timestamp() -> str:
     timestamp: str = now.isoformat("T", "milliseconds")
     return timestamp + "Z"
 
-
 def parse_timestamp(timestamp: str) -> datetime:
     """解析回报时间戳"""
     dt: datetime = datetime.fromtimestamp(int(timestamp) / 1000)
     return dt.replace(tzinfo=CHINA_TZ)
-
 
 def get_float_value(data: dict, key: str) -> float:
     """获取字典中对应键的浮点数值"""
@@ -1036,7 +1030,6 @@ def get_float_value(data: dict, key: str) -> float:
     if not data_str:
         return 0.0
     return float(data_str)
-
 
 def parse_order_data(data: dict, gateway_name: str) -> OrderData:
     """解析委托回报数据"""
