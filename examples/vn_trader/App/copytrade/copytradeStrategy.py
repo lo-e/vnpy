@@ -100,8 +100,12 @@ class CopytradeStrategy(CtaTemplate):
         t = Thread(target=self.wait_symbol_tick)
         t.start()
 
-        # 开启新线程统计 当前盈亏
+        # 开启新线程统计当前盈亏
         t = Thread(target=self.calculate_pnl)
+        t.start()
+
+        # 开启新线程获取交易员的当前带单
+        t = Thread(target=self.fetch_copytrade_data)
         t.start()
 
     def on_mainengine_position_updated(self, event):
@@ -324,6 +328,39 @@ class CopytradeStrategy(CtaTemplate):
                     return
         
         super().send_symbol_order(symbol, direction, offset, price, volume, stop)
+
+    def fetch_copytrade_data(self):
+        while True:
+            try:
+                gateway = self.cta_engine.main_engine.get_default_gateway("OKX")
+                if gateway:
+                    # 查询交易员排行榜
+                    # rank_data = gateway.rest_api.query_copytrader_rank()
+
+                    # 查询交易员当前带单
+                    """
+                    从小有个百万梦 '540D011FDACCB47A'
+                    墙头草 'D5E7A8430A35CA84'
+                    ALvinnn111 '9B28742D954561AE'
+                    """
+                    trader_position_data = gateway.rest_api.query_copytrade(trader="9B28742D954561AE")
+                    if isinstance(trader_position_data, list):
+                        for d in trader_position_data:
+                            symbol = d["instId"]
+                            subPos = float(d["subPos"])
+                            posSide = d["posSide"]
+
+                            contract = self.cta_engine.main_engine.get_contract(f"{symbol}.OKX")
+                            if contract:
+                                pos = abs(contract.min_volume * subPos)
+                                pos = round_to(pos, contract.min_volume)
+                                if posSide == "short":
+                                    pos = pos * -1
+                                print(f"{symbol}\t{posSide}\t{pos}")
+            
+            except Exception as e:
+                pass
+            sleep(10)
 
     def on_trade(self, trade):
         """成交推送"""

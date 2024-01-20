@@ -424,6 +424,35 @@ class OkxRestApi(RestClient):
         history: List[BarData] = [buf[i] for i in index]
         return history
 
+    def query_copytrade(self, trader:str) -> None:
+        # 可设置分页，单页最多100条数据，详见官方文档
+        resp: Response = self.request(
+            "GET",
+            "/api/v5/copytrading/public-current-subpositions",
+            params={"instType": "SWAP",
+                    "uniqueCode": trader}
+        )
+
+        data = None
+        if resp.status_code == 200:
+            result: dict = resp.json()
+            data = result["data"]
+        return data
+    
+    def query_copytrader_rank(self) -> None:
+        resp: Response = self.request(
+            "GET",
+            "/api/v5/copytrading/public-lead-traders",
+            params={"instType": "SWAP",
+                    "sortType": "aum"}
+        )
+
+        data = None
+        if resp.status_code == 200:
+            result: dict = resp.json()
+            data = result["data"][0]["ranks"]
+        return data
+
     def on_query_time(self, packet: dict, request: Request) -> None:
         """时间查询回报"""
         timestamp: int = int(packet["data"][0]["ts"])
