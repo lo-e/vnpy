@@ -340,7 +340,8 @@ class CopytradeStrategy(CtaTemplate):
         super().send_symbol_order(symbol, direction, offset, price, volume, stop)
 
     def fetch_copytrade_data(self, trader):
-        trader_name = self.trader_setting.get(trader, {}).get("trader", "")
+        setting = self.trader_setting.get(trader, {})
+        trader_name = setting.get("trader", "")
         error_notice_time = 0
         while True:
             try:
@@ -357,6 +358,8 @@ class CopytradeStrategy(CtaTemplate):
                     """
                     trader_position_data = gateway.rest_api.query_copytrade(trader)
                     if isinstance(trader_position_data, list):
+                        net_pos_dict_real = {}
+                        net_pos_dict_copy = {}
                         for d in trader_position_data:
                             symbol = d["instId"]
                             subPos = float(d["subPos"])
@@ -365,12 +368,21 @@ class CopytradeStrategy(CtaTemplate):
                             contract = self.cta_engine.main_engine.get_contract(f"{symbol}.OKX")
                             if contract:
                                 pos = abs(contract.min_volume * subPos)
-                                pos = round_to(pos, contract.min_volume)
                                 if posSide == "short":
                                     pos = pos * -1
+                                
+                                # 计算带单员实际净持仓
+                                symbol_net_pos_real = net_pos_dict_real.get(symbol, 0) + pos
+                                net_pos_dict_real[symbol] = round_to(symbol_net_pos_real, contract.min_volume)
+
+                                # 根据跟单比例计算净持仓
+                                pos = pos * setting.get("copy_rate", 1)
+                                pos = floor_to(pos, contract.min_volume)
+                                symbol_net_pos = net_pos_dict_copy.get(symbol, 0) + pos
+                                net_pos_dict_copy[symbol] = round_to(symbol_net_pos, contract.min_volume)
                                 # print(f"{symbol}\t{posSide}\t{pos}")
 
-                        # print(f"{datetime.now()}\t带单员：{trader_name}\t开单数量：{len(trader_position_data)}\n")
+                        print(f"{datetime.now()}\t带单员：{trader_name}\t开单数量：{len(trader_position_data)}\t实际净持仓：{net_pos_dict_real}\t跟单净持仓：{net_pos_dict_copy}\n")
                     
                     else:
                         error_notice_gap = int(time.time()) - error_notice_time
