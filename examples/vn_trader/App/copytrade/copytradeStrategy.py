@@ -239,7 +239,10 @@ class CopytradeStrategy(CtaTemplate):
                 # self.check_position_queue.put(target_symbol_pos_dict)
                 
                 # 发送钉钉通知
-                msg = f"带单员带单更新\n\n时间：{datetime.now()}\n详情：{self.trader_position_dict}"
+                msg = f"带单员带单更新\n\n时间：{datetime.now()}"
+                for trader, pos_data in self.trader_position_dict.items():
+                    trader_name = self.trader_setting.get(trader, {}).get("trader", "")
+                    msg += f"\n{trader_name}：{pos_data}"
                 self.send_ding_talk(msg)
 
     def check_target_pos(self):
