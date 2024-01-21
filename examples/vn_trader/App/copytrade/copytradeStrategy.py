@@ -67,6 +67,9 @@ class CopytradeStrategy(CtaTemplate):
         # 导入跟单设置
         self.copy_setting = setting.get("copy_setting", {})
 
+        # 带单员带单监控
+        self.trader_setting = setting.get("trader_setting", {})
+
         # 投资组合设置
         portfolio_setting = setting.get("portfolio", {})
         self.portfolio_value = portfolio_setting.get("capital", 1000000000)
@@ -105,8 +108,9 @@ class CopytradeStrategy(CtaTemplate):
         t.start()
 
         # 开启新线程获取交易员的当前带单
-        t = Thread(target=self.fetch_copytrade_data)
-        t.start()
+        for trader in list(self.trader_setting.keys()):
+            t = Thread(target=self.fetch_copytrade_data, args=(trader,))
+            t.start()
 
     def on_mainengine_position_updated(self, event):
         # 合约的目标仓位
@@ -119,11 +123,13 @@ class CopytradeStrategy(CtaTemplate):
             exchange_user: str = position.exchange_user
             target_setting = self.copy_setting.get(exchange.value, {}).get(exchange_user, {})
             copy_assets = target_setting.get("copy_assets", 0)
-            trade_assets = target_setting.get("trade_assets", 0)
+            copy_rate = target_setting.get("copy_rate", 0)
+            copy_value = copy_assets * copy_rate
+            trade_value = target_setting.get("trade_value", 0)
             start = target_setting.get("start", False)
-            if copy_assets and trade_assets and start:
+            if copy_value and trade_value and start:
                 # 计算目标持仓
-                target_pos = abs(position.volume * trade_assets / copy_assets)
+                target_pos = abs(position.volume * trade_value / copy_value)
                 if position.direction == Direction.SHORT:
                     target_pos = target_pos * -1
 
@@ -330,7 +336,7 @@ class CopytradeStrategy(CtaTemplate):
         
         super().send_symbol_order(symbol, direction, offset, price, volume, stop)
 
-    def fetch_copytrade_data(self):
+    def fetch_copytrade_data(self, trader):
         while True:
             try:
                 gateway = self.cta_engine.main_engine.get_default_gateway("OKX")
