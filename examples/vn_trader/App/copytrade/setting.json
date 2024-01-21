@@ -16,7 +16,7 @@
     "OKX": {
       "lo-e（test）": {
         "trader": "测试",
-        "copy_assets": 5000,
+        "copy_assets": 50000,
         "copy_rate": 0.01,
         "trade_value": 1000,
         "start": false
@@ -57,6 +57,13 @@
       "copy_assets": 100000,
       "copy_rate": 0.01,
       "trade_value": 700,
+      "start": true
+    },
+    "9B28742D954561AE": {
+      "trader": "Alvinnn111",
+      "copy_assets": 200000,
+      "copy_rate": 0.01,
+      "trade_value": 500,
       "start": true
     }
   },

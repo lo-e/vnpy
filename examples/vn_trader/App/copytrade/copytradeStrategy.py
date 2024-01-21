@@ -348,7 +348,7 @@ class CopytradeStrategy(CtaTemplate):
                     """
                     从小有个百万梦 '540D011FDACCB47A'
                     墙头草 'D5E7A8430A35CA84'
-                    ALvinnn111 '9B28742D954561AE'
+                    Alvinnn111 '9B28742D954561AE'
                     """
                     trader_position_data = gateway.rest_api.query_copytrade(trader)
                     if isinstance(trader_position_data, list):
