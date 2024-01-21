@@ -243,6 +243,7 @@ class CopytradeStrategy(CtaTemplate):
                 for trader, pos_data in self.trader_position_dict.items():
                     trader_name = self.trader_setting.get(trader, {}).get("trader", "")
                     msg += f"\n{trader_name}：{pos_data}"
+                msg += "\n"
                 self.send_ding_talk(msg)
 
     def check_target_pos(self):
