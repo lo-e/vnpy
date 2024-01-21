@@ -64,7 +64,7 @@
       "copy_assets": 200000,
       "copy_rate": 0.01,
       "trade_value": 500,
-      "start": true
+      "start": false
     }
   },
   "start": true

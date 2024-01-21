@@ -363,13 +363,13 @@ class CopytradeStrategy(CtaTemplate):
                                 pos = round_to(pos, contract.min_volume)
                                 if posSide == "short":
                                     pos = pos * -1
-                                print(f"{symbol}\t{posSide}\t{pos}")
+                                # print(f"{symbol}\t{posSide}\t{pos}")
 
-                        trader_name = self.trader_setting.get(trader, {}).get("trader", "")
-                        print(f"{datetime.now()}\t带单员：{trader_name}\t开单数量：{len(trader_position_data)}\n")
+                        # trader_name = self.trader_setting.get(trader, {}).get("trader", "")
+                        # print(f"{datetime.now()}\t带单员：{trader_name}\t开单数量：{len(trader_position_data)}\n")
             except Exception as e:
                 pass
-            sleep(10)
+            # sleep(0.1)
 
     def on_trade(self, trade):
         """成交推送"""
