@@ -14,21 +14,52 @@
   },
   "copy_setting": {
     "OKX": {
+      "lo-e（test）": {
+        "trader": "测试",
+        "copy_assets": 50000,
+        "copy_rate": 0.01,
+        "trade_value": 1000,
+        "start": false
+      },
       "lo-e": {
-        "trader": "墙头草",
-        "copy_assets": 500,
-        "trade_assets": 700
+        "trader": "从小有个百万梦",
+        "copy_assets": 20000,
+        "copy_rate": 0.03,
+        "trade_value": 700,
+        "start": true
       },
       "wawjlc": {
         "trader": "从小有个百万梦",
-        "copy_assets": 600,
-        "trade_assets": 700
+        "copy_assets": 20000,
+        "copy_rate": 0.03,
+        "trade_value": 700,
+        "start": true
       },
       "loesuperman": {
         "trader": "墙头草",
-        "copy_assets": 1000,
-        "trade_assets": 700
+        "copy_assets": 100000,
+        "copy_rate": 0.01,
+        "trade_value": 700,
+        "start": true
       }
+    }
+  },
+  "trader_setting": {
+    "540D011FDACCB47A": {
+      "trader": "从小有个百万梦",
+      "symbol_list": ["BTC", "ETH"],
+      "copy_assets": 20000,
+      "copy_rate": 0.03,
+      "trade_value": 700,
+      "start": true
+    },
+    "D5E7A8430A35CA84": {
+      "trader": "墙头草",
+      "symbol_list": [],
+      "copy_assets": 100000,
+      "copy_rate": 0.01,
+      "trade_value": 700,
+      "start": true
     }
   },
   "start": true
