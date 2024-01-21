@@ -374,14 +374,14 @@ class CopytradeStrategy(CtaTemplate):
                     
                     else:
                         error_notice_gap = int(time.time()) - error_notice_time
-                        if error_notice_gap >= 10:
+                        if error_notice_gap >= 60*10:
                             error_notice_time = int(time.time())
                             msg = f"！获取（{trader_name}）带单数据类型异常！\n{trader_position_data}"
                             self.send_ding_talk(msg)
 
             except Exception as e:
                 error_notice_gap = int(time.time()) - error_notice_time
-                if error_notice_gap >= 60:
+                if error_notice_gap >= 60*10:
                     error_notice_time = int(time.time())
                     msg = f"！获取（{trader_name}）带单报错！\n{e}"
                     self.send_ding_talk(msg)
