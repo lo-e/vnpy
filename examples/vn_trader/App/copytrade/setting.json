@@ -60,6 +60,14 @@
       "copy_rate": 0.01,
       "trade_value": 700,
       "start": true
+    },
+    "9B28742D954561AE": {
+      "trader": "Alvinnn",
+      "symbol_list": [],
+      "copy_assets": 100000,
+      "copy_rate": 1,
+      "trade_value": 700,
+      "start": true
     }
   },
   "start": true
