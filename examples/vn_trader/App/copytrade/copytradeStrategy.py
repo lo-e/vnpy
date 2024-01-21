@@ -23,6 +23,7 @@ import os
 from pathlib import Path
 from vnpy.trader.constant import Exchange
 from vnpy.trader.object import SubscribeRequest
+import time
 from time import sleep
 from enum import Enum
 from decimal import Decimal
@@ -108,9 +109,11 @@ class CopytradeStrategy(CtaTemplate):
         t.start()
 
         # 开启新线程获取交易员的当前带单
-        for trader in list(self.trader_setting.keys()):
-            t = Thread(target=self.fetch_copytrade_data, args=(trader,))
-            t.start()
+        for trader, setting in self.trader_setting.items():
+            start = setting.get("start", False)
+            if start:
+                t = Thread(target=self.fetch_copytrade_data, args=(trader,))
+                t.start()
 
     def on_mainengine_position_updated(self, event):
         # 合约的目标仓位
@@ -337,6 +340,8 @@ class CopytradeStrategy(CtaTemplate):
         super().send_symbol_order(symbol, direction, offset, price, volume, stop)
 
     def fetch_copytrade_data(self, trader):
+        trader_name = self.trader_setting.get(trader, {}).get("trader", "")
+        error_notice_time = 0
         while True:
             try:
                 gateway = self.cta_engine.main_engine.get_default_gateway("OKX")
@@ -365,11 +370,23 @@ class CopytradeStrategy(CtaTemplate):
                                     pos = pos * -1
                                 # print(f"{symbol}\t{posSide}\t{pos}")
 
-                        # trader_name = self.trader_setting.get(trader, {}).get("trader", "")
                         # print(f"{datetime.now()}\t带单员：{trader_name}\t开单数量：{len(trader_position_data)}\n")
+                    
+                    else:
+                        error_notice_gap = int(time.time()) - error_notice_time
+                        if error_notice_gap >= 10:
+                            error_notice_time = int(time.time())
+                            msg = f"！获取（{trader_name}）带单数据类型异常！\n{trader_position_data}"
+                            self.send_ding_talk(msg)
+
             except Exception as e:
-                pass
-            # sleep(0.1)
+                error_notice_gap = int(time.time()) - error_notice_time
+                if error_notice_gap >= 60:
+                    error_notice_time = int(time.time())
+                    msg = f"！获取（{trader_name}）带单报错！\n{e}"
+                    self.send_ding_talk(msg)
+
+            sleep(0.01)
 
     def on_trade(self, trade):
         """成交推送"""
