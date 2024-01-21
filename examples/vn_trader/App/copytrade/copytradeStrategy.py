@@ -47,7 +47,7 @@ class CopytradeStrategy(CtaTemplate):
         "symbol_pos_dict",
         "target_symbol_pos_dict",
         "symbol_absolute_pos_dict",
-        "trader_position_dict",
+        "trader_name_position_dict",
         "trader_position_inited",
         "position_pnl",
         "position_pnl_rate"
@@ -66,6 +66,7 @@ class CopytradeStrategy(CtaTemplate):
         self.symbol_absolute_pos_dict = {} # 合约双向持仓数据
 
         self.trader_position_dict = {} # 带单交易员带单数据
+        self.trader_name_position_dict = {} # 带单交易员带单数据
         self.trader_position_inited = False # 带单交易员带单数据初始化
 
         self.copy_position_cache = {} # 跟单持仓缓存
@@ -240,8 +241,7 @@ class CopytradeStrategy(CtaTemplate):
                 
                 # 发送钉钉通知
                 msg = f"带单员带单更新\n\n时间：{datetime.now()}\n"
-                for trader, pos_data in self.trader_position_dict.items():
-                    trader_name = self.trader_setting.get(trader, {}).get("trader", "")
+                for trader_name, pos_data in self.trader_name_position_dict.items():
                     msg += f"\n{trader_name}：{pos_data}"
                 msg += "\n"
                 self.send_ding_talk(msg)
@@ -491,6 +491,7 @@ class CopytradeStrategy(CtaTemplate):
                         # 带单交易员带单数据更新
                         if (trader not in self.trader_position_dict) or self.trader_position_dict[trader] != net_pos_dict_copy:
                             self.trader_position_dict[trader] = net_pos_dict_copy
+                            self.trader_name_position_dict[trader_name] = net_pos_dict_copy
                             self.on_trader_position_updated()
                         # print(f"{datetime.now()}\t带单员：{trader_name}\t开单数量：{len(trader_position_data)}\t实际净持仓：{net_pos_dict_real}\t跟单净持仓：{net_pos_dict_copy}\n")
                     
