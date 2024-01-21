@@ -120,7 +120,8 @@ class CopytradeStrategy(CtaTemplate):
             target_setting = self.copy_setting.get(exchange.value, {}).get(exchange_user, {})
             copy_assets = target_setting.get("copy_assets", 0)
             trade_assets = target_setting.get("trade_assets", 0)
-            if copy_assets and trade_assets:
+            start = target_setting.get("start", False)
+            if copy_assets and trade_assets and start:
                 # 计算目标持仓
                 target_pos = abs(position.volume * trade_assets / copy_assets)
                 if position.direction == Direction.SHORT:

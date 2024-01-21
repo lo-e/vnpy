@@ -14,20 +14,29 @@
   },
   "copy_setting": {
     "OKX": {
+      "lo-e（test）": {
+        "trader": "测试",
+        "copy_assets": 500,
+        "trade_assets": 1000,
+        "start": false
+      },
       "lo-e": {
         "trader": "墙头草",
         "copy_assets": 500,
-        "trade_assets": 700
+        "trade_assets": 700,
+        "start": true
       },
       "wawjlc": {
         "trader": "从小有个百万梦",
         "copy_assets": 600,
-        "trade_assets": 700
+        "trade_assets": 700,
+        "start": true
       },
       "loesuperman": {
         "trader": "墙头草",
         "copy_assets": 1000,
-        "trade_assets": 700
+        "trade_assets": 700,
+        "start": true
       }
     }
   },
