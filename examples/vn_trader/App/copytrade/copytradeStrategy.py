@@ -493,7 +493,7 @@ class CopytradeStrategy(CtaTemplate):
                             self.trader_position_dict[trader] = net_pos_dict_copy
                             self.trader_name_position_dict[trader_name] = net_pos_dict_copy
                             self.on_trader_position_updated()
-                        # print(f"{datetime.now()}\t带单员：{trader_name}\t开单数量：{len(trader_position_data)}\t实际净持仓：{net_pos_dict_real}\t跟单净持仓：{net_pos_dict_copy}\n")
+                        print(f"{datetime.now()}\t带单员：{trader_name}\t开单数量：{len(trader_position_data)}\t实际净持仓：{net_pos_dict_real}\t跟单净持仓：{net_pos_dict_copy}\n")
                     
                     else:
                         error_notice_gap = int(time.time()) - error_notice_time
