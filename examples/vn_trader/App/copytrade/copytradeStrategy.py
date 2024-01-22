@@ -192,6 +192,10 @@ class CopytradeStrategy(CtaTemplate):
     # 带单员带单更新
     def check_trader_position_updated(self):
         while True:
+            if not self.trading:
+                sleep(1)
+                continue
+            
             try:
                 __ = self.check_trader_position_updated_queue.get(block=True, timeout=1)
 
