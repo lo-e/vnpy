@@ -5,7 +5,8 @@
     "ETHUSDT.BINANCE",
     "BNBUSDT.BINANCE",
     "SOLUSDT.BINANCE",
-    "XRPUSDT.BINANCE"
+    "XRPUSDT.BINANCE",
+    "ORDIUSDT.BINANCE"
   ],
   "portfolio":{
     "update_time": "2024-01-03",
@@ -58,14 +59,6 @@
       "symbol_list": [],
       "copy_assets": 100000,
       "copy_rate": 0.01,
-      "trade_value": 700,
-      "start": true
-    },
-    "9B28742D954561AE": {
-      "trader": "Alvinnn",
-      "symbol_list": [],
-      "copy_assets": 100000,
-      "copy_rate": 1,
       "trade_value": 700,
       "start": true
     }
