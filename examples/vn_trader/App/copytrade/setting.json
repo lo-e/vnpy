@@ -5,7 +5,8 @@
     "ETHUSDT.BINANCE",
     "BNBUSDT.BINANCE",
     "SOLUSDT.BINANCE",
-    "XRPUSDT.BINANCE"
+    "XRPUSDT.BINANCE",
+    "ORDIUSDT.BINANCE"
   ],
   "portfolio":{
     "update_time": "2024-01-03",
