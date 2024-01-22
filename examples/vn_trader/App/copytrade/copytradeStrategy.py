@@ -77,6 +77,7 @@ class CopytradeStrategy(CtaTemplate):
         self.position_pnl_rate = "" # 持仓盈亏占比（相对投资组合总资金）
 
         self.check_position_queue = Queue()
+        self.check_trader_position_updated_queue = Queue()
 
         # 导入跟单设置
         self.copy_setting = setting.get("copy_setting", {})
@@ -117,6 +118,10 @@ class CopytradeStrategy(CtaTemplate):
         t = Thread(target=self.check_target_pos)
         t.start()
 
+        # 开启新线程检查带单员带单更新后的目标持仓
+        t = Thread(target=self.check_trader_position_updated)
+        t.start()
+
         # 开启新线程等待行情数据
         t = Thread(target=self.wait_symbol_tick)
         t.start()
@@ -135,7 +140,7 @@ class CopytradeStrategy(CtaTemplate):
     def on_start(self):
         self.trading = True
         self.on_mainengine_position_updated(event=None)
-        self.on_trader_position_updated()
+        self.check_trader_position_updated_queue.put(None)
 
     # 跟单持仓更新
     def on_mainengine_position_updated(self, event):
@@ -185,66 +190,73 @@ class CopytradeStrategy(CtaTemplate):
         # print(f"\n")
 
     # 带单员带单更新
-    def on_trader_position_updated(self):
-        # 合约的目标仓位
-        target_symbol_pos_dict = {}
+    def check_trader_position_updated(self):
+        while True:
+            try:
+                __ = self.check_trader_position_updated_queue.get(block=True, timeout=1)
 
-        inited = True
-        for trader, setting in self.trader_setting.items():
-            copy_assets = setting.get("copy_assets", 0)
-            copy_rate = setting.get("copy_rate", 0)
-            copy_value = copy_assets * copy_rate
-            trade_value = setting.get("trade_value", 0)
-            start = setting.get("start", False)
-            if not copy_value or not trade_value or not start:
-                continue
+                # 合约的目标仓位
+                target_symbol_pos_dict = {}
 
-            if trader in self.trader_position_dict:
-                for symbol, pos in self.trader_position_dict[trader].items():
-                    # 计算目标持仓
-                    target_pos = pos * trade_value / copy_value
+                inited = True
+                for trader, setting in self.trader_setting.items():
+                    copy_assets = setting.get("copy_assets", 0)
+                    copy_rate = setting.get("copy_rate", 0)
+                    copy_value = copy_assets * copy_rate
+                    trade_value = setting.get("trade_value", 0)
+                    start = setting.get("start", False)
+                    if not copy_value or not trade_value or not start:
+                        continue
 
-                    # 转换合约
-                    pure_symbol = symbol.split("-")[0]
-                    if pure_symbol in ["PEPE", "SHIB", "XEC", "LUNC", "FLOKI", "BONK", "SATS"]:
-                        binance_symbol = f"1000{pure_symbol}USDT.BINANCE"
-                        target_pos = target_pos / 1000
-                        
+                    if trader in self.trader_position_dict:
+                        for symbol, pos in self.trader_position_dict[trader].items():
+                            # 计算目标持仓
+                            target_pos = pos * trade_value / copy_value
+
+                            # 转换合约
+                            pure_symbol = symbol.split("-")[0]
+                            if pure_symbol in ["PEPE", "SHIB", "XEC", "LUNC", "FLOKI", "BONK", "SATS"]:
+                                binance_symbol = f"1000{pure_symbol}USDT.BINANCE"
+                                target_pos = target_pos / 1000
+                                
+                            else:
+                                binance_symbol = f"{pure_symbol}USDT.BINANCE"
+
+                            # 持仓统计
+                            target_symbol_pos_dict[binance_symbol] = target_symbol_pos_dict.get(binance_symbol, 0) + target_pos
+                    
                     else:
-                        binance_symbol = f"{pure_symbol}USDT.BINANCE"
+                        # 未完全获取所有带单员带单数据
+                        inited = False
 
-                    # 持仓统计
-                    target_symbol_pos_dict[binance_symbol] = target_symbol_pos_dict.get(binance_symbol, 0) + target_pos
+                # 仓位精度处理
+                for vt_symbol, pos in target_symbol_pos_dict.items():
+                    contract = self.cta_engine.main_engine.get_contract(vt_symbol)
+                    if contract:
+                        target_symbol_pos_dict[vt_symbol] = round_to(pos, contract.min_volume)
+
+                # 历史持仓数据填补
+                for symbol in self.trader_position_cache.keys():
+                    if symbol not in target_symbol_pos_dict:
+                        target_symbol_pos_dict[symbol] = 0
+
+                # 数据初始化判断
+                self.trader_position_inited = inited
+                if self.trader_position_inited:
+                    # 导入持仓检查队列
+                    if self.trading and self.trader_position_cache != target_symbol_pos_dict:
+                        self.trader_position_cache = target_symbol_pos_dict
+                        # self.check_position_queue.put(target_symbol_pos_dict)
+                        
+                        # 发送钉钉通知
+                        msg = f"带单员带单更新\n\n时间：{datetime.now()}\n"
+                        for trader_name, pos_data in self.trader_name_position_dict.items():
+                            msg += f"\n{trader_name}：{pos_data}\n"
+                        msg += "\n"
+                        self.send_ding_talk(msg)
             
-            else:
-                # 未完全获取所有带单员带单数据
-                inited = False
-
-        # 仓位精度处理
-        for vt_symbol, pos in target_symbol_pos_dict.items():
-            contract = self.cta_engine.main_engine.get_contract(vt_symbol)
-            if contract:
-                target_symbol_pos_dict[vt_symbol] = round_to(pos, contract.min_volume)
-
-        # 历史持仓数据填补
-        for symbol in self.trader_position_cache.keys():
-            if symbol not in target_symbol_pos_dict:
-                target_symbol_pos_dict[symbol] = 0
-
-        # 数据初始化判断
-        self.trader_position_inited = inited
-        if self.trader_position_inited:
-            # 导入持仓检查队列
-            if self.trading and self.trader_position_cache != target_symbol_pos_dict:
-                self.trader_position_cache = target_symbol_pos_dict
-                # self.check_position_queue.put(target_symbol_pos_dict)
-                
-                # 发送钉钉通知
-                msg = f"带单员带单更新\n\n时间：{datetime.now()}\n"
-                for trader_name, pos_data in self.trader_name_position_dict.items():
-                    msg += f"\n{trader_name}：{pos_data}\n"
-                msg += "\n"
-                self.send_ding_talk(msg)
+            except:
+                pass
 
     def check_target_pos(self):
         while True:
@@ -492,7 +504,7 @@ class CopytradeStrategy(CtaTemplate):
                         if (trader not in self.trader_position_dict) or self.trader_position_dict[trader] != net_pos_dict_copy:
                             self.trader_position_dict[trader] = net_pos_dict_copy
                             self.trader_name_position_dict[trader_name] = net_pos_dict_copy
-                            self.on_trader_position_updated()
+                            self.check_trader_position_updated_queue.put(None)
                         print(f"{datetime.now()}\t带单员：{trader_name}\t开单数量：{len(trader_position_data)}\t实际净持仓：{net_pos_dict_real}\t跟单净持仓：{net_pos_dict_copy}\n")
                     
                     else:
