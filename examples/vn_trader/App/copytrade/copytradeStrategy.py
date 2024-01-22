@@ -242,7 +242,7 @@ class CopytradeStrategy(CtaTemplate):
                 # 发送钉钉通知
                 msg = f"带单员带单更新\n\n时间：{datetime.now()}\n"
                 for trader_name, pos_data in self.trader_name_position_dict.items():
-                    msg += f"\n{trader_name}：{pos_data}"
+                    msg += f"\n{trader_name}：{pos_data}\n"
                 msg += "\n"
                 self.send_ding_talk(msg)
 
