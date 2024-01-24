@@ -267,8 +267,27 @@ class CopytradeStrategy(CtaTemplate):
                             msg += f"\n{vt_symbol}：{pos}"
                         msg += "\n\n------------\n"
 
-                        for trader_name, pos_data in self.trader_name_position_dict.items():
-                            msg += f"\n{trader_name}：{pos_data}\n"
+                        for trader_name, symbol_pos_dict in self.trader_name_position_dict.items():
+                            if symbol_pos_dict:
+                                msg += f"\n【{trader_name}】"
+
+                            for symbol, pos_data in symbol_pos_dict.items():
+                                msg += f"\n{symbol}"
+
+                                long_data = pos_data.get("long", {})
+                                long_volume = long_data.get("volume", 0)
+                                long_price = long_data.get("price", 0)
+
+                                short_data = pos_data.get("short", {})
+                                short_volume = short_data.get("volume", 0)
+                                short_price = short_data.get("price", 0)
+
+                                if long_volume:
+                                    msg += f"\nlong {long_volume}@{long_price}\n"
+                                
+                                if short_volume:
+                                    msg += f"\nshort {short_volume}@{short_price}\n"
+
                         msg += "\n"
                         self.send_ding_talk(msg)
             
