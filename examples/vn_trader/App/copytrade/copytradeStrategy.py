@@ -557,16 +557,12 @@ class CopytradeStrategy(CtaTemplate):
                                 short_value = abs(short_volume * short_price)
 
                                 if pos > 0:
-                                    long_volume = float(
-                                        Decimal(str(long_volume)) + Decimal(str(abs(pos)))
-                                    )
+                                    long_volume += abs(pos)
                                     long_value += abs(price * pos)
                                     long_price = long_value / abs(long_volume)
 
                                 else:
-                                    short_volume = float(
-                                        Decimal(str(short_volume)) + Decimal(str(abs(pos)))
-                                    )
+                                    short_volume += abs(pos)
                                     short_value += abs(price * pos)
                                     short_price = short_value / abs(short_volume)
                                 
