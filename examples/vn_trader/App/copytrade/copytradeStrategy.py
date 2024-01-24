@@ -215,8 +215,15 @@ class CopytradeStrategy(CtaTemplate):
                         continue
 
                     if trader in self.trader_position_dict:
-                        for symbol, pos in self.trader_position_dict[trader].items():
+                        for symbol, pos_data in self.trader_position_dict[trader].items():
+                            long_data = pos_data.get("long", {})
+                            long_volume = long_data.get("volume", 0)
+
+                            short_data = pos_data.get("short", {})
+                            short_volume = short_data.get("volume", 0)
+                            
                             # 计算目标持仓
+                            pos = long_volume - short_volume
                             target_pos = pos * trade_value / copy_value
 
                             # 转换合约
@@ -255,7 +262,11 @@ class CopytradeStrategy(CtaTemplate):
                         # self.check_position_queue.put(target_symbol_pos_dict)
                         
                         # 发送钉钉通知
-                        msg = f"带单员带单更新\n\n时间：{datetime.now()}\n"
+                        msg = f"跟单仓位更新\n\n时间：{datetime.now()}\n"
+                        for vt_symbol, pos in target_symbol_pos_dict:
+                            msg += f"\n{vt_symbol}：{pos}"
+                        msg += "\n"
+                        
                         for trader_name, pos_data in self.trader_name_position_dict.items():
                             msg += f"\n{trader_name}：{pos_data}\n"
                         msg += "\n"
@@ -477,8 +488,8 @@ class CopytradeStrategy(CtaTemplate):
                     """
                     trader_position_data = gateway.rest_api.query_copytrade(trader)
                     if isinstance(trader_position_data, list):
-                        net_pos_dict_real = {}
-                        net_pos_dict_copy = {}
+                        symbol_pos_dict_real = {}
+                        symbol_pos_dict_copy = {}
                         for d in trader_position_data:
                             symbol = d["instId"]
                             pure_symbol = symbol.split("-")[0]
@@ -488,34 +499,76 @@ class CopytradeStrategy(CtaTemplate):
 
                             contract = self.cta_engine.main_engine.get_contract(f"{symbol}.OKX")
                             if contract:
+                                # 订单数量
                                 subPos = float(d["subPos"])
                                 pos = abs(contract.min_volume * subPos)
-
                                 posSide = d["posSide"]
                                 if posSide == "short":
                                     pos = pos * -1
 
-                                price = d["openAvgPx"]
+                                # 统计带单员实际净持仓
+                                net_pos_real = symbol_pos_dict_real.get(symbol, 0) + pos
+                                symbol_pos_dict_real[symbol] = round_to(net_pos_real, contract.min_volume)
                                 
-                                # 计算带单员实际净持仓
-                                symbol_net_pos_real = net_pos_dict_real.get(symbol, 0) + pos
-                                net_pos_dict_real[symbol] = round_to(symbol_net_pos_real, contract.min_volume)
-
-                                # 根据跟单比例计算净持仓
+                                # 根据跟单比例计算订单数量
                                 pos = pos * setting.get("copy_rate", 1)
                                 pos = floor_to(pos, contract.min_volume)
-                                symbol_net_pos_copy = net_pos_dict_copy.get(symbol, 0) + pos
-                                net_pos_dict_copy[symbol] = round_to(symbol_net_pos_copy, contract.min_volume)
+
+                                # 订单成交价格
+                                price = d["openAvgPx"]
+
+                                # 计算仓位均价
+                                absolute_pos_data = symbol_pos_dict_copy.get(symbol, {})
+                                long_data = absolute_pos_data.get("long", {})
+                                long_volume = long_data.get("volume", 0)
+                                long_price = long_data.get("price", 0)
+                                long_value = abs(long_volume * long_price)
+
+                                short_data = absolute_pos_data.get("short", {})
+                                short_volume = short_data.get("volume", 0)
+                                short_price = short_data.get("price", 0)
+                                short_value = abs(short_volume * short_price)
+
+                                if pos > 0:
+                                    long_volume = float(
+                                        Decimal(str(long_volume)) + Decimal(str(abs(pos)))
+                                    )
+                                    long_volume = round_to(long_volume, contract.min_volume)
+                                    long_value += abs(price * pos)
+                                    long_price = long_value / abs(long_volume)
+
+                                else:
+                                    short_volume = float(
+                                        Decimal(str(short_volume)) + Decimal(str(abs(pos)))
+                                    )
+                                    short_volume = round_to(short_volume, contract.min_volume)
+                                    short_value += abs(price * pos)
+                                    short_price = short_value / abs(short_volume)
+                                
+                                # 统计带单员多空持仓数量、均价
+                                pos_data = {}
+                                if long_volume:
+                                    pos_data["long"] = {"volume":long_volume, "price":long_price}
+
+                                if short_volume:
+                                    pos_data["short"] = {"volume":short_volume, "price":short_price}
+
+                                if pos_data:
+                                    symbol_pos_dict_copy[symbol] = pos_data
+                                
+                                elif symbol in symbol_pos_dict_copy:
+                                    symbol_pos_dict_copy.pop(symbol)
+
                                 # print(f"{symbol}\t{posSide}\t{pos}")
 
                         # 带单交易员带单数据更新
-                        if (trader not in self.trader_position_dict) or self.trader_position_dict[trader] != net_pos_dict_copy:
-                            self.trader_position_dict[trader] = net_pos_dict_copy
-                            self.trader_name_position_dict[trader_name] = net_pos_dict_copy
+                        if (trader not in self.trader_position_dict) or self.trader_position_dict[trader] != symbol_pos_dict_copy:
+                            self.trader_position_dict[trader] = symbol_pos_dict_copy
+                            self.trader_name_position_dict[trader_name] = symbol_pos_dict_copy
                             self.check_trader_position_updated_queue.put(None)
                         self.trader_name_position_updated_time[trader_name] = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
                         
-                        # print(f"{datetime.now()}\t带单员：{trader_name}\t开单数量：{len(trader_position_data)}\t实际净持仓：{net_pos_dict_real}\t跟单净持仓：{net_pos_dict_copy}\n")
+                        # print(f"{datetime.now()}\t带单员：{trader_name}\t开单数量：{len(trader_position_data)}\t实际净持仓：{symbol_pos_dict_real}\n")
                     
                     else:
                         error_notice_gap = int(time.time()) - error_notice_time
