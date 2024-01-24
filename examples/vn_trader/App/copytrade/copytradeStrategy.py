@@ -273,14 +273,19 @@ class CopytradeStrategy(CtaTemplate):
 
                             for symbol, pos_data in symbol_pos_dict.items():
                                 msg += f"\n{symbol}"
+                                contract = self.cta_engine.main_engine.get_contract(f"{symbol}.OKX")
 
                                 long_data = pos_data.get("long", {})
                                 long_volume = long_data.get("volume", 0)
                                 long_price = long_data.get("price", 0)
+                                if contract:
+                                    long_price = round_to(long_price, contract.pricetick)
 
                                 short_data = pos_data.get("short", {})
                                 short_volume = short_data.get("volume", 0)
                                 short_price = short_data.get("price", 0)
+                                if contract:
+                                    short_price = round_to(short_price, contract.pricetick)
 
                                 if long_volume:
                                     msg += f"\nlong {long_volume}@{long_price}\n"
@@ -555,7 +560,6 @@ class CopytradeStrategy(CtaTemplate):
                                     long_volume = float(
                                         Decimal(str(long_volume)) + Decimal(str(abs(pos)))
                                     )
-                                    long_volume = round_to(long_volume, contract.min_volume)
                                     long_value += abs(price * pos)
                                     long_price = long_value / abs(long_volume)
 
@@ -563,10 +567,15 @@ class CopytradeStrategy(CtaTemplate):
                                     short_volume = float(
                                         Decimal(str(short_volume)) + Decimal(str(abs(pos)))
                                     )
-                                    short_volume = round_to(short_volume, contract.min_volume)
                                     short_value += abs(price * pos)
                                     short_price = short_value / abs(short_volume)
                                 
+                                # 精度处理
+                                long_volume = round_to(long_volume, contract.min_volume)
+                                long_price = round_to(long_price, contract.pricetick)
+                                short_volume = round_to(short_volume, contract.min_volume)
+                                short_price = round_to(short_price, contract.pricetick)
+
                                 # 统计带单员多空持仓数量、均价
                                 pos_data = {}
                                 if long_volume:
