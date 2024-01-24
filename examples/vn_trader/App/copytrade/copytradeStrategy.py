@@ -494,6 +494,8 @@ class CopytradeStrategy(CtaTemplate):
                                 posSide = d["posSide"]
                                 if posSide == "short":
                                     pos = pos * -1
+
+                                price = d["openAvgPx"]
                                 
                                 # 计算带单员实际净持仓
                                 symbol_net_pos_real = net_pos_dict_real.get(symbol, 0) + pos
@@ -502,8 +504,8 @@ class CopytradeStrategy(CtaTemplate):
                                 # 根据跟单比例计算净持仓
                                 pos = pos * setting.get("copy_rate", 1)
                                 pos = floor_to(pos, contract.min_volume)
-                                symbol_net_pos = net_pos_dict_copy.get(symbol, 0) + pos
-                                net_pos_dict_copy[symbol] = round_to(symbol_net_pos, contract.min_volume)
+                                symbol_net_pos_copy = net_pos_dict_copy.get(symbol, 0) + pos
+                                net_pos_dict_copy[symbol] = round_to(symbol_net_pos_copy, contract.min_volume)
                                 # print(f"{symbol}\t{posSide}\t{pos}")
 
                         # 带单交易员带单数据更新
@@ -511,8 +513,8 @@ class CopytradeStrategy(CtaTemplate):
                             self.trader_position_dict[trader] = net_pos_dict_copy
                             self.trader_name_position_dict[trader_name] = net_pos_dict_copy
                             self.check_trader_position_updated_queue.put(None)
-                        
                         self.trader_name_position_updated_time[trader_name] = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
+                        
                         # print(f"{datetime.now()}\t带单员：{trader_name}\t开单数量：{len(trader_position_data)}\t实际净持仓：{net_pos_dict_real}\t跟单净持仓：{net_pos_dict_copy}\n")
                     
                     else:
