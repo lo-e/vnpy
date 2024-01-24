@@ -48,6 +48,7 @@ class CopytradeStrategy(CtaTemplate):
         "target_symbol_pos_dict",
         "symbol_absolute_pos_dict",
         "trader_name_position_dict",
+        "trader_name_position_updated_time",
         "trader_position_inited",
         "position_pnl",
         "position_pnl_rate"
@@ -67,6 +68,7 @@ class CopytradeStrategy(CtaTemplate):
 
         self.trader_position_dict = {} # 带单交易员带单数据
         self.trader_name_position_dict = {} # 带单交易员带单数据
+        self.trader_name_position_updated_time = {} # 带单交易员带单更新时间
         self.trader_position_inited = False # 带单交易员带单数据初始化
 
         self.copy_position_cache = {} # 跟单持仓缓存
@@ -509,6 +511,8 @@ class CopytradeStrategy(CtaTemplate):
                             self.trader_position_dict[trader] = net_pos_dict_copy
                             self.trader_name_position_dict[trader_name] = net_pos_dict_copy
                             self.check_trader_position_updated_queue.put(None)
+                        
+                        self.trader_name_position_updated_time[trader_name] = datetime.now().replace(microsecond=0)
                         # print(f"{datetime.now()}\t带单员：{trader_name}\t开单数量：{len(trader_position_data)}\t实际净持仓：{net_pos_dict_real}\t跟单净持仓：{net_pos_dict_copy}\n")
                     
                     else:
