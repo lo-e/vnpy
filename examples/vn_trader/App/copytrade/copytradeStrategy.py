@@ -266,7 +266,7 @@ class CopytradeStrategy(CtaTemplate):
                         for vt_symbol, pos in target_symbol_pos_dict:
                             msg += f"\n{vt_symbol}：{pos}"
                         msg += "\n"
-                        
+
                         for trader_name, pos_data in self.trader_name_position_dict.items():
                             msg += f"\n{trader_name}：{pos_data}\n"
                         msg += "\n"
@@ -515,7 +515,7 @@ class CopytradeStrategy(CtaTemplate):
                                 pos = floor_to(pos, contract.min_volume)
 
                                 # 订单成交价格
-                                price = d["openAvgPx"]
+                                price = float(d["openAvgPx"])
 
                                 # 计算仓位均价
                                 absolute_pos_data = symbol_pos_dict_copy.get(symbol, {})
