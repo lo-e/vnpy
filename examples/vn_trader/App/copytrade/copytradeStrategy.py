@@ -455,7 +455,7 @@ class CopytradeStrategy(CtaTemplate):
                 
                 self.position_pnl = round(copy_pnl, 2)
                 position_pnl_rate = copy_pnl / self.portfolio_value
-                if position_pnl_rate <= self.portfolio_stop_loss:
+                if self.trading and position_pnl_rate <= self.portfolio_stop_loss:
                     # ====== 止损平仓 ======
 
                     # 取消所有正在进行中的订单
