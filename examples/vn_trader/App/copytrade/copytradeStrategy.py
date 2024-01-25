@@ -148,6 +148,9 @@ class CopytradeStrategy(CtaTemplate):
 
     # 跟单持仓更新
     def on_mainengine_position_updated(self, event):
+        if not self.trading:
+            return
+        
         # 合约的目标仓位
         target_symbol_pos_dict = {}
 
@@ -188,7 +191,7 @@ class CopytradeStrategy(CtaTemplate):
                 target_symbol_pos_dict[vt_symbol] = round_to(pos, contract.min_volume)
 
         # 导入持仓检查队列
-        if self.trading and self.copy_position_cache != target_symbol_pos_dict:
+        if self.copy_position_cache != target_symbol_pos_dict:
             self.copy_position_cache = target_symbol_pos_dict
             self.check_position_queue.put(target_symbol_pos_dict)
         # print(f"\n")
@@ -259,7 +262,7 @@ class CopytradeStrategy(CtaTemplate):
                 self.trader_position_inited = inited
                 if self.trader_position_inited:
                     # 导入持仓检查队列
-                    if self.trading and self.trader_position_cache != target_symbol_pos_dict:
+                    if self.trader_position_cache != target_symbol_pos_dict:
                         self.trader_position_cache = target_symbol_pos_dict
                         # self.check_position_queue.put(target_symbol_pos_dict)
                         
