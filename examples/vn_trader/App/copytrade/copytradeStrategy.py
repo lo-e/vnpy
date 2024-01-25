@@ -50,6 +50,7 @@ class CopytradeStrategy(CtaTemplate):
         "trader_name_position_dict",
         "trader_name_position_updated_time",
         "trader_position_inited",
+        "trader_pnl_dict",
         "position_pnl",
         "position_pnl_rate"
     ]
@@ -77,6 +78,7 @@ class CopytradeStrategy(CtaTemplate):
         self.wait_tick_symbols = set() # 等待行情数据的合约集合
         self.position_pnl = 0 # 持仓盈亏
         self.position_pnl_rate = "" # 持仓盈亏占比（相对投资组合总资金）
+        self.trader_pnl_dict = 0 # 带单员持仓盈亏
 
         self.check_position_queue = Queue()
         self.check_trader_position_updated_queue = Queue()
@@ -430,10 +432,11 @@ class CopytradeStrategy(CtaTemplate):
 
     def calculate_pnl(self):
         while True:
-            pnl = 0
             try:
-                # 计算策略跟单盈亏
                 oms_engine = self.cta_engine.main_engine.engines["oms"]
+
+                # 计算策略跟单盈亏
+                copy_pnl = 0
                 for vt_symbol in list(self.symbol_absolute_pos_dict.keys()):
                     pos_data = self.symbol_absolute_pos_dict[vt_symbol]
                     tick = oms_engine.ticks.get(vt_symbol, None)
@@ -443,19 +446,44 @@ class CopytradeStrategy(CtaTemplate):
                         long_price = long_data.get("price", 0)
                         if long_volume and long_price and tick.last_price:
                             long_pnl = long_volume * (tick.last_price - long_price)
-                            pnl += long_pnl
+                            copy_pnl += long_pnl
 
                         short_data = pos_data.get("short", {})
                         short_volume = abs(short_data.get("volume", 0))
                         short_price = short_data.get("price", 0)
                         if short_volume and short_price and tick.last_price:
                             short_pnl = short_volume * (short_price - tick.last_price)
-                            pnl += short_pnl
+                            copy_pnl += short_pnl
                 
-                self.position_pnl = round(pnl, 2)
-                self.position_pnl_rate = f"{round(pnl / self.portfolio_value * 100, 2)}%"
+                self.position_pnl = round(copy_pnl, 2)
+                self.position_pnl_rate = f"{round(copy_pnl / self.portfolio_value * 100, 2)}%"
 
                 # 计算带单员带单盈亏
+                trader_pnl_dict = {}
+                for trader_name, symbol_pos_dict in self.trader_name_position_dict.items():
+                    trader_pnl = 0
+                    for symbol, pos_data in symbol_pos_dict.items():
+                        tick = oms_engine.ticks.get(f"{symbol}.OKX", None)
+                        if tick:
+                            long_data = pos_data.get("long", {})
+                            long_volume = abs(long_data.get("volume", 0))
+                            long_price = long_data.get("price", 0)
+                            if long_volume and long_price and tick.last_price:
+                                long_pnl = long_volume * (tick.last_price - long_price)
+                                trader_pnl += long_pnl
+
+                            short_data = pos_data.get("short", {})
+                            short_volume = abs(short_data.get("volume", 0))
+                            short_price = short_data.get("price", 0)
+                            if short_volume and short_price and tick.last_price:
+                                short_pnl = short_volume * (short_price - tick.last_price)
+                                trader_pnl += short_pnl
+                    trader_pnl_dict[trader_name] = trader_pnl
+                
+                for trader_name, trader_pnl in trader_pnl_dict.items():
+                    trader_pnl = round(trader_pnl, 2)
+                    trader_pnl_rate = f"{round(trader_pnl / self.portfolio_value * 100, 2)}%"
+                    self.trader_pnl_dict[trader_name] = [trader_pnl, trader_pnl_rate]
 
                 self.put_timer_event()
                 
