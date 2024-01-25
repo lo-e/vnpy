@@ -11,7 +11,7 @@
   "portfolio":{
     "update_time": "2024-01-03",
     "capital": 1126,
-    "stop_loss": 0.32
+    "stop_loss": -0.32
   },
   "copy_setting": {
     "OKX": {
@@ -52,7 +52,7 @@
       "copy_assets": 20000,
       "copy_rate": 1,
       "trade_value": 700,
-      "stop_loss": 0.2,
+      "stop_loss": -0.2,
       "start": true
     },
     "D5E7A8430A35CA84": {
@@ -61,7 +61,7 @@
       "copy_assets": 100000,
       "copy_rate": 1,
       "trade_value": 700,
-      "stop_loss": 0.3,
+      "stop_loss": -0.3,
       "start": true
     }
   },

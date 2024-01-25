@@ -92,7 +92,7 @@ class CopytradeStrategy(CtaTemplate):
         # 投资组合设置
         portfolio_setting = setting.get("portfolio", {})
         self.portfolio_value = portfolio_setting.get("capital", 1000000000)
-        self.portfolio_stop_loss = portfolio_setting.get("stop_loss", 1)
+        self.portfolio_stop_loss = portfolio_setting.get("stop_loss", -1)
 
         # 默认合约列表
         self.default_vt_symbols = setting.get("vt_symbols", [])
@@ -455,7 +455,7 @@ class CopytradeStrategy(CtaTemplate):
                 
                 self.position_pnl = round(copy_pnl, 2)
                 position_pnl_rate = copy_pnl / self.portfolio_value
-                if position_pnl_rate <= self.portfolio_stop_loss * -1:
+                if position_pnl_rate <= self.portfolio_stop_loss:
                     # 止损平仓
                     for vt_symbol, current_pos in self.symbol_pos_dict.items():
                         # 取消该合约正在进行中的订单
@@ -478,7 +478,7 @@ class CopytradeStrategy(CtaTemplate):
                     
                     # 停止策略，发出通知
                     self.trading = False
-                    msg = f"\n投资组合当前亏损：{position_pnl_rate}\n最大亏损限制：-{self.portfolio_stop_loss}\n已强制清仓，停止策略"
+                    msg = f"\n投资组合当前亏损：{position_pnl_rate}\n最大亏损限制：{self.portfolio_stop_loss}\n已强制清仓，停止策略"
                     self.send_ding_talk(msg)
                         
                 self.position_pnl_rate = f"{round(position_pnl_rate * 100, 2)}%"
@@ -510,13 +510,13 @@ class CopytradeStrategy(CtaTemplate):
                     trader_name = trader_setting.get("trader", "")
                     copy_assets = trader_setting.get("copy_assets", 0)
                     copy_rate = trader_setting.get("copy_rate", 0)
-                    stop_loss = trader_setting.get("stop_loss", 0)
+                    stop_loss = trader_setting.get("stop_loss", -1)
                     value = copy_assets * copy_rate
 
                     trader_pnl = round(trader_pnl, 2)
                     if value:
                         trader_pnl_rate = trader_pnl / value
-                        if trader_pnl_rate <= stop_loss * -1:
+                        if trader_pnl_rate <= stop_loss:
                             # 止损平仓
                             pass
                         trader_pnl_rate = f"{round(trader_pnl_rate * 100, 2)}%"
