@@ -432,6 +432,7 @@ class CopytradeStrategy(CtaTemplate):
         while True:
             pnl = 0
             try:
+                # 计算策略跟单盈亏
                 oms_engine = self.cta_engine.main_engine.engines["oms"]
                 for vt_symbol in list(self.symbol_absolute_pos_dict.keys()):
                     pos_data = self.symbol_absolute_pos_dict[vt_symbol]
@@ -453,6 +454,9 @@ class CopytradeStrategy(CtaTemplate):
                 
                 self.position_pnl = round(pnl, 2)
                 self.position_pnl_rate = f"{round(pnl / self.portfolio_value * 100, 2)}%"
+
+                # 计算带单员带单盈亏
+
                 self.put_timer_event()
                 
             except Exception as e:
@@ -593,6 +597,22 @@ class CopytradeStrategy(CtaTemplate):
                             self.trader_position_dict[trader] = symbol_pos_dict_copy
                             self.trader_name_position_dict[trader_name] = symbol_pos_dict_copy
                             self.check_trader_position_updated_queue.put(None)
+
+                            # 订阅带单合约行情
+                            oms_engine = self.cta_engine.main_engine.engines["oms"]
+                            for symbol in symbol_pos_dict_copy.keys():
+                                vt_symbol = f"{symbol}.OKX"
+                                tick = oms_engine.ticks.get(vt_symbol, None)
+                                contract = self.cta_engine.main_engine.get_contract(vt_symbol)
+                                if not tick and contract:
+                                    # 订阅合约行情
+                                    req = SubscribeRequest(
+                                        symbol=contract.symbol, exchange=contract.exchange
+                                    )
+                                    self.cta_engine.main_engine.subscribe(req, contract.gateway_name)
+
+                            # 打印更新内容 
+                            print(f"\n--------------------\n{datetime.now()}\n带单员【{trader_name}】带单更新：\n{symbol_pos_dict_copy}\n\n{trader_position_data}\n--------------------\n")
                         self.trader_name_position_updated_time[trader_name] = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
                         
                         # print(f"{datetime.now()}\t带单员：{trader_name}\t开单数量：{len(trader_position_data)}\t实际净持仓：{symbol_pos_dict_real}\n")
