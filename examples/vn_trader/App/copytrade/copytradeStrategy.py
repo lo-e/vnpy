@@ -608,7 +608,7 @@ class CopytradeStrategy(CtaTemplate):
                                     self.cta_engine.main_engine.subscribe(req, contract.gateway_name)
 
                             # 打印更新内容 
-                            print(f"{datetime.now()}\n带单员带单更新：\n{symbol_pos_dict_copy}\n\n{trader_position_data}")
+                            print(f"\n--------------------{datetime.now()}\n带单员带单更新：\n{symbol_pos_dict_copy}\n\n{trader_position_data}--------------------\n")
                         self.trader_name_position_updated_time[trader_name] = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
                         
                         # print(f"{datetime.now()}\t带单员：{trader_name}\t开单数量：{len(trader_position_data)}\t实际净持仓：{symbol_pos_dict_real}\n")
