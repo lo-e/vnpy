@@ -141,11 +141,6 @@ class CopytradeStrategy(CtaTemplate):
                 t = Thread(target=self.fetch_copytrade_data, args=(trader,))
                 t.start()
 
-    def on_start(self):
-        self.trading = True
-        self.on_mainengine_position_updated(event=None)
-        self.check_trader_position_updated_queue.put(None)
-
     # 跟单持仓更新
     def on_mainengine_position_updated(self, event):
         if not self.trading:
