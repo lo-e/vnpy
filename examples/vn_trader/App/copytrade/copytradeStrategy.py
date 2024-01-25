@@ -39,7 +39,7 @@ class CopytradeStrategy(CtaTemplate):
     parameters = [
         "strategy_name",
         "portfolio_value",
-        "stop_loss"
+        "portfolio_stop_loss"
     ]
 
     # 变量列表，保存了变量的名称
@@ -92,7 +92,7 @@ class CopytradeStrategy(CtaTemplate):
         # 投资组合设置
         portfolio_setting = setting.get("portfolio", {})
         self.portfolio_value = portfolio_setting.get("capital", 1000000000)
-        self.stop_loss = portfolio_setting.get("stop_loss", 1)
+        self.portfolio_stop_loss = portfolio_setting.get("stop_loss", 1)
 
         # 默认合约列表
         self.default_vt_symbols = setting.get("vt_symbols", [])
@@ -456,11 +456,15 @@ class CopytradeStrategy(CtaTemplate):
                             copy_pnl += short_pnl
                 
                 self.position_pnl = round(copy_pnl, 2)
-                self.position_pnl_rate = f"{round(copy_pnl / self.portfolio_value * 100, 2)}%"
+                position_pnl_rate = copy_pnl / self.portfolio_value
+                if position_pnl_rate <= self.portfolio_stop_loss * -1:
+                    # 止损平仓
+                    pass
+                self.position_pnl_rate = f"{round(position_pnl_rate * 100, 2)}%"
 
                 # 计算带单员带单盈亏
                 trader_pnl_dict = {}
-                for trader_name, symbol_pos_dict in self.trader_name_position_dict.items():
+                for trader, symbol_pos_dict in self.trader_position_dict.items():
                     trader_pnl = 0
                     for symbol, pos_data in symbol_pos_dict.items():
                         tick = oms_engine.ticks.get(f"{symbol}.OKX", None)
@@ -478,12 +482,24 @@ class CopytradeStrategy(CtaTemplate):
                             if short_volume and short_price and tick.last_price:
                                 short_pnl = short_volume * (short_price - tick.last_price)
                                 trader_pnl += short_pnl
-                    trader_pnl_dict[trader_name] = trader_pnl
+                    trader_pnl_dict[trader] = trader_pnl
                 
-                for trader_name, trader_pnl in trader_pnl_dict.items():
+                for trader, trader_pnl in trader_pnl_dict.items():
+                    trader_setting = self.trader_setting.get(trader, {})
+                    trader_name = trader_setting.get("trader", "")
+                    copy_assets = trader_setting.get("copy_assets", 0)
+                    copy_rate = trader_setting.get("copy_rate", 0)
+                    stop_loss = trader_setting.get("stop_loss", 0)
+                    value = copy_assets * copy_rate
+
                     trader_pnl = round(trader_pnl, 2)
-                    trader_pnl_rate = f"{round(trader_pnl / self.portfolio_value * 100, 2)}%"
-                    self.trader_pnl_dict[trader_name] = [trader_pnl, trader_pnl_rate]
+                    if value:
+                        trader_pnl_rate = trader_pnl / value
+                        if trader_pnl_rate <= stop_loss * -1:
+                            # 止损平仓
+                            pass
+                        trader_pnl_rate = f"{round(trader_pnl_rate * 100, 2)}%"
+                        self.trader_pnl_dict[trader_name] = [trader_pnl, trader_pnl_rate]
 
                 self.put_timer_event()
                 

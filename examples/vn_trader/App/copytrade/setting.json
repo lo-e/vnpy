@@ -52,6 +52,7 @@
       "copy_assets": 20000,
       "copy_rate": 1,
       "trade_value": 700,
+      "stop_loss": 0.2,
       "start": true
     },
     "D5E7A8430A35CA84": {
@@ -60,6 +61,7 @@
       "copy_assets": 100000,
       "copy_rate": 1,
       "trade_value": 700,
+      "stop_loss": 0.3,
       "start": true
     }
   },
