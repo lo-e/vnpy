@@ -456,12 +456,13 @@ class CopytradeStrategy(CtaTemplate):
                 self.position_pnl = round(copy_pnl, 2)
                 position_pnl_rate = copy_pnl / self.portfolio_value
                 if position_pnl_rate <= self.portfolio_stop_loss:
-                    # 止损平仓
-                    for vt_symbol, current_pos in self.symbol_pos_dict.items():
-                        # 取消所有正在进行中的订单
-                        self.cancel_all()
+                    # ====== 止损平仓 ======
 
-                        # 发出订单
+                    # 取消所有正在进行中的订单
+                    self.cancel_all()
+
+                    # 发出平仓订单
+                    for vt_symbol, current_pos in self.symbol_pos_dict.items():
                         tick = oms_engine.ticks.get(vt_symbol, None)
                         if tick:
                             long_close_price = tick.last_price * 1.01
