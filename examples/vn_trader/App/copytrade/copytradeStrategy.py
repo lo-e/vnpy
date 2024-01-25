@@ -78,7 +78,7 @@ class CopytradeStrategy(CtaTemplate):
         self.wait_tick_symbols = set() # 等待行情数据的合约集合
         self.position_pnl = 0 # 持仓盈亏
         self.position_pnl_rate = "" # 持仓盈亏占比（相对投资组合总资金）
-        self.trader_pnl_dict = 0 # 带单员持仓盈亏
+        self.trader_pnl_dict = {} # 带单员持仓盈亏
 
         self.check_position_queue = Queue()
         self.check_trader_position_updated_queue = Queue()
