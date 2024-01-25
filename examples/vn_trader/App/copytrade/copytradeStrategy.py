@@ -39,7 +39,7 @@ class CopytradeStrategy(CtaTemplate):
     parameters = [
         "strategy_name",
         "portfolio_value",
-        "stop_loss"
+        "portfolio_stop_loss"
     ]
 
     # 变量列表，保存了变量的名称
@@ -50,6 +50,7 @@ class CopytradeStrategy(CtaTemplate):
         "trader_name_position_dict",
         "trader_name_position_updated_time",
         "trader_position_inited",
+        "trader_pnl_dict",
         "position_pnl",
         "position_pnl_rate"
     ]
@@ -58,7 +59,8 @@ class CopytradeStrategy(CtaTemplate):
     syncs = [
         "symbol_pos_dict",
         "target_symbol_pos_dict",
-        "symbol_absolute_pos_dict"
+        "symbol_absolute_pos_dict",
+        "trader_from_time_dict"
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -70,6 +72,7 @@ class CopytradeStrategy(CtaTemplate):
         self.trader_name_position_dict = {} # 带单交易员带单数据
         self.trader_name_position_updated_time = {} # 带单交易员带单更新时间
         self.trader_position_inited = False # 带单交易员带单数据初始化
+        self.trader_from_time_dict = {} # 带单交易员有效带单起始时间
 
         self.copy_position_cache = {} # 跟单持仓缓存
         self.trader_position_cache = {} # 带单员带单持仓缓存
@@ -77,6 +80,7 @@ class CopytradeStrategy(CtaTemplate):
         self.wait_tick_symbols = set() # 等待行情数据的合约集合
         self.position_pnl = 0 # 持仓盈亏
         self.position_pnl_rate = "" # 持仓盈亏占比（相对投资组合总资金）
+        self.trader_pnl_dict = {} # 带单员持仓盈亏
 
         self.check_position_queue = Queue()
         self.check_trader_position_updated_queue = Queue()
@@ -90,7 +94,7 @@ class CopytradeStrategy(CtaTemplate):
         # 投资组合设置
         portfolio_setting = setting.get("portfolio", {})
         self.portfolio_value = portfolio_setting.get("capital", 1000000000)
-        self.stop_loss = portfolio_setting.get("stop_loss", 1)
+        self.portfolio_stop_loss = portfolio_setting.get("stop_loss", -1)
 
         # 默认合约列表
         self.default_vt_symbols = setting.get("vt_symbols", [])
@@ -139,13 +143,11 @@ class CopytradeStrategy(CtaTemplate):
                 t = Thread(target=self.fetch_copytrade_data, args=(trader,))
                 t.start()
 
-    def on_start(self):
-        self.trading = True
-        self.on_mainengine_position_updated(event=None)
-        self.check_trader_position_updated_queue.put(None)
-
     # 跟单持仓更新
     def on_mainengine_position_updated(self, event):
+        if not self.trading:
+            return
+        
         # 合约的目标仓位
         target_symbol_pos_dict = {}
 
@@ -186,7 +188,7 @@ class CopytradeStrategy(CtaTemplate):
                 target_symbol_pos_dict[vt_symbol] = round_to(pos, contract.min_volume)
 
         # 导入持仓检查队列
-        if self.trading and self.copy_position_cache != target_symbol_pos_dict:
+        if (not event) or (self.copy_position_cache != target_symbol_pos_dict):
             self.copy_position_cache = target_symbol_pos_dict
             self.check_position_queue.put(target_symbol_pos_dict)
         # print(f"\n")
@@ -199,7 +201,7 @@ class CopytradeStrategy(CtaTemplate):
                 continue
             
             try:
-                __ = self.check_trader_position_updated_queue.get(block=True, timeout=1)
+                event = self.check_trader_position_updated_queue.get(block=True, timeout=1)
 
                 # 合约的目标仓位
                 target_symbol_pos_dict = {}
@@ -257,7 +259,7 @@ class CopytradeStrategy(CtaTemplate):
                 self.trader_position_inited = inited
                 if self.trader_position_inited:
                     # 导入持仓检查队列
-                    if self.trading and self.trader_position_cache != target_symbol_pos_dict:
+                    if (not event) or (self.trader_position_cache != target_symbol_pos_dict):
                         self.trader_position_cache = target_symbol_pos_dict
                         # self.check_position_queue.put(target_symbol_pos_dict)
                         
@@ -430,10 +432,11 @@ class CopytradeStrategy(CtaTemplate):
 
     def calculate_pnl(self):
         while True:
-            pnl = 0
             try:
-                # 计算策略跟单盈亏
                 oms_engine = self.cta_engine.main_engine.engines["oms"]
+
+                # 计算策略跟单盈亏
+                copy_pnl = 0
                 for vt_symbol in list(self.symbol_absolute_pos_dict.keys()):
                     pos_data = self.symbol_absolute_pos_dict[vt_symbol]
                     tick = oms_engine.ticks.get(vt_symbol, None)
@@ -443,19 +446,83 @@ class CopytradeStrategy(CtaTemplate):
                         long_price = long_data.get("price", 0)
                         if long_volume and long_price and tick.last_price:
                             long_pnl = long_volume * (tick.last_price - long_price)
-                            pnl += long_pnl
+                            copy_pnl += long_pnl
 
                         short_data = pos_data.get("short", {})
                         short_volume = abs(short_data.get("volume", 0))
                         short_price = short_data.get("price", 0)
                         if short_volume and short_price and tick.last_price:
                             short_pnl = short_volume * (short_price - tick.last_price)
-                            pnl += short_pnl
+                            copy_pnl += short_pnl
                 
-                self.position_pnl = round(pnl, 2)
-                self.position_pnl_rate = f"{round(pnl / self.portfolio_value * 100, 2)}%"
+                self.position_pnl = round(copy_pnl, 2)
+                position_pnl_rate = copy_pnl / self.portfolio_value
+                if self.trading and position_pnl_rate <= self.portfolio_stop_loss:
+                    # ====== 止损平仓 ======
+
+                    # 取消所有正在进行中的订单
+                    self.cancel_all()
+
+                    # 发出平仓订单
+                    for vt_symbol, current_pos in self.symbol_pos_dict.items():
+                        tick = oms_engine.ticks.get(vt_symbol, None)
+                        if tick:
+                            long_close_price = tick.last_price * 1.01
+                            short_close_price = tick.last_price * 0.99
+                            if current_pos > 0:
+                                # 平多
+                                self.send_symbol_order(vt_symbol, Direction.SHORT, Offset.CLOSE, short_close_price, abs(current_pos))
+
+                            elif current_pos < 0:
+                                # 平空
+                                self.send_symbol_order(vt_symbol, Direction.LONG, Offset.CLOSE, long_close_price, abs(current_pos))
+                    
+                    # 停止策略，发出通知
+                    self.trading = False
+                    msg = f"\n投资组合当前亏损：{position_pnl_rate}\n最大亏损限制：{self.portfolio_stop_loss}\n已强制清仓，停止策略"
+                    self.send_ding_talk(msg)
+                        
+                self.position_pnl_rate = f"{round(position_pnl_rate * 100, 2)}%"
 
                 # 计算带单员带单盈亏
+                trader_pnl_dict = {}
+                for trader, symbol_pos_dict in self.trader_position_dict.items():
+                    trader_pnl = 0
+                    for symbol, pos_data in symbol_pos_dict.items():
+                        tick = oms_engine.ticks.get(f"{symbol}.OKX", None)
+                        if tick:
+                            long_data = pos_data.get("long", {})
+                            long_volume = abs(long_data.get("volume", 0))
+                            long_price = long_data.get("price", 0)
+                            if long_volume and long_price and tick.last_price:
+                                long_pnl = long_volume * (tick.last_price - long_price)
+                                trader_pnl += long_pnl
+
+                            short_data = pos_data.get("short", {})
+                            short_volume = abs(short_data.get("volume", 0))
+                            short_price = short_data.get("price", 0)
+                            if short_volume and short_price and tick.last_price:
+                                short_pnl = short_volume * (short_price - tick.last_price)
+                                trader_pnl += short_pnl
+                    trader_pnl_dict[trader] = trader_pnl
+                
+                for trader, trader_pnl in trader_pnl_dict.items():
+                    trader_setting = self.trader_setting.get(trader, {})
+                    trader_name = trader_setting.get("trader", "")
+                    copy_assets = trader_setting.get("copy_assets", 0)
+                    copy_rate = trader_setting.get("copy_rate", 0)
+                    stop_loss = trader_setting.get("stop_loss", -1)
+                    value = copy_assets * copy_rate
+
+                    trader_pnl = round(trader_pnl, 2)
+                    if value:
+                        trader_pnl_rate = trader_pnl / value
+                        if trader_pnl_rate <= stop_loss:
+                            # 设置带单交易员有效带单起始时间（相当于止损平仓）
+                            self.trader_from_time_dict[trader] = datetime.now().replace(microsecond=0)
+
+                        trader_pnl_rate = f"{round(trader_pnl_rate * 100, 2)}%"
+                        self.trader_pnl_dict[trader_name] = [trader_pnl, trader_pnl_rate]
 
                 self.put_timer_event()
                 
@@ -522,6 +589,14 @@ class CopytradeStrategy(CtaTemplate):
                         symbol_pos_dict_real = {}
                         symbol_pos_dict_copy = {}
                         for d in trader_position_data:
+                            # 带单起始时间判断
+                            open_time = d["openTime"]
+                            open_time = datetime.fromtimestamp(int(open_time) / 1000)
+                            valid_from_time = self.trader_from_time_dict.get(trader, None)
+                            if valid_from_time and open_time < valid_from_time:
+                                continue
+                            
+                            # 带单合约判断
                             symbol = d["instId"]
                             pure_symbol = symbol.split("-")[0]
                             symbol_list = setting.get("symbol_list", [])
@@ -596,7 +671,7 @@ class CopytradeStrategy(CtaTemplate):
                         if (trader not in self.trader_position_dict) or self.trader_position_dict[trader] != symbol_pos_dict_copy:
                             self.trader_position_dict[trader] = symbol_pos_dict_copy
                             self.trader_name_position_dict[trader_name] = symbol_pos_dict_copy
-                            self.check_trader_position_updated_queue.put(None)
+                            self.check_trader_position_updated_queue.put(True)
 
                             # 订阅带单合约行情
                             oms_engine = self.cta_engine.main_engine.engines["oms"]
