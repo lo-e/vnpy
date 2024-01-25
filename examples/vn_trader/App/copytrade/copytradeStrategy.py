@@ -457,7 +457,30 @@ class CopytradeStrategy(CtaTemplate):
                 position_pnl_rate = copy_pnl / self.portfolio_value
                 if position_pnl_rate <= self.portfolio_stop_loss * -1:
                     # 止损平仓
-                    pass
+                    for vt_symbol, current_pos in self.symbol_pos_dict.items():
+                        # 取消该合约正在进行中的订单
+                        active_orders = oms_engine.get_all_active_orders(vt_symbol)
+                        for order in active_orders:
+                            self.cancel_order(order.vt_orderid)
+
+                        # 发出订单
+                        tick = oms_engine.ticks.get(vt_symbol, None)
+                        if tick:
+                            long_close_price = tick.last_price * 1.01
+                            short_close_price = tick.last_price * 0.99
+                            if current_pos > 0:
+                                # 平多
+                                self.send_symbol_order(vt_symbol, Direction.SHORT, Offset.CLOSE, short_close_price, abs(current_pos))
+
+                            elif current_pos < 0:
+                                # 平空
+                                self.send_symbol_order(vt_symbol, Direction.LONG, Offset.CLOSE, long_close_price, abs(current_pos))
+                    
+                    # 停止策略，发出通知
+                    self.trading = False
+                    msg = f"\n投资组合当前亏损：{position_pnl_rate}\n最大亏损限制：-{self.portfolio_stop_loss}\n已强制清仓，停止策略"
+                    self.send_ding_talk(msg)
+                        
                 self.position_pnl_rate = f"{round(position_pnl_rate * 100, 2)}%"
 
                 # 计算带单员带单盈亏
