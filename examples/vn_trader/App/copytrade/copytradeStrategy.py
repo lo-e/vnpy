@@ -458,10 +458,8 @@ class CopytradeStrategy(CtaTemplate):
                 if position_pnl_rate <= self.portfolio_stop_loss:
                     # 止损平仓
                     for vt_symbol, current_pos in self.symbol_pos_dict.items():
-                        # 取消该合约正在进行中的订单
-                        active_orders = oms_engine.get_all_active_orders(vt_symbol)
-                        for order in active_orders:
-                            self.cancel_order(order.vt_orderid)
+                        # 取消所有正在进行中的订单
+                        self.cancel_all()
 
                         # 发出订单
                         tick = oms_engine.ticks.get(vt_symbol, None)
