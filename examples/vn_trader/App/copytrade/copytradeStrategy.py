@@ -59,7 +59,8 @@ class CopytradeStrategy(CtaTemplate):
     syncs = [
         "symbol_pos_dict",
         "target_symbol_pos_dict",
-        "symbol_absolute_pos_dict"
+        "symbol_absolute_pos_dict",
+        "trader_from_time_dict"
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -71,6 +72,7 @@ class CopytradeStrategy(CtaTemplate):
         self.trader_name_position_dict = {} # 带单交易员带单数据
         self.trader_name_position_updated_time = {} # 带单交易员带单更新时间
         self.trader_position_inited = False # 带单交易员带单数据初始化
+        self.trader_from_time_dict = {} # 带单交易员有效带单起始时间
 
         self.copy_position_cache = {} # 跟单持仓缓存
         self.trader_position_cache = {} # 带单员带单持仓缓存
@@ -516,8 +518,9 @@ class CopytradeStrategy(CtaTemplate):
                     if value:
                         trader_pnl_rate = trader_pnl / value
                         if trader_pnl_rate <= stop_loss:
-                            # 止损平仓
-                            pass
+                            # 设置带单交易员有效带单起始时间（相当于止损平仓）
+                            self.trader_from_time_dict[trader] = datetime.now().replace(microsecond=0)
+
                         trader_pnl_rate = f"{round(trader_pnl_rate * 100, 2)}%"
                         self.trader_pnl_dict[trader_name] = [trader_pnl, trader_pnl_rate]
 
@@ -586,6 +589,14 @@ class CopytradeStrategy(CtaTemplate):
                         symbol_pos_dict_real = {}
                         symbol_pos_dict_copy = {}
                         for d in trader_position_data:
+                            # 带单起始时间判断
+                            open_time = d["openTime"]
+                            open_time = datetime.fromtimestamp(int(open_time) / 1000)
+                            valid_from_time = self.trader_from_time_dict.get(trader, None)
+                            if valid_from_time and open_time < valid_from_time:
+                                continue
+                            
+                            # 带单合约判断
                             symbol = d["instId"]
                             pure_symbol = symbol.split("-")[0]
                             symbol_list = setting.get("symbol_list", [])
