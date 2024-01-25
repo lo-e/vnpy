@@ -593,6 +593,7 @@ class CopytradeStrategy(CtaTemplate):
                             self.trader_position_dict[trader] = symbol_pos_dict_copy
                             self.trader_name_position_dict[trader_name] = symbol_pos_dict_copy
                             self.check_trader_position_updated_queue.put(None)
+                            print(f"带单员带单更新：\n{symbol_pos_dict_copy}\n\n{trader_position_data}")
                         self.trader_name_position_updated_time[trader_name] = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
                         
                         # print(f"{datetime.now()}\t带单员：{trader_name}\t开单数量：{len(trader_position_data)}\t实际净持仓：{symbol_pos_dict_real}\n")
