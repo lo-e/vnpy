@@ -191,7 +191,7 @@ class CopytradeStrategy(CtaTemplate):
                 target_symbol_pos_dict[vt_symbol] = round_to(pos, contract.min_volume)
 
         # 导入持仓检查队列
-        if self.copy_position_cache != target_symbol_pos_dict:
+        if (not event) or (self.copy_position_cache != target_symbol_pos_dict):
             self.copy_position_cache = target_symbol_pos_dict
             self.check_position_queue.put(target_symbol_pos_dict)
         # print(f"\n")
@@ -204,7 +204,7 @@ class CopytradeStrategy(CtaTemplate):
                 continue
             
             try:
-                __ = self.check_trader_position_updated_queue.get(block=True, timeout=1)
+                event = self.check_trader_position_updated_queue.get(block=True, timeout=1)
 
                 # 合约的目标仓位
                 target_symbol_pos_dict = {}
@@ -262,7 +262,7 @@ class CopytradeStrategy(CtaTemplate):
                 self.trader_position_inited = inited
                 if self.trader_position_inited:
                     # 导入持仓检查队列
-                    if self.trader_position_cache != target_symbol_pos_dict:
+                    if (not event) or (self.trader_position_cache != target_symbol_pos_dict):
                         self.trader_position_cache = target_symbol_pos_dict
                         # self.check_position_queue.put(target_symbol_pos_dict)
                         
@@ -643,7 +643,7 @@ class CopytradeStrategy(CtaTemplate):
                         if (trader not in self.trader_position_dict) or self.trader_position_dict[trader] != symbol_pos_dict_copy:
                             self.trader_position_dict[trader] = symbol_pos_dict_copy
                             self.trader_name_position_dict[trader_name] = symbol_pos_dict_copy
-                            self.check_trader_position_updated_queue.put(None)
+                            self.check_trader_position_updated_queue.put(True)
 
                             # 订阅带单合约行情
                             oms_engine = self.cta_engine.main_engine.engines["oms"]
