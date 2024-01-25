@@ -432,6 +432,7 @@ class CopytradeStrategy(CtaTemplate):
         while True:
             pnl = 0
             try:
+                # 计算策略跟单盈亏
                 oms_engine = self.cta_engine.main_engine.engines["oms"]
                 for vt_symbol in list(self.symbol_absolute_pos_dict.keys()):
                     pos_data = self.symbol_absolute_pos_dict[vt_symbol]
@@ -453,6 +454,9 @@ class CopytradeStrategy(CtaTemplate):
                 
                 self.position_pnl = round(pnl, 2)
                 self.position_pnl_rate = f"{round(pnl / self.portfolio_value * 100, 2)}%"
+
+                # 计算带单员带单盈亏
+
                 self.put_timer_event()
                 
             except Exception as e:
