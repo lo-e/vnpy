@@ -665,8 +665,8 @@ class CopytradeEngine(BaseEngine):
                 pass
     
     def get_strategie_sync_file_path(self, strategy):
-        dir = os.path.dirname(os.path.realpath(__file__))
-        dir_path = Path(dir).joinpath(f"strategie_sync_data{DIR_SYMBOL}BaiduSyncdisk{DIR_SYMBOL}")
+        dir = os.getcwd()
+        dir_path = Path(dir).joinpath(f"BaiduSyncdisk{DIR_SYMBOL}")
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
         file_path = dir_path.joinpath(f"{strategy.strategy_name}.json")
