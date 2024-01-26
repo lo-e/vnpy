@@ -94,7 +94,7 @@ class CopytradeStrategy(CtaTemplate):
         self.portfolio_value = 0
         stop_loss_value = 0
         for _, exchange_data in self.copy_setting.items():
-            for __, copy_data in exchange_data:
+            for __, copy_data in exchange_data.items():
                 start = copy_data.get("start", False)
                 if start:
                     trade_value = copy_data.get("trade_value", 0)
