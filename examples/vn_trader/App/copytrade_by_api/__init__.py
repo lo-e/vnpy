@@ -16,4 +16,4 @@ class CopytradeByApiApp(BaseApp):
     display_name = "跟单交易（API）"
     engine_class = CopytradeEngine
     widget_name = "CopytradeManager"
-    icon_name = "copytrade.ico"
+    icon_name = "copytrade_api.ico"
