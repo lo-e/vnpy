@@ -1,5 +1,5 @@
 {
-  "strategy_name": "COPYTRADE",
+  "strategy_name": "COPYTRADE_API",
   "vt_symbols": [
     "BTCUSDT.BINANCE",
     "ETHUSDT.BINANCE",
