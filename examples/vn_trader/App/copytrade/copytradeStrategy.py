@@ -15,7 +15,6 @@ from vnpy.trader.utility import round_to, floor_to, ceil_to, load_json_path
 import numpy as np
 from threading import Thread
 from utilities.BarGenerator import BarGenerator
-from App.marting.martingPortfolio import BAR_DOWNLOAD_GENERATE_COMPLETE
 from vnpy.event import Event
 from copy import copy
 from vnpy.trader.event import EVENT_MAINENGINE_POSITION_UPDATED
@@ -92,9 +91,17 @@ class CopytradeStrategy(CtaTemplate):
         self.trader_setting = setting.get("trader_setting", {})
 
         # 投资组合设置
-        portfolio_setting = setting.get("portfolio", {})
-        self.portfolio_value = portfolio_setting.get("capital", 1000000000)
-        self.portfolio_stop_loss = portfolio_setting.get("stop_loss", -1)
+        self.portfolio_value = 0
+        stop_loss_value = 0
+        for _, exchange_data in self.copy_setting.items():
+            for __, copy_data in exchange_data:
+                start = copy_data.get("start", False)
+                if start:
+                    trade_value = copy_data.get("trade_value", 0)
+                    stop_loss = copy_data.get("stop_loss", -1)
+                    self.portfolio_value += trade_value
+                    stop_loss_value += trade_value * stop_loss
+        self.portfolio_stop_loss = stop_loss_value / self.portfolio_value
 
         # 默认合约列表
         self.default_vt_symbols = setting.get("vt_symbols", [])

@@ -8,11 +8,6 @@
     "XRPUSDT.BINANCE",
     "ORDIUSDT.BINANCE"
   ],
-  "portfolio":{
-    "update_time": "2024-01-03",
-    "capital": 1126,
-    "stop_loss": -0.32
-  },
   "copy_setting": {
     "OKX": {
       "lo-e（test）": {
@@ -20,6 +15,7 @@
         "copy_assets": 50000,
         "copy_rate": 0.01,
         "trade_value": 1000,
+        "stop_loss": -0.3,
         "start": false
       },
       "lo-e": {
@@ -27,13 +23,15 @@
         "copy_assets": 20000,
         "copy_rate": 0.03,
         "trade_value": 700,
-        "start": true
+        "stop_loss": -0.2,
+        "start": false
       },
       "wawjlc": {
         "trader": "从小有个百万梦",
         "copy_assets": 20000,
         "copy_rate": 0.03,
         "trade_value": 700,
+        "stop_loss": -0.2,
         "start": true
       },
       "loesuperman": {
@@ -41,6 +39,7 @@
         "copy_assets": 100000,
         "copy_rate": 0.01,
         "trade_value": 700,
+        "stop_loss": -0.3,
         "start": true
       }
     }
