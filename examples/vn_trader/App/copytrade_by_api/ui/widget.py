@@ -305,7 +305,7 @@ class CopytradeManager(QtWidgets.QWidget):
 
     def initUi(self):
         """初始化界面"""
-        self.setWindowTitle("跟单交易")
+        self.setWindowTitle("跟单交易（API）")
 
         # 组合管理
         portfolioManager = CopytradePortfolioManager(
