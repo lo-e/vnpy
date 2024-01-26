@@ -359,8 +359,8 @@ class CopytradeStrategy(CtaTemplate):
                                 self.cancel_order(order.vt_orderid)
 
                             # 发出订单
-                            long_open_price = tick.last_price + contract.pricetick*100
-                            short_open_price = tick.last_price - contract.pricetick*100
+                            long_open_price = max(tick.last_price + contract.pricetick*100, tick.last_price * 1.0005)
+                            short_open_price = min(tick.last_price - contract.pricetick*100, tick.last_price * 0.9995)
                             long_close_price = tick.last_price * 1.01
                             short_close_price = tick.last_price * 0.99
                             current_pos = self.symbol_pos_dict.get(vt_symbol, 0)
