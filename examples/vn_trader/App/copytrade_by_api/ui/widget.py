@@ -208,26 +208,24 @@ class CopytradePortfolioManager(QtWidgets.QGroupBox):
         hbox1.addStretch()
         vbox.addLayout(hbox1)
 
-        # height = 100
-        # self.paramMonitor = CtaValueMonitor(self)
-        # self.paramMonitor.setFixedHeight(height)
-        # hbox2 = QtWidgets.QHBoxLayout()
-        # hbox2.addWidget(self.paramMonitor)
-        # vbox.addLayout(hbox2)
+        height = 100
+        self.paramMonitor = CtaValueMonitor(self)
+        self.paramMonitor.setFixedHeight(height)
+        hbox2 = QtWidgets.QHBoxLayout()
+        hbox2.addWidget(self.paramMonitor)
+        vbox.addLayout(hbox2)
 
-        # self.varMonitor = CtaValueMonitor(self)
-        # self.varMonitor.setFixedHeight(height)
-        # hbox3 = QtWidgets.QHBoxLayout()
-        # hbox3.addWidget(self.varMonitor)
-        # vbox.addLayout(hbox3)
+        self.varMonitor = CtaValueMonitor(self)
+        self.varMonitor.setFixedHeight(height)
+        hbox3 = QtWidgets.QHBoxLayout()
+        hbox3.addWidget(self.varMonitor)
+        vbox.addLayout(hbox3)
 
         self.setLayout(vbox)
 
     # ----------------------------------------------------------------------
     def updateMonitor(self):
         """显示组合最新状态"""
-        return
-    
         paramDict = self.copytradeEngine.get_portfolio_parameters()
         if paramDict:
             self.paramMonitor.updateData(paramDict)

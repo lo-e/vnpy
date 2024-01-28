@@ -1,68 +1,38 @@
 {
-  "strategy_name": "COPYTRADE_API",
-  "vt_symbols": [
-    "BTCUSDT.BINANCE",
-    "ETHUSDT.BINANCE",
-    "BNBUSDT.BINANCE",
-    "SOLUSDT.BINANCE",
-    "XRPUSDT.BINANCE",
-    "ORDIUSDT.BINANCE"
-  ],
-  "copy_setting": {
-    "OKX": {
-      "lo-e（test）": {
-        "trader": "测试",
-        "copy_assets": 50000,
-        "copy_rate": 0.01,
-        "trade_value": 1000,
-        "stop_loss": -0.3,
-        "start": false
-      },
-      "lo-e": {
+  "portfolio":{
+    "symbols": [
+      "BTC",
+      "ETH",
+      "BNB",
+      "SOL",
+      "XRP",
+      "ORDI"
+    ],
+    "copy_setting": {
+      "540D011FDACCB47A": {
         "trader": "从小有个百万梦",
+        "symbol_list": ["BTC", "ETH"],
         "copy_assets": 20000,
-        "copy_rate": 0.03,
-        "trade_value": 700,
-        "stop_loss": -0.2,
-        "start": false
-      },
-      "wawjlc": {
-        "trader": "从小有个百万梦",
-        "copy_assets": 20000,
-        "copy_rate": 0.03,
-        "trade_value": 700,
+        "trade_assets": 700,
         "stop_loss": -0.2,
         "start": true
       },
-      "loesuperman": {
+      "D5E7A8430A35CA84": {
         "trader": "墙头草",
+        "symbol_list": [],
         "copy_assets": 100000,
-        "copy_rate": 0.01,
-        "trade_value": 700,
+        "trade_assets": 700,
         "stop_loss": -0.3,
         "start": true
       }
     }
   },
-  "trader_setting": {
-    "540D011FDACCB47A": {
-      "trader": "从小有个百万梦",
-      "symbol_list": ["BTC", "ETH"],
-      "copy_assets": 20000,
-      "copy_rate": 1,
-      "trade_value": 700,
-      "stop_loss": -0.2,
-      "start": true
-    },
-    "D5E7A8430A35CA84": {
-      "trader": "墙头草",
-      "symbol_list": [],
-      "copy_assets": 100000,
-      "copy_rate": 1,
-      "trade_value": 700,
-      "stop_loss": -0.3,
+  "signal":[
+    {
+      "strategy_name": "COPYTRADE_API_BINANCE",
+      "exchange": "BINANCE",
+      "exhcange_user": "lo-e（test）",
       "start": true
     }
-  },
-  "start": true
+  ]
 }

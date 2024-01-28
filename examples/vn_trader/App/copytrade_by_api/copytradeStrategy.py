@@ -101,7 +101,7 @@ class CopytradeStrategy(CtaTemplate):
                     stop_loss = copy_data.get("stop_loss", -1)
                     self.portfolio_value += trade_value
                     stop_loss_value += trade_value * stop_loss
-        self.portfolio_stop_loss = stop_loss_value / self.portfolio_value
+        self.portfolio_stop_loss = stop_loss_value / self.portfolio_value if self.portfolio_value else -1
 
         # 默认合约列表
         self.default_vt_symbols = setting.get("vt_symbols", [])

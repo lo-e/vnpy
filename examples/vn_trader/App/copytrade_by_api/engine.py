@@ -64,6 +64,7 @@ from time import sleep
 from decimal import Decimal
 from .copytradeStrategy import CopytradeStrategy
 import json
+from .copytradePortfolio import CopytradePortfolio
 
 STOP_STATUS_MAP = {
     Status.SUBMITTING: StopOrderStatus.WAITING,
@@ -100,11 +101,23 @@ class CopytradeEngine(BaseEngine):
 
         self.offset_converter = OffsetConverter(self.main_engine)
 
+        # 组合管理类
+        self.copytradePortfolio: CopytradePortfolio = None
+
     def init_engine(self):
         dir_path = Path(os.path.dirname(os.path.realpath(__file__)))
         file_path = dir_path.joinpath("setting.json")
         setting = load_json_path(file_path)
-        self.add_strategy(setting)
+
+        # 导入投资组合
+        portfolio_setting = setting.get("portfolio", None)
+        self.copytradePortfolio = CopytradePortfolio(self, portfolio_setting)
+        
+        # 导入策略
+        signal_list = setting.get("signal", [])
+        for signal_setting in signal_list:
+            self.add_strategy(signal_setting)
+
         self.register_event()
         self.write_log("跟单交易引擎初始化成功")
 
@@ -701,6 +714,23 @@ class CopytradeEngine(BaseEngine):
         """停止策略组合"""
         self.stop_all_strategies()
 
+    def get_portfolio_variables(self):
+        varDict = OrderedDict()
+
+        for key in self.copytradePortfolio.varList:
+            varDict[key] = self.copytradePortfolio.__getattribute__(key)
+
+        return varDict
+
+    def get_portfolio_parameters(self):
+        """获取策略的参数字典"""
+        paramDict = OrderedDict()
+
+        for key in self.copytradePortfolio.paramList:
+            paramDict[key] = self.copytradePortfolio.__getattribute__(key)
+
+        return paramDict
+    
     def get_strategy_parameters(self, strategy_name):
         """
         Get parameters of a strategy.
