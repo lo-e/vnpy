@@ -257,12 +257,30 @@ class MainEngine:
             return gateway.send_order(req)
         else:
             return ""
+    
+    def send_account_order(self, req: OrderRequest, gateway_name: str, account_name: str) -> str:
+        """
+        Send new order request to a specific gateway.
+        """
+        gateway = self.get_gateway(gateway_name=gateway_name, account_name=account_name)
+        if gateway:
+            return gateway.send_order(req)
+        else:
+            return ""
 
     def cancel_order(self, req: CancelRequest, gateway_name: str) -> None:
         """
         Send cancel order request to a specific gateway.
         """
         gateway = self.get_default_gateway(gateway_name)
+        if gateway:
+            gateway.cancel_order(req)
+
+    def cancel_account_order(self, req: CancelRequest, gateway_name: str, account_name: str) -> None:
+        """
+        Send cancel order request to a specific gateway.
+        """
+        gateway = self.get_gateway(gateway_name=gateway_name, account_name=account_name)
         if gateway:
             gateway.cancel_order(req)
 

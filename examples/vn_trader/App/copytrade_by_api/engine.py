@@ -44,7 +44,7 @@ from vnpy.trader.utility import (
 )
 from vnpy.trader.utility import DIR_SYMBOL
 
-from .base import APP_NAME
+from .base import APP_NAME, EVENT_COPYTRADE_PORTFOLIO
 from vnpy.app.cta_strategy.base import (
     EVENT_CTA_LOG,
     EVENT_CTA_STRATEGY,
@@ -112,6 +112,7 @@ class CopytradeEngine(BaseEngine):
         # 导入投资组合
         portfolio_setting = setting.get("portfolio", None)
         self.copytradePortfolio = CopytradePortfolio(self, portfolio_setting)
+        self.loadPortfolioSyncData()
         
         # 导入策略
         signal_list = setting.get("signal", [])
@@ -132,6 +133,10 @@ class CopytradeEngine(BaseEngine):
         self.event_engine.register(EVENT_TIMER, self.process_timer_event)
 
     def process_timer_event(self, event: Event):
+        # 投资组合推送
+        if self.copytradePortfolio.inited:
+            self.copytradePortfolio.on_timer()
+
         # 策略推送
         for strategy in self.strategies.values():
             if strategy.inited:
@@ -294,7 +299,7 @@ class CopytradeEngine(BaseEngine):
         vt_orderids = []
 
         for req in req_list:
-            vt_orderid = self.main_engine.send_order(req, contract.gateway_name)
+            vt_orderid = self.main_engine.send_account_order(req, contract.gateway_name, strategy.exchange_user)
             vt_orderids.append(vt_orderid)
 
             self.offset_converter.update_order_request(req, vt_orderid)
@@ -332,7 +337,7 @@ class CopytradeEngine(BaseEngine):
             return
 
         req = order.create_cancel_request()
-        self.main_engine.cancel_order(req, order.gateway_name)
+        self.main_engine.cancel_account_order(req, order.gateway_nam, strategy.exchange_user)
 
     def send_order(
         self,
@@ -524,6 +529,67 @@ class CopytradeEngine(BaseEngine):
         event2 = Event(EVENT_CTA_STRATEGY + strategy_name, data)
         self.event_engine.put(event2)
 
+    def put_portfolio_event(self):
+        """
+        Put an event to update portfolio status.
+        """
+        # 保存到数据库
+        self.savePortfolioSyncData()
+
+        # 刷新Portfolio组件UI
+        event = Event(type=EVENT_COPYTRADE_PORTFOLIO, data=self.get_portfolio_variables())
+        self.event_engine.put(event)
+
+    def loadPortfolioSyncData(self):
+        """从数据库导入投资组合历史同步数据"""
+        syncData = self.main_engine.dbQuery(
+            PORTFOLIO_DB_NAME, self.copytradePortfolio.name, {}
+        )
+
+        if not syncData:
+            return
+
+        d = syncData[0]
+
+        for key in self.copytradePortfolio.syncList:
+            if key in d:
+                self.copytradePortfolio.__setattr__(key, d[key])
+    
+    def savePortfolioSyncData(self):
+        """保存投资组合同步数据到数据库"""
+        if not self.copytradePortfolio:
+            return
+
+        d = {}
+        for key in self.copytradePortfolio.syncList:
+            d[key] = self.copytradePortfolio.__getattribute__(key)
+        
+        if d:
+            self.main_engine.dbUpdate(
+                PORTFOLIO_DB_NAME,
+                self.copytradePortfolio.name,
+                d,
+                {},
+                True,
+                callback=self.portfolioDbUpdateCallback,
+            )
+
+    def portfolioDbUpdateCallback(self, back_data=None):
+        try:
+            if isinstance(back_data, dict):
+                result = back_data.get("result", False)
+                if result:
+                    content = f"跟单交易组合{self.copytradePortfolio.name}同步数据保存成功"
+                else:
+                    content = f"跟单交易组合{self.copytradePortfolio.name}同步数据保存失败"
+                    self.write_log(content)
+            else:
+                content = f"跟单交易组合{self.copytradePortfolio.name}同步数据保存失败"
+                self.write_log(content)
+        except:
+            content = f"跟单交易组合{self.copytradePortfolio.name}同步数据保存失败"
+            self.write_log(content)
+
     def write_log(self, msg: str, strategy: CtaTemplate = None):
         """
         Create cta engine log event.
@@ -704,11 +770,25 @@ class CopytradeEngine(BaseEngine):
 
     def initPortfolio(self):
         """初始化策略组合"""
+        # 策略初始化
         self.init_all_strategies()
+
+        # 投资组合初始化
+        if not self.copytradePortfolio.inited:
+            self.copytradePortfolio.inited = True
+            self.copytradePortfolio.on_init()
+            self.put_portfolio_event()
 
     def startPortfolio(self):
         """启动策略组合"""
+        # 策略启动
         self.start_all_strategies()
+
+        # 投资组合启动
+        if not self.copytradePortfolio.starting:
+            self.copytradePortfolio.on_start()
+            self.copytradePortfolio.starting = True
+            self.put_portfolio_event()
 
     def stopPortfolio(self):
         """停止策略组合"""
