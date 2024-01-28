@@ -11,7 +11,7 @@ from typing import Dict, List, Any,Union
 
 
 from vnpy.event import Event,EventEngine
-from vnpy_rest import RestClient, Request
+from ..rest import RestClient, Request
 from ..websocket import WebsocketClient
 from types import coroutine
 from asyncio import (
