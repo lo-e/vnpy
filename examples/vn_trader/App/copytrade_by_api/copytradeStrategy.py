@@ -59,7 +59,7 @@ class CopytradeStrategy(CtaTemplate):
     ]
 
     def __init__(self, ctaEngine, setting):
-        self.exchange = "" # 交易所
+        self.exchange = Exchange.NONE # 交易所
         self.exchange_user = "" # 交易所用户名
 
         self.symbol_pos_dict = {} # 合约净持仓
@@ -94,20 +94,30 @@ class CopytradeStrategy(CtaTemplate):
             cta_engine=ctaEngine, strategy_name="", vt_symbol="", setting=setting
         )
 
+        # 特殊常量赋值
+        if self.exchange == "OKX":
+            self.exchange = Exchange.OKX
+        
+        elif self.exchange == "BINANCE":
+            self.exchange = Exchange.BINANCE
+        
+        else:
+            raise(f"跟单交易策略交易所配置错误")
+
     def on_init(self):
         # 订阅合约
         subscribe_vt_symbols = set()
         for pure_symbol in self.portfolio.symbols:
             vt_symbol = ""
-            if self.exchange == "OKX":
-                vt_symbol = f"{pure_symbol}-USDT-SWAP.OKX"
+            if self.exchange == Exchange.OKX:
+                vt_symbol = f"{pure_symbol}-USDT-SWAP.{self.exchange.value}"
             
-            elif self.exchange == "BINANCE":
+            elif self.exchange == Exchange.BINANCE:
                 if pure_symbol in ["PEPE", "SHIB", "XEC", "LUNC", "FLOKI", "BONK", "SATS"]:
-                    vt_symbol = f"1000{pure_symbol}USDT.BINANCE"
+                    vt_symbol = f"1000{pure_symbol}USDT.{self.exchange.value}"
                     
                 else:
-                    vt_symbol = f"{pure_symbol}USDT.BINANCE"
+                    vt_symbol = f"{pure_symbol}USDT.{self.exchange.value}"
                 
             if vt_symbol:
                 subscribe_vt_symbols.add(vt_symbol)
@@ -175,16 +185,16 @@ class CopytradeStrategy(CtaTemplate):
                             pure_symbol = symbol.split("-")[0]
 
                             vt_symbol = ""
-                            if self.exchange == "OKX":
-                                vt_symbol = f"{pure_symbol}-USDT-SWAP.OKX"
+                            if self.exchange == Exchange.OKX:
+                                vt_symbol = f"{pure_symbol}-USDT-SWAP.{self.exchange.value}"
                             
-                            elif self.exchange == "BINANCE":
+                            elif self.exchange == Exchange.BINANCE:
                                 if pure_symbol in ["PEPE", "SHIB", "XEC", "LUNC", "FLOKI", "BONK", "SATS"]:
-                                    vt_symbol = f"1000{pure_symbol}USDT.BINANCE"
+                                    vt_symbol = f"1000{pure_symbol}USDT.{self.exchange.value}"
                                     target_pos = target_pos / 1000
                                     
                                 else:
-                                    vt_symbol = f"{pure_symbol}USDT.BINANCE"
+                                    vt_symbol = f"{pure_symbol}USDT.{self.exchange.value}"
 
                             # 持仓统计
                             if vt_symbol:
@@ -442,7 +452,7 @@ class CopytradeStrategy(CtaTemplate):
             return
 
         # 币安开仓有最低价值限制，判断是否满足
-        if offset == Offset.OPEN and self.exchange == "BINANCE":
+        if offset == Offset.OPEN and self.exchange == Exchange.BINANCE:
             oms_engine = self.cta_engine.main_engine.engines["oms"]
             tick = oms_engine.ticks.get(symbol, None)
             if tick:
