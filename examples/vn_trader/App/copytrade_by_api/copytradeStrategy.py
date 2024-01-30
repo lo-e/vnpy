@@ -157,7 +157,7 @@ class CopytradeStrategy(CtaTemplate):
     # 检查带单员带单更新
     def check_trader_position_updated(self):
         while True:
-            if not self.trading or self.portfolio.trader_position_inited:
+            if (not self.trading) or (not self.portfolio.trader_position_inited):
                 sleep(1)
                 continue
             
