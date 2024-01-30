@@ -94,7 +94,7 @@ class CopytradeStrategy(CtaTemplate):
             cta_engine=ctaEngine, strategy_name="", vt_symbol="", setting=setting
         )
 
-        # 特殊常量赋值
+        # 特殊常量处理
         if self.exchange == "OKX":
             self.exchange = Exchange.OKX
         
@@ -103,6 +103,10 @@ class CopytradeStrategy(CtaTemplate):
         
         else:
             raise(f"跟单交易策略交易所配置错误")
+        
+        gateway = self.cta_engine.main_engine.get_gateway(gateway_name=self.exchange.value, account_name=self.exchange_user)
+        if not gateway:
+            raise(f"跟单交易策略交易所未连接")
 
     def on_init(self):
         # 订阅合约
