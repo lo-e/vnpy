@@ -91,6 +91,8 @@ class CopytradePortfolio(object):
                     从小有个百万梦 '540D011FDACCB47A'
                     墙头草 'D5E7A8430A35CA84'
                     Alvinnn111 '9B28742D954561AE'
+                    fat_bear '5EAE0133C50F4261'
+                    比特智说币 '8B9619BF3BDE40E7'
                     """
                     trader_position_data = gateway.rest_api.query_copytrade(trader)
                     if isinstance(trader_position_data, list):

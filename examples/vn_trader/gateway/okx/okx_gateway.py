@@ -1070,9 +1070,11 @@ def parse_order_data(data: dict, gateway_name: str) -> OrderData:
 
 
     volume=float(data["sz"])
+    traded=float(data["accFillSz"])
     contract: ContractData = symbol_contract_map.get(data["instId"], None)
     if contract:
         volume = volume * contract.contract_value if contract.contract_value else volume
+        traded = traded * contract.contract_value if contract.contract_value else traded
 
     price = float(data["px"]) if data["px"] else 0
     order: OrderData = OrderData(
@@ -1082,7 +1084,7 @@ def parse_order_data(data: dict, gateway_name: str) -> OrderData:
         orderid=order_id,
         direction=DIRECTION_OKX2VT[data["side"]],
         offset=Offset.NONE,
-        traded=float(data["accFillSz"]),
+        traded=traded,
         price=price,
         volume=volume,
         datetime=parse_timestamp(data["cTime"]),

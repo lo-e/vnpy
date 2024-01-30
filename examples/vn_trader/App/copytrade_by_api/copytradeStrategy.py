@@ -76,8 +76,6 @@ class CopytradeStrategy(CtaTemplate):
         self.trade_assets_setting = setting["trade_assets"] # 跟单交易资金设置
 
         self.portfolio = ctaEngine.copytradePortfolio # 投资组合管理
-        if not self.portfolio:
-            raise(f"投资组合管理缺失")
 
         # 交易总资金、总止损
         self.trade_capital = 0
@@ -94,7 +92,12 @@ class CopytradeStrategy(CtaTemplate):
             cta_engine=ctaEngine, strategy_name="", vt_symbol="", setting=setting
         )
 
-        # 特殊常量处理
+    def on_init(self):
+        # 投资组合管理缺失判断
+        if not self.portfolio:
+            exit(f"投资组合管理缺失")
+
+        # 交易所配置判断
         if self.exchange == "OKX":
             self.exchange = Exchange.OKX
         
@@ -102,13 +105,12 @@ class CopytradeStrategy(CtaTemplate):
             self.exchange = Exchange.BINANCE
         
         else:
-            raise(f"跟单交易策略交易所配置错误")
+            exit(f"跟单交易策略交易所配置错误：{self.exchange}")
 
-    def on_init(self):
-        # 判断交易所是否成功连接
+        # 交易所成功连接判断
         gateway = self.cta_engine.main_engine.get_gateway(gateway_name=self.exchange.value, account_name=self.exchange_user)
         if not gateway:
-            raise(f"跟单交易策略交易所未连接")
+            exit(f"跟单交易策略交易所未连接：{self.exchange}@{self.exchange_user}")
         
         # 订阅合约
         subscribe_vt_symbols = set()
