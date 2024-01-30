@@ -103,12 +103,13 @@ class CopytradeStrategy(CtaTemplate):
         
         else:
             raise(f"跟单交易策略交易所配置错误")
-        
+
+    def on_init(self):
+        # 判断交易所是否成功连接
         gateway = self.cta_engine.main_engine.get_gateway(gateway_name=self.exchange.value, account_name=self.exchange_user)
         if not gateway:
             raise(f"跟单交易策略交易所未连接")
-
-    def on_init(self):
+        
         # 订阅合约
         subscribe_vt_symbols = set()
         for pure_symbol in self.portfolio.symbols:

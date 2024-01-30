@@ -69,7 +69,7 @@ class CopytradePortfolio(object):
         # 检查所有带单交易员带单数据是否成功获取
         inited = True
         for trader in self.copy_setting.keys():
-            if trader in self.trader_position_dict:
+            if trader not in self.trader_position_dict:
                 inited = False
         self.trader_position_inited = inited
 
