@@ -103,7 +103,11 @@ class CopytradeStrategy(CtaTemplate):
                 vt_symbol = f"{pure_symbol}-USDT-SWAP.OKX"
             
             elif self.exchange == "BINANCE":
-                vt_symbol = f"{pure_symbol}USDT.BINANCE"
+                if pure_symbol in ["PEPE", "SHIB", "XEC", "LUNC", "FLOKI", "BONK", "SATS"]:
+                    vt_symbol = f"1000{pure_symbol}USDT.BINANCE"
+                    
+                else:
+                    vt_symbol = f"{pure_symbol}USDT.BINANCE"
                 
             if vt_symbol:
                 subscribe_vt_symbols.add(vt_symbol)
