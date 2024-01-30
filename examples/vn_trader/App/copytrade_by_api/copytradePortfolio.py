@@ -66,6 +66,14 @@ class CopytradePortfolio(object):
         pass
 
     def on_timer(self):
+        # 检查所有带单交易员带单数据是否成功获取
+        inited = True
+        for trader in self.copy_setting.keys():
+            if trader in self.trader_position_dict:
+                inited = False
+        self.trader_position_inited = inited
+
+        # 投资组合事件推送
         self.cta_engine.put_portfolio_event()
 
     def fetch_copytrade_data(self, trader):

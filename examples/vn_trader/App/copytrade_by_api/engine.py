@@ -775,8 +775,8 @@ class CopytradeEngine(BaseEngine):
 
         # 投资组合初始化
         if not self.copytradePortfolio.inited:
-            self.copytradePortfolio.inited = True
             self.copytradePortfolio.on_init()
+            self.copytradePortfolio.inited = True
             self.put_portfolio_event()
 
     def startPortfolio(self):
