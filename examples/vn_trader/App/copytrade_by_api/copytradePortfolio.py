@@ -40,7 +40,6 @@ class CopytradePortfolio(object):
         self.trader_name_position_updated_time = {} # 带单交易员带单更新时间
         self.trader_position_inited = False # 带单交易员带单数据初始化
         self.trader_from_time_dict = {} # 带单交易员有效带单起始时间
-        self.trader_position_cache = {} # 带单交易员带单持仓缓存
         self.trader_pnl_dict = {} # 带单交易员持仓盈亏
 
         # 设置参数

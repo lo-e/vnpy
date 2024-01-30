@@ -66,7 +66,7 @@ class CopytradeStrategy(CtaTemplate):
         self.target_symbol_pos_dict = {} #  合约目标净持仓
         self.symbol_absolute_pos_dict = {} # 合约双向持仓数据
 
-        self.copy_position_cache = {} # 跟单持仓缓存
+        self.target_symbol_pos_cache = {} # 跟单持仓缓存
         self.wait_tick_symbols = set() # 等待行情数据的合约集合
         self.position_pnl = 0 # 持仓盈亏
         self.position_pnl_rate = "" # 持仓盈亏占比（相对投资组合总资金）
@@ -157,7 +157,7 @@ class CopytradeStrategy(CtaTemplate):
     # 检查带单员带单更新
     def check_trader_position_updated(self):
         while True:
-            if not self.trading:
+            if not self.trading or self.portfolio.trader_position_inited:
                 sleep(1)
                 continue
             
@@ -167,47 +167,41 @@ class CopytradeStrategy(CtaTemplate):
                 # 合约的目标仓位
                 target_symbol_pos_dict = {}
 
-                inited = True
                 for trader, setting in self.portfolio.copy_setting.items():
                     copy_value = setting.get("copy_assets", 0)
                     trade_value = self.trade_assets_setting.get(trader, 0)
                     if not copy_value or not trade_value:
                         continue
 
-                    if trader in self.portfolio.trader_position_dict:
-                        for symbol, pos_data in self.portfolio.trader_position_dict[trader].items():
-                            long_data = pos_data.get("long", {})
-                            long_volume = long_data.get("volume", 0)
+                    for symbol, pos_data in self.portfolio.trader_position_dict[trader].items():
+                        long_data = pos_data.get("long", {})
+                        long_volume = long_data.get("volume", 0)
 
-                            short_data = pos_data.get("short", {})
-                            short_volume = short_data.get("volume", 0)
-                            
-                            # 计算目标持仓
-                            pos = long_volume - short_volume
-                            target_pos = pos * trade_value / copy_value
+                        short_data = pos_data.get("short", {})
+                        short_volume = short_data.get("volume", 0)
+                        
+                        # 计算目标持仓
+                        pos = long_volume - short_volume
+                        target_pos = pos * trade_value / copy_value
 
-                            # 转换合约
-                            pure_symbol = symbol.split("-")[0]
+                        # 转换合约
+                        pure_symbol = symbol.split("-")[0]
 
-                            vt_symbol = ""
-                            if self.exchange == Exchange.OKX:
-                                vt_symbol = f"{pure_symbol}-USDT-SWAP.{self.exchange.value}"
-                            
-                            elif self.exchange == Exchange.BINANCE:
-                                if pure_symbol in ["PEPE", "SHIB", "XEC", "LUNC", "FLOKI", "BONK", "SATS"]:
-                                    vt_symbol = f"1000{pure_symbol}USDT.{self.exchange.value}"
-                                    target_pos = target_pos / 1000
-                                    
-                                else:
-                                    vt_symbol = f"{pure_symbol}USDT.{self.exchange.value}"
+                        vt_symbol = ""
+                        if self.exchange == Exchange.OKX:
+                            vt_symbol = f"{pure_symbol}-USDT-SWAP.{self.exchange.value}"
+                        
+                        elif self.exchange == Exchange.BINANCE:
+                            if pure_symbol in ["PEPE", "SHIB", "XEC", "LUNC", "FLOKI", "BONK", "SATS"]:
+                                vt_symbol = f"1000{pure_symbol}USDT.{self.exchange.value}"
+                                target_pos = target_pos / 1000
+                                
+                            else:
+                                vt_symbol = f"{pure_symbol}USDT.{self.exchange.value}"
 
-                            # 持仓统计
-                            if vt_symbol:
-                                target_symbol_pos_dict[vt_symbol] = target_symbol_pos_dict.get(vt_symbol, 0) + target_pos
-                    
-                    else:
-                        # 未完全获取所有带单员带单数据
-                        inited = False
+                        # 持仓统计
+                        if vt_symbol:
+                            target_symbol_pos_dict[vt_symbol] = target_symbol_pos_dict.get(vt_symbol, 0) + target_pos
 
                 # 仓位精度处理
                 for vt_symbol, pos in target_symbol_pos_dict.items():
@@ -216,47 +210,44 @@ class CopytradeStrategy(CtaTemplate):
                         target_symbol_pos_dict[vt_symbol] = round_to(pos, contract.min_volume)
 
                 # 历史持仓数据填补
-                for symbol in self.trader_position_cache.keys():
+                for symbol in self.target_symbol_pos_cache.keys():
                     if symbol not in target_symbol_pos_dict:
                         target_symbol_pos_dict[symbol] = 0
 
-                # 数据初始化判断
-                self.trader_position_inited = inited
-                if self.trader_position_inited:
-                    # 导入持仓检查队列
-                    if (not event) or (self.trader_position_cache != target_symbol_pos_dict):
-                        self.trader_position_cache = target_symbol_pos_dict
-                        self.check_position_queue.put(target_symbol_pos_dict)
-                        
-                        # 发送钉钉通知
-                        msg = f"跟单仓位更新\n{datetime.now()}\n"
-                        for vt_symbol, pos in target_symbol_pos_dict.items():
-                            msg += f"\n{vt_symbol}：{pos}"
-                        msg += "\n\n------------\n"
+                # 导入持仓检查队列
+                if (not event) or (self.target_symbol_pos_cache != target_symbol_pos_dict):
+                    self.target_symbol_pos_cache = target_symbol_pos_dict
+                    self.check_position_queue.put(target_symbol_pos_dict)
+                    
+                    # 发送钉钉通知
+                    msg = f"跟单仓位更新\n{datetime.now()}\n"
+                    for vt_symbol, pos in target_symbol_pos_dict.items():
+                        msg += f"\n{vt_symbol}：{pos}"
+                    msg += "\n\n------------\n"
 
-                        for trader_name, symbol_pos_dict in self.portfolio.trader_name_position_dict.items():
-                            if symbol_pos_dict:
-                                msg += f"\n【{trader_name}】"
+                    for trader_name, symbol_pos_dict in self.portfolio.trader_name_position_dict.items():
+                        if symbol_pos_dict:
+                            msg += f"\n【{trader_name}】"
 
-                            for symbol, pos_data in symbol_pos_dict.items():
-                                msg += f"\n{symbol}"
+                        for symbol, pos_data in symbol_pos_dict.items():
+                            msg += f"\n{symbol}"
 
-                                long_data = pos_data.get("long", {})
-                                long_volume = long_data.get("volume", 0)
-                                long_price = long_data.get("price", 0)
+                            long_data = pos_data.get("long", {})
+                            long_volume = long_data.get("volume", 0)
+                            long_price = long_data.get("price", 0)
 
-                                short_data = pos_data.get("short", {})
-                                short_volume = short_data.get("volume", 0)
-                                short_price = short_data.get("price", 0)
+                            short_data = pos_data.get("short", {})
+                            short_volume = short_data.get("volume", 0)
+                            short_price = short_data.get("price", 0)
 
-                                if long_volume:
-                                    msg += f"\nlong {long_volume}@{long_price}\n"
-                                
-                                if short_volume:
-                                    msg += f"\nshort {short_volume}@{short_price}\n"
+                            if long_volume:
+                                msg += f"\nlong {long_volume}@{long_price}\n"
+                            
+                            if short_volume:
+                                msg += f"\nshort {short_volume}@{short_price}\n"
 
-                        msg += "\n"
-                        self.send_ding_talk(msg)
+                    msg += "\n"
+                    self.send_ding_talk(msg)
             
             except Empty:
                 pass
