@@ -193,16 +193,16 @@ class CopytradePortfolio(object):
                         # print(f"{datetime.now()}\t带单员：{trader_name}\t开单数量：{len(trader_position_data)}\t最新持仓：{symbol_pos_dict_copy}\n")
                     
                     else:
-                        error_notice_gap = int(time.time()) - error_notice_time
+                        error_notice_gap = int(time()) - error_notice_time
                         if error_notice_gap >= 60*10:
-                            error_notice_time = int(time.time())
+                            error_notice_time = int(time())
                             msg = f"！获取（{trader_name}）带单数据异常！\n{trader_position_data}\n{msg}"
                             self.send_ding_talk(msg)
 
             except Exception as e:
-                error_notice_gap = int(time.time()) - error_notice_time
+                error_notice_gap = int(time()) - error_notice_time
                 if error_notice_gap >= 60*10:
-                    error_notice_time = int(time.time())
+                    error_notice_time = int(time())
                     msg = f"！获取（{trader_name}）带单报错！\n{e}"
                     self.send_ding_talk(msg)
 
