@@ -434,10 +434,12 @@ class OkxRestApi(RestClient):
         )
 
         data = None
+        msg = ""
         if resp.status_code == 200:
             result: dict = resp.json()
+            msg = result["msg"]
             data = result["data"]
-        return data
+        return data, msg
     
     def query_copytrader_rank(self) -> None:
         resp: Response = self.request(
