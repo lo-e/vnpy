@@ -94,8 +94,8 @@ class CopytradePortfolio(object):
                     fat_bear '5EAE0133C50F4261'
                     比特智说币 '8B9619BF3BDE40E7'
                     """
-                    trader_position_data, msg = gateway.rest_api.query_copytrade(trader)
-                    if isinstance(trader_position_data, list) and (not msg):
+                    trader_position_data, message = gateway.rest_api.query_copytrade(trader)
+                    if isinstance(trader_position_data, list) and (not message):
                         symbol_pos_dict_copy = {}
                         for d in trader_position_data:
                             # 带单起始时间判断
@@ -196,7 +196,7 @@ class CopytradePortfolio(object):
                         error_notice_gap = int(time()) - error_notice_time
                         if error_notice_gap >= 60*10:
                             error_notice_time = int(time())
-                            msg = f"！获取（{trader_name}）带单数据异常！\n{trader_position_data}\n{msg}"
+                            msg = f"！获取（{trader_name}）带单数据异常！\n{trader_position_data}\n\n{message}"
                             self.send_ding_talk(msg)
 
             except Exception as e:
