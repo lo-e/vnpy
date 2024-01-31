@@ -337,7 +337,7 @@ class CopytradeEngine(BaseEngine):
             return
 
         req = order.create_cancel_request()
-        self.main_engine.cancel_account_order(req, order.gateway_nam, strategy.exchange_user)
+        self.main_engine.cancel_account_order(req, order.gateway_name, strategy.exchange_user)
 
     def send_order(
         self,
