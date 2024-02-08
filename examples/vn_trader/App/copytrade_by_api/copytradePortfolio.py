@@ -116,9 +116,10 @@ class CopytradePortfolio(object):
                             if contract:
                                 # 订单数量
                                 subPos = float(d["subPos"])
-                                pos = abs(contract.min_volume * subPos)
                                 posSide = d["posSide"]
-                                if posSide == "short":
+                                pos = abs(subPos)
+                                pos = contract.min_volume * pos
+                                if (posSide == "short") or (posSide == "net" and subPos < 0):
                                     pos = pos * -1
 
                                 # 订单成交价格
