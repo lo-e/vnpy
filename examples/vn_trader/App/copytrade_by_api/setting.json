@@ -30,20 +30,20 @@
     {
       "strategy_name": "COPYTRADE_API_OKX",
       "exchange": "OKX",
-      "exchange_user": "lo-e（test）",
+      "exchange_user": "lo-e",
       "trade_assets":{
-        "540D011FDACCB47A":700,
-        "D5E7A8430A35CA84":700
+        "540D011FDACCB47A":800,
+        "D5E7A8430A35CA84":800
       },
       "start": true
     },
     {
       "strategy_name": "COPYTRADE_API_BINANCE",
       "exchange": "BINANCE",
-      "exchange_user": "lo-e（test）",
+      "exchange_user": "lo-e（copytrade）",
       "trade_assets":{
-        "540D011FDACCB47A":700,
-        "D5E7A8430A35CA84":700
+        "540D011FDACCB47A":625,
+        "D5E7A8430A35CA84":625
       },
       "start": true
     }
