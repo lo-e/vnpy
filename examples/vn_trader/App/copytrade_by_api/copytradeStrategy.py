@@ -189,6 +189,10 @@ class CopytradeStrategy(CtaTemplate):
                         # 转换合约
                         pure_symbol = symbol.split("-")[0]
 
+                        # 墙头草跟单山寨币仓位加倍
+                        if (trader == "D5E7A8430A35CA84") and (pure_symbol not in ["BTC", "ETH", "XRP"]):
+                            target_pos *= 2
+
                         vt_symbol = ""
                         if self.exchange == Exchange.OKX:
                             vt_symbol = f"{pure_symbol}-USDT-SWAP.{self.exchange.value}"
