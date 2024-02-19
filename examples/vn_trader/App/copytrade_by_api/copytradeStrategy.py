@@ -66,7 +66,6 @@ class CopytradeStrategy(CtaTemplate):
         self.target_symbol_pos_dict = {} #  合约目标净持仓
         self.symbol_absolute_pos_dict = {} # 合约双向持仓数据
 
-        self.target_symbol_pos_cache = {} # 跟单持仓缓存
         self.wait_tick_symbols = set() # 等待行情数据的合约集合
         self.position_pnl = 0 # 持仓盈亏
         self.position_pnl_rate = "" # 持仓盈亏占比（相对投资组合总资金）
@@ -216,13 +215,12 @@ class CopytradeStrategy(CtaTemplate):
                         target_symbol_pos_dict[vt_symbol] = round_to(pos, contract.min_volume)
 
                 # 历史持仓数据填补
-                for symbol in self.target_symbol_pos_cache.keys():
+                for symbol in self.target_symbol_pos_dict.keys():
                     if symbol not in target_symbol_pos_dict:
                         target_symbol_pos_dict[symbol] = 0
 
                 # 导入持仓检查队列
-                if (not event) or (self.target_symbol_pos_cache != target_symbol_pos_dict):
-                    self.target_symbol_pos_cache = target_symbol_pos_dict
+                if (not event) or (self.target_symbol_pos_dict != target_symbol_pos_dict):
                     self.check_position_queue.put(target_symbol_pos_dict)
                     
                     # 发送钉钉通知

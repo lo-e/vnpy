@@ -19,6 +19,7 @@ class CopytradePortfolio(object):
         "trader_name_position_dict",
         "trader_name_position_updated_time",
         "trader_position_inited",
+        "trader_from_time_dict",
         "trader_pnl_dict",
     ]
 
