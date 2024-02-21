@@ -220,6 +220,7 @@ class CopytradePortfolio(object):
                 for trader, symbol_pos_dict in self.trader_position_dict.items():
                     trader_pnl = 0
                     for symbol, pos_data in symbol_pos_dict.items():
+                        pure_symbol = symbol.split("-")[0]
                         tick = oms_engine.ticks.get(f"{symbol}.OKX", None)
                         if tick:
                             long_data = pos_data.get("long", {})
@@ -227,6 +228,9 @@ class CopytradePortfolio(object):
                             long_price = long_data.get("price", 0)
                             if long_volume and long_price and tick.last_price:
                                 long_pnl = long_volume * (tick.last_price - long_price)
+                                # 墙头草跟单山寨币仓位加倍，盈亏加倍计算
+                                if (trader == "D5E7A8430A35CA84") and (pure_symbol not in ["BTC", "ETH", "XRP"]):
+                                    long_pnl *= 2
                                 trader_pnl += long_pnl
 
                             short_data = pos_data.get("short", {})
@@ -234,6 +238,9 @@ class CopytradePortfolio(object):
                             short_price = short_data.get("price", 0)
                             if short_volume and short_price and tick.last_price:
                                 short_pnl = short_volume * (short_price - tick.last_price)
+                                # 墙头草跟单山寨币仓位加倍，盈亏加倍计算
+                                if (trader == "D5E7A8430A35CA84") and (pure_symbol not in ["BTC", "ETH", "XRP"]):
+                                    short_pnl *= 2
                                 trader_pnl += short_pnl
                     trader_pnl_dict[trader] = trader_pnl
                 
