@@ -126,3 +126,15 @@ requests.exceptions.ProxyError: HTTPSConnectionPool(host='api.telegram.org', por
 ```
 重装requests（建议版本requests==2.22.0）
 ```
+
+ERROR: Failed building wheel for PyQt5-sip
+
+error: Microsoft Visual C++ 14.0 or greater is required. Get it with "Microsoft C++ Build Tools": https://visualstudio.microsoft.com/visual-cpp-build-tools/
+```
+1、使用powershell安装C++生成工具
+wget https://aka.ms/vs/17/release/vs_BuildTools.exe -o vs_BuildTools.exe ; cmd /c vs_BuildTools.exe
+
+2、Visual Studio安装界面选择左边第一项"使用C++的桌面开发"，一定要勾选右边"C++/CLI支持
+
+3、安装完成后启动
+```
