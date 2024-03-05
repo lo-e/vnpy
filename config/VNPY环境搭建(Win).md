@@ -136,5 +136,5 @@ wget https://aka.ms/vs/17/release/vs_BuildTools.exe -o vs_BuildTools.exe ; cmd /
 
 2、Visual Studio安装界面选择左边第一项"使用C++的桌面开发"，一定要勾选右边"C++/CLI支持
 
-3、安装完成后启动
+3、安装完成后启动V
 ```
