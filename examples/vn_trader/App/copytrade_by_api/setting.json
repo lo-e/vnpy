@@ -44,7 +44,7 @@
       "exchange": "OKX",
       "exchange_user": "lo-e",
       "trade_assets":{
-        "540D011FDACCB47A":800,
+        "540D011FDACCB47A":0,
         "D5E7A8430A35CA84":800
       },
       "start": true
@@ -54,7 +54,7 @@
       "exchange": "BINANCE",
       "exchange_user": "lo-e（copytrade）",
       "trade_assets":{
-        "540D011FDACCB47A":625,
+        "540D011FDACCB47A":0,
         "D5E7A8430A35CA84":625
       },
       "start": true
