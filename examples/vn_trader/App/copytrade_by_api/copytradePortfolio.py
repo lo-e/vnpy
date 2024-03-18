@@ -257,6 +257,10 @@ class CopytradePortfolio(object):
                             # 设置带单交易员有效带单起始时间（相当于止损平仓）
                             self.trader_from_time_dict[trader] = datetime.now().replace(microsecond=0)
 
+                            # 发送通知提醒
+                            msg = f"\n{trader_name} 当前亏损：{trader_pnl_rate}\n最大亏损限制：{stop_loss}\n已强制清仓"
+                            self.send_ding_talk(msg)
+
                         trader_pnl_rate = f"{round(trader_pnl_rate * 100, 2)}%"
                         self.trader_pnl_dict[trader_name] = [trader_pnl, trader_pnl_rate]
                 
