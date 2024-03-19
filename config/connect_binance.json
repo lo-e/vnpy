@@ -4,15 +4,15 @@
         "key": "9e727282b6290c6b03466b30fa386fd11564f359cf311e2f758b78cdac8c0688",
         "secret": "997c2de2c9a20eb0b14cd77c18448dfe30dc23b964facb9872a1a6957b24a1c2",
         "服务器": "TESTNET",
-        "代理地址": "192.168.31.140",
-        "代理端口": 10811
+        "代理地址": "",
+        "代理端口": 0
     },
-    "lo-e": {
-        "账户名称": "lo-e",
-        "key": "thA9yx5k8y59QE9l3DAQh87Qtm6M7m9LHoFsevPBBQpF81a03ZxfiN84yryNHlAu",
-        "secret": "LnAuy5GTwCGPjQsLvu8liau1NppDPBdnydde07pGleNSbA3zOvYNNF6VWwCmu5C8",
+    "lo-e（copytrade）": {
+        "账户名称": "lo-e（copytrade）",
+        "key": "npec79P3IYnfQfIfc9jMAkwg7nGdqDhc09UllLQPQIaPenEbAaUdaxgw1tjGm0aC",
+        "secret": "huFqJQIlIuq11lBZKWnOBgWGquD4RRKEPYdpuZhAKimJeCO0kBK3149TR8RoCzTf",
         "服务器": "REAL",
-        "代理地址": "192.168.31.140",
-        "代理端口": 10811
+        "代理地址": "",
+        "代理端口": 0
     }
 }
