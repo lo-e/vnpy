@@ -4,8 +4,8 @@
         "API Key": "54c72528-3a37-4128-8f26-67395616c2b5",
         "Secret Key": "2C1B99485CB3353C8ED7C33A331310A5",
         "Passphrase": "970720699&Ok",
-        "代理地址": "192.168.31.140",
-        "代理端口": "10811",
+        "代理地址": "",
+        "代理端口": "",
         "服务器": "REAL"
     },
     "lo-e（test）": {
@@ -13,17 +13,26 @@
         "API Key": "8ffd158d-6faa-41f7-9f2b-c4bae30478da",
         "Secret Key": "EFE1D9FFE6CED847BED7F914B8C1DBEC",
         "Passphrase": "970720699&Ok",
-        "代理地址": "192.168.31.140",
-        "代理端口": "10811",
+        "代理地址": "",
+        "代理端口": "",
         "服务器": "TEST"
     },
     "wawjlc": {
         "账户名称": "wawjlc",
-        "API Key": "f00f4b3a-6bc6-4dfc-b905-02fdb962a41f",
-        "Secret Key": "64BEC5AC86D8397AE037BB93BA9F4A92",
+        "API Key": "9c48d6a0-a60c-4527-ae6b-fbd51e73e572",
+        "Secret Key": "C0F04CA31DE8337A86FA59F54D910917",
         "Passphrase": "970720699&Ok",
-        "代理地址": "192.168.31.140",
-        "代理端口": "10811",
+        "代理地址": "",
+        "代理端口": "",
+        "服务器": "REAL"
+    },
+    "loesuperman": {
+        "账户名称": "loesuperman",
+        "API Key": "30d0ca69-2240-471a-8dff-ccbf4d9085d0",
+        "Secret Key": "9F369C6DC61BD3BA2AA02195987EFB63",
+        "Passphrase": "970720699&Ok",
+        "代理地址": "",
+        "代理端口": "",
         "服务器": "REAL"
     }
 }
