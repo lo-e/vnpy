@@ -1,25 +1,26 @@
 {
-  "portfolio":{
-    "name":"COPYTRADE_API_PORTFOLIO",
+  "portfolio": {
+    "name": "COPYTRADE_API_PORTFOLIO",
     "symbols": [
       "BTC",
       "ETH",
       "BNB",
       "SOL",
       "XRP",
-      "ORDI",
-      "ETC",
-      "UNI",
-      "LINK",
-      "APE",
-      "AVAX",
+      "OP",
+      "AAVE",
       "SUSHI",
+      "ATOM",
+      "ICP",
+      "FIL",
+      "CRV",
+      "UNI",
       "ADA",
+      "LINK",
+      "ORDI",
+      "DOGE",
       "LTC",
-      "CFX",
-      "MATIC",
-      "NEO",
-      "DOT"
+      "ETC"
     ],
     "copy_setting": {
       "540D011FDACCB47A": {
@@ -38,14 +39,14 @@
       }
     }
   },
-  "signal":[
+  "signal": [
     {
       "strategy_name": "COPYTRADE_API_OKX",
       "exchange": "OKX",
       "exchange_user": "lo-e",
-      "trade_assets":{
-        "540D011FDACCB47A":800,
-        "D5E7A8430A35CA84":800
+      "trade_assets": {
+        "540D011FDACCB47A": 800,
+        "D5E7A8430A35CA84": 800
       },
       "start": true
     },
@@ -53,9 +54,9 @@
       "strategy_name": "COPYTRADE_API_BINANCE",
       "exchange": "BINANCE",
       "exchange_user": "lo-e（copytrade）",
-      "trade_assets":{
-        "540D011FDACCB47A":625,
-        "D5E7A8430A35CA84":625
+      "trade_assets": {
+        "540D011FDACCB47A": 625,
+        "D5E7A8430A35CA84": 625
       },
       "start": true
     }
