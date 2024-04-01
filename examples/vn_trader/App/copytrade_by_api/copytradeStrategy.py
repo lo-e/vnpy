@@ -475,6 +475,9 @@ class CopytradeStrategy(CtaTemplate):
                 if "LINK" in symbol and order_value <= 20:
                     value_cross = False
 
+                if "LTC" in symbol and order_value <= 20:
+                    value_cross = False
+
                 if order_value <= 5:
                     value_cross = False
                 
