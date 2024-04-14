@@ -8,13 +8,13 @@ https://git-scm.com/downloads
 
 ```
 全局设置
-git config --global user.name "your user name"
-git config --global user.email "your user email"
+git config --global user.name "loe"
+git config --global user.email "lo-e@outlook.com"
 ```
 
 ```
 创建ssh key
-ssh-keygen -t rsa -C "your user email"
+ssh-keygen -t rsa -C "lo-e@outlook.com"
 在.ssh目录下将id_rsa.pub内容添加到github
 ```
 
