@@ -94,6 +94,7 @@ ta-lib 安装错误，则手动下载安装，而且需要下载对应Pyhon版�
 
 ```
 https://www.lfd.uci.edu/~gohlke/pythonlibs/#ta-lib
+https://github.com/cgohlke/talib-build/releases
 例如：
 cmd输入ipython显示Python版本为3.8.6
 则pip install TA_Lib‑0.4.18‑cp38‑cp38‑win_amd64.whl
