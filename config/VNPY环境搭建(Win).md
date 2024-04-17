@@ -48,7 +48,7 @@ http://www.sublimetext.com/2
 ```
 移步百度网盘
 或者
-https://www.mongodb.com/download-center?jmp=tutorials#community
+https://www.mongodb.com/products/self-managed/community-edition
 ```
 ```
 Mongodb注册为Windows系统服务，根据官方指导操作（当前官方提示最新版本安装过程自动完成注册Windows系统服务，这一步可省略，视情况而定）
