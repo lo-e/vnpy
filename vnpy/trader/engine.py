@@ -54,6 +54,8 @@ from time import sleep
 import socket
 from concurrent.futures import ThreadPoolExecutor
 from copy import copy
+import json
+import time
 
 class MainEngine:
     """
@@ -125,6 +127,7 @@ class MainEngine:
         self.add_engine(EmailEngine)
         """ modify by loe """
         self.add_engine(DingTalkEngine)
+        self.add_engine(MonitorEngine)
 
     def write_log(self, msg: str, source: str = "") -> None:
         """
@@ -925,3 +928,40 @@ class DingTalkEngine(BaseEngine):
 
         self.active = False
         self.thread.join()
+
+class MonitorEngine(BaseEngine):
+    def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
+        super().__init__(main_engine, event_engine, "monitor")
+        
+        self.main_engine.monitor_updating_file = self.monitor_updating_file
+        self.updating_files = set()
+
+        self.thread: Thread = Thread(target=self.run)
+        self.thread.start()
+
+     def run(self):
+        count = 1
+        while True:
+            empty = True
+            for file in self.updating_files:
+                empty = False
+                data = {"count":count,
+                        "time":datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+                try:
+                    with open(file, "w", encoding="utf-8") as file:
+                        file.write(
+                            json.dumps(data, ensure_ascii=False)
+                        )
+                    # print(f"文件更新：{file}\n内容：{data}\n")
+
+                except Exception as e:
+                    print(f"文件更新出错：{file}\n{e}\n")
+
+            if empty:
+                sleep(2)
+            
+            else:
+                sleep(60)
+
+    def monitor_updating_file(self, target_file:str):
+        self.updating_files.add(target_file)
