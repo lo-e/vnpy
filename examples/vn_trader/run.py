@@ -78,6 +78,9 @@ from App.algo_trading import AlgoTradingApp
 from App.marting import MartingApp
 from App.copytrade_by_position import CopytradeByPositionApp
 from App.copytrade_by_api import CopytradeByApiApp
+import os
+from pathlib import Path
+from vnpy.trader.utility import DIR_SYMBOL
 
 def main():
     """"""
@@ -156,6 +159,15 @@ def main():
     # main_engine.add_app(WebTraderApp)
     # main_engine.add_app(PortfolioManagerApp)
     # main_engine.add_app(PaperAccountApp)
+    
+    # 监控程序运行状态
+    dir = os.getcwd()
+    dir_path = Path(dir).joinpath(f"BaiduSyncdisk{DIR_SYMBOL}")
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+    file_path = dir_path.joinpath(f"MONITORING.json")
+    main_engine.monitor_updating_file(target_file=file_path)
+
     main_window = MainWindow(main_engine, event_engine)
     main_window.showMaximized()
 

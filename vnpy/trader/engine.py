@@ -939,7 +939,7 @@ class MonitorEngine(BaseEngine):
         self.thread: Thread = Thread(target=self.run)
         self.thread.start()
 
-     def run(self):
+    def run(self):
         count = 1
         while True:
             empty = True
