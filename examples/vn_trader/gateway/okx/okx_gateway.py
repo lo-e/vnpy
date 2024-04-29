@@ -501,13 +501,7 @@ class OkxRestApi(RestClient):
             ctValue = float(ctValue) if ctValue else 0
 
             # 最小下单数量（按合约面值计价币种）
-            # min_volume = minSz * ctValue if ctValue else minSz
-            min_volume = ctValue if ctValue else minSz
-            if symbol == "BTC-USDT-SWAP":
-                min_volume = 0.01
-            
-            if symbol == "ETH-USDT-SWAP":
-                min_volume = 0.1
+            min_volume = minSz * ctValue if ctValue else minSz
 
             # 合约类型 
             total_count += 1

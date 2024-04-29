@@ -119,7 +119,7 @@ class CopytradePortfolio(object):
                                 subPos = float(d["subPos"])
                                 posSide = d["posSide"]
                                 pos = abs(subPos)
-                                pos = contract.min_volume * pos
+                                pos = pos * contract.contract_value
                                 if (posSide == "short") or (posSide == "net" and subPos < 0):
                                     pos = pos * -1
 
