@@ -1,37 +1,40 @@
 # encoding: UTF-8
 
 from __future__ import print_function
+
 from csv import DictReader
 from datetime import datetime
 from collections import OrderedDict, defaultdict
+
 import numpy as np
 import matplotlib.pyplot as plt
 from pymongo import MongoClient
+
 from vnpy.trader.object import BarData
 from vnpy.trader.constant import Direction, Exchange
-from constant import Currency
-from pondStrategy import PondPortfolio
-from vnpy.app.cta_strategy.base import DAILY_DB_NAME, HourDataBaseName
 
-SIZE_DICT = {}
+from pondStrategy import PondPortfolio
+
+from vnpy.app.cta_strategy.base import DAILY_DB_NAME, MINUTE_DB_NAME, HOUR_DB_NAME, MinuteDataBaseName, HourDataBaseName
+import pandas as pd
+
 PRICETICK_DICT = {}
 VARIABLE_COMMISSION_DICT = {}
-FIXED_COMMISSION_DICT = {}
 SLIPPAGE_DICT = {}
 
 class BacktestingEngine(object):
+    """回测引擎"""
     def __init__(self):
         self.portfolio = None
         
         # 合约配置信息
         self.symbolList = []
-        self.sizeDict = {}                  # 合约大小字典
+        self.min_volume_dict = {}           # 最低交易数量【商品为整数、数字货币带小数】
         self.priceTickDict = {}             # 最小价格变动字典
         self.variableCommissionDict = {}    # 变动手续费字典
         self.slippageDict = {}              # 滑点成本字典
         
         self.portfolioValue = 0
-        self.portfolioCurrency = Currency.CNY   # 默认人民币作为资产货币
         self.startDt = None
         self.endDt = None
         self.currentDt = None
@@ -41,90 +44,75 @@ class BacktestingEngine(object):
         
         self.result = None
         self.resultList = []
-
-        """ modify by loe """
         self.tradingStart = None
     
-    #----------------------------------------------------------------------
     def setPeriod(self, startDt, endDt):
         """设置回测周期"""
         self.startDt = startDt
         self.endDt = endDt
     
-    #----------------------------------------------------------------------
-    def initPortfolio(self, filename):
+    def initPortfolio(self, filename, portfolioValue=10000000):
         """初始化投资组合"""
+        self.portfolioValue = portfolioValue
+        
         with open(filename) as f:
             r = DictReader(f)
             for d in r:
                 self.symbolList.append(d['symbol'])
-                self.sizeDict[d['symbol']] = int(d['size'])
-                SIZE_DICT[d['symbol']] = int(d['size'])
                 self.priceTickDict[d['symbol']] = float(d['priceTick'])
+                self.min_volume_dict[d['symbol']] = float(d['min_volume'])
                 PRICETICK_DICT[d['symbol']] = float(d['priceTick'])
                 VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
                 SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
-                self.portfolioValue = float(d['capital'])
-                self.portfolioCurrency = CurrencyWithSymbol(d['symbol'])
             
         self.portfolio = PondPortfolio(self)
-        self.portfolio.init(self.portfolioValue, self.symbolList, SIZE_DICT)
+        self.portfolio.init(portfolioValue, self.symbolList)
         self.portfolio.tradingStart = self.tradingStart
         
         self.output(u'投资组合的合约代码%s' %(self.symbolList))
         self.output(u'投资组合的初始价值%s' %(portfolioValue))
 
-    def initSinglePortfolio(self, d):
+    def initSinglePortfolio(self, d, portfolioValue=10000000):
         """初始化投资组合"""
+        self.portfolioValue = portfolioValue
         self.symbolList.append(d['symbol'])
 
-        self.sizeDict[d['symbol']] = int(d['size'])
-        SIZE_DICT[d['symbol']] = int(d['size'])
         self.priceTickDict[d['symbol']] = float(d['priceTick'])
+        self.min_volume_dict[d['symbol']] = float(d['min_volume'])
         PRICETICK_DICT[d['symbol']] = float(d['priceTick'])
         VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
         SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
-        self.portfolioValue = float(d['capital'])
-        self.portfolioCurrency = CurrencyWithSymbol(d['symbol'])
 
         self.portfolio = PondPortfolio(self)
-        self.portfolio.init(self.portfolioValue, self.symbolList, SIZE_DICT)
-        self.portfolio.tradingStart = self.tradingStart
-
-        self.output(f'代码：{self.symbolList} ')
-        self.output(f'{self.portfolioCurrency}：\t{self.portfolioValue}')
-
-    def initListPortfolio(self, l):
-        """初始化投资组合"""
-        for d in l:
-            self.symbolList.append(d['symbol'])
-
-            self.sizeDict[d['symbol']] = int(d['size'])
-            SIZE_DICT[d['symbol']] = int(d['size'])
-            self.priceTickDict[d['symbol']] = float(d['priceTick'])
-            PRICETICK_DICT[d['symbol']] = float(d['priceTick'])
-            VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
-            SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
-            self.portfolioValue = float(d['capital'])
-            self.portfolioCurrency = CurrencyWithSymbol(d['symbol'])
-
-        self.portfolio = PondPortfolio(self)
-        self.portfolio.init(self.portfolioValue, self.symbolList, SIZE_DICT)
+        self.portfolio.init(portfolioValue, self.symbolList)
         self.portfolio.tradingStart = self.tradingStart
 
         self.output(u'投资组合的合约代码%s' % (self.symbolList))
-        self.output(u'投资组合的初始价值%s' % (self.portfolioValue))
+        self.output(u'投资组合的初始价值%s' % (portfolioValue))
+
+    def initListPortfolio(self, l, portfolioValue=10000000):
+        """初始化投资组合"""
+        self.portfolioValue = portfolioValue
+
+        for d in l:
+            self.symbolList.append(d['symbol'])
+            self.priceTickDict[d['symbol']] = float(d['priceTick'])
+            self.min_volume_dict[d['symbol']] = float(d['min_volume'])
+            PRICETICK_DICT[d['symbol']] = float(d['priceTick'])
+            VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
+            SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
+
+        self.portfolio = PondPortfolio(self)
+        self.portfolio.init(portfolioValue, self.symbolList)
+        self.portfolio.tradingStart = self.tradingStart
+
+        self.output(u'投资组合的合约代码%s' % (self.symbolList))
+        self.output(u'投资组合的初始价值%s' % (portfolioValue))
     
-    #----------------------------------------------------------------------
     def loadData(self):
         """加载数据"""
         mc = MongoClient()
-        # 日K数据库
         db = mc[DAILY_DB_NAME]
-        # 小时K数据库
-        #db = mc[HourDataBaseName(12)]
-
-        """ modify by loe """
         dataDict = {}
         for symbol in self.symbolList:
             flt = {'datetime':{'$gte':self.startDt,
@@ -134,21 +122,25 @@ class BacktestingEngine(object):
             cursor = collection.find(flt).sort('datetime')
             
             for d in cursor:
-                bar = BarData(gateway_name = '', symbol = '', exchange = None, datetime = None, endDatetime = None)
+                exchange = Exchange.RQ
+                bar = BarData(gateway_name = '', symbol = '', exchange = exchange, datetime = None, endDatetime = None)
                 bar.__dict__ = d
                 
                 barDict = dataDict.setdefault(bar.datetime, OrderedDict())
                 barDict[bar.symbol] = bar
             
-            self.output(f'数据量：{cursor.count()}')
+            self.output(u'%s数据加载完成，总数据量：%s' %(symbol, cursor.count()))
 
         dateList = sorted(dataDict.keys())
         for theDatetime in dateList:
             self.dataDict[theDatetime] = dataDict[theDatetime]
+        
+        self.output(u'全部数据加载完成')
     
-    #----------------------------------------------------------------------
     def runBacktesting(self):
         """运行回测"""
+        self.output(u'开始回放K线数据')
+        
         for dt, barDict in self.dataDict.items():
             self.currentDt = dt
 
@@ -164,10 +156,12 @@ class BacktestingEngine(object):
             for bar in barDict.values():
                 self.portfolio.onBar(bar)
                 self.result.updateBar(bar)
+        
+        self.output(u'K线数据回放结束')
     
-    #----------------------------------------------------------------------
     def calculateResult(self, annualDays=240):
         """计算结果"""
+        self.output(u'开始统计回测结果')
         
         for result in self.resultList:
             result.calculatePnl()
@@ -193,6 +187,9 @@ class BacktestingEngine(object):
         highlevelList = []
         drawdownList = []
         ddPercentList = []
+        drawdownOriginList = []
+        ddOriginPercentList = []
+        dateList = []
         returnList = []
         
         for result in resultList:
@@ -209,18 +206,38 @@ class BacktestingEngine(object):
             
             highlevel = max(highlevel, endBalance)
             highlevelList.append(highlevel)
-            
+
+            dateList.append(result.date)
+
             drawdown = endBalance - highlevel
             drawdownList.append(drawdown)
             ddPercentList.append(drawdown/highlevel*100)
-            
+
+            drawdownOrigin = endBalance - self.portfolioValue
+            drawdownOriginList.append(drawdownOrigin)
+            ddOriginPercentList.append(drawdownOrigin / self.portfolioValue * 100)
+
             totalCommission += result.commission
             totalSlippage += result.slippage
             totalTradeCount += result.tradeCount
             totalNetPnl += result.netPnl
 
-        maxDrawdown = min(drawdownList)
-        maxDdPercent = min(ddPercentList)
+        drawdownSeries = pd.Series(drawdownList, index=dateList)
+        maxDrawdown = drawdownSeries.min()
+        maxDrawdownDate = drawdownSeries.idxmin()
+
+        ddPercentSeries = pd.Series(ddPercentList, index=dateList)
+        maxDdPercent = ddPercentSeries.min()
+        maxDdPercentDate = ddPercentSeries.idxmin()
+
+        drawdownOriginSeries = pd.Series(drawdownOriginList, index=dateList)
+        maxDrawdownOrigin = drawdownOriginSeries.min()
+        maxDrawdownOriginDate = drawdownOriginSeries.idxmin()
+
+        ddOriginPercentSeries = pd.Series(ddOriginPercentList, index=dateList)
+        maxDdPercentOrigin = ddOriginPercentSeries.min()
+        maxDdPercentOriginDate = ddOriginPercentSeries.idxmin()
+
         totalReturn = (endBalance / self.portfolioValue - 1) * 100
         dailyReturn = np.mean(returnList) * 100
         annualizedReturn = dailyReturn * annualDays
@@ -232,7 +249,6 @@ class BacktestingEngine(object):
             sharpeRatio = 0
         
         # 返回结果
-        """ modify by loe dailyTradeCount计算修改"""
         result = {
             'startDate': startDate,
             'endDate': endDate,
@@ -241,7 +257,13 @@ class BacktestingEngine(object):
             'lossDays': lossDays,
             'endBalance': endBalance,
             'maxDrawdown': maxDrawdown,
+            'maxDrawdownDate': maxDrawdownDate,
             'maxDdPercent': maxDdPercent,
+            'maxDdPercentDate': maxDdPercentDate,
+            'maxDrawdownOrigin': maxDrawdownOrigin,
+            'maxDrawdownOriginDate': maxDrawdownOriginDate,
+            'maxDdPercentOrigin': maxDdPercentOrigin,
+            'maxDdPercentOriginDate': maxDdPercentOriginDate,
             'totalNetPnl': totalNetPnl,
             'dailyNetPnl': totalNetPnl/totalDays,
             'totalCommission': totalCommission,
@@ -269,13 +291,12 @@ class BacktestingEngine(object):
         
         return timeseries, result
     
-    #----------------------------------------------------------------------
-    """ modify by loe """
     def showResult(self, figSavedPath=''):
         """显示回测结果"""
         timeseries, result = self.calculateResult()
         
         # 输出统计结果
+        self.output('-' * 30)
         self.output(u'首个交易日：\t%s' % result['startDate'])
         self.output(u'最后交易日：\t%s' % result['endDate'])
         
@@ -283,32 +304,37 @@ class BacktestingEngine(object):
         self.output(u'盈利交易日\t%s' % result['profitDays'])
         self.output(u'亏损交易日：\t%s' % result['lossDays'])
         
-        self.output(u'起始资金：\t%s %s' % (self.portfolioValue, self.portfolioCurrency))
-        self.output(u'结束资金：\t%s %s' % (formatNumber(result['endBalance']), self.portfolioCurrency))
+        self.output(u'起始资金：\t%s' % self.portfolioValue)
+        self.output(u'结束资金：\t%s' % formatNumber(result['endBalance']))
     
         self.output(u'总收益率：\t%s%%' % formatNumber(result['totalReturn']))
         self.output(u'年化收益：\t%s%%' % formatNumber(result['annualizedReturn']))
-        self.output(u'总盈亏：\t%s %s' % (formatNumber(result['totalNetPnl']), self.portfolioCurrency))
-        self.output(u'最大回撤: \t%s %s' % (formatNumber(result['maxDrawdown']), self.portfolioCurrency))
-        self.output(u'百分比最大回撤: %s%%' % formatNumber(result['maxDdPercent']))   
+        self.output(u'总盈亏：\t%s' % formatNumber(result['totalNetPnl']))
+        self.output(u'最大回撤: \t%s\t%s' % (formatNumber(result['maxDrawdown']), result['maxDrawdownDate']))
+        self.output(u'百分比最大回撤: %s%%\t%s' % (formatNumber(result['maxDdPercent']), result['maxDdPercentDate']))
+        self.output(u'最大回撤【本金】: \t%s\t%s' % (formatNumber(result['maxDrawdownOrigin']), result['maxDrawdownOriginDate']))
+        self.output(u'百分比最大回撤【本金】: %s%%\t%s' % (formatNumber(result['maxDdPercentOrigin']), result['maxDdPercentOriginDate']))
         
-        self.output(u'总手续费：\t%s %s' % (formatNumber(result['totalCommission']), self.portfolioCurrency))
-        self.output(u'总滑点：\t%s %s' % (formatNumber(result['totalSlippage']), self.portfolioCurrency))
+        self.output(u'总手续费：\t%s' % formatNumber(result['totalCommission']))
+        self.output(u'总滑点：\t%s' % formatNumber(result['totalSlippage']))
         self.output(u'总成交笔数：\t%s' % formatNumber(result['totalTradeCount']))
-
+        
+        self.output(u'日均盈亏：\t%s' % formatNumber(result['dailyNetPnl']))
+        self.output(u'日均手续费：\t%s' % formatNumber(result['dailyCommission']))
+        self.output(u'日均滑点：\t%s' % formatNumber(result['dailySlippage']))
         self.output(u'日均成交笔数：\t%s' % formatNumber(result['dailyTradeCount']))
-
+        
+        self.output(u'日均收益率：\t%s%%' % formatNumber(result['dailyReturn']))
+        self.output(u'收益标准差：\t%s%%' % formatNumber(result['returnStd']))
         self.output(u'Sharpe Ratio：\t%s' % formatNumber(result['sharpeRatio']))
-
-        self.output(f"最大占用保证金：{self.portfolio.maxBond[0]} {self.portfolioCurrency}\t持仓单位：{self.portfolio.maxBond[1]}\n")
+        
         # 绘图
         fig = plt.figure(figsize=(10, 16))
         
         pBalance = plt.subplot(4, 1, 1)
-        pBalance.set_title(f'Balance\t{self.symbolList[0]}')
+        pBalance.set_title('Balance')
         plt.plot(timeseries['date'], timeseries['balance'])
-
-        """
+        
         pDrawdown = plt.subplot(4, 1, 2)
         pDrawdown.set_title('Drawdown')
         pDrawdown.fill_between(range(len(timeseries['drawdown'])), timeseries['drawdown'])
@@ -323,27 +349,22 @@ class BacktestingEngine(object):
 
         if figSavedPath:
             plt.savefig(figSavedPath)
-        """
-        plt.show()
-        return result
+        
+        plt.show()        
     
-    #----------------------------------------------------------------------
     def sendOrder(self, symbol, direction, offset, price, volume):
         """记录交易数据（由portfolio调用）"""
         # 记录成交数据
-        """ modify by loe """
         trade = TradeData(symbol, self.currentDt, direction, offset, price, volume)
         l = self.tradeDict.setdefault(self.currentDt, [])        
         l.append(trade)
         
         self.result.updateTrade(trade)
 
-    #----------------------------------------------------------------------
     def output(self, content):
         """输出信息"""
         print(content)
     
-    #----------------------------------------------------------------------
     def getTradeData(self, symbol=''):
         """获取交易数据"""
         tradeList = []
@@ -365,10 +386,9 @@ class TradeData(object):
         self.offset = offset
         self.price = price
         self.volume = volume
-        
+
 class DailyResult(object):
     """每日的成交记录"""
-
     def __init__(self, date):
         self.date = date
         
@@ -386,36 +406,30 @@ class DailyResult(object):
         self.netPnl = 0                         # 净盈亏
         self.tradeCount = 0                     # 成交笔数
     
-    #----------------------------------------------------------------------
     def updateTrade(self, trade):
         """更新交易"""
         l = self.tradeDict[trade.symbol]
         l.append(trade)
         self.tradeCount += 1
         
-    #----------------------------------------------------------------------
     def updatePos(self, d):
         """更新昨持仓"""
         self.posDict.update(d)
     
-    #----------------------------------------------------------------------
     def updateBar(self, bar):
         """更新K线"""
         self.closeDict[bar.symbol] = bar.close_price
     
-    #----------------------------------------------------------------------
     def updatePreviousClose(self, d):
         """更新昨收盘"""
         self.previousCloseDict.update(d)
 
-    #----------------------------------------------------------------------
     def calculateTradingPnl(self):
         """计算当日交易盈亏"""
         for symbol, l in self.tradeDict.items():
             close = self.closeDict[symbol]
-            size = SIZE_DICT[symbol]
-            
-            slippage = SLIPPAGE_DICT[symbol]
+
+            slippage = SLIPPAGE_DICT[symbol] * PRICETICK_DICT[symbol]
             variableCommission = VARIABLE_COMMISSION_DICT[symbol]
             
             for trade in l:
@@ -424,41 +438,35 @@ class DailyResult(object):
                 else:
                     side = -1
 
-                """ modify by loe """
-                openCryptoAmount = (size / trade.price) * trade.volume
-                commissionCost = openCryptoAmount * variableCommission
-                #slippageCost = trade.volume * size * slippage
+                commissionCost = trade.volume * trade.price * variableCommission
+                slippageCost = trade.volume * slippage
 
                 if close:
-                    pnl = (size / trade.price - size / close) * trade.volume * side
+                    pnl = (close - trade.price) * trade.volume * side
                     self.commission += commissionCost
-                    #self.slippage += slippageCost
+                    self.slippage += slippageCost
                     self.tradingPnl += pnl
                 else:
                     print('*' * 20)
                     print('%s\t%s volume：%s\t计算当日交易盈亏数据缺失' % (self.date, symbol, trade.volume))
                     print('*' * 20 + '\n')
     
-    #----------------------------------------------------------------------
     def calculateHoldingPnl(self):
         """计算当日持仓盈亏"""
         for symbol, pos in self.posDict.items():
             previousClose = self.previousCloseDict.get(symbol, 0)
             close = self.closeDict.get(symbol, 0)
             #close = self.closeDict[symbol]
-            size = SIZE_DICT[symbol]
 
-            """ modify by loe """
             if close:
                 if previousClose:
-                    pnl = (size / previousClose - size / close) * pos
+                    pnl = (close - previousClose) * pos
                     self.holdingPnl += pnl
             elif pos:
                 print('*'*20)
                 print('%s\t%s pos：%s\t计算当日持仓盈亏数据缺失' % (self.date, symbol, pos))
                 print('*'*20 + '\n')
 
-    #----------------------------------------------------------------------
     def calculatePnl(self):
         """计算总盈亏"""
         self.calculateHoldingPnl()
@@ -469,14 +477,5 @@ class DailyResult(object):
 
 def formatNumber(n):
     """格式化数字到字符串"""
-    rn = round(n, 6)        # 保留两位小数
+    rn = round(n, 2)        # 保留两位小数
     return format(rn, ',')  # 加上千分符
-
-def CurrencyWithSymbol(symbol=''):
-    if not symbol:
-        return ''
-
-    cPair = symbol.split('/')[-1]
-    return cPair.split('.')[0]
-
-

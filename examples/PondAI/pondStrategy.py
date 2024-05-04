@@ -6,6 +6,7 @@ from vnpy.trader.utility import ArrayManager
 from datetime import  datetime
 from pymongo import MongoClient, ASCENDING
 from vnpy.trader.object import BarData
+
 import re
 from vnpy.app.cta_strategy.base import (DAILY_DB_NAME, DOMINANT_DB_NAME)
 
@@ -13,18 +14,10 @@ MAX_PRODUCT_POS = 4         # 单品种最大持仓
 MAX_CATEGORY_POS = 6        # 高度关联最大持仓
 MAX_DIRECTION_POS = 12      # 单方向最大持仓
 
-CATEGORY_DICT = {'finance':['IF','IC','IH'],
-                'nonferrous_metal':['AL'],
-                 'ferrous_metal':['RB','I','HC','SM'],
-                 'coal':['JM','J','ZC'],
-                 'chemical_industry':['TA']}
-
-ACTUAL_TRADE = False        # 实盘合约交易
-
+ACTUAL_TRADE = True        # 实盘合约交易
 
 class TradeResult(object):
-    """ 一次完整的开平交易 """
-
+    """一次完整的开平交易"""
     def __init__(self):
         self.unit = 0
         self.entry = 0                  # 开仓均价
@@ -38,34 +31,39 @@ class TradeResult(object):
         self.unit += change              # 加上新仓位的数量
         self.entry = cost / self.unit    # 计算新的平均开仓成本
 
-    #----------------------------------------------------------------------
     def close(self, price):
         """平仓"""
         self.exit = price
         self.pnl = self.unit * (self.exit - self.entry)
     
 class PondSignal(object):
-    """ 交易策略 """
-
     def __init__(self, portfolio, symbol,
                  entryWindow, exitWindow, atrWindow,
                  profitCheck=False):
-        
         self.portfolio = portfolio      # 投资组合
+        
         self.symbol = symbol            # 合约代码
+        self.is_crypto = self.portfolio.engine.is_crypto_dict[self.symbol]
         self.entryWindow = entryWindow  # 入场通道周期数
         self.exitWindow = exitWindow    # 出场通道周期数
         self.atrWindow = atrWindow      # 计算ATR周期数
-        self.profitCheck = profitCheck  # 是否检查上一笔盈利
+        if self.is_crypto:
+            self.profitCheck = False
+        else:
+            self.profitCheck = profitCheck  # 是否检查上一笔盈利
 
         self.am = ArrayManager(self.entryWindow+1)      # K线容器
+        #self.am = ArrayManager(60)
         self.atrAm = ArrayManager(self.atrWindow+1)     # K线容器
+        #self.atrAm = ArrayManager(60)
         
         self.atrVolatility = 0          # ATR波动率
         self.entryUp = 0                # 入场通道
         self.entryDown = 0
         self.exitUp = 0                 # 出场通道
         self.exitDown = 0
+        self.priceHigh = 0
+        self.priceLow = 0
         
         self.longEntry1 = 0             # 多头入场位
         self.longEntry2 = 0
@@ -95,7 +93,7 @@ class PondSignal(object):
 
     def onBar(self, bar):
         actualBar = None
-        if ACTUAL_TRADE and not self.newDominantIniting:
+        if ACTUAL_TRADE and not self.is_crypto and not self.newDominantIniting:
             # 获取数据库
             if not self.client:
                 self.client = MongoClient('localhost', 27017)
@@ -122,8 +120,11 @@ class PondSignal(object):
                     elif dominantDic['date'] == bar.datetime:
                         break
                     else:
-                        i -= 1
-                        break
+                        if not self.dominantDate:
+                            return
+                        else:
+                            raise '回测数据日期找不到对应主力合约，检查代码！'
+                            break
                 self.symbolDominantData = self.symbolDominantData[i:]
 
                 startD = self.symbolDominantData[0]
@@ -166,7 +167,7 @@ class PondSignal(object):
                 for dic in cursor:
                     exchange = Exchange.RQ
                     b = BarData(gateway_name='', symbol='', exchange=exchange, datetime=None, endDatetime=None)
-                    b.__dict__ = dic
+                    b.__dict__ = b.merge_data(dic)
                     self.actualBarList.append(b)
 
                 # 新主力合约模拟回测历史数据，获取入场状态
@@ -207,6 +208,7 @@ class PondSignal(object):
             actualBar = self.getActualBar(bar.datetime)
 
             # 替换bar数据
+            # 这里替换close_price是为了turtleEngine计算每日盈亏，替换的是指数合约close_price的值
             bar.close_price = actualBar.close_price
             bar = actualBar
 
@@ -273,16 +275,14 @@ class PondSignal(object):
         
         # 优先检查平仓
         if self.unit > 0:
-            """ modify by loe """
-            longExit = max(self.longStop, self.exitDown)
+            longExit = max(self.longStop, self.exitDown, self.priceHigh - 100*self.atrVolatility)
             
             if bar.low_price <= longExit:
                 self.sell(longExit)
                 return
 
         elif self.unit < 0:
-            """ modify by loe """
-            shortExit = min(self.shortStop, self.exitUp)
+            shortExit = min(self.shortStop, self.exitUp, self.priceLow + 100*self.atrVolatility)
 
             if bar.high_price >= shortExit:
                 self.cover(shortExit)
@@ -312,7 +312,6 @@ class PondSignal(object):
                 return
 
         # 没有仓位或者持有空头仓位的时候，可以做空（加仓）
-        #"""
         if self.unit <= 0:
             if bar.low_price <= self.shortEntry1 and self.unit > -1:
                 self.short(self.shortEntry1, 1)
@@ -325,17 +324,17 @@ class PondSignal(object):
             
             if bar.low_price <= self.shortEntry4 and self.unit > -4:
                 self.short(self.shortEntry4, 1)
-        #"""
-            
+
     def calculateIndicator(self):
         """计算技术指标"""
         self.entryUp, self.entryDown = self.am.donchian(self.entryWindow)
         self.exitUp, self.exitDown = self.am.donchian(self.exitWindow)
+        self.priceHigh = max(self.bar.high_price, self.priceHigh)
+        self.priceLow = min(self.bar.low_price, self.priceLow)
         
         # 有持仓后，ATR波动率和入场位等都不再变化
         if not self.unit:
             #self.atrVolatility = self.am.atr(self.atrWindow)
-            """ modify by loe """
             self.atrVolatility = self.atrAm.atr(self.atrWindow)
             
             self.longEntry1 = self.entryUp
@@ -380,6 +379,8 @@ class PondSignal(object):
         
         # 以最后一次加仓价格，加上两倍N计算止损
         self.longStop = price - self.atrVolatility * 2
+        self.priceHigh = price
+        self.priceLow = price
     
     def sell(self, price):
         """卖出平仓"""
@@ -399,12 +400,14 @@ class PondSignal(object):
         # 对价格四舍五入
         priceTick = self.portfolio.engine.priceTickDict[self.symbol]
         price = int(round(price / priceTick, 0)) * priceTick
-        
+
         self.open(price, -volume)
         self.newSignal(Direction.SHORT, Offset.OPEN, price, volume)
         
         # 以最后一次加仓价格，加上两倍N计算止损
         self.shortStop = price + self.atrVolatility * 2
+        self.priceHigh = price
+        self.priceLow = price
     
     def cover(self, price):
         """买入平仓"""
@@ -429,12 +432,19 @@ class PondSignal(object):
     def close(self, price):
         """平仓"""
         self.unit = 0
-
+        
         self.result.close(price)
         self.resultList.append(self.result)
         self.result = None
-
         self.newDominantOpen = True
+
+    def getLastPnl(self):
+        """获取上一笔交易的盈亏"""
+        if not self.resultList:
+            return 0
+        
+        result = self.resultList[-1]
+        return result.pnl
     
     def calculateTradePrice(self, direction, price):
         """计算成交价格"""
@@ -448,8 +458,6 @@ class PondSignal(object):
         return tradePrice
 
 class PondPortfolio(object):
-    """ 策略组合 """
-
     def __init__(self, engine):
         self.engine = engine
         
@@ -458,26 +466,22 @@ class PondPortfolio(object):
         self.unitDict = {}          # 每个品种的持仓情况
         self.totalLong = 0          # 总的多头持仓
         self.totalShort = 0         # 总的空头持仓
-
         self.categoryLongUnitDict = defaultdict(int)      # 高度关联品种多头持仓情况
         self.categoryShortUnitDict = defaultdict(int)     # 高度关联品种空头持仓情况
-        self.maxBond = [0, 0]                             # 历史占用保证金的最大值
         self.tradingStart = None                          # 开始交易日期
         
         self.tradingDict = {}       # 交易中的信号字典
-        
-        self.sizeDict = {}                          # 合约大小字典
-        self.multiplierDict = defaultdict(list)     # 按照波动幅度计算的委托量单位字典
-        self.posDict = {}                           # 真实持仓量字典
+        self.multiplierDict = {}    # 按照波动幅度计算的委托量单位字典
+        self.posDict = {}           # 真实持仓量字典
         
         self.portfolioValue = 0     # 组合市值
     
-    def init(self, portfolioValue, symbolList, sizeDict):
+    def init(self, portfolioValue, symbolList):
+        """"""
         self.portfolioValue = portfolioValue
-        self.sizeDict = sizeDict
         
         for symbol in symbolList:
-            signal = PondSignal(self, symbol, 20, 10, 15, False)
+            signal = PondSignal(self, symbol, 20, 10, 15, True)
 
             l = self.signalDict[symbol]
             l.append(signal)
@@ -486,6 +490,7 @@ class PondPortfolio(object):
             self.posDict[symbol] = 0
     
     def onBar(self, bar):
+        """"""
         for signal in self.signalDict[bar.symbol]:
             signal.onBar(bar)
     
@@ -493,37 +498,33 @@ class PondPortfolio(object):
         """对交易信号进行过滤，符合条件的才发单执行"""
         unit = self.unitDict[signal.symbol]
         
-        # 根据波动幅度计算委托量单位
-        multiplier = 0
-        if offset == Offset.OPEN:
-            size = self.sizeDict[signal.symbol]
+        # 如果当前无仓位，则重新根据波动幅度计算委托量单位
+        if not unit:
             riskValue = self.portfolioValue * 0.01
-            if signal.atrVolatility * size:
-                if direction == Direction.LONG:
-                    multiplier = riskValue * (price * (price - 2*signal.atrVolatility)) / (size * signal.atrVolatility)
-                elif direction == Direction.SHORT:
-                    multiplier = riskValue * (price * (price + 2 * signal.atrVolatility)) / (size * signal.atrVolatility)
+            multiplier = 0
+            if signal.atrVolatility:
+                multiplier = riskValue / signal.atrVolatility
 
-                multiplier = int(round(multiplier, 0))
-        elif offset == Offset.CLOSE and abs(unit):
-            multiplierList = self.multiplierDict[signal.symbol]
-            multiplier = sum(multiplierList) / min(volume, abs(unit))
+                min_volume = self.engine.min_volume_dict[signal.symbol]
+                if min_volume <= 0:
+                    raise('策略最小交易数量设置错误！！')
+                multiplier = round(multiplier / min_volume, 0) * min_volume
 
+            self.multiplierDict[signal.symbol] = multiplier
         else:
-            return
+            multiplier = self.multiplierDict[signal.symbol]
 
         # 过滤虚假开仓
         if multiplier == 0:
-            print(f'开仓0\t{signal.symbol}\t{signal.bar.datetime}')
             return
 
         # 开仓
         if offset == Offset.OPEN:
-            # 一个unit预计占用保证金不得超过初始资金的20%
-            size = self.sizeDict[signal.symbol]
-            if multiplier * size / 20.0 / price > self.portfolioValue * 0.2:
-                print('%s\t%s预计保证金超限\tprice：%s\tatr：%s' % (signal.bar.datetime, signal.symbol, price, signal.atrVolatility))
-                return
+            # 检查上一次是否为盈利
+            if signal.profitCheck:
+                pnl = signal.getLastPnl()
+                if pnl > 0:
+                    return
                 
             # 买入
             if direction == Direction.LONG:
@@ -535,15 +536,6 @@ class PondPortfolio(object):
                 if self.unitDict[signal.symbol] >= MAX_PRODUCT_POS:
                     return
 
-                """ modify by loe """
-                # 高度关联品种单方向持仓不能超过上限
-                startSymbol = re.sub("\d", "", signal.symbol)
-                for key, value in CATEGORY_DICT.items():
-                    if startSymbol in value:
-                        if self.categoryLongUnitDict[key] >= MAX_CATEGORY_POS:
-                            return
-                        break
-
             # 卖出
             else:
                 if self.totalShort <= -MAX_DIRECTION_POS:
@@ -551,14 +543,6 @@ class PondPortfolio(object):
                 
                 if self.unitDict[signal.symbol] <= -MAX_PRODUCT_POS:
                     return
-
-                """ modify by loe """
-                startSymbol = re.sub("\d", "", signal.symbol)
-                for key, value in CATEGORY_DICT.items():
-                    if startSymbol in value:
-                        if self.categoryShortUnitDict[key] <= -MAX_CATEGORY_POS:
-                            return
-                        break
 
         # 平仓
         else:
@@ -589,37 +573,9 @@ class PondPortfolio(object):
 
         self.sendOrder(signal.symbol, direction, offset, price, volume, multiplier)
 
-        # 记录开仓的数量
-        if offset == Offset.OPEN:
-            if not unit:
-                multiplierList = []
-                multiplierList.append(multiplier)
-                self.multiplierDict[signal.symbol] = multiplierList
-            else:
-                multiplierList = self.multiplierDict[signal.symbol]
-                multiplierList.append(multiplier)
-
-        """ modify by loe """
-        # 计算持仓预计占用的保证金
-        bond = 0
-        totalUnit = 0
-        for tradingSignal in self.tradingDict.values():
-            tUnit = abs(self.unitDict[tradingSignal.symbol])
-            tMultiplierList = self.multiplierDict[tradingSignal.symbol]
-            multiplierSum = sum(tMultiplierList)
-            tSize = self.sizeDict[tradingSignal.symbol]
-
-            bond += multiplierSum*tSize / 20 / price
-            totalUnit += tUnit
-        if self.maxBond:
-            lastMax = self.maxBond[0]
-
-            if bond > lastMax:
-                self.maxBond = [bond, totalUnit]
-        else:
-            self.maxBond = [bond, totalUnit]
-
     def sendOrder(self, symbol, direction, offset, price, volume, multiplier):
+        """"""
+
         # 计算合约持仓
         if direction == Direction.LONG:
             self.unitDict[symbol] += volume
@@ -641,17 +597,6 @@ class PondPortfolio(object):
                 self.totalLong += unit
             elif unit < 0:
                 self.totalShort += unit
-
-            """ modify by loe """
-            # 类别持仓
-            startSymbol = re.sub("\d", "", theSymbol)
-            for key, value in CATEGORY_DICT.items():
-                if startSymbol in value:
-                    if unit > 0:
-                        self.categoryLongUnitDict[key] += unit
-                    elif unit < 0:
-                        self.categoryShortUnitDict[key] += unit
-                    break
         
         # 向回测引擎中发单记录
         self.engine.sendOrder(symbol, direction, offset, price, volume*multiplier)
