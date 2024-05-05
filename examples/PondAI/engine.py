@@ -44,7 +44,8 @@ class BacktestingEngine(object):
         
         self.result = None
         self.resultList = []
-        self.tradingStart = None
+
+        self.symbol_signal_dict = {}
     
     def setPeriod(self, startDt, endDt):
         """设置回测周期"""
@@ -67,7 +68,6 @@ class BacktestingEngine(object):
             
         self.portfolio = PondPortfolio(self)
         self.portfolio.init(portfolioValue, self.symbolList)
-        self.portfolio.tradingStart = self.tradingStart
         
         self.output(u'投资组合的合约代码%s' %(self.symbolList))
         self.output(u'投资组合的初始价值%s' %(portfolioValue))
@@ -85,7 +85,6 @@ class BacktestingEngine(object):
 
         self.portfolio = PondPortfolio(self)
         self.portfolio.init(portfolioValue, self.symbolList)
-        self.portfolio.tradingStart = self.tradingStart
 
         self.output(u'投资组合的合约代码%s' % (self.symbolList))
         self.output(u'投资组合的初始价值%s' % (portfolioValue))
@@ -104,15 +103,15 @@ class BacktestingEngine(object):
 
         self.portfolio = PondPortfolio(self)
         self.portfolio.init(portfolioValue, self.symbolList)
-        self.portfolio.tradingStart = self.tradingStart
 
-        self.output(u'投资组合的合约代码%s' % (self.symbolList))
-        self.output(u'投资组合的初始价值%s' % (portfolioValue))
+        self.output(u'投资组合的合约代码：%s' % (self.symbolList[:10]))
+        self.output(u'投资组合的合约代码总数量：%s' % (len(self.symbolList)))
+        self.output(u'投资组合的初始价值：%s' % (portfolioValue))
     
     def loadData(self):
         """加载数据"""
         mc = MongoClient()
-        db = mc[DAILY_DB_NAME]
+        db = mc[HOUR_DB_NAME]
         dataDict = {}
         for symbol in self.symbolList:
             flt = {'datetime':{'$gte':self.startDt,
@@ -152,7 +151,7 @@ class BacktestingEngine(object):
             
             if previousResult:
                 self.result.updatePreviousClose(previousResult.closeDict)
-            
+
             for bar in barDict.values():
                 self.portfolio.onBar(bar)
                 self.result.updateBar(bar)
@@ -312,8 +311,8 @@ class BacktestingEngine(object):
         self.output(u'总盈亏：\t%s' % formatNumber(result['totalNetPnl']))
         self.output(u'最大回撤: \t%s\t%s' % (formatNumber(result['maxDrawdown']), result['maxDrawdownDate']))
         self.output(u'百分比最大回撤: %s%%\t%s' % (formatNumber(result['maxDdPercent']), result['maxDdPercentDate']))
-        self.output(u'最大回撤【本金】: \t%s\t%s' % (formatNumber(result['maxDrawdownOrigin']), result['maxDrawdownOriginDate']))
-        self.output(u'百分比最大回撤【本金】: %s%%\t%s' % (formatNumber(result['maxDdPercentOrigin']), result['maxDdPercentOriginDate']))
+        # self.output(u'最大回撤【本金】: \t%s\t%s' % (formatNumber(result['maxDrawdownOrigin']), result['maxDrawdownOriginDate']))
+        # self.output(u'百分比最大回撤【本金】: %s%%\t%s' % (formatNumber(result['maxDdPercentOrigin']), result['maxDdPercentOriginDate']))
         
         self.output(u'总手续费：\t%s' % formatNumber(result['totalCommission']))
         self.output(u'总滑点：\t%s' % formatNumber(result['totalSlippage']))
