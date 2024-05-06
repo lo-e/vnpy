@@ -1,22 +1,18 @@
 # encoding: UTF-8
 
 from __future__ import print_function
-
 from csv import DictReader
 from datetime import datetime
 from collections import OrderedDict, defaultdict
-
 import numpy as np
 import matplotlib.pyplot as plt
 from pymongo import MongoClient
-
 from vnpy.trader.object import BarData
 from vnpy.trader.constant import Direction, Exchange
-
 from pondStrategy import PondPortfolio
-
 from vnpy.app.cta_strategy.base import DAILY_DB_NAME, MINUTE_DB_NAME, HOUR_DB_NAME, MinuteDataBaseName, HourDataBaseName
 import pandas as pd
+from time import time
 
 PRICETICK_DICT = {}
 VARIABLE_COMMISSION_DICT = {}
@@ -137,10 +133,16 @@ class BacktestingEngine(object):
     
     def runBacktesting(self):
         """运行回测"""
-        self.output(u'开始回放K线数据')
+        self.output(f"{datetime.now()}\t开始回放K线数据")
         
+        backtesting_start = time()
+        log_time_gap = 1
+        log_time = 0
         for dt, barDict in self.dataDict.items():
-            print(f"K线数据回放：{dt}")
+            time_cost = int(time() - backtesting_start)
+            if time_cost > log_time:
+                log_time += log_time_gap
+                print(f"K线数据回放：{dt}")
             self.currentDt = dt
 
             previousResult = self.result
@@ -156,7 +158,7 @@ class BacktestingEngine(object):
                 self.portfolio.onBar(bar)
                 self.result.updateBar(bar)
         
-        self.output(u'K线数据回放结束')
+        self.output(f"{datetime.now()}\tK线数据回放结束")
     
     def calculateResult(self, annualDays=240):
         """计算结果"""

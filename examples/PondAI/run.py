@@ -16,6 +16,7 @@ import pandas as pd
 from vnpy.trader.constant import Direction, Offset
 from vnpy.trader.utility import DIR_SYMBOL
 import csv
+import shutil
 
 def one():
     # 读取文件，生成回测合约参数
@@ -51,7 +52,7 @@ def one():
             symbol_signal_dict[symbol] = symbol_signal_list
 
     time_cost = time() - file_start
-    print(f"信号数据读取时间：{time_cost}")
+    print(f"信号数据读取总耗时：{time_cost}")
     if not setting_list:
         return
     
@@ -68,11 +69,61 @@ def one():
     figSavedName = ""
     if figSavedName:
         figSavedName = f"figSaved{DIR_SYMBOL}{figSavedName}"
-
+    
     # 开始回测
+    backtesting_start = time()
     engine.initListPortfolio(setting_list, 10000000)
     engine.loadData()
     engine.runBacktesting()
+    time_cost = time() - backtesting_start
+    print(f"回测总耗时：{time_cost}")
+
+    # 获取合约交易数据
+    print(f"{datetime.now()}\t开始保存交易数据")
+    trades_save_start = time()
+    symbol_trade_dic = {}
+    for symbol in engine.symbolList:
+        symbol_trade_list = symbol_trade_dic.get(symbol, [])
+        trade_data_list = engine.getTradeData(symbol)
+        for trade in trade_data_list:
+            trade_data = {
+                "symbol": trade.symbol,
+                "datetime": trade.dt,
+                "direction": trade.direction.value,
+                "offset": trade.offset.value,
+                "volume": trade.volume,
+                "price": trade.price,
+            }
+            symbol_trade_list.append(trade_data)
+        symbol_trade_dic[symbol] = symbol_trade_list
+
+    # 保存合约交易数据
+    symbol_trade_dir_path = f"data{DIR_SYMBOL}symbol_trades{DIR_SYMBOL}"
+    if os.path.exists(symbol_trade_dir_path):
+        shutil.rmtree(symbol_trade_dir_path)
+        os.makedirs(symbol_trade_dir_path)
+    else:
+        os.makedirs(symbol_trade_dir_path)
+    for symbol, trade_list in symbol_trade_dic.items():
+        if len(trade_list):
+            fieldNames = [
+                "datetime",
+                "symbol",
+                "direction",
+                "offset",
+                "volume",
+                "price",
+            ]
+            filePath = f"{symbol_trade_dir_path}{symbol}.csv"
+            with open(filePath, "w") as f:
+                writer = csv.DictWriter(f, fieldnames=fieldNames)
+                writer.writeheader()
+                writer.writerows(trade_list)
+    
+    time_cost = time() - trades_save_start
+    print(f"保存交易数据总耗时：{time_cost}")
+
+    # 展示图表
     engine.showResult(figSavedName)
 
 if __name__ == "__main__":
