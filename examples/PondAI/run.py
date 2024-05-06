@@ -70,7 +70,7 @@ def one():
         figSavedName = f"figSaved{DIR_SYMBOL}{figSavedName}"
 
     # 开始回测
-    engine.initListPortfolio(setting_list, 1000000)
+    engine.initListPortfolio(setting_list, 10000000)
     engine.loadData()
     engine.runBacktesting()
     engine.showResult(figSavedName)

@@ -104,9 +104,8 @@ class BacktestingEngine(object):
         self.portfolio = PondPortfolio(self)
         self.portfolio.init(portfolioValue, self.symbolList)
 
-        self.output(u'投资组合的合约代码：%s' % (self.symbolList[:10]))
-        self.output(u'投资组合的合约代码总数量：%s' % (len(self.symbolList)))
-        self.output(u'投资组合的初始价值：%s' % (portfolioValue))
+        self.output(f"投资组合的合约代码（总数：{len(self.symbolList)}）\n{self.symbolList[:10]}")
+        self.output(f"投资组合的初始价值：{portfolioValue}")
     
     def loadData(self):
         """加载数据"""
@@ -141,6 +140,7 @@ class BacktestingEngine(object):
         self.output(u'开始回放K线数据')
         
         for dt, barDict in self.dataDict.items():
+            print(f"K线数据回放：{dt}")
             self.currentDt = dt
 
             previousResult = self.result

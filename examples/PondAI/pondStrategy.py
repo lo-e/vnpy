@@ -76,7 +76,7 @@ class PondSignal(object):
             target_prediction_data = filtered_data.iloc[-1]
             prediction = target_prediction_data["prediction"]
             prediction = float(prediction)
-            open_volume = self.portfolio.portfolioValue * 0.1 / bar.close_price
+            open_volume = self.portfolio.portfolioValue / (len(self.portfolio.engine.symbolList) * bar.close_price)
             if prediction == 0:
                 if self.pos > 0:
                     # 卖出平仓
