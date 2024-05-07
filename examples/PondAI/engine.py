@@ -125,7 +125,7 @@ class BacktestingEngine(object):
                 barDict = dataDict.setdefault(bar.datetime, OrderedDict())
                 barDict[bar.symbol] = bar
             
-            self.output(f"{datetime.now()}\t{index}/{len(self.symbolList)}\t{symbol}数据加载完成，总数据量：{cursor.retrieved}")
+            self.output(f"{datetime.now()}({index}/{len(self.symbolList)})\t{symbol}数据加载完成，总数据量：{cursor.retrieved}")
 
         dateList = sorted(dataDict.keys())
         for theDatetime in dateList:

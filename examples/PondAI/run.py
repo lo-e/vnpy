@@ -96,11 +96,13 @@ def one():
         symbol_trade_list = symbol_trade_dic.get(symbol, [])
         trade_data_list = engine.getTradeData(symbol)
         for trade in trade_data_list:
+            direction = "LONG" if trade.direction == Direction.LONG else ("SHORT" if trade.direction == Direction.SHORT else "NET")
+            offset = "OPEN" if trade.offset == Offset.OPEN else ("NONE" if trade.offset == Offset.NONE else "CLOSE")
             trade_data = {
                 "symbol": trade.symbol,
                 "datetime": trade.dt,
-                "direction": trade.direction.value,
-                "offset": trade.offset.value,
+                "direction": direction,
+                "offset": offset,
                 "volume": trade.volume,
                 "price": trade.price,
             }
