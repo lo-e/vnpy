@@ -12,7 +12,7 @@ from vnpy.trader.constant import Direction, Exchange
 from pondStrategy import PondPortfolio
 from vnpy.app.cta_strategy.base import DAILY_DB_NAME, MINUTE_DB_NAME, HOUR_DB_NAME, MinuteDataBaseName, HourDataBaseName
 import pandas as pd
-from time import time
+from time import sleep, time
 
 PRICETICK_DICT = {}
 VARIABLE_COMMISSION_DICT = {}
@@ -105,12 +105,18 @@ class BacktestingEngine(object):
     
     def loadData(self):
         """加载数据"""
-        mc = MongoClient()
-        db = mc[HOUR_DB_NAME]
         dataDict = {}
         index = 0
         for symbol in self.symbolList:
             index += 1
+            if (index == 1) or (not (index % 100)):
+                if index != 1:
+                    mc.close()
+                    sleep(10)
+                mc = MongoClient()
+                db = mc[HOUR_DB_NAME]
+                print("====== MongoClient Suspend ======")
+
             flt = {'datetime':{'$gte':self.startDt,
                                '$lte':self.endDt}} 
             
