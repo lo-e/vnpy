@@ -20,14 +20,24 @@ import shutil
 
 def one():
     # 读取文件，生成回测合约参数
+    print(f"{datetime.now()}\t开始信号数据读取")
     file_name = f"data{DIR_SYMBOL}naive_prediction.csv"
     symbol_set = set()
     setting_list = []
     symbol_signal_dict = {}
     file_start = time()
+    log_time_gap = 60
+    log_time = 0
+    file_read_count = 0
     with open(file_name, "r") as f:
         reader = csv.DictReader(f)
         for row in reader:
+            file_read_count += 1
+            time_cost = int(time() - file_start)
+            if time_cost > log_time:
+                log_time += log_time_gap
+                print(f"信号数据读取统计：{file_read_count}")
+
             # 交易参数设置
             symbol = row["symbol"]
             if symbol not in symbol_set:

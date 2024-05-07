@@ -136,7 +136,7 @@ class BacktestingEngine(object):
         self.output(f"{datetime.now()}\t开始回放K线数据")
         
         backtesting_start = time()
-        log_time_gap = 1
+        log_time_gap = 60
         log_time = 0
         for dt, barDict in self.dataDict.items():
             time_cost = int(time() - backtesting_start)
@@ -347,6 +347,11 @@ class BacktestingEngine(object):
         pKDE = plt.subplot(4, 1, 4)
         pKDE.set_title('Daily Pnl Distribution')
         plt.hist(timeseries['netPnl'], bins=50)
+
+        pBalance.set_position([0.125, 0.75, 0.775, 0.15])  # Adjust the position of the Balance plot
+        pDrawdown.set_position([0.125, 0.50, 0.775, 0.15])  # Adjust the position of the Drawdown plot
+        pPnl.set_position([0.125, 0.25, 0.775, 0.15])      # Adjust the position of the Daily Pnl plot
+        pKDE.set_position([0.125, 0.05, 0.775, 0.15]) 
 
         if figSavedPath:
             plt.savefig(figSavedPath)
