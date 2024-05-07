@@ -76,9 +76,15 @@ def one():
     engine = BacktestingEngine()
     engine.setPeriod(datetime(2021, 1, 1), datetime(2024, 12, 31))
     engine.symbol_signal_dict = symbol_signal_dict
-    figSavedName = ""
+    figSavedName = "result_figure"
     if figSavedName:
-        figSavedName = f"figSaved{DIR_SYMBOL}{figSavedName}"
+        fig_saved_path = f"figSaved{DIR_SYMBOL}"
+        if os.path.exists(fig_saved_path):
+            shutil.rmtree(fig_saved_path)
+            os.makedirs(fig_saved_path)
+        else:
+            os.makedirs(fig_saved_path)
+        figSavedName = f"{fig_saved_path}{figSavedName}"
     
     # 开始回测
     backtesting_start = time()

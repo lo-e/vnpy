@@ -41,7 +41,8 @@ class PondSignal(object):
 
     def onBar(self, bar):
         if not bar.check_valid():
-            raise('Bar数据校验不通过！！')
+            # raise('Bar数据校验不通过！！')
+            return
         
         self.bar = bar
         self.generateSignal(bar)
