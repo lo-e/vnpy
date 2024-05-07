@@ -112,10 +112,11 @@ class BacktestingEngine(object):
             if (index == 1) or (not (index % 100)):
                 if index != 1:
                     mc.close()
+                    print("====== MongoClient Suspend ======")
                     sleep(10)
+                    
                 mc = MongoClient()
                 db = mc[HOUR_DB_NAME]
-                print("====== MongoClient Suspend ======")
 
             flt = {'datetime':{'$gte':self.startDt,
                                '$lte':self.endDt}} 
