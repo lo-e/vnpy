@@ -108,7 +108,9 @@ class BacktestingEngine(object):
         mc = MongoClient()
         db = mc[HOUR_DB_NAME]
         dataDict = {}
+        index = 0
         for symbol in self.symbolList:
+            index += 1
             flt = {'datetime':{'$gte':self.startDt,
                                '$lte':self.endDt}} 
             
@@ -123,7 +125,7 @@ class BacktestingEngine(object):
                 barDict = dataDict.setdefault(bar.datetime, OrderedDict())
                 barDict[bar.symbol] = bar
             
-            self.output(u'%s数据加载完成，总数据量：%s' %(symbol, cursor.retrieved))
+            self.output(f"{inedx}/{len(self.symbolList)}\t{symbol}数据加载完成，总数据量：{cursor.retrieved}")
 
         dateList = sorted(dataDict.keys())
         for theDatetime in dateList:
