@@ -107,37 +107,12 @@ class BacktestingEngine(object):
         self.output(f"投资组合的初始价值：{portfolioValue}")
     
     def loadData(self):
-        count = 2
-        group = len(self.symbolList) / count
-        group = int(ceil_to(group, 1))
-        for i in range(group):
-            if (i+1) >= group:
-                symbol_slices = self.symbolList[i*count:]
-            
-            else:
-                symbol_slices = self.symbolList[i*count:(i+1)*count]
-            
-            thread = threading.Thread(target=self.load_slices_data, args=(symbol_slices,))
-            self.load_data_threads.append(thread)
-            thread.start()
-
-        while True:
-            load_completed = True
-            for t in self.load_data_threads:
-                if t.is_alive():
-                    load_completed = False
-                    break
-            if load_completed:
-                break
-            sleep(1)
-
-    def load_slices_data(self, symbol_list:list):
         """加载数据"""
         mc = MongoClient()
         db = mc[HOUR_DB_NAME]
         dataDict = {}
         index = 0
-        for symbol in symbol_list:
+        for symbol in self.symbolList:
             index += 1
             flt = {'datetime':{'$gte':self.startDt,
                                '$lte':self.endDt}} 
@@ -153,7 +128,7 @@ class BacktestingEngine(object):
                 barDict = dataDict.setdefault(bar.datetime, OrderedDict())
                 barDict[bar.symbol] = bar
             
-            self.output(f"{datetime.now()}({index}/{len(symbol_list)})\t{symbol}数据加载完成，总数据量：{cursor.retrieved}")
+            self.output(f"{datetime.now()}({index}/{len(self.symbolList)})\t{symbol}数据加载完成，总数据量：{cursor.retrieved}")
 
         dateList = sorted(dataDict.keys())
         for theDatetime in dateList:
