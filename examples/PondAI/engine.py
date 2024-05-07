@@ -105,19 +105,12 @@ class BacktestingEngine(object):
     
     def loadData(self):
         """加载数据"""
+        mc = MongoClient()
+        db = mc[HOUR_DB_NAME]
         dataDict = {}
         index = 0
         for symbol in self.symbolList:
             index += 1
-            if (index == 1) or (not (index % 100)):
-                if index != 1:
-                    mc.close()
-                    print("====== MongoClient Suspend ======")
-                    sleep(10)
-                    
-                mc = MongoClient()
-                db = mc[HOUR_DB_NAME]
-
             flt = {'datetime':{'$gte':self.startDt,
                                '$lte':self.endDt}} 
             
