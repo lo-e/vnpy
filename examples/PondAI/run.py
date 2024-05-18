@@ -11,7 +11,10 @@ from vnpy.trader.utility import DIR_SYMBOL
 import csv
 import shutil
 
-def backtesting(signal_file:str):
+
+def backtesting(
+    signal_file: str, from_dt: str = "2009-01-01", to_dt: str = "2024-12-31"
+):
     # 读取文件，生成回测合约参数
     print(f"{datetime.now()}\t开始信号数据读取")
     file_name = f"data{DIR_SYMBOL}{signal_file}"
@@ -58,16 +61,18 @@ def backtesting(signal_file:str):
     print(f"信号数据读取总耗时：{time_cost}")
     if not setting_list:
         return
-    
+
     # 信号数据按时间排序
     for symbol, signal_list in symbol_signal_dict.items():
         signal_df = pd.DataFrame(signal_list)
-        df_sorted = signal_df.sort_values(by='datetime')
+        df_sorted = signal_df.sort_values(by="datetime")
         symbol_signal_dict[symbol] = df_sorted
 
     # 回测引擎参数设置
+    from_dt = datetime.strptime(from_dt, "%Y-%m-%d")
+    to_dt = datetime.strptime(to_dt, "%Y-%m-%d")
     engine = BacktestingEngine()
-    engine.setPeriod(datetime(2021, 1, 1), datetime(2024, 12, 31))
+    engine.setPeriod(from_dt, to_dt)
     engine.symbol_signal_dict = symbol_signal_dict
     figSavedName = "result_figure"
     if figSavedName:
@@ -78,7 +83,7 @@ def backtesting(signal_file:str):
         else:
             os.makedirs(fig_saved_path)
         figSavedName = f"{fig_saved_path}{figSavedName}"
-    
+
     # 开始回测
     backtesting_start = time()
     engine.initListPortfolio(setting_list, 10000000)
@@ -95,8 +100,16 @@ def backtesting(signal_file:str):
         symbol_trade_list = symbol_trade_dic.get(symbol, [])
         trade_data_list = engine.getTradeData(symbol)
         for trade in trade_data_list:
-            direction = "LONG" if trade.direction == Direction.LONG else ("SHORT" if trade.direction == Direction.SHORT else "NET")
-            offset = "OPEN" if trade.offset == Offset.OPEN else ("NONE" if trade.offset == Offset.NONE else "CLOSE")
+            direction = (
+                "LONG"
+                if trade.direction == Direction.LONG
+                else ("SHORT" if trade.direction == Direction.SHORT else "NET")
+            )
+            offset = (
+                "OPEN"
+                if trade.offset == Offset.OPEN
+                else ("NONE" if trade.offset == Offset.NONE else "CLOSE")
+            )
             trade_data = {
                 "symbol": trade.symbol,
                 "datetime": trade.dt,
@@ -130,12 +143,13 @@ def backtesting(signal_file:str):
                 writer = csv.DictWriter(f, fieldnames=fieldNames)
                 writer.writeheader()
                 writer.writerows(trade_list)
-    
+
     time_cost = time() - trades_save_start
     print(f"保存交易数据总耗时：{time_cost}")
 
     # 展示图表
     engine.showResult(figSavedName)
 
+
 if __name__ == "__main__":
-    backtesting(signal_file="naive_prediction.csv")
+    backtesting(signal_file="naive_prediction.csv", from_dt="2021-01-01", to_dt="2024-12-31")
