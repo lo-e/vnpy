@@ -60,4 +60,4 @@ class CSVsBarLocalEngine(object):
 
 if __name__ == "__main__":
     engine = CSVsBarLocalEngine()
-    engine.csv_to_mongodb(file_name="eth_price.csv", db_name=HOUR_DB_NAME)
+    engine.csv_to_mongodb(file_name="eth_price_v2.csv", db_name=HOUR_DB_NAME)

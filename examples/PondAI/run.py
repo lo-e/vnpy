@@ -2,26 +2,19 @@
 
 from datetime import datetime
 from time import time
-import numpy as np
-import matplotlib.pyplot as plt
 from engine import BacktestingEngine
-from csv import DictReader
 import csv
 import os
-from collections import OrderedDict
-import re
-from pymongo import MongoClient, ASCENDING
-from vnpy.app.cta_strategy.base import DAILY_DB_NAME
 import pandas as pd
 from vnpy.trader.constant import Direction, Offset
 from vnpy.trader.utility import DIR_SYMBOL
 import csv
 import shutil
 
-def one():
+def backtesting(signal_file:str):
     # 读取文件，生成回测合约参数
     print(f"{datetime.now()}\t开始信号数据读取")
-    file_name = f"data{DIR_SYMBOL}naive_prediction.csv"
+    file_name = f"data{DIR_SYMBOL}{signal_file}"
     symbol_set = set()
     setting_list = []
     symbol_signal_dict = {}
@@ -145,4 +138,4 @@ def one():
     engine.showResult(figSavedName)
 
 if __name__ == "__main__":
-    one()
+    backtesting(signal_file="naive_prediction.csv")

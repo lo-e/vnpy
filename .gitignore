@@ -45,6 +45,7 @@ examples/vn_trader/App/Turtle_crypto/dataservice/CSVs_/
 examples/MartingStrategy/signal_trades/
 examples/MartingStrategy/symbol_trades/
 examples/MartingStrategy/trending_continuous/
+examples/PondAI/figSaved/
 
 # Misc
 .DS_Store
