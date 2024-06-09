@@ -193,6 +193,10 @@ class CopytradeEngine(BaseEngine):
         if not strategy:
             return
         
+        contract = self.main_engine.get_contract(trade.vt_symbol)
+        if not contract:
+            return
+        
         # 统计合约净持仓
         if trade.direction == Direction.LONG:
             strategy.symbol_pos_dict[trade.vt_symbol] = float(
@@ -203,6 +207,7 @@ class CopytradeEngine(BaseEngine):
             strategy.symbol_pos_dict[trade.vt_symbol] = float(
                 Decimal(str(strategy.symbol_pos_dict.get(trade.vt_symbol, 0))) - Decimal(str(trade.volume))
             )
+        strategy.symbol_pos_dict[trade.vt_symbol] = round_to(strategy.symbol_pos_dict[trade.vt_symbol], contract.min_volume)
         if trade.vt_symbol in strategy.symbol_pos_dict and not strategy.symbol_pos_dict[trade.vt_symbol]:
             strategy.symbol_pos_dict.pop(trade.vt_symbol)
 
@@ -245,6 +250,9 @@ class CopytradeEngine(BaseEngine):
                 long_volume = float(
                     Decimal(str(long_volume)) - Decimal(str(trade.volume))
                 )
+        
+        long_volume = round_to(long_volume, contract.min_volume)
+        short_volume = round_to(short_volume, contract.min_volume)
         
         pos_data = {}
         if long_volume:

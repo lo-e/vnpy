@@ -26,6 +26,7 @@ from time import sleep
 from enum import Enum
 from decimal import Decimal
 from queue import Empty, Queue
+from vnpy.trader.event import EVENT_MAINENGINE_POSITION_UPDATED
 
 class CopytradeStrategy(CtaTemplate):
     """ 跟单交易策略 """
@@ -75,6 +76,7 @@ class CopytradeStrategy(CtaTemplate):
         self.trade_assets_setting = setting["trade_assets"] # 跟单交易资金设置
 
         self.portfolio = ctaEngine.copytradePortfolio # 投资组合管理
+        self.next_check_real_strategy_position_dt = None # 下一次检查对比交易所持仓和策略持仓的时间
 
         # 交易总资金、总止损
         self.trade_capital = 0
@@ -138,6 +140,9 @@ class CopytradeStrategy(CtaTemplate):
                 self.cta_engine.main_engine.subscribe(req, contract.gateway_name)
             else:
                 self.write_log(f"行情订阅失败，找不到合约{vt_symbol}")
+                
+        # 订阅交易所仓位更新
+        self.cta_engine.event_engine.register(EVENT_MAINENGINE_POSITION_UPDATED, self.on_mainengine_position_updated)
 
         # 开启新线程检查带单员带单更新后的目标持仓
         t = Thread(target=self.check_trader_position_updated)
@@ -154,6 +159,55 @@ class CopytradeStrategy(CtaTemplate):
         # 开启新线程统计当前盈亏
         t = Thread(target=self.calculate_pnl)
         t.start()
+
+    def on_start(self):
+        # 一分钟后开始检查对比交易所持仓和策略持仓
+        self.next_check_real_strategy_position_dt = datetime.now() + timedelta(minutes=1)
+
+    def on_mainengine_position_updated(self, event):
+        if not self.trading:
+            return
+        
+        if self.next_check_real_strategy_position_dt and datetime.now() < self.next_check_real_strategy_position_dt:
+            return
+
+        # 钉钉消息标题
+        ding_talk_msg = f"交易所持仓与策略持仓不一致"
+        ding_talk_action = False
+
+        # 获取所有跟单账号持仓
+        oms_engine = self.cta_engine.main_engine.engines["oms"]
+        for _, position in oms_engine.positions.items():
+            exchange: Exchange = position.exchange
+            exchange_user: str = position.exchange_user
+            if self.exchange == exchange and self.exchange_user == exchange_user:
+                # 真实持仓
+                real_pos = position.volume
+
+                # 精度处理
+                contract = self.cta_engine.main_engine.get_contract(position.vt_symbol)
+                if contract:
+                    real_pos = round_to(real_pos, contract.min_volume)
+
+                absolute_pos_data = self.symbol_absolute_pos_dict.get(position.vt_symbol, {})
+                if position.direction == Direction.LONG:
+                    long_data = absolute_pos_data.get("long", {})
+                    long_volume = long_data.get("volume", 0)
+                    if abs(long_volume) != abs(real_pos):
+                        ding_talk_action = True
+                        ding_talk_msg += f"\n\n{position.vt_symbol}\n{position.direction.value} {real_pos}&{long_volume}"
+
+                elif position.direction == Direction.SHORT:
+                    short_data = absolute_pos_data.get("short", {})
+                    short_volume = short_data.get("volume", 0)
+                    if abs(short_volume) != abs(real_pos):
+                        ding_talk_action = True
+                        ding_talk_msg += f"\n\n{position.vt_symbol}\n{position.direction.value} {real_pos}&{short_volume}"
+        
+        # 发送钉钉通知
+        if ding_talk_action:
+            self.next_check_real_strategy_position_dt = datetime.now() + timedelta(hours=1)
+            self.send_ding_talk(ding_talk_msg)
 
     # 检查带单员带单更新
     def check_trader_position_updated(self):
