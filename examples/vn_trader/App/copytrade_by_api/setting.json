@@ -53,7 +53,7 @@
     {
       "strategy_name": "COPYTRADE_API_BINANCE",
       "exchange": "BINANCE",
-      "exchange_user": "lo-e（copytrade）",
+      "exchange_user": "lo-e",
       "trade_assets": {
         "540D011FDACCB47A": 500,
         "D5E7A8430A35CA84": 500
