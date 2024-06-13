@@ -28,6 +28,7 @@ from decimal import Decimal
 from queue import Empty, Queue
 from vnpy.trader.event import EVENT_MAINENGINE_POSITION_UPDATED
 from vnpy.trader.utility import DIR_SYMBOL
+import pandas as pd
 
 class CopytradeStrategy(CtaTemplate):
     """ 跟单交易策略 """
@@ -93,8 +94,8 @@ class CopytradeStrategy(CtaTemplate):
         self.trade_stop_loss = stop_loss / self.trade_capital if self.trade_capital else -1
 
         # 文件获取根据交易员分类的pnl数据
-        for trader_code, assets in self.trade_assets_setting.items():
-            trader_setting = self.portfolio.copy_setting.get(trader_code, {})
+        for trader, assets in self.trade_assets_setting.items():
+            trader_setting = self.portfolio.copy_setting.get(trader, {})
             trader_name = trader_setting.get("trader", "")
             if not trader_name:
                 continue
@@ -103,11 +104,22 @@ class CopytradeStrategy(CtaTemplate):
             if not strategy_name:
                 continue
 
+            # 文件路径
             dir = os.getcwd()
             dir_path = Path(dir).joinpath(f"BaiduSyncdisk{DIR_SYMBOL}PNL_{strategy_name}{DIR_SYMBOL}")
             if not os.path.exists(dir_path):
                 os.makedirs(dir_path)
             file_path = dir_path.joinpath(f"{trader_name}.csv")
+
+            # 获取文件数据
+            pnl_data_list = []
+            if os.path.exists(file_path):
+                csv_data = pd.read_csv(file_path)
+                for _, row in csv_data.iterrows():
+                    row_dict = dict(row)
+                    pnl_data_list.append(row_dict)
+            
+            self.trader_pnl_data_dict[trader_name] = pnl_data_list
 
         # 完成setting.json参数的配置
         super(CopytradeStrategy, self).__init__(
