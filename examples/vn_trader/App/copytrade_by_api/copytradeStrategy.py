@@ -27,6 +27,7 @@ from enum import Enum
 from decimal import Decimal
 from queue import Empty, Queue
 from vnpy.trader.event import EVENT_MAINENGINE_POSITION_UPDATED
+from vnpy.trader.utility import DIR_SYMBOL
 
 class CopytradeStrategy(CtaTemplate):
     """ 跟单交易策略 """
@@ -56,7 +57,8 @@ class CopytradeStrategy(CtaTemplate):
     syncs = [
         "symbol_pos_dict",
         "target_symbol_pos_dict",
-        "symbol_absolute_pos_dict"
+        "symbol_absolute_pos_dict",
+        "target_trader_symbol_absolute_pos_dict"
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -66,6 +68,7 @@ class CopytradeStrategy(CtaTemplate):
         self.symbol_pos_dict = {} # 合约净持仓
         self.target_symbol_pos_dict = {} #  合约目标净持仓
         self.symbol_absolute_pos_dict = {} # 合约双向持仓数据
+        self.target_trader_symbol_absolute_pos_dict = {} # 根据交易员分类的合约目标双向持仓数据
 
         self.wait_tick_symbols = set() # 等待行情数据的合约集合
         self.position_pnl = 0 # 持仓盈亏
@@ -77,6 +80,7 @@ class CopytradeStrategy(CtaTemplate):
 
         self.portfolio = ctaEngine.copytradePortfolio # 投资组合管理
         self.next_check_real_strategy_position_dt = None # 下一次检查对比交易所持仓和策略持仓的时间
+        self.trader_pnl_data_dict = {} # 根据交易员分类的pnl数据
 
         # 交易总资金、总止损
         self.trade_capital = 0
@@ -87,6 +91,23 @@ class CopytradeStrategy(CtaTemplate):
             self.trade_capital += assets
             stop_loss += assets * copy_stop_loss
         self.trade_stop_loss = stop_loss / self.trade_capital if self.trade_capital else -1
+
+        # 文件获取根据交易员分类的pnl数据
+        for trader_code, assets in self.trade_assets_setting.items():
+            trader_setting = self.portfolio.copy_setting.get(trader_code, {})
+            trader_name = trader_setting.get("trader", "")
+            if not trader_name:
+                continue
+
+            strategy_name = setting["strategy_name"]
+            if not strategy_name:
+                continue
+
+            dir = os.getcwd()
+            dir_path = Path(dir).joinpath(f"BaiduSyncdisk{DIR_SYMBOL}PNL_{strategy_name}{DIR_SYMBOL}")
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path)
+            file_path = dir_path.joinpath(f"{trader_name}.csv")
 
         # 完成setting.json参数的配置
         super(CopytradeStrategy, self).__init__(
@@ -425,9 +446,168 @@ class CopytradeStrategy(CtaTemplate):
                                         # 平空（减仓）
                                         volume = target_pos - current_pos
                                         self.send_symbol_order(vt_symbol, Direction.LONG, Offset.CLOSE, long_close_price, abs(volume))
-
+                            
+                            # 更新根据交易员分类的pnl数据
+                            self.update_pnl_result_on_trader()
             except:
                 pass
+    
+    def update_pnl_result_on_trader(self):
+        try:
+            # 根据交易员分类的合约目标双向持仓数据
+            target_trader_symbol_absolute_pos_dict = {}
+
+            for trader, setting in self.portfolio.copy_setting.items():
+                trader_name = setting.get("trader", "")
+                if not trader_name:
+                    continue
+
+                copy_value = setting.get("copy_assets", 0)
+                trade_value = self.trade_assets_setting.get(trader, 0)
+                if not copy_value or not trade_value:
+                    continue
+
+                for symbol, pos_data in self.portfolio.trader_position_dict[trader].items():
+                    long_data = pos_data.get("long", {})
+                    long_volume = long_data.get("volume", 0)
+
+                    short_data = pos_data.get("short", {})
+                    short_volume = short_data.get("volume", 0)
+                    
+                    # 计算目标持仓
+                    target_long_volume = long_volume * trade_value / copy_value
+                    target_short_volume = short_volume * trade_value / copy_value
+
+                    # 转换合约
+                    pure_symbol = symbol.split("-")[0]
+
+                    # 墙头草跟单山寨币仓位加倍
+                    if (trader == "D5E7A8430A35CA84") and (pure_symbol not in ["BTC", "ETH", "XRP"]):
+                        target_long_volume *= 2
+                        target_short_volume *= 2
+
+                    vt_symbol = ""
+                    if self.exchange == Exchange.OKX:
+                        vt_symbol = f"{pure_symbol}-USDT-SWAP.{self.exchange.value}"
+                    
+                    elif self.exchange == Exchange.BINANCE:
+                        if pure_symbol in ["PEPE", "SHIB", "XEC", "LUNC", "FLOKI", "BONK", "SATS"]:
+                            vt_symbol = f"1000{pure_symbol}USDT.{self.exchange.value}"
+                            target_long_volume = target_long_volume / 1000
+                            target_short_volume = target_short_volume / 1000
+                            
+                        else:
+                            vt_symbol = f"{pure_symbol}USDT.{self.exchange.value}"
+
+                    # 持仓统计
+                    if vt_symbol:
+                        symbol_pos_data = target_trader_symbol_absolute_pos_dict.get(trader_name, {})
+                        pos_data = symbol_pos_data.get(vt_symbol, {})
+                        pos_data["long_volume"] = pos_data.get("long_volume", 0) + target_long_volume
+                        pos_data["short_volume"] = pos_data.get("short_volume", 0) + target_short_volume
+                        symbol_pos_data[vt_symbol] = pos_data
+                        target_trader_symbol_absolute_pos_dict[trader_name] = symbol_pos_data
+
+            # ====== 以下代码的trader == trader_name ======
+            # 历史持仓数据填补
+            for trader, symbol_pos_data in self.target_trader_symbol_absolute_pos_dict.items():
+                for vt_symbol, real_pos_data in symbol_pos_data.items():
+                    pos_data = target_trader_symbol_absolute_pos_dict.get(trader, {}).get(vt_symbol, {})
+                    target_trader_symbol_absolute_pos_dict[trader][vt_symbol] = pos_data
+
+            # 计算PNL
+            oms_engine = self.cta_engine.main_engine.engines["oms"]
+            for trader, symbol_pos_data in target_trader_symbol_absolute_pos_dict.items():
+                for vt_symbol, pos_data in symbol_pos_data.items():
+                    contract = self.cta_engine.main_engine.get_contract(vt_symbol)
+                    if contract:
+                        pos_data["long_volume"] = round_to(pos_data.get("long_volume", 0), contract.min_volume)
+                        pos_data["short_volume"] = round_to(pos_data.get("short_volume", 0), contract.min_volume)
+                    
+                    long_volume = pos_data.get("long_volume", 0)
+                    short_volume = pos_data.get("short_volume", 0)
+
+                    real_symbol_pos_data = self.target_trader_symbol_absolute_pos_dict.get(trader, {})
+                    real_pos_data = real_symbol_pos_data.get(vt_symbol, {})
+                    real_long_volume = real_pos_data.get("long_volume", 0)
+                    real_long_price = real_pos_data.get("long_price", 0)
+                    real_short_volume = real_pos_data.get("short_volume", 0)
+                    real_short_price = real_pos_data.get("short_price", 0)
+
+                    long_trade = round_to(long_volume - real_long_volume, contract.min_volume)
+                    short_trade = round_to(short_volume - real_short_volume, contract.min_volume)
+                    
+                    # 判断开平仓，开仓更新平均开仓价格，平仓记录PNL并保存文件
+                    tick = oms_engine.ticks.get(vt_symbol, None)
+                    if long_trade > 0 and tick:
+                        # 多头开仓
+                        long_value = abs(real_long_volume*real_long_price) + abs(tick.last_price * long_trade)
+                        long_price = long_value / abs(long_volume)
+                        real_pos_data["long_volume"] = long_volume
+                        real_pos_data["long_price"] = long_price
+
+                    if long_trade < 0:
+                        # 多头平仓
+                        open = real_long_price
+                        close = tick.last_price
+                        pnl = (close - open) * abs(long_trade)
+                        pnl_data = {"vt_symbol":vt_symbol,
+                                    "offset":"close_long",
+                                    "open":open,
+                                    "close":close,
+                                    "volume":abs(long_trade),
+                                    "pnl":pnl}
+                    
+                    if short_trade > 0 and tick:
+                        # 空头开仓
+                        short_value = abs(real_short_volume*real_short_price) + abs(tick.last_price * short_trade)
+                        short_price = short_value / abs(short_volume)
+                        real_pos_data["short_volume"] = short_volume
+                        real_pos_data["short_price"] = short_price
+
+                    if short_trade < 0:
+                        # 空头平仓
+                        open = real_short_price
+                        close = tick.last_price
+                        pnl = (close - open) * abs(long_trade) * -1
+                        pnl_data = {"vt_symbol":vt_symbol,
+                                    "offset":"close_short",
+                                    "open":open,
+                                    "close":close,
+                                    "volume":abs(short_trade),
+                                    "pnl":pnl}
+
+                    # 剔除空的数据，并且保存
+                    if not real_pos_data.get("long_volume", 0):
+                        if "long_volume" in real_pos_data:
+                            real_pos_data.pop["long_volume"]
+                        
+                        if "long_price" in real_pos_data:
+                            real_pos_data.pop["long_price"]
+
+                    if not real_pos_data.get("short_volume", 0):
+                        if "short_volume" in real_pos_data:
+                            real_pos_data.pop["short_volume"]
+                        
+                        if "short_price" in real_pos_data:
+                            real_pos_data.pop["short_price"]
+
+                    if real_pos_data:
+                        real_symbol_pos_data[vt_symbol] = real_pos_data
+
+                    elif vt_symbol in real_symbol_pos_data:
+                        real_symbol_pos_data.pop(vt_symbol)
+
+                    if real_symbol_pos_data:
+                        self.target_trader_symbol_absolute_pos_dict[trader] = real_symbol_pos_data
+                    
+                    elif trader in self.target_trader_symbol_absolute_pos_dict:
+                        self.target_trader_symbol_absolute_pos_dict.pop(trader)
+
+
+        except Exception as e:
+            msg = f"更新交易员分类的PNL结果报错：{e}"
+            self.send_ding_talk(msg)
 
     def wait_symbol_tick(self):
         oms_engine = self.cta_engine.main_engine.engines["oms"]
