@@ -99,7 +99,7 @@
     {
       "strategy_name": "COPYTRADE_API_OKX",
       "exchange": "OKX",
-      "exchange_user": "lo-e",
+      "exchange_user": "lo-e（test）",
       "trade_assets": {
         "D5E7A8430A35CA84": 500,
         "032805718789399F": 500,
@@ -117,7 +117,7 @@
     {
       "strategy_name": "COPYTRADE_API_BINANCE",
       "exchange": "BINANCE",
-      "exchange_user": "lo-e（test）",
+      "exchange_user": "lo-e",
       "trade_assets": {
         "D5E7A8430A35CA84": 2500
       },
