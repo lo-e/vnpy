@@ -38,7 +38,7 @@
       "exchange": "OKX",
       "exchange_user": "lo-e",
       "trade_assets": {
-        "D5E7A8430A35CA84": 2000
+        "D5E7A8430A35CA84": 2500
       },
       "start": true
     },
@@ -47,7 +47,7 @@
       "exchange": "BINANCE",
       "exchange_user": "lo-e",
       "trade_assets": {
-        "D5E7A8430A35CA84": 2000
+        "D5E7A8430A35CA84": 2500
       },
       "start": false
     }
