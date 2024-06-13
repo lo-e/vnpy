@@ -520,16 +520,17 @@ class CopytradeStrategy(CtaTemplate):
                         symbol_pos_data[vt_symbol] = pos_data
                         target_trader_symbol_absolute_pos_dict[trader_name] = symbol_pos_data
 
-            # ====== 以下代码的trader == trader_name ======
             # 历史持仓数据填补
-            for trader, symbol_pos_data in self.target_trader_symbol_absolute_pos_dict.items():
+            for trader_name, symbol_pos_data in self.target_trader_symbol_absolute_pos_dict.items():
                 for vt_symbol, real_pos_data in symbol_pos_data.items():
-                    pos_data = target_trader_symbol_absolute_pos_dict.get(trader, {}).get(vt_symbol, {})
-                    target_trader_symbol_absolute_pos_dict[trader][vt_symbol] = pos_data
+                    pos_data = target_trader_symbol_absolute_pos_dict.get(trader_name, {}).get(vt_symbol, {})
+                    target_trader_symbol_absolute_pos_dict[trader_name][vt_symbol] = pos_data
 
             # 计算PNL
             oms_engine = self.cta_engine.main_engine.engines["oms"]
-            for trader, symbol_pos_data in target_trader_symbol_absolute_pos_dict.items():
+            for trader_name, symbol_pos_data in target_trader_symbol_absolute_pos_dict.items():
+                new_pnl = False
+
                 for vt_symbol, pos_data in symbol_pos_data.items():
                     contract = self.cta_engine.main_engine.get_contract(vt_symbol)
                     if contract:
@@ -539,7 +540,7 @@ class CopytradeStrategy(CtaTemplate):
                     long_volume = pos_data.get("long_volume", 0)
                     short_volume = pos_data.get("short_volume", 0)
 
-                    real_symbol_pos_data = self.target_trader_symbol_absolute_pos_dict.get(trader, {})
+                    real_symbol_pos_data = self.target_trader_symbol_absolute_pos_dict.get(trader_name, {})
                     real_pos_data = real_symbol_pos_data.get(vt_symbol, {})
                     real_long_volume = real_pos_data.get("long_volume", 0)
                     real_long_price = real_pos_data.get("long_price", 0)
@@ -563,12 +564,18 @@ class CopytradeStrategy(CtaTemplate):
                         open = real_long_price
                         close = tick.last_price
                         pnl = (close - open) * abs(long_trade)
-                        pnl_data = {"vt_symbol":vt_symbol,
+                        pnl_data = {"time":datetime.now().strftime(f"%Y-%m-%d %H:%M:%S"),
+                                    "vt_symbol":vt_symbol,
                                     "offset":"close_long",
                                     "open":open,
                                     "close":close,
                                     "volume":abs(long_trade),
                                     "pnl":pnl}
+                        
+                        pnl_data_list = self.trader_pnl_data_dict.get(trader_name, [])
+                        pnl_data_list.append(pnl_data)
+                        self.trader_pnl_data_dict[trader_name] = pnl_data_list
+                        new_pnl = True
                     
                     if short_trade > 0 and tick:
                         # 空头开仓
@@ -582,12 +589,18 @@ class CopytradeStrategy(CtaTemplate):
                         open = real_short_price
                         close = tick.last_price
                         pnl = (close - open) * abs(long_trade) * -1
-                        pnl_data = {"vt_symbol":vt_symbol,
+                        pnl_data = {"time":datetime.now().strftime(f"%Y-%m-%d %H:%M:%S"),
+                                    "vt_symbol":vt_symbol,
                                     "offset":"close_short",
                                     "open":open,
                                     "close":close,
                                     "volume":abs(short_trade),
                                     "pnl":pnl}
+                        
+                        pnl_data_list = self.trader_pnl_data_dict.get(trader_name, [])
+                        pnl_data_list.append(pnl_data)
+                        self.trader_pnl_data_dict[trader_name] = pnl_data_list
+                        new_pnl = True
 
                     # 剔除空的数据，并且保存
                     if not real_pos_data.get("long_volume", 0):
@@ -611,11 +624,23 @@ class CopytradeStrategy(CtaTemplate):
                         real_symbol_pos_data.pop(vt_symbol)
 
                     if real_symbol_pos_data:
-                        self.target_trader_symbol_absolute_pos_dict[trader] = real_symbol_pos_data
+                        self.target_trader_symbol_absolute_pos_dict[trader_name] = real_symbol_pos_data
                     
-                    elif trader in self.target_trader_symbol_absolute_pos_dict:
-                        self.target_trader_symbol_absolute_pos_dict.pop(trader)
+                    elif trader_name in self.target_trader_symbol_absolute_pos_dict:
+                        self.target_trader_symbol_absolute_pos_dict.pop(trader_name)
 
+                if new_pnl:
+                    # pnl数据写入文件
+                    dir = os.getcwd()
+                    dir_path = Path(dir).joinpath(f"BaiduSyncdisk{DIR_SYMBOL}PNL_{self.strategy_name}{DIR_SYMBOL}")
+                    if not os.path.exists(dir_path):
+                        os.makedirs(dir_path)
+                    file_path = dir_path.joinpath(f"{trader_name}.csv")
+
+                    pnl_data_list = self.trader_pnl_data_dict.get(trader_name, [])
+                    df_sorted = pd.DataFrame(pnl_data_list)
+                    df_sorted = df_sorted.sort_values("time", ascending=False)
+                    df_sorted.to_csv(file_path, index=False)
 
         except Exception as e:
             msg = f"更新交易员分类的PNL结果报错：{e}"
