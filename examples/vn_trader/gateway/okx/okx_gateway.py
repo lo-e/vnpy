@@ -50,6 +50,7 @@ from threading import Thread
 
 from ..rest import Request, RestClient
 from ..websocket import WebsocketClient
+import re
 
 # 中国时区
 CHINA_TZ: timezone = timezone("Asia/Shanghai")
@@ -979,12 +980,29 @@ class OkxWebsocketPrivateApi(WebsocketClient):
         volume = round_to(req.volume / contract.contract_value, contract.contract_min) if contract.contract_value and contract.contract_min else req.volume
 
         # 生成委托请求
+        # 对2.1892e-07类型价格处理
+        price_str = str(req.price)
+        slice_list = price_str.split("e-")
+        if len(slice_list) == 2:
+            n = 0
+            n_list = slice_list[0].split(".")
+            if len(n_list) == 2:
+                n = n_list[-1]
+                n = re.sub("\D", "", n)
+                n = int(len(n))
+
+            e = slice_list[-1]
+            e = re.sub("\D", "", e)
+            e = int(e)
+
+            price_str = f"{req.price:.{n+e}f}"
+
         args: dict = {
             "instId": req.symbol,
             "clOrdId": orderid,
             "side": DIRECTION_VT2OKX[req.direction],
             "ordType": ORDERTYPE_VT2OKX[req.type],
-            "px": str(req.price),
+            "px": price_str,
             "sz": str(volume)
         }
 
