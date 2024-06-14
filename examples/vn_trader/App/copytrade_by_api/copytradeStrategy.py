@@ -561,6 +561,8 @@ class CopytradeStrategy(CtaTemplate):
 
                     if long_trade < 0:
                         # 多头平仓
+                        real_pos_data["long_volume"] = long_volume
+
                         open = real_long_price
                         close = tick.last_price
                         pnl = (close - open) * abs(long_trade)
@@ -586,6 +588,8 @@ class CopytradeStrategy(CtaTemplate):
 
                     if short_trade < 0:
                         # 空头平仓
+                        real_pos_data["short_volume"] = short_volume
+                        
                         open = real_short_price
                         close = tick.last_price
                         pnl = (close - open) * abs(long_trade) * -1
