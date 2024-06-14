@@ -589,10 +589,10 @@ class CopytradeStrategy(CtaTemplate):
                     if short_trade < 0:
                         # 空头平仓
                         real_pos_data["short_volume"] = short_volume
-                        
+
                         open = real_short_price
                         close = tick.last_price
-                        pnl = (close - open) * abs(long_trade) * -1
+                        pnl = (close - open) * abs(short_trade) * -1
                         pnl_data = {"time":datetime.now().strftime(f"%Y-%m-%d %H:%M:%S"),
                                     "vt_symbol":vt_symbol,
                                     "offset":"close_short",
