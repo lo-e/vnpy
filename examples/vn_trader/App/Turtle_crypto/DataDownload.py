@@ -18,7 +18,7 @@ if __name__ == "__main__":
         mode = input("选择模式（默认1）【接口获取：1 正向：2 反向：3】")
         if mode == "2":
             contract_list = ["BTC-USDT-SWAP", "ETH-USDT-SWAP"]
-            contract_list = ['AAVE-USDT-SWAP', 'ADA-USDT-SWAP', 'AXS-USDT-SWAP', 'DOGE-USDT-SWAP', 'LINK-USDT-SWAP', 'BNB-USDT-SWAP', 'UNI-USDT-SWAP']
+            contract_list = ["BTC-USDT-SWAP", "CEL-USDT-SWAP", "NOT-USDT-SWAP", "PEOPLE-USDT-SWAP", "PEPE-USDT-SWAP", "TRB-USDT-SWAP", "TURBO-USDT-SWAP"]
 
         elif mode == "3":
             contract_list = ["BTC-USD-SWAP", "ETH-USD-SWAP"]
@@ -43,7 +43,7 @@ if __name__ == "__main__":
         mode = input("选择模式（默认1）【接口获取：1 正向：2 反向：3】")
         if mode == "2":
             contract_list = ["BTCUSDT", "ETHUSDT"]
-            contract_list = ["AAVEUSDT", "ADAUSDT", "AXSUSDT", "DOGEUSDT", "LINKUSDT", "BNBUSDT", "UNIUSDT"]
+            contract_list = ["BTCUSDT", "CELUSDT", "NOTUSDT", "PEOPLEUSDT", "PEPEUSDT", "TRBUSDT", "TURBOUSDT"]
 
         elif mode == "3":
             contract_list = ["BTCUSD", "ETHUSD"]
@@ -67,10 +67,10 @@ if __name__ == "__main__":
     # sleep(2)
 
     # 起止日期
-    days = 6
-    to_date = datetime.now() + timedelta(days=2)
-    # days = (datetime.now() - datetime.strptime("2020-12-01", "%Y-%m-%d")).days
-    # to_date = datetime.strptime("2023-12-31", "%Y-%m-%d")
+    # days = 200
+    # to_date = datetime.now() + timedelta(days=2)
+    days = (datetime.now() - datetime.strptime("2020-12-01", "%Y-%m-%d")).days
+    to_date = datetime.strptime("2024-12-31", "%Y-%m-%d")
 
     # 是否从数据库最新数据日期开始
     from_data_base = True

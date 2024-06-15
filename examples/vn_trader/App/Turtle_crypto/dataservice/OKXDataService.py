@@ -11,7 +11,7 @@ from pymongo import MongoClient, ASCENDING, DESCENDING
 from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 import pandas as pd
 
-main_url = 'https://www.okex.com'
+main_url = 'https://www.okx.com'
 
 class OKXType(Enum):
     USDT = "usdt"
@@ -19,7 +19,7 @@ class OKXType(Enum):
     INVERSE = "inverse"
 
 # ====== 获取bar数据 ======
-# symbol：'BT-CUSD-SWAP'
+# symbol：'BTC-USD-SWAP'
 # interval：'1m/3m/5m/15m/30m/1H/2H/4H 香港时间开盘价k线：[6H/12H/1D/1W/1M/3M/6M/1Y] UTC时间开盘价k线：[/6Hutc/12Hutc/1Dutc/1Wutc/1Mutc/3Mutc/6Mutc/1Yutc]'
 # from：'%Y-%m-%d %H:%M:%S'
 def okx_get_bar_data(symbol:str, interval:str, from_time:str='', limit:int=100, save_to:str=""):
@@ -306,14 +306,14 @@ def delete_okex():
     # print(result)
 
 if __name__ == '__main__':
-    """
+    #"""
     symbol = 'BTC-USDT-SWAP'
     interval = '1m'
     from_time = ''
     from_time = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
     okx_get_bar_data(symbol=symbol, interval=interval, from_time=from_time, limit=100)
     print('completed！')
-    """
+    #"""
 
     """
     # 获取所有合约列表
@@ -331,4 +331,4 @@ if __name__ == '__main__':
     """
 
     # 生成马丁策略回测参数
-    okx_marting_setting(min_value_filter=0)
+    #okx_marting_setting(min_value_filter=0)

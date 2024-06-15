@@ -417,7 +417,7 @@ class DownloadThread(object):
                 else:
                     print(f"交易所类型错误")
                     break
-            except Exception:
+            except Exception as e:
                 download_failed = True
                 print("****** 下载中断 ******")
 
