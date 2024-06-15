@@ -461,9 +461,14 @@ class CopytradeStrategy(CtaTemplate):
                             
                             # 更新根据交易员分类的pnl数据
                             self.update_pnl_result_on_trader()
-            except:
+            except Empty:
                 pass
+
+            except:
+                msg = f"“检查目标仓位”报错：{e}"
+                self.send_ding_talk(msg)
     
+    # 更新交易员分类的pnl结果
     def update_pnl_result_on_trader(self):
         try:
             # 根据交易员分类的合约目标双向持仓数据
@@ -524,7 +529,7 @@ class CopytradeStrategy(CtaTemplate):
             for trader_name, symbol_pos_data in self.target_trader_symbol_absolute_pos_dict.items():
                 for vt_symbol, real_pos_data in symbol_pos_data.items():
                     pos_data = target_trader_symbol_absolute_pos_dict.get(trader_name, {}).get(vt_symbol, {})
-                    target_trader_symbol_absolute_pos_dict[trader_name][vt_symbol] = pos_data
+                    target_trader_symbol_absolute_pos_dict[trader_name] = {vt_symbol:pos_data}
 
             # 计算PNL
             oms_engine = self.cta_engine.main_engine.engines["oms"]
@@ -609,17 +614,17 @@ class CopytradeStrategy(CtaTemplate):
                     # 剔除空的数据，并且保存
                     if not real_pos_data.get("long_volume", 0):
                         if "long_volume" in real_pos_data:
-                            real_pos_data.pop["long_volume"]
+                            real_pos_data.pop("long_volume")
                         
                         if "long_price" in real_pos_data:
-                            real_pos_data.pop["long_price"]
+                            real_pos_data.pop("long_price")
 
                     if not real_pos_data.get("short_volume", 0):
                         if "short_volume" in real_pos_data:
-                            real_pos_data.pop["short_volume"]
+                            real_pos_data.pop("short_volume")
                         
                         if "short_price" in real_pos_data:
-                            real_pos_data.pop["short_price"]
+                            real_pos_data.pop("short_price")
 
                     if real_pos_data:
                         real_symbol_pos_data[vt_symbol] = real_pos_data
@@ -647,7 +652,7 @@ class CopytradeStrategy(CtaTemplate):
                     df_sorted.to_csv(file_path, index=False)
 
         except Exception as e:
-            msg = f"更新交易员分类的PNL结果报错：{e}"
+            msg = f"“更新交易员分类的PNL结果”报错：{e}"
             self.send_ding_talk(msg)
 
     def wait_symbol_tick(self):
