@@ -528,8 +528,11 @@ class CopytradeStrategy(CtaTemplate):
             # 历史持仓数据填补
             for trader_name, symbol_pos_data in self.target_trader_symbol_absolute_pos_dict.items():
                 for vt_symbol, real_pos_data in symbol_pos_data.items():
-                    pos_data = target_trader_symbol_absolute_pos_dict.get(trader_name, {}).get(vt_symbol, {})
-                    target_trader_symbol_absolute_pos_dict[trader_name] = {vt_symbol:pos_data}
+                    symbol_pos_dict = target_trader_symbol_absolute_pos_dict.get(trader_name, {})
+                    pos_data = symbol_pos_dict.get(vt_symbol, {})
+
+                    symbol_pos_dict[vt_symbol] = pos_data
+                    target_trader_symbol_absolute_pos_dict[trader_name] = symbol_pos_dict
 
             # 计算PNL
             oms_engine = self.cta_engine.main_engine.engines["oms"]
