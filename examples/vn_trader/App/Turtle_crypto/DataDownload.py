@@ -19,6 +19,7 @@ if __name__ == "__main__":
         if mode == "2":
             contract_list = ["BTC-USDT-SWAP", "ETH-USDT-SWAP"]
             contract_list = ["BTC-USDT-SWAP", "CEL-USDT-SWAP", "NOT-USDT-SWAP", "PEOPLE-USDT-SWAP", "PEPE-USDT-SWAP", "TRB-USDT-SWAP", "TURBO-USDT-SWAP", "CORE-USDT-SWAP", "ETH-USDT-SWAP", "MERL-USDT-SWAP"]
+        
         elif mode == "3":
             contract_list = ["BTC-USD-SWAP", "ETH-USD-SWAP"]
 
