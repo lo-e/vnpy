@@ -15,6 +15,7 @@ import talib
 
 from .object import BarData, TickData
 from .constant import Exchange, Interval
+import socket
 
 """ modify by loe """
 import csv
@@ -1048,3 +1049,17 @@ def get_platform_dir_symbol():
     return result
 
 DIR_SYMBOL = get_platform_dir_symbol()
+
+# 获取本机的IP地址
+def get_local_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    
+    except Exception as e:
+        return ""
+    
+LOCAL_IP = get_local_ip()

@@ -5,7 +5,7 @@ import time
 import os
 import csv
 from datetime import datetime, timedelta
-from vnpy.trader.utility import DIR_SYMBOL
+from vnpy.trader.utility import DIR_SYMBOL, LOCAL_IP
 from enum import Enum
 from pymongo import MongoClient, ASCENDING, DESCENDING
 from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
@@ -48,7 +48,15 @@ def okx_get_bar_data(symbol:str, interval:str, from_time:str='', limit:int=100, 
             url = base_url + f'&after={since_ts}'
         else:
             url = base_url
-        resp = requests.get(url, headers={}, params={})
+        
+        # 比如MI-PRO连接系统代理报错，以下手动添加请求代理解决
+        proxy = f"{LOCAL_IP}:10811"
+        proxies = {
+            "http": proxy,
+            "https": proxy,
+        }
+        resp = requests.get(url, headers={}, params={}, proxies=proxies)
+
         data = resp.json()
         bar_data_list = data.get('data', [])
 
@@ -161,7 +169,15 @@ def okx_get_first_bar_datetime(symbol:str, from_time:str=''):
     # 获取合约上市日期
     api = '/api/v5/public/instruments'
     url = f'{main_url}{api}?instType=SWAP&instId={symbol}'
-    resp = requests.get(url, headers={}, params={})
+    
+    # 比如MI-PRO连接系统代理报错，以下手动添加请求代理解决
+    proxy = f"{LOCAL_IP}:10811"
+    proxies = {
+        "http": proxy,
+        "https": proxy,
+    }
+    resp = requests.get(url, headers={}, params={}, proxies=proxies)
+    
     data = resp.json()["data"]
     if data:
         contract_data = data[0]
@@ -327,7 +343,8 @@ if __name__ == '__main__':
     # 获取合约从某个时间开始最早的交易时间
     symbol = 'BTC-USDT-SWAP'
     from_time = "2019-01-01 00:00:00"
-    okx_get_first_bar_datetime(symbol=symbol, from_time=from_time)
+    result = okx_get_first_bar_datetime(symbol=symbol, from_time=from_time)
+    print(result)
     """
 
     # 生成马丁策略回测参数
