@@ -428,6 +428,7 @@ class DownloadThread(object):
                 from_time = from_time + timedelta(minutes=1)
         #"""
         
+        #"""
         # 1m数据入数据库
         print("\n====== 1m数据入数据库 ======")
         if self.exchange == ExchangeType.BINANCE:
@@ -441,7 +442,8 @@ class DownloadThread(object):
         elif self.exchange == ExchangeType.BYBIT:
             engine = CSVsBybitBarLocalEngine(duration="1", contract=self.contract, target_dir=self.save_to)
             engine.startWork()
-        
+        #"""
+
         # 终止线程
         self.close()
 

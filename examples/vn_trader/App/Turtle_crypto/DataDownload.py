@@ -19,7 +19,7 @@ if __name__ == "__main__":
         if mode == "2":
             contract_list = ["BTC-USDT-SWAP", "ETH-USDT-SWAP"]
             contract_list = ["BTC-USDT-SWAP", "CEL-USDT-SWAP", "NOT-USDT-SWAP", "PEOPLE-USDT-SWAP", "PEPE-USDT-SWAP", "TRB-USDT-SWAP", "TURBO-USDT-SWAP", "CORE-USDT-SWAP", "ETH-USDT-SWAP", "MERL-USDT-SWAP"]
-
+                             
         elif mode == "3":
             contract_list = ["BTC-USD-SWAP", "ETH-USD-SWAP"]
 
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     # 起止日期
     # days = 200
     # to_date = datetime.now() + timedelta(days=2)
-    days = (datetime.now() - datetime.strptime("2020-12-01", "%Y-%m-%d")).days
+    days = (datetime.now() - datetime.strptime("2024-01-01", "%Y-%m-%d")).days
     to_date = datetime.strptime("2024-12-31", "%Y-%m-%d")
 
     # 是否从数据库最新数据日期开始

@@ -11,7 +11,15 @@ from pymongo import MongoClient, ASCENDING, DESCENDING
 from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 import pandas as pd
 
+# 域名
 main_url = 'https://www.okx.com'
+
+# 代理
+proxy = f"{LOCAL_IP}:10811"
+proxies = {
+    "http": proxy,
+    "https": proxy,
+}
 
 class OKXType(Enum):
     USDT = "usdt"
@@ -50,11 +58,6 @@ def okx_get_bar_data(symbol:str, interval:str, from_time:str='', limit:int=100, 
             url = base_url
         
         # 比如MI-PRO连接系统代理报错，以下手动添加请求代理解决
-        proxy = f"{LOCAL_IP}:10811"
-        proxies = {
-            "http": proxy,
-            "https": proxy,
-        }
         resp = requests.get(url, headers={}, params={}, proxies=proxies)
 
         data = resp.json()
@@ -136,7 +139,10 @@ def okx_get_symbol_list(type:OKXType=OKXType.USDT, need_data: bool = False):
 
     # 发起请求
     url = f"{main_url}/api/v5/public/instruments"
-    resp = requests.get(url, headers={}, params={"instType": "SWAP"})
+
+    # 比如MI-PRO连接系统代理报错，以下手动添加请求代理解决
+    resp = requests.get(url, headers={}, params={"instType": "SWAP"}, proxies=proxies)
+    
     data = resp.json()
     data = data["data"]
     for d in data:
@@ -171,13 +177,8 @@ def okx_get_first_bar_datetime(symbol:str, from_time:str=''):
     url = f'{main_url}{api}?instType=SWAP&instId={symbol}'
     
     # 比如MI-PRO连接系统代理报错，以下手动添加请求代理解决
-    proxy = f"{LOCAL_IP}:10811"
-    proxies = {
-        "http": proxy,
-        "https": proxy,
-    }
     resp = requests.get(url, headers={}, params={}, proxies=proxies)
-    
+
     data = resp.json()["data"]
     if data:
         contract_data = data[0]
