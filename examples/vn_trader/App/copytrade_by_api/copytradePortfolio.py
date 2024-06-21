@@ -55,8 +55,14 @@ class CopytradePortfolio(object):
         for trader_code, setting in self.copy_setting.items():
             start = setting.get("start", False)
             if start:
-                t = Thread(target=self.fetch_copytrade_data, args=(trader_code,))
-                t.start()
+                type = setting.get("type", "")
+                if type == "copy":
+                    t = Thread(target=self.fetch_copy_trade_data, args=(trader_code,))
+                    t.start()
+                
+                elif type == "public":
+                    t = Thread(target=self.fetch_public_trade_data, args=(trader_code,))
+                    t.start()
 
         # 开启新线程统计当前带单交易员带单盈亏
         t = Thread(target=self.calculate_pnl)
@@ -76,10 +82,11 @@ class CopytradePortfolio(object):
         # 投资组合事件推送
         self.cta_engine.put_portfolio_event()
 
-    def fetch_copytrade_data(self, trader):
+    def fetch_copy_trade_data(self, trader):
         setting = self.copy_setting.get(trader, {})
         trader_name = setting.get("trader", "")
         error_notice_time = 0
+        oms_engine = self.cta_engine.main_engine.engines["oms"]
         while True:
             try:
                 gateway = self.cta_engine.main_engine.get_default_gateway("OKX")
@@ -176,7 +183,6 @@ class CopytradePortfolio(object):
                                 strategy.on_copy_trader()
 
                             # 订阅带单合约行情
-                            oms_engine = self.cta_engine.main_engine.engines["oms"]
                             for symbol in symbol_pos_dict_copy.keys():
                                 vt_symbol = f"{symbol}.OKX"
                                 tick = oms_engine.ticks.get(vt_symbol, None)
@@ -210,11 +216,141 @@ class CopytradePortfolio(object):
 
             sleep(0.01)
 
-    def calculate_pnl(self):
+    def fetch_public_trade_data(self, trader):
+        setting = self.copy_setting.get(trader, {})
+        trader_name = setting.get("trader", "")
+        error_notice_time = 0
+        oms_engine = self.cta_engine.main_engine.engines["oms"]
         while True:
             try:
-                oms_engine = self.cta_engine.main_engine.engines["oms"]
+                gateway = self.cta_engine.main_engine.get_default_gateway("OKX")
+                if gateway:
+                    # 查询交易员当前带单
+                    """
+                    bit_lang_lang 563E3A78CDBAFB4E
+                    """
+                    trader_position_data, message = gateway.rest_api.query_publictrade(trader)
+                    if isinstance(trader_position_data, list) and (not message):
+                        symbol_pos_dict_copy = {}
+                        for direction_position_data in trader_position_data:
+                            position_data_list = direction_position_data["posData"]
+                            for d in position_data_list:
+                                # 建仓起始时间判断
+                                open_time = d["cTime"]
+                                open_time = datetime.fromtimestamp(int(open_time) / 1000)
+                                valid_from_time = self.trader_from_time_dict.get(trader, None)
+                                if valid_from_time and open_time < valid_from_time:
+                                    continue
+                                
+                                # 带单合约判断
+                                symbol = d["instId"]
+                                pure_symbol = symbol.split("-")[0]
+                                symbol_list = setting.get("symbol_list", [])
+                                if symbol_list and pure_symbol not in symbol_list:
+                                    continue
 
+                                contract = self.cta_engine.main_engine.get_contract(f"{symbol}.OKX")
+                                if contract:
+                                    # 仓位价格
+                                    price = float(d["avgPx"])
+
+                                    # 仓位大小
+                                    copy_assets = setting["copy_assets"]
+                                    pos_space = float(d["posSpace"])
+                                    pos_value = copy_assets * pos_space
+                                    pos = pos_value / price
+
+                                    posSide = d["posSide"]
+                                    if posSide == "short":
+                                        pos = pos * -1
+
+                                    # 计算仓位均价
+                                    absolute_pos_data = symbol_pos_dict_copy.get(symbol, {})
+                                    long_data = absolute_pos_data.get("long", {})
+                                    long_volume = long_data.get("volume", 0)
+                                    long_price = long_data.get("price", 0)
+                                    long_value = abs(long_volume * long_price)
+
+                                    short_data = absolute_pos_data.get("short", {})
+                                    short_volume = short_data.get("volume", 0)
+                                    short_price = short_data.get("price", 0)
+                                    short_value = abs(short_volume * short_price)
+
+                                    if pos > 0:
+                                        long_volume += abs(pos)
+                                        long_value += abs(price * pos)
+                                        long_price = long_value / abs(long_volume)
+
+                                    else:
+                                        short_volume += abs(pos)
+                                        short_value += abs(price * pos)
+                                        short_price = short_value / abs(short_volume)
+                                    
+                                    # 精度处理
+                                    long_volume = round_to(long_volume, contract.min_volume)
+                                    long_price = round_to(long_price, contract.pricetick)
+                                    short_volume = round_to(short_volume, contract.min_volume)
+                                    short_price = round_to(short_price, contract.pricetick)
+
+                                    # 统计带单员多空持仓数量、均价
+                                    pos_data = {}
+                                    if long_volume:
+                                        pos_data["long"] = {"volume":long_volume, "price":long_price}
+
+                                    if short_volume:
+                                        pos_data["short"] = {"volume":short_volume, "price":short_price}
+
+                                    symbol_pos_dict_copy[symbol] = pos_data
+
+                                    # print(f"{symbol}\t{posSide}\t{pos}")
+
+                        # 带单交易员带单数据更新
+                        if (trader not in self.trader_position_dict) or self.trader_position_dict[trader] != symbol_pos_dict_copy:
+                            self.trader_position_dict[trader] = symbol_pos_dict_copy
+                            self.trader_name_position_dict[trader_name] = symbol_pos_dict_copy
+
+                            # 策略响应
+                            for strategy in self.cta_engine.strategies.values():
+                                strategy.on_copy_trader()
+
+                            # 订阅带单合约行情
+                            for symbol in symbol_pos_dict_copy.keys():
+                                vt_symbol = f"{symbol}.OKX"
+                                tick = oms_engine.ticks.get(vt_symbol, None)
+                                contract = self.cta_engine.main_engine.get_contract(vt_symbol)
+                                if not tick and contract:
+                                    # 订阅合约行情
+                                    req = SubscribeRequest(
+                                        symbol=contract.symbol, exchange=contract.exchange
+                                    )
+                                    self.cta_engine.main_engine.subscribe(req, contract.gateway_name)
+
+                            # 打印更新内容 
+                            print(f"\n--------------------\n{datetime.now()}\n交易员【{trader_name}】交易更新：\n{symbol_pos_dict_copy}\n\n{trader_position_data}\n--------------------\n")
+                        self.trader_name_position_updated_time[trader_name] = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
+                        
+                        # print(f"{datetime.now()}\t带单员：{trader_name}\t开单数量：{len(trader_position_data)}\t最新持仓：{symbol_pos_dict_copy}\n")
+                    
+                    else:
+                        error_notice_gap = int(time()) - error_notice_time
+                        if error_notice_gap >= 60*5:
+                            error_notice_time = int(time())
+                            msg = f"！获取（{trader_name}）交易数据异常！\n{trader_position_data}\n\n{message}"
+                            self.send_ding_talk(msg)
+
+            except Exception as e:
+                error_notice_gap = int(time()) - error_notice_time
+                if error_notice_gap >= 60*5:
+                    error_notice_time = int(time())
+                    msg = f"！获取（{trader_name}）交易数据报错！\n{e}"
+                    self.send_ding_talk(msg)
+
+            sleep(0.01)
+
+    def calculate_pnl(self):
+        oms_engine = self.cta_engine.main_engine.engines["oms"]
+        while True:
+            try:
                 # 计算带单员带单盈亏
                 trader_pnl_dict = {}
                 for trader, symbol_pos_dict in self.trader_position_dict.items():

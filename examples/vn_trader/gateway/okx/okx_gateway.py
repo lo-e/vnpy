@@ -442,6 +442,22 @@ class OkxRestApi(RestClient):
             data = result["data"]
         return data, msg
     
+    def query_publictrade(self, trader:str) -> None:
+        # 可设置分页，单页最多100条数据，详见官方文档
+        resp: Response = self.request(
+            "GET",
+            "/priapi/v5/ecotrade/public/positions-v2",
+            params={"uniqueName": trader}
+        )
+
+        data = None
+        msg = ""
+        if resp.status_code == 200:
+            result: dict = resp.json()
+            msg = result["msg"]
+            data = result["data"]
+        return data, msg
+    
     def query_copytrader_rank(self) -> None:
         resp: Response = self.request(
             "GET",
