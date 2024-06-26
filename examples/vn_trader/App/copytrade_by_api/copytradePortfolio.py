@@ -360,8 +360,10 @@ class CopytradePortfolio(object):
                         
                             # 打印更新内容 
                             print(f"\n--------------------\n{datetime.now()}\n交易员【{trader_name}】交易更新：\n{symbol_pos_dict_copy}\n\n{trader_position_data}\n--------------------\n")
-                        self.trader_name_position_updated_time[trader_name] = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
                         
+                        self.trader_name_position_updated_time[trader_name] = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
+                        error_notice_time = int(time())
+
                         # print(f"{datetime.now()}\t带单员：{trader_name}\t开单数量：{len(trader_position_data)}\t最新持仓：{symbol_pos_dict_copy}\n")
                     
                     else:
