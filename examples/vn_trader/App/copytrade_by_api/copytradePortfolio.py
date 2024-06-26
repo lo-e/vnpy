@@ -229,8 +229,11 @@ class CopytradePortfolio(object):
                     """
                     bit_lang_lang 563E3A78CDBAFB4E
                     """
+
                     trader_position_data, message = gateway.rest_api.query_publictrade(trader)
                     if isinstance(trader_position_data, list) and (not message):
+                        long_lever = 0
+                        short_lever = 0
                         symbol_pos_dict_copy = {}
                         for direction_position_data in trader_position_data:
                             position_data_list = direction_position_data["posData"]
@@ -261,7 +264,11 @@ class CopytradePortfolio(object):
                                     pos = pos_value / price
 
                                     posSide = d["posSide"]
-                                    if posSide == "short":
+                                    if posSide == "long":
+                                        long_lever += round(pos_space, 2)
+
+                                    else:
+                                        short_lever += round(pos_space, 2)
                                         pos = pos * -1
 
                                     # 计算仓位均价
@@ -306,12 +313,38 @@ class CopytradePortfolio(object):
 
                         # 带单交易员带单数据更新
                         if (trader not in self.trader_position_dict) or self.trader_position_dict[trader] != symbol_pos_dict_copy:
+                            msg = ""
+                            last_position_data = self.trader_position_dict.get(trader, {})
+                            symbol_list = set(last_position_data.keys()).union(symbol_pos_dict_copy.keys())
+                            for symbol in symbol_list:
+                                pos_data = last_position_data.get(symbol, {})
+                                last_long_data = pos_data.get("long", {})
+                                last_long_price = last_long_data.get("price", 0)
+                                last_short_data = pos_data.get("short", {})
+                                last_short_price = last_short_data.get("price", 0)
+
+                                current_pos_data = symbol_pos_dict_copy.get(symbol, {})
+                                current_long_data = current_pos_data.get("long", {})
+                                current_long_price = current_long_data.get("price", 0)
+                                current_short_data = current_pos_data.get("short", {})
+                                current_short_price = current_short_data.get("price", 0)
+
+                                if last_long_price != current_long_price:
+                                    msg += f"\n{symbol}\nlong {last_long_price} - {current_long_price}"
+                                
+                                if last_short_price != current_short_price:
+                                    msg += f"\n{symbol}\nshort {last_short_price} - {current_short_price}"
+                                
+                            if msg:
+                                msg = f"\nlong_lever {long_lever}\nshort_lever {short_lever}\n{msg}"
+                                self.send_ding_talk(msg)
+
+                                # 策略响应
+                                for strategy in self.cta_engine.strategies.values():
+                                    strategy.on_copy_trader()
+
                             self.trader_position_dict[trader] = symbol_pos_dict_copy
                             self.trader_name_position_dict[trader_name] = symbol_pos_dict_copy
-
-                            # 策略响应
-                            for strategy in self.cta_engine.strategies.values():
-                                strategy.on_copy_trader()
 
                             # 订阅带单合约行情
                             for symbol in symbol_pos_dict_copy.keys():
@@ -324,7 +357,7 @@ class CopytradePortfolio(object):
                                         symbol=contract.symbol, exchange=contract.exchange
                                     )
                                     self.cta_engine.main_engine.subscribe(req, contract.gateway_name)
-
+                        
                             # 打印更新内容 
                             print(f"\n--------------------\n{datetime.now()}\n交易员【{trader_name}】交易更新：\n{symbol_pos_dict_copy}\n\n{trader_position_data}\n--------------------\n")
                         self.trader_name_position_updated_time[trader_name] = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
