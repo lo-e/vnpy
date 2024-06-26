@@ -8,11 +8,11 @@
     "copy_setting": {
       "D5E7A8430A35CA84": {
         "trader": "墙头草",
-        "type": "copy",
+        "type": "public",
         "symbol_list": [],
-        "copy_assets": 300000,
+        "copy_assets": 2500,
         "stop_loss": -0.3,
-        "start": false
+        "start": true
       },
       "563E3A78CDBAFB4E": {
         "trader": "bit浪浪",
