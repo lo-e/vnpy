@@ -336,7 +336,7 @@ class CopytradePortfolio(object):
                                     msg += f"\n{symbol}\nshort {last_short_price} - {current_short_price}"
                                 
                             if msg:
-                                msg = f"\nlong_lever {long_lever}\nshort_lever {short_lever}\n{msg}"
+                                msg = f"{trader_name}\nlong_lever {long_lever}\nshort_lever {short_lever}\n{msg}"
                                 self.send_ding_talk(msg)
 
                                 # 策略响应
