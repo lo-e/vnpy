@@ -370,14 +370,14 @@ class CopytradePortfolio(object):
                         error_notice_gap = int(time()) - error_notice_time
                         if error_notice_gap >= 60*5:
                             error_notice_time = int(time())
-                            msg = f"！获取（{trader_name}）交易数据异常！\n{trader_position_data}\n\n{message}"
+                            msg = f"！获取（{trader_name}）当前持仓数据异常！\n{trader_position_data}\n\n{message}"
                             self.send_ding_talk(msg)
 
             except Exception as e:
                 error_notice_gap = int(time()) - error_notice_time
                 if error_notice_gap >= 60*5:
                     error_notice_time = int(time())
-                    msg = f"！获取（{trader_name}）交易数据报错！\n{e}"
+                    msg = f"！获取（{trader_name}）当前持仓数据报错！\n{e}"
                     self.send_ding_talk(msg)
 
             sleep(0.01)
