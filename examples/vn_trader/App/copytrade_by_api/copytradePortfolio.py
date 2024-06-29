@@ -238,6 +238,10 @@ class CopytradePortfolio(object):
                         for direction_position_data in trader_position_data:
                             position_data_list = direction_position_data["posData"]
                             for d in position_data_list:
+                                # 过滤逐仓保证金持仓
+                                if d["mgnMode"] == "isolated":
+                                    continue
+
                                 # 建仓起始时间判断
                                 open_time = d["cTime"]
                                 open_time = datetime.fromtimestamp(int(open_time) / 1000)
