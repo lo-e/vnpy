@@ -180,6 +180,41 @@ def ceil_to(value: float, target: float) -> float:
     result = float(int(ceil(value / target)) * target)
     return result
 
+def plus(value_1: float, value_2: float) -> float:
+    """
+    Similar to math.ceil function, but to target float number.
+    """
+    value_d_1 = Decimal(str(value_1))
+    value_d_2 = Decimal(str(value_2))
+    result = float(value_d_1 + value_d_2)
+    return result
+
+def sub(value_1: float, value_2: float) -> float:
+    """
+    Similar to math.ceil function, but to target float number.
+    """
+    value_d_1 = Decimal(str(value_1))
+    value_d_2 = Decimal(str(value_2))
+    result = float(value_d_1 - value_d_2)
+    return result
+
+def multi(value_1: float, value_2: float) -> float:
+    """
+    Similar to math.ceil function, but to target float number.
+    """
+    value_d_1 = Decimal(str(value_1))
+    value_d_2 = Decimal(str(value_2))
+    result = float(value_d_1 * value_d_2)
+    return result
+
+def divide(value_1: float, value_2: float) -> float:
+    """
+    Similar to math.ceil function, but to target float number.
+    """
+    value_d_1 = Decimal(str(value_1))
+    value_d_2 = Decimal(str(value_2))
+    result = float(value_d_1 / value_d_2)
+    return result
 
 def get_digits(value: float) -> int:
     """
