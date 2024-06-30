@@ -268,7 +268,8 @@ class CopytradePortfolio(object):
                                     pos = pos_value / price
 
                                     posSide = d["posSide"]
-                                    if posSide == "long":
+                                    pos = float(d["pos"])
+                                    if posSide == "long" or (posSide == "net" and pos > 0):
                                         long_lever += round(pos_space, 2)
 
                                     else:
