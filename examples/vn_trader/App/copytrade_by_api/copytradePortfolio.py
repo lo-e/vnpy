@@ -335,17 +335,20 @@ class CopytradePortfolio(object):
                                 current_pos_data = symbol_pos_dict_copy.get(symbol, {})
                                 current_long_data = current_pos_data.get("long", {})
                                 current_long_price = current_long_data.get("price", 0)
+                                current_long_lever = current_long_data.get("lever", 0)
                                 current_short_data = current_pos_data.get("short", {})
                                 current_short_price = current_short_data.get("price", 0)
+                                current_short_lever = current_short_data.get("lever", 0)
 
                                 if last_long_price != current_long_price:
-                                    msg += f"\n{symbol}\nlong {last_long_price} - {current_long_price}"
-                                
+                                    msg += f"\n{symbol}\nlong（{current_long_lever}） {last_long_price} - {current_long_price}\n"
+                            
                                 if last_short_price != current_short_price:
-                                    msg += f"\n{symbol}\nshort {last_short_price} - {current_short_price}"
-                                
+                                    msg += f"\n{symbol}\nshort（{current_short_lever}） {last_short_price} - {current_short_price}\n"
+                                    
                             if msg:
-                                msg = f"{trader_name}\nlong_lever {long_lever}\nshort_lever {short_lever}\n{msg}"
+                                line = "-"*20
+                                msg = f"{trader_name}\nlong_lever {long_lever}\nshort_lever {short_lever}\n{line}\n{msg}"
                                 self.send_ding_talk(msg)
 
                                 # 策略响应
