@@ -211,7 +211,7 @@ class CopytradePortfolio(object):
                 error_notice_gap = int(time()) - error_notice_time
                 if error_notice_gap >= 60*5:
                     error_notice_time = int(time())
-                    msg = f"！获取（{trader_name}）带单报错！\n{e}"
+                    msg = f"！获取（{trader_name}）带单数据报错！\n{e}"
                     self.send_ding_talk(msg)
 
             sleep(0.01)
