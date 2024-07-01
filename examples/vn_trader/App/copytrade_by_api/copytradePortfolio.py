@@ -282,21 +282,25 @@ class CopytradePortfolio(object):
                                     long_volume = long_data.get("volume", 0)
                                     long_price = long_data.get("price", 0)
                                     long_value = abs(long_volume * long_price)
+                                    symbol_long_lever = long_data.get("lever", 0)
 
                                     short_data = absolute_pos_data.get("short", {})
                                     short_volume = short_data.get("volume", 0)
                                     short_price = short_data.get("price", 0)
                                     short_value = abs(short_volume * short_price)
+                                    symbol_short_lever = short_data.get("lever", 0)
 
                                     if pos > 0:
                                         long_volume += abs(pos)
                                         long_value += abs(price * pos)
                                         long_price = long_value / abs(long_volume)
+                                        symbol_long_lever += round(pos_space, 2)
 
                                     else:
                                         short_volume += abs(pos)
                                         short_value += abs(price * pos)
                                         short_price = short_value / abs(short_volume)
+                                        symbol_short_lever += round(pos_space, 2)
                                     
                                     # 精度处理
                                     long_volume = round_to(long_volume, contract.min_volume)
@@ -307,10 +311,10 @@ class CopytradePortfolio(object):
                                     # 统计带单员多空持仓数量、均价
                                     pos_data = {}
                                     if long_volume:
-                                        pos_data["long"] = {"volume":long_volume, "price":long_price}
+                                        pos_data["long"] = {"volume":long_volume, "price":long_price, "lever":symbol_long_lever}
 
                                     if short_volume:
-                                        pos_data["short"] = {"volume":short_volume, "price":short_price}
+                                        pos_data["short"] = {"volume":short_volume, "price":short_price, "lever":symbol_short_lever}
 
                                     symbol_pos_dict_copy[symbol] = pos_data
 
