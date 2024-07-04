@@ -465,7 +465,7 @@ class CopytradeStrategy(CtaTemplate):
             except Empty:
                 pass
 
-            except:
+            except Exception as e:
                 msg = f"“检查目标仓位”报错：{e}"
                 self.send_ding_talk(msg)
     

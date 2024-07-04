@@ -483,7 +483,7 @@ class CopytradeStrategyPublic(CtaTemplate):
                                         current_symbol_pos_data = self.trader_symbol_pos_dict.get(trader, {})
                                         current_pos_data = current_symbol_pos_data.get(vt_symbol, {})
                                         current_data = current_pos_data.get(direction, {})
-                                        current_pos = current_data.get("volume")
+                                        current_pos = current_data.get("volume", 0.0)
                                         if direction == "short":
                                             current_pos *= -1
                                         
@@ -517,7 +517,7 @@ class CopytradeStrategyPublic(CtaTemplate):
             except Empty:
                 pass
 
-            except:
+            except Exception as e:
                 msg = f"“检查目标仓位”报错：{e}"
                 self.send_ding_talk(msg)
     
