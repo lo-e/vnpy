@@ -250,9 +250,6 @@ class CopytradeStrategyPublic(CtaTemplate):
     # 检查带单员带单更新
     def check_trader_position_updated(self):
         while True:
-            """ fake """
-            self.trading = True
-
             if (not self.trading) or (not self.portfolio.trader_position_inited):
                 sleep(1)
                 continue
@@ -488,7 +485,7 @@ class CopytradeStrategyPublic(CtaTemplate):
                                             current_pos *= -1
                                         
                                         sub = abs(target_pos) - abs(last_target_pos)
-                                        if target_pos > 0 or (target_pos == 0 and direction == "long"):
+                                        if direction == "long":
                                             if sub > 0:
                                                 # 多头加仓
                                                 price = open_price if open_price else long_open_price
@@ -500,7 +497,7 @@ class CopytradeStrategyPublic(CtaTemplate):
                                                 if v:
                                                     self.send_symbol_order(trader, vt_symbol, Direction.SHORT, Offset.CLOSE, short_close_price, abs(v))
 
-                                        elif target_pos < 0 or (target_pos == 0 and direction == "short"):
+                                        elif direction == "short":
                                             if sub > 0:
                                                 # 空头加仓
                                                 price = open_price if open_price else short_open_price
