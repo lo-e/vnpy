@@ -42,6 +42,8 @@
       "exchange_user": "lo-e（test）",
       "type": "public",
       "trade_assets": {
+        "D5E7A8430A35CA84": 2000,
+        "563E3A78CDBAFB4E": 2000,
         "716AACABE58C1407": 2000
       },
       "start": true
