@@ -257,6 +257,10 @@ class CopytradeStrategy(CtaTemplate):
                 target_symbol_pos_dict = {}
 
                 for trader, setting in self.portfolio.copy_setting.items():
+                    start = setting.get("start", False)
+                    if not start:
+                        continue
+                    
                     copy_value = setting.get("copy_assets", 0)
                     trade_value = self.trade_assets_setting.get(trader, 0)
                     if not copy_value or not trade_value:
