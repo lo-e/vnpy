@@ -199,7 +199,7 @@ class CopytradePortfolio(object):
                             print(f"\n--------------------\n{datetime.now()}\n带单员【{trader_name}】带单更新：\n{symbol_pos_dict_copy}\n\n{trader_position_data}\n--------------------\n")
                         self.trader_name_position_updated_time[trader_name] = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
                         error_notice_time = int(time())
-                        
+
                         # print(f"{datetime.now()}\t带单员：{trader_name}\t开单数量：{len(trader_position_data)}\t最新持仓：{symbol_pos_dict_copy}\n")
                     
                     else:
@@ -269,9 +269,9 @@ class CopytradePortfolio(object):
                                     pos_value = copy_assets * pos_space
                                     pos = pos_value / price
 
-                                    posSide = d["posSide"]
-                                    pos = float(d["pos"])
-                                    if posSide == "long" or (posSide == "net" and pos > 0):
+                                    pos_side = d["posSide"]
+                                    pos_direction = float(d["pos"])
+                                    if pos_side == "long" or (pos_side == "net" and pos_direction > 0):
                                         long_lever += round(pos_space, 2)
 
                                     else:
@@ -319,8 +319,6 @@ class CopytradePortfolio(object):
                                         pos_data["short"] = {"volume":short_volume, "price":short_price, "lever":symbol_short_lever}
 
                                     symbol_pos_dict_copy[symbol] = pos_data
-
-                                    # print(f"{symbol}\t{posSide}\t{pos}")
 
                         # 带单交易员带单数据更新
                         if (trader not in self.trader_position_dict) or self.trader_position_dict[trader] != symbol_pos_dict_copy:
