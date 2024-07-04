@@ -23,6 +23,15 @@
         "stop_loss": -0.2,
         "max_lever": 10,
         "start": true
+      },
+      "716AACABE58C1407": {
+        "trader": "一直游",
+        "type": "public",
+        "symbol_list": [],
+        "copy_assets": 2000,
+        "stop_loss": -0.2,
+        "max_lever": 10,
+        "start": true
       }
     }
   },
@@ -31,8 +40,9 @@
       "strategy_name": "COPYTRADE_API_OKX",
       "exchange": "OKX",
       "exchange_user": "lo-e（test）",
+      "type": "public",
       "trade_assets": {
-        "D5E7A8430A35CA84": 2500
+        "716AACABE58C1407": 2000
       },
       "start": true
     },
@@ -40,8 +50,9 @@
       "strategy_name": "COPYTRADE_API_BINANCE",
       "exchange": "BINANCE",
       "exchange_user": "lo-e",
+      "type": "copy",
       "trade_assets": {
-        "D5E7A8430A35CA84": 2500
+        "D5E7A8430A35CA84": 2000
       },
       "start": false
     }

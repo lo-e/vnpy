@@ -63,6 +63,7 @@ from collections import OrderedDict
 from time import sleep
 from decimal import Decimal
 from .copytradeStrategy import CopytradeStrategy
+from .copytradeStrategyPublic import CopytradeStrategyPublic
 import json
 from .copytradePortfolio import CopytradePortfolio
 
@@ -198,18 +199,84 @@ class CopytradeEngine(BaseEngine):
             return
         
         # 统计合约净持仓
-        if trade.direction == Direction.LONG:
-            strategy.symbol_pos_dict[trade.vt_symbol] = float(
-                Decimal(str(strategy.symbol_pos_dict.get(trade.vt_symbol, 0))) + Decimal(str(trade.volume))
-            )
+        if strategy.type == "copy":
+            if trade.direction == Direction.LONG:
+                strategy.symbol_pos_dict[trade.vt_symbol] = float(
+                    Decimal(str(strategy.symbol_pos_dict.get(trade.vt_symbol, 0))) + Decimal(str(trade.volume))
+                )
 
-        else:
-            strategy.symbol_pos_dict[trade.vt_symbol] = float(
-                Decimal(str(strategy.symbol_pos_dict.get(trade.vt_symbol, 0))) - Decimal(str(trade.volume))
-            )
-        strategy.symbol_pos_dict[trade.vt_symbol] = round_to(strategy.symbol_pos_dict[trade.vt_symbol], contract.min_volume)
-        if trade.vt_symbol in strategy.symbol_pos_dict and not strategy.symbol_pos_dict[trade.vt_symbol]:
-            strategy.symbol_pos_dict.pop(trade.vt_symbol)
+            else:
+                strategy.symbol_pos_dict[trade.vt_symbol] = float(
+                    Decimal(str(strategy.symbol_pos_dict.get(trade.vt_symbol, 0))) - Decimal(str(trade.volume))
+                )
+            strategy.symbol_pos_dict[trade.vt_symbol] = round_to(strategy.symbol_pos_dict[trade.vt_symbol], contract.min_volume)
+            if trade.vt_symbol in strategy.symbol_pos_dict and not strategy.symbol_pos_dict[trade.vt_symbol]:
+                strategy.symbol_pos_dict.pop(trade.vt_symbol)
+
+        elif strategy.type == "public":
+            trader = strategy.orderid_trader_dict.get(trade.vt_orderid, "")
+            if trader:
+                symbol_pos_data = strategy.trader_symbol_pos_dict.get(trader, {})
+                pos_data = symbol_pos_data.get(trade.vt_symbol, {})
+                long_data = pos_data.get("long", {})
+                long_volume = long_data.get("volume", 0)
+                long_price = long_data.get("price", 0)
+                long_value = abs(long_volume * long_price)
+
+                short_data = pos_data.get("short", {})
+                short_volume = short_data.get("volume", 0)
+                short_price = short_data.get("price", 0)
+                short_value = abs(short_volume * short_price)
+
+                if trade.offset == Offset.OPEN:
+                    if trade.direction == Direction.LONG:
+                        long_volume = float(
+                            Decimal(str(long_volume)) + Decimal(str(trade.volume))
+                        )
+                        long_value += abs(trade.price * trade.volume)
+                        long_price = long_value / abs(long_volume)
+
+                    else:
+                        short_volume = float(
+                            Decimal(str(short_volume)) + Decimal(str(trade.volume))
+                        )
+                        short_value += abs(trade.price * trade.volume)
+                        short_price = short_value / abs(short_volume)
+                
+                elif trade.offset == Offset.CLOSE or trade.offset == Offset.CLOSETODAY or trade.offset == Offset.CLOSEYESTERDAY:
+                    if trade.direction == Direction.LONG:
+                        short_volume = float(
+                            Decimal(str(short_volume)) - Decimal(str(trade.volume))
+                        )
+
+                    else:
+                        long_volume = float(
+                            Decimal(str(long_volume)) - Decimal(str(trade.volume))
+                        )
+                
+                long_volume = round_to(long_volume, contract.min_volume)
+                short_volume = round_to(short_volume, contract.min_volume)
+                
+                pos_data = {}
+                if long_volume:
+                    pos_data["long"] = {"volume":long_volume, "price":long_price}
+
+                if short_volume:
+                    pos_data["short"] = {"volume":short_volume, "price":short_price}
+
+                if pos_data:
+                    symbol_pos_data[trade.vt_symbol] = pos_data
+                    strategy.trader_symbol_pos_dict[trader] = symbol_pos_data
+
+                elif trade.vt_symbol in symbol_pos_data:
+                    symbol_pos_data.pop(trade.vt_symbol)
+
+                    if symbol_pos_data:
+                        strategy.trader_symbol_pos_dict[trader] = symbol_pos_data
+
+                    elif trader in strategy.trader_symbol_pos_dict:
+                        strategy.trader_symbol_pos_dict.pop(trader)
+
 
         # 统计合约多空持仓
         # data_example = {"BTCUSDT.BINANCE":{"long":{"volume":1, "price":100},
@@ -685,7 +752,15 @@ class CopytradeEngine(BaseEngine):
             return
 
         # 创建策略实例
-        strategy = CopytradeStrategy(self, setting)
+        type = setting["type"]
+        if type == "copy":
+            strategy = CopytradeStrategy(self, setting)
+        
+        elif type == "public":
+            strategy = CopytradeStrategyPublic(self, setting)
+
+        else:
+            return
 
         # 加载同步数据
         self.loadSyncData(strategy)

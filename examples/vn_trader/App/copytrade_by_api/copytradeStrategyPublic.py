@@ -30,10 +30,10 @@ from vnpy.trader.event import EVENT_MAINENGINE_POSITION_UPDATED
 from vnpy.trader.utility import DIR_SYMBOL
 import pandas as pd
 
-class CopytradeStrategy(CtaTemplate):
+class CopytradeStrategyPublic(CtaTemplate):
     """ 跟单交易策略 """
 
-    className = "CopytradeStrategy"
+    className = "CopytradeStrategyPublic"
     author = "loe"
 
     # 参数列表，保存了参数的名称
@@ -48,8 +48,8 @@ class CopytradeStrategy(CtaTemplate):
 
     # 变量列表，保存了变量的名称
     variables = [
-        "symbol_pos_dict",
-        "target_symbol_pos_dict",
+        "trader_symbol_pos_dict",
+        "target_trader_symbol_pos_dict",
         "symbol_absolute_pos_dict",
         "position_pnl",
         "position_pnl_rate"
@@ -57,8 +57,8 @@ class CopytradeStrategy(CtaTemplate):
 
     # 同步列表，保存了需要保存到数据库的变量名称
     syncs = [
-        "symbol_pos_dict",
-        "target_symbol_pos_dict",
+        "trader_symbol_pos_dict",
+        "target_trader_symbol_pos_dict",
         "symbol_absolute_pos_dict",
         "target_trader_symbol_absolute_pos_dict"
     ]
@@ -67,10 +67,11 @@ class CopytradeStrategy(CtaTemplate):
         self.exchange = Exchange.NONE # 交易所
         self.exchange_user = "" # 交易所用户名
 
-        self.symbol_pos_dict = {} # 合约净持仓
-        self.target_symbol_pos_dict = {} #  合约目标净持仓
+        self.trader_symbol_pos_dict = {} # 交易员分类的合约净持仓
+        self.target_trader_symbol_pos_dict = {} #  交易员分类的目标合约净持仓
         self.symbol_absolute_pos_dict = {} # 合约双向持仓数据
         self.target_trader_symbol_absolute_pos_dict = {} # 根据交易员分类的合约目标双向持仓数据
+        self.orderid_trader_dict = {} # 根据交易员分类的订单id
 
         self.wait_tick_symbols = set() # 等待行情数据的合约集合
         self.position_pnl = 0 # 持仓盈亏
@@ -123,7 +124,7 @@ class CopytradeStrategy(CtaTemplate):
             self.trader_pnl_data_dict[trader_name] = pnl_data_list
 
         # 完成setting.json参数的配置
-        super(CopytradeStrategy, self).__init__(
+        super(CopytradeStrategyPublic, self).__init__(
             cta_engine=ctaEngine, strategy_name="", vt_symbol="", setting=setting
         )
 
@@ -164,7 +165,10 @@ class CopytradeStrategy(CtaTemplate):
             if vt_symbol:
                 subscribe_vt_symbols.add(vt_symbol)
 
-        subscribe_vt_symbols = subscribe_vt_symbols.union(set(self.symbol_pos_dict.keys()))
+        for _, symbol_pos_data in self.trader_symbol_pos_dict.items():
+            for vt_symbol, _ in symbol_pos_data.items():
+                subscribe_vt_symbols = subscribe_vt_symbols.add(vt_symbol)
+
         for vt_symbol in subscribe_vt_symbols:
             contract = self.cta_engine.main_engine.get_contract(vt_symbol)
             if contract:
@@ -246,6 +250,9 @@ class CopytradeStrategy(CtaTemplate):
     # 检查带单员带单更新
     def check_trader_position_updated(self):
         while True:
+            """ fake """
+            self.trading = True
+
             if (not self.trading) or (not self.portfolio.trader_position_inited):
                 sleep(1)
                 continue
@@ -254,7 +261,7 @@ class CopytradeStrategy(CtaTemplate):
                 event = self.check_trader_position_updated_queue.get(block=True, timeout=1)
 
                 # 合约的目标仓位
-                target_symbol_pos_dict = {}
+                target_trader_symbol_pos_dict = {}
 
                 for trader, setting in self.portfolio.copy_setting.items():
                     copy_value = setting.get("copy_assets", 0)
@@ -265,78 +272,111 @@ class CopytradeStrategy(CtaTemplate):
                     for symbol, pos_data in self.portfolio.trader_position_dict[trader].items():
                         long_data = pos_data.get("long", {})
                         long_volume = long_data.get("volume", 0)
+                        long_price = long_data.get("price", 0)
+                        long_lever = long_data.get("lever", 0)
 
                         short_data = pos_data.get("short", {})
                         short_volume = short_data.get("volume", 0)
-                        
-                        # 计算目标持仓
-                        pos = long_volume - short_volume
-                        target_pos = pos * trade_value / copy_value
+                        short_price = short_data.get("price", 0)
+                        short_lever = short_data.get("lever", 0)
 
-                        # 转换合约
-                        pure_symbol = symbol.split("-")[0]
+                        if long_lever or short_lever:
+                            # 计算目标持仓
+                            long_volume = long_volume * trade_value / copy_value
+                            short_volume = short_volume * trade_value / copy_value
 
-                        # 墙头草跟单山寨币仓位加倍
-                        if (trader == "D5E7A8430A35CA84") and (pure_symbol not in ["BTC", "ETH", "XRP"]):
-                            target_pos *= 2
+                            # 转换合约
+                            pure_symbol = symbol.split("-")[0]
 
-                        vt_symbol = ""
-                        if self.exchange == Exchange.OKX:
-                            vt_symbol = f"{pure_symbol}-USDT-SWAP.{self.exchange.value}"
-                        
-                        elif self.exchange == Exchange.BINANCE:
-                            if pure_symbol in ["PEPE", "SHIB", "XEC", "LUNC", "FLOKI", "BONK", "SATS"]:
-                                vt_symbol = f"1000{pure_symbol}USDT.{self.exchange.value}"
-                                target_pos = target_pos / 1000
-                                
-                            else:
-                                vt_symbol = f"{pure_symbol}USDT.{self.exchange.value}"
+                            # 墙头草跟单山寨币仓位加倍
+                            if (trader == "D5E7A8430A35CA84") and (pure_symbol not in ["BTC", "ETH", "XRP"]):
+                                long_volume *= 2
+                                short_volume *= 2
 
-                        # 持仓统计
-                        if vt_symbol:
-                            target_symbol_pos_dict[vt_symbol] = target_symbol_pos_dict.get(vt_symbol, 0) + target_pos
+                            vt_symbol = ""
+                            if self.exchange == Exchange.OKX:
+                                vt_symbol = f"{pure_symbol}-USDT-SWAP.{self.exchange.value}"
+                            
+                            elif self.exchange == Exchange.BINANCE:
+                                if pure_symbol in ["PEPE", "SHIB", "XEC", "LUNC", "FLOKI", "BONK", "SATS"]:
+                                    vt_symbol = f"1000{pure_symbol}USDT.{self.exchange.value}"
+                                    long_volume = long_volume / 1000
+                                    short_volume = short_volume / 1000
+                                    
+                                else:
+                                    vt_symbol = f"{pure_symbol}USDT.{self.exchange.value}"
+
+                            # 持仓统计
+                            if vt_symbol:
+                                target_pos_data = {}
+                                if long_volume:
+                                    target_pos_data["long"] = {"volume":long_volume, "price":long_price}
+
+                                if short_volume:
+                                    target_pos_data["short"] = {"volume":short_volume, "price":short_price}
+
+                                symbol_pos_data = target_trader_symbol_pos_dict.get(trader, {})
+                                symbol_pos_data[vt_symbol] = target_pos_data
+                                target_trader_symbol_pos_dict[trader] = symbol_pos_data
 
                 # 仓位精度处理
-                for vt_symbol, pos in target_symbol_pos_dict.items():
-                    contract = self.cta_engine.main_engine.get_contract(vt_symbol)
-                    if contract:
-                        target_symbol_pos_dict[vt_symbol] = round_to(pos, contract.min_volume)
+                for trader, symbol_pos_data in target_trader_symbol_pos_dict.items():
+                    for vt_symbol, pos_data in symbol_pos_data.items():
+                        contract = self.cta_engine.main_engine.get_contract(vt_symbol)
+                        if contract:
+                            for _, data in pos_data.items():
+                                data["volume"] = round_to(data["volume"], contract.min_volume)
 
                 # 历史持仓数据填补
-                for symbol in self.target_symbol_pos_dict.keys():
-                    if symbol not in target_symbol_pos_dict:
-                        target_symbol_pos_dict[symbol] = 0
+                for trader, symbol_pos_data in self.target_trader_symbol_pos_dict.items():
+                    for vt_symbol, pos_data in symbol_pos_data.items():
+                        for direction, data in pos_data.items():
+                            t_symbol_pos_data = target_trader_symbol_pos_dict.get(trader, {})
+                            t_pos_data = t_symbol_pos_data.get(vt_symbol, {})
+                            t_data = t_pos_data.get(direction, {})
+                            if not t_data:
+                                t_pos_data[direction] = {}
+                                t_symbol_pos_data[vt_symbol] = t_pos_data
+                                target_trader_symbol_pos_dict[trader] = t_symbol_pos_data
 
-                # 导入持仓检查队列
-                if (not event) or (self.target_symbol_pos_dict != target_symbol_pos_dict):
-                    self.check_position_queue.put(target_symbol_pos_dict)
+                if (not event) or (self.target_trader_symbol_pos_dict != target_trader_symbol_pos_dict):
+                    self.check_position_queue.put(target_trader_symbol_pos_dict)
                     
                     # 发送钉钉通知
-                    msg = f"跟单仓位更新\n{datetime.now()}\n"
-                    for vt_symbol, pos in target_symbol_pos_dict.items():
-                        msg += f"\n{vt_symbol}：{pos}"
+                    msg = f"跟单个人交易更新\n{datetime.now()}\n"
+                    for trader, symbol_pos_data in target_trader_symbol_pos_dict.items():
+                        trader_setting = self.portfolio.copy_setting.get(trader, {})
+                        trader_name = trader_setting.get("trader", "")
+                        for vt_symbol, pos_data in symbol_pos_data.items():
+                            for direction, data in pos_data.items():
+                                pos = data["volume"]
+                                if direction == "short":
+                                    pos *= -1
+                                    msg += f"\n{trader_name} {vt_symbol}：{pos}"
                     msg += "\n\n------------\n"
 
-                    for trader_name, symbol_pos_dict in self.portfolio.trader_name_position_dict.items():
-                        if symbol_pos_dict:
+                    for trader_name, symbol_pos_data in self.portfolio.trader_name_position_dict.items():
+                        if symbol_pos_data:
                             msg += f"\n【{trader_name}】"
 
-                        for symbol, pos_data in symbol_pos_dict.items():
+                        for symbol, pos_data in symbol_pos_data.items():
                             msg += f"\n{symbol}"
 
                             long_data = pos_data.get("long", {})
                             long_volume = long_data.get("volume", 0)
                             long_price = long_data.get("price", 0)
+                            long_lever = long_data.get("lever", 0)
 
                             short_data = pos_data.get("short", {})
                             short_volume = short_data.get("volume", 0)
                             short_price = short_data.get("price", 0)
+                            short_lever = short_data.get("lever", 0)
 
                             if long_volume:
-                                msg += f"\nlong {long_volume}@{long_price}\n"
+                                msg += f"\nlong（{long_lever}） {long_volume}@{long_price}\n"
                             
                             if short_volume:
-                                msg += f"\nshort {short_volume}@{short_price}\n"
+                                msg += f"\nshort（{short_lever}） {short_volume}@{short_price}\n"
 
                     msg += "\n"
                     self.send_ding_talk(msg)
@@ -347,7 +387,6 @@ class CopytradeStrategy(CtaTemplate):
             except Exception as e:
                 print(f"check_trader_position_updated 报错：{e}")
 
-    # 检查目标仓位
     def check_target_pos(self):
         while True:
             if not self.trading:
@@ -358,110 +397,123 @@ class CopytradeStrategy(CtaTemplate):
                 checking_data = self.check_position_queue.get(block=True, timeout=1)
 
                 oms_engine = self.cta_engine.main_engine.engines["oms"]
-                for vt_symbol, checking_pos in checking_data.items():
-                    contract = self.cta_engine.main_engine.get_contract(vt_symbol)
-                    if not contract:
-                        self.send_ding_talk(f"交易合约{vt_symbol}不存在")
-                        return
 
-                    # 检查合约目标持仓是否发生变化
-                    checking_pos = round_to(checking_pos, contract.min_volume)
-                    target_pos = self.target_symbol_pos_dict.get(vt_symbol, 0)
-                    if target_pos != checking_pos:
-                        # 获取合约最新行情数据
-                        tick = oms_engine.ticks.get(vt_symbol, None)
-                        if not tick:
-                            self.send_ding_talk(f"交易合约{vt_symbol}行情数据缺失")
+                for trader, symbol_pos_data in checking_data.items():
+                    for vt_symbol, pos_data in symbol_pos_data.items():
+                        for direction, data in pos_data.items():
+                            checking_pos = data["volume"]
+                            if direction == "short":
+                                checking_pos *= -1
 
-                            # 订阅合约行情
-                            req = SubscribeRequest(
-                                symbol=contract.symbol, exchange=contract.exchange
-                            )
-                            self.cta_engine.main_engine.subscribe(req, contract.gateway_name)
-                            
-                            # 行情数据监控
-                            self.wait_tick_symbols.add(vt_symbol)
+                                contract = self.cta_engine.main_engine.get_contract(vt_symbol)
+                                if not contract:
+                                    self.send_ding_talk(f"交易合约{vt_symbol}不存在")
+                                    return
 
-                        else:
-                            # 合约目标持仓更新
-                            target_pos = checking_pos
-                            if target_pos:
-                                self.target_symbol_pos_dict[vt_symbol] = target_pos
-                            else:
-                                self.target_symbol_pos_dict.pop(vt_symbol)
+                                # 检查合约目标持仓是否发生变化
+                                checking_pos = round_to(checking_pos, contract.min_volume)
+                                t_symbol_pos_data = self.target_trader_symbol_pos_dict.get(trader, {})
+                                t_pos_data = t_symbol_pos_data.get(vt_symbol, {})
+                                t_data = t_pos_data.get(direction, {})
+                                target_pos = t_data.get("volume", 0)
+                                if direction == "short":
+                                    target_pos *= -1
 
-                            # 取消该合约正在进行中的订单
-                            active_orders = oms_engine.get_all_active_orders(vt_symbol)
-                            strategy_orderids = self.cta_engine.strategy_orderid_map[self.strategy_name]
-                            for order in active_orders:
-                                if order.vt_orderid in strategy_orderids:
-                                    self.cancel_order(order.vt_orderid)
+                                if target_pos != checking_pos:
+                                    # 获取合约最新行情数据
+                                    tick = oms_engine.ticks.get(vt_symbol, None)
+                                    if not tick and target_pos:
+                                        self.send_ding_talk(f"交易合约{vt_symbol}行情数据缺失")
 
-                            # 发出订单
-                            # long_open_price = max(tick.last_price + contract.pricetick*100, tick.last_price * 1.0005)
-                            # short_open_price = min(tick.last_price - contract.pricetick*100, tick.last_price * 0.9995)
-                            long_open_price = tick.last_price * 1.0015
-                            short_open_price = tick.last_price * 0.9985
-                            long_close_price = tick.last_price * 1.01
-                            short_close_price = tick.last_price * 0.99
-                            current_pos = self.symbol_pos_dict.get(vt_symbol, 0)
-                            if target_pos > 0:
-                                if current_pos < 0:
-                                    # 先平空
-                                    self.send_symbol_order(vt_symbol, Direction.LONG, Offset.CLOSE, long_close_price, abs(current_pos))
+                                        # 订阅合约行情
+                                        req = SubscribeRequest(
+                                            symbol=contract.symbol, exchange=contract.exchange
+                                        )
+                                        self.cta_engine.main_engine.subscribe(req, contract.gateway_name)
+                                        
+                                        # 行情数据监控
+                                        self.wait_tick_symbols.add(vt_symbol)
 
-                                    # 再开多
-                                    self.send_symbol_order(vt_symbol, Direction.LONG, Offset.OPEN, long_open_price, abs(target_pos))
-                                
-                                elif current_pos == 0:
-                                    # 开多
-                                    self.send_symbol_order(vt_symbol, Direction.LONG, Offset.OPEN, long_open_price, abs(target_pos))
-                                
-                                else:
-                                    if target_pos > current_pos:
-                                        # 开多（加仓）
-                                        volume = target_pos - current_pos
-                                        self.send_symbol_order(vt_symbol, Direction.LONG, Offset.OPEN, long_open_price, abs(volume))
-                                    
-                                    elif target_pos < current_pos:
-                                        # 平多（减仓）
-                                        volume = target_pos - current_pos
-                                        self.send_symbol_order(vt_symbol, Direction.SHORT, Offset.CLOSE, short_close_price, abs(volume))
+                                    else:
+                                        # 合约目标持仓更新
+                                        last_target_pos = target_pos
+                                        target_pos = checking_pos
 
-                            elif target_pos == 0:
-                                if current_pos > 0:
-                                    # 平多
-                                    self.send_symbol_order(vt_symbol, Direction.SHORT, Offset.CLOSE, short_close_price, abs(current_pos))
+                                        # 初始开仓严格限价
+                                        open_price = 0
+                                        if target_pos and not last_target_pos:
+                                            open_price = data["price"]
 
-                                elif current_pos < 0:
-                                    # 平空
-                                    self.send_symbol_order(vt_symbol, Direction.LONG, Offset.CLOSE, long_close_price, abs(current_pos))
+                                        if target_pos:
+                                            t_data["volume"] = abs(target_pos)
+                                            t_data["price"] = data["price"]
+                                            t_pos_data[direction] = t_data
+                                            t_symbol_pos_data[vt_symbol] = t_pos_data
+                                            self.target_trader_symbol_pos_dict[trader] = t_symbol_pos_data
 
-                            else:
-                                if current_pos > 0:
-                                    # 先平多
-                                    self.send_symbol_order(vt_symbol, Direction.SHORT, Offset.CLOSE, short_close_price, abs(current_pos))
+                                        elif direction in t_pos_data:
+                                            t_pos_data.pop(direction)
+                                            if t_pos_data:
+                                                t_symbol_pos_data[vt_symbol] = t_pos_data
 
-                                    # 再开空
-                                    self.send_symbol_order(vt_symbol, Direction.SHORT, Offset.OPEN, short_open_price, abs(target_pos))
-                                
-                                elif current_pos == 0:
-                                    # 开空
-                                    self.send_symbol_order(vt_symbol, Direction.SHORT, Offset.OPEN, short_open_price, abs(target_pos))
-                                
-                                else:
-                                    if target_pos < current_pos:
-                                        # 开空（加仓）
-                                        volume = target_pos - current_pos
-                                        self.send_symbol_order(vt_symbol, Direction.SHORT, Offset.OPEN, short_open_price, abs(volume))
-                                    
-                                    elif target_pos > current_pos:
-                                        # 平空（减仓）
-                                        volume = target_pos - current_pos
-                                        self.send_symbol_order(vt_symbol, Direction.LONG, Offset.CLOSE, long_close_price, abs(volume))
-                            
-                            # 更新根据交易员分类的pnl数据
-                            self.update_pnl_result_on_trader()
+                                            elif vt_symbol in t_symbol_pos_data:
+                                                t_symbol_pos_data.pop(vt_symbol)
+
+                                            if t_symbol_pos_data:
+                                                self.target_trader_symbol_pos_dict[trader] = t_symbol_pos_data
+
+                                            elif trader in self.target_trader_symbol_pos_dict:
+                                                self.target_trader_symbol_pos_dict.pop(trader)
+
+                                        # 取消该合约正在进行中的订单
+                                        active_orders = oms_engine.get_all_active_orders(vt_symbol)
+                                        strategy_orderids = self.cta_engine.strategy_orderid_map[self.strategy_name]
+                                        for order in active_orders:
+                                            if order.vt_orderid in strategy_orderids:
+                                                self.cancel_order(order.vt_orderid)
+
+                                        # 发出订单
+                                        # 限价单价格
+                                        long_open_price = tick.last_price * 1.0015
+                                        short_open_price = tick.last_price * 0.9985
+                                        long_close_price = tick.last_price * 1.01
+                                        short_close_price = tick.last_price * 0.99
+                                        
+                                        # 当前交易员分类的实际持仓
+                                        current_symbol_pos_data = self.trader_symbol_pos_dict.get(trader, {})
+                                        current_pos_data = current_symbol_pos_data.get(vt_symbol, {})
+                                        current_data = current_pos_data.get(direction, {})
+                                        current_pos = current_data.get("volume")
+                                        if direction == "short":
+                                            current_pos *= -1
+                                        
+                                        sub = abs(target_pos) - abs(last_target_pos)
+                                        if target_pos > 0 or (target_pos == 0 and direction == "long"):
+                                            if sub > 0:
+                                                # 多头加仓
+                                                price = open_price if open_price else long_open_price
+                                                self.send_symbol_order(trader, vt_symbol, Direction.LONG, Offset.OPEN, price, abs(sub))
+
+                                            elif sub < 0:
+                                                # 多头减仓
+                                                v = min(abs(current_pos), abs(sub))
+                                                if v:
+                                                    self.send_symbol_order(trader, vt_symbol, Direction.SHORT, Offset.CLOSE, short_close_price, abs(v))
+
+                                        elif target_pos < 0 or (target_pos == 0 and direction == "short"):
+                                            if sub > 0:
+                                                # 空头加仓
+                                                price = open_price if open_price else short_open_price
+                                                self.send_symbol_order(trader, vt_symbol, Direction.SHORT, Offset.OPEN, price, abs(sub))
+
+                                            elif sub < 0:
+                                                # 空头减仓
+                                                v = min(abs(current_pos), abs(sub))
+                                                if v:
+                                                    self.send_symbol_order(trader, vt_symbol, Direction.LONG, Offset.CLOSE, long_close_price, abs(v))
+
+                                        # 更新根据交易员分类的pnl数据
+                                        self.update_pnl_result_on_trader()
             except Empty:
                 pass
 
@@ -706,18 +758,24 @@ class CopytradeStrategy(CtaTemplate):
                     self.cancel_all()
 
                     # 发出平仓订单
-                    for vt_symbol, current_pos in self.symbol_pos_dict.items():
-                        tick = oms_engine.ticks.get(vt_symbol, None)
-                        if tick:
-                            long_close_price = tick.last_price * 1.01
-                            short_close_price = tick.last_price * 0.99
-                            if current_pos > 0:
-                                # 平多
-                                self.send_symbol_order(vt_symbol, Direction.SHORT, Offset.CLOSE, short_close_price, abs(current_pos))
+                    for trader, symbol_pos_data in self.trader_symbol_pos_dict.items():
+                        for vt_symbol, pos_data in symbol_pos_data.items():
+                            for direction, data in pos_data.items():
+                                pos = data["volume"]
+                                if direction == "short":
+                                    pos *= -1
 
-                            elif current_pos < 0:
-                                # 平空
-                                self.send_symbol_order(vt_symbol, Direction.LONG, Offset.CLOSE, long_close_price, abs(current_pos))
+                                tick = oms_engine.ticks.get(vt_symbol, None)
+                                if tick:
+                                    long_close_price = tick.last_price * 1.01
+                                    short_close_price = tick.last_price * 0.99
+                                    if pos > 0:
+                                        # 平多
+                                        self.send_symbol_order(trader, vt_symbol, Direction.SHORT, Offset.CLOSE, short_close_price, abs(pos))
+
+                                    elif pos < 0:
+                                        # 平空
+                                        self.send_symbol_order(trader, vt_symbol, Direction.LONG, Offset.CLOSE, long_close_price, abs(pos))
                     
                     # 停止策略，发出通知
                     self.trading = False
@@ -731,7 +789,7 @@ class CopytradeStrategy(CtaTemplate):
 
             sleep(1)
 
-    def send_symbol_order(self, symbol, direction, offset, price, volume, stop=False):
+    def send_symbol_order(self, trader, symbol, direction, offset, price, volume, stop=False):
         contract = self.cta_engine.main_engine.get_contract(symbol)
         volume = round_to(abs(volume), contract.min_volume)
         if not volume:
@@ -769,7 +827,9 @@ class CopytradeStrategy(CtaTemplate):
                     self.send_ding_talk(f"开仓订单价值未满足要求\n合约：{symbol}\n价格：{tick.last_price}\n数量：{volume}\n价值：{order_value}")
                     return
         
-        super().send_symbol_order(symbol, direction, offset, price, volume, stop)
+        vt_orderids = super().send_symbol_order(symbol, direction, offset, price, volume, stop)
+        for orderid in vt_orderids:
+            self.orderid_trader_dict[orderid] = trader
 
     def on_copy_trader(self):
         # 带单员带单更新
