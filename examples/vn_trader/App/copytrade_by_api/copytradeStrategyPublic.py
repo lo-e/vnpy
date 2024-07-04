@@ -203,6 +203,9 @@ class CopytradeStrategyPublic(CtaTemplate):
         self.next_check_real_strategy_position_dt = datetime.now() + timedelta(minutes=1)
 
     def on_mainengine_position_updated(self, event):
+        """ fake """
+        return
+    
         if not self.trading:
             return
         
