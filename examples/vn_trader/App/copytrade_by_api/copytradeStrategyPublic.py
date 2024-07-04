@@ -356,7 +356,7 @@ class CopytradeStrategyPublic(CtaTemplate):
                                 pos = data["volume"]
                                 if direction == "short":
                                     pos *= -1
-                                    msg += f"\n{trader_name} {vt_symbol}：{pos}"
+                                msg += f"\n{trader_name} {vt_symbol}：{pos}"
                     msg += "\n\n------------\n"
 
                     for trader_name, symbol_pos_data in self.portfolio.trader_name_position_dict.items():
