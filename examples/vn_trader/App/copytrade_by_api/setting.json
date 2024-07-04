@@ -13,7 +13,7 @@
         "copy_assets": 2000,
         "stop_loss": -0.3,
         "max_lever": 5,
-        "start": false
+        "start": true
       },
       "563E3A78CDBAFB4E": {
         "trader": "bit浪浪",
