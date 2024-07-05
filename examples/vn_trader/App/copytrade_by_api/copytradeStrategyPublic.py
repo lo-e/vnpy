@@ -167,7 +167,7 @@ class CopytradeStrategyPublic(CtaTemplate):
 
         for _, symbol_pos_data in self.trader_symbol_pos_dict.items():
             for vt_symbol, _ in symbol_pos_data.items():
-                subscribe_vt_symbols = subscribe_vt_symbols.add(vt_symbol)
+                subscribe_vt_symbols.add(vt_symbol)
 
         for vt_symbol in subscribe_vt_symbols:
             contract = self.cta_engine.main_engine.get_contract(vt_symbol)
