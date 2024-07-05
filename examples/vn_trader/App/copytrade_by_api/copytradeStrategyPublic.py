@@ -448,6 +448,13 @@ class CopytradeStrategyPublic(CtaTemplate):
                                     if target_pos and not last_target_pos:
                                         open_price = data["price"]
 
+                                        # 避免限价单价格过高或者过低超出交易所限制而被拒单
+                                        if direction == "long":
+                                            open_price = min(open_price, tick.last_price*1.01)
+
+                                        if direction == "short":
+                                            open_price = max(open_price, tick.last_price*0.99)
+
                                     if target_pos:
                                         t_data["volume"] = abs(target_pos)
                                         t_data["price"] = data["price"]
