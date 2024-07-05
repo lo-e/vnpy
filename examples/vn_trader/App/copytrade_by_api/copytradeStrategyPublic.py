@@ -389,7 +389,8 @@ class CopytradeStrategyPublic(CtaTemplate):
                 pass
 
             except Exception as e:
-                print(f"check_trader_position_updated 报错：{e}")
+                msg = f"check_trader_position_updated 报错：{e}"
+                self.send_ding_talk(msg)
 
     def check_target_pos(self):
         while True:
