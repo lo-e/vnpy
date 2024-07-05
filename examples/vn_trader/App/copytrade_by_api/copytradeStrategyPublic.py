@@ -351,12 +351,14 @@ class CopytradeStrategyPublic(CtaTemplate):
                     for trader, symbol_pos_data in target_trader_symbol_pos_dict.items():
                         trader_setting = self.portfolio.copy_setting.get(trader, {})
                         trader_name = trader_setting.get("trader", "")
+                        msg += f"\n{trader_name}"
                         for vt_symbol, pos_data in symbol_pos_data.items():
                             for direction, data in pos_data.items():
-                                pos = data["volume"]
+                                pos = data.get("volume", 0)
+                                price = data.get("price", 0)
                                 if direction == "short":
                                     pos *= -1
-                                msg += f"\n{trader_name} {vt_symbol}：{pos}"
+                                msg += f"\n{vt_symbol}\n{direction} {pos}@{price}\n"
                     msg += "\n\n------------\n"
 
                     for trader_name, symbol_pos_data in self.portfolio.trader_name_position_dict.items():
