@@ -405,7 +405,7 @@ class CopytradeStrategyPublic(CtaTemplate):
                 for trader, symbol_pos_data in checking_data.items():
                     for vt_symbol, pos_data in symbol_pos_data.items():
                         for direction, data in pos_data.items():
-                            checking_pos = data["volume"]
+                            checking_pos = data.get("volume", 0)
                             if direction == "short":
                                 checking_pos *= -1
 
