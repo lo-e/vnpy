@@ -310,14 +310,34 @@ class CopytradeStrategyPublic(CtaTemplate):
                                 else:
                                     vt_symbol = f"{pure_symbol}USDT.{self.exchange.value}"
 
+                            # 只有open_price发生了变化才触发仓位变动
+                            t_symbol_pos_data = self.target_trader_symbol_pos_dict.get(trader, {})
+                            t_pos_data = t_symbol_pos_data.get(vt_symbol, {})
+
+                            t_long_data = t_pos_data.get("long", {})
+                            t_long_price = t_long_data.get("price", 0)
+                            t_long_volume = t_long_data.get("volume", 0)
+
+                            t_short_data = t_pos_data.get("short", {})
+                            t_short_price = t_short_data.get("price", 0)
+                            t_short_volume = t_short_data.get("volume", 0)
+
                             # 持仓统计
                             if vt_symbol:
                                 target_pos_data = {}
                                 if long_volume:
-                                    target_pos_data["long"] = {"volume":long_volume, "price":long_price}
+                                    if long_price == t_long_price:
+                                        target_pos_data["long"] = {"volume":t_long_volume, "price":t_long_price}
+                                    
+                                    else:
+                                        target_pos_data["long"] = {"volume":long_volume, "price":long_price}
 
                                 if short_volume:
-                                    target_pos_data["short"] = {"volume":short_volume, "price":short_price}
+                                    if short_price == t_short_price:
+                                        target_pos_data["short"] = {"volume":t_short_volume, "price":t_short_price}
+
+                                    else:
+                                        target_pos_data["short"] = {"volume":short_volume, "price":short_price}
 
                                 symbol_pos_data = target_trader_symbol_pos_dict.get(trader, {})
                                 symbol_pos_data[vt_symbol] = target_pos_data
