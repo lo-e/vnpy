@@ -429,7 +429,7 @@ class CopytradeStrategyPublic(CtaTemplate):
                             if target_pos != checking_pos:
                                 # 获取合约最新行情数据
                                 tick = oms_engine.ticks.get(vt_symbol, None)
-                                if not tick and target_pos:
+                                if not tick:
                                     self.send_ding_talk(f"交易合约{vt_symbol}行情数据缺失")
 
                                     # 订阅合约行情
