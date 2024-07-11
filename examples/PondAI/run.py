@@ -16,8 +16,8 @@ def backtesting(
     signal_file: str, from_dt: str = "2009-01-01", to_dt: str = "2024-12-31"
 ):
     # 读取文件，生成回测合约参数
-    print(f"{datetime.now()}\t开始信号数据读取")
-    file_name = f"data{DIR_SYMBOL}{signal_file}"
+    print(f"{datetime.now()}\tStart signal data reading")
+    file_name = f".\data{DIR_SYMBOL}{signal_file}"
     symbol_set = set()
     setting_list = []
     symbol_signal_dict = {}
@@ -32,7 +32,7 @@ def backtesting(
             time_cost = int(time() - file_start)
             if time_cost > log_time:
                 log_time += log_time_gap
-                print(f"信号数据读取统计：{file_read_count}")
+                print(f"Signal data reading statistics：{file_read_count}")
 
             # 交易参数设置
             symbol = row["symbol"]
@@ -58,7 +58,7 @@ def backtesting(
             symbol_signal_dict[symbol] = symbol_signal_list
 
     time_cost = time() - file_start
-    print(f"信号数据读取总耗时：{time_cost}")
+    print(f"Total time spent reading signal data：{time_cost}")
     if not setting_list:
         return
 
@@ -90,10 +90,10 @@ def backtesting(
     engine.loadData()
     engine.runBacktesting()
     time_cost = time() - backtesting_start
-    print(f"回测总耗时：{time_cost}")
+    print(f"Total backtesting time：{time_cost}")
 
     # 获取合约交易数据
-    print(f"{datetime.now()}\t开始保存交易数据")
+    print(f"{datetime.now()}\tStart saving transaction data")
     trades_save_start = time()
     symbol_trade_dic = {}
     for symbol in engine.symbolList:
@@ -145,11 +145,11 @@ def backtesting(
                 writer.writerows(trade_list)
 
     time_cost = time() - trades_save_start
-    print(f"保存交易数据总耗时：{time_cost}")
+    print(f"Total time spent saving transaction data：{time_cost}")
 
     # 展示图表
     engine.showResult(figSavedName)
 
 
 if __name__ == "__main__":
-    backtesting(signal_file="naive_prediction.csv", from_dt="2021-01-01", to_dt="2024-12-31")
+    backtesting(signal_file="naive_prediction_test1.csv", from_dt="2023-01-01", to_dt="2024-12-31")
