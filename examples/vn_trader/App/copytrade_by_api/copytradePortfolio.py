@@ -347,9 +347,9 @@ class CopytradePortfolio(object):
                                     msg += f"\n{symbol}\nshort（{current_short_lever}） {last_short_price} - {current_short_price}\n"
                                     
                             if msg:
-                                line = "-"*20
-                                msg = f"{trader_name}\nlong_lever {long_lever}\nshort_lever {short_lever}\n{line}\n{msg}"
-                                self.send_ding_talk(msg)
+                                # line = "-"*20
+                                # msg = f"{trader_name}\nlong_lever {long_lever}\nshort_lever {short_lever}\n{line}\n{msg}"
+                                # self.send_ding_talk(msg)
 
                                 # 策略响应
                                 for strategy in self.cta_engine.strategies.values():
