@@ -54,7 +54,7 @@
       "trade_assets": {
         "905FEE86AF5EE22C": 100
       },
-      "start": true
+      "start": false
     },
     {
       "strategy_name": "COPYTRADE_API_BINANCE",
