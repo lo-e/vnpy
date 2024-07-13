@@ -47,16 +47,6 @@
       "start": true
     },
     {
-      "strategy_name": "COPYTRADE_API_OKX_WAWJLC",
-      "exchange": "OKX",
-      "exchange_user": "wawjlc",
-      "type": "copy",
-      "trade_assets": {
-        "905FEE86AF5EE22C": 100
-      },
-      "start": false
-    },
-    {
       "strategy_name": "COPYTRADE_API_BINANCE",
       "exchange": "BINANCE",
       "exchange_user": "lo-e",
