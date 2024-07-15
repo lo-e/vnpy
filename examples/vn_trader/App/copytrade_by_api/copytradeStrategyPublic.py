@@ -378,7 +378,12 @@ class CopytradeStrategyPublic(CtaTemplate):
                                 price = data.get("price", 0)
                                 if direction == "short":
                                     pos *= -1
-                                msg += f"\n{vt_symbol}\n{direction} {pos}@{price}\n"
+
+                                current_symbol_pos_data = self.target_trader_symbol_pos_dict.get(trader, {})
+                                current_pos_data = current_symbol_pos_data.get(vt_symbol, {})
+                                current_data = current_pos_data.get(direction, {})
+                                current_price = current_data.get("price", 0)
+                                msg += f"\n{vt_symbol}\n{direction} {pos}@({current_price}){price}\n"
                     msg += "\n\n------------\n"
 
                     for trader_name, symbol_pos_data in self.portfolio.trader_name_position_dict.items():
