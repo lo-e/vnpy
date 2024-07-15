@@ -29,7 +29,7 @@
         "type": "public",
         "symbol_list": [],
         "copy_assets": 2000,
-        "stop_loss": -0.3,
+        "stop_loss": -0.5,
         "max_lever": 10,
         "start": true
       }
