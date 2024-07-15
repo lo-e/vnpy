@@ -47,7 +47,7 @@
       "start": true
     },
     {
-      "strategy_name": "COPYTRADE_API_BINANCE",
+      "strategy_name": "COPYTRADE_API_BINANCE_LOE",
       "exchange": "BINANCE",
       "exchange_user": "lo-e",
       "type": "copy",
