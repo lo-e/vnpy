@@ -39,7 +39,7 @@
     {
       "strategy_name": "COPYTRADE_API_OKX_LOE",
       "exchange": "OKX",
-      "exchange_user": "lo-e",
+      "exchange_user": "lo-e（test）",
       "type": "public",
       "trade_assets": {
         "563E3A78CDBAFB4E": 100
