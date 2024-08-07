@@ -98,7 +98,7 @@ def okx_get_bar_data(symbol:str, interval:str, from_time:str='', limit:int=100, 
             if first_bar_dt and first_bar_dt > datetime.strptime(from_time, "%Y-%m-%d %H:%M:%S"):
                 from_time = first_bar_dt.strftime("%Y-%m-%d %H:%M:%S")
                 if interval == "1m":
-                    since = (datetime.strptime(from_time, "%Y-%m-%d %H:%M:%S") + timedelta(minutes=limit)).strftime("%Y-%m-%d %H:%M:%S")
+                    since = (datetime.strptime(from_time, "%Y-%m-%d %H:%M:%S") + timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
                 
                 elif interval == "1D":
                     since = (datetime.strptime(from_time, "%Y-%m-%d %H:%M:%S") + timedelta(days=limit)).strftime("%Y-%m-%d %H:%M:%S")

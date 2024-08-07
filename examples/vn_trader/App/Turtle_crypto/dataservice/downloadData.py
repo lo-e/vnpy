@@ -381,6 +381,7 @@ class DownloadThread(object):
                     from_time = db_end_dt - timedelta(minutes=10)
 
         to_time = datetime(self.to_date.year, self.to_date.month, self.to_date.day)
+    
         while from_time:
             if from_time >= to_time:
                 break

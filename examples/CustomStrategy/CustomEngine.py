@@ -20,7 +20,6 @@ import pandas as pd
 
 PRICETICK_DICT = {}
 VARIABLE_COMMISSION_DICT = {}
-FIXED_COMMISSION_DICT = {}
 SLIPPAGE_DICT = {}
 MIN_VOLUME_DICT = {}
 
@@ -56,7 +55,6 @@ class BacktestingEngine(object):
                 self.symbolList.append(d['symbol'])
                 PRICETICK_DICT[d['symbol']] = float(d['priceTick'])
                 VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
-                FIXED_COMMISSION_DICT[d['symbol']] = float(d['fixedCommission'])
                 SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
                 MIN_VOLUME_DICT[d['symbol']] = float(d['min_volume'])
             
@@ -396,7 +394,6 @@ class DailyResult(object):
 
             slippage = SLIPPAGE_DICT[symbol] * PRICETICK_DICT[symbol]
             variableCommission = VARIABLE_COMMISSION_DICT[symbol]
-            fixedCommission = FIXED_COMMISSION_DICT[symbol]
             
             for trade in l:
                 if trade.direction == Direction.LONG:
@@ -404,7 +401,7 @@ class DailyResult(object):
                 else:
                     side = -1
 
-                commissionCost = (trade.volume * fixedCommission + trade.volume * trade.price * variableCommission)
+                commissionCost = trade.volume * trade.price * variableCommission
                 slippageCost = trade.volume * slippage
 
                 if close:
