@@ -344,12 +344,14 @@ if __name__ == '__main__':
     flt_symbol_list = []
     for symbol in symbol_list:
         first_bar_dt = None
-        while not first_bar_dt:
+        trying = True
+        while trying:
             try:
                 first_bar_dt = okx_get_first_bar_datetime(symbol=symbol)
-            
+                trying = False
+
             except Exception:
-                pass
+                trying = True
 
         if first_bar_dt:
             flt_from = datetime.now().replace(second=0) - timedelta(days=90)

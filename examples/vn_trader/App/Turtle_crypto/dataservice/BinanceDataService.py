@@ -5,16 +5,23 @@ import time
 import os
 import csv
 from datetime import datetime, timedelta
-from vnpy.trader.utility import DIR_SYMBOL
+from vnpy.trader.utility import DIR_SYMBOL, LOCAL_IP
 from enum import Enum
 from pymongo import MongoClient, ASCENDING, DESCENDING
 from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 import pandas as pd
 
+# 域名
 main_url_spot = "https://api.binance.com"
 main_url_inverse = "https://dapi.binance.com"
 main_url_usdt = "https://fapi.binance.com"
 
+# 代理
+proxy = f"{LOCAL_IP}:10811"
+proxies = {
+    "http": proxy,
+    "https": proxy,
+}
 
 class BinanceType(Enum):
     SPOT = "spot"
@@ -157,7 +164,7 @@ def binance_get_first_bar_datetime(
         start_time = int(time.mktime(timeArray))
         params["startTime"] = start_time * 1000
 
-    resp = requests.get(url, headers={}, params=params)
+    resp = requests.get(url, headers={}, params=params, proxies=proxies)
     bar_data_list = resp.json()
 
     if bar_data_list:
@@ -176,7 +183,7 @@ def binance_get_symbol_list(need_data: bool = False):
 
     # 发起请求
     url = f"{main_url_usdt}/fapi/v1/exchangeInfo"
-    resp = requests.get(url, headers={}, params={})
+    resp = requests.get(url, headers={}, params={}, proxies=proxies)
     data = resp.json()
     data = data.get("symbols", [])
     for d in data:
@@ -309,17 +316,47 @@ if __name__ == "__main__":
     print('completed！')
     """
 
+    #"""
     # 获取正向永续合约列表
-    # symbol_list = binance_get_symbol_list(need_data=False)
-    # for symbol in symbol_list:
-    #     print(symbol)
-    # print(f"BINANCE_USDT永续合约总计：{len(symbol_list)}")
+    symbol_list = binance_get_symbol_list(need_data=False)
+    for symbol in symbol_list:
+        print(symbol)
+    print(f"BINANCE_USDT永续合约总计：{len(symbol_list)}")
 
+    # 筛选新币种
+    print(f"\n------ 符合筛选条件的合约 ------")
+    flt_symbol_list = []
+    for symbol in symbol_list:
+        first_bar_dt = None
+        trying = True
+        while trying:
+            try:
+                first_bar_dt = binance_get_first_bar_datetime(symbol=symbol, interval="1m", symbol_type=BinanceType.USDT, start_time="2020-12-01 00:00:00")
+                trying = False
+
+            except Exception:
+                trying = True
+
+        if first_bar_dt:
+            flt_from = datetime.now().replace(second=0) - timedelta(days=90)
+            if first_bar_dt >= flt_from:
+                flt_symbol_list.append(symbol)
+                print(f"{symbol}\t\t{first_bar_dt}")
+        
+        else:
+            print(f"无法获取合约上市日期：{symbol}")
+    print(f"总计：{len(flt_symbol_list)}")
+    #"""
+
+    """
     # 获取指定时间段的合约最初交易时间
-    # symbol_list = ['GALAUSDT', 'ZRXUSDT', 'BAKEUSDT', 'SFPUSDT', 'LINAUSDT', 'OMGUSDT', 'RENUSDT', 'KNCUSDT', 'BATUSDT', 'BELUSDT', 'WAVESUSDT', 'ZENUSDT', 'SXPUSDT', 'RLCUSDT', 'PEOPLEUSDT', 'CHRUSDT', 'ARUSDT', 'ARPAUSDT', 'ATAUSDT', 'UNFIUSDT', 'DYDXUSDT', 'OGNUSDT', 'DASHUSDT', 'AUDIOUSDT', 'LRCUSDT', 'SKLUSDT', 'ETHUSDT', 'AXSUSDT', 'MASKUSDT', 'AAVEUSDT', 'ZILUSDT', 'SUSHIUSDT', 'STORJUSDT', 'FTMUSDT', 'ETCUSDT', 'CTSIUSDT', 'KAVAUSDT', 'DOGEUSDT', 'EGLDUSDT', 'SOLUSDT', 'C98USDT', 'CRVUSDT', 'YFIUSDT', 'ALGOUSDT', 'RSRUSDT', 'MKRUSDT', 'ENJUSDT']
-    # for symbol in symbol_list:
-    #     start_dt = binance_get_first_bar_datetime(symbol=symbol, interval="1m", symbol_type=BinanceType.USDT, start_time="2020-12-01 00:00:00")
-    #     print(f"{symbol}\t{start_dt}")
+    symbol_list = ['GALAUSDT', 'ZRXUSDT', 'BAKEUSDT', 'SFPUSDT', 'LINAUSDT', 'OMGUSDT', 'RENUSDT', 'KNCUSDT', 'BATUSDT', 'BELUSDT', 'WAVESUSDT', 'ZENUSDT', 'SXPUSDT', 'RLCUSDT', 'PEOPLEUSDT', 'CHRUSDT', 'ARUSDT', 'ARPAUSDT', 'ATAUSDT', 'UNFIUSDT', 'DYDXUSDT', 'OGNUSDT', 'DASHUSDT', 'AUDIOUSDT', 'LRCUSDT', 'SKLUSDT', 'ETHUSDT', 'AXSUSDT', 'MASKUSDT', 'AAVEUSDT', 'ZILUSDT', 'SUSHIUSDT', 'STORJUSDT', 'FTMUSDT', 'ETCUSDT', 'CTSIUSDT', 'KAVAUSDT', 'DOGEUSDT', 'EGLDUSDT', 'SOLUSDT', 'C98USDT', 'CRVUSDT', 'YFIUSDT', 'ALGOUSDT', 'RSRUSDT', 'MKRUSDT', 'ENJUSDT']
+    for symbol in symbol_list:
+        start_dt = binance_get_first_bar_datetime(symbol=symbol, interval="1m", symbol_type=BinanceType.USDT, start_time="2020-12-01 00:00:00")
+        print(f"{symbol}\t{start_dt}")
+    """
 
+    """
     # 生成马丁策略回测参数
     binance_marting_setting(min_value_filter=0)
+    """
