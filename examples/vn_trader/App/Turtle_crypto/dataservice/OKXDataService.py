@@ -323,22 +323,44 @@ def delete_okex():
     # print(result)
 
 if __name__ == '__main__':
-    #"""
+    """
     symbol = 'BTC-USDT-SWAP'
     interval = '1m'
     from_time = ''
     from_time = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
     okx_get_bar_data(symbol=symbol, interval=interval, from_time=from_time, limit=100)
     print('completed！')
-    #"""
-
     """
+
+    #"""
     # 获取所有合约列表
     symbol_list = okx_get_symbol_list(type=OKXType.USDT)
     for symbol in symbol_list:
         print(symbol)
     print(f"总计：{len(symbol_list)}")
-    """
+
+    # 筛选新币种
+    print(f"\n------ 符合筛选条件的合约 ------")
+    flt_symbol_list = []
+    for symbol in symbol_list:
+        first_bar_dt = None
+        while not first_bar_dt:
+            try:
+                first_bar_dt = okx_get_first_bar_datetime(symbol=symbol)
+            
+            except Exception:
+                pass
+
+        if first_bar_dt:
+            flt_from = datetime.now().replace(second=0) - timedelta(days=90)
+            if first_bar_dt >= flt_from:
+                flt_symbol_list.append(symbol)
+                print(f"{symbol}\t\t{first_bar_dt}")
+        
+        else:
+            print(f"无法获取合约上市日期：{symbol}")
+    print(f"总计：{len(flt_symbol_list)}")
+    #"""
 
     """
     # 获取合约从某个时间开始最早的交易时间
@@ -348,5 +370,7 @@ if __name__ == '__main__':
     print(result)
     """
 
+    """
     # 生成马丁策略回测参数
-    #okx_marting_setting(min_value_filter=0)
+    okx_marting_setting(min_value_filter=0)
+    """
