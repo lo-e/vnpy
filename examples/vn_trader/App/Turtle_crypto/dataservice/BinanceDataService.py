@@ -10,6 +10,7 @@ from enum import Enum
 from pymongo import MongoClient, ASCENDING, DESCENDING
 from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 import pandas as pd
+import socket
 
 # 域名
 main_url_spot = "https://api.binance.com"
@@ -163,8 +164,13 @@ def binance_get_first_bar_datetime(
         timeArray = time.strptime(start_time, "%Y-%m-%d %H:%M:%S")
         start_time = int(time.mktime(timeArray))
         params["startTime"] = start_time * 1000
-
-    resp = requests.get(url, headers={}, params=params, proxies=proxies)
+    
+    client = socket.gethostname()
+    if "MI-PRO" in client:
+        resp = requests.get(url, headers={}, params=params, proxies=proxies)
+    
+    else:
+        resp = requests.get(url, headers={}, params=params)
     bar_data_list = resp.json()
 
     if bar_data_list:
@@ -183,7 +189,12 @@ def binance_get_symbol_list(need_data: bool = False):
 
     # 发起请求
     url = f"{main_url_usdt}/fapi/v1/exchangeInfo"
-    resp = requests.get(url, headers={}, params={}, proxies=proxies)
+    client = socket.gethostname()
+    if "MI-PRO" in client:
+        resp = requests.get(url, headers={}, params={}, proxies=proxies)
+    
+    else:
+        resp = requests.get(url, headers={}, params={})
     data = resp.json()
     data = data.get("symbols", [])
     for d in data:

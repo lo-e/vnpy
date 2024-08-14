@@ -10,6 +10,7 @@ from enum import Enum
 from pymongo import MongoClient, ASCENDING, DESCENDING
 from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 import pandas as pd
+import socket
 
 # 域名
 main_url = 'https://www.okx.com'
@@ -58,7 +59,12 @@ def okx_get_bar_data(symbol:str, interval:str, from_time:str='', limit:int=100, 
             url = base_url
         
         # 比如MI-PRO连接系统代理报错，以下手动添加请求代理解决
-        resp = requests.get(url, headers={}, params={}, proxies=proxies)
+        client = socket.gethostname()
+        if "MI-PRO" in client:
+            resp = requests.get(url, headers={}, params={}, proxies=proxies)
+
+        else:
+            resp = requests.get(url, headers={}, params={})
 
         data = resp.json()
         bar_data_list = data.get('data', [])
@@ -141,7 +147,12 @@ def okx_get_symbol_list(type:OKXType=OKXType.USDT, need_data: bool = False):
     url = f"{main_url}/api/v5/public/instruments"
 
     # 比如MI-PRO连接系统代理报错，以下手动添加请求代理解决
-    resp = requests.get(url, headers={}, params={"instType": "SWAP"}, proxies=proxies)
+    client = socket.gethostname()
+    if "MI-PRO" in client:
+        resp = requests.get(url, headers={}, params={"instType": "SWAP"}, proxies=proxies)
+    
+    else:
+        resp = requests.get(url, headers={}, params={"instType": "SWAP"})
     
     data = resp.json()
     data = data["data"]
@@ -177,7 +188,12 @@ def okx_get_first_bar_datetime(symbol:str, from_time:str=''):
     url = f'{main_url}{api}?instType=SWAP&instId={symbol}'
     
     # 比如MI-PRO连接系统代理报错，以下手动添加请求代理解决
-    resp = requests.get(url, headers={}, params={}, proxies=proxies)
+    client = socket.gethostname()
+    if "MI-PRO" in client:
+        resp = requests.get(url, headers={}, params={}, proxies=proxies)
+    
+    else:
+        resp = requests.get(url, headers={}, params={})
 
     data = resp.json()["data"]
     if data:
