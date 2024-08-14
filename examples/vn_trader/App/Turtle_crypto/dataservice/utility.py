@@ -2,8 +2,8 @@
 
 import os
 from vnpy.trader.utility import DIR_SYMBOL
-from OKXDataService import okx_get_symbol_list, OKXType, okx_get_first_bar_datetime
-from BinanceDataService import binance_get_symbol_list, BinanceType, binance_get_first_bar_datetime
+from .OKXDataService import okx_get_symbol_list, OKXType, okx_get_first_bar_datetime
+from .BinanceDataService import binance_get_symbol_list, BinanceType, binance_get_first_bar_datetime
 from datetime import datetime, timedelta
 
 def get_csv_path(target_dir: str = ""):
@@ -99,6 +99,3 @@ def get_instruments_list():
         else:
             print(f"无法获取合约上市日期：{symbol}")
     print(f"BINANCE筛选合约总计：{len(flt_symbol_list_binance)}")
-
-if __name__ == '__main__':
-    get_instruments_list()

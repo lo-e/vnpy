@@ -9,8 +9,13 @@ from dataservice.OKXDataService import okx_get_symbol_list, OKXType
 from vnpy.trader.constant import Interval
 from datetime import datetime, timedelta
 from time import sleep
+from dataservice.utility import get_instruments_list
 
 if __name__ == "__main__":
+    """
+    get_instruments_list()
+    """
+
     # """
     exchange = input("选择交易所（默认1）【Binance：1 OKX：2 Bybit：3】")
     if exchange == "2":
