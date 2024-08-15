@@ -55,7 +55,7 @@ def get_instruments_list():
 
     # 筛选新币种
     print(f"\n------ OKX符合筛选条件的合约 ------")
-    flt_symbol_list_ok = []
+    flt_symbol_dt_dict_ok = {}
     for symbol in symbol_list_ok:
         first_bar_dt = None
         trying = True
@@ -70,15 +70,15 @@ def get_instruments_list():
         if first_bar_dt:
             flt_from = datetime.now().replace(second=0) - timedelta(days=90)
             if first_bar_dt >= flt_from:
-                flt_symbol_list_ok.append(symbol)
-                print(f"{symbol}\t\t{first_bar_dt}")
+                pure_symbol = symbol.split("-")[0]
+                flt_symbol_dt_dict_ok[pure_symbol] = first_bar_dt
+                print(f"{pure_symbol}\t\t{first_bar_dt}")
         
         else:
             print(f"无法获取合约上市日期：{symbol}")
-    print(f"OKX筛选合约总计：{len(flt_symbol_list_ok)}")
 
     print(f"\n------ BINANCE符合筛选条件的合约 ------")
-    flt_symbol_list_binance = []
+    flt_symbol_dt_dict_binance = {}
     for symbol in symbol_list_binance:
         first_bar_dt = None
         trying = True
@@ -93,9 +93,37 @@ def get_instruments_list():
         if first_bar_dt:
             flt_from = datetime.now().replace(second=0) - timedelta(days=90)
             if first_bar_dt >= flt_from:
-                flt_symbol_list_binance.append(symbol)
-                print(f"{symbol}\t\t{first_bar_dt}")
+                pure_symbol = symbol.split("USDT")[0]
+                flt_symbol_dt_dict_binance[pure_symbol] = first_bar_dt
+                print(f"{pure_symbol}\t\t{first_bar_dt}")
         
         else:
             print(f"无法获取合约上市日期：{symbol}")
-    print(f"BINANCE筛选合约总计：{len(flt_symbol_list_binance)}")
+    print(f"\n" + f"-"*20 + "\n")
+
+    # OKX和BINANCE筛选合约
+    flt_symbol_list_ok = set(flt_symbol_dt_dict_ok.keys())
+    flt_symbol_list_binance = set(flt_symbol_dt_dict_binance.keys())
+
+    # OKX和BINANCE共同筛选合约
+    flt_symbol_list_common = flt_symbol_list_ok.intersection(flt_symbol_list_binance)
+
+    # OKX独占帅选合约
+    flt_symbol_list_okx_only = flt_symbol_list_ok - flt_symbol_list_common
+
+    # BINANCE独占合约
+    flt_symbol_list_binance_only = flt_symbol_list_binance - flt_symbol_list_common
+
+    for symbol in flt_symbol_list_okx_only:
+        print(f"{symbol}\t{flt_symbol_dt_dict_ok[symbol]}")
+    print(f"OKX独占筛选合约总计：{len(flt_symbol_list_okx_only)} 所有合约总计：{len(flt_symbol_dt_dict_ok)}")
+    print(f"\n" + f"-"*20 + "\n")
+
+    for symbol in flt_symbol_list_binance_only:
+        print(f"{symbol}\t{flt_symbol_dt_dict_binance[symbol]}")
+    print(f"BINANCE独占筛选合约总计：{len(flt_symbol_list_binance_only)} 所有合约总计：{len(flt_symbol_dt_dict_binance)}")
+    print(f"\n" + f"-"*20 + "\n")
+
+    for symbol in flt_symbol_list_common:
+        print(f"{symbol}\t{flt_symbol_dt_dict_ok[symbol]}(OKX)\t{flt_symbol_dt_dict_binance[symbol]}(BINANCE)")
+    print(f"OKX和BINANCE共同筛选合约总计：{len(flt_symbol_list_common)}")
