@@ -1,0 +1,24 @@
+{
+  "signal": [
+    {
+      "symbol":"BTCUSDT.BINANCE",
+      "from":"2024-08-15 15:00:00",
+      "direction":"LONG",
+      "window":20,
+      "stop_price_profit":61128,
+      "stop_price_up":62776,
+      "stop_price_down":50000,
+      "start": true
+    },
+    {
+      "symbol":"1000PEPEUSDT.BINANCE",
+      "from":"2024-08-15 15:00:00",
+      "direction":"LONG",
+      "window":20,
+      "stop_price_profit":61128,
+      "stop_price_up":62776,
+      "stop_price_down":50000,
+      "start": false
+    }
+  ]
+}

@@ -17,6 +17,7 @@ from CustomPortfolio import CustomPortfolio
 
 from vnpy.app.cta_strategy.base import DAILY_DB_NAME, MINUTE_DB_NAME, HOUR_DB_NAME, MinuteDataBaseName, HourDataBaseName
 import pandas as pd
+import json
 
 PRICETICK_DICT = {}
 VARIABLE_COMMISSION_DICT = {}
@@ -39,6 +40,16 @@ class BacktestingEngine(object):
         
         self.result = None
         self.resultList = []
+
+    def init(self):
+        contract_info_file = "setting.csv"
+        with open(contract_info_file) as f:
+            r = DictReader(f)
+            for d in r:
+                PRICETICK_DICT[d['symbol']] = float(d['priceTick'])
+                VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
+                SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
+                MIN_VOLUME_DICT[d['symbol']] = float(d['min_volume'])
     
     def setPeriod(self, startDt, endDt):
         """设置回测周期"""
@@ -49,20 +60,22 @@ class BacktestingEngine(object):
         """初始化投资组合"""
         self.portfolioValue = portfolioValue
         
-        with open(filename) as f:
-            r = DictReader(f)
-            for d in r:
-                self.symbolList.append(d['symbol'])
-                PRICETICK_DICT[d['symbol']] = float(d['priceTick'])
-                VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
-                SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
-                MIN_VOLUME_DICT[d['symbol']] = float(d['min_volume'])
+        with open(filename, 'r') as f:
+            data = json.load(f)
+        
+        signal_setting_list = []
+        for signal in data.get('signal', []):
+            start = signal["start"]
+            if start:
+                symbol = signal['symbol']
+                self.symbolList.append(symbol)
+                signal_setting_list.append(signal)
             
         self.portfolio = CustomPortfolio(self)
-        self.portfolio.init(portfolioValue, self.symbolList)
+        self.portfolio.init(portfolioValue, signal_setting_list)
         
-        self.output(u'投资组合的合约代码%s' %(self.symbolList))
-        self.output(u'投资组合的初始价值%s' %(portfolioValue))
+        self.output(f"投资组合的合约代码{self.symbolList}")
+        self.output(f"投资组合的初始价值{portfolioValue}")
 
     def loadData(self):
         """加载数据"""

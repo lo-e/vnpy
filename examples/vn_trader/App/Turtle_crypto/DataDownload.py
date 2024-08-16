@@ -47,8 +47,7 @@ if __name__ == "__main__":
         exchange = "BINANCE"
         mode = input("选择模式（默认1）【接口获取：1 正向：2 反向：3】")
         if mode == "2":
-            contract_list = ["BTCUSDT", "ETHUSDT"]
-            contract_list = ["BTCUSDT", "CELUSDT", "NOTUSDT", "PEOPLEUSDT", "PEPEUSDT", "TRBUSDT", "TURBOUSDT"]
+            contract_list = ["BTCUSDT", "1000PEPEUSDT"]
 
         elif mode == "3":
             contract_list = ["BTCUSD", "ETHUSD"]

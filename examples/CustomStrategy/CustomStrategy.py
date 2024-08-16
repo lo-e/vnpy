@@ -36,9 +36,27 @@ class CustomResult(object):
     
 class CustomSignal(object):
     
-    def __init__(self, portfolio, symbol):
+    def __init__(self, portfolio, symbol_setting):
+        """
+        "symbol":"BTCUSDT.BINANCE",
+        "from":"2024-08-15 15:00:00",
+        "direction":"LONG",
+        "window":20,
+        "stop_price_profit":61128,
+        "stop_price_up":62776,
+        "stop_price_down":50000,
+        "start": true
+        """
         self.portfolio = portfolio                      # 投资组合
-        self.symbol = symbol                            # 合约代码
+        self.symbol = symbol_setting["symbol"]          # 合约代码
+        self.from_dt =  symbol_setting["from"]
+        self.from_dt = datetime.strptime(self.from_dt, f"%Y-%m-%d %H:%M:%S")
+        self.direction = Direction.LONG if symbol_setting["direction"] else Direction.SHORT
+        self.window = symbol_setting["window"]
+        self.stop_price_profit = symbol_setting["stop_price_profit"]
+        self.stop_price_up = symbol_setting["stop_price_up"]
+        self.stop_price_down = symbol_setting["stop_price_down"]
+
         self.am = ArrayManager(5)                       # K线容器
 
         """ fake """
@@ -49,6 +67,6 @@ class CustomSignal(object):
         
         if self.next_dt:
             if bar.datetime != self.next_dt:
-                print("error")
+                raise("error")
         self.next_dt = bar.datetime + timedelta(minutes=1)
 

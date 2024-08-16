@@ -19,11 +19,12 @@ class CustomPortfolio(object):
         self.trading_dict = {}          # 交易中的信号字典
         self.pos_dict = {}              # 真实持仓量字典
     
-    def init(self, portfolioValue, symbolList):
+    def init(self, portfolioValue, signal_setting_list):
         self.portfolioValue = portfolioValue
         
-        for symbol in symbolList:
-            signal = CustomSignal(self, symbol)
+        for symbol_setting in signal_setting_list:
+            signal = CustomSignal(self, symbol_setting)
+            symbol = symbol_setting["symbol"]
             l = self.signal_dict[symbol]
             l.append(signal)
             
