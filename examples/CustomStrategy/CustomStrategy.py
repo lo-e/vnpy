@@ -45,6 +45,9 @@ class CustomSignal(object):
         self.direction = Direction.LONG if symbol_setting["direction"] == "LONG" else Direction.SHORT       # 交易方向
         self.long_window = symbol_setting["long_window"]                                                    # 止损价格参考的窗口数
         self.short_window = symbol_setting["short_window"]                                                  # 开仓价格参考的窗口数
+        self.max_loss_count = symbol_setting["max_loss_count"]                                              # 允许的最大止损次数
+        self.profit_rate = symbol_setting["profit_rate"]                                                    # 开仓要求的最低预期收益率
+        self.loss_rate = symbol_setting["loss_rate"]                                                        # 单次持仓允许的最大亏损率
         self.stop_profit_price = symbol_setting["stop_profit_price"]                                        # 止盈价
         self.stop_price_up = symbol_setting["stop_price_up"]                                                # 向上突破该价格停止尝试
         self.stop_price_down = symbol_setting["stop_price_down"]                                            # 向下突破该价格停止尝试
@@ -61,7 +64,6 @@ class CustomSignal(object):
         self.indicator_inited = False                                                                       # 数据初始化状态
         self.profit_stop = False                                                                            # 止盈状态
         self.loss_count = 0                                                                                 # 止损次数
-        self.max_loss_count = 3                                                                             # 最大止损次数
 
         self.next_dt = None                                                                                 # 下一bar的时间，为了测试bar是否缺失
         self.bar = None                                                                                     # 当前最新bar
@@ -100,23 +102,27 @@ class CustomSignal(object):
                 if self.bar.high_price >= self.short_up:
                     # 多头开仓
                     price = max(self.bar.open_price, self.short_up)
-                    value = self.portfolio.portfolioValue * 0.02 / abs(((self.long_down / price) - 1))
-                    volume = value / price
-                    self.send_order(Direction.LONG, Offset.OPEN, price, volume)
-                    self.pos_open_price = price
-                    self.stop_loss_price = self.long_down
-                    return
+                    lever = self.loss_rate / abs(((self.long_down / price) - 1))
+                    if ((self.stop_profit_price / price) - 1) * lever >= self.profit_rate:
+                        value = self.portfolio.portfolioValue * lever
+                        volume = value / price
+                        self.send_order(Direction.LONG, Offset.OPEN, price, volume)
+                        self.pos_open_price = price
+                        self.stop_loss_price = self.long_down
+                        return
             
             else:
                 if self.bar.low_price <= self.short_down:
                     # 空头开仓
                     price = min(self.bar.open_price, self.short_down)
-                    value = self.portfolio.portfolioValue * 0.02 / abs(((self.long_up / price) - 1))
-                    volume = value / price
-                    self.send_order(Direction.SHORT, Offset.OPEN, price, volume)
-                    self.pos_open_price = price
-                    self.stop_loss_price = self.long_up
-                    return
+                    lever = self.loss_rate / abs(((self.long_up / price) - 1))
+                    if (1 - (self.stop_profit_price / price)) * lever >= self.profit_rate:
+                        value = self.portfolio.portfolioValue * lever
+                        volume = value / price
+                        self.send_order(Direction.SHORT, Offset.OPEN, price, volume)
+                        self.pos_open_price = price
+                        self.stop_loss_price = self.long_up
+                        return
 
         else:
             if self.direction == Direction.LONG:
@@ -144,7 +150,7 @@ class CustomSignal(object):
                         price = max(self.bar.open_price, self.short_up)
                         if 1 / abs(((self.long_down / price) - 1)) >= 1.5 / abs(((self.stop_loss_price / self.pos_open_price) - 1)):
                             # 满足多头加仓条件
-                            value = self.portfolio.portfolioValue * 0.02 / abs(((self.long_down / price) - 1))
+                            value = self.portfolio.portfolioValue * self.loss_rate / abs(((self.long_down / price) - 1))
                             volume = value / price
                             add_volume = volume - abs(self.pos)
                             if add_volume > 0:
@@ -179,7 +185,7 @@ class CustomSignal(object):
                         price = min(self.bar.open_price, self.short_down)
                         if 1 / abs(((self.long_up / price) - 1)) >= 1.5 / abs(((self.stop_loss_price / self.pos_open_price) - 1)):
                             # 满足空头加仓条件
-                            value = self.portfolio.portfolioValue * 0.02 / abs(((self.long_up / price) - 1))
+                            value = self.portfolio.portfolioValue * self.loss_rate / abs(((self.long_up / price) - 1))
                             volume = value / price
                             add_volume = volume - abs(self.pos)
                             if add_volume > 0:
