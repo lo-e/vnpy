@@ -41,6 +41,11 @@ class BacktestingEngine(object):
         self.result = None
         self.resultList = []
 
+        self.pricetick_dict = {}
+        self.variable_commission_dict = {}
+        self.slippage_dict = {}
+        self.min_volume_dict = {} 
+
     def init(self):
         contract_info_file = "setting.csv"
         with open(contract_info_file) as f:
@@ -50,6 +55,11 @@ class BacktestingEngine(object):
                 VARIABLE_COMMISSION_DICT[d['symbol']] = float(d['variableCommission'])
                 SLIPPAGE_DICT[d['symbol']] = float(d['slippage'])
                 MIN_VOLUME_DICT[d['symbol']] = float(d['min_volume'])
+
+                self.pricetick_dict[d['symbol']] = float(d['priceTick'])
+                self.variable_commission_dict[d['symbol']] = float(d['variableCommission'])
+                self.slippage_dict[d['symbol']] = float(d['slippage'])
+                self.min_volume_dict[d['symbol']] = float(d['min_volume'])
     
     def setPeriod(self, startDt, endDt):
         """设置回测周期"""

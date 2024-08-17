@@ -8,6 +8,7 @@ from pymongo import MongoClient, ASCENDING
 from vnpy.trader.object import BarData
 import re
 from vnpy.app.cta_strategy.base import (DAILY_DB_NAME, DOMINANT_DB_NAME)
+from vnpy.trader.utility import round_to
 
 class CustomResult(object):
     """一次完整的开平交易"""
@@ -101,8 +102,7 @@ class CustomSignal(object):
                     price = max(self.bar.open_price, self.short_up)
                     value = self.portfolio.portfolioValue * 0.02 / abs(((self.long_down / price) - 1))
                     volume = value / price
-                    self.portfolio.sendOrder(self, Direction.LONG, Offset.OPEN, price, volume)
-                    self.pos = volume
+                    self.send_order(Direction.LONG, Offset.OPEN, price, volume)
                     self.pos_open_price = price
                     self.stop_loss_price = self.long_down
                     return
@@ -113,8 +113,7 @@ class CustomSignal(object):
                     price = min(self.bar.open_price, self.short_down)
                     value = self.portfolio.portfolioValue * 0.02 / abs(((self.long_up / price) - 1))
                     volume = value / price
-                    self.portfolio.sendOrder(self, Direction.SHORT, Offset.OPEN, price, volume)
-                    self.pos = volume * -1
+                    self.send_order(Direction.SHORT, Offset.OPEN, price, volume)
                     self.pos_open_price = price
                     self.stop_loss_price = self.long_up
                     return
@@ -124,8 +123,7 @@ class CustomSignal(object):
                 if self.bar.high_price >= self.stop_profit_price:
                     # 多头止盈
                     price = max(self.bar.open_price, self.stop_profit_price)
-                    self.portfolio.sendOrder(self, Direction.SHORT, Offset.CLOSE, price, abs(self.pos))
-                    self.pos = 0
+                    self.send_order(Direction.SHORT, Offset.CLOSE, price, abs(self.pos))
                     self.pos_open_price = 0
                     self.stop_loss_price = 0
                     self.profit_stop = True
@@ -134,8 +132,7 @@ class CustomSignal(object):
                 if self.bar.low_price <= self.stop_loss_price:
                     # 多头止损
                     price = min(self.bar.open_price, self.stop_loss_price)
-                    self.portfolio.sendOrder(self, Direction.SHORT, Offset.CLOSE, price, abs(self.pos))
-                    self.pos = 0
+                    self.send_order(Direction.SHORT, Offset.CLOSE, price, abs(self.pos))
                     self.pos_open_price = 0
                     self.stop_loss_price = 0
                     self.loss_count += 1
@@ -151,8 +148,7 @@ class CustomSignal(object):
                             volume = value / price
                             add_volume = volume - abs(self.pos)
                             if add_volume > 0:
-                                self.portfolio.sendOrder(self, Direction.LONG, Offset.OPEN, price, add_volume)
-                                self.pos = volume
+                                self.send_order(Direction.LONG, Offset.OPEN, price, add_volume)
                                 self.pos_open_price = price
                                 self.stop_loss_price = self.long_down
                                 self.max_loss_count += 1
@@ -162,8 +158,7 @@ class CustomSignal(object):
                 if self.bar.low_price <= self.stop_profit_price:
                     # 空头止盈
                     price = min(self.bar.open_price, self.stop_profit_price)
-                    self.portfolio.sendOrder(self, Direction.LONG, Offset.CLOSE, price, abs(self.pos))
-                    self.pos = 0
+                    self.send_order(Direction.LONG, Offset.CLOSE, price, abs(self.pos))
                     self.pos_open_price = 0
                     self.stop_loss_price = 0
                     self.profit_stop = True
@@ -172,8 +167,7 @@ class CustomSignal(object):
                 if self.bar.high_price >= self.stop_loss_price:
                     # 空头止损
                     price = max(self.bar.open_price, self.stop_loss_price)
-                    self.portfolio.sendOrder(self, Direction.LONG, Offset.CLOSE, price, abs(self.pos))
-                    self.pos = 0
+                    self.send_order(Direction.LONG, Offset.CLOSE, price, abs(self.pos))
                     self.pos_open_price = 0
                     self.stop_loss_price = 0
                     self.loss_count += 1
@@ -189,12 +183,29 @@ class CustomSignal(object):
                             volume = value / price
                             add_volume = volume - abs(self.pos)
                             if add_volume > 0:
-                                self.portfolio.sendOrder(self, Direction.SHORT, Offset.OPEN, price, add_volume)
-                                self.pos = volume * -1
+                                self.send_order(Direction.SHORT, Offset.OPEN, price, add_volume)
                                 self.pos_open_price = price
                                 self.stop_loss_price = self.long_up
                                 self.max_loss_count += 1
                                 return
+
+    def send_order(self, direction, offset, price, volume):
+        # 精度处理
+        price_tick = self.portfolio.engine.pricetick_dict[self.symbol]
+        price = round_to(price, price_tick)
+
+        min_volume = self.portfolio.engine.min_volume_dict[self.symbol]
+        volume = round_to(volume, min_volume)
+
+        # 当前持仓
+        if direction == Direction.LONG:
+            self.pos += volume
+
+        else:
+            self.pos -= volume
+
+        # 发出订单
+        self.portfolio.sendOrder(self, direction, offset, price, volume)
 
     def calculate_indicator(self):
         # 开始时间过滤
