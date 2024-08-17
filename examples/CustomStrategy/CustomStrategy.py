@@ -207,6 +207,8 @@ class CustomSignal(object):
         # 发出订单
         self.portfolio.sendOrder(self, direction, offset, price, volume)
 
+        # print(f"{direction.value}\t{offset.value}\t{price}\t{volume}")
+
     def calculate_indicator(self):
         # 开始时间过滤
         if self.bar.datetime < self.from_dt:
