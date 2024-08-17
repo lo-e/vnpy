@@ -19,13 +19,13 @@ from vnpy.trader.utility import DIR_SYMBOL
 def backtesting():
     engine = BacktestingEngine()
     engine.init()
-    engine.setPeriod(datetime(2024, 1, 1), datetime(2024, 12, 31))
+    engine.setPeriod(datetime(2024, 8, 15), datetime(2024, 8, 20))
     figSavedName = ''
     if figSavedName:
         figSavedName = f'figSaved{DIR_SYMBOL}{figSavedName}'
 
     filename = 'setting.json'
-    engine.initPortfolio(filename, 60000)
+    engine.initPortfolio(filename, 10000)
     engine.loadData()
     engine.runBacktesting()
     engine.showResult(figSavedName)

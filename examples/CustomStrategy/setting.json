@@ -4,21 +4,23 @@
       "symbol":"BTCUSDT.BINANCE",
       "from":"2024-08-15 15:00:00",
       "direction":"LONG",
-      "window":20,
-      "stop_price_profit":61128,
-      "stop_price_up":62776,
-      "stop_price_down":50000,
-      "start": true
-    },
-    {
-      "symbol":"1000PEPEUSDT.BINANCE",
-      "from":"2024-08-15 15:00:00",
-      "direction":"LONG",
-      "window":20,
-      "stop_price_profit":61128,
+      "long_window":20,
+      "short_window":5,
+      "stop_profit_price":61128,
       "stop_price_up":62776,
       "stop_price_down":50000,
       "start": false
+    },
+    {
+      "symbol":"1000PEPEUSDT.BINANCE",
+      "from":"2024-08-16 08:00:00",
+      "direction":"SHORT",
+      "long_window":20,
+      "short_window":5,
+      "stop_profit_price":0.0053073,
+      "stop_price_up":0.0089900,
+      "stop_price_down":0.0053073,
+      "start": true
     }
   ]
 }

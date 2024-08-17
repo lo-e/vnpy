@@ -1,2 +1,3 @@
 symbol,priceTick,variableCommission,slippage,min_volume
-BTC-USDT-SWAP.OKX,0.1,0.0005,6,0.001
+BTCUSDT.BINANCE,0.1,0.0005,6,0.001
+1000PEPEUSDT.BINANCE,0.0000001,0.0005,6,1
