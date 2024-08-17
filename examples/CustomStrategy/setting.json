@@ -13,11 +13,11 @@
     },
     {
       "symbol":"1000PEPEUSDT.BINANCE",
-      "from":"2024-08-16 08:00:00",
+      "from":"2024-08-15 23:00:00",
       "direction":"SHORT",
       "long_window":20,
       "short_window":5,
-      "stop_profit_price":0.0053073,
+      "stop_profit_price":0.0072866,
       "stop_price_up":0.0089900,
       "stop_price_down":0.0053073,
       "start": true
