@@ -15,7 +15,6 @@ from ..base import APP_NAME, EVENT_CUSTOMTRADING_PORTFOLIO
 class CtaValueMonitor(QtWidgets.QTableWidget):
     """参数监控"""
 
-    # ----------------------------------------------------------------------
     def __init__(self, parent=None):
         """Constructor"""
         super(CtaValueMonitor, self).__init__(parent)
@@ -26,7 +25,6 @@ class CtaValueMonitor(QtWidgets.QTableWidget):
 
         self.initUi()
 
-    # ----------------------------------------------------------------------
     def initUi(self):
         """初始化界面"""
         self.setRowCount(1)
@@ -35,7 +33,6 @@ class CtaValueMonitor(QtWidgets.QTableWidget):
 
         self.setMaximumHeight(self.sizeHint().height())
 
-    # ----------------------------------------------------------------------
     def updateData(self, data):
         """更新数据"""
         if not self.inited:
@@ -64,12 +61,11 @@ class CtaStrategyManager(QtWidgets.QGroupBox):
 
     signal = QtCore.pyqtSignal(Event)
 
-    # ----------------------------------------------------------------------
-    def __init__(self, copytradeEngine, eventEngine, name, parent=None):
+    def __init__(self, customTradingEngine, eventEngine, name, parent=None):
         """Constructor"""
         super(CtaStrategyManager, self).__init__(parent)
 
-        self.copytradeEngine = copytradeEngine
+        self.customTradingEngine = customTradingEngine
         self.eventEngine = eventEngine
         self.name = name
 
@@ -77,7 +73,6 @@ class CtaStrategyManager(QtWidgets.QGroupBox):
         self.updateMonitor()
         self.registerEvent()
 
-    # ----------------------------------------------------------------------
     def initUi(self):
         """初始化界面"""
         height = 120
@@ -116,18 +111,15 @@ class CtaStrategyManager(QtWidgets.QGroupBox):
 
         self.setLayout(vbox)
 
-    # ----------------------------------------------------------------------
     def updateMonitor(self):
         """显示策略最新状态"""
-        paramDict = self.copytradeEngine.get_strategy_parameters(self.name)
+        paramDict = self.customTradingEngine.get_strategy_parameters(self.name)
         if paramDict:
             self.paramMonitor.updateData(paramDict)
 
-        varDict = self.copytradeEngine.get_strategy_variables(self.name)
+        varDict = self.customTradingEngine.get_strategy_variables(self.name)
         if varDict:
             self.varMonitor.updateData(varDict)
-
-            # ----------------------------------------------------------------------
 
     def updateVar(self, event):
         """更新组合变量"""
@@ -135,55 +127,46 @@ class CtaStrategyManager(QtWidgets.QGroupBox):
         variables = data["variables"]
         self.varMonitor.updateData(variables)
 
-    # ----------------------------------------------------------------------
     def registerEvent(self):
         """注册事件监听"""
         self.signal.connect(self.updateVar)
         self.eventEngine.register(EVENT_CTA_STRATEGY + self.name, self.signal.emit)
 
-    # ----------------------------------------------------------------------
     def init(self):
         """初始化策略"""
-        self.copytradeEngine.init_strategy(self.name)
+        self.customTradingEngine.init_strategy(self.name)
 
-    # ----------------------------------------------------------------------
     def start(self):
         """启动策略"""
-        self.copytradeEngine.start_strategy(self.name)
+        self.customTradingEngine.start_strategy(self.name)
 
-    # ----------------------------------------------------------------------
     def stop(self):
         """停止策略"""
-        self.copytradeEngine.stop_strategy(self.name)
+        self.customTradingEngine.stop_strategy(self.name)
 
-    """ modify by loe """
-
-    # ----------------------------------------------------------------------
     def reinit(self):
         """重新初始化策略"""
-        self.copytradeEngine.reinit_strategie(self.name)
+        self.customTradingEngine.reinit_strategie(self.name)
 
 
-class CopytradePortfolioManager(QtWidgets.QGroupBox):
-    """跟单交易组合管理组件"""
+class CustomTradingPortfolioManager(QtWidgets.QGroupBox):
+    """自主交易组合管理组件"""
 
     signal = QtCore.pyqtSignal(Event)
 
-    # ----------------------------------------------------------------------
-    def __init__(self, copytradeEngine, eventEngine, copytradeManager, parent=None):
+    def __init__(self, customTradingEngine, eventEngine, customTradingManager, parent=None):
         """Constructor"""
-        super(CopytradePortfolioManager, self).__init__(parent)
+        super(CustomTradingPortfolioManager, self).__init__(parent)
 
-        self.copytradeEngine = copytradeEngine
+        self.customTradingEngine = customTradingEngine
         self.eventEngine = eventEngine
-        self.copytradeManager = copytradeManager
+        self.customTradingManager = customTradingManager
 
         self.strategyLoaded = False
 
         self.initUi()
         self.registerEvent()
 
-    # ----------------------------------------------------------------------
     def initUi(self):
         """初始化界面"""
         self.setTitle("组合管理")
@@ -223,91 +206,80 @@ class CopytradePortfolioManager(QtWidgets.QGroupBox):
 
         self.setLayout(vbox)
 
-    # ----------------------------------------------------------------------
     def updateMonitor(self):
         """显示组合最新状态"""
-        paramDict = self.copytradeEngine.get_portfolio_parameters()
+        paramDict = self.customTradingEngine.get_portfolio_parameters()
         if paramDict:
             self.paramMonitor.updateData(paramDict)
 
-        varDict = self.copytradeEngine.get_portfolio_variables()
+        varDict = self.customTradingEngine.get_portfolio_variables()
         if varDict:
             self.varMonitor.updateData(varDict)
-
-            # ----------------------------------------------------------------------
 
     def updateVar(self, event):
         """更新策略变量"""
         data = event.data
         self.varMonitor.updateData(data)
 
-    # ----------------------------------------------------------------------
     def registerEvent(self):
         """注册事件监听"""
         self.signal.connect(self.updateVar)
         self.eventEngine.register(EVENT_CUSTOMTRADING_PORTFOLIO, self.signal.emit)
 
-    # ----------------------------------------------------------------------
     def load(self, setting_file):
         """加载组合"""
         if not self.strategyLoaded:
-            self.copytradeEngine.init_engine()
+            self.customTradingEngine.init_engine()
 
             # 加载组合
             self.updateMonitor()
 
             # 加载信号
-            self.copytradeManager.initStrategyManager()
+            self.customTradingManager.initStrategyManager()
 
             self.strategyLoaded = True
-            self.copytradeEngine.write_log(text.STRATEGY_LOADED)
+            self.customTradingEngine.write_log(text.STRATEGY_LOADED)
 
-    # ----------------------------------------------------------------------
     def init(self):
         """初始化组合"""
-        self.copytradeEngine.initPortfolio()
+        self.customTradingEngine.initPortfolio()
 
-    # ----------------------------------------------------------------------
     def start(self):
         """启动组合"""
-        self.copytradeEngine.startPortfolio()
+        self.customTradingEngine.startPortfolio()
 
-    # ----------------------------------------------------------------------
     def stop(self):
         """停止组合"""
-        self.copytradeEngine.stopPortfolio()
+        self.customTradingEngine.stopPortfolio()
 
-    # ----------------------------------------------------------------------
     def reinit(self):
         """重新初始化策略"""
-        return
-        self.copytradeEngine.reinit_strategies()
+        pass
 
-
-class CopytradeManager(QtWidgets.QWidget):
+class CustomTradingManager(QtWidgets.QWidget):
     """引擎管理组件"""
 
     signal = QtCore.pyqtSignal(Event)
 
     def __init__(self, mainEngine: MainEngine, eventEngine: EventEngine, parent=None):
-        super(CopytradeManager, self).__init__(parent)
+        super(CustomTradingManager, self).__init__(parent)
 
-        self.copytradeEngine = mainEngine.get_engine(APP_NAME)
+        self.customTradingEngine = mainEngine.get_engine(APP_NAME)
         self.eventEngine = eventEngine
 
         self.initUi()
         self.registerEvent()
 
         # 记录日志
-        self.copytradeEngine.write_log(text.CTA_ENGINE_STARTED)
+        self.customTradingEngine.write_log(text.CTA_ENGINE_STARTED)
 
     def initUi(self):
         """初始化界面"""
-        self.setWindowTitle("跟单交易（API）")
+        self.setWindowTitle("自主交易（API）")
 
         # 组合管理
-        portfolioManager = CopytradePortfolioManager(
-            self.copytradeEngine, self.eventEngine, self
+        portfolioManager = CustomTradingPortfolioManager(
+            self.customTradingEngine, self.eventEngine, self
         )
         portfolioManager.setMaximumHeight(600)
 
@@ -327,16 +299,15 @@ class CopytradeManager(QtWidgets.QWidget):
         vbox.addWidget(self.ctaLogMonitor)
         self.setLayout(vbox)
 
-    # ----------------------------------------------------------------------
     def initStrategyManager(self):
         """初始化策略管理组件界面"""
         w = QtWidgets.QWidget()
         vbox = QtWidgets.QVBoxLayout()
 
-        l = self.copytradeEngine.get_strategy_names()
+        l = self.customTradingEngine.get_strategy_names()
         for name in l:
             strategyManager = CtaStrategyManager(
-                self.copytradeEngine, self.eventEngine, name
+                self.customTradingEngine, self.eventEngine, name
             )
             vbox.addWidget(strategyManager)
 
@@ -345,31 +316,12 @@ class CopytradeManager(QtWidgets.QWidget):
         w.setLayout(vbox)
         self.scrollArea.setWidget(w)
 
-        # ----------------------------------------------------------------------
-
-    def initAll(self):
-        """全部初始化"""
-        self.copytradeEngine.initAll()
-
-        # ----------------------------------------------------------------------
-
-    def startAll(self):
-        """全部启动"""
-        self.copytradeEngine.startAll()
-
-    # ----------------------------------------------------------------------
-    def stopAll(self):
-        """全部停止"""
-        self.copytradeEngine.stopAll()
-
-    # ----------------------------------------------------------------------
     def updateCtaLog(self, event):
         """更新CTA相关日志"""
         log = event.data
         content = "\t".join([str(log.time), log.msg])
         self.ctaLogMonitor.append(content)
 
-    # ----------------------------------------------------------------------
     def registerEvent(self):
         """注册事件监听"""
         self.signal.connect(self.updateCtaLog)

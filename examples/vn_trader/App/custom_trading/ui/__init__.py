@@ -1,1 +1,1 @@
-from .widget import CopytradeManager
+from .widget import CustomTradingManager

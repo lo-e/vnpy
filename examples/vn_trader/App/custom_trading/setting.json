@@ -6,7 +6,7 @@
     {
       "strategy_name": "CUSTOMTRADING_BTC_BINANCE",
       "vt_symbol":"BTCUSDT.BINANCE",
-      "exchange": "OKX",
+      "exchange": "BINANCE",
       "exchange_user": "lo-e（test）",
       "direction":"LONG",
       "long_window":20,

@@ -6,7 +6,7 @@ from vnpy.trader.object import TickData, BarData, TradeData, OrderData
 from vnpy.trader.utility import BarGenerator, ArrayManager
 from .base import APP_NAME
 from vnpy.app.cta_strategy.base import StopOrder
-from .engine import CopytradeEngine
+from .engine import CustomTradingEngine
 
 class CustomTradingApp(BaseApp):
     """"""
@@ -14,6 +14,6 @@ class CustomTradingApp(BaseApp):
     app_module = __module__
     app_path = Path(__file__).parent
     display_name = "自主交易"
-    engine_class = CopytradeEngine
-    widget_name = "CopytradeManager"
-    icon_name = "copytrade_api.ico"
+    engine_class = CustomTradingEngine
+    widget_name = "CustomTradingManager"
+    icon_name = "custom_trading.ico"

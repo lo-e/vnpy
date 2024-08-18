@@ -61,10 +61,8 @@ class CustomTradingStrategy(CtaTemplate):
     ]
 
     def __init__(self, ctaEngine, setting):
-        self.portfolio = ctaEngine.copytradePortfolio # 投资组合管理
-        # self.exchange = Exchange.NONE # 交易所
-        # self.exchange_user = "" # 交易所用户名
-
+        self.portfolio = ctaEngine.customTradingPortfolio # 投资组合管理
+        
         # 完成setting.json参数的配置
         super(CustomTradingStrategy, self).__init__(
             cta_engine=ctaEngine, strategy_name="", vt_symbol="", setting=setting
