@@ -78,6 +78,7 @@ from App.algo_trading import AlgoTradingApp
 from App.marting import MartingApp
 from App.copytrade_by_position import CopytradeByPositionApp
 from App.copytrade_by_api import CopytradeByApiApp
+from App.custom_trading import CustomTradingApp
 import os
 from pathlib import Path
 from vnpy.trader.utility import DIR_SYMBOL
@@ -142,6 +143,7 @@ def main():
     main_engine.add_app(MartingApp)
     main_engine.add_app(CopytradeByPositionApp)
     main_engine.add_app(CopytradeByApiApp)
+    main_engine.add_app(CustomTradingApp)
     # main_engine.add_app(CtaStrategyApp)
     # main_engine.add_app(CtaBacktesterApp)
     # main_engine.add_app(SpreadTradingApp)

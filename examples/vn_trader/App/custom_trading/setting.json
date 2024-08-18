@@ -1,0 +1,23 @@
+{
+  "portfolio":{
+    "name":"CUSTOMTRADING_PORTFOLIO"
+  },
+  "signal": [
+    {
+      "strategy_name": "CUSTOMTRADING_BTC_BINANCE",
+      "vt_symbol":"BTCUSDT.BINANCE",
+      "exchange": "OKX",
+      "exchange_user": "lo-e（test）",
+      "direction":"LONG",
+      "long_window":20,
+      "short_window":5,
+      "max_loss_count":3,
+      "profit_rate":0.3,
+      "loss_rate":0.02,
+      "stop_profit_price":61128,
+      "stop_price_up":62776,
+      "stop_price_down":50000,
+      "start": true
+    }
+  ]
+}
