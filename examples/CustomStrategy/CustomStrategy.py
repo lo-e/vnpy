@@ -64,7 +64,7 @@ class CustomSignal(object):
         self.indicator_inited = False                                                                       # 数据初始化状态
         self.profit_stop = False                                                                            # 止盈状态
         self.loss_count = 0                                                                                 # 止损次数
-
+        self.open_stop = False                                                                              # 停止开新的仓位
         self.next_dt = None                                                                                 # 下一bar的时间，为了测试bar是否缺失
         self.bar = None                                                                                     # 当前最新bar
         self.am = ArrayManager(self.long_window)                                                            # K线容器
@@ -98,6 +98,10 @@ class CustomSignal(object):
             return
         
         if not self.pos:
+            if self.open_stop:
+                # 停止开新的仓位
+                return
+            
             if self.direction == Direction.LONG:
                 if self.bar.high_price >= self.short_up:
                     # 多头开仓
@@ -247,3 +251,7 @@ class CustomSignal(object):
 
         # 突破开仓价格
         self.short_up, self.short_down = self.am.donchian(self.short_window)
+
+        # 判断是否价格突破开仓上限/下限
+        if self.bar.high_price >= self.stop_price_up or self.bar.low_price <= self.stop_price_down:
+            self.open_stop = True
