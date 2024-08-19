@@ -137,8 +137,8 @@ class CustomTradingStrategy(CtaTemplate):
     def on_init(self):
         # 交易所成功连接判断
         gateway = self.cta_engine.main_engine.get_gateway(gateway_name=self.exchange.value, account_name=self.exchange_user)
-        # if not gateway:
-            # exit(f"自主交易策略交易所未连接：{self.exchange}@{self.exchange_user}")
+        if not gateway:
+            exit(f"自主交易策略交易所未连接：{self.exchange}@{self.exchange_user}")
 
     def on_start(self):
         pass
