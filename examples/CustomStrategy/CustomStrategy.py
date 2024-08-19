@@ -252,6 +252,6 @@ class CustomSignal(object):
         # 突破开仓价格
         self.short_up, self.short_down = self.am.donchian(self.short_window)
 
-        # 判断是否价格突破开仓上限/下限
+        # 判断是否价格突破开仓上限/下限，然后停止开新仓位
         if self.bar.high_price >= self.stop_price_up or self.bar.low_price <= self.stop_price_down:
             self.open_stop = True
