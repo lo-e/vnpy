@@ -24,8 +24,8 @@
       "profit_rate":0.3,
       "loss_rate":0.02,
       "stop_profit_price":0.0053073,
-      "stop_price_up":0.0089900,
-      "stop_price_down":0.0053073,
+      "stop_price_up":0.0078523,
+      "stop_price_down":0.0071467,
       "start": true
     }
   ]
