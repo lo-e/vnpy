@@ -641,6 +641,7 @@ class CustomTradingEngine(BaseEngine):
 
         # 创建策略实例
         strategy = CustomTradingStrategy(self, setting)
+        self.customTradingPortfolio.strategy_symbols.add(strategy.vt_symbol)
 
         # 加载同步数据
         self.loadSyncData(strategy)

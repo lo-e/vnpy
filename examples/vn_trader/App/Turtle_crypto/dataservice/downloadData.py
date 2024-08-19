@@ -47,6 +47,11 @@ class TurtleCryptoDataDownloading(object):
         self.loading_complete = True
         pass
 
+    def delete_history_data(self, target_dir: str = ""):
+        csv_path = get_csv_path(target_dir=target_dir)
+        if os.path.exists(csv_path):
+            shutil.rmtree(csv_path)
+
     def remove_thread(self, thread):
         if thread in self.threads:
             self.threads.remove(thread)
@@ -59,14 +64,14 @@ class TurtleCryptoDataDownloading(object):
         from_data_base: bool = False,
         api_check: bool = False,
         save_to: str = "",
+        delete_history_data: bool = True
     ):
         if not to_date:
             to_date = datetime.now() + timedelta(days=2)
 
         # 先删除原有文件夹，包括其中所有内容
-        csv_path = get_csv_path(target_dir=save_to)
-        if os.path.exists(csv_path):
-            shutil.rmtree(csv_path)
+        if delete_history_data:
+            self.delete_history_data(target_dir=save_to)
 
         # 多线程获取数据
         self.loading_complete = False
@@ -102,14 +107,14 @@ class TurtleCryptoDataDownloading(object):
         from_data_base: bool = False,
         api_check: bool = False,
         save_to: str = "",
+        delete_history_data: bool = True
     ):
         if not to_date:
             to_date = datetime.now() + timedelta(days=2)
 
         # 先删除原有文件夹，包括其中所有内容
-        csv_path = get_csv_path(target_dir=save_to)
-        if os.path.exists(csv_path):
-            shutil.rmtree(csv_path)
+        if delete_history_data:
+            self.delete_history_data(target_dir=save_to)
 
         # 多线程获取数据
         self.loading_complete = False
@@ -145,14 +150,14 @@ class TurtleCryptoDataDownloading(object):
         from_data_base: bool = False,
         api_check: bool = False,
         save_to: str = "",
+        delete_history_data: bool = True
     ):
         if not to_date:
             to_date = datetime.now() + timedelta(days=2)
 
         # 先删除原有文件夹，包括其中所有内容
-        csv_path = get_csv_path(target_dir=save_to)
-        if os.path.exists(csv_path):
-            shutil.rmtree(csv_path)
+        if delete_history_data:
+            self.delete_history_data(target_dir=save_to)
 
         # 多线程获取数据
         self.loading_complete = False
