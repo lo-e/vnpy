@@ -63,8 +63,8 @@ class CustomSignal(object):
 
         self.indicator_inited = False                                                                       # 数据初始化状态
         self.profit_stop = False                                                                            # 止盈状态
-        self.loss_count = 0                                                                                 # 止损次数
         self.open_stop = False                                                                              # 停止开新的仓位
+        self.loss_count = 0                                                                                 # 止损次数
         self.next_dt = None                                                                                 # 下一bar的时间，为了测试bar是否缺失
         self.bar = None                                                                                     # 当前最新bar
         self.am = ArrayManager(self.long_window)                                                            # K线容器
@@ -228,7 +228,7 @@ class CustomSignal(object):
         if self.bar.datetime < self.from_dt:
             return
         
-        # 止盈价格
+        # 止损价格
         self.long_up, self.long_down = self.am.donchian(self.long_window)
         if not self.indicator_inited:
             if self.direction == Direction.LONG:

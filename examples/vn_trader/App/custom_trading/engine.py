@@ -208,11 +208,11 @@ class CustomTradingEngine(BaseEngine):
 
         # 策略持仓统计
         if trade.direction == Direction.LONG:
-            self.pos = float(Decimal(str(self.pos)) + Decimal(str(trade.volume)))
+            strategy.pos = float(Decimal(str(strategy.pos)) + Decimal(str(trade.volume)))
 
         else:
-            self.pos = float(Decimal(str(self.pos)) - Decimal(str(trade.volume)))
-        self.pos = round_to(self.pos, contract.min_volume)
+            strategy.pos = float(Decimal(str(strategy.pos)) - Decimal(str(trade.volume)))
+        strategy.pos = round_to(strategy.pos, contract.min_volume)
 
         # 策略响应成交事件
         self.call_strategy_func(strategy, strategy.on_trade, trade)
