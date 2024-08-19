@@ -76,6 +76,13 @@ class CustomTradingStrategy(CtaTemplate):
 
     # 同步列表，保存了需要保存到数据库的变量名称
     syncs = [
+        "virtual_pos",
+        "pos_open_price",
+        "stop_loss_price",
+        "profit_stop",
+        "open_stop",
+        "loss_count",
+        "max_loss_count"
     ]
 
     def __init__(self, ctaEngine, setting):
