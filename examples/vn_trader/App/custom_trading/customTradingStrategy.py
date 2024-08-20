@@ -59,6 +59,7 @@ class CustomTradingStrategy(CtaTemplate):
         "virtual_pos",
         "direction",
         "indicator_inited",
+        "indicator_waiting",
         "bar_loading",
         "bar_lack",
         "bar_loaded_dt",
@@ -130,6 +131,7 @@ class CustomTradingStrategy(CtaTemplate):
         self.short_down = 0                                                                                 # 开仓向下突破价
 
         self.indicator_inited = False                                                                       # 指标初始化状态
+        self.indicator_waiting = False                                                                      # 价格突破long_up或long_down，需要等待下一周期指标更新，才能开仓和加仓
         self.profit_stop = False                                                                            # 止盈状态
         self.open_stop = False                                                                              # 停止开新的仓位
         self.loss_count = 0                                                                                 # 止损次数
@@ -227,6 +229,9 @@ class CustomTradingStrategy(CtaTemplate):
         # 突破开仓价格
         self.short_up, self.short_down = self.am.donchian(self.short_window)
 
+        # 指标已更新
+        self.indicator_waiting = False
+
     def on_tick(self, tick: TickData):
         if not self.trading or self.profit_stop or self.loss_count >= self.max_loss_count:
             return
@@ -239,10 +244,14 @@ class CustomTradingStrategy(CtaTemplate):
         indicator_valid = True
         if not self.long_up or not self.long_down or not self.short_up or not self.short_down:
             indicator_valid = False
+
+        # 判断指标是否需要更新
+        if (self.direction == Direction.LONG and tick.last_price < self.long_down) or (self.direction == Direction.SHORT and tick.last_price > self.long_up):
+            self.indicator_waiting = True
         
         if not self.virtual_pos:
             # 停止开新的仓位判断
-            if self.bar_loading or self.bar_lack or not indicator_valid or not self.indicator_inited or self.open_stop:
+            if self.bar_loading or self.bar_lack or not indicator_valid or self.indicator_waiting or not self.indicator_inited or self.open_stop:
                 return
             
             if self.direction == Direction.LONG:
@@ -299,7 +308,7 @@ class CustomTradingStrategy(CtaTemplate):
                 
                 if tick.last_price >= self.short_up:
                     # 停止加仓判断
-                    if self.bar_loading or self.bar_lack or not indicator_valid:
+                    if self.bar_loading or self.bar_lack or not indicator_valid or self.indicator_waiting:
                         return
             
                     # 多头加仓
@@ -342,7 +351,7 @@ class CustomTradingStrategy(CtaTemplate):
                 
                 if tick.last_price <= self.short_down:
                     # 停止加仓判断
-                    if self.bar_loading or self.bar_lack or not indicator_valid:
+                    if self.bar_loading or self.bar_lack or not indicator_valid or self.indicator_waiting:
                         return
                     
                     # 空头加仓
