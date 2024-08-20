@@ -234,10 +234,15 @@ class CustomTradingStrategy(CtaTemplate):
         # 判断是否价格突破开仓上限/下限，然后停止开新仓位
         if tick.last_price >= self.stop_price_up or tick.last_price <= self.stop_price_down:
             self.open_stop = True
+
+        # 判断是否指标变量数值正常
+        indicator_valid = True
+        if not self.long_up or not self.long_down or not self.short_up or not self.short_down:
+            indicator_valid = False
         
         if not self.virtual_pos:
             # 停止开新的仓位判断
-            if self.open_stop or self.bar_loading or self.bar_lack or not self.indicator_inited:
+            if self.bar_loading or self.bar_lack or not indicator_valid or not self.indicator_inited or self.open_stop:
                 return
             
             if self.direction == Direction.LONG:
@@ -294,7 +299,7 @@ class CustomTradingStrategy(CtaTemplate):
                 
                 if tick.last_price >= self.short_up:
                     # 停止加仓判断
-                    if self.bar_loading or self.bar_lack:
+                    if self.bar_loading or self.bar_lack or not indicator_valid:
                         return
             
                     # 多头加仓
@@ -337,7 +342,7 @@ class CustomTradingStrategy(CtaTemplate):
                 
                 if tick.last_price <= self.short_down:
                     # 停止加仓判断
-                    if self.bar_loading or self.bar_lack:
+                    if self.bar_loading or self.bar_lack or not indicator_valid:
                         return
                     
                     # 空头加仓
