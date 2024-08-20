@@ -67,6 +67,7 @@ class CustomTradingStrategy(CtaTemplate):
         "short_up",
         "short_down",
         "pos_open_price",
+        "pos_open_dt",
         "stop_loss_price",
         "profit_stop",
         "open_stop",
@@ -78,6 +79,7 @@ class CustomTradingStrategy(CtaTemplate):
     syncs = [
         "virtual_pos",
         "pos_open_price",
+        "pos_open_dt",
         "stop_loss_price",
         "profit_stop",
         "open_stop",
@@ -119,6 +121,7 @@ class CustomTradingStrategy(CtaTemplate):
 
         self.virtual_pos = 0                                                                                # 虚拟持仓
         self.pos_open_price = 0                                                                             # 开仓价格
+        self.pos_open_dt = None                                                                             # 开仓时的bar时间
         self.stop_loss_price = 0                                                                            # 持仓止损价格
         
         self.long_up = 0                                                                                    # 止损最高价
@@ -248,6 +251,7 @@ class CustomTradingStrategy(CtaTemplate):
                         volume = value / pos_open_price
                         self.send_order(Direction.LONG, Offset.OPEN, trade_price, volume)
                         self.pos_open_price = pos_open_price
+                        self.pos_open_dt = self.bar.datetime
                         self.stop_loss_price = self.long_down
                         return
             
@@ -262,6 +266,7 @@ class CustomTradingStrategy(CtaTemplate):
                         volume = value / pos_open_price
                         self.send_order(Direction.SHORT, Offset.OPEN, trade_price, volume)
                         self.pos_open_price = pos_open_price
+                        self.pos_open_dt = self.bar.datetime
                         self.stop_loss_price = self.long_up
                         return
 
@@ -272,6 +277,7 @@ class CustomTradingStrategy(CtaTemplate):
                     trade_price = tick.last_price * 0.995
                     self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(self.virtual_pos))
                     self.pos_open_price = 0
+                    self.pos_open_dt = None
                     self.stop_loss_price = 0
                     self.profit_stop = True
                     return
@@ -281,6 +287,7 @@ class CustomTradingStrategy(CtaTemplate):
                     trade_price = tick.last_price * 0.995
                     self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(self.virtual_pos))
                     self.pos_open_price = 0
+                    self.pos_open_dt = None
                     self.stop_loss_price = 0
                     self.loss_count += 1
                     return
@@ -302,6 +309,7 @@ class CustomTradingStrategy(CtaTemplate):
                             if add_volume > 0:
                                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, add_volume)
                                 self.pos_open_price = pos_open_price
+                                self.pos_open_dt = self.bar.datetime
                                 self.stop_loss_price = self.long_down
                                 self.max_loss_count += 1
                                 return
@@ -312,6 +320,7 @@ class CustomTradingStrategy(CtaTemplate):
                     trade_price = tick.last_price * 1.005
                     self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(self.virtual_pos))
                     self.pos_open_price = 0
+                    self.pos_open_dt = None
                     self.stop_loss_price = 0
                     self.profit_stop = True
                     return
@@ -321,6 +330,7 @@ class CustomTradingStrategy(CtaTemplate):
                     trade_price = tick.last_price * 1.005
                     self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(self.virtual_pos))
                     self.pos_open_price = 0
+                    self.pos_open_dt = None
                     self.stop_loss_price = 0
                     self.loss_count += 1
                     return
@@ -342,6 +352,7 @@ class CustomTradingStrategy(CtaTemplate):
                             if add_volume > 0:
                                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, add_volume)
                                 self.pos_open_price = pos_open_price
+                                self.pos_open_dt = self.bar.datetime
                                 self.stop_loss_price = self.long_up
                                 self.max_loss_count += 1
                                 return
