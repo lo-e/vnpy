@@ -17,7 +17,7 @@
       "loss_rate":0.02,
       "stop_profit_price":63861,
       "stop_price_up":61815,
-      "stop_price_down":59835,
+      "stop_price_down":56051,
       "start": true
     },
     {
@@ -32,8 +32,8 @@
       "profit_rate":0.3,
       "loss_rate":0.02,
       "stop_profit_price":0.000009193,
-      "stop_price_up":0.000008532,
-      "stop_price_down":0.000007596,
+      "stop_price_up":0.000008296,
+      "stop_price_down":0.000007299,
       "start": true
     }
   ]
