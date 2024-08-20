@@ -5,9 +5,9 @@
   },
   "signal": [
     {
-      "strategy_name": "CUSTOMTRADING_BTC_BINANCE",
-      "vt_symbol":"BTCUSDT.BINANCE",
-      "exchange": "BINANCE",
+      "strategy_name": "CUSTOMTRADING_BTC_OKX",
+      "vt_symbol":"BTC-USDT-SWAP.OKX",
+      "exchange": "OKX",
       "exchange_user": "lo-e（test）",
       "direction":"LONG",
       "long_window":20,
