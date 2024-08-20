@@ -12,7 +12,8 @@ from App.Turtle_crypto.dataservice import TurtleCryptoDataDownloading
 
 class CustomTradingPortfolio(object):
     """ 自主交易组合管理 """
-    parameters = ["name"]
+    parameters = ["name",
+                  "portfolioValue"]
 
     variables = [
         "inited",

@@ -1,6 +1,7 @@
 {
   "portfolio":{
-    "name":"CUSTOMTRADING_PORTFOLIO"
+    "name":"CUSTOMTRADING_PORTFOLIO",
+    "portfolioValue":1000
   },
   "signal": [
     {
