@@ -1,6 +1,6 @@
 # encoding: UTF-8
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from copy import copy
 from time import time, sleep
 from threading import Thread
@@ -32,7 +32,7 @@ class CustomTradingPortfolio(object):
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()        # 数据下载引擎
-        self.downloading_at = -1                                    # 记录开始下载的分钟时间点
+        self.downloading_at = None                                  # 记录开始下载的分钟时间点
 
         # 设置参数
         for name in self.parameters:
@@ -41,8 +41,11 @@ class CustomTradingPortfolio(object):
 
     def on_init(self):
         # 下载数据
-        time_minute = datetime.now().minute
-        self.downloading_at = time_minute
+        latest_dt = datetime.now().replace(second=0, microsecond=0)
+        while (latest_dt.minute + 1) % 5:
+            latest_dt = latest_dt + timedelta(minutes=1)
+        latest_dt = latest_dt - timedelta(minutes=5)
+        self.downloading_at = latest_dt
         thread = Thread(target=self.download_data)
         thread.start()
 
@@ -54,9 +57,12 @@ class CustomTradingPortfolio(object):
 
     def on_timer(self):
         # 每隔五分钟下载
-        time_minute = datetime.now().minute
-        if not time_minute % 5 and self.downloading_at != time_minute and not len(self.download_engine.threads):
-            self.downloading_at = time_minute
+        latest_dt = datetime.now().replace(second=0, microsecond=0)
+        while (latest_dt.minute + 1) % 5:
+            latest_dt = latest_dt + timedelta(minutes=1)
+        latest_dt = latest_dt - timedelta(minutes=5)
+        if self.downloading_at != latest_dt and not len(self.download_engine.threads):
+            self.downloading_at = latest_dt
             thread = Thread(target=self.download_data)
             thread.start()
 
