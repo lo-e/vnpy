@@ -265,7 +265,7 @@ class CustomTradingStrategy(CtaTemplate):
                         volume = value / pos_open_price
                         self.send_order(Direction.LONG, Offset.OPEN, trade_price, volume)
                         self.pos_open_price = pos_open_price
-                        self.pos_open_dt = self.bar.datetime
+                        self.pos_open_dt = self.bar.datetime.strftime("%Y-%m-%d %H:%M:%S")
                         self.stop_loss_price = self.long_down
                         return
                     
@@ -286,7 +286,7 @@ class CustomTradingStrategy(CtaTemplate):
                         volume = value / pos_open_price
                         self.send_order(Direction.SHORT, Offset.OPEN, trade_price, volume)
                         self.pos_open_price = pos_open_price
-                        self.pos_open_dt = self.bar.datetime
+                        self.pos_open_dt = self.bar.datetime.strftime("%Y-%m-%d %H:%M:%S")
                         self.stop_loss_price = self.long_up
                         return
                     
@@ -335,7 +335,7 @@ class CustomTradingStrategy(CtaTemplate):
                             if add_volume > 0:
                                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, add_volume)
                                 self.pos_open_price = pos_open_price
-                                self.pos_open_dt = self.bar.datetime
+                                self.pos_open_dt = self.bar.datetime.strftime("%Y-%m-%d %H:%M:%S")
                                 self.stop_loss_price = self.long_down
                                 self.max_loss_count += 1
                                 return
@@ -378,7 +378,7 @@ class CustomTradingStrategy(CtaTemplate):
                             if add_volume > 0:
                                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, add_volume)
                                 self.pos_open_price = pos_open_price
-                                self.pos_open_dt = self.bar.datetime
+                                self.pos_open_dt = self.bar.datetime.strftime("%Y-%m-%d %H:%M:%S")
                                 self.stop_loss_price = self.long_up
                                 self.max_loss_count += 1
                                 return
