@@ -268,12 +268,6 @@ class CustomTradingStrategy(CtaTemplate):
                         self.pos_open_dt = self.bar.datetime.strftime("%Y-%m-%d %H:%M:%S")
                         self.stop_loss_price = self.long_down
                         return
-                    
-                    else:
-                        """ fake """
-                        profit_ = ((self.stop_profit_price / pos_open_price) - 1) * lever
-                        msg = f"预期盈利为满足，开仓失败\n{self.vt_symbol}\n{self.direction.value}\n{self.bar.datetime}\n{profit_}"
-                        self.send_ding_talk(msg)
             
             else:
                 if tick.last_price <= self.short_down:
@@ -289,12 +283,6 @@ class CustomTradingStrategy(CtaTemplate):
                         self.pos_open_dt = self.bar.datetime.strftime("%Y-%m-%d %H:%M:%S")
                         self.stop_loss_price = self.long_up
                         return
-                    
-                    else:
-                        """ fake """
-                        profit_ = ((self.stop_profit_price / pos_open_price) - 1) * lever
-                        msg = f"预期盈利为满足，开仓失败\n{self.vt_symbol}\n{self.direction.value}\n{self.bar.datetime}\n{profit_}"
-                        self.send_ding_talk(msg)
 
         else:
             if self.direction == Direction.LONG:
