@@ -157,7 +157,7 @@ class CustomTradingStrategy(CtaTemplate):
         while (data_to.minute + 1) % 5:
             data_to = data_to + timedelta(minutes=1)
         data_to = data_to - timedelta(minutes=5)
-        if data_to == self.bar_loaded_dt:
+        if data_to - timedelta(minutes=4) == self.bar_loaded_dt:
             # 该周期bar数据已经导入完成
             return
 
@@ -198,7 +198,7 @@ class CustomTradingStrategy(CtaTemplate):
 
         # 更新状态（bar数据加载完毕）
         self.bar_lack = False
-        self.bar_loaded_dt = data_to
+        self.bar_loaded_dt = data_to - timedelta(minutes=4)
         self.bar_loading = False
 
         # 计算指标
