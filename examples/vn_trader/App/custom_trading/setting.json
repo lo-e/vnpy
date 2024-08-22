@@ -51,6 +51,22 @@
       "stop_price_up":0.719,
       "stop_price_down":0.641,
       "start": true
+    },
+    {
+      "strategy_name": "CUSTOMTRADING_ULTI_OKX",
+      "vt_symbol":"ULTI-USDT-SWAP.OKX",
+      "exchange": "OKX",
+      "exchange_user": "lo-e（test）",
+      "direction":"LONG",
+      "long_window":20,
+      "short_window":5,
+      "max_loss_count":3,
+      "profit_rate":0.3,
+      "loss_rate":0.02,
+      "stop_profit_price":0.04142,
+      "stop_price_up":0.02956,
+      "stop_price_down":0.02441,
+      "start": true
     }
   ]
 }
