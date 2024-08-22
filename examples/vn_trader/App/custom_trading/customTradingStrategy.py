@@ -423,7 +423,7 @@ class CustomTradingStrategy(CtaTemplate):
         
         # 平仓订单数量处理
         if offset != Offset.OPEN:
-            volume = min(volume, self.pos)
+            volume = min(volume, abs(self.pos))
         
         # 发出订单
         super().send_order(direction, offset, price, volume)
