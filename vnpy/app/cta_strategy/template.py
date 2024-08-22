@@ -448,6 +448,10 @@ class CtaTemplate(ABC):
     def do_save_order(self, order_dict:dict):
         try:
             strategy_variables = self.get_variables()
+            for key, value in strategy_variables.items():
+                if isinstance(value, Enum):
+                    strategy_variables[key] = value.value
+
             d = {'datetime':datetime.now(),
                  'order_data':order_dict,
                  'variables':strategy_variables}
@@ -465,6 +469,10 @@ class CtaTemplate(ABC):
     def do_save_trade(self, trade_dic:dict):
         try:
             strategy_variables = self.get_variables()
+            for key, value in strategy_variables.items():
+                if isinstance(value, Enum):
+                    strategy_variables[key] = value.value
+
             d = {'datetime':datetime.now(),
                  'trade_data':trade_dic,
                  'variables':strategy_variables}
