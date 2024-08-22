@@ -104,7 +104,7 @@ class CustomTradingStrategy(CtaTemplate):
             self.exchange = Exchange.BINANCE
         
         else:
-            exit(f"交易所配置错误：{self.exchange}")
+            raise(f"交易所配置错误：{self.exchange}")
 
         # 交易方向配置判断
         if self.direction == "LONG":
@@ -114,7 +114,7 @@ class CustomTradingStrategy(CtaTemplate):
             self.direction = Direction.SHORT
 
         else:
-            exit(f"交易方向配置错误：{self.direction}")
+            raise(f"交易方向配置错误：{self.direction}")
 
         self.bar_loading = False                                                                            # 正在加载bar数据
         self.bar_lack = True                                                                                # bar缺失
@@ -143,7 +143,7 @@ class CustomTradingStrategy(CtaTemplate):
         # 交易所成功连接判断
         gateway = self.cta_engine.main_engine.get_gateway(gateway_name=self.exchange.value, account_name=self.exchange_user)
         if not gateway:
-            exit(f"自主交易策略交易所未连接：{self.exchange}@{self.exchange_user}")
+            raise(f"自主交易策略交易所未连接：{self.exchange}@{self.exchange_user}")
 
     def on_start(self):
         pass
