@@ -9,7 +9,7 @@ from dataservice.OKXDataService import okx_get_symbol_list, OKXType, okx_get_fir
 from vnpy.trader.constant import Interval
 from datetime import datetime, timedelta
 from time import sleep
-from dataservice.utility import get_instruments_list
+from threading import Thread
 
 class DownloadUtility(object):
     def __init__(self) -> None:
@@ -223,7 +223,43 @@ class DownloadUtility(object):
             # print('\n\n' + lost_msg + back_msg)
 
     def update_data_signal(self):
-        pass
+        # OKX合约列表
+        okx_contract_list = okx_get_symbol_list(type=OKXType.USDT)
+        print(f"OKX合约总数：{len(okx_contract_list)}")
+        
+        # BINANCE合约列表
+        binance_contract_list = binance_get_symbol_list()
+        print(f"BINANCE合约总数：{len(binance_contract_list)}")
+
+        # 下载起止日期
+        days = 5
+        to_date = datetime.now() + timedelta(days=2)
+
+        # 是否从数据库最新数据日期开始
+        from_data_base = True
+
+        # 下载引擎
+        dataDownload = TurtleCryptoDataDownloading()
+
+        # 先清空历史下载数据 
+        dataDownload.delete_history_data()
+
+        # 开始下载
+        thread = Thread(target=dataDownload.download_from_okx, args=(okx_contract_list, days, to_date, from_data_base, False, "", False))
+        thread.start()
+
+        thread = Thread(target=dataDownload.download_from_binance, args=(binance_contract_list, days, to_date, from_data_base, False, "", False))
+        thread.start()
+
+        # 检查数据更新完成
+        complete_check_time = 0
+        while True:
+            sleep(1)
+            if not len(dataDownload.threads):
+                complete_check_time += 1
+                if complete_check_time >= 5:
+                    print(f"更新数据完成：{datetime.now()}")
+                    break
 
 if __name__ == "__main__":
     utility = DownloadUtility()
