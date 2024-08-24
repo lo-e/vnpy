@@ -9,6 +9,9 @@ from queue import Queue, Empty
 from vnpy.trader.utility import round_to, floor_to, ceil_to, load_json_path
 from vnpy.trader.object import SubscribeRequest
 from App.Turtle_crypto.dataservice import TurtleCryptoDataDownloading
+from vnpy.trader.constant import Direction, Offset
+
+DEFAULT_MAX_LOSS_COUNT = 3
 
 class CustomTradingPortfolio(object):
     """ 自主交易组合管理 """
@@ -17,10 +20,16 @@ class CustomTradingPortfolio(object):
 
     variables = [
         "inited",
-        "starting"
+        "starting",
+        "category_trading_dict",
+        "category_loss_dict",
+        "category_max_loss_count"
     ]
 
     syncs = [
+        "category_trading_dict",
+        "category_loss_dict",
+        "category_max_loss_count"
     ]
 
     def __init__(self, engine, setting):
@@ -29,6 +38,9 @@ class CustomTradingPortfolio(object):
         self.inited = False
         self.starting = False
         self.strategy_symbols = set()
+        self.category_trading_dict = {}
+        self.category_loss_dict = {}
+        self.category_max_loss_count = {}
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()        # 数据下载引擎
@@ -97,6 +109,38 @@ class CustomTradingPortfolio(object):
                 self.download_engine.download_from_bybit(
                     contract_list=exchange_symbols, days=1, from_data_base=True, save_to=self.name, delete_history_data=False
                 )
+
+    def send_order(self, strategy, direction, offset, price, volume, stop_loss):
+        result = False
+        trading_strategy_name = self.category_trading_dict.get(strategy.category, "")
+        if direction == Direction.OPEN:
+            # 开仓订单
+            if not trading_strategy_name:
+                if self.category_loss_dict.get(strategy.category, 0) < self.category_max_loss_count.get(strategy.category, DEFAULT_MAX_LOSS_COUNT):
+                    self.category_trading_dict[strategy.category] = strategy.strategy_name
+                    result = True
+
+            if trading_strategy_name == strategy.strategy_name:
+                # 加仓
+                max_loss_count = self.category_max_loss_count.get(strategy.category, DEFAULT_MAX_LOSS_COUNT)
+                self.category_max_loss_count[strategy.category] = max_loss_count + 1
+                result = True
+
+        else:
+            # 平仓订单
+            if trading_strategy_name == strategy.strategy_name:
+                self.category_trading_dict[strategy.category] = ""
+
+                # 止损平仓
+                if stop_loss:
+                    category_loss = self.category_loss_dict.get(strategy.category, 0)
+                    self.category_loss_dict[strategy.category] = category_loss + 1
+
+                result = True
+
+        if result:
+            # 发送订单
+            strategy.send_server_order(direction, offset, price, volume)
 
     def send_ding_talk(self, content):
         # 推送钉钉消息

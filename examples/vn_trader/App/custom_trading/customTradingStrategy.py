@@ -44,6 +44,7 @@ class CustomTradingStrategy(CtaTemplate):
         "exchange",
         "exchange_user",
         "direction",
+        "category",
         "long_window",
         "short_window",
         "max_loss_count",
@@ -301,7 +302,7 @@ class CustomTradingStrategy(CtaTemplate):
                 if tick.last_price <= self.stop_loss_price:
                     # 多头止损
                     trade_price = tick.last_price * 0.995
-                    self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(self.virtual_pos))
+                    self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(self.virtual_pos), stop_loss=True)
                     self.pos_open_price = 0
                     self.pos_open_dt = None
                     self.stop_loss_price = 0
@@ -346,7 +347,7 @@ class CustomTradingStrategy(CtaTemplate):
                 if tick.last_price >= self.stop_loss_price:
                     # 空头止损
                     trade_price = tick.last_price * 1.005
-                    self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(self.virtual_pos))
+                    self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(self.virtual_pos), stop_loss=True)
                     self.pos_open_price = 0
                     self.pos_open_dt = None
                     self.stop_loss_price = 0
@@ -377,7 +378,7 @@ class CustomTradingStrategy(CtaTemplate):
                                 self.max_loss_count += 1
                                 return
 
-    def send_order(self, direction, offset, price, volume):
+    def send_order(self, direction, offset, price, volume, stop_loss: bool=False):
         # 撤回历史订单
         self.cancel_all()
 
@@ -432,6 +433,9 @@ class CustomTradingStrategy(CtaTemplate):
             volume = min(volume, abs(self.pos))
         
         # 发出订单
+        self.portfolio.send_order(self, direction, offset, price, volume, stop_loss)
+    
+    def send_server_order(self, direction, offset, price, volume):
         super().send_order(direction, offset, price, volume)
 
     def on_trade(self, trade):
