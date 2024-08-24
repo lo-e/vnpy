@@ -260,6 +260,7 @@ class CustomTradingStrategy(CtaTemplate):
                     pos_open_price = tick.last_price
                     trade_price = tick.last_price * 1.005
                     lever = self.loss_rate / abs(((self.long_down / pos_open_price) - 1))
+                    lever = min(lever, 20)
                     if ((self.stop_profit_price / pos_open_price) - 1) * lever >= self.profit_rate:
                         value = self.portfolio.portfolioValue * lever
                         volume = value / pos_open_price
@@ -275,6 +276,7 @@ class CustomTradingStrategy(CtaTemplate):
                     pos_open_price = tick.last_price
                     trade_price = tick.last_price * 0.995
                     lever = self.loss_rate / abs(((self.long_up / pos_open_price) - 1))
+                    lever = min(lever, 20)
                     if (1 - (self.stop_profit_price / pos_open_price)) * lever >= self.profit_rate:
                         value = self.portfolio.portfolioValue * lever
                         volume = value / pos_open_price
@@ -317,7 +319,9 @@ class CustomTradingStrategy(CtaTemplate):
                         trade_price = tick.last_price * 1.005
                         if 1 / abs(((self.long_down / pos_open_price) - 1)) >= 1.5 / abs(((self.stop_loss_price / self.pos_open_price) - 1)):
                             # 满足多头加仓条件
-                            value = self.portfolio.portfolioValue * self.loss_rate / abs(((self.long_down / pos_open_price) - 1))
+                            lever = self.loss_rate / abs(((self.long_down / pos_open_price) - 1))
+                            lever = min(lever, 20)
+                            value = self.portfolio.portfolioValue * lever
                             volume = value / pos_open_price
                             add_volume = volume - abs(self.pos)
                             if add_volume > 0:
@@ -360,7 +364,9 @@ class CustomTradingStrategy(CtaTemplate):
                         trade_price = tick.last_price * 0.995
                         if 1 / abs(((self.long_up / pos_open_price) - 1)) >= 1.5 / abs(((self.stop_loss_price / self.pos_open_price) - 1)):
                             # 满足空头加仓条件
-                            value = self.portfolio.portfolioValue * self.loss_rate / abs(((self.long_up / pos_open_price) - 1))
+                            lever = self.loss_rate / abs(((self.long_up / pos_open_price) - 1))
+                            lever = min(lever, 20)
+                            value = self.portfolio.portfolioValue * lever
                             volume = value / pos_open_price
                             add_volume = volume - abs(self.pos)
                             if add_volume > 0:
