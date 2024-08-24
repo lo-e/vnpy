@@ -13,7 +13,7 @@ from threading import Thread
 
 class DownloadUtility(object):
     def __init__(self) -> None:
-        pass
+        self.update_data_hour = -1              # 上次更新数据的时间
     
     def get_instruments_list(self):
         # 获取OKX合约列表
@@ -223,44 +223,52 @@ class DownloadUtility(object):
             # print('\n\n' + lost_msg + back_msg)
 
     def update_data_signal(self):
-        # OKX合约列表
-        okx_contract_list = okx_get_symbol_list(type=OKXType.USDT)
-        print(f"OKX合约总数：{len(okx_contract_list)}")
-        
-        # BINANCE合约列表
-        binance_contract_list = binance_get_symbol_list()
-        print(f"BINANCE合约总数：{len(binance_contract_list)}")
-
-        # 下载起止日期
-        days = 5
-        to_date = datetime.now() + timedelta(days=2)
-
-        # 是否从数据库最新数据日期开始
-        from_data_base = True
-
         # 下载引擎
         dataDownload = TurtleCryptoDataDownloading()
 
-        # 先清空历史下载数据 
-        dataDownload.delete_history_data()
-
-        # 开始下载
-        thread = Thread(target=dataDownload.download_from_okx, args=(okx_contract_list, days, to_date, from_data_base, False, "", False))
-        thread.start()
-
-        thread = Thread(target=dataDownload.download_from_binance, args=(binance_contract_list, days, to_date, from_data_base, False, "", False))
-        thread.start()
-
-        # 检查数据更新完成
-        complete_check_time = 0
         while True:
-            sleep(1)
-            if not len(dataDownload.threads):
-                complete_check_time += 1
-                if complete_check_time >= 5:
-                    print(f"更新数据完成：{datetime.now()}")
-                    break
+            current_minute = datetime.now().minute
+            current_hour = datetime.now().hour
+            if current_hour != self.update_data_hour and current_minute >= 1 and not len(dataDownload.threads):
+                self.update_data_hour = current_hour
 
+                # OKX合约列表
+                okx_contract_list = okx_get_symbol_list(type=OKXType.USDT)
+                print(f"OKX合约总数：{len(okx_contract_list)}")
+                
+                # BINANCE合约列表
+                binance_contract_list = binance_get_symbol_list()
+                print(f"BINANCE合约总数：{len(binance_contract_list)}")
+
+                # 下载起止日期
+                days = 5
+                to_date = datetime.now() + timedelta(days=2)
+
+                # 是否从数据库最新数据日期开始
+                from_data_base = True
+
+                # 先清空历史下载数据 
+                dataDownload.delete_history_data()
+
+                # 开始下载
+                thread = Thread(target=dataDownload.download_from_okx, args=(okx_contract_list, days, to_date, from_data_base, False, "", False))
+                thread.start()
+
+                thread = Thread(target=dataDownload.download_from_binance, args=(binance_contract_list, days, to_date, from_data_base, False, "", False))
+                thread.start()
+
+                # 检查数据更新完成
+                complete_check_time = 0
+                while True:
+                    sleep(1)
+                    if not len(dataDownload.threads):
+                        complete_check_time += 1
+                        if complete_check_time >= 5:
+                            print(f"更新数据完成：{datetime.now()}")
+                            break
+
+            sleep(10)
+            
 if __name__ == "__main__":
     utility = DownloadUtility()
 
