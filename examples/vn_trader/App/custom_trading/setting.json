@@ -13,12 +13,12 @@
       "long_window":20,
       "short_window":5,
       "max_loss_count":3,
-      "profit_rate":0.3,
+      "profit_rate":0.4,
       "loss_rate":0.02,
-      "stop_profit_price":66161,
-      "stop_price_up":61815,
-      "stop_price_down":56051,
-      "start": false
+      "stop_profit_price":67739,
+      "stop_price_up":65872,
+      "stop_price_down":62671,
+      "start": true
     },
     {
       "strategy_name": "CUSTOMTRADING_PEPE_OKX",
@@ -29,12 +29,12 @@
       "long_window":20,
       "short_window":5,
       "max_loss_count":3,
-      "profit_rate":0.3,
+      "profit_rate":0.9,
       "loss_rate":0.02,
-      "stop_profit_price":0.000007702,
-      "stop_price_up":0.000008296,
-      "stop_price_down":0.000007516,
-      "start": false
+      "stop_profit_price":0.000011366,
+      "stop_price_up":0.000010098,
+      "stop_price_down":0.000008597,
+      "start": true
     },
     {
       "strategy_name": "CUSTOMTRADING_LQTY_OKX",
@@ -50,23 +50,7 @@
       "stop_profit_price":0.612,
       "stop_price_up":0.719,
       "stop_price_down":0.641,
-      "start": true
-    },
-    {
-      "strategy_name": "CUSTOMTRADING_ULTI_OKX",
-      "vt_symbol":"ULTI-USDT-SWAP.OKX",
-      "exchange": "OKX",
-      "exchange_user": "lo-e（test）",
-      "direction":"LONG",
-      "long_window":20,
-      "short_window":5,
-      "max_loss_count":3,
-      "profit_rate":0.3,
-      "loss_rate":0.02,
-      "stop_profit_price":0.04142,
-      "stop_price_up":0.02956,
-      "stop_price_down":0.02441,
-      "start": true
+      "start": false
     }
   ]
 }
