@@ -14,6 +14,14 @@ from pymongo import MongoClient
 from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 from vnpy.trader.constant import Exchange
 from vnpy.trader.object import BarData
+import pandas as pd
+from vnpy.trader.utility import DIR_SYMBOL
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Paragraph
+from reportlab.platypus import Spacer
 
 class DownloadUtility(object):
     def __init__(self) -> None:
@@ -274,25 +282,178 @@ class DownloadUtility(object):
                             break
                 
                 # 每隔4h分析市场行情
-                current_hour = datetime.now().hour
                 if not current_hour % 4:
-                    for okx_contract in okx_contract_list:
-                        vt_symbol = f"{okx_contract}.OKX"
-                        start_dt = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(hours=4)
-                        end_dt = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(minutes=1)
-                        flt = {'datetime':{'$gte':self.startDt,
-                                           '$lte':self.endDt}}
-                        collection = db[vt_symbol]
-                        cursor = collection.find(flt).sort('datetime')
-                        open_price = 0
-                        close_price = 0
-                        for d in cursor:
-                            exchange = Exchange.NONE
-                            bar = BarData(gateway_name = '', symbol = '', exchange = exchange, datetime = None, endDatetime = None)
-                            bar.__dict__ = d
-                            if not open_price:
-                                open_price = bar.open_price
-                            close_price = bar.close_price
+                    for exchange in ["OKX", "BINANCE"]:
+                        contract_rate_dict = {}
+                        contract_list = []
+
+                        if exchange == "OKX":
+                            contract_list = okx_contract_list
+
+                        elif exchange == "BINANCE":
+                            contract_list = binance_contract_list
+
+                        for contract in contract_list:
+                            if exchange == "OKX":
+                                vt_symbol = f"{contract}.OKX"
+
+                            elif exchange == "BINANCE":
+                                vt_symbol = f"{contract}.BINANCE"
+                            
+                            start_dt = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(hours=4)
+                            end_dt = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(minutes=1)
+                            flt = {'datetime':{'$gte':start_dt,
+                                            '$lte':end_dt}}
+                            collection = db[vt_symbol]
+                            cursor = collection.find(flt).sort('datetime')
+                            open_price = 0
+                            close_price = 0
+                            for d in cursor:
+                                exchange = Exchange.NONE
+                                bar = BarData(gateway_name = '', symbol = '', exchange = exchange, datetime = None, endDatetime = None)
+                                bar.__dict__ = d
+                                if not open_price:
+                                    open_price = bar.open_price
+                                close_price = bar.close_price
+
+                            if open_price:
+                                rate = close_price / open_price - 1
+                                if exchange == "OKX":
+                                    pure_symbol = vt_symbol.split("-")[0]
+
+                                elif exchange == "BINANCE":
+                                    pure_symbol = vt_symbol.split("USDT")[0]
+                                
+                                contract_rate_dict[pure_symbol] = rate
+
+                        if contract_rate_dict:
+                            # BTC、ETH涨跌幅
+                            btc_rate = contract_rate_dict["BTC"]
+                            contract_rate_dict.pop("BTC")
+                            eth_rate = contract_rate_dict["ETH"]
+                            contract_rate_dict.pop("ETH")
+
+                            # 转换成dataframe
+                            df_rates = pd.DataFrame.from_dict(contract_rate_dict, orient='index', columns=['rate'])
+                            df_rates.index.name = 'contract'
+                            df_rates.reset_index(inplace=True)
+                            
+                            # 筛选并排序
+                            filtered_df_rise1 = df_rates[(df_rates['rate'] >= 0.09)].copy()
+                            filtered_df_rise1 = filtered_df_rise1.sort_values(by='rate', ascending=False)
+                            filtered_df_rise1.loc[:, 'rate'] = filtered_df_rise1['rate'].apply(lambda x: f"{x*100:.2f}%")
+
+                            filtered_df_rise2 = df_rates[(df_rates['rate'] >= 0.06) & (df_rates['rate'] < 0.09)].copy()
+                            filtered_df_rise2 = filtered_df_rise2.sort_values(by='rate', ascending=False)
+                            filtered_df_rise2.loc[:, 'rate'] = filtered_df_rise2['rate'].apply(lambda x: f"{x*100:.2f}%")
+
+                            filtered_df_rise3 = df_rates[(df_rates['rate'] >= 0.03) & (df_rates['rate'] < 0.06)].copy()
+                            filtered_df_rise3 = filtered_df_rise3.sort_values(by='rate', ascending=False)
+                            filtered_df_rise3.loc[:, 'rate'] = filtered_df_rise3['rate'].apply(lambda x: f"{x*100:.2f}%")
+
+                            filtered_df_fall1 = df_rates[(df_rates['rate'] <= -0.09)].copy()
+                            filtered_df_fall1 = filtered_df_fall1.sort_values(by='rate', ascending=False)
+                            filtered_df_fall1.loc[:, 'rate'] = filtered_df_fall1['rate'].apply(lambda x: f"{x*100:.2f}%")
+
+                            filtered_df_fall2 = df_rates[(df_rates['rate'] <= -0.06) & (df_rates['rate'] > -0.09)].copy()
+                            filtered_df_fall2 = filtered_df_fall2.sort_values(by='rate', ascending=False)
+                            filtered_df_fall2.loc[:, 'rate'] = filtered_df_fall2['rate'].apply(lambda x: f"{x*100:.2f}%")
+
+                            filtered_df_fall3 = df_rates[(df_rates['rate'] <= -0.03) & (df_rates['rate'] > -0.06)].copy()
+                            filtered_df_fall3 = filtered_df_fall3.sort_values(by='rate', ascending=False)
+                            filtered_df_fall3.loc[:, 'rate'] = filtered_df_fall3['rate'].apply(lambda x: f"{x*100:.2f}%")
+
+                            # 创建PDF文档
+                            if exchange == "OKX":
+                                pdf_filename = f"dataservice{DIR_SYMBOL}okx_contract_rates.pdf"
+
+                            elif exchange == "BINANCE":
+                                pdf_filename = f"dataservice{DIR_SYMBOL}binance_contract_rates.pdf"
+
+                            doc = SimpleDocTemplate(pdf_filename, pagesize=letter)
+                            elements = []
+
+                            # 标题样式设置
+                            styles = getSampleStyleSheet()
+                            title_style = styles['Heading1']
+                            title_style.alignment = 1
+                            title_style.textColor = colors.goldenrod
+
+                            title_style = styles['Italic']
+                            title_style.alignment = 1
+                            title_style.textColor = colors.lightgrey
+
+                            """ BTC、ETH """
+                            elements.append(Paragraph(f"{datetime.now().replace(microsecond=0)}", styles['Italic']))
+                            elements.append(Spacer(1, 12))
+                            elements.append(Spacer(1, 12))
+                            elements.append(Paragraph(f"BTC {btc_rate*100:.2f}%", styles['Heading1']))
+                            elements.append(Paragraph(f"ETH {eth_rate*100:.2f}%", styles['Heading1']))
+                            elements.append(Spacer(1, 12))
+                            
+                            """ RISE_1 """
+                            if len(filtered_df_rise1):
+                                data = filtered_df_rise1.values.tolist()
+                                table = Table(data)
+                                table.setStyle(TableStyle([
+                                    ('GRID', (0, 0), (-1, -1), 1, colors.red)
+                                ]))
+                                elements.append(table)
+                                elements.append(Spacer(1, 12))
+
+                            """ RISE_2 """
+                            if len(filtered_df_rise2):
+                                data = filtered_df_rise2.values.tolist()
+                                table = Table(data)
+                                table.setStyle(TableStyle([
+                                    ('GRID', (0, 0), (-1, -1), 1, colors.red)
+                                ]))
+                                elements.append(table)
+                                elements.append(Spacer(1, 12))
+
+                            """ RISE_3 """
+                            if len(filtered_df_rise3):
+                                data = filtered_df_rise3.values.tolist()
+                                table = Table(data)
+                                table.setStyle(TableStyle([
+                                    ('GRID', (0, 0), (-1, -1), 1, colors.red)
+                                ]))
+                                elements.append(table)
+                                elements.append(Spacer(1, 12))
+
+                            """ FALL_1 """
+                            if len(filtered_df_fall1):
+                                data = filtered_df_fall1.values.tolist()
+                                table = Table(data)
+                                table.setStyle(TableStyle([
+                                    ('GRID', (0, 0), (-1, -1), 1, colors.green)
+                                ]))
+                                elements.append(table)
+                                elements.append(Spacer(1, 12))
+
+                            """ FALL_2 """
+                            if len(filtered_df_fall2):
+                                data = filtered_df_fall2.values.tolist()
+                                table = Table(data)
+                                table.setStyle(TableStyle([
+                                    ('GRID', (0, 0), (-1, -1), 1, colors.green)
+                                ]))
+                                elements.append(table)
+                                elements.append(Spacer(1, 12))
+
+                            """ FALL_3 """
+                            if len(filtered_df_fall3):
+                                data = filtered_df_fall3.values.tolist()
+                                table = Table(data)
+                                table.setStyle(TableStyle([
+                                    ('GRID', (0, 0), (-1, -1), 1, colors.green)
+                                ]))
+                                elements.append(table)
+                                elements.append(Spacer(1, 12))
+
+                            # 生成PDF
+                            doc.build(elements)
+                            print(f"PDF file '{pdf_filename}' has been created.")
 
             sleep(10)
             
