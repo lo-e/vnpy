@@ -10,6 +10,10 @@ from vnpy.trader.constant import Interval
 from datetime import datetime, timedelta
 from time import sleep
 from threading import Thread
+from pymongo import MongoClient
+from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
+from vnpy.trader.constant import Exchange
+from vnpy.trader.object import BarData
 
 class DownloadUtility(object):
     def __init__(self) -> None:
@@ -225,6 +229,8 @@ class DownloadUtility(object):
     def update_data_signal(self):
         # 下载引擎
         dataDownload = TurtleCryptoDataDownloading()
+        mc = MongoClient()
+        db = mc[MINUTE_DB_NAME]
 
         while True:
             current_minute = datetime.now().minute
@@ -266,6 +272,27 @@ class DownloadUtility(object):
                         if complete_check_time >= 5:
                             print(f"更新数据完成：{datetime.now()}")
                             break
+                
+                # 每隔4h分析市场行情
+                current_hour = datetime.now().hour
+                if not current_hour % 4:
+                    for okx_contract in okx_contract_list:
+                        vt_symbol = f"{okx_contract}.OKX"
+                        start_dt = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(hours=4)
+                        end_dt = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(minutes=1)
+                        flt = {'datetime':{'$gte':self.startDt,
+                                           '$lte':self.endDt}}
+                        collection = db[vt_symbol]
+                        cursor = collection.find(flt).sort('datetime')
+                        open_price = 0
+                        close_price = 0
+                        for d in cursor:
+                            exchange = Exchange.NONE
+                            bar = BarData(gateway_name = '', symbol = '', exchange = exchange, datetime = None, endDatetime = None)
+                            bar.__dict__ = d
+                            if not open_price:
+                                open_price = bar.open_price
+                            close_price = bar.close_price
 
             sleep(10)
             
