@@ -464,7 +464,7 @@ class DownloadUtility(object):
                         # 发送email
                         if not current_hour % 1:
                             pdf_full_path = os.path.abspath(pdf_filename)
-                            email_engine.send_email(subject=f"行情推送", content=f"点击附件查看", pdf_file_path=pdf_full_path)
+                            email_engine.send_email(subject=f"{exchange}行情推送", content=f"点击附件查看", pdf_file_path=pdf_full_path)
 
             sleep(10)
             
