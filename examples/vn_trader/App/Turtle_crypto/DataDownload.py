@@ -16,6 +16,7 @@ from vnpy.trader.constant import Exchange
 from vnpy.trader.object import BarData
 import pandas as pd
 from vnpy.trader.utility import DIR_SYMBOL
+import os
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
@@ -364,11 +365,15 @@ class DownloadUtility(object):
                             filtered_df_fall3.loc[:, 'rate'] = filtered_df_fall3['rate'].apply(lambda x: f"{x*100:.2f}%")
 
                             # 创建PDF文档
+                            dir_path = f"dataservice{DIR_SYMBOL}PDFs"
+                            if not os.path.exists(dir_path):
+                                os.makedirs(dir_path)
+
                             if exchange == "OKX":
-                                pdf_filename = f"dataservice{DIR_SYMBOL}okx_contract_rates.pdf"
+                                pdf_filename = f"{dir_path}{DIR_SYMBOL}okx_contract_rates.pdf"
 
                             elif exchange == "BINANCE":
-                                pdf_filename = f"dataservice{DIR_SYMBOL}binance_contract_rates.pdf"
+                                pdf_filename = f"{dir_path}{DIR_SYMBOL}binance_contract_rates.pdf"
 
                             doc = SimpleDocTemplate(pdf_filename, pagesize=letter)
                             elements = []
