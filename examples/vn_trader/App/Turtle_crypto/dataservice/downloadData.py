@@ -45,6 +45,9 @@ class TurtleCryptoDataDownloading(object):
     def __init__(self):
         self.threads = []
         self.loading_complete = True
+        self.bybit_loading_complete = True
+        self.okx_loading_complete = True
+        self.binance_loading_complete = True
         pass
 
     def delete_history_data(self, target_dir: str = ""):
@@ -75,6 +78,7 @@ class TurtleCryptoDataDownloading(object):
 
         # 多线程获取数据
         self.loading_complete = False
+        self.bybit_loading_complete = False
         start_time = time()
         for contract in contract_list:
             while len(self.threads) >= 10:
@@ -97,7 +101,10 @@ class TurtleCryptoDataDownloading(object):
         # 避免下载时间过短影响逻辑判断
         if end_time - start_time < 3:
             sleep(2)
-        self.loading_complete = True
+
+        self.bybit_loading_complete = True
+        if self.okx_loading_complete and self.binance_loading_complete:
+            self.loading_complete = True
 
     def download_from_okx(
         self,
@@ -118,6 +125,7 @@ class TurtleCryptoDataDownloading(object):
 
         # 多线程获取数据
         self.loading_complete = False
+        self.bybit_loading_complete = False
         start_time = time()
         for contract in contract_list:
             while len(self.threads) >= 10:
@@ -140,7 +148,10 @@ class TurtleCryptoDataDownloading(object):
         # 避免下载时间过短影响逻辑判断
         if end_time - start_time < 3:
             sleep(2)
-        self.loading_complete = True
+        
+        self.okx_loading_complete = True
+        if self.bybit_loading_complete and self.binance_loading_complete:
+            self.loading_complete = True
 
     def download_from_binance(
         self,
@@ -161,6 +172,7 @@ class TurtleCryptoDataDownloading(object):
 
         # 多线程获取数据
         self.loading_complete = False
+        self.bybit_loading_complete = False
         start_time = time()
         for contract in contract_list:
             while len(self.threads) >= 10:
@@ -183,7 +195,10 @@ class TurtleCryptoDataDownloading(object):
         # 避免下载时间过短影响逻辑判断
         if end_time - start_time < 3:
             sleep(2)
-        self.loading_complete = True
+        
+        self.binance_loading_complete = True
+        if self.okx_loading_complete and self.bybit_loading_complete:
+            self.loading_complete = True
 
     def generate_for_bybit(self, contract_list, days=1):
         result = True

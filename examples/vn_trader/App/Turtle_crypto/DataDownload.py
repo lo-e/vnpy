@@ -243,7 +243,7 @@ class DownloadUtility(object):
         while True:
             current_minute = datetime.now().minute
             current_hour = datetime.now().hour
-            if current_hour != self.update_data_hour and current_minute >= 1 and not len(dataDownload.threads):
+            if current_hour != self.update_data_hour and current_minute >= 1 and dataDownload.loading_complete:
                 self.update_data_hour = current_hour
 
                 # OKX合约列表
@@ -275,7 +275,7 @@ class DownloadUtility(object):
                 complete_check_time = 0
                 while True:
                     sleep(1)
-                    if not len(dataDownload.threads):
+                    if dataDownload.loading_complete:
                         complete_check_time += 1
                         if complete_check_time >= 5:
                             print(f"更新数据完成：{datetime.now()}")
