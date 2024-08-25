@@ -104,6 +104,9 @@ class TurtleCryptoDataDownloading(object):
 
         self.bybit_loading_complete = True
         if self.okx_loading_complete and self.binance_loading_complete:
+            while len(self.threads):
+                sleep(1)
+
             self.loading_complete = True
 
     def download_from_okx(
@@ -151,6 +154,9 @@ class TurtleCryptoDataDownloading(object):
         
         self.okx_loading_complete = True
         if self.bybit_loading_complete and self.binance_loading_complete:
+            while len(self.threads):
+                sleep(1)
+                
             self.loading_complete = True
 
     def download_from_binance(
@@ -198,6 +204,9 @@ class TurtleCryptoDataDownloading(object):
         
         self.binance_loading_complete = True
         if self.okx_loading_complete and self.bybit_loading_complete:
+            while len(self.threads):
+                sleep(1)
+                
             self.loading_complete = True
 
     def generate_for_bybit(self, contract_list, days=1):
