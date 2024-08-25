@@ -11,7 +11,7 @@ from email.message import EmailMessage
 from queue import Empty, Queue
 from threading import Thread
 from typing import Any, Type, Dict, List, Optional
-
+from vnpy.trader.utility import DIR_SYMBOL
 from vnpy.event import Event, EventEngine
 from .app import BaseApp
 from .event import (
@@ -788,7 +788,7 @@ class EmailEngine(BaseEngine):
 
         self.main_engine.send_email = self.send_email
 
-    def send_email(self, subject: str, content: str, receiver: str = "") -> None:
+    def send_email(self, subject: str, content: str, pdf_file_path: str = "", receiver: str = "") -> None:
         """"""
         # Start email engine when sending first email.
         if not self.active:
@@ -802,18 +802,23 @@ class EmailEngine(BaseEngine):
         msg["From"] = SETTINGS["email.sender"]
         msg["To"] = receiver
         client = socket.gethostname()
-        subject = f'{subject}【{client}】'
+        subject = f'{subject} - {client}'
         msg["Subject"] = subject
-        """ modify by loe """
         if content:
             content = f'{datetime.now()}\n\n{content}'
         msg.set_content(content)
 
-        self.queue.put(msg)
+        try:
+            if pdf_file_path and os.path.exists(pdf_file_path):
+                with open(pdf_file_path, "rb") as file:
+                    pdf_data = file.read()
+                file_name = pdf_file_path.split(DIR_SYMBOL)[-1]
+                msg.add_attachment(pdf_data, maintype="application", subtype="pdf", filename=file_name)
+                
+        except:
+            pass
 
-        """ modify by loe """
-        # 同时发送钉钉消息
-        # self.main_engine.send_ding_talk(content=f'邮件主题\n============\n{subject}\n\n邮件内容\n============\n{content}')
+        self.queue.put(msg)
 
     def run(self) -> None:
         """"""
