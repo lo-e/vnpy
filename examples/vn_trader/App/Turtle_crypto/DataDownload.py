@@ -309,8 +309,8 @@ class DownloadUtility(object):
                             open_price = 0
                             close_price = 0
                             for d in cursor:
-                                exchange = Exchange.NONE
-                                bar = BarData(gateway_name = '', symbol = '', exchange = exchange, datetime = None, endDatetime = None)
+                                bar_exchange = Exchange.NONE
+                                bar = BarData(gateway_name = '', symbol = '', exchange = bar_exchange, datetime = None, endDatetime = None)
                                 bar.__dict__ = d
                                 if not open_price:
                                     open_price = bar.open_price
