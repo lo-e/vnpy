@@ -128,7 +128,7 @@ class TurtleCryptoDataDownloading(object):
 
         # 多线程获取数据
         self.loading_complete = False
-        self.bybit_loading_complete = False
+        self.okx_loading_complete = False
         start_time = time()
         for contract in contract_list:
             while len(self.threads) >= 10:
@@ -178,7 +178,7 @@ class TurtleCryptoDataDownloading(object):
 
         # 多线程获取数据
         self.loading_complete = False
-        self.bybit_loading_complete = False
+        self.binance_loading_complete = False
         start_time = time()
         for contract in contract_list:
             while len(self.threads) >= 10:
