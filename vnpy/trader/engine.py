@@ -786,7 +786,8 @@ class EmailEngine(BaseEngine):
         self.queue: Queue = Queue()
         self.active: bool = False
 
-        self.main_engine.send_email = self.send_email
+        if main_engine:
+            self.main_engine.send_email = self.send_email
 
     def send_email(self, subject: str, content: str, pdf_file_path: str = "", receiver: str = "") -> None:
         """"""

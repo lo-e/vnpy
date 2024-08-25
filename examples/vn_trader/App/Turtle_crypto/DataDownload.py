@@ -23,6 +23,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import Paragraph
 from reportlab.platypus import Spacer
+from vnpy.trader.engine import EmailEngine
 
 class DownloadUtility(object):
     def __init__(self) -> None:
@@ -238,6 +239,7 @@ class DownloadUtility(object):
     def update_data_signal(self):
         # 下载引擎
         dataDownload = TurtleCryptoDataDownloading()
+        email_engine = EmailEngine(main_engine=None, event_engine=None)
         mc = MongoClient()
         db = mc[MINUTE_DB_NAME]
 
@@ -388,7 +390,7 @@ class DownloadUtility(object):
                         title_style.textColor = colors.lightgrey
 
                         """ BTC、ETH """
-                        elements.append(Paragraph(f"{datetime.now().replace(microsecond=0)}", styles['Italic']))
+                        elements.append(Paragraph(f"{datetime.now().replace(minute=0, second=0, microsecond=0)}", styles['Italic']))
                         elements.append(Spacer(1, 12))
                         elements.append(Spacer(1, 12))
                         elements.append(Paragraph(f"BTC {btc_rate*100:.2f}%", styles['Heading1']))
@@ -458,6 +460,11 @@ class DownloadUtility(object):
                         # 生成PDF
                         doc.build(elements)
                         print(f"PDF 文档 '{pdf_filename}' 创建成功")
+
+                        # 发送email
+                        if not current_hour % 1:
+                            pdf_full_path = os.path.abspath(pdf_filename)
+                            email_engine.send_email(subject=f"行情推送", content=f"点击附件查看", pdf_file_path=pdf_full_path)
 
             sleep(10)
             
