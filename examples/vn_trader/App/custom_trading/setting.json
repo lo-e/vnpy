@@ -14,11 +14,11 @@
       "long_window":20,
       "short_window":5,
       "max_loss_count":9,
-      "profit_rate":0.4,
+      "profit_rate":0.3,
       "loss_rate":0.02,
-      "stop_profit_price":67739,
-      "stop_price_up":65872,
-      "stop_price_down":62671,
+      "stop_profit_price":67461,
+      "stop_price_up":65823,
+      "stop_price_down":61963,
       "start": true
     },
     {
@@ -31,11 +31,28 @@
       "long_window":20,
       "short_window":5,
       "max_loss_count":9,
-      "profit_rate":0.9,
+      "profit_rate":0.3,
       "loss_rate":0.02,
       "stop_profit_price":0.000011366,
       "stop_price_up":0.000010098,
       "stop_price_down":0.000008597,
+      "start": true
+    },
+    {
+      "strategy_name": "CUSTOMTRADING_MAX_OKX",
+      "vt_symbol":"MAX-USDT-SWAP.OKX",
+      "exchange": "OKX",
+      "exchange_user": "lo-e（test）",
+      "direction":"LONG",
+      "category":"A",
+      "long_window":20,
+      "short_window":5,
+      "max_loss_count":9,
+      "profit_rate":0.3,
+      "loss_rate":0.02,
+      "stop_profit_price":0.41917,
+      "stop_price_up":0.38325,
+      "stop_price_down":0.32796,
       "start": true
     }
   ]
