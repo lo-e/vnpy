@@ -113,7 +113,7 @@ class CustomTradingPortfolio(object):
     def send_order(self, strategy, direction, offset, price, volume, stop_loss):
         result = False
         trading_strategy_name = self.category_trading_dict.get(strategy.category, "")
-        if direction == Direction.OPEN:
+        if offset == Offset.OPEN:
             # 开仓订单
             if not trading_strategy_name:
                 if self.category_loss_dict.get(strategy.category, 0) < self.category_max_loss_count.get(strategy.category, DEFAULT_MAX_LOSS_COUNT):
