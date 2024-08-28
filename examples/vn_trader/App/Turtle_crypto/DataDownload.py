@@ -334,8 +334,12 @@ class DownloadUtility(object):
                                     if bar.close_price > hour_open:
                                         continuous_fall = False
                                     
+                                    elif bar.close_price < hour_open:
+                                        continuous_rise = False
+
                                     else:
                                         continuous_rise = False
+                                        continuous_fall = False
                                 hour_open = 0
 
                         if open_price:
