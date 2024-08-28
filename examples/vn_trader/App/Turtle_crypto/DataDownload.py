@@ -288,6 +288,8 @@ class DownloadUtility(object):
                 for exchange in ["OKX", "BINANCE"]:
                     contract_rate_dict = {}
                     contract_list = []
+                    continuous_rise_list = set()
+                    continuous_fall_list = set()
 
                     if exchange == "OKX":
                         contract_list = okx_contract_list
@@ -310,23 +312,51 @@ class DownloadUtility(object):
                         cursor = collection.find(flt).sort('datetime')
                         open_price = 0
                         close_price = 0
+                        continuous_rise = False
+                        continuous_fall = False
+                        hour_open = 0
                         for d in cursor:
                             bar_exchange = Exchange.NONE
                             bar = BarData(gateway_name = '', symbol = '', exchange = bar_exchange, datetime = None, endDatetime = None)
                             bar.__dict__ = d
+
+                            # 记录open_close_price
                             if not open_price:
                                 open_price = bar.open_price
                             close_price = bar.close_price
+                            
+                            # 记录每小时的连续涨跌
+                            if bar.datetime.minute == 0:
+                                hour_open = bar.open_price
+
+                            if bar.datetime.minute == 59:
+                                if hour_open:
+                                    if bar.close_price > hour_open:
+                                        continuous_rise = True
+                                        continuous_fall = False
+                                    
+                                    else:
+                                        continuous_fall = True
+                                        continuous_rise = False
+                                hour_open = 0
 
                         if open_price:
-                            rate = close_price / open_price - 1
                             if exchange == "OKX":
                                 pure_symbol = vt_symbol.split("-")[0]
 
                             elif exchange == "BINANCE":
                                 pure_symbol = vt_symbol.split("USDT")[0]
                             
+                            # 计算涨跌幅
+                            rate = close_price / open_price - 1
                             contract_rate_dict[pure_symbol] = rate
+                            
+                            # 筛选连续涨跌的合约
+                            if continuous_rise:
+                                continuous_rise_list.add(pure_symbol)
+                            
+                            if continuous_fall:
+                                continuous_fall_list.add(pure_symbol)
 
                     if contract_rate_dict:
                         # BTC、ETH涨跌幅
@@ -380,14 +410,22 @@ class DownloadUtility(object):
                         elements = []
 
                         # 标题样式设置
+                        title_style = styles['Italic']
+                        title_style.alignment = 1
+                        title_style.textColor = colors.lightgrey
+
                         styles = getSampleStyleSheet()
                         title_style = styles['Heading1']
                         title_style.alignment = 1
                         title_style.textColor = colors.goldenrod
 
-                        title_style = styles['Italic']
+                        title_style = styles['Heading2']
                         title_style.alignment = 1
-                        title_style.textColor = colors.lightgrey
+                        title_style.textColor = colors.red
+
+                        title_style = styles['Heading3']
+                        title_style.alignment = 1
+                        title_style.textColor = colors.green
 
                         """ BTC、ETH """
                         elements.append(Paragraph(f"{datetime.now().replace(minute=0, second=0, microsecond=0)}", styles['Italic']))
@@ -456,6 +494,14 @@ class DownloadUtility(object):
                             ]))
                             elements.append(table)
                             elements.append(Spacer(1, 12))
+
+                        if len(continuous_rise_list):
+                            content = " ".join(continuous_rise_list)
+                            elements.append(Paragraph(content, styles['Heading2']))
+
+                        if len(continuous_fall_list):
+                            content = " ".join(continuous_fall_list)
+                            elements.append(Paragraph(content, styles['Heading3']))
 
                         # 生成PDF
                         doc.build(elements)
