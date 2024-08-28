@@ -410,11 +410,11 @@ class DownloadUtility(object):
                         elements = []
 
                         # 标题样式设置
+                        styles = getSampleStyleSheet()
                         title_style = styles['Italic']
                         title_style.alignment = 1
                         title_style.textColor = colors.lightgrey
 
-                        styles = getSampleStyleSheet()
                         title_style = styles['Heading1']
                         title_style.alignment = 1
                         title_style.textColor = colors.goldenrod
