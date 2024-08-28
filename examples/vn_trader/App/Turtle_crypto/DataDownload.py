@@ -312,8 +312,8 @@ class DownloadUtility(object):
                         cursor = collection.find(flt).sort('datetime')
                         open_price = 0
                         close_price = 0
-                        continuous_rise = False
-                        continuous_fall = False
+                        continuous_rise = True
+                        continuous_fall = True
                         hour_open = 0
                         for d in cursor:
                             bar_exchange = Exchange.NONE
@@ -332,11 +332,9 @@ class DownloadUtility(object):
                             if bar.datetime.minute == 59:
                                 if hour_open:
                                     if bar.close_price > hour_open:
-                                        continuous_rise = True
                                         continuous_fall = False
                                     
                                     else:
-                                        continuous_fall = True
                                         continuous_rise = False
                                 hour_open = 0
 
