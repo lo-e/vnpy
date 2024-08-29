@@ -424,10 +424,17 @@ class DownloadUtility(object):
                         title_style = styles['Heading2']
                         title_style.alignment = 1
                         title_style.textColor = colors.red
+                        title_style.fontSize = 12
 
                         title_style = styles['Heading3']
                         title_style.alignment = 1
                         title_style.textColor = colors.green
+                        title_style.fontSize = 12
+
+                        title_style = styles['Bullet']
+                        title_style.alignment = 1
+                        title_style.textColor = colors.lightgrey
+                        title_style.fontSize = 9
 
                         """ BTC、ETH """
                         elements.append(Paragraph(f"{datetime.now().replace(minute=0, second=0, microsecond=0)}", styles['Italic']))
@@ -498,10 +505,13 @@ class DownloadUtility(object):
                             elements.append(Spacer(1, 12))
 
                         if len(continuous_rise_list):
+                            elements.append(Paragraph(f"continuous rise", styles['Bullet']))
                             content = " ".join(continuous_rise_list)
                             elements.append(Paragraph(content, styles['Heading2']))
+                            elements.append(Spacer(1, 12))
 
                         if len(continuous_fall_list):
+                            elements.append(Paragraph(f"continuous fall", styles['Bullet']))
                             content = " ".join(continuous_fall_list)
                             elements.append(Paragraph(content, styles['Heading3']))
 
