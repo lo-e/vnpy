@@ -139,3 +139,11 @@ wget https://aka.ms/vs/17/release/vs_BuildTools.exe -o vs_BuildTools.exe ; cmd /
 
 3、安装完成后启动V
 ```
+
+"setuptools not available in build environment"
+```
+尝试重装pip、setuptools（版本参考，或尝试其他可用版本）
+
+python -m pip install pip==21.3.1
+pip install setuptools==57.5.0
+```
