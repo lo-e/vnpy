@@ -23,6 +23,7 @@ tushare
 jqdatasdk
 plotly
 exchange-calendars
+reportlab
 
 vnpy_rest==1.0.3
 vnpy_websocket==1.0.2
