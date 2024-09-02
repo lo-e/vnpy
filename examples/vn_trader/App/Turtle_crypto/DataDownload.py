@@ -533,7 +533,7 @@ if __name__ == "__main__":
     # utility.get_instruments_list()
 
     # 下载数据
-    # utility.download_data()
+    utility.download_data()
     
     # 更新数据并生成市场信号
-    utility.update_data_signal()
+    # utility.update_data_signal()

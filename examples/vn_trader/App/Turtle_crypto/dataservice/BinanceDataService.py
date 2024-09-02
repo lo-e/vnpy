@@ -75,7 +75,13 @@ def binance_get_bar_data(
         end_time = int(time.mktime(timeArray))
         params["endTime"] = end_time * 1000
 
-    resp = requests.get(url, headers={}, params=params)
+    client = socket.gethostname()
+    if "MI-PRO" in client:
+        resp = requests.get(url, headers={}, params=params, proxies=proxies)
+    
+    else:
+        resp = requests.get(url, headers={}, params=params)
+
     if "until" in resp.text:
         i_until = resp.text.index("until")
         i_please = resp.text.index(". Please")
