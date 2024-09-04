@@ -1,14 +1,14 @@
 {
   "portfolio":{
     "name":"CUSTOMTRADING_PORTFOLIO",
-    "portfolioValue":1000
+    "portfolioValue":280
   },
   "signal": [
     {
       "strategy_name": "CUSTOMTRADING_BTC_OKX",
       "vt_symbol":"BTC-USDT-SWAP.OKX",
       "exchange": "OKX",
-      "exchange_user": "lo-e（test）",
+      "exchange_user": "lo-e",
       "direction":"SHORT",
       "category":"A",
       "long_window":20,
@@ -19,23 +19,6 @@
       "stop_profit_price":55779,
       "stop_price_up":60332,
       "stop_price_down":58532,
-      "start": false
-    },
-    {
-      "strategy_name": "CUSTOMTRADING_FET_BINANCE",
-      "vt_symbol":"FET-USDT-SWAP.BINANCE",
-      "exchange": "BINANCE",
-      "exchange_user": "lo-e（test）",
-      "direction":"SHORT",
-      "category":"B",
-      "long_window":20,
-      "short_window":5,
-      "max_loss_count":9,
-      "profit_rate":0.3,
-      "loss_rate":0.02,
-      "stop_profit_price":0.9062114,
-      "stop_price_up":1.2992714,
-      "stop_price_down":1.0730262,
       "start": true
     }
   ]
