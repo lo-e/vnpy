@@ -261,8 +261,8 @@ class CustomTradingStrategy(CtaTemplate):
                     pos_open_price = tick.last_price
                     trade_price = tick.last_price * 1.005
                     lever = self.loss_rate / abs(((self.long_down / pos_open_price) - 1))
-                    lever = min(lever, 20)
                     if ((self.stop_profit_price / pos_open_price) - 1) * lever >= self.profit_rate:
+                        lever = min(lever, 20)
                         value = self.portfolio.portfolioValue * lever
                         volume = value / pos_open_price
                         self.send_order(Direction.LONG, Offset.OPEN, trade_price, volume)
@@ -277,8 +277,8 @@ class CustomTradingStrategy(CtaTemplate):
                     pos_open_price = tick.last_price
                     trade_price = tick.last_price * 0.995
                     lever = self.loss_rate / abs(((self.long_up / pos_open_price) - 1))
-                    lever = min(lever, 20)
                     if (1 - (self.stop_profit_price / pos_open_price)) * lever >= self.profit_rate:
+                        lever = min(lever, 20)
                         value = self.portfolio.portfolioValue * lever
                         volume = value / pos_open_price
                         self.send_order(Direction.SHORT, Offset.OPEN, trade_price, volume)
