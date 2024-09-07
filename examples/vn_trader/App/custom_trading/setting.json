@@ -14,11 +14,11 @@
       "long_window":20,
       "short_window":5,
       "max_loss_count":9,
-      "profit_rate":0.3,
       "loss_rate":0.02,
-      "stop_profit_price":55779,
-      "stop_price_up":60332,
-      "stop_price_down":58532,
+      "profit_rate":0.67,
+      "stop_profit_price":49880,
+      "stop_price_up":56661,
+      "stop_price_down":10000,
       "start": true
     }
   ]
