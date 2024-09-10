@@ -10,15 +10,13 @@
       "exchange": "OKX",
       "exchange_user": "lo-e",
       "direction":"SHORT",
-      "category":"A",
       "long_window":20,
       "short_window":5,
-      "max_loss_count":9,
+      "max_loss_count":1,
       "loss_rate":0.02,
-      "profit_rate":0.67,
+      "min_lever":10,
+      "max_lever":20,
       "stop_profit_price":49880,
-      "stop_price_up":56661,
-      "stop_price_down":10000,
       "start": true
     }
   ]

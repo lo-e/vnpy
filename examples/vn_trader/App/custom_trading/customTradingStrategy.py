@@ -44,15 +44,13 @@ class CustomTradingStrategy(CtaTemplate):
         "exchange",
         "exchange_user",
         "direction",
-        "category",
         "long_window",
         "short_window",
         "max_loss_count",
-        "profit_rate",
         "loss_rate",
-        "stop_profit_price",
-        "stop_price_up",
-        "stop_price_down"
+        "min_lever",
+        "max_lever",
+        "stop_profit_price"
     ]
 
     # 变量列表，保存了变量的名称
@@ -72,7 +70,6 @@ class CustomTradingStrategy(CtaTemplate):
         "pos_open_dt",
         "stop_loss_price",
         "profit_stop",
-        "open_stop",
         "loss_count",
         "max_loss_count"
     ]
@@ -84,7 +81,6 @@ class CustomTradingStrategy(CtaTemplate):
         "pos_open_dt",
         "stop_loss_price",
         "profit_stop",
-        "open_stop",
         "loss_count",
         "max_loss_count"
     ]
@@ -133,8 +129,7 @@ class CustomTradingStrategy(CtaTemplate):
 
         self.indicator_inited = False                                                                       # 指标初始化状态
         self.indicator_waiting = False                                                                      # 价格突破long_up或long_down，需要等待下一周期指标更新，才能开仓和加仓
-        self.profit_stop = False                                                                            # 止盈状态
-        self.open_stop = False                                                                              # 停止开新的仓位
+        self.profit_stop = False                                                                            # 止盈状态                                                                             # 停止开新的仓位
         self.loss_count = 0                                                                                 # 止损次数
         self.bar = None                                                                                     # 当前最新bar
         self.am = ArrayManager(self.long_window)                                                            # K线容器
@@ -236,10 +231,6 @@ class CustomTradingStrategy(CtaTemplate):
     def on_tick(self, tick: TickData):
         if not self.trading or self.profit_stop or self.loss_count >= self.max_loss_count:
             return
-        
-        # 判断是否价格突破开仓上限/下限，然后停止开新仓位
-        if tick.last_price >= self.stop_price_up or tick.last_price <= self.stop_price_down:
-            self.open_stop = True
 
         # 判断是否指标变量数值正常
         indicator_valid = True
@@ -252,7 +243,7 @@ class CustomTradingStrategy(CtaTemplate):
         
         if not self.virtual_pos:
             # 停止开新的仓位判断
-            if self.bar_loading or self.bar_lack or not indicator_valid or self.indicator_waiting or not self.indicator_inited or self.open_stop:
+            if self.bar_loading or self.bar_lack or not indicator_valid or not self.indicator_inited:
                 return
             
             if self.direction == Direction.LONG:
@@ -261,8 +252,8 @@ class CustomTradingStrategy(CtaTemplate):
                     pos_open_price = tick.last_price
                     trade_price = tick.last_price * 1.005
                     lever = self.loss_rate / abs(((self.long_down / pos_open_price) - 1))
-                    if ((self.stop_profit_price / pos_open_price) - 1) * lever >= self.profit_rate:
-                        lever = min(lever, 20)
+                    if lever >= self.min_lever:
+                        lever = min(lever, self.max_lever)
                         value = self.portfolio.portfolioValue * lever
                         volume = value / pos_open_price
                         self.send_order(Direction.LONG, Offset.OPEN, trade_price, volume)
@@ -277,8 +268,8 @@ class CustomTradingStrategy(CtaTemplate):
                     pos_open_price = tick.last_price
                     trade_price = tick.last_price * 0.995
                     lever = self.loss_rate / abs(((self.long_up / pos_open_price) - 1))
-                    if (1 - (self.stop_profit_price / pos_open_price)) * lever >= self.profit_rate:
-                        lever = min(lever, 20)
+                    if lever >= self.min_lever:
+                        lever = min(lever, self.max_lever)
                         value = self.portfolio.portfolioValue * lever
                         volume = value / pos_open_price
                         self.send_order(Direction.SHORT, Offset.OPEN, trade_price, volume)
@@ -302,7 +293,7 @@ class CustomTradingStrategy(CtaTemplate):
                 if tick.last_price <= self.stop_loss_price:
                     # 多头止损
                     trade_price = tick.last_price * 0.995
-                    self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(self.virtual_pos), stop_loss=True)
+                    self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(self.virtual_pos))
                     self.pos_open_price = 0
                     self.pos_open_dt = None
                     self.stop_loss_price = 0
@@ -311,7 +302,7 @@ class CustomTradingStrategy(CtaTemplate):
                 
                 if tick.last_price >= self.short_up:
                     # 停止加仓判断
-                    if self.bar_loading or self.bar_lack or not indicator_valid or self.indicator_waiting:
+                    if True or self.bar_loading or self.bar_lack or not indicator_valid:
                         return
             
                     # 多头加仓
@@ -321,7 +312,7 @@ class CustomTradingStrategy(CtaTemplate):
                         if 1 / abs(((self.long_down / pos_open_price) - 1)) >= 1.5 / abs(((self.stop_loss_price / self.pos_open_price) - 1)):
                             # 满足多头加仓条件
                             lever = self.loss_rate / abs(((self.long_down / pos_open_price) - 1))
-                            lever = min(lever, 20)
+                            lever = min(lever, self.max_lever)
                             value = self.portfolio.portfolioValue * lever
                             volume = value / pos_open_price
                             add_volume = volume - abs(self.pos)
@@ -347,7 +338,7 @@ class CustomTradingStrategy(CtaTemplate):
                 if tick.last_price >= self.stop_loss_price:
                     # 空头止损
                     trade_price = tick.last_price * 1.005
-                    self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(self.virtual_pos), stop_loss=True)
+                    self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(self.virtual_pos))
                     self.pos_open_price = 0
                     self.pos_open_dt = None
                     self.stop_loss_price = 0
@@ -356,7 +347,7 @@ class CustomTradingStrategy(CtaTemplate):
                 
                 if tick.last_price <= self.short_down:
                     # 停止加仓判断
-                    if self.bar_loading or self.bar_lack or not indicator_valid or self.indicator_waiting:
+                    if True or self.bar_loading or self.bar_lack or not indicator_valid:
                         return
                     
                     # 空头加仓
@@ -366,7 +357,7 @@ class CustomTradingStrategy(CtaTemplate):
                         if 1 / abs(((self.long_up / pos_open_price) - 1)) >= 1.5 / abs(((self.stop_loss_price / self.pos_open_price) - 1)):
                             # 满足空头加仓条件
                             lever = self.loss_rate / abs(((self.long_up / pos_open_price) - 1))
-                            lever = min(lever, 20)
+                            lever = min(lever, self.max_lever)
                             value = self.portfolio.portfolioValue * lever
                             volume = value / pos_open_price
                             add_volume = volume - abs(self.pos)
@@ -378,7 +369,7 @@ class CustomTradingStrategy(CtaTemplate):
                                 self.max_loss_count += 1
                                 return
 
-    def send_order(self, direction, offset, price, volume, stop_loss: bool=False):
+    def send_order(self, direction, offset, price, volume):
         # 撤回历史订单
         self.cancel_all()
 
@@ -433,9 +424,6 @@ class CustomTradingStrategy(CtaTemplate):
             volume = min(volume, abs(self.pos))
         
         # 发出订单
-        self.portfolio.send_order(self, direction, offset, price, volume, stop_loss)
-    
-    def send_server_order(self, direction, offset, price, volume):
         super().send_order(direction, offset, price, volume)
 
     def on_trade(self, trade):
