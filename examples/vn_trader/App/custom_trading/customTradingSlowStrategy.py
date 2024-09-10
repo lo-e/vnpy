@@ -31,10 +31,10 @@ import pandas as pd
 from pymongo import MongoClient
 from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 
-class CustomTradingStrategy(CtaTemplate):
+class CustomTradingSlowStrategy(CtaTemplate):
     """ 自主交易策略 """
 
-    className = "CustomTradingStrategy"
+    className = "CustomTradingSlowStrategy"
     author = "loe"
 
     # 参数列表，保存了参数的名称
@@ -89,7 +89,7 @@ class CustomTradingStrategy(CtaTemplate):
         self.portfolio = ctaEngine.customTradingPortfolio # 投资组合管理
         
         # 完成setting.json参数的配置
-        super(CustomTradingStrategy, self).__init__(
+        super(CustomTradingSlowStrategy, self).__init__(
             cta_engine=ctaEngine, strategy_name="", vt_symbol="", setting=setting
         )
 

@@ -62,7 +62,8 @@ import re
 from collections import OrderedDict
 from time import sleep
 from decimal import Decimal
-from .customTradingStrategy import CustomTradingStrategy
+from .customTradingFastStrategy import CustomTradingFastStrategy
+from .customTradingSlowStrategy import CustomTradingSlowStrategy
 import json
 from .customTradingPortfolio import CustomTradingPortfolio
 
@@ -640,7 +641,15 @@ class CustomTradingEngine(BaseEngine):
             return
 
         # 创建策略实例
-        strategy = CustomTradingStrategy(self, setting)
+        if "SLOW" in name:
+            strategy = CustomTradingSlowStrategy(self, setting)
+
+        elif "FAST" in name:
+            strategy = CustomTradingFastStrategy(self, setting)
+        
+        else:
+            self.write_log(f"策略命名不符合：{name}")
+            return
         self.customTradingPortfolio.strategy_symbols.add(strategy.vt_symbol)
 
         # 加载同步数据
