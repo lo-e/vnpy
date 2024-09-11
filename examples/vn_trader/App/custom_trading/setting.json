@@ -12,12 +12,12 @@
       "direction":"LONG",
       "long_window":20,
       "short_window":5,
-      "max_loss_count":1,
-      "loss_rate":0.02,
-      "min_lever":10,
-      "max_lever":20,
+      "loss_rate":0.06,
+      "loss_rate_single":0.006,
+      "max_open_times":3,
+      "max_lever_single":5,
       "stop_profit_price":59361,
-      "start": false
+      "start": true
     },
     {
       "strategy_name": "CUSTOMTRADING_FAST_BTC_OKX",

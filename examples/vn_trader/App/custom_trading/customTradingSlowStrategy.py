@@ -46,10 +46,10 @@ class CustomTradingSlowStrategy(CtaTemplate):
         "direction",
         "long_window",
         "short_window",
-        "max_loss_count",
         "loss_rate",
-        "min_lever",
-        "max_lever",
+        "loss_rate_single",
+        "max_open_times",
+        "max_lever_single",
         "stop_profit_price"
     ]
 
@@ -68,10 +68,10 @@ class CustomTradingSlowStrategy(CtaTemplate):
         "short_down",
         "pos_open_price",
         "pos_open_dt",
-        "stop_loss_price",
+        "pos_open_times",
+        "cross_price",
         "profit_stop",
-        "loss_count",
-        "max_loss_count"
+        "loss_stop"
     ]
 
     # 同步列表，保存了需要保存到数据库的变量名称
@@ -79,10 +79,10 @@ class CustomTradingSlowStrategy(CtaTemplate):
         "virtual_pos",
         "pos_open_price",
         "pos_open_dt",
-        "stop_loss_price",
+        "pos_open_times",
+        "cross_price",
         "profit_stop",
-        "loss_count",
-        "max_loss_count"
+        "loss_stop"
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -120,7 +120,8 @@ class CustomTradingSlowStrategy(CtaTemplate):
         self.virtual_pos = 0                                                                                # 虚拟持仓
         self.pos_open_price = 0                                                                             # 开仓价格
         self.pos_open_dt = None                                                                             # 开仓时的bar时间
-        self.stop_loss_price = 0                                                                            # 持仓止损价格
+        self.pos_open_times = 0                                                                             # 开仓次数                                                                                                                                 
+        self.cross_price = 0                                                                                # 下次开仓前需要逆向突破的价格
         
         self.long_up = 0                                                                                    # 止损最高价
         self.long_down = 0                                                                                  # 止损最低价
@@ -129,8 +130,8 @@ class CustomTradingSlowStrategy(CtaTemplate):
 
         self.indicator_inited = False                                                                       # 指标初始化状态
         self.indicator_waiting = False                                                                      # 价格突破long_up或long_down，需要等待下一周期指标更新，才能开仓和加仓
-        self.profit_stop = False                                                                            # 止盈状态                                                                             # 停止开新的仓位
-        self.loss_count = 0                                                                                 # 止损次数
+        self.profit_stop = False                                                                            # 止盈状态
+        self.loss_stop = False                                                                              # 止损状态                                                                               
         self.bar = None                                                                                     # 当前最新bar
         self.am = ArrayManager(self.long_window)                                                            # K线容器
         self.bar_generator = BarGenerator(on_bar=None, window=5, on_window_bar=self.on_window_bar)          # bar生成工具
@@ -229,7 +230,7 @@ class CustomTradingSlowStrategy(CtaTemplate):
         self.indicator_waiting = False
 
     def on_tick(self, tick: TickData):
-        if not self.trading or self.profit_stop or self.loss_count >= self.max_loss_count:
+        if not self.trading:
             return
 
         # 判断是否指标变量数值正常
@@ -241,145 +242,117 @@ class CustomTradingSlowStrategy(CtaTemplate):
         if (self.direction == Direction.LONG and tick.last_price < self.long_down) or (self.direction == Direction.SHORT and tick.last_price > self.long_up):
             self.indicator_waiting = True
         
-        if not self.virtual_pos:
-            # 停止开新的仓位判断
-            if self.bar_loading or self.bar_lack or not indicator_valid or not self.indicator_inited:
-                return
-            
-            if self.direction == Direction.LONG:
-                if tick.last_price >= self.short_up:
-                    # 多头开仓
-                    pos_open_price = tick.last_price
-                    trade_price = tick.last_price * 1.005
-                    lever = self.loss_rate / abs(((self.long_down / pos_open_price) - 1))
-                    if lever >= self.min_lever:
-                        lever = min(lever, self.max_lever)
-                        value = self.portfolio.portfolioValue * lever
-                        volume = value / pos_open_price
-                        self.send_order(Direction.LONG, Offset.OPEN, trade_price, volume)
-                        self.pos_open_price = pos_open_price
-                        self.pos_open_dt = self.bar.datetime.strftime("%Y-%m-%d %H:%M:%S")
-                        self.stop_loss_price = self.long_down
-                        return
-            
-            else:
-                if tick.last_price <= self.short_down:
-                    # 空头开仓
-                    pos_open_price = tick.last_price
-                    trade_price = tick.last_price * 0.995
-                    lever = self.loss_rate / abs(((self.long_up / pos_open_price) - 1))
-                    if lever >= self.min_lever:
-                        lever = min(lever, self.max_lever)
-                        value = self.portfolio.portfolioValue * lever
-                        volume = value / pos_open_price
-                        self.send_order(Direction.SHORT, Offset.OPEN, trade_price, volume)
-                        self.pos_open_price = pos_open_price
-                        self.pos_open_dt = self.bar.datetime.strftime("%Y-%m-%d %H:%M:%S")
-                        self.stop_loss_price = self.long_up
-                        return
+        if self.cross_price:
+            if (self.direction == Direction.LONG and tick.last_price <= self.cross_price) or (self.direction == Direction.SHORT and tick.last_price >= self.cross_price):
+                self.cross_price = 0
 
-        else:
+        if self.virtual_pos:
             if self.direction == Direction.LONG:
                 if tick.last_price >= self.stop_profit_price:
                     # 多头止盈
-                    trade_price = tick.last_price * 0.995
-                    self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(self.virtual_pos))
+                    price = tick.last_price
+                    self.send_order(Direction.SHORT, Offset.CLOSE, price, abs(self.virtual_pos))
                     self.pos_open_price = 0
                     self.pos_open_dt = None
-                    self.stop_loss_price = 0
+                    self.cross_price = 0
                     self.profit_stop = True
                     return
                 
-                if tick.last_price <= self.stop_loss_price:
+                pos_lever = (self.pos_open_price * abs(self.virtual_pos)) / self.portfolio.portfolioValue
+                rate = (tick.last_price / self.pos_open_price - 1) * pos_lever
+                if rate <= self.loss_rate * -1:
                     # 多头止损
-                    trade_price = tick.last_price * 0.995
-                    self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(self.virtual_pos))
+                    price = tick.last_price
+                    self.send_order(Direction.SHORT, Offset.CLOSE, price, abs(self.virtual_pos))
                     self.pos_open_price = 0
                     self.pos_open_dt = None
-                    self.stop_loss_price = 0
-                    self.loss_count += 1
+                    self.cross_price = 0
+                    self.loss_stop = True
                     return
-                
-                if tick.last_price >= self.short_up:
-                    # 停止加仓判断
-                    if True or self.bar_loading or self.bar_lack or not indicator_valid:
-                        return
             
-                    # 多头加仓
-                    if ((self.long_down / self.pos_open_price) - 1) >= abs((self.stop_loss_price / self.pos_open_price) - 1):
-                        pos_open_price = tick.last_price
-                        trade_price = tick.last_price * 1.005
-                        if 1 / abs(((self.long_down / pos_open_price) - 1)) >= 1.5 / abs(((self.stop_loss_price / self.pos_open_price) - 1)):
-                            # 满足多头加仓条件
-                            lever = self.loss_rate / abs(((self.long_down / pos_open_price) - 1))
-                            lever = min(lever, self.max_lever)
-                            value = self.portfolio.portfolioValue * lever
-                            volume = value / pos_open_price
-                            add_volume = volume - abs(self.pos)
-                            if add_volume > 0:
-                                self.send_order(Direction.LONG, Offset.OPEN, trade_price, add_volume)
-                                self.pos_open_price = pos_open_price
-                                self.pos_open_dt = self.bar.datetime.strftime("%Y-%m-%d %H:%M:%S")
-                                self.stop_loss_price = self.long_down
-                                self.max_loss_count += 1
-                                return
-
             else:
                 if tick.last_price <= self.stop_profit_price:
                     # 空头止盈
-                    trade_price = tick.last_price * 1.005
-                    self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(self.virtual_pos))
+                    price = tick.last_price
+                    self.send_order(Direction.LONG, Offset.CLOSE, price, abs(self.virtual_pos))
                     self.pos_open_price = 0
                     self.pos_open_dt = None
-                    self.stop_loss_price = 0
+                    self.cross_price = 0
                     self.profit_stop = True
                     return
                 
-                if tick.last_price >= self.stop_loss_price:
+                pos_lever = (self.pos_open_price * abs(self.virtual_pos)) / self.portfolio.portfolioValue
+                rate = (1 - tick.last_price / self.pos_open_price) * pos_lever
+                if rate <= self.loss_rate * -1:
                     # 空头止损
-                    trade_price = tick.last_price * 1.005
-                    self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(self.virtual_pos))
+                    price = tick.last_price
+                    self.send_order(Direction.LONG, Offset.CLOSE, price, abs(self.virtual_pos))
                     self.pos_open_price = 0
                     self.pos_open_dt = None
-                    self.stop_loss_price = 0
-                    self.loss_count += 1
+                    self.cross_price = 0
+                    self.loss_stop = True
                     return
-                
-                if tick.last_price <= self.short_down:
-                    # 停止加仓判断
-                    if True or self.bar_loading or self.bar_lack or not indicator_valid:
-                        return
-                    
-                    # 空头加仓
-                    if ((self.long_up / self.pos_open_price) - 1) * -1 >= abs((self.stop_loss_price / self.pos_open_price) - 1):
-                        pos_open_price = tick.last_price
-                        trade_price = tick.last_price * 0.995
-                        if 1 / abs(((self.long_up / pos_open_price) - 1)) >= 1.5 / abs(((self.stop_loss_price / self.pos_open_price) - 1)):
-                            # 满足空头加仓条件
-                            lever = self.loss_rate / abs(((self.long_up / pos_open_price) - 1))
-                            lever = min(lever, self.max_lever)
-                            value = self.portfolio.portfolioValue * lever
-                            volume = value / pos_open_price
-                            add_volume = volume - abs(self.pos)
-                            if add_volume > 0:
-                                self.send_order(Direction.SHORT, Offset.OPEN, trade_price, add_volume)
-                                self.pos_open_price = pos_open_price
-                                self.pos_open_dt = self.bar.datetime.strftime("%Y-%m-%d %H:%M:%S")
-                                self.stop_loss_price = self.long_up
-                                self.max_loss_count += 1
-                                return
 
+        # 停止开新的仓位判断
+        if self.profit_stop or self.loss_stop:
+            return
+        
+        if self.cross_price or self.pos_open_times >= self.max_open_times:
+            return
+        
+        if self.bar_loading or self.bar_lack or not indicator_valid or not self.indicator_inited:
+            return
+        
+        if self.direction == Direction.LONG:
+            if tick.last_price >= self.short_up:
+                # 多头开仓
+                price = tick.last_price
+                lever = self.loss_rate_single / abs(((self.long_down / price) - 1))
+                lever = min(lever, self.max_lever_single)
+                value = self.portfolio.portfolioValue * lever
+                volume = value / price
+                self.pos_open_dt = self.bar.datetime.strftime("%Y-%m-%d %H:%M:%S")
+                self.pos_open_times += 1
+                self.cross_price = self.long_down
+                self.send_order(Direction.LONG, Offset.OPEN, price, volume)
+                return
+        
+        else:
+            if tick.last_price <= self.short_down:
+                # 空头开仓
+                price = tick.last_price
+                lever = self.loss_rate_single / abs(((self.long_up / price) - 1))
+                lever = min(lever, self.max_lever_single)
+                value = self.portfolio.portfolioValue * lever
+                volume = value / price
+                self.pos_open_dt = self.bar.datetime.strftime("%Y-%m-%d %H:%M:%S")
+                self.pos_open_times += 1
+                self.cross_price = self.long_up
+                self.send_order(Direction.SHORT, Offset.OPEN, price, volume)
+                return
+                
     def send_order(self, direction, offset, price, volume):
         # 撤回历史订单
         self.cancel_all()
 
+        trade_price = price
+        if direction == Direction.LONG:
+            trade_price = price * 1.005
+
+        elif direction == Direction.SHORT:
+            trade_price = price * 0.995
+
         # 精度处理
         contract = self.cta_engine.main_engine.get_contract(self.vt_symbol)
-        price = round_to(price, contract.pricetick)
+        trade_price = round_to(trade_price, contract.pricetick)
         volume = round_to(volume, contract.min_volume)
-        if not price or not volume:
+        if not trade_price or not volume:
             return
         
+        # 当前仓位总价值
+        if offset == Offset.OPEN:
+            total_value = price * volume + self.pos_open_price * abs(self.virtual_pos)
+
         # 当前虚拟持仓
         if direction == Direction.LONG:
             self.virtual_pos += volume
@@ -387,44 +360,45 @@ class CustomTradingSlowStrategy(CtaTemplate):
         else:
             self.virtual_pos -= volume
 
+        # 当前仓位均价
+        if offset == Offset.OPEN:
+            self.pos_open_price = total_value / abs(self.virtual_pos)
+        
         # 币安开仓有最低价值限制，判断是否满足
         if offset == Offset.OPEN and self.exchange == Exchange.BINANCE:
-            oms_engine = self.cta_engine.main_engine.engines["oms"]
-            tick = oms_engine.ticks.get(self.vt_symbol, None)
-            if tick:
-                value_cross = True
-                order_value = tick.last_price * volume
-                if "BTC" in self.vt_symbol and order_value <= 100:
-                    value_cross = False
+            value_cross = True
+            order_value = price * volume
+            if "BTC" in self.vt_symbol and order_value <= 100:
+                value_cross = False
 
-                if "ETH" in self.vt_symbol and order_value <= 20:
-                    value_cross = False
-                
-                if "BCH" in self.vt_symbol and order_value <= 20:
-                    value_cross = False
+            if "ETH" in self.vt_symbol and order_value <= 20:
+                value_cross = False
+            
+            if "BCH" in self.vt_symbol and order_value <= 20:
+                value_cross = False
 
-                if "ETC" in self.vt_symbol and order_value <= 20:
-                    value_cross = False
+            if "ETC" in self.vt_symbol and order_value <= 20:
+                value_cross = False
 
-                if "LINK" in self.vt_symbol and order_value <= 20:
-                    value_cross = False
+            if "LINK" in self.vt_symbol and order_value <= 20:
+                value_cross = False
 
-                if "LTC" in self.vt_symbol and order_value <= 20:
-                    value_cross = False
+            if "LTC" in self.vt_symbol and order_value <= 20:
+                value_cross = False
 
-                if order_value <= 5:
-                    value_cross = False
-                
-                if not value_cross:
-                    self.send_ding_talk(f"开仓订单价值未满足要求\n合约：{self.vt_symbol}\n价格：{tick.last_price}\n数量：{volume}\n价值：{order_value}")
-                    return
+            if order_value <= 5:
+                value_cross = False
+            
+            if not value_cross:
+                self.send_ding_talk(f"开仓订单价值未满足要求\n合约：{self.vt_symbol}\n价格：{tick.last_price}\n数量：{volume}\n价值：{order_value}")
+                return
         
         # 平仓订单数量处理
         if offset != Offset.OPEN:
             volume = min(volume, abs(self.pos))
         
         # 发出订单
-        super().send_order(direction, offset, price, volume)
+        super().send_order(direction, offset, trade_price, volume)
 
     def on_trade(self, trade):
         super().on_trade(trade)
