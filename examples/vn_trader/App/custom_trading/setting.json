@@ -8,7 +8,7 @@
       "strategy_name": "CUSTOMTRADING_SLOW_BTC_OKX",
       "vt_symbol":"BTC-USDT-SWAP.OKX",
       "exchange": "OKX",
-      "exchange_user": "lo-e",
+      "exchange_user": "lo-e（test）",
       "direction":"LONG",
       "long_window":20,
       "short_window":5,
@@ -17,19 +17,19 @@
       "min_lever":10,
       "max_lever":20,
       "stop_profit_price":59361,
-      "start": true
+      "start": false
     },
     {
       "strategy_name": "CUSTOMTRADING_FAST_BTC_OKX",
       "vt_symbol":"BTC-USDT-SWAP.OKX",
       "exchange": "OKX",
-      "exchange_user": "lo-e",
+      "exchange_user": "lo-e（test）",
       "direction":"LONG",
       "long_window":20,
       "short_window":5,
       "max_loss_count":1,
       "loss_rate":0.02,
-      "min_lever":10,
+      "min_lever":3,
       "max_lever":20,
       "stop_profit_price":59361,
       "start": true
