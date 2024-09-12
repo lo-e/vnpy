@@ -71,6 +71,7 @@ class CustomTradingSlowStrategy(CtaTemplate):
         "pos_open_times",
         "cross_price",
         "profit_stop",
+        "open_stop",
         "loss_stop"
     ]
 
@@ -82,6 +83,7 @@ class CustomTradingSlowStrategy(CtaTemplate):
         "pos_open_times",
         "cross_price",
         "profit_stop",
+        "open_stop",
         "loss_stop"
     ]
 
@@ -131,6 +133,7 @@ class CustomTradingSlowStrategy(CtaTemplate):
         self.indicator_inited = False                                                                       # 指标初始化状态
         self.indicator_waiting = False                                                                      # 价格突破long_up或long_down，需要等待下一周期指标更新，才能开仓和加仓
         self.profit_stop = False                                                                            # 止盈状态
+        self.open_stop = False                                                                              # 停止开新的仓位
         self.loss_stop = False                                                                              # 止损状态                                                                               
         self.bar = None                                                                                     # 当前最新bar
         self.am = ArrayManager(self.long_window)                                                            # K线容器
@@ -232,6 +235,9 @@ class CustomTradingSlowStrategy(CtaTemplate):
     def on_tick(self, tick: TickData):
         if not self.trading:
             return
+        
+        if (self.direction == Direction.LONG and tick.last_price >= self.stop_profit_price) or (self.direction == Direction.SHORT and tick.last_price <= self.stop_profit_price):
+            self.open_stop = True
 
         # 判断是否指标变量数值正常
         indicator_valid = True
@@ -294,7 +300,7 @@ class CustomTradingSlowStrategy(CtaTemplate):
                     return
 
         # 停止开新的仓位判断
-        if self.profit_stop or self.loss_stop:
+        if self.profit_stop or self.loss_stop or self.open_stop:
             return
         
         if self.cross_price or self.pos_open_times >= self.max_open_times:

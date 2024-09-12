@@ -70,6 +70,7 @@ class CustomTradingFastStrategy(CtaTemplate):
         "pos_open_dt",
         "stop_loss_price",
         "profit_stop",
+        "open_stop",
         "loss_count",
         "max_loss_count"
     ]
@@ -81,6 +82,7 @@ class CustomTradingFastStrategy(CtaTemplate):
         "pos_open_dt",
         "stop_loss_price",
         "profit_stop",
+        "open_stop",
         "loss_count",
         "max_loss_count"
     ]
@@ -129,7 +131,8 @@ class CustomTradingFastStrategy(CtaTemplate):
 
         self.indicator_inited = False                                                                       # 指标初始化状态
         self.indicator_waiting = False                                                                      # 价格突破long_up或long_down，需要等待下一周期指标更新，才能开仓和加仓
-        self.profit_stop = False                                                                            # 止盈状态                                                                             # 停止开新的仓位
+        self.profit_stop = False                                                                            # 止盈状态  
+        self.open_stop = False                                                                              # 停止开新的仓位
         self.loss_count = 0                                                                                 # 止损次数
         self.bar = None                                                                                     # 当前最新bar
         self.am = ArrayManager(self.long_window)                                                            # K线容器
@@ -231,6 +234,9 @@ class CustomTradingFastStrategy(CtaTemplate):
     def on_tick(self, tick: TickData):
         if not self.trading or self.profit_stop or self.loss_count >= self.max_loss_count:
             return
+        
+        if (self.direction == Direction.LONG and tick.last_price >= self.stop_profit_price) or (self.direction == Direction.SHORT and tick.last_price <= self.stop_profit_price):
+            self.open_stop = True
 
         # 判断是否指标变量数值正常
         indicator_valid = True
@@ -243,7 +249,7 @@ class CustomTradingFastStrategy(CtaTemplate):
         
         if not self.virtual_pos:
             # 停止开新的仓位判断
-            if self.bar_loading or self.bar_lack or not indicator_valid or not self.indicator_inited:
+            if self.bar_loading or self.bar_lack or not indicator_valid or not self.indicator_inited or self.open_stop:
                 return
             
             if self.direction == Direction.LONG:
