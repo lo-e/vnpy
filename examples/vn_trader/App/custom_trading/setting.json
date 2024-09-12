@@ -16,7 +16,7 @@
       "loss_rate_single":0.006,
       "max_open_times":3,
       "max_lever_single":5,
-      "stop_profit_price":59361,
+      "stop_profit_price":61786,
       "start": true
     },
     {
@@ -31,7 +31,7 @@
       "loss_rate":0.02,
       "min_lever":10,
       "max_lever":20,
-      "stop_profit_price":59361,
+      "stop_profit_price":61786,
       "start": true
     }
   ]
