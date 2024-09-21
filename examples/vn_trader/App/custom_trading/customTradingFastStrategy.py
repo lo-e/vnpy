@@ -50,6 +50,7 @@ class CustomTradingFastStrategy(CtaTemplate):
         "loss_rate",
         "min_lever",
         "max_lever",
+        "start_price",
         "stop_profit_price"
     ]
 

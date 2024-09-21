@@ -50,6 +50,7 @@ class CustomTradingSlowStrategy(CtaTemplate):
         "loss_rate_single",
         "max_open_times",
         "max_lever_single",
+        "start_price",
         "stop_profit_price"
     ]
 
