@@ -68,6 +68,7 @@ class CustomTradingFastStrategy(CtaTemplate):
         "short_down",
         "pos_open_price",
         "pos_open_dt",
+        "stop_price",
         "stop_loss_price",
         "profit_stop",
         "open_stop",
@@ -80,6 +81,7 @@ class CustomTradingFastStrategy(CtaTemplate):
         "virtual_pos",
         "pos_open_price",
         "pos_open_dt",
+        "stop_price",
         "stop_loss_price",
         "profit_stop",
         "open_stop",
@@ -122,6 +124,7 @@ class CustomTradingFastStrategy(CtaTemplate):
         self.virtual_pos = 0                                                                                # 虚拟持仓
         self.pos_open_price = 0                                                                             # 开仓价格
         self.pos_open_dt = None                                                                             # 开仓时的bar时间
+        self.stop_price = 0                                                                                 # 平仓价格
         self.stop_loss_price = 0                                                                            # 持仓止损价格
         
         self.long_up = 0                                                                                    # 止损最高价
@@ -235,7 +238,8 @@ class CustomTradingFastStrategy(CtaTemplate):
         if not self.trading or self.profit_stop or self.loss_count >= self.max_loss_count:
             return
         
-        if (self.direction == Direction.LONG and tick.last_price >= self.stop_profit_price) or (self.direction == Direction.SHORT and tick.last_price <= self.stop_profit_price):
+        sub = abs(self.stop_profit_price - self.start_price) / 3
+        if (self.direction == Direction.LONG and tick.last_price >= self.stop_profit_price - sub) or (self.direction == Direction.SHORT and tick.last_price <= self.stop_profit_price + sub):
             self.open_stop = True
 
         # 判断是否指标变量数值正常
@@ -290,19 +294,22 @@ class CustomTradingFastStrategy(CtaTemplate):
                     # 多头止盈
                     trade_price = tick.last_price * 0.995
                     self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(self.virtual_pos))
-                    self.pos_open_price = 0
-                    self.pos_open_dt = None
-                    self.stop_loss_price = 0
+                    self.stop_price = tick.last_pric
                     self.profit_stop = True
                     return
                 
-                if tick.last_price <= self.stop_loss_price:
+                stop = False
+                if self.open_stop and tick.last_price <= self.pos_open_price:
+                    stop = True
+
+                elif tick.last_price <= self.stop_loss_price:
+                    stop = True
+
+                if stop:
                     # 多头止损
                     trade_price = tick.last_price * 0.995
                     self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(self.virtual_pos))
-                    self.pos_open_price = 0
-                    self.pos_open_dt = None
-                    self.stop_loss_price = 0
+                    self.stop_price = tick.last_pric
                     self.loss_count += 1
                     return
                 
@@ -335,19 +342,22 @@ class CustomTradingFastStrategy(CtaTemplate):
                     # 空头止盈
                     trade_price = tick.last_price * 1.005
                     self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(self.virtual_pos))
-                    self.pos_open_price = 0
-                    self.pos_open_dt = None
-                    self.stop_loss_price = 0
+                    self.stop_price = tick.last_pric
                     self.profit_stop = True
                     return
                 
-                if tick.last_price >= self.stop_loss_price:
+                stop = False
+                if self.open_stop and tick.last_price >= self.pos_open_price:
+                    stop = True
+
+                elif tick.last_price >= self.stop_loss_price:
+                    stop = True
+
+                if stop:
                     # 空头止损
                     trade_price = tick.last_price * 1.005
                     self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(self.virtual_pos))
-                    self.pos_open_price = 0
-                    self.pos_open_dt = None
-                    self.stop_loss_price = 0
+                    self.stop_price = tick.last_pric
                     self.loss_count += 1
                     return
                 
