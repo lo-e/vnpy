@@ -69,7 +69,7 @@ class CustomTradingSlowStrategy(CtaTemplate):
         "short_down",
         "pos_open_price",
         "pos_open_dt",
-        "stop_price",
+        "pos_stop_price",
         "pos_open_times",
         "cross_price",
         "profit_stop",
@@ -83,7 +83,7 @@ class CustomTradingSlowStrategy(CtaTemplate):
         "pos_open_price",
         "pos_open_dt",
         "pos_open_times",
-        "stop_price",
+        "pos_stop_price",
         "cross_price",
         "profit_stop",
         "open_stop",
@@ -125,7 +125,7 @@ class CustomTradingSlowStrategy(CtaTemplate):
         self.virtual_pos = 0                                                                                # 虚拟持仓
         self.pos_open_price = 0                                                                             # 开仓价格
         self.pos_open_dt = None                                                                             # 开仓时的bar时间
-        self.stop_price = 0                                                                                 # 平仓价格
+        self.pos_stop_price = 0                                                                                 # 平仓价格
         self.pos_open_times = 0                                                                             # 开仓次数                                                                                                                                 
         self.cross_price = 0                                                                                # 下次开仓前需要逆向突破的价格
         
@@ -263,7 +263,7 @@ class CustomTradingSlowStrategy(CtaTemplate):
                     # 多头止盈
                     price = tick.last_price
                     self.send_order(Direction.SHORT, Offset.CLOSE, price, abs(self.virtual_pos))
-                    self.stop_price = price
+                    self.pos_stop_price = price
                     self.profit_stop = True
                     return
                 
@@ -281,7 +281,7 @@ class CustomTradingSlowStrategy(CtaTemplate):
                     # 多头止损
                     price = tick.last_price
                     self.send_order(Direction.SHORT, Offset.CLOSE, price, abs(self.virtual_pos))
-                    self.stop_price = price
+                    self.pos_stop_price = price
                     self.loss_stop = True
                     return
             
@@ -290,7 +290,7 @@ class CustomTradingSlowStrategy(CtaTemplate):
                     # 空头止盈
                     price = tick.last_price
                     self.send_order(Direction.LONG, Offset.CLOSE, price, abs(self.virtual_pos))
-                    self.stop_price = price
+                    self.pos_stop_price = price
                     self.profit_stop = True
                     return
                 
@@ -308,7 +308,7 @@ class CustomTradingSlowStrategy(CtaTemplate):
                     # 空头止损
                     price = tick.last_price
                     self.send_order(Direction.LONG, Offset.CLOSE, price, abs(self.virtual_pos))
-                    self.stop_price = price
+                    self.pos_stop_price = price
                     self.loss_stop = True
                     return
 
