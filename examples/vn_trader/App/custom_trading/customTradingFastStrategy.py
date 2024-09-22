@@ -295,7 +295,7 @@ class CustomTradingFastStrategy(CtaTemplate):
                     # 多头止盈
                     trade_price = tick.last_price * 0.995
                     self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(self.virtual_pos))
-                    self.pos_stop_price = tick.last_pric
+                    self.pos_stop_price = tick.last_price
                     self.profit_stop = True
                     return
                 
@@ -310,7 +310,7 @@ class CustomTradingFastStrategy(CtaTemplate):
                     # 多头止损
                     trade_price = tick.last_price * 0.995
                     self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(self.virtual_pos))
-                    self.pos_stop_price = tick.last_pric
+                    self.pos_stop_price = tick.last_price
                     self.loss_count += 1
                     return
                 
@@ -343,7 +343,7 @@ class CustomTradingFastStrategy(CtaTemplate):
                     # 空头止盈
                     trade_price = tick.last_price * 1.005
                     self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(self.virtual_pos))
-                    self.pos_stop_price = tick.last_pric
+                    self.pos_stop_price = tick.last_price
                     self.profit_stop = True
                     return
                 
@@ -358,7 +358,7 @@ class CustomTradingFastStrategy(CtaTemplate):
                     # 空头止损
                     trade_price = tick.last_price * 1.005
                     self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(self.virtual_pos))
-                    self.pos_stop_price = tick.last_pric
+                    self.pos_stop_price = tick.last_price
                     self.loss_count += 1
                     return
                 
