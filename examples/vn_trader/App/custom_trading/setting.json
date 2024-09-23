@@ -30,7 +30,7 @@
       "short_window":5,
       "max_loss_count":1,
       "loss_rate":0.02,
-      "min_lever":3,
+      "min_lever":10,
       "max_lever":20,
       "start_price":62889,
       "stop_profit_price":63157,
