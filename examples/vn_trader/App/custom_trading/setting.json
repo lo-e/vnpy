@@ -1,7 +1,7 @@
 {
   "portfolio":{
     "name":"CUSTOMTRADING_PORTFOLIO",
-    "portfolioValue":280
+    "portfolioValue":1280
   },
   "signal": [
     {
@@ -18,7 +18,7 @@
       "max_lever_single":5,
       "start_price":62889,
       "stop_profit_price":63157,
-      "start": true
+      "start": false
     },
     {
       "strategy_name": "CUSTOMTRADING_FAST_BTC_OKX",
@@ -34,7 +34,39 @@
       "max_lever":20,
       "start_price":62889,
       "stop_profit_price":63157,
+      "start": false
+    },
+    {
+      "strategy_name": "CUSTOMTRADING_SLOW_ETH_OKX",
+      "vt_symbol":"ETH-USDT-SWAP.OKX",
+      "exchange": "OKX",
+      "exchange_user": "lo-e",
+      "direction":"LONG",
+      "long_window":20,
+      "short_window":5,
+      "loss_rate":0.06,
+      "loss_rate_single":0.006,
+      "max_open_times":3,
+      "max_lever_single":3,
+      "start_price":2659,
+      "stop_profit_price":2915,
       "start": true
-    }
+    },
+    {
+      "strategy_name": "CUSTOMTRADING_FAST_ETH_OKX",
+      "vt_symbol":"ETH-USDT-SWAP.OKX",
+      "exchange": "OKX",
+      "exchange_user": "lo-e",
+      "direction":"LONG",
+      "long_window":20,
+      "short_window":5,
+      "max_loss_count":1,
+      "loss_rate":0.02,
+      "min_lever":5,
+      "max_lever":10,
+      "start_price":2659,
+      "stop_profit_price":2915,
+      "start": false
+    } 
   ]
 }
