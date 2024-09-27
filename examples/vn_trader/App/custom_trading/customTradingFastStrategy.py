@@ -125,7 +125,7 @@ class CustomTradingFastStrategy(CtaTemplate):
         self.virtual_pos = 0                                                                                # 虚拟持仓
         self.pos_open_price = 0                                                                             # 开仓价格
         self.pos_open_dt = None                                                                             # 开仓时的bar时间
-        self.pos_stop_price = 0                                                                                 # 平仓价格
+        self.pos_stop_price = 0                                                                             # 平仓价格
         self.stop_loss_price = 0                                                                            # 持仓止损价格
         
         self.long_up = 0                                                                                    # 止损最高价

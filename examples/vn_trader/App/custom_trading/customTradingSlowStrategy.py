@@ -70,6 +70,7 @@ class CustomTradingSlowStrategy(CtaTemplate):
         "pos_open_price",
         "pos_open_dt",
         "pos_stop_price",
+        "stop_loss_price",
         "pos_open_times",
         "cross_price",
         "profit_stop",
@@ -82,8 +83,9 @@ class CustomTradingSlowStrategy(CtaTemplate):
         "virtual_pos",
         "pos_open_price",
         "pos_open_dt",
-        "pos_open_times",
         "pos_stop_price",
+        "stop_loss_price",
+        "pos_open_times",
         "cross_price",
         "profit_stop",
         "open_stop",
@@ -125,7 +127,8 @@ class CustomTradingSlowStrategy(CtaTemplate):
         self.virtual_pos = 0                                                                                # 虚拟持仓
         self.pos_open_price = 0                                                                             # 开仓价格
         self.pos_open_dt = None                                                                             # 开仓时的bar时间
-        self.pos_stop_price = 0                                                                                 # 平仓价格
+        self.pos_stop_price = 0                                                                             # 平仓价格
+        self.stop_loss_price = 0                                                                            # 持仓止损价格
         self.pos_open_times = 0                                                                             # 开仓次数                                                                                                                                 
         self.cross_price = 0                                                                                # 下次开仓前需要逆向突破的价格
         
@@ -272,9 +275,12 @@ class CustomTradingSlowStrategy(CtaTemplate):
                     stop = True
 
                 else:
-                    pos_lever = (self.pos_open_price * abs(self.virtual_pos)) / self.portfolio.portfolioValue
-                    rate = (tick.last_price / self.pos_open_price - 1) * pos_lever
-                    if rate <= self.loss_rate * -1:
+                    # pos_lever = (self.pos_open_price * abs(self.virtual_pos)) / self.portfolio.portfolioValue
+                    # rate = (tick.last_price / self.pos_open_price - 1) * pos_lever
+                    # if rate <= self.loss_rate * -1:
+                    #     stop = True
+
+                    if tick.last_price <= self.stop_loss_price:
                         stop = True
 
                 if stop:
@@ -299,9 +305,12 @@ class CustomTradingSlowStrategy(CtaTemplate):
                     stop = True
                 
                 else:
-                    pos_lever = (self.pos_open_price * abs(self.virtual_pos)) / self.portfolio.portfolioValue
-                    rate = (1 - tick.last_price / self.pos_open_price) * pos_lever
-                    if rate <= self.loss_rate * -1:
+                    # pos_lever = (self.pos_open_price * abs(self.virtual_pos)) / self.portfolio.portfolioValue
+                    # rate = (1 - tick.last_price / self.pos_open_price) * pos_lever
+                    # if rate <= self.loss_rate * -1:
+                    #     stop = True
+
+                    if tick.last_price >= self.stop_loss_price:
                         stop = True
 
                 if stop:
@@ -379,9 +388,17 @@ class CustomTradingSlowStrategy(CtaTemplate):
         else:
             self.virtual_pos -= volume
 
-        # 当前仓位均价
         if offset == Offset.OPEN:
+            # 当前仓位均价
             self.pos_open_price = total_value / abs(self.virtual_pos)
+
+            # 当前仓位止损价格
+            pos_lever = total_value / self.portfolio.portfolioValue
+            if self.direction == Direction.LONG:
+                self.stop_loss_price = ((self.loss_rate * -1) / pos_lever + 1) * self.pos_open_price
+            
+            else:
+                self.stop_loss_price = (1 - ((self.loss_rate * -1) / pos_lever)) * self.pos_open_price
         
         # 币安开仓有最低价值限制，判断是否满足
         if offset == Offset.OPEN and self.exchange == Exchange.BINANCE:
