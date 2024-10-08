@@ -243,7 +243,7 @@ class CustomTradingSlowStrategy(CtaTemplate):
         if not self.trading:
             return
         
-        sub = abs(self.stop_profit_price - self.start_price) / 3
+        sub = abs(self.stop_profit_price - self.start_price) / 2
         if (self.direction == Direction.LONG and tick.last_price >= self.stop_profit_price - sub) or (self.direction == Direction.SHORT and tick.last_price <= self.stop_profit_price + sub):
             self.open_stop = True
 
