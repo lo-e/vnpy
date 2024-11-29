@@ -147,3 +147,14 @@ wget https://aka.ms/vs/17/release/vs_BuildTools.exe -o vs_BuildTools.exe ; cmd /
 python -m pip install pip==21.3.1
 pip install setuptools==57.5.0
 ```
+
+requests、chrome_driver等网络请求工具无法自动使用系统代理，需要手动设置代理
+```
+还不明确具体原因，可以尝试安装以下库，会安装指定版本的其他网络请求库，可以解决问题，具体哪个第三方库导致此问题还有待排查
+
+pip install solana
+Successfully installed cachetools-4.2.4 construct-2.10.68 construct-typing-0.5.6 httpcore-0.16.3 httpx-0.23.3 jsonalias-0.1.1 rfc3986-1.5.0 solana-0.30.2 solders-0.18.1 types-cachetools-4.2.10
+
+pip install web3
+Successfully installed aiohttp-3.8.6 aiosignal-1.3.1 async-timeout-4.0.3 asynctest-0.13.0 bitarray-3.0.0 charset-normalizer-3.4.0 ckzg-1.0.2 eth-abi-4.2.1 eth-account-0.10.0 eth-hash-0.5.2 eth-keyfile-0.6.1 eth-keys-0.4.0 eth-rlp-0.3.0 eth-typing-3.5.2 eth-utils-2.3.2 frozenlist-1.3.3 hexbytes-0.3.1 importlib-resources-5.12.0 jsonschema-4.17.3 lru-dict-1.2.0 parsimonious-0.9.0 pkgutil-resolve-name-1.3.10 protobuf-4.24.4 pyunormalize-16.0.0 regex-2024.4.16 rlp-3.0.0 web3-6.20.3 zipp-3.15.0
+```
