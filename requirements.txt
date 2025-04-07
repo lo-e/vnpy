@@ -11,9 +11,6 @@ pandas
 matplotlib
 seaborn
 PyCryptodome
-futu-api
-ta-lib
-ibapi
 deap
 pyzmq
 DingtalkChatbot
@@ -24,6 +21,7 @@ jqdatasdk
 plotly
 exchange-calendars
 reportlab
+pymongo
 
 vnpy_rest==1.0.3
 vnpy_websocket==1.0.2
