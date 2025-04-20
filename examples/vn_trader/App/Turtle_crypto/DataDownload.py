@@ -177,16 +177,19 @@ class DownloadUtility(object):
                     print(f"无法获取合约上市日期：{symbol}")
                 
                 first_bar_dt_str = first_bar_dt.strftime(f"%Y-%m-%d %H:%M:%S") if first_bar_dt else ""
+                ts = first_bar_dt.timestamp() if first_bar_dt else 0
                 symbol_dt_data.append({"symbol": symbol,
-                                       "on": first_bar_dt_str})
+                                       "on": first_bar_dt_str,
+                                       "on_timestamp": ts})
 
         print(f"总计：{len(flt_symbol_list)}")
 
         # 保存到文件
         df = pd.DataFrame(symbol_dt_data)
+        sorted_df = df.sort_values("on_timestamp", ascending=False)
         csv_dir = get_csv_path()
         file_path = f"{csv_dir}{exchange.value}{DIR_SYMBOL}instruments.csv"
-        save_df_data(df, file_path)
+        save_df_data(sorted_df, file_path)
 
     def download_data(self):
         exchange = input("选择交易所（默认1）【Binance：1 OKX：2 Bybit：3】")
@@ -578,7 +581,7 @@ if __name__ == "__main__":
     # 获取各大交易所所有合约列表
     # utility.get_instruments_list()
 
-    # 获取新上市的合约列表
+    # 获取新上市的合约列表（附上上市日期并保存到.csv文件）
     utility.get_new_instruments_list(Exchange.BINANCE)
 
     # 下载数据
