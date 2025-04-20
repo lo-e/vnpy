@@ -24,11 +24,13 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import Paragraph
 from reportlab.platypus import Spacer
 from vnpy.trader.engine import EmailEngine
+from dataservice.utility import get_csv_path, save_df_data
 
 class DownloadUtility(object):
     def __init__(self) -> None:
         self.update_data_hour = -1              # 上次更新数据的时间
     
+    # 获取各大交易所所有合约列表
     def get_instruments_list(self):
         # 获取OKX合约列表
         symbol_list_ok = okx_get_symbol_list(type=OKXType.USDT)
@@ -141,6 +143,50 @@ class DownloadUtility(object):
         for symbol in flt_symbol_list_common:
             print(f"{symbol}\t{flt_symbol_dt_dict_ok[symbol]}(OKX)\t{flt_symbol_dt_dict_binance[symbol]}(BINANCE)")
         print(f"OKX和BINANCE共同筛选合约总计：{len(flt_symbol_list_common)}")
+
+    # 获取新上市的合约列表
+    def get_new_instruments_list(self, exchange: Exchange):
+        flt_symbol_list = []
+        symbol_dt_data = []
+        if exchange == Exchange.BINANCE:
+            symbol_list = binance_get_symbol_list(need_data=False)
+            for symbol in symbol_list:
+                print(symbol)
+            print(f"BINANCE_USDT永续合约总计：{len(symbol_list)}")
+
+            # 筛选新币种
+            print(f"\n------ 符合筛选条件的合约 ------")
+            for symbol in symbol_list:
+                first_bar_dt = None
+                try_count = 0
+                while try_count < 5:
+                    try:
+                        first_bar_dt = binance_get_first_bar_datetime(symbol=symbol, interval="1m", symbol_type=BinanceType.USDT, start_time="2020-12-01 00:00:00")
+                        break
+
+                    except Exception:
+                        try_count += 1
+
+                if first_bar_dt:
+                    flt_from = datetime.now().replace(second=0) - timedelta(days=90)
+                    if first_bar_dt >= flt_from:
+                        flt_symbol_list.append(symbol)
+                        print(f"{symbol}\t\t{first_bar_dt}")
+                
+                else:
+                    print(f"无法获取合约上市日期：{symbol}")
+                
+                first_bar_dt_str = first_bar_dt.strftime(f"%Y-%m-%d %H:%M:%S") if first_bar_dt else ""
+                symbol_dt_data.append({"symbol": symbol,
+                                       "on": first_bar_dt_str})
+
+        print(f"总计：{len(flt_symbol_list)}")
+
+        # 保存到文件
+        df = pd.DataFrame(symbol_dt_data)
+        csv_dir = get_csv_path()
+        file_path = f"{csv_dir}{exchange.value}{DIR_SYMBOL}instruments.csv"
+        save_df_data(df, file_path)
 
     def download_data(self):
         exchange = input("选择交易所（默认1）【Binance：1 OKX：2 Bybit：3】")
@@ -525,15 +571,18 @@ class DownloadUtility(object):
                             email_engine.send_email(subject=f"{exchange}行情推送", content=f"点击附件查看", pdf_file_path=pdf_full_path)
 
             sleep(10)
-            
+    
 if __name__ == "__main__":
     utility = DownloadUtility()
 
-    # 获取OKX、BINANCE合约列表信息
+    # 获取各大交易所所有合约列表
     # utility.get_instruments_list()
 
+    # 获取新上市的合约列表
+    utility.get_new_instruments_list(Exchange.BINANCE)
+
     # 下载数据
-    utility.download_data()
+    # utility.download_data()
     
     # 更新数据并生成市场信号
     # utility.update_data_signal()
