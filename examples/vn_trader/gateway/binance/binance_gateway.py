@@ -996,7 +996,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
 
         data: dict = packet["data"]
 
-        symbol, channel = stream.split("@")
+        symbol, channel = stream.split("@")[:2]
         symbol_upper = symbol.upper()
         tick = self.ticks.get(symbol_upper, None)
         if not tick:
@@ -1019,7 +1019,12 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
             tick.last_price = float(data["c"])
             tick.datetime = generate_datetime(float(data["E"]))
 
-        else:
+        elif channel == "aggTrade":
+            tick.volume = float(data["q"])
+            tick.last_price = float(data["p"])
+            tick.datetime = generate_datetime(float(data["T"]))
+
+        elif channel == "depth5":
             dt = generate_datetime(data["E"])
             tick.datetime = dt
             bids: list = data["b"]
@@ -1048,8 +1053,10 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
             try:
                 symbol = self.subscribe_queue.get(block=True, timeout=1)
                 self.reqid += 1
-                # channels = [f"{symbol.lower()}@ticker", f"{symbol.lower()}@depth5"]
-                channels = [f"{symbol.lower()}@ticker"]
+                # channels = [f"{symbol.lower()}@ticker", f"{symbol.lower()}@depth5@100ms"] # 按Symbol刷新的24小时完整ticker信息、有限档深度信息
+                # channels = [f"{symbol.lower()}@ticker"]
+                # channels = [f"{symbol.lower()}@aggTrade", f"{symbol.lower()}@depth5@100ms"] # 同一价格、同一方向、同一时间(100ms计算)的归集交易、有限档深度信息
+                channels = [f"{symbol.lower()}@aggTrade"]
                 req: dict = {"method": "SUBSCRIBE", "params": channels, "id": self.reqid}
                 self.send_packet(req)
 
