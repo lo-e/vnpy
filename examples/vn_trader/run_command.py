@@ -8,16 +8,27 @@ import time
 from vnpy.trader.event import EVENT_TICK
 from vnpy.trader.object import TickData
 from threading import Thread
+from datetime import datetime, timedelta
+from copy import copy
+
+class SecondTick(object):
+    def __init__(self) -> None:
+        self.vt_symbol: str = ""
+        self.timestamp: int = 0
+        self.datetime: datetime = None
+        self.price: float = 0
+        self.count: int = 0
 
 class SubscribeEngine(object):
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
         self.main_engine = main_engine
         self.event_engine = event_engine
-
-        # 注册事件
         self.event_engine.register(EVENT_TICK, self.on_tick)
 
+        self.symbol_second_tick_data = {}
+
     def subscribe(self, vt_symbol: str):
+        # 订阅合约
         start = time.time()
         success = False
         while not success:
@@ -35,10 +46,24 @@ class SubscribeEngine(object):
             print(f"行情订阅失败，找不到合约{vt_symbol}")
 
     def on_tick(self, event):
+        # 行情数据处理
         tick: TickData = event.data
-        dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S.%f")
-        if "OKX" in tick.vt_symbol:
-            print(f"{tick.vt_symbol} {tick.last_price} {dt}")
+        tick_timestamp: int = int(tick.datetime.timestamp())
+        second_tick: SecondTick = self.symbol_second_tick_data.get(tick.vt_symbol, SecondTick())
+        if second_tick.timestamp != tick_timestamp:
+            if second_tick.timestamp:
+                print(f"{second_tick.vt_symbol} {second_tick.price}@{second_tick.count} {second_tick.datetime}")
+
+            second_tick = SecondTick()
+            second_tick.vt_symbol = tick.vt_symbol
+            second_tick.timestamp = tick_timestamp
+            second_tick.datetime = datetime.fromtimestamp(tick_timestamp)
+            second_tick.price = tick.last_price
+            second_tick.count = 1
+            self.symbol_second_tick_data[tick.vt_symbol] = second_tick
+        
+        else:
+            second_tick.count += 1
 
 if __name__ == "__main__":
     # 引擎
