@@ -48,7 +48,6 @@ class TurtleCryptoDataDownloading(object):
         self.bybit_loading_complete = True
         self.okx_loading_complete = True
         self.binance_loading_complete = True
-        pass
 
     def delete_history_data(self, target_dir: str = ""):
         csv_path = get_csv_path(target_dir=target_dir)

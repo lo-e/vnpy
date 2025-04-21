@@ -1,0 +1,24 @@
+{
+  "portfolio":{
+    "name":"HIT_NEW_PORTFOLIO",
+    "portfolioValue":1280
+  },
+  "signal": [
+    {
+      "strategy_name": "HIT_NEW_OKX",
+      "vt_symbol":"BTC-USDT-SWAP.OKX",
+      "exchange": "OKX",
+      "exchange_user": "lo-e",
+      "direction":"LONG",
+      "long_window":20,
+      "short_window":5,
+      "loss_rate":0.06,
+      "loss_rate_single":0.006,
+      "max_open_times":3,
+      "max_lever_single":5,
+      "start_price":65000,
+      "stop_profit_price":69490,
+      "start": true
+    }
+  ]
+}
