@@ -587,6 +587,7 @@ class OkxWebsocketPublicApi(WebsocketClient):
 
         self.callbacks: Dict[str, callable] = {
             "tickers": self.on_ticker,
+            "trades": self.on_trade,
             "books5": self.on_depth
         }
 
@@ -620,8 +621,11 @@ class OkxWebsocketPublicApi(WebsocketClient):
         self.ticks[req.symbol] = tick
 
         # 发送订阅请求
+        # tickers 获取产品的最新成交价、买一价、卖一价和24小时交易量等信息，最快100ms推送一次，没有触发事件时不推送，触发推送的事件有：成交、买一卖一发生变动。
+        # trades 获取最近的成交数据，有成交数据就推送，每次推送可能聚合多条成交数据，根据每个taker订单的不同成交价格推送消息，并使用count字段表示聚合的订单匹配数量。
+        # books5 获取深度数据，books5是5档频道，首次推5档快照数据，以后定量推送，每100毫秒当5档快照数据有变化推送一次5档数据。
         args: list = []
-        for channel in ["tickers", "books5"]:
+        for channel in ["trades"]:
             args.append({
                 "channel": channel,
                 "instId": req.symbol
@@ -674,17 +678,30 @@ class OkxWebsocketPublicApi(WebsocketClient):
         )
 
     def on_ticker(self, data: list) -> None:
-        """行情推送回报"""
+        """ 行情推送回报 """
         for d in data:
             tick: TickData = self.ticks[d["instId"]]
             tick.last_price = float(d["last"])
             tick.open_price = float(d["open24h"])
             tick.high_price = float(d["high24h"])
             tick.low_price = float(d["low24h"])
-            tick.volume = float(d["vol24h"])
+            tick.volume = float(d["volCcy24h"])
+            tick.datetime = parse_timestamp(d["ts"])
+
+            self.gateway.on_tick(copy(tick))
+
+    def on_trade(self, data: list) -> None:
+        """ 成交推送回报 """
+        for d in data:
+            tick: TickData = self.ticks[d["instId"]]
+            tick.last_price = float(d["px"])
+            tick.volume = float(d["sz"])
+            tick.datetime = parse_timestamp(d["ts"])
+
+            self.gateway.on_tick(copy(tick))
 
     def on_depth(self, data: list) -> None:
-        """盘口推送回报"""
+        """ 盘口推送回报 """
         for d in data:
             tick: TickData = self.ticks[d["instId"]]
             bids: list = d["bids"]

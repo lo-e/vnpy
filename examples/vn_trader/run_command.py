@@ -37,7 +37,7 @@ class SubscribeEngine(object):
     def on_tick(self, event):
         tick: TickData = event.data
         dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S.%f")
-        if "BINANCE" in tick.vt_symbol:
+        if "OKX" in tick.vt_symbol:
             print(f"{tick.vt_symbol} {tick.last_price} {dt}")
 
 if __name__ == "__main__":

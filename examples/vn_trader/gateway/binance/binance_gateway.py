@@ -1049,13 +1049,13 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
         self.connected = False
     
     def run_subscribe(self):
+        # @ticker 按Symbol刷新的24小时完整ticker信息
+        # @aggTrade # 同一价格、同一方向、同一时间(100ms计算)的归集交易、有限档深度信息
+        # @depth5@100ms 有限档深度信息
         while True:
             try:
                 symbol = self.subscribe_queue.get(block=True, timeout=1)
                 self.reqid += 1
-                # channels = [f"{symbol.lower()}@ticker", f"{symbol.lower()}@depth5@100ms"] # 按Symbol刷新的24小时完整ticker信息、有限档深度信息
-                # channels = [f"{symbol.lower()}@ticker"]
-                # channels = [f"{symbol.lower()}@aggTrade", f"{symbol.lower()}@depth5@100ms"] # 同一价格、同一方向、同一时间(100ms计算)的归集交易、有限档深度信息
                 channels = [f"{symbol.lower()}@aggTrade"]
                 req: dict = {"method": "SUBSCRIBE", "params": channels, "id": self.reqid}
                 self.send_packet(req)
