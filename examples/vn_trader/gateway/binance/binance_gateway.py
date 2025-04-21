@@ -1018,6 +1018,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
             tick.low_price = float(data["l"])
             tick.last_price = float(data["c"])
             tick.datetime = generate_datetime(float(data["E"]))
+
         else:
             dt = generate_datetime(data["E"])
             tick.datetime = dt

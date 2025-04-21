@@ -181,7 +181,41 @@ class DownloadUtility(object):
                 symbol_dt_data.append({"symbol": symbol,
                                        "on": first_bar_dt_str,
                                        "on_timestamp": ts})
+                
+        elif exchange == Exchange.OKX:
+            symbol_list = okx_get_symbol_list(type=OKXType.USDT)
+            for symbol in symbol_list:
+                print(symbol)
+            print(f"OKX_USDT永续合约总计：{len(symbol_list)}")
 
+            # 筛选新币种
+            print(f"\n------ 符合筛选条件的合约 ------")
+            for symbol in symbol_list:
+                first_bar_dt = None
+                try_count = 0
+                while try_count < 5:
+                    try:
+                        first_bar_dt = okx_get_first_bar_datetime(symbol=symbol)
+                        break
+
+                    except Exception:
+                        try_count += 1
+
+                if first_bar_dt:
+                    flt_from = datetime.now().replace(second=0) - timedelta(days=90)
+                    if first_bar_dt >= flt_from:
+                        flt_symbol_list.append(symbol)
+                        print(f"{symbol}\t\t{first_bar_dt}")
+                
+                else:
+                    print(f"无法获取合约上市日期：{symbol}")
+                
+                first_bar_dt_str = first_bar_dt.strftime(f"%Y-%m-%d %H:%M:%S") if first_bar_dt else ""
+                ts = first_bar_dt.timestamp() if first_bar_dt else 0
+                symbol_dt_data.append({"symbol": symbol,
+                                       "on": first_bar_dt_str,
+                                       "on_timestamp": ts})
+                
         print(f"总计：{len(flt_symbol_list)}")
 
         # 保存到文件
@@ -582,7 +616,7 @@ if __name__ == "__main__":
     # utility.get_instruments_list()
 
     # 获取新上市的合约列表（附上上市日期并保存到.csv文件）
-    utility.get_new_instruments_list(Exchange.BINANCE)
+    utility.get_new_instruments_list(Exchange.OKX)
 
     # 下载数据
     # utility.download_data()
