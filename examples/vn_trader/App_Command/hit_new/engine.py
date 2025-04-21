@@ -102,7 +102,7 @@ class HitNewEngine(BaseEngine):
         # 导入投资组合
         portfolio_setting = setting.get("portfolio", None)
         self.portfolio = HitNewPortfolio(self, portfolio_setting)
-        self.loadPortfolioSyncData()
+        self.load_portfolio_syncData()
         
         # 导入策略
         signal_list = setting.get("signal", [])
@@ -415,7 +415,7 @@ class HitNewEngine(BaseEngine):
         # 保存投资组合同步数据到数据库
         self.savePortfolioSyncData()
 
-    def loadPortfolioSyncData(self):
+    def load_portfolio_syncData(self):
         # 从数据库导入投资组合历史同步数据
         syncData = self.main_engine.dbQuery(
             PORTFOLIO_DB_NAME, self.portfolio.name, {}
@@ -651,7 +651,7 @@ class HitNewEngine(BaseEngine):
             content = f"打新策略同步数据保存失败！！"
             self.write_log(content)
 
-    def initPortfolio(self):
+    def init_portfolio(self):
         # 初始化所有策略
         self.init_all_strategies()
 

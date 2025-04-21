@@ -53,27 +53,21 @@ class HitNewStrategy(CtaTemplate):
         self.bar_loading = False                                                                            # 正在加载bar数据
         self.bar_lack = True                                                                                # bar缺失
         self.bar = None                                                                                     # 当前最新bar
-        self.am = ArrayManager(self.long_window)                                                            # K线容器
+        self.am = ArrayManager(60)                                                            # K线容器
         self.bar_generator = BarGenerator(on_bar=None, window=5, on_window_bar=self.on_window_bar)          # bar生成工具
 
     def on_init(self):
         # 交易所成功连接判断
         exchange = self.vt_symbol.split(".")[-1]
-        if exchange == "OKX":
-            exchange = Exchange.OKX
+        if exchange != "OKX" and exchange != "BINANCE" and exchange != "BYBIT":
+            msg = f"未知交易所错误：{exchange}"
+            self.send_ding_talk(msg)
+            return
         
-        elif exchange == "BINANCE":
-            exchange = Exchange.BINANCE
-        
-        elif exchange == "BYBIT":
-            exchange = Exchange.BYBIT
-        
-        else:
-            raise(f"合约交易所错误：{exchange}")
-        
-        gateway = self.cta_engine.main_engine.get_gateway(gateway_name=exchange.value, account_name=self.exchange_user)
+        gateway = self.cta_engine.main_engine.get_gateway(gateway_name=exchange, account_name=self.exchange_user)
         if not gateway:
-            raise(f"打新策略交易所账户未连接：{self.exchange}@{self.exchange_user}")
+            msg = f"打新策略交易所账户未连接\n交易所 {exchange.value}@{self.exchange_user}"
+            self.send_ding_talk(msg)
 
     def load_bar_data(self):
         # 数据库加载bar数据

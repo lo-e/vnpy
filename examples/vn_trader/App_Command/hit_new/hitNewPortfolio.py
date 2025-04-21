@@ -26,8 +26,8 @@ class HitNewPortfolio(object):
         self.strategy_symbols = set()
         
         # 数据下载相关
-        self.download_engine = TurtleCryptoDataDownloading()        # 数据下载引擎
-        self.downloading_at = None                                  # 记录开始下载的分钟时间点
+        self.download_engine = TurtleCryptoDataDownloading()
+        self.data_update_hour_time: datetime = None
 
         # 设置参数
         for name in self.parameters:
@@ -35,34 +35,25 @@ class HitNewPortfolio(object):
                 setattr(self, name, setting[name])
 
     def on_init(self):
-        # 下载数据
-        latest_dt = datetime.now().replace(second=0, microsecond=0)
-        while (latest_dt.minute + 1) % 5:
-            latest_dt = latest_dt + timedelta(minutes=1)
-        latest_dt = latest_dt - timedelta(minutes=5)
-        self.downloading_at = latest_dt
-        thread = Thread(target=self.download_data)
-        thread.start()
-
-    def on_start(self):
-        pass
-
-    def on_stop(self):
         pass
 
     def on_timer(self):
-        # 每隔五分钟下载
-        latest_dt = datetime.now().replace(second=0, microsecond=0)
-        while (latest_dt.minute + 1) % 5:
-            latest_dt = latest_dt + timedelta(minutes=1)
-        latest_dt = latest_dt - timedelta(minutes=5)
-        if self.downloading_at != latest_dt and not len(self.download_engine.threads):
-            self.downloading_at = latest_dt
+        download_need = False
+        current_hour_time = datetime.now().replace(minute=0, second=0, microsecond=0)
+        
+        if not self.data_update_hour_time and datetime.now().minute <= 55:
+            download_need = True
+
+        if self.data_update_hour_time and self.data_update_hour_time != current_hour_time:
+            download_need = True
+
+        if download_need:
+            self.data_update_hour_time = current_hour_time
             thread = Thread(target=self.download_data)
             thread.start()
 
-        # 状态更新
-        self.cta_engine.put_portfolio_event()
+            # 状态更新
+            self.cta_engine.put_portfolio_event()
 
     def download_data(self):
         # 按交易所分类合约

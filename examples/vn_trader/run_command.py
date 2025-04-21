@@ -10,6 +10,7 @@ from vnpy.trader.object import TickData
 from threading import Thread
 from datetime import datetime, timedelta
 from copy import copy
+from App_Command.hit_new.engine import HitNewEngine
 
 class SecondTick(object):
     def __init__(self) -> None:
@@ -46,6 +47,8 @@ class SubscribeEngine(object):
             print(f"行情订阅失败，找不到合约{vt_symbol}")
 
     def on_tick(self, event):
+        return
+
         # 行情数据处理
         tick: TickData = event.data
         tick_timestamp: int = int(tick.datetime.timestamp())
@@ -83,9 +86,11 @@ if __name__ == "__main__":
         connect_setting = connect_setting.get(f"lo-e")
         main_engine.connect(connect_setting, gateway.gateway_name)
 
-    # 订阅行情
-    vt_symbols = ["BTCUSDT.BINANCE", "BTC-USDT-SWAP.OKX"]
-    for vt_symbol in vt_symbols:
-        Thread(target=subscribe_engine.subscribe, args=(vt_symbol,)).start()
-    
+    # 等待交易所连接成功
+    time.sleep(10)
+
+    # 执行策略
+    hit_new_app = HitNewEngine(main_engine=main_engine, event_engine=event_engine)
+    hit_new_app.init_engine()
+    hit_new_app.init_portfolio()
 

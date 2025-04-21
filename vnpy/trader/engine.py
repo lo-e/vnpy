@@ -339,14 +339,14 @@ class MainEngine:
                 # 调用server_info查询服务器状态，防止服务器异常并未连接成功
                 self.dbClient.server_info()
 
-                self.write_log('MongoDB连接成功')
+                self.write_log('MongoDB 连接成功')
 
                 # 如果启动日志记录，则注册日志事件监听函数
                 self.event_engine.register(EVENT_LOG, self.dbLogging)
 
             except:
                 self.dbClient = None
-                self.write_log('MongoDB连接失败！！')
+                self.write_log('MongoDB 连接失败！！')
 
     def dbQuery(self, dbName, collectionName, d, sortKey='', sortDirection=ASCENDING):
         """从MongoDB中读取数据，d是查询要求，返回的是数据库查询的指针"""
@@ -898,7 +898,7 @@ class DingTalkEngine(BaseEngine):
     def send_ding_talk(self, content):
         # 内容添加电脑名称、时间
         client = socket.gethostname()
-        full_content = f'【{client}】\n\n{datetime.now()}\n\n{content}'
+        full_content = f'{content}\n\n【{client}】\n{datetime.now()}'
 
         # 开启线程
         if not self.active:
