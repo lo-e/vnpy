@@ -10,6 +10,8 @@ from vnpy.trader.utility import round_to, floor_to, ceil_to, load_json_path
 from vnpy.trader.object import SubscribeRequest
 from App.Turtle_crypto.dataservice import TurtleCryptoDataDownloading
 from vnpy.trader.constant import Direction, Offset
+from pymongo import MongoClient, ASCENDING, DESCENDING
+from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 
 class HitNewPortfolio(object):
     parameters = ["name",
@@ -53,33 +55,63 @@ class HitNewPortfolio(object):
             thread.start()
 
     def download_data(self):
-        # 按交易所分类合约
-        contract_exchange_dict = {}
-        for symbol in self.strategy_symbols:
-            exchange = symbol.split(".")[-1]
-            exchange_symbols = contract_exchange_dict.get(exchange, set())
-            exchange_symbols.add(symbol.split(".")[0])
-            contract_exchange_dict[exchange] = exchange_symbols
+        download_success = False
+        try_count = 0
+        while try_count < 5:
+            try:
+                # 按交易所分类合约
+                contract_exchange_dict = {}
+                for symbol in self.strategy_symbols:
+                    exchange = symbol.split(".")[-1]
+                    exchange_symbols = contract_exchange_dict.get(exchange, set())
+                    exchange_symbols.add(symbol.split(".")[0])
+                    contract_exchange_dict[exchange] = exchange_symbols
 
-        # 先清空历史下载数据 
-        self.download_engine.delete_history_data(target_dir=self.name)
+                # 先清空历史下载数据 
+                self.download_engine.delete_history_data(target_dir=self.name)
 
-        # 开始下载
-        for exchange, exchange_symbols in contract_exchange_dict.items():
-            if exchange == "BINANCE":
-                self.download_engine.download_from_binance(
-                    contract_list=exchange_symbols, days=1, from_data_base=True, save_to=self.name, delete_history_data=False
-                )
+                # 开始下载
+                for exchange, exchange_symbols in contract_exchange_dict.items():
+                    if exchange == "BINANCE":
+                        self.download_engine.download_from_binance(
+                            contract_list=exchange_symbols, days=1, from_data_base=True, save_to=self.name, delete_history_data=False
+                        )
 
-            elif exchange == "OKX":
-                self.download_engine.download_from_okx(
-                    contract_list=exchange_symbols, days=1, from_data_base=True, save_to=self.name, delete_history_data=False
-                )
-            
-            elif exchange == "BYBIT":
-                self.download_engine.download_from_bybit(
-                    contract_list=exchange_symbols, days=1, from_data_base=True, save_to=self.name, delete_history_data=False
-                )
+                    elif exchange == "OKX":
+                        self.download_engine.download_from_okx(
+                            contract_list=exchange_symbols, days=1, from_data_base=True, save_to=self.name, delete_history_data=False
+                        )
+                    
+                    elif exchange == "BYBIT":
+                        self.download_engine.download_from_bybit(
+                            contract_list=exchange_symbols, days=1, from_data_base=True, save_to=self.name, delete_history_data=False
+                        )
+
+                # 检查下载结果
+                all_success = True
+                target_time = self.data_update_hour_time - timedelta(minutes=1)
+                for symbol in self.strategy_symbols:
+                    client = MongoClient("localhost", 27017)
+                    db = client[MINUTE_DB_NAME]
+                    collection = db[symbol]
+
+                    end_data = collection.find_one(sort=[("datetime", DESCENDING)])
+                    db_end_dt = end_data["datetime"] if end_data else None
+                    if db_end_dt < target_time:
+                        all_success = False
+                        break
+                
+                if all_success:
+                    download_success = True
+                    break
+
+            except Exception as e:
+                msg = f"HitNewPortfolio 下载数据出错\n\n{e}"
+                self.send_ding_talk(msg)
+        
+        if not download_success:
+            msg = f"HitNewPortfolio 下载数据失败"
+            self.send_ding_talk(msg)
 
     def send_ding_talk(self, content):
         # 推送钉钉消息
