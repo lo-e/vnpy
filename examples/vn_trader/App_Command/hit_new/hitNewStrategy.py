@@ -60,13 +60,13 @@ class HitNewStrategy(CtaTemplate):
         # 交易所成功连接判断
         exchange = self.vt_symbol.split(".")[-1]
         if exchange != "OKX" and exchange != "BINANCE" and exchange != "BYBIT":
-            msg = f"未知交易所错误：{exchange}"
+            msg = f"未知交易所：{exchange}"
             self.send_ding_talk(msg)
             return
         
         gateway = self.cta_engine.main_engine.get_gateway(gateway_name=exchange, account_name=self.exchange_user)
         if not gateway:
-            msg = f"打新策略交易所账户未连接\n交易所 {exchange.value}@{self.exchange_user}"
+            msg = f"交易所账户未连接\n\n交易所：{exchange}\n账户：{self.exchange_user}"
             self.send_ding_talk(msg)
 
     def load_bar_data(self):

@@ -1,5 +1,6 @@
 from vnpy.trader.engine import MainEngine
 from vnpy.event import EventEngine
+from vnpy.trader.gateway import BaseGateway
 from gateway.binance import BinanceUsdtGateway
 from gateway.okx import OkxGateway
 from vnpy.trader.utility import load_json
@@ -78,16 +79,33 @@ if __name__ == "__main__":
     main_engine.dbConnect()
 
     # 连接交易所
-    gateways = [OkxGateway, BinanceUsdtGateway]
-    for gateway in gateways:
-        main_engine.add_gateway(gateway)
-        gateway_setting_filename = f"connect_{gateway.gateway_name.lower()}.json"
+    gateways = [[OkxGateway, "lo-e"], [BinanceUsdtGateway, "lo-e"]]
+    for gateway_info in gateways:
+        gateway_class: BaseGateway = gateway_info[0]
+        account_name = gateway_info[1]
+
+        main_engine.add_gateway(gateway_class)
+        gateway_setting_filename = f"connect_{gateway_class.gateway_name.lower()}.json"
         connect_setting = load_json(gateway_setting_filename)
-        connect_setting = connect_setting.get(f"lo-e")
-        main_engine.connect(connect_setting, gateway.gateway_name)
+        connect_setting = connect_setting.get(account_name)
+        main_engine.connect(connect_setting, gateway_class.gateway_name)
 
     # 等待交易所连接成功
-    time.sleep(10)
+    while True:
+        all_connected = True
+        for gateway_info in gateways:
+            gateway_class: BaseGateway = gateway_info[0]
+            account_name = gateway_info[1]
+            connected = main_engine.get_gateway_connect_status(gateway_class.gateway_name, account_name)
+            if not connected:
+                all_connected = False
+                break
+
+        if all_connected:
+            break
+
+        else:
+            time.sleep(1)
 
     # 执行策略
     hit_new_app = HitNewEngine(main_engine=main_engine, event_engine=event_engine)

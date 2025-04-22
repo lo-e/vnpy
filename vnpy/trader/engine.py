@@ -454,6 +454,12 @@ class MainEngine:
         if gateway_name in self.waiting_check_gateway_names:
             self.waiting_check_gateway_names.remove(gateway_name)
 
+    def get_gateway_connect_status(self, gateway_name: str, account_name: str):
+        gateway = self.get_gateway(gateway_name, account_name)
+        res = gateway.check_connected()
+        connected = res.get("connected", False)
+        return connected
+
 class BaseEngine(ABC):
     """
     Abstract class for implementing an function engine.

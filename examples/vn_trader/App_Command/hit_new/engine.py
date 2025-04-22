@@ -335,7 +335,7 @@ class HitNewEngine(BaseEngine):
                 continue
 
             # 响应策略初始化方法
-            self.write_log(f"打新策略{strategy_name}开始执行初始化")
+            self.write_log(f"{strategy_name}开始执行初始化")
             self.call_strategy_func(strategy, strategy.on_init)
 
             # 订阅合约行情
@@ -350,7 +350,7 @@ class HitNewEngine(BaseEngine):
             # 策略状态更新（初始化完成）
             strategy.inited = True
             self.put_strategy_event(strategy)
-            self.write_log(f"打新策略{strategy_name}初始化完成")
+            self.write_log(f"{strategy_name}初始化完成")
 
         self.init_thread = None
 
@@ -371,7 +371,7 @@ class HitNewEngine(BaseEngine):
         # 策略状态更新（已启动）
         strategy.trading = True
         self.put_strategy_event(strategy)
-        self.write_log(f"打新策略{strategy_name}启动")
+        self.write_log(f"{strategy_name}启动")
 
     def stop_strategy(self, strategy_name: str):
         # 停止策略
@@ -453,18 +453,18 @@ class HitNewEngine(BaseEngine):
             if isinstance(back_data, dict):
                 result = back_data.get("result", False)
                 if result:
-                    content = f"打新组合{self.portfolio.name}同步数据保存成功"
+                    content = f"{self.portfolio.name}同步数据保存成功"
 
                 else:
-                    content = f"打新组合{self.portfolio.name}同步数据保存失败"
+                    content = f"{self.portfolio.name}同步数据保存失败"
                     self.write_log(content)
 
             else:
-                content = f"打新组合{self.portfolio.name}同步数据保存失败"
+                content = f"{self.portfolio.name}同步数据保存失败"
                 self.write_log(content)
 
         except:
-            content = f"打新组合{self.portfolio.name}同步数据保存失败"
+            content = f"{self.portfolio.name}同步数据保存失败"
             self.write_log(content)
 
     def write_log(self, msg: str, strategy: CtaTemplate = None):
@@ -637,18 +637,18 @@ class HitNewEngine(BaseEngine):
                 result = back_data.get("result", False)
                 strategy_name = back_data.get("strategy_name", "")
                 if result:
-                    content = f"打新策略{strategy_name}同步数据保存成功"
+                    content = f"{strategy_name}同步数据保存成功"
 
                 else:
-                    content = f"打新策略{strategy_name}同步数据保存失败！！"
+                    content = f"{strategy_name}同步数据保存失败！！"
                     self.write_log(content)
 
             else:
-                content = f"打新策略同步数据保存失败！！"
+                content = f"策略同步数据保存失败！！"
                 self.write_log(content)
 
         except:
-            content = f"打新策略同步数据保存失败！！"
+            content = f"策略同步数据保存失败！！"
             self.write_log(content)
 
     def init_portfolio(self):

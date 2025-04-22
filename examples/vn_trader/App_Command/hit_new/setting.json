@@ -8,7 +8,7 @@
       "strategy_name": "HIT_NEW_BTC_OKX",
       "vt_symbol": "BTC-USDT-SWAP.OKX",
       "direction": "LONG",
-      "exchange_user": "lo-e（test）",
+      "exchange_user": "lo-e",
       "start": true
     },
     {
