@@ -435,9 +435,10 @@ class DownloadThread(object):
 
         #"""
         # 获取bar数据
-        print(f"{self.contract} Bar数据下载中..")
+        vt_symbol = f"{self.contract}.{self.exchange.value}"
         from_time = datetime.now() - timedelta(days=self.days)
         from_time = datetime(from_time.year, from_time.month, from_time.day)
+        print(f"{vt_symbol} Bar数据下载中..")
 
         # 接口获取合约起始时间
         first_bar_dt = None
@@ -475,16 +476,7 @@ class DownloadThread(object):
         if self.from_data_base:
             client = MongoClient("localhost", 27017)
             db = client[MINUTE_DB_NAME]
-            symbol = self.contract
-            if self.exchange == Exchange.BINANCE:
-                symbol = self.contract + ".BINANCE"
-
-            elif self.exchange == Exchange.OKX:
-                symbol = self.contract + ".OKX"
-
-            elif self.exchange == Exchange.BYBIT:
-                symbol = self.contract + ".BYBIT"
-            collection = db[symbol]
+            collection = db[vt_symbol]
 
             if first_bar_dt:
                 flt = {"datetime": {"$gte": from_time}}
@@ -496,7 +488,7 @@ class DownloadThread(object):
                 if dt_list:
                     db_start_dt = dt_list[0]
                     db_end_dt = dt_list[-1]
-                    print(f"{self.contract} 数据库起止时间\t{db_start_dt}\t{db_end_dt}\t")
+                    print(f"{vt_symbol} 数据库起止时间\t{db_start_dt}\t{db_end_dt}\t")
 
                     if db_start_dt <= first_bar_dt:
                         virtual_dt_list = []
@@ -510,7 +502,7 @@ class DownloadThread(object):
                             loss_dt = sorted(list(sub))[0]
                             from_time = loss_dt - timedelta(minutes=10)
                             print(
-                                f"!!!!!! {self.contract} 数据库数据缺失【from：{loss_dt}】 !!!!!!"
+                                f"!!!!!! {vt_symbol} 数据库数据缺失【from：{loss_dt}】 !!!!!!"
                             )
                         else:
                             # 数据库数据完整
@@ -522,7 +514,7 @@ class DownloadThread(object):
                 end_data = collection.find_one(sort=[("datetime", DESCENDING)])
                 db_end_dt = end_data["datetime"] if end_data else None
 
-                print(f"{self.contract} 数据库起止时间\t{db_start_dt}\t{db_end_dt}")
+                print(f"{vt_symbol} 数据库起止时间\t{db_start_dt}\t{db_end_dt}")
                 if db_end_dt:
                     from_time = db_end_dt - timedelta(minutes=10)
 
@@ -532,7 +524,7 @@ class DownloadThread(object):
             if from_time >= to_time:
                 break
 
-            print(f"{self.contract} {from_time}..")
+            print(f"{vt_symbol} {from_time}..")
             download_failed = False
             try:
                 if self.exchange == Exchange.BINANCE:
@@ -567,7 +559,7 @@ class DownloadThread(object):
                 
             except Exception as e:
                 download_failed = True
-                print(f"{self.contract} 下载中断")
+                print(f"{vt_symbol} 下载中断")
 
             if download_failed:
                 sleep(2)
@@ -575,12 +567,12 @@ class DownloadThread(object):
             elif from_time:
                 from_time = from_time + timedelta(minutes=1)
 
-        print(f"{self.contract} Bar数据下载完成！")
+        print(f"{vt_symbol} Bar数据下载完成！")
         #"""
         
         #"""
         # 1m数据入数据库
-        print(f"{self.contract} Bar数据导入数据库..")
+        print(f"{vt_symbol} Bar数据导入数据库..")
         if self.exchange == Exchange.BINANCE:
             engine = CSVsBinanceBarLocalEngine(duration="1m", contract=self.contract, target_dir=self.save_to)
             engine.startWork()

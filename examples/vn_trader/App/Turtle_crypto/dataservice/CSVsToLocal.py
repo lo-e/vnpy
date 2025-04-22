@@ -130,7 +130,7 @@ class CSVsBybitBarLocalEngine(object):
 
         # 打印进程
 
-        print(f"{self.contract} Bar数据导入数据库完成！")
+        print(f"{self.contract}.BYBIT Bar数据导入数据库完成！")
         # if totalCount:
         #     sub = time() - totalStartTime
         #     print("总用时：", sub, "s")
@@ -248,7 +248,7 @@ class CSVsOKXBarLocalEngine(object):
                 #         print("*" * 60, "\n")
 
         # 打印进程
-        print(f"{self.contract} Bar数据导入数据库完成！")
+        print(f"{self.contract}.OKX Bar数据导入数据库完成！")
 
         # if totalCount:
         #     sub = time() - totalStartTime
@@ -357,7 +357,7 @@ class CSVsBinanceBarLocalEngine(object):
                 #         print("*" * 60, "\n")
 
         # 打印进程
-        print(f"{self.contract} Bar数据导入数据库完成！")
+        print(f"{self.contract}.BINANCE Bar数据导入数据库完成！")
 
         # if totalCount:
         #     sub = time() - totalStartTime
