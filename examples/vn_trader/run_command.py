@@ -111,4 +111,5 @@ if __name__ == "__main__":
     hit_new_app = HitNewEngine(main_engine=main_engine, event_engine=event_engine)
     hit_new_app.init_engine()
     hit_new_app.init_portfolio()
+    hit_new_app.start_portfolio()
 

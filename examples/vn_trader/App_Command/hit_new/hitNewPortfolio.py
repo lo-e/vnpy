@@ -43,6 +43,9 @@ class HitNewPortfolio(object):
     def on_init(self):
         self.load_instruments_data()
 
+    def on_start(self):
+        pass
+
     def load_instruments_data(self):
         # .csv获取交易所USDT合约列表
         try:
@@ -184,21 +187,44 @@ class HitNewPortfolio(object):
         # OKX新上市合约
         for instrument in okx_new:
             symbol = instrument["symbol"]
+            pure_symbol = symbol.split("-USDT-")[0]
             vt_symbol = f"{symbol}.OKX"
+            signal_long_setting = {
+                "strategy_name": f"HIT_NEW_LONG_{pure_symbol}_OKX",
+                "vt_symbol": vt_symbol,
+                "direction": "LONG",
+                "exchange_user": "lo-e",
+                "start": True
+                }
+            self.cta_engine.hit_new_strategy(signal_long_setting)
+
+            signal_short_setting = {
+                "strategy_name": f"HIT_NEW_SHORT_{pure_symbol}_OKX",
+                "vt_symbol": vt_symbol,
+                "direction": "SHORT",
+                "exchange_user": "lo-e",
+                "start": True
+                }
+            self.cta_engine.hit_new_strategy(signal_short_setting)
+            
             msg = f"{vt_symbol} 合约上新"
             self.send_ding_talk(msg)
         
         # BINANCE新上市合约
         for instrument in binance_new:
             symbol = instrument["symbol"]
+            pure_symbol = symbol.split("USDT")[0]
             vt_symbol = f"{symbol}.BINANCE"
+
             msg = f"{vt_symbol} 合约上新"
             self.send_ding_talk(msg)
 
         # BYBIT新上市合约
         for instrument in bybit_new:
             symbol = instrument["symbol"]
+            pure_symbol = symbol.split("USDT")[0]
             vt_symbol = f"{symbol}.BYBIT"
+            
             msg = f"{vt_symbol} 合约上新"
             self.send_ding_talk(msg)
 

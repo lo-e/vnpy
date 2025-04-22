@@ -329,30 +329,33 @@ class HitNewEngine(BaseEngine):
         # 初始化策略
         while not self.init_queue.empty():
             strategy_name = self.init_queue.get()
-            strategy = self.strategies[strategy_name]
-            if strategy.inited:
-                self.write_log(f"{strategy_name}已经完成初始化，禁止重复操作")
-                continue
-
-            # 响应策略初始化方法
-            self.write_log(f"{strategy_name}开始执行初始化")
-            self.call_strategy_func(strategy, strategy.on_init)
-
-            # 订阅合约行情
-            contract = self.main_engine.get_contract(strategy.vt_symbol)
-            if contract:
-                req = SubscribeRequest(symbol=contract.symbol, exchange=contract.exchange)
-                self.main_engine.subscribe(req, contract.gateway_name)
-
-            else:
-                self.write_log(f"行情订阅失败，找不到合约{strategy.vt_symbol}", strategy)
-
-            # 策略状态更新（初始化完成）
-            strategy.inited = True
-            self.put_strategy_event(strategy)
-            self.write_log(f"{strategy_name}初始化完成")
+            self.initing_strategy(strategy_name)
 
         self.init_thread = None
+
+    def initing_strategy(self, strategy_name: str):
+        strategy = self.strategies[strategy_name]
+        if strategy.inited:
+            self.write_log(f"{strategy_name}已经完成初始化，禁止重复操作")
+            return
+
+        # 响应策略初始化方法
+        self.write_log(f"{strategy_name}开始执行初始化")
+        self.call_strategy_func(strategy, strategy.on_init)
+
+        # 订阅合约行情
+        contract = self.main_engine.get_contract(strategy.vt_symbol)
+        if contract:
+            req = SubscribeRequest(symbol=contract.symbol, exchange=contract.exchange)
+            self.main_engine.subscribe(req, contract.gateway_name)
+
+        else:
+            self.write_log(f"行情订阅失败，找不到合约{strategy.vt_symbol}", strategy)
+
+        # 策略状态更新（初始化完成）
+        strategy.inited = True
+        self.put_strategy_event(strategy)
+        self.write_log(f"{strategy_name}初始化完成")
 
     def start_strategy(self, strategy_name: str):
         # 启动策略
@@ -532,6 +535,30 @@ class HitNewEngine(BaseEngine):
             callback(result)
         return result
 
+    def hit_new_strategy(self, setting):
+        try:
+            # 执行策略
+            self.add_strategy(setting)
+            strategy_name = setting["strategy_name"]
+            self.initing_strategy(strategy_name)
+            self.start_strategy(strategy_name)
+
+            # 保存策略
+            dir_path = Path(os.path.dirname(os.path.realpath(__file__)))
+            file_path = dir_path.joinpath("setting.json")
+            setting_data = load_json_path(file_path)
+            
+            signal_list = setting_data.get("signal", [])
+            signal_list.append(setting)
+            setting_data["signal"] = signal_list
+
+            with open(file_path, "w") as f:
+                json.dump(setting_data, f)
+        
+        except Exception as e:
+            msg = f"打新出错\n\n{setting}\n\n{e}"
+            self.send_dingtalk(msg)
+
     def add_strategy(self, setting):
         # 策略参数
         try:
@@ -661,7 +688,7 @@ class HitNewEngine(BaseEngine):
             self.portfolio.inited = True
             self.put_portfolio_event()
 
-    def startPortfolio(self):
+    def start_portfolio(self):
         # 启动所有策略
         self.start_all_strategies()
 
