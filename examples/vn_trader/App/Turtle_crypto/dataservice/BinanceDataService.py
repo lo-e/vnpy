@@ -11,6 +11,7 @@ from pymongo import MongoClient, ASCENDING, DESCENDING
 from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 import pandas as pd
 import socket
+from .utility import get_csv_path
 
 # 域名
 main_url_spot = "https://api.binance.com"
@@ -123,7 +124,7 @@ def binance_get_bar_data(
             data_dic["volume"] = str(vol)
             result_list.append(data_dic)
 
-        print(f"======  {symbol} {since} -> {until} ======")
+        # print(f"{symbol} {since} -> {until}")
 
     if not len(result_list):
         return None
@@ -305,15 +306,6 @@ def binance_marting_setting(min_value_filter: float = 0):
 
     return rusult_list
 
-
-def get_csv_path(target_dir: str = ""):
-    path = os.path.abspath(__file__)
-    file_name = path.split(DIR_SYMBOL)[-1]
-    if target_dir:
-        csv_path = path.rstrip(file_name) + f"CSVs_{DIR_SYMBOL}" + f"{target_dir}{DIR_SYMBOL}"
-    else:
-        csv_path = path.rstrip(file_name) + f"CSVs{DIR_SYMBOL}"
-    return csv_path
 
 
 if __name__ == "__main__":

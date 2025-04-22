@@ -87,7 +87,7 @@ if __name__ == "__main__":
         main_engine.add_gateway(gateway_class)
         gateway_setting_filename = f"connect_{gateway_class.gateway_name.lower()}.json"
         connect_setting = load_json(gateway_setting_filename)
-        connect_setting = connect_setting.get(account_name)
+        connect_setting = connect_setting.get(account_name, None)
         main_engine.connect(connect_setting, gateway_class.gateway_name)
 
     # 等待交易所连接成功

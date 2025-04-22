@@ -41,6 +41,7 @@ examples/PondAI/data/
 # Folder
 examples/vn_trader/App/Turtle_crypto/dataservice/CSVs/
 examples/vn_trader/App/Turtle_crypto/dataservice/CSVs_/
+examples/vn_trader/App/Turtle_crypto/dataservice/CSVs_temp/
 examples/vn_trader/App/Turtle_crypto/dataservice/PDFs/
 examples/MartingStrategy/signal_trades/
 examples/MartingStrategy/symbol_trades/

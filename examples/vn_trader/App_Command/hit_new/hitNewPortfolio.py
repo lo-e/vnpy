@@ -52,9 +52,6 @@ class HitNewPortfolio(object):
             thread = Thread(target=self.download_data)
             thread.start()
 
-            # 状态更新
-            self.cta_engine.put_portfolio_event()
-
     def download_data(self):
         # 按交易所分类合约
         contract_exchange_dict = {}

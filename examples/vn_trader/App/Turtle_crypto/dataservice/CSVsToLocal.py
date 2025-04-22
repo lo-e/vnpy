@@ -23,10 +23,12 @@ class CSVsBybitBarLocalEngine(object):
         super(CSVsBybitBarLocalEngine, self).__init__()
         # 周期
         self.duration = duration
+        self.contract = contract
+
         # 项目路径
         csv_path = get_csv_path(target_dir=target_dir)
-        contract = f"BYBIT.{contract}"
-        self.walkingDir = csv_path + f"{contract}{DIR_SYMBOL}{duration}"
+        full_contract = f"BYBIT.{contract}"
+        self.walkingDir = csv_path + f"{full_contract}{DIR_SYMBOL}{duration}"
         # 获取数据库
         self.client = pymongo.MongoClient("localhost", 27017)
 
@@ -89,8 +91,8 @@ class CSVsBybitBarLocalEngine(object):
 
                             count += 1
                             totalCount += 1
-                            if count == 1:
-                                print("=" * 6, symbol, "\t", theFile, "=" * 6)
+                            # if count == 1:
+                            #     print("=" * 6, symbol, "\t", theFile, "=" * 6)
 
                             # 转换symbol
                             symbol = f"{symbol}.BYBIT"
@@ -117,33 +119,33 @@ class CSVsBybitBarLocalEngine(object):
                                 upsert=True,
                             )
                 # 打印进程
-                if count:
-                    sub = time() - startTime
-                    print("用时：", sub, "s")
-                    print("数据量：", count, "\n")
-                    """ fake """
-                    if count < 200:
-                        print("*" * 60, "\n")
+                # if count:
+                #     sub = time() - startTime
+                #     print("用时：", sub, "s")
+                #     print("数据量：", count, "\n")
+                #     """ fake """
+                #     if count < 200:
+                #         print("*" * 60, "\n")
 
         # 打印进程
 
-        print(f"所有数据导入完成：{datetime.datetime.now()}")
+        print(f"{self.contract} Bar数据导入数据库完成！")
         if totalCount:
             sub = time() - totalStartTime
             print("总用时：", sub, "s")
             print("总数据量：", totalCount, "\n")
-
 
 class CSVsOKXBarLocalEngine(object):
     def __init__(self, duration: str, contract: str, target_dir: str=""):
         super(CSVsOKXBarLocalEngine, self).__init__()
         # 周期
         self.duration = duration
+        self.contract = contract
 
         # 项目路径
         csv_path = get_csv_path(target_dir=target_dir)
-        contract = f"OKX.{contract}"
-        self.walkingDir = csv_path + f"{contract}{DIR_SYMBOL}{duration}"
+        full_contract = f"OKX.{contract}"
+        self.walkingDir = csv_path + f"{full_contract}{DIR_SYMBOL}{duration}"
 
         # 获取数据库
         self.client = pymongo.MongoClient("localhost", 27017)
@@ -207,8 +209,8 @@ class CSVsOKXBarLocalEngine(object):
 
                             count += 1
                             totalCount += 1
-                            if count == 1:
-                                print("=" * 6, symbol, "\t", theFile, "=" * 6)
+                            # if count == 1:
+                            #     print("=" * 6, symbol, "\t", theFile, "=" * 6)
 
                             # 转换symbol
                             symbol = f"{symbol}.OKX"
@@ -235,33 +237,33 @@ class CSVsOKXBarLocalEngine(object):
                                 upsert=True,
                             )
                 # 打印进程
-                if count:
-                    sub = time() - startTime
-                    print("用时：", sub, "s")
-                    print("数据量：", count, "\n")
-                    """ fake """
-                    if count < 200:
-                        print("*" * 60, "\n")
+                # if count:
+                #     sub = time() - startTime
+                #     print("用时：", sub, "s")
+                #     print("数据量：", count, "\n")
+
+                #     """ fake """
+                #     if count < 200:
+                #         print("*" * 60, "\n")
 
         # 打印进程
-        print("所有数据导入完成")
-        if totalCount:
-            sub = time() - totalStartTime
-            print("总用时：", sub, "s")
-            print("总数据量：", totalCount, "\n")
+        print(f"{self.contract} Bar数据导入数据库完成！")
 
+        # if totalCount:
+        #     sub = time() - totalStartTime
+        #     print("总用时：", sub, "s")
+        #     print("总数据量：", totalCount, "\n")
 
 class CSVsBinanceBarLocalEngine(object):
     def __init__(self, duration: str, contract: str, target_dir: str=""):
         super(CSVsBinanceBarLocalEngine, self).__init__()
-        # 周期
-        self.duration = duration
-        # 项目路径
-        csv_path = get_csv_path(target_dir=target_dir)
-        contract = f"BINANCE.{contract}"
-        self.walkingDir = csv_path + f"{contract}{DIR_SYMBOL}{duration}"
-        # 获取数据库
-        self.client = pymongo.MongoClient("localhost", 27017)
+
+        self.duration = duration                                                # 周期
+        self.contract = contract                                                # 合约
+        full_contract = f"BINANCE.{self.contract}"                              # 完整合约
+        csv_path = get_csv_path(target_dir=target_dir)                          # CSVs路径
+        self.walkingDir = csv_path + f"{full_contract}{DIR_SYMBOL}{duration}"   # 项目路径
+        self.client = pymongo.MongoClient("localhost", 27017)                   # MongoDB
 
     def startWork(self):
         totalCount = 0
@@ -315,8 +317,8 @@ class CSVsBinanceBarLocalEngine(object):
 
                             count += 1
                             totalCount += 1
-                            if count == 1:
-                                print("=" * 6, symbol, "\t", theFile, "=" * 6)
+                            # if count == 1:
+                            #     print("=" * 6, symbol, "\t", theFile, "=" * 6)
 
                             # 转换symbol
                             symbol = f"{symbol}.BINANCE"
@@ -342,18 +344,21 @@ class CSVsBinanceBarLocalEngine(object):
                                 {"$set": bar.__dict__},
                                 upsert=True,
                             )
+                
                 # 打印进程
-                if count:
-                    sub = time() - startTime
-                    print("用时：", sub, "s")
-                    print("数据量：", count, "\n")
-                    """ fake """
-                    if count < 1500:
-                        print("*" * 60, "\n")
+                # if count:
+                #     sub = time() - startTime
+                #     print("用时：", sub, "s")
+                #     print("数据量：", count, "\n")
+
+                #     """ fake """
+                #     if count < 1500:
+                #         print("*" * 60, "\n")
 
         # 打印进程
-        print("所有数据导入完成")
-        if totalCount:
-            sub = time() - totalStartTime
-            print("总用时：", sub, "s")
-            print("总数据量：", totalCount, "\n")
+        print(f"{self.contract} Bar数据导入数据库完成！")
+
+        # if totalCount:
+        #     sub = time() - totalStartTime
+        #     print("总用时：", sub, "s")
+        #     print("总数据量：", totalCount, "\n")

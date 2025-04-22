@@ -295,7 +295,7 @@ class DownloadThread(object):
         save_to: str = "",
     ):
         self.engine = engine
-        self.exchange = exchange
+        self.exchange: ExchangeType = exchange
         self.contract = contract
         self.interval = interval
         self.days = days
@@ -317,7 +317,7 @@ class DownloadThread(object):
 
         #"""
         # 获取bar数据
-        print(f"====== {self.contract}开始下载 ======")
+        print(f"{self.contract} Bar数据下载中..")
         from_time = datetime.now() - timedelta(days=self.days)
         from_time = datetime(from_time.year, from_time.month, from_time.day)
 
@@ -378,7 +378,7 @@ class DownloadThread(object):
                 if dt_list:
                     db_start_dt = dt_list[0]
                     db_end_dt = dt_list[-1]
-                    print(f"{self.contract}数据库起止时间\t{db_start_dt}\t{db_end_dt}\t")
+                    print(f"{self.contract} 数据库起止时间\t{db_start_dt}\t{db_end_dt}\t")
 
                     if db_start_dt <= first_bar_dt:
                         virtual_dt_list = []
@@ -392,7 +392,7 @@ class DownloadThread(object):
                             loss_dt = sorted(list(sub))[0]
                             from_time = loss_dt - timedelta(minutes=10)
                             print(
-                                f"!!!!!! {self.contract}数据库数据缺失【from：{loss_dt}】 !!!!!!"
+                                f"!!!!!! {self.contract} 数据库数据缺失【from：{loss_dt}】 !!!!!!"
                             )
                         else:
                             # 数据库数据完整
@@ -404,7 +404,7 @@ class DownloadThread(object):
                 end_data = collection.find_one(sort=[("datetime", DESCENDING)])
                 db_end_dt = end_data["datetime"] if end_data else None
 
-                print(f"{self.contract}数据库起止时间\t{db_start_dt}\t{db_end_dt}")
+                print(f"{self.contract} 数据库起止时间\t{db_start_dt}\t{db_end_dt}")
                 if db_end_dt:
                     from_time = db_end_dt - timedelta(minutes=10)
 
@@ -414,7 +414,7 @@ class DownloadThread(object):
             if from_time >= to_time:
                 break
 
-            print(f"下载数据：{from_time}\t{self.contract}")
+            print(f"{self.contract} {from_time}..")
             download_failed = False
             try:
                 if self.exchange == ExchangeType.BINANCE:
@@ -444,22 +444,25 @@ class DownloadThread(object):
                     )
 
                 else:
-                    print(f"交易所类型错误")
+                    print(f"交易所类型错误：{self.exchange.value}")
                     break
+                
             except Exception as e:
                 download_failed = True
-                print("****** 下载中断 ******")
+                print(f"{self.contract} 下载中断")
 
             if download_failed:
                 sleep(2)
 
             elif from_time:
                 from_time = from_time + timedelta(minutes=1)
+
+        print(f"{self.contract} Bar数据下载完成！")
         #"""
         
         #"""
         # 1m数据入数据库
-        print("\n====== 1m数据入数据库 ======")
+        print(f"{self.contract} Bar数据导入数据库..")
         if self.exchange == ExchangeType.BINANCE:
             engine = CSVsBinanceBarLocalEngine(duration="1m", contract=self.contract, target_dir=self.save_to)
             engine.startWork()

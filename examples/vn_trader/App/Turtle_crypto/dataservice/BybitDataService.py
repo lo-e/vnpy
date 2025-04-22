@@ -13,6 +13,7 @@ from typing import Set
 import pandas as pd
 from pymongo import MongoClient, ASCENDING, DESCENDING
 from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
+from .utility import get_csv_path
 
 hostname = socket.gethostname()
 main_url = "https://api.bybit.com"
@@ -359,17 +360,6 @@ def bybit_marting_setting(min_value_filter: float = 0):
     results_sorted.to_csv(csv_file_path, index=False)
 
     return rusult_list
-
-
-def get_csv_path(target_dir: str = ""):
-    path = os.path.abspath(__file__)
-    file_name = path.split(DIR_SYMBOL)[-1]
-    if target_dir:
-        csv_path = path.rstrip(file_name) + f"CSVs_{DIR_SYMBOL}" + f"{target_dir}{DIR_SYMBOL}"
-    else:
-        csv_path = path.rstrip(file_name) + f"CSVs{DIR_SYMBOL}"
-    return csv_path
-
 
 if __name__ == "__main__":
     """
