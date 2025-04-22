@@ -10,8 +10,14 @@ from .BybitDataService import (
     BybitSymbolType,
     bybit_get_first_bar_datetime,
 )
-from .OKXDataService import okx_get_bar_data, okx_get_first_bar_datetime
+from .OKXDataService import (
+    okx_get_symbol_list,
+    OKXType,
+    okx_get_bar_data,
+    okx_get_first_bar_datetime
+)
 from .BinanceDataService import (
+    binance_get_symbol_list,
     binance_get_bar_data,
     BinanceType,
     binance_get_first_bar_datetime,
@@ -31,15 +37,10 @@ from threading import Thread
 from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 from pymongo import MongoClient, ASCENDING, DESCENDING
 from enum import Enum
-from .utility import get_csv_path
-
-
-class ExchangeType(Enum):
-    BINANCE = "BINANCE"
-    OKX = "OKX"
-    BYBIT = "BYBIT"
-    NONE = "NONE"
-
+from .utility import get_csv_path, save_df_data
+from vnpy.trader.constant import Exchange
+import pandas as pd
+from vnpy.trader.utility import DIR_SYMBOL
 
 class TurtleCryptoDataDownloading(object):
     def __init__(self):
@@ -84,7 +85,7 @@ class TurtleCryptoDataDownloading(object):
                 sleep(2)
             thread = DownloadThread(
                 self,
-                exchange=ExchangeType.BYBIT,
+                exchange=Exchange.BYBIT,
                 contract=contract,
                 interval="1",
                 days=days,
@@ -134,7 +135,7 @@ class TurtleCryptoDataDownloading(object):
                 sleep(2)
             thread = DownloadThread(
                 self,
-                exchange=ExchangeType.OKX,
+                exchange=Exchange.OKX,
                 contract=contract,
                 interval="1m",
                 days=days,
@@ -184,7 +185,7 @@ class TurtleCryptoDataDownloading(object):
                 sleep(2)
             thread = DownloadThread(
                 self,
-                exchange=ExchangeType.BINANCE,
+                exchange=Exchange.BINANCE,
                 contract=contract,
                 interval="1m",
                 days=days,
@@ -207,6 +208,88 @@ class TurtleCryptoDataDownloading(object):
                 sleep(1)
                 
             self.loading_complete = True
+
+    # 获取交易所所有USDT永续合约列表
+    def download_instruments_list(self, exchange: Exchange, history_symbol_instrument_data: dict = {}):
+        result = []
+        new_data = []
+        print(f"{exchange.value} USDT永续合约列表下载中..")
+        if exchange == Exchange.BINANCE:
+            symbol_list = binance_get_symbol_list(need_data=False)
+            # for symbol in symbol_list:
+            #     print(symbol)
+
+            # 获取上市时间
+            for symbol in symbol_list:
+                history_instrument_data = history_symbol_instrument_data.get(symbol, {})
+                instrument_on = history_instrument_data.get("on", "")
+                if instrument_on:
+                    result.append(history_instrument_data)
+
+                else:
+                    first_bar_dt = None
+                    try_count = 0
+                    while try_count < 5:
+                        try:
+                            first_bar_dt = binance_get_first_bar_datetime(symbol=symbol, interval="1m", symbol_type=BinanceType.USDT, start_time="2020-12-01 00:00:00")
+                            break
+
+                        except Exception:
+                            try_count += 1
+                    
+                    first_bar_dt_str = first_bar_dt.strftime(f"%Y-%m-%d %H:%M:%S") if first_bar_dt else ""
+                    ts = first_bar_dt.timestamp() if first_bar_dt else 0
+                    instrument_data = {"symbol": symbol,
+                                       "on": first_bar_dt_str,
+                                       "on_timestamp": ts}
+                    result.append(instrument_data)
+                    new_data.append(instrument_data)
+            
+            # 输出结果
+            print(f"{exchange.value} USDT永续合约总计：{len(symbol_list)}")
+                
+        elif exchange == Exchange.OKX:
+            symbol_list = okx_get_symbol_list(type=OKXType.USDT)
+            # for symbol in symbol_list:
+            #     print(symbol)
+
+            # 获取上市时间
+            for symbol in symbol_list:
+                history_instrument_data = history_symbol_instrument_data.get(symbol, {})
+                instrument_on = history_instrument_data.get("on", "")
+                if instrument_on:
+                    result.append(history_instrument_data)
+
+                else:
+                    first_bar_dt = None
+                    try_count = 0
+                    while try_count < 5:
+                        try:
+                            first_bar_dt = okx_get_first_bar_datetime(symbol=symbol)
+                            break
+
+                        except Exception:
+                            try_count += 1
+                    
+                    first_bar_dt_str = first_bar_dt.strftime(f"%Y-%m-%d %H:%M:%S") if first_bar_dt else ""
+                    ts = first_bar_dt.timestamp() if first_bar_dt else 0
+                    instrument_data = {"symbol": symbol,
+                                       "on": first_bar_dt_str,
+                                       "on_timestamp": ts}
+                    result.append(instrument_data)
+                    new_data.append(instrument_data)
+
+            # 输出结果
+            print(f"{exchange.value} USDT永续合约总计：{len(symbol_list)}")
+
+        # 保存到文件
+        df = pd.DataFrame(result)
+        sorted_df = df.sort_values("on_timestamp", ascending=False)
+        csv_dir = get_csv_path()
+        file_path = f"{csv_dir}{exchange.value}{DIR_SYMBOL}instruments.csv"
+        save_df_data(sorted_df, file_path)
+        
+        return result, new_data
 
     def generate_for_bybit(self, contract_list, days=1):
         result = True
@@ -285,7 +368,7 @@ class DownloadThread(object):
     def __init__(
         self,
         engine,
-        exchange: ExchangeType,
+        exchange: Exchange,
         contract,
         interval,
         days=1,
@@ -295,7 +378,7 @@ class DownloadThread(object):
         save_to: str = "",
     ):
         self.engine = engine
-        self.exchange: ExchangeType = exchange
+        self.exchange: Exchange = exchange
         self.contract = contract
         self.interval = interval
         self.days = days
@@ -309,9 +392,9 @@ class DownloadThread(object):
 
     def run(self):
         if (
-            self.exchange != ExchangeType.BINANCE
-            and self.exchange != ExchangeType.OKX
-            and self.exchange != ExchangeType.BYBIT
+            self.exchange != Exchange.BINANCE
+            and self.exchange != Exchange.OKX
+            and self.exchange != Exchange.BYBIT
         ):
             exit(f"交易所类型错误")
 
@@ -327,7 +410,7 @@ class DownloadThread(object):
             request_needed = True
             while request_needed:
                 try:
-                    if self.exchange == ExchangeType.BINANCE:
+                    if self.exchange == Exchange.BINANCE:
                         first_bar_dt = binance_get_first_bar_datetime(
                             symbol=self.contract,
                             interval=self.interval,
@@ -337,13 +420,13 @@ class DownloadThread(object):
                             ),
                         )
 
-                    elif self.exchange == ExchangeType.OKX:
+                    elif self.exchange == Exchange.OKX:
                         first_bar_dt = okx_get_first_bar_datetime(
                             symbol=self.contract,
                             from_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"),
                         )
 
-                    elif self.exchange == ExchangeType.BYBIT:
+                    elif self.exchange == Exchange.BYBIT:
                         first_bar_dt = bybit_get_first_bar_datetime(
                             symbol=self.contract,
                             interval=self.interval,
@@ -358,13 +441,13 @@ class DownloadThread(object):
             client = MongoClient("localhost", 27017)
             db = client[MINUTE_DB_NAME]
             symbol = self.contract
-            if self.exchange == ExchangeType.BINANCE:
+            if self.exchange == Exchange.BINANCE:
                 symbol = self.contract + ".BINANCE"
 
-            elif self.exchange == ExchangeType.OKX:
+            elif self.exchange == Exchange.OKX:
                 symbol = self.contract + ".OKX"
 
-            elif self.exchange == ExchangeType.BYBIT:
+            elif self.exchange == Exchange.BYBIT:
                 symbol = self.contract + ".BYBIT"
             collection = db[symbol]
 
@@ -417,7 +500,7 @@ class DownloadThread(object):
             print(f"{self.contract} {from_time}..")
             download_failed = False
             try:
-                if self.exchange == ExchangeType.BINANCE:
+                if self.exchange == Exchange.BINANCE:
                     from_time = binance_get_bar_data(
                         symbol=self.contract,
                         interval=self.interval,
@@ -427,7 +510,7 @@ class DownloadThread(object):
                         save_to=self.save_to,
                     )
 
-                elif self.exchange == ExchangeType.OKX:
+                elif self.exchange == Exchange.OKX:
                     from_time = okx_get_bar_data(
                         symbol=self.contract,
                         interval=self.interval,
@@ -435,7 +518,7 @@ class DownloadThread(object):
                         save_to=self.save_to,
                     )
 
-                elif self.exchange == ExchangeType.BYBIT:
+                elif self.exchange == Exchange.BYBIT:
                     from_time = bybit_get_bar_data(
                         symbol=self.contract,
                         interval=self.interval,
@@ -463,15 +546,15 @@ class DownloadThread(object):
         #"""
         # 1m数据入数据库
         print(f"{self.contract} Bar数据导入数据库..")
-        if self.exchange == ExchangeType.BINANCE:
+        if self.exchange == Exchange.BINANCE:
             engine = CSVsBinanceBarLocalEngine(duration="1m", contract=self.contract, target_dir=self.save_to)
             engine.startWork()
 
-        elif self.exchange == ExchangeType.OKX:
+        elif self.exchange == Exchange.OKX:
             engine = CSVsOKXBarLocalEngine(duration="1m", contract=self.contract, target_dir=self.save_to)
             engine.startWork()
 
-        elif self.exchange == ExchangeType.BYBIT:
+        elif self.exchange == Exchange.BYBIT:
             engine = CSVsBybitBarLocalEngine(duration="1", contract=self.contract, target_dir=self.save_to)
             engine.startWork()
         #"""

@@ -9,9 +9,12 @@ from queue import Queue, Empty
 from vnpy.trader.utility import round_to, floor_to, ceil_to, load_json_path
 from vnpy.trader.object import SubscribeRequest
 from App.Turtle_crypto.dataservice import TurtleCryptoDataDownloading
-from vnpy.trader.constant import Direction, Offset
+from vnpy.trader.constant import Direction, Offset, Exchange
 from pymongo import MongoClient, ASCENDING, DESCENDING
 from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
+from App.Turtle_crypto.dataservice.utility import get_csv_path
+import pandas as pd
+import os
 
 class HitNewPortfolio(object):
     parameters = ["name",
@@ -26,6 +29,7 @@ class HitNewPortfolio(object):
         self.inited = False
         self.starting = False
         self.strategy_symbols = set()
+        self.exchange_instruments_data = {}
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -37,7 +41,29 @@ class HitNewPortfolio(object):
                 setattr(self, name, setting[name])
 
     def on_init(self):
-        pass
+        self.load_instruments_data()
+
+    def load_instruments_data(self):
+        # .csv获取交易所USDT合约列表
+        try:
+            csv_dir = get_csv_path()
+            exhcanges = [Exchange.OKX, Exchange.BINANCE, Exchange.BYBIT]
+            for exchange in exhcanges:
+                exchange_instruments_data = {}
+                file_path = f"{csv_dir}{exchange.value}{DIR_SYMBOL}instruments.csv"
+                if not os.path.exists(file_path):
+                    continue
+
+                df = pd.read_csv(file_path)
+                for _, row in df.iterrows():
+                    instrument = dict(row)
+                    symbol = instrument["symbol"]
+                    exchange_instruments_data[symbol] = instrument
+                self.exchange_instruments_data[exchange.value] = exchange_instruments_data
+
+        except Exception as e:
+            msg = f"HitNewPortfolio 获取交易所USDT合约列表出错\n\n{e}"
+            self.send_ding_talk(msg)
 
     def on_timer(self):
         download_need = False
@@ -55,6 +81,7 @@ class HitNewPortfolio(object):
             thread.start()
 
     def download_data(self):
+        # 下载Bar数据
         download_success = False
         try_count = 0
         while try_count < 5:
@@ -106,11 +133,53 @@ class HitNewPortfolio(object):
                     break
 
             except Exception as e:
-                msg = f"HitNewPortfolio 下载数据出错\n\n{e}"
+                msg = f"HitNewPortfolio 下载Bar数据出错\n\n{e}"
                 self.send_ding_talk(msg)
         
         if not download_success:
-            msg = f"HitNewPortfolio 下载数据失败"
+            msg = f"HitNewPortfolio 下载Bar数据失败"
+            self.send_ding_talk(msg)
+
+        # 下载合约列表数据
+        okx_instruments_data = []
+        okx_new = []
+        binance_instruments_data = []
+        binance_new = []
+
+        download_success = False
+        try_count = 0
+        while try_count < 5:
+            try_count += 1
+            try:
+                if not okx_instruments_data:
+                    okx_history_instruments_data = self.exchange_instruments_data.get(Exchange.OKX.value, {})
+                    okx_instruments_data, okx_new = self.download_engine.download_instruments_list(Exchange.OKX, okx_history_instruments_data)
+                
+                if not binance_instruments_data:
+                    binance_history_instruments_data = self.exchange_instruments_data.get(Exchange.BINANCE.value, {})
+                    binance_instruments_data, binance_new = self.download_engine.download_instruments_list(Exchange.BINANCE, binance_history_instruments_data)
+
+                if len(okx_instruments_data) and len(binance_instruments_data):
+                    download_success = True
+                    break
+
+            except Exception as e:
+                msg = f"HitNewPortfolio 下载合约列表数据出错\n\n{e}"
+                self.send_ding_talk(msg)
+
+        # OKX新上市合约
+        for instrument in okx_new:
+            pass
+        
+        # BINANCE新上市合约
+        for instrument in binance_new:
+            pass
+
+        # 重新获取交易所USDT合约列表
+        self.load_instruments_data()
+
+        if not download_success:
+            msg = f"HitNewPortfolio 下载合约列表数据失败"
             self.send_ding_talk(msg)
 
     def send_ding_talk(self, content):
