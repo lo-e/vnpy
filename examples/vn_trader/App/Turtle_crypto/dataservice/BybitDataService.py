@@ -38,43 +38,34 @@ class BybitSymbolType(Enum):
 # limit：<= 200
 def bybit_get_bar_data(symbol: str, interval: str, from_time: str, limit: int = 200, save_to:str=""):
     timeArray = time.strptime(from_time, "%Y-%m-%d %H:%M:%S")
-    timeStamp = int(time.mktime(timeArray))
-    if "USDT" in symbol:
-        url = f"{main_url}/public/linear/kline?symbol={symbol}&interval={interval}&from={timeStamp}&limit={limit}"
-    else:
-        url = f"{main_url}/v2/public/kline/list?symbol={symbol}&interval={interval}&from={timeStamp}&limit={limit}"
+    timestamp = int(time.mktime(timeArray)) * 1000
+    url = f"{main_url}/v5/market/kline?symbol={symbol}&interval={interval}&start={timestamp}"
     resp = requests.get(url, headers={}, params={})
-    data = resp.json()
-    bar_data = data.get("result", [])
-    if not bar_data:
-        bar_data = []
+    result = resp.json().get("result", {})
+    data = result.get("list", [])
 
     # 数据整理
     result_list = []
-    since = ""
-    until = ""
-    for dic in bar_data:
-        # 转换时间戳
-        the_timestamp = dic["open_time"]
-        datetime_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(the_timestamp))
-        if not since:
-            since = time.strftime("%Y-%m-%d-%H%M%S", time.localtime(the_timestamp))
-        until = time.strftime("%Y-%m-%d-%H%M%S", time.localtime(the_timestamp))
+    start = ""
+    end = ""
+    for d in data[::-1]:
+        # Bar数据
+        ts, open_price, high_price, low_price, close_price, volume, turnover = d
+        dt = datetime.fromtimestamp(int(int(ts) / 1000))
+        result = {"datetime": dt,
+                  "symbol": symbol,
+                  "open": open_price,
+                  "high": high_price,
+                  "low": low_price,
+                  "close": close_price,
+                  "volume": volume,
+                  "turnover": turnover}
+        result_list.append(result)
 
-        if "open_time" in dic:
-            dic.pop("open_time")
-        if "interval" in dic:
-            dic.pop("interval")
-        if "turnover" in dic:
-            dic.pop("turnover")
-        if "id" in dic:
-            dic.pop("id")
-        if "period" in dic:
-            dic.pop("period")
-        if "start_at" in dic:
-            dic.pop("start_at")
-        dic["datetime"] = datetime_str
-        result_list.append(dic)
+        # 起始时间
+        if not start:
+            start = dt
+        end = dt
 
     if not len(result_list):
         return None
@@ -85,15 +76,17 @@ def bybit_get_bar_data(symbol: str, interval: str, from_time: str, limit: int = 
     dir_path = csv_path + f"{contract}{DIR_SYMBOL}{interval}{DIR_SYMBOL}"
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
-    file_path = dir_path + f"{since}__{until}.csv"
-    field_names = ["datetime", "symbol", "open", "high", "low", "close", "volume"]
+    
+    start_str = start.strftime("%Y-%m-%d-%H%M%S")
+    end_str = end.strftime("%Y-%m-%d-%H%M%S")
+    file_path = dir_path + f"{start_str}__{end_str}.csv"
+    field_names = list(result_list[0].keys())
     with open(file_path, "w") as f:
         writer = csv.DictWriter(f, fieldnames=field_names)
         writer.writeheader()
-        # 写入csv文件
         writer.writerows(result_list)
 
-    return datetime.strptime(until, "%Y-%m-%d-%H%M%S")
+    return end
 
 def bybit_get_first_bar_datetime(symbol: str, interval: str, from_time: str = "2020-01-01 00:00:00"):
     first_bar_dt = None
@@ -106,7 +99,7 @@ def bybit_get_first_bar_datetime(symbol: str, interval: str, from_time: str = "2
     result = resp.json().get("result", {})
     data = result.get("list", [])
     if data:
-        start_time, openPrice, highPrice, lowPrice, closePrice, volume, turnover = data[-1]
+        start_time = data[-1][0]
         first_bar_dt = datetime.fromtimestamp(int(int(start_time) / 1000))
         
     return first_bar_dt

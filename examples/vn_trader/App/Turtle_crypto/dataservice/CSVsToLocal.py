@@ -112,6 +112,7 @@ class CSVsBybitBarLocalEngine(object):
                             bar.high_price = float(row["high"])
                             bar.low_price = float(row["low"])
                             bar.volume = float(row["volume"])
+                            bar.turnover = float(row["turnover"])
                             # 保存bar到数据库
                             collection.update_many(
                                 {"datetime": bar.datetime},
@@ -130,10 +131,10 @@ class CSVsBybitBarLocalEngine(object):
         # 打印进程
 
         print(f"{self.contract} Bar数据导入数据库完成！")
-        if totalCount:
-            sub = time() - totalStartTime
-            print("总用时：", sub, "s")
-            print("总数据量：", totalCount, "\n")
+        # if totalCount:
+        #     sub = time() - totalStartTime
+        #     print("总用时：", sub, "s")
+        #     print("总数据量：", totalCount, "\n")
 
 class CSVsOKXBarLocalEngine(object):
     def __init__(self, duration: str, contract: str, target_dir: str=""):
