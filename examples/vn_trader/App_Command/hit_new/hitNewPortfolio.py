@@ -175,15 +175,24 @@ class HitNewPortfolio(object):
 
         # OKX新上市合约
         for instrument in okx_new:
-            pass
+            symbol = instrument["symbol"]
+            vt_symbol = f"{symbol}.OKX"
+            msg = f"{vt_symbol} 合约上新"
+            self.send_ding_talk(msg)
         
         # BINANCE新上市合约
         for instrument in binance_new:
-            pass
+            symbol = instrument["symbol"]
+            vt_symbol = f"{symbol}.BINANCE"
+            msg = f"{vt_symbol} 合约上新"
+            self.send_ding_talk(msg)
 
         # BYBIT新上市合约
         for instrument in bybit_new:
-            pass
+            symbol = instrument["symbol"]
+            vt_symbol = f"{symbol}.BYBIT"
+            msg = f"{vt_symbol} 合约上新"
+            self.send_ding_talk(msg)
 
         # 重新获取交易所USDT合约列表
         self.load_instruments_data()
