@@ -98,6 +98,7 @@ class HitNewPortfolio(object):
                 self.download_engine.delete_history_data(target_dir=self.name)
 
                 # 开始下载
+                print(f"\n")
                 for exchange, exchange_symbols in contract_exchange_dict.items():
                     if exchange == "BINANCE":
                         self.download_engine.download_from_binance(
@@ -136,7 +137,11 @@ class HitNewPortfolio(object):
                 msg = f"HitNewPortfolio 下载Bar数据出错\n\n{e}"
                 self.send_ding_talk(msg)
         
-        if not download_success:
+        if download_success:
+            msg = f"Bar数据已更新！\t{datetime.now()}\n"
+            print(msg)
+
+        else:
             msg = f"HitNewPortfolio 下载Bar数据失败"
             self.send_ding_talk(msg)
 
@@ -156,14 +161,17 @@ class HitNewPortfolio(object):
                 if not okx_instruments_data:
                     okx_history_instruments_data = self.exchange_instruments_data.get(Exchange.OKX.value, {})
                     okx_instruments_data, okx_new = self.download_engine.download_instruments_list(Exchange.OKX, okx_history_instruments_data)
+                    print(f"\n")
                 
                 if not binance_instruments_data:
                     binance_history_instruments_data = self.exchange_instruments_data.get(Exchange.BINANCE.value, {})
                     binance_instruments_data, binance_new = self.download_engine.download_instruments_list(Exchange.BINANCE, binance_history_instruments_data)
+                    print(f"\n")
 
                 if not bybit_instruments_data:
                     bybit_history_instruments_data = self.exchange_instruments_data.get(Exchange.BYBIT.value, {})
                     bybit_instruments_data, bybit_new = self.download_engine.download_instruments_list(Exchange.BYBIT, bybit_history_instruments_data)
+                    print(f"\n")
 
                 if len(okx_instruments_data) and len(binance_instruments_data) and len(bybit_instruments_data):
                     download_success = True
