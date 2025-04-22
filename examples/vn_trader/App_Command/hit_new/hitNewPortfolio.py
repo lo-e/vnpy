@@ -145,6 +145,8 @@ class HitNewPortfolio(object):
         okx_new = []
         binance_instruments_data = []
         binance_new = []
+        bybit_instruments_data = []
+        bybit_new = []
 
         download_success = False
         try_count = 0
@@ -159,7 +161,11 @@ class HitNewPortfolio(object):
                     binance_history_instruments_data = self.exchange_instruments_data.get(Exchange.BINANCE.value, {})
                     binance_instruments_data, binance_new = self.download_engine.download_instruments_list(Exchange.BINANCE, binance_history_instruments_data)
 
-                if len(okx_instruments_data) and len(binance_instruments_data):
+                if not bybit_instruments_data:
+                    bybit_history_instruments_data = self.exchange_instruments_data.get(Exchange.BYBIT.value, {})
+                    bybit_instruments_data, bybit_new = self.download_engine.download_instruments_list(Exchange.BYBIT, bybit_history_instruments_data)
+
+                if len(okx_instruments_data) and len(binance_instruments_data) and len(bybit_instruments_data):
                     download_success = True
                     break
 
@@ -173,6 +179,10 @@ class HitNewPortfolio(object):
         
         # BINANCE新上市合约
         for instrument in binance_new:
+            pass
+
+        # BYBIT新上市合约
+        for instrument in bybit_new:
             pass
 
         # 重新获取交易所USDT合约列表
