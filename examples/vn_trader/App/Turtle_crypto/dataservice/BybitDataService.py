@@ -158,12 +158,12 @@ def bybit_get_symbol_list(need_data: bool = False):
             #     gateway_name='BYBIT'
             # )
             quote_coin = d["quoteCoin"]
+            contract_type = d["contractType"] # LinearPerpetual、LinearFutures
             status = d["status"]
-            if quote_coin == "USDT" and status == "Trading":
+            if quote_coin == "USDT" and contract_type == "LinearPerpetual" and status == "Trading":
                 symbol = d["symbol"]
                 symbol_list.add(symbol)
                 symbol_data_dict[symbol] = d
-            
 
     symbol_list = sorted(list(symbol_list))
     if need_data:

@@ -215,7 +215,7 @@ class TurtleCryptoDataDownloading(object):
         new_data = []
         print(f"{exchange.value} USDT永续合约列表下载中..")
         if exchange == Exchange.BINANCE:
-            symbol_list = binance_get_symbol_list(need_data=False)
+            symbol_list = binance_get_symbol_list()
             # for symbol in symbol_list:
             #     print(symbol)
 
