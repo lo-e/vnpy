@@ -95,22 +95,21 @@ def bybit_get_bar_data(symbol: str, interval: str, from_time: str, limit: int = 
 
     return datetime.strptime(until, "%Y-%m-%d-%H%M%S")
 
-def bybit_get_first_bar_datetime(symbol: str, interval: str, from_time: str):
-    result = None
+def bybit_get_first_bar_datetime(symbol: str, interval: str, from_time: str = "2020-01-01 00:00:00"):
+    first_bar_dt = None
+
+    # 获取Bar列表
     timeArray = time.strptime(from_time, "%Y-%m-%d %H:%M:%S")
-    timeStamp = int(time.mktime(timeArray))
-    if "USDT" in symbol:
-        url = f"{main_url}/public/linear/kline?symbol={symbol}&interval={interval}&from={timeStamp}&limit=10"
-    else:
-        url = f"{main_url}/v2/public/kline/list?symbol={symbol}&interval={interval}&from={timeStamp}&limit=10"
+    timestamp = int(time.mktime(timeArray)) * 1000
+    url = f"{main_url}/v5/market/kline?symbol={symbol}&interval={interval}&start={timestamp}"
     resp = requests.get(url, headers={}, params={})
-    data = resp.json()
-    bar_data = data.get("result", [])
-    for dic in bar_data:
-        the_timestamp = dic["open_time"]
-        result = datetime.fromtimestamp(the_timestamp)
-        break
-    return result
+    result = resp.json().get("result", {})
+    data = result.get("list", [])
+    if data:
+        start_time, openPrice, highPrice, lowPrice, closePrice, volume, turnover = data[-1]
+        first_bar_dt = datetime.fromtimestamp(int(int(start_time) / 1000))
+        
+    return first_bar_dt
 
 def bybit_get_latest_price(symbol: str):
     from_time = datetime.now() - timedelta(hours=1)
@@ -131,84 +130,42 @@ def bybit_get_latest_price(symbol: str):
     return latest_price
 
 
-def bybit_get_symbol_list(type: BybitSymbolType, need_data: bool = False):
+def bybit_get_symbol_list(need_data: bool = False):
     symbol_list: Set[str] = set()
     symbol_data_dict = {}
 
-    if type == BybitSymbolType.SPOT:
-        # 现货
-        url = f"{main_url}/spot/v3/public/symbols"
-
-    elif (
-        type == BybitSymbolType.USDT
-        or type == BybitSymbolType.USDC
-        or type == BybitSymbolType.SWAP
-        or type == BybitSymbolType.FUTURE
-    ):
-        # 合约
-        url = f"{main_url}/v2/public/symbols"
-
-    resp = requests.get(url, headers={}, params={})
-    data = resp.json()
-    if type == BybitSymbolType.SPOT:
-        data = data.get("result", {})
-        data = data.get("list", [])
-    else:
-        data = data.get("result", [])
-    for d in data:
-        # contract: ContractData = ContractData(
-        #     symbol=d["name"],
-        #     exchange=Exchange.BYBIT,
-        #     name=d["name"],
-        #     product=Product.FUTURES,
-        #     size=1,
-        #     pricetick=float(d["price_filter"]["tick_size"]),
-        #     min_volume=d["lot_size_filter"]["min_trading_qty"],
-        #     history_data=True,
-        #     gateway_name='BYBIT'
-        # )
-        symbol = ""
-        if type == BybitSymbolType.SPOT:
-            # 现货
-
-            # 筛选现货交易对的报价货币
-            if d["quoteCoin"] != "USDT":
-                continue
-
-            symbol = d["name"]
-            symbol_list.add(symbol)
-            symbol_data_dict[symbol] = d
-
-        elif (
-            type == BybitSymbolType.SWAP
-            and d["name"] == d["alias"]
-            and d["quote_currency"] != "USDT"
-        ):
-            # 反向永续合约
-            symbol = d["name"]
-            symbol_list.add(symbol)
-            symbol_data_dict[symbol] = d
-
-        elif type == BybitSymbolType.FUTURE and d["name"] != d["alias"]:
-            # 反向交割合约
-            symbol = d["name"]
-            symbol_list.add(symbol)
-            symbol_data_dict[symbol] = d
-
-        elif type == BybitSymbolType.USDT and d["quote_currency"] == "USDT":
-            # 正向USDT永续合约
-            symbol = d["name"]
-            symbol_list.add(symbol)
-            symbol_data_dict[symbol] = d
-
-        elif type == BybitSymbolType.USDC and d["quote_currency"] == "USDC":
-            # 正向USDC永续合约
-            symbol = d["name"]
-            symbol_list.add(symbol)
-            symbol_data_dict[symbol] = d
+    cursor = ""
+    init = True
+    while init or cursor:
+        init = False
+        url = f"{main_url}/v5/market/instruments-info"
+        params = {"category": "linear",
+                  "cursor": cursor}
+        resp = requests.get(url, headers={}, params=params)
+        result = resp.json().get("result", {})
+        cursor = result.get("nextPageCursor", "")
+        data = result.get("list", [])
+        for d in data:
+            # contract: ContractData = ContractData(
+            #     symbol=d["name"],
+            #     exchange=Exchange.BYBIT,
+            #     name=d["name"],
+            #     product=Product.FUTURES,
+            #     size=1,
+            #     pricetick=float(d["price_filter"]["tick_size"]),
+            #     min_volume=d["lot_size_filter"]["min_trading_qty"],
+            #     history_data=True,
+            #     gateway_name='BYBIT'
+            # )
+            quote_coin = d["quoteCoin"]
+            status = d["status"]
+            if quote_coin == "USDT" and status == "Trading":
+                symbol = d["symbol"]
+                symbol_list.add(symbol)
+                symbol_data_dict[symbol] = d
+            
 
     symbol_list = sorted(list(symbol_list))
-
     if need_data:
         return symbol_list, symbol_data_dict
 

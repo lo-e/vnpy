@@ -246,7 +246,7 @@ class TurtleCryptoDataDownloading(object):
                     new_data.append(instrument_data)
             
             # 输出结果
-            print(f"{exchange.value} USDT永续合约总计：{len(symbol_list)}")
+            print(f"{exchange.value} USDT永续合约总计：{len(symbol_list)} 新上市合约：{len(new_data)}")
                 
         elif exchange == Exchange.OKX:
             symbol_list = okx_get_symbol_list(type=OKXType.USDT)
@@ -280,14 +280,49 @@ class TurtleCryptoDataDownloading(object):
                     new_data.append(instrument_data)
 
             # 输出结果
-            print(f"{exchange.value} USDT永续合约总计：{len(symbol_list)}")
+            print(f"{exchange.value} USDT永续合约总计：{len(symbol_list)} 新上市合约：{len(new_data)}")
+        
+        elif exchange == Exchange.BYBIT:
+            symbol_list = bybit_get_symbol_list()
+            # for symbol in symbol_list:
+            #     print(symbol)
+
+            # 获取上市时间
+            for symbol in symbol_list:
+                history_instrument_data = history_symbol_instrument_data.get(symbol, {})
+                instrument_on = history_instrument_data.get("on", "")
+                if instrument_on:
+                    result.append(history_instrument_data)
+
+                else:
+                    first_bar_dt = None
+                    try_count = 0
+                    while try_count < 5:
+                        try:
+                            first_bar_dt = bybit_get_first_bar_datetime(symbol=symbol, interval="1")
+                            break
+
+                        except Exception:
+                            try_count += 1
+                    
+                    first_bar_dt_str = first_bar_dt.strftime(f"%Y-%m-%d %H:%M:%S") if first_bar_dt else ""
+                    ts = first_bar_dt.timestamp() if first_bar_dt else 0
+                    instrument_data = {"symbol": symbol,
+                                       "on": first_bar_dt_str,
+                                       "on_timestamp": ts}
+                    result.append(instrument_data)
+                    new_data.append(instrument_data)
+
+            # 输出结果
+            print(f"{exchange.value} USDT永续合约总计：{len(symbol_list)} 新上市合约：{len(new_data)}")
 
         # 保存到文件
-        df = pd.DataFrame(result)
-        sorted_df = df.sort_values("on_timestamp", ascending=False)
-        csv_dir = get_csv_path()
-        file_path = f"{csv_dir}{exchange.value}{DIR_SYMBOL}instruments.csv"
-        save_df_data(sorted_df, file_path)
+        if result:
+            df = pd.DataFrame(result)
+            sorted_df = df.sort_values("on_timestamp", ascending=False)
+            csv_dir = get_csv_path()
+            file_path = f"{csv_dir}{exchange.value}{DIR_SYMBOL}instruments.csv"
+            save_df_data(sorted_df, file_path)
         
         return result, new_data
 
