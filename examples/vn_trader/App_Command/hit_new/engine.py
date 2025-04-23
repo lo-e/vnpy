@@ -611,16 +611,16 @@ class HitNewEngine(BaseEngine):
                 strategy.__setattr__(key, data[key])
 
     def save_sync_data(self, strategy):
-        # 保存策略同步数据到数据库
         if not strategy.inited:
             return
         
+        # 获取策略同步数据
         flt = {"strategy_name": strategy.strategy_name, "vt_symbol": strategy.vt_symbol}
         data = copy(flt)
         for key in strategy.syncs:
             data[key] = strategy.__getattribute__(key)
 
-        # 保存到数据库
+        # 保存策略同步数据到数据库
         colleciton_name = f"{strategy.__class__.__name__}"
         self.main_engine.dbUpdate(
             POSITION_DB_NAME,
@@ -631,8 +631,32 @@ class HitNewEngine(BaseEngine):
             callback=self.strategy_db_Update_callback,
         )
 
-        # 保存到文件（数据有变化时才保存）
+        # 保存策略同步数据到文件（数据有变化时才保存）
         json_file = self.get_strategie_sync_file_path(strategy)
+        history_data = {}
+        try:
+            with open(json_file, 'r') as f:
+                history_data = json.load(f)
+
+        except:
+            pass
+        
+        if history_data != data:
+            try:
+                with open(json_file, "w", encoding="utf-8") as file:
+                    file.write(
+                        json.dumps(data, ensure_ascii=False)
+                    )
+            except:
+                pass
+
+        # 获取策略变量数据
+        data = {}
+        for key in strategy.variables:
+            data[key] = strategy.__getattribute__(key)
+
+        # 保存策略变量数据到文件（数据有变化时才保存）
+        json_file = self.get_strategie_variable_file_path(strategy)
         history_data = {}
         try:
             with open(json_file, 'r') as f:
@@ -656,7 +680,16 @@ class HitNewEngine(BaseEngine):
         dir_path = Path(dir).joinpath(f"BaiduSyncdisk{DIR_SYMBOL}")
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
-        file_path = dir_path.joinpath(f"{strategy.strategy_name}.json")
+        file_path = dir_path.joinpath(f"{strategy.strategy_name}_syncs.json")
+        return file_path
+
+    def get_strategie_variable_file_path(self, strategy):
+        # 策略变量数据保存文件路径 
+        dir = os.getcwd()
+        dir_path = Path(dir).joinpath(f"BaiduSyncdisk{DIR_SYMBOL}")
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        file_path = dir_path.joinpath(f"{strategy.strategy_name}_variables.json")
         return file_path
     
     def strategy_db_Update_callback(self, back_data=None):

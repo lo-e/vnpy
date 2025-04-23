@@ -7,15 +7,15 @@
     {
       "strategy_name": "HIT_NEW_BTC_OKX",
       "vt_symbol": "BTC-USDT-SWAP.OKX",
-      "direction": "LONG",
       "exchange_user": "lo-e",
+      "direction": "LONG",
       "start": true
     },
     {
       "strategy_name": "HIT_NEW_BTC_BINANCE",
       "vt_symbol": "BTCUSDT.BINANCE",
-      "direction": "LONG",
       "exchange_user": "lo-e",
+      "direction": "LONG",
       "start": true
     }
   ]

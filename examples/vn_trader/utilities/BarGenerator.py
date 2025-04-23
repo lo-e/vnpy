@@ -136,6 +136,7 @@ class BarGenerator:
         """
         if self.interval == Interval.MINUTE:
             self.update_bar_minute_window(bar)
+
         else:
             self.update_bar_hour_window(bar)
 
@@ -176,8 +177,6 @@ class BarGenerator:
                 self.window_bar = None
 
     def update_bar_hour_window(self, bar: BarData) -> None:
-        """"""
-        # If not inited, create window bar object
         if not self.hour_bar:
             dt = bar.datetime.replace(minute=0, second=0, microsecond=0)
             self.hour_bar = BarData(
@@ -196,8 +195,6 @@ class BarGenerator:
             return
 
         finished_bar = None
-
-        # If minute is 59, update minute bar into window bar and push
         if bar.datetime.minute == 59:
             self.hour_bar.high_price = max(self.hour_bar.high_price, bar.high_price)
             self.hour_bar.low_price = min(self.hour_bar.low_price, bar.low_price)
@@ -210,7 +207,6 @@ class BarGenerator:
             finished_bar = self.hour_bar
             self.hour_bar = None
 
-        # If minute bar of new hour, then push existing window bar
         elif bar.datetime.hour != self.hour_bar.datetime.hour:
             finished_bar = self.hour_bar
 
@@ -228,7 +224,7 @@ class BarGenerator:
                 turnover=bar.turnover,
                 open_interest=bar.open_interest,
             )
-        # Otherwise only update minute bar
+
         else:
             self.hour_bar.high_price = max(self.hour_bar.high_price, bar.high_price)
             self.hour_bar.low_price = min(self.hour_bar.low_price, bar.low_price)
@@ -238,14 +234,13 @@ class BarGenerator:
             self.hour_bar.turnover += bar.turnover
             self.hour_bar.open_interest = bar.open_interest
 
-        # Push finished window bar
         if finished_bar:
             self.on_hour_bar(finished_bar)
 
     def on_hour_bar(self, bar: BarData) -> None:
-        """"""
         if self.window == 1:
             self.on_window_bar(bar)
+
         else:
             if not self.window_bar:
                 self.window_bar = BarData(
@@ -257,6 +252,7 @@ class BarGenerator:
                     high_price=bar.high_price,
                     low_price=bar.low_price,
                 )
+
             else:
                 self.window_bar.high_price = max(
                     self.window_bar.high_price, bar.high_price
@@ -274,6 +270,7 @@ class BarGenerator:
                 if self.window_start:
                     self.on_window_bar(self.window_bar)
                     self.window_bar = None
+
                 else:
                     # 初始周期
                     self.window_start = True

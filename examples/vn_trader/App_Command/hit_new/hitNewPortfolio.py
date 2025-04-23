@@ -224,8 +224,8 @@ class HitNewPortfolio(object):
             signal_long_setting = {
                 "strategy_name": f"HIT_NEW_LONG_{pure_symbol}_OKX",
                 "vt_symbol": vt_symbol,
-                "direction": "LONG",
                 "exchange_user": "lo-e",
+                "direction": "LONG",
                 "start": True
                 }
             self.cta_engine.hit_new_strategy(signal_long_setting)
@@ -233,8 +233,8 @@ class HitNewPortfolio(object):
             signal_short_setting = {
                 "strategy_name": f"HIT_NEW_SHORT_{pure_symbol}_OKX",
                 "vt_symbol": vt_symbol,
-                "direction": "SHORT",
                 "exchange_user": "lo-e",
+                "direction": "SHORT",
                 "start": True
                 }
             self.cta_engine.hit_new_strategy(signal_short_setting)

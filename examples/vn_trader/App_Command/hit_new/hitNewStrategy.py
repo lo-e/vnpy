@@ -15,8 +15,6 @@ from utilities.BarGenerator import BarGenerator
 from vnpy.trader.constant import Exchange
 from pymongo import MongoClient
 from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
-from .base import EVENT_BAR_UPDATED
-
 class HitNewStrategy(CtaTemplate):
     className = "HitNewStrategy"
     author = "loe"
@@ -29,8 +27,27 @@ class HitNewStrategy(CtaTemplate):
         "direction"
     ]
 
+    # 变量列表
+    variables = [
+        "tradable",
+        "indicator_inited",
+        "bar_lack",
+        "minute_bar_dt",
+        "hour_bar_dt",
+        "hour_up",
+        "hour_up_confirm",
+        "hour_up_rebirth",
+        "hour_down",
+        "hour_down_confirm",
+        "hour_down_rebirth"
+    ]
+
     # 同步列表
     syncs = [
+        "hour_up",
+        "hour_up_confirm",
+        "hour_down",
+        "hour_down_confirm",
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -51,11 +68,20 @@ class HitNewStrategy(CtaTemplate):
         else:
             raise(f"交易方向配置错误：{self.direction}")
 
-        self.bar_loading = False                                                                            # 正在加载bar数据
-        self.bar_lack = True                                                                                # bar缺失
-        self.bar = None                                                                                     # 当前最新bar
-        self.am = ArrayManager(60)                                                                          # K线容器
-        self.bar_generator = BarGenerator(on_bar=None, window=5, on_window_bar=self.on_window_bar)          # bar生成工具
+        self.bar_lack = False
+        self.minute_bar_dt: str = ""
+        self.hour_bar_dt: str = ""
+        self.hour_bar_generator = None
+        self.hour_am = None
+
+        self.tradable = True
+        self.indicator_inited = False
+        self.hour_up = 0
+        self.hour_up_confirm = False
+        self.hour_up_rebirth = False
+        self.hour_down = 0
+        self.hour_down_confirm = False
+        self.hour_down_rebirth = False
 
     def on_init(self):
         # 交易所成功连接判断
@@ -71,62 +97,111 @@ class HitNewStrategy(CtaTemplate):
             self.send_ding_talk(msg)
 
     def load_bar_data(self):
-        # 数据库加载bar数据
-        mc = MongoClient()
-        db = mc[MINUTE_DB_NAME]
-        collection = db[self.vt_symbol]
-        data_from = datetime.now().replace(second=0, microsecond=0) - timedelta(hours=6)
-        data_to = datetime.now().replace(second=0, microsecond=0) - timedelta(minutes=1)
-        flt = {"datetime": {"$gte": data_from, "$lte": data_to}}
-        cursor = collection.find(flt).sort('datetime')
+        try:
+            # 数据库加载Bar数据
+            bar_lack = False
+            mc = MongoClient()
+            db = mc[MINUTE_DB_NAME]
+            collection = db[self.vt_symbol]
+            data_from = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(hours=5)
+            data_to = datetime.now().replace(second=0, microsecond=0) - timedelta(minutes=1)
+            flt = {"datetime": {"$gte": data_from, "$lte": data_to}}
+            cursor = collection.find(flt).sort('datetime')
 
-        next_bar_dt = None
-        for d in cursor:
-            bar = BarData(gateway_name = '', symbol = '', exchange = Exchange.NONE, datetime = None, endDatetime = None)
-            bar.__dict__ = d
+            bar_list = []
+            next_bar_dt = None
+            for d in cursor:
+                bar = BarData(gateway_name = '', symbol = '', exchange = Exchange.NONE, datetime = None, endDatetime = None)
+                bar.__dict__ = d
 
-            if next_bar_dt and bar.datetime != next_bar_dt:
+                if next_bar_dt and bar.datetime != next_bar_dt:
+                    # bar数据缺失
+                    bar_lack = True
+                    msg = f"Bar数据缺失\n合约 {self.vt_symbol}\n时间 {next_bar_dt}"
+                    self.send_ding_talk(msg)
+                    break
+                
+                next_bar_dt = bar.datetime + timedelta(minutes=1)
+                bar_list.append(bar)
+
+            if not next_bar_dt or next_bar_dt - timedelta(minutes=1) != data_to:
                 # bar数据缺失
-                self.bar_lack = True
-                self.bar_loading = False
-
-                msg = f"Bar数据确实\n合约 {self.vt_symbol}\n时间 {next_bar_dt}"
+                bar_lack = True
+                msg = f"Bar数据缺失\n合约 {self.vt_symbol}\n时间 {data_to}"
                 self.send_ding_talk(msg)
-                return
-            
-            next_bar_dt = bar.datetime + timedelta(minutes=1)
-            self.on_bar(bar)
 
-        if next_bar_dt - timedelta(minutes=1) != data_to:
-            # bar数据缺失
-            self.bar_lack = True
-            self.bar_loading = False
-            return
+            if not bar_lack:
+                # 回测Bar数据
+                self.hour_am = ArrayManager(5)
+                self.hour_bar_generator = BarGenerator(window=1, on_window_bar=self.on_hour_bar, interval=Interval.HOUR)
+                for bar in bar_list:
+                    self.on_bar(bar)
 
-        # 更新状态（bar数据加载完毕）
-        self.bar_lack = False
-        self.bar_loading = False
+                # 计算指标
+                self.calculate_indicator()
 
-        # 计算指标
-        self.calculate_indicator()
+            self.bar_lack = bar_lack
+
+        except Exception as e:
+            self.tradable = False
+            msg = f"加载Bar数据出错\n\n{e}"
+            self.send_ding_talk(msg)
 
     def on_bar(self, bar):
-        self.bar_generator.update_bar(bar)
+        self.minute_bar_dt = bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+        self.hour_bar_generator.update_bar(bar)
 
-    def on_window_bar(self, bar):
-        self.am.update_bar(bar)
-        self.bar = bar
+    def on_hour_bar(self, bar):
+        self.hour_bar_dt = bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+        self.hour_am.update_bar(bar)
 
-    def on_bar_updated(self, event):
-        pass
+    def on_bar_updated(self, _):
+        self.load_bar_data()
 
     def calculate_indicator(self):
-        pass
+        if self.hour_am.inited:
+            # 计算上下趋势价格
+            hour_up, hour_down = self.hour_am.donchian_oc(5)
+            if not self.hour_up_confirm and self.hour_up != hour_up:
+                self.hour_up = hour_up
+                self.hour_up_rebirth = False
+            
+            if not self.hour_down_confirm and self.hour_down != hour_down:
+                self.hour_down = hour_down
+                self.hour_down_rebirth = False
+            
+            # 指标完成初始化
+            self.indicator_inited = True
 
     def on_tick(self, tick: TickData):
         if not self.trading:
             return
-        pass
+        
+        # 判断Rebirth
+        if not self.hour_up_rebirth and self.hour_up and tick.last_price < self.hour_up:
+            self.hour_up_rebirth = True
+
+        if not self.hour_down_rebirth and self.hour_down and tick.last_price > self.hour_down:
+            self.hour_down_rebirth = True
+        
+        # 判断开仓
+        if self.tradable and self.indicator_inited and not self.bar_lack:
+            if self.direction == Direction.LONG and self.hour_up and self.hour_up_rebirth:
+                if tick.last_price >= self.hour_up:
+                    # 上趋势价格确认
+                    self.hour_up_confirm = True
+
+                    # 多头开仓
+
+            if self.direction == Direction.SHORT and self.hour_down and self.hour_down_rebirth:
+                if tick.last_price <= self.hour_down:
+                    # 下趋势价格确认
+                    self.hour_down_confirm = True
+
+                    # 空头开仓
+
+        # 同步数据
+        self.put_timer_event()
 
     def send_order(self, direction, offset, price, volume):
         # 撤回历史订单

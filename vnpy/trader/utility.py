@@ -931,6 +931,33 @@ class ArrayManager(object):
         if array:
             return up, down
         return up[-1], down[-1]
+    
+    def donchian_oc(
+        self, n: int
+    ) -> Union[
+        Tuple[np.ndarray, np.ndarray],
+        Tuple[float, float]
+    ]:
+        """
+        Donchian Channel With Open Close.
+        """
+        open_up = talib.MAX(self.open, n)[-1]
+        close_up = talib.MAX(self.close, n)[-1]
+        if np.isnan(open_up) or np.isnan(close_up):
+            up = np.nan
+
+        else:
+            up = max(open_up, close_up)
+
+        open_down = talib.MIN(self.open, n)[-1]
+        close_down = talib.MIN(self.close, n)[-1]
+        if np.isnan(open_down) or np.isnan(close_down):
+            down = np.nan
+
+        else:
+            down = min(open_down, close_down)
+
+        return up, down
 
     def aroon(
         self,
