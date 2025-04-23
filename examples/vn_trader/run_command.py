@@ -43,7 +43,7 @@ class MonitorEngine(object):
         now = datetime.now()
         if now.second == 0:
             gateway_all_connected = self.check_gateway_connected()
-            print(f"交易所连接状态：{gateway_all_connected} {now}")
+            print(f"{now}\t交易所连接状态：{gateway_all_connected}")
 class SubscribeEngine(object):
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
         self.main_engine = main_engine
