@@ -16,6 +16,8 @@ from App.Turtle_crypto.dataservice.utility import get_csv_path
 import pandas as pd
 import os
 from vnpy.trader.object import BarData
+from vnpy.event import Event
+from .base import EVENT_BAR_UPDATED
 
 class HitNewPortfolio(object):
     parameters = ["name",
@@ -162,11 +164,16 @@ class HitNewPortfolio(object):
                 self.send_ding_talk(msg)
 
         if download_success:
+            # 输出结果
             for bar in result_bar_list:
                 print(f"{bar.datetime}\t{bar.vt_symbol}\t{bar.open_price}\t{bar.high_price}\t{bar.low_price}\t{bar.close_price}")
 
             msg = f"Bar数据已更新！\n"
             self.print_(msg)
+
+            # 发送事件
+            event = Event(type=EVENT_BAR_UPDATED, data="")
+            self.cta_engine.event_engine.put(event)
 
         else:
             msg = f"HitNewPortfolio 下载Bar数据失败"

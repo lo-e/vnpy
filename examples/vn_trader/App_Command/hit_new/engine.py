@@ -62,6 +62,7 @@ from decimal import Decimal
 import json
 from .hitNewStrategy import HitNewStrategy
 from .hitNewPortfolio import HitNewPortfolio
+from .base import EVENT_BAR_UPDATED
 
 STOP_STATUS_MAP = {
     Status.SUBMITTING: StopOrderStatus.WAITING,
@@ -580,6 +581,7 @@ class HitNewEngine(BaseEngine):
 
         # 创建策略实例
         strategy = HitNewStrategy(self, setting)
+        self.event_engine.register(EVENT_BAR_UPDATED, strategy.on_bar_updated)
         self.portfolio.strategy_symbols.add(strategy.vt_symbol)
 
         # 加载同步数据

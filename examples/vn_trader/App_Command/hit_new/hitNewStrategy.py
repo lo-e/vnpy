@@ -15,6 +15,7 @@ from utilities.BarGenerator import BarGenerator
 from vnpy.trader.constant import Exchange
 from pymongo import MongoClient
 from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
+from .base import EVENT_BAR_UPDATED
 
 class HitNewStrategy(CtaTemplate):
     className = "HitNewStrategy"
@@ -53,7 +54,7 @@ class HitNewStrategy(CtaTemplate):
         self.bar_loading = False                                                                            # 正在加载bar数据
         self.bar_lack = True                                                                                # bar缺失
         self.bar = None                                                                                     # 当前最新bar
-        self.am = ArrayManager(60)                                                            # K线容器
+        self.am = ArrayManager(60)                                                                          # K线容器
         self.bar_generator = BarGenerator(on_bar=None, window=5, on_window_bar=self.on_window_bar)          # bar生成工具
 
     def on_init(self):
@@ -71,16 +72,17 @@ class HitNewStrategy(CtaTemplate):
 
     def load_bar_data(self):
         # 数据库加载bar数据
-        data_to = datetime.now().replace(second=0, microsecond=0) - timedelta(minutes=1)
         mc = MongoClient()
         db = mc[MINUTE_DB_NAME]
         collection = db[self.vt_symbol]
-        flt = {'datetime':{'$lte':data_to}}
+        data_from = datetime.now().replace(second=0, microsecond=0) - timedelta(hours=6)
+        data_to = datetime.now().replace(second=0, microsecond=0) - timedelta(minutes=1)
+        flt = {"datetime": {"$gte": data_from, "$lte": data_to}}
         cursor = collection.find(flt).sort('datetime')
+
         next_bar_dt = None
         for d in cursor:
-            exchange = Exchange.NONE
-            bar = BarData(gateway_name = '', symbol = '', exchange = exchange, datetime = None, endDatetime = None)
+            bar = BarData(gateway_name = '', symbol = '', exchange = Exchange.NONE, datetime = None, endDatetime = None)
             bar.__dict__ = d
 
             if next_bar_dt and bar.datetime != next_bar_dt:
@@ -114,6 +116,9 @@ class HitNewStrategy(CtaTemplate):
     def on_window_bar(self, bar):
         self.am.update_bar(bar)
         self.bar = bar
+
+    def on_bar_updated(self, event):
+        pass
 
     def calculate_indicator(self):
         pass
