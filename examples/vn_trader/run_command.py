@@ -6,13 +6,14 @@ from gateway.okx import OkxGateway
 from vnpy.trader.utility import load_json
 from vnpy.trader.object import SubscribeRequest
 import time
-from vnpy.trader.event import EVENT_TICK
+from vnpy.trader.event import EVENT_TICK, EVENT_TIMER
 from vnpy.trader.object import TickData
 from threading import Thread
 from datetime import datetime, timedelta
 from copy import copy
 from App_Command.hit_new.engine import HitNewEngine
 
+GATEWAYS = [[OkxGateway, "lo-e"], [BinanceUsdtGateway, "lo-e"]]
 class SecondTick(object):
     def __init__(self) -> None:
         self.vt_symbol: str = ""
@@ -21,6 +22,28 @@ class SecondTick(object):
         self.price: float = 0
         self.count: int = 0
 
+class MonitorEngine(object):
+    def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
+        self.main_engine = main_engine
+        self.event_engine = event_engine
+        self.event_engine.register(EVENT_TIMER, self.on_timer)
+
+    def check_gateway_connected(self):
+        all_connected = True
+        for gateway_info in GATEWAYS:
+            gateway_class: BaseGateway = gateway_info[0]
+            account_name = gateway_info[1]
+            connected = main_engine.get_gateway_connect_status(gateway_class.gateway_name, account_name)
+            if not connected:
+                all_connected = False
+                break
+        return all_connected
+    
+    def on_timer(self, event):
+        now = datetime.now()
+        if now.second == 0:
+            gateway_all_connected = self.check_gateway_connected()
+            print(f"交易所连接状态：{gateway_all_connected} {now}")
 class SubscribeEngine(object):
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
         self.main_engine = main_engine
@@ -74,13 +97,13 @@ if __name__ == "__main__":
     event_engine = EventEngine()
     main_engine = MainEngine(event_engine)
     subscribe_engine = SubscribeEngine(main_engine, event_engine)
+    monitor_engine = MonitorEngine(main_engine, event_engine)
 
     # 数据库
     main_engine.dbConnect()
 
     # 连接交易所
-    gateways = [[OkxGateway, "lo-e"], [BinanceUsdtGateway, "lo-e"]]
-    for gateway_info in gateways:
+    for gateway_info in GATEWAYS:
         gateway_class: BaseGateway = gateway_info[0]
         account_name = gateway_info[1]
 
@@ -92,16 +115,8 @@ if __name__ == "__main__":
 
     # 等待交易所连接成功
     while True:
-        all_connected = True
-        for gateway_info in gateways:
-            gateway_class: BaseGateway = gateway_info[0]
-            account_name = gateway_info[1]
-            connected = main_engine.get_gateway_connect_status(gateway_class.gateway_name, account_name)
-            if not connected:
-                all_connected = False
-                break
-
-        if all_connected:
+        gateway_all_connected = monitor_engine.check_gateway_connected()
+        if gateway_all_connected:
             break
 
         else:
