@@ -33,7 +33,8 @@ class HitNewPortfolio(object):
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
-        self.data_update_hour_time: datetime = None
+        self.download_bar_time: datetime = None
+        self.download_instruments_time: datetime = None
 
         # 设置参数
         for name in self.parameters:
@@ -45,6 +46,21 @@ class HitNewPortfolio(object):
 
     def on_start(self):
         pass
+
+    def on_timer(self):
+        # 下载Bar数据
+        current_minute_time = datetime.now().replace(second=0, microsecond=0)
+        if self.download_bar_time != current_minute_time:
+            self.download_bar_time = current_minute_time
+            thread = Thread(target=self.download_bar_data)
+            thread.start()
+
+        # 下载合约列表数据
+        current_hour_time = datetime.now().replace(minute=0, second=0, microsecond=0)
+        if self.download_instruments_time != current_hour_time:
+            self.download_instruments_time = current_hour_time
+            thread = Thread(target=self.download_instruments_data)
+            thread.start()
 
     def load_instruments_data(self):
         # .csv获取交易所USDT合约列表
@@ -68,22 +84,7 @@ class HitNewPortfolio(object):
             msg = f"HitNewPortfolio 获取交易所USDT合约列表出错\n\n{e}"
             self.send_ding_talk(msg)
 
-    def on_timer(self):
-        download_need = False
-        current_hour_time = datetime.now().replace(minute=0, second=0, microsecond=0)
-        
-        if not self.data_update_hour_time and datetime.now().minute <= 55:
-            download_need = True
-
-        if self.data_update_hour_time and self.data_update_hour_time != current_hour_time:
-            download_need = True
-
-        if download_need:
-            self.data_update_hour_time = current_hour_time
-            thread = Thread(target=self.download_data)
-            thread.start()
-
-    def download_data(self):
+    def download_bar_data(self):
         # 下载Bar数据
         download_success = False
         try_count = 0
@@ -118,23 +119,8 @@ class HitNewPortfolio(object):
                             contract_list=exchange_symbols, days=1, from_data_base=True, save_to=self.name, delete_history_data=False
                         )
 
-                # 检查下载结果
-                all_success = True
-                target_time = self.data_update_hour_time - timedelta(minutes=1)
-                for symbol in self.strategy_symbols:
-                    client = MongoClient("localhost", 27017)
-                    db = client[MINUTE_DB_NAME]
-                    collection = db[symbol]
-
-                    end_data = collection.find_one(sort=[("datetime", DESCENDING)])
-                    db_end_dt = end_data["datetime"] if end_data else None
-                    if db_end_dt < target_time:
-                        all_success = False
-                        break
-                
-                if all_success:
-                    download_success = True
-                    break
+                download_success = True
+                break
 
             except Exception as e:
                 msg = f"HitNewPortfolio 下载Bar数据出错\n\n{e}"
@@ -148,6 +134,7 @@ class HitNewPortfolio(object):
             msg = f"HitNewPortfolio 下载Bar数据失败"
             self.send_ding_talk(msg)
 
+    def download_instruments_data(self):
         # 下载合约列表数据
         okx_instruments_data = []
         okx_new = []
@@ -164,17 +151,14 @@ class HitNewPortfolio(object):
                 if not okx_instruments_data:
                     okx_history_instruments_data = self.exchange_instruments_data.get(Exchange.OKX.value, {})
                     okx_instruments_data, okx_new = self.download_engine.download_instruments_list(Exchange.OKX, okx_history_instruments_data)
-                    print(f"\n")
                 
                 if not binance_instruments_data:
                     binance_history_instruments_data = self.exchange_instruments_data.get(Exchange.BINANCE.value, {})
                     binance_instruments_data, binance_new = self.download_engine.download_instruments_list(Exchange.BINANCE, binance_history_instruments_data)
-                    print(f"\n")
 
                 if not bybit_instruments_data:
                     bybit_history_instruments_data = self.exchange_instruments_data.get(Exchange.BYBIT.value, {})
                     bybit_instruments_data, bybit_new = self.download_engine.download_instruments_list(Exchange.BYBIT, bybit_history_instruments_data)
-                    print(f"\n")
 
                 if len(okx_instruments_data) and len(binance_instruments_data) and len(bybit_instruments_data):
                     download_success = True
@@ -231,7 +215,11 @@ class HitNewPortfolio(object):
         # 重新获取交易所USDT合约列表
         self.load_instruments_data()
 
-        if not download_success:
+        if download_success:
+            msg = f"合约列表数据已更新！\t{datetime.now()}\n"
+            print(msg)
+        
+        else:
             msg = f"HitNewPortfolio 下载合约列表数据失败"
             self.send_ding_talk(msg)
 
