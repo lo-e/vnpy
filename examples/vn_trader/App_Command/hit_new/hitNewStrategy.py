@@ -29,6 +29,7 @@ class HitNewStrategy(CtaTemplate):
 
     # 变量列表
     variables = [
+        "target_pos",
         "tradable",
         "indicator_inited",
         "bar_lack",
@@ -44,6 +45,7 @@ class HitNewStrategy(CtaTemplate):
 
     # 同步列表
     syncs = [
+        "target_pos",
         "hour_up",
         "hour_up_confirm",
         "hour_down",
@@ -73,7 +75,8 @@ class HitNewStrategy(CtaTemplate):
         self.hour_bar_dt: str = ""
         self.hour_bar_generator = None
         self.hour_am = None
-
+        
+        self.target_pos = 0
         self.tradable = True
         self.indicator_inited = False
         self.hour_up = 0
@@ -184,21 +187,23 @@ class HitNewStrategy(CtaTemplate):
         if not self.hour_down_rebirth and self.hour_down and tick.last_price > self.hour_down:
             self.hour_down_rebirth = True
         
-        # 判断开仓
-        if self.tradable and self.indicator_inited and not self.bar_lack:
-            if self.direction == Direction.LONG and self.hour_up and self.hour_up_rebirth:
-                if tick.last_price >= self.hour_up:
-                    # 上趋势价格确认
-                    self.hour_up_confirm = True
+        if self.target_pos:
+            if self.direction == Direction.LONG and self.hour_up and tick.last_price <= self.hour_up * 0.99:
+                # 多头平仓
+                pass
 
-                    # 多头开仓
+            if self.direction == Direction.SHORT and self.hour_down and tick.last_price >= self.hour_down * 1.01:
+                # 空头平仓
+                pass
+        
+        elif self.tradable and self.indicator_inited and not self.bar_lack:
+            if self.direction == Direction.LONG and self.hour_up and self.hour_up_rebirth and tick.last_price >= self.hour_up:
+                # 多头开仓
+                self.hour_up_confirm = True
 
-            if self.direction == Direction.SHORT and self.hour_down and self.hour_down_rebirth:
-                if tick.last_price <= self.hour_down:
-                    # 下趋势价格确认
-                    self.hour_down_confirm = True
-
-                    # 空头开仓
+            if self.direction == Direction.SHORT and self.hour_down and self.hour_down_rebirth and tick.last_price <= self.hour_down:
+                # 空头开仓
+                self.hour_down_confirm = True
 
         # 同步数据
         self.put_timer_event()
@@ -213,13 +218,6 @@ class HitNewStrategy(CtaTemplate):
         volume = round_to(volume, contract.min_volume)
         if not price or not volume:
             return
-        
-        # 当前虚拟持仓
-        if direction == Direction.LONG:
-            self.virtual_pos += volume
-
-        else:
-            self.virtual_pos -= volume
 
         # 币安开仓有最低价值限制，判断是否满足
         if offset == Offset.OPEN and self.exchange == Exchange.BINANCE:
