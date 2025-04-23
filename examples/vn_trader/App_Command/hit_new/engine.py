@@ -677,7 +677,7 @@ class HitNewEngine(BaseEngine):
     def get_strategie_sync_file_path(self, strategy):
         # 策略同步数据保存文件路径 
         dir = os.getcwd()
-        dir_path = Path(dir).joinpath(f"BaiduSyncdisk{DIR_SYMBOL}")
+        dir_path = Path(dir).joinpath(f"BaiduSyncdisk{DIR_SYMBOL}syncs{DIR_SYMBOL}")
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
         file_path = dir_path.joinpath(f"{strategy.strategy_name}_syncs.json")
@@ -686,7 +686,7 @@ class HitNewEngine(BaseEngine):
     def get_strategie_variable_file_path(self, strategy):
         # 策略变量数据保存文件路径 
         dir = os.getcwd()
-        dir_path = Path(dir).joinpath(f"BaiduSyncdisk{DIR_SYMBOL}")
+        dir_path = Path(dir).joinpath(f"BaiduSyncdisk{DIR_SYMBOL}variables{DIR_SYMBOL}")
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
         file_path = dir_path.joinpath(f"{strategy.strategy_name}_variables.json")

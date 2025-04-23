@@ -5,14 +5,14 @@
   },
   "signal": [
     {
-      "strategy_name": "HIT_NEW_BTC_OKX",
+      "strategy_name": "HIT_NEW_LONG_BTC_OKX",
       "vt_symbol": "BTC-USDT-SWAP.OKX",
       "exchange_user": "lo-e",
       "direction": "LONG",
       "start": true
     },
     {
-      "strategy_name": "HIT_NEW_BTC_BINANCE",
+      "strategy_name": "HIT_NEW_LONG_BTC_BINANCE",
       "vt_symbol": "BTCUSDT.BINANCE",
       "exchange_user": "lo-e",
       "direction": "LONG",
