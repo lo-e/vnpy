@@ -14,19 +14,24 @@ from copy import copy
 from App_Command.hit_new.engine import HitNewEngine
 
 GATEWAYS = [[OkxGateway, "lo-e"], [BinanceUsdtGateway, "lo-e"]]
-class SecondTick(object):
+class DurationBar(object):
     def __init__(self) -> None:
         self.vt_symbol: str = ""
-        self.timestamp: int = 0
         self.datetime: datetime = None
-        self.price: float = 0
-        self.count: int = 0
+        self.open: float = 0
+        self.high: float = 0
+        self.low: float = 0
+        self.close: float = 0
+        self.tick_count: int = 0
 
 class MonitorEngine(object):
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
         self.main_engine = main_engine
         self.event_engine = event_engine
         self.event_engine.register(EVENT_TIMER, self.on_timer)
+        self.event_engine.register(EVENT_TICK, self.on_tick)
+
+        self.duration_bar_data = {}
 
     def check_gateway_connected(self):
         all_connected = True
@@ -39,19 +44,6 @@ class MonitorEngine(object):
                 break
         return all_connected
     
-    def on_timer(self, event):
-        now = datetime.now()
-        if (now.minute % 5 == 0) and (now.second == 0):
-            gateway_all_connected = self.check_gateway_connected()
-            print(f"{now}\t交易所连接状态：{gateway_all_connected}")
-class SubscribeEngine(object):
-    def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
-        self.main_engine = main_engine
-        self.event_engine = event_engine
-        self.event_engine.register(EVENT_TICK, self.on_tick)
-
-        self.symbol_second_tick_data = {}
-
     def subscribe(self, vt_symbol: str):
         # 订阅合约
         start = time.time()
@@ -71,32 +63,49 @@ class SubscribeEngine(object):
             print(f"行情订阅失败，找不到合约{vt_symbol}")
 
     def on_tick(self, event):
-        return
-
-        # 行情数据处理
+        # 收到Tick数据
         tick: TickData = event.data
-        tick_timestamp: int = int(tick.datetime.timestamp())
-        second_tick: SecondTick = self.symbol_second_tick_data.get(tick.vt_symbol, SecondTick())
-        if second_tick.timestamp != tick_timestamp:
-            if second_tick.timestamp:
-                print(f"{second_tick.vt_symbol} {second_tick.price}@{second_tick.count} {second_tick.datetime}")
+        minute = tick.datetime.minute
+        while minute % 5:
+            minute -= 1
+        duration_dt = tick.datetime.replace(minute=minute, second=0, microsecond=0)
 
-            second_tick = SecondTick()
-            second_tick.vt_symbol = tick.vt_symbol
-            second_tick.timestamp = tick_timestamp
-            second_tick.datetime = datetime.fromtimestamp(tick_timestamp)
-            second_tick.price = tick.last_price
-            second_tick.count = 1
-            self.symbol_second_tick_data[tick.vt_symbol] = second_tick
+        duration_bar: DurationBar = self.duration_bar_data.get(tick.vt_symbol, DurationBar())
+        if duration_bar.datetime != duration_dt:
+            if duration_bar.datetime:
+                dt_str = duration_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+                print(f"{dt_str}\t{duration_bar.tick_count}\t{duration_bar.vt_symbol}\t{duration_bar.open}\t{duration_bar.high}\t{duration_bar.low}\t{duration_bar.close}")
+            
+            else:
+                dt_str = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S.%f")
+                print(f"{dt_str}\t{tick.vt_symbol}\t{tick.last_price}")
+
+            duration_bar = DurationBar()
+            duration_bar.vt_symbol = tick.vt_symbol
+            duration_bar.datetime = duration_dt
+            duration_bar.open = tick.last_price
+            duration_bar.high = tick.last_price
+            duration_bar.low = tick.last_price
+            duration_bar.close = tick.last_price
+            duration_bar.tick_count = 1
+            self.duration_bar_data[tick.vt_symbol] = duration_bar
         
         else:
-            second_tick.count += 1
+            duration_bar.high = max(duration_bar.high, tick.last_price)
+            duration_bar.low = max(duration_bar.low, tick.last_price)
+            duration_bar.close = tick.last_price
+            duration_bar.tick_count += 1
+    
+    def on_timer(self, event):
+        now = datetime.now()
+        if (now.minute % 5 == 0) and (now.second == 0):
+            gateway_all_connected = self.check_gateway_connected()
+            print(f"{now}\t交易所连接状态：{gateway_all_connected}")
 
 if __name__ == "__main__":
     # 引擎
     event_engine = EventEngine()
     main_engine = MainEngine(event_engine)
-    subscribe_engine = SubscribeEngine(main_engine, event_engine)
     monitor_engine = MonitorEngine(main_engine, event_engine)
 
     # 数据库
