@@ -15,6 +15,7 @@ from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 from App.Turtle_crypto.dataservice.utility import get_csv_path
 import pandas as pd
 import os
+from vnpy.trader.object import BarData
 
 class HitNewPortfolio(object):
     parameters = ["name",
@@ -34,7 +35,9 @@ class HitNewPortfolio(object):
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
         self.download_bar_time: datetime = None
+        self.bar_downloading = False
         self.download_instruments_time: datetime = None
+        self.instruments_downloading = False
 
         # 设置参数
         for name in self.parameters:
@@ -50,14 +53,14 @@ class HitNewPortfolio(object):
     def on_timer(self):
         # 下载Bar数据
         current_minute_time = datetime.now().replace(second=0, microsecond=0)
-        if self.download_bar_time != current_minute_time:
+        if self.download_bar_time != current_minute_time and not self.bar_downloading:
             self.download_bar_time = current_minute_time
             thread = Thread(target=self.download_bar_data)
             thread.start()
 
         # 下载合约列表数据
         current_hour_time = datetime.now().replace(minute=0, second=0, microsecond=0)
-        if self.download_instruments_time != current_hour_time:
+        if self.download_instruments_time != current_hour_time and not self.instruments_downloading:
             self.download_instruments_time = current_hour_time
             thread = Thread(target=self.download_instruments_data)
             thread.start()
@@ -86,9 +89,12 @@ class HitNewPortfolio(object):
 
     def download_bar_data(self):
         # 下载Bar数据
+        self.bar_downloading = True
         download_success = False
+        result_bar_list = []
         try_count = 0
         while try_count < 5:
+            try_count += 1
             try:
                 # 按交易所分类合约
                 contract_exchange_dict = {}
@@ -119,23 +125,58 @@ class HitNewPortfolio(object):
                             contract_list=exchange_symbols, days=1, from_data_base=True, save_to=self.name, delete_history_data=False
                         )
 
-                download_success = True
-                break
+                # 检查下载结果
+                all_downloaded = True
+                for symbol in self.strategy_symbols:
+                    client = MongoClient("localhost", 27017)
+                    db = client[MINUTE_DB_NAME]
+                    collection = db[symbol]
+
+                    now = datetime.now().replace(second=0, microsecond=0)
+                    dt_from = now - timedelta(minutes=10)
+                    dt_to = now - timedelta(minutes=1)
+                    flt = {"datetime": {"$gte": dt_from, "$lte": dt_to}}
+                    bar_list = list(collection.find(flt).sort("datetime", DESCENDING))
+                    if bar_list:
+                        data = bar_list[0]
+                        bar = BarData(
+                            gateway_name="",
+                            symbol="",
+                            exchange=Exchange.NONE,
+                            datetime=None,
+                            endDatetime=None)
+                        bar.__dict__ = data
+                        if bar.datetime == dt_to:
+                            result_bar_list.append(copy(bar))
+
+                        else:
+                            all_downloaded = False
+                            break
+
+                if all_downloaded:
+                    download_success = True
+                    break
 
             except Exception as e:
                 msg = f"HitNewPortfolio 下载Bar数据出错\n\n{e}"
                 self.send_ding_talk(msg)
-        
+
         if download_success:
-            msg = f"Bar数据已更新！\t{datetime.now()}\n"
-            print(msg)
+            for bar in result_bar_list:
+                print(f"{bar.datetime}\t{bar.vt_symbol}\t{bar.open_price}\t{bar.high_price}\t{bar.low_price}\t{bar.close_price}")
+
+            msg = f"Bar数据已更新！\n"
+            self.print_(msg)
 
         else:
             msg = f"HitNewPortfolio 下载Bar数据失败"
             self.send_ding_talk(msg)
 
+        self.bar_downloading = False
+
     def download_instruments_data(self):
         # 下载合约列表数据
+        self.instruments_downloading = True
         okx_instruments_data = []
         okx_new = []
         binance_instruments_data = []
@@ -216,12 +257,18 @@ class HitNewPortfolio(object):
         self.load_instruments_data()
 
         if download_success:
-            msg = f"合约列表数据已更新！\t{datetime.now()}\n"
-            print(msg)
+            msg = f"合约列表数据已更新！\n"
+            self.print_(msg)
         
         else:
             msg = f"HitNewPortfolio 下载合约列表数据失败"
             self.send_ding_talk(msg)
+
+        self.instruments_downloading = False
+
+    def print_(self, msg: str):
+        dt = datetime.now().replace(microsecond=0)
+        print(f"{dt}\t{msg}")
 
     def send_ding_talk(self, content):
         # 推送钉钉消息
