@@ -92,7 +92,7 @@ class MonitorEngine(object):
         
         else:
             duration_bar.high = max(duration_bar.high, tick.last_price)
-            duration_bar.low = max(duration_bar.low, tick.last_price)
+            duration_bar.low = min(duration_bar.low, tick.last_price)
             duration_bar.close = tick.last_price
             duration_bar.tick_count += 1
     
