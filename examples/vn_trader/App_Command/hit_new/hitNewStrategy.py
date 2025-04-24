@@ -227,7 +227,6 @@ class HitNewStrategy(CtaTemplate):
             if self.direction == Direction.SHORT and self.hour_down and self.hour_down_rebirth and tick.last_price <= self.hour_down:
                 # 空头开仓
                 self.hour_down_confirm = True
-                self.hour_up_confirm = True
                 trade_value = self.portfolio.portfolio_value
                 trade_price = tick.last_price * 0.995
                 trade_volume = trade_value / tick.last_price
