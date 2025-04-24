@@ -17,6 +17,20 @@
       "exchange_user": "lo-e（test）",
       "direction": "SHORT",
       "start": true
+    },
+    {
+      "strategy_name": "HIT_NEW_LONG_PEPE_OKX",
+      "vt_symbol": "PEPE-USDT-SWAP.OKX",
+      "exchange_user": "lo-e（test）",
+      "direction": "LONG",
+      "start": true
+    },
+    {
+      "strategy_name": "HIT_NEW_SHORT_PEPE_OKX",
+      "vt_symbol": "PEPE-USDT-SWAP.OKX",
+      "exchange_user": "lo-e（test）",
+      "direction": "SHORT",
+      "start": true
     }
   ]
 }
