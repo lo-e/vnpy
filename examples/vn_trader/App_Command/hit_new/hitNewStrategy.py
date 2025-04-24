@@ -190,20 +190,35 @@ class HitNewStrategy(CtaTemplate):
         if self.target_pos:
             if self.direction == Direction.LONG and self.hour_up and tick.last_price <= self.hour_up * 0.99:
                 # 多头平仓
-                pass
+                trade_price = tick.last_price * 0.995
+                self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(self.target_pos))
+                self.target_pos = 0
 
             if self.direction == Direction.SHORT and self.hour_down and tick.last_price >= self.hour_down * 1.01:
                 # 空头平仓
-                pass
+                trade_price = tick.last_price * 1.005
+                self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(self.target_pos))
+                self.target_pos = 0
         
-        elif self.tradable and self.indicator_inited and not self.bar_lack:
+        elif self.tradable and self.indicator_inited and not self.bar_lack and not self.pos:
             if self.direction == Direction.LONG and self.hour_up and self.hour_up_rebirth and tick.last_price >= self.hour_up:
                 # 多头开仓
                 self.hour_up_confirm = True
+                trade_value = self.portfolio.portfolio_value
+                trade_price = tick.last_price * 1.005
+                trade_volume = trade_value / tick.last_price
+                self.send_order(Direction.LONG, Offset.OPEN, trade_price, trade_volume)
+                self.target_pos = trade_volume
 
             if self.direction == Direction.SHORT and self.hour_down and self.hour_down_rebirth and tick.last_price <= self.hour_down:
                 # 空头开仓
                 self.hour_down_confirm = True
+                self.hour_up_confirm = True
+                trade_value = self.portfolio.portfolio_value
+                trade_price = tick.last_price * 0.995
+                trade_volume = trade_value / tick.last_price
+                self.send_order(Direction.SHORT, Offset.OPEN, trade_price, trade_volume)
+                self.target_pos = trade_volume * -1
 
         # 同步数据
         self.put_timer_event()

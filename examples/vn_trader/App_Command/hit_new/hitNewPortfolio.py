@@ -21,7 +21,7 @@ from .base import EVENT_BAR_UPDATED
 
 class HitNewPortfolio(object):
     parameters = ["name",
-                  "portfolioValue"]
+                  "portfolio_value"]
 
     syncs = [
     ]
@@ -29,6 +29,7 @@ class HitNewPortfolio(object):
     def __init__(self, engine, setting):
         self.cta_engine = engine
         self.name = ""
+        self.portfolio_value = 0
         self.inited = False
         self.starting = False
         self.strategy_symbols = set()
