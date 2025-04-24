@@ -417,7 +417,7 @@ class HitNewEngine(BaseEngine):
 
     def put_portfolio_event(self):
         # 保存投资组合同步数据到数据库
-        self.savePortfolioSyncData()
+        self.save_portfolio_sync_data()
 
     def load_portfolio_syncData(self):
         # 从数据库导入投资组合历史同步数据
@@ -432,7 +432,7 @@ class HitNewEngine(BaseEngine):
             if key in d:
                 self.portfolio.__setattr__(key, d[key])
     
-    def savePortfolioSyncData(self):
+    def save_portfolio_sync_data(self):
         # 保存策略组合同步数据到数据库
         if not self.portfolio:
             return
