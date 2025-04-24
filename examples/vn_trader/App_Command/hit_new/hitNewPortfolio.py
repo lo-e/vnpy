@@ -34,6 +34,7 @@ class HitNewPortfolio(object):
         self.starting = False
         self.strategy_symbols = set()
         self.exchange_instruments_data = {}
+        self.new_signal_settings = []
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -57,6 +58,11 @@ class HitNewPortfolio(object):
         # 下载Bar数据
         current_minute_time = datetime.now().replace(second=0, microsecond=0)
         if self.download_bar_time != current_minute_time and not self.bar_downloading:
+            # 核查执行新策略
+            for setting in self.new_signal_settings:
+                self.cta_engine.hit_new_strategy(setting)
+            self.new_signal_settings = []
+
             self.download_bar_time = current_minute_time
             thread = Thread(target=self.download_bar_data)
             thread.start()
@@ -218,7 +224,6 @@ class HitNewPortfolio(object):
                 self.send_ding_talk(msg)
 
         # OKX新上市合约
-        new_signal_settings = []
         for instrument in okx_new:
             symbol = instrument["symbol"]
             pure_symbol = symbol.split("-USDT-")[0]
@@ -230,7 +235,6 @@ class HitNewPortfolio(object):
                 "direction": "LONG",
                 "start": True
                 }
-            new_signal_settings.append(signal_long_setting)
 
             signal_short_setting = {
                 "strategy_name": f"HIT_NEW_SHORT_{pure_symbol}_OKX",
@@ -239,8 +243,8 @@ class HitNewPortfolio(object):
                 "direction": "SHORT",
                 "start": True
                 }
-            new_signal_settings.append(signal_short_setting)
             
+            self.new_signal_settings.extend([signal_long_setting, signal_short_setting])
             msg = f"{vt_symbol} 合约上新"
             self.send_ding_talk(msg)
         
@@ -261,16 +265,6 @@ class HitNewPortfolio(object):
             
             msg = f"{vt_symbol} 合约上新"
             self.send_ding_talk(msg)
-
-        # 执行新策略
-        if new_signal_settings:
-            # 等待Bar数据下载完成
-            while self.bar_downloading:
-                time.sleep(1)
-            time.sleep(5)
-
-            for setting in new_signal_settings:
-                self.cta_engine.hit_new_strategy(setting)
 
         # 重新获取交易所USDT合约列表
         self.load_instruments_data()
