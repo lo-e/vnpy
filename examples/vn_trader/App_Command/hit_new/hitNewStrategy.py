@@ -30,8 +30,8 @@ class HitNewStrategy(CtaTemplate):
     # 变量列表
     variables = [
         "target_pos",
-        "position_value",
-        "position_price",
+        "open_price",
+        "pnl",
         "tradable",
         "indicator_inited",
         "bar_lack",
@@ -48,8 +48,11 @@ class HitNewStrategy(CtaTemplate):
     # 同步列表
     syncs = [
         "target_pos",
-        "position_value",
-        "position_price",
+        "open_value",
+        "open_price",
+        "close_value",
+        "close_volume",
+        "pnl",
         "hour_up",
         "hour_up_confirm",
         "hour_down",
@@ -104,8 +107,11 @@ class HitNewStrategy(CtaTemplate):
         self.hour_down_rebirth = False
         
         self.target_pos = 0
-        self.position_value = 0
-        self.position_price = 0
+        self.open_value = 0
+        self.open_price = 0
+        self.close_value = 0
+        self.close_volume = 0
+        self.pnl = 0
 
     def on_init(self):
         # 交易所成功连接判断
@@ -209,20 +215,20 @@ class HitNewStrategy(CtaTemplate):
             self.hour_down_rebirth = True
         
         if self.target_pos:
-            if self.direction == Direction.LONG and ((self.hour_up and tick.last_price <= self.hour_up * 0.99) or (self.position_price and tick.last_price <= self.position_price * 0.99)):
+            if self.direction == Direction.LONG and ((self.hour_up and tick.last_price <= self.hour_up * 0.99) or (self.open_price and tick.last_price <= self.open_price * 0.99)):
                 # 多头平仓
                 trade_price = tick.last_price * 0.995
                 self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(self.target_pos))
                 self.target_pos = 0
 
-            if self.direction == Direction.SHORT and ((self.hour_down and tick.last_price >= self.hour_down * 1.01) or (self.position_price and tick.last_price >= self.position_price * 1.01)):
+            if self.direction == Direction.SHORT and ((self.hour_down and tick.last_price >= self.hour_down * 1.01) or (self.open_price and tick.last_price >= self.open_price * 1.01)):
                 # 空头平仓
                 trade_price = tick.last_price * 1.005
                 self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(self.target_pos))
                 self.target_pos = 0
         
         elif self.tradable and self.indicator_inited and not self.bar_lack and not self.pos:
-            if self.direction == Direction.LONG and self.hour_up and ((self.hour_up_rebirth and tick.last_price >= self.hour_up) or (self.position_price and tick.last_price >= max(self.hour_up, self.position_price))):
+            if self.direction == Direction.LONG and self.hour_up and ((self.hour_up_rebirth and tick.last_price >= self.hour_up) or (self.open_price and tick.last_price >= max(self.hour_up, self.open_price))):
                 # 多头开仓
                 self.hour_up_confirm = True
                 trade_value = self.portfolio.portfolio_value
@@ -231,7 +237,7 @@ class HitNewStrategy(CtaTemplate):
                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, trade_volume)
                 self.target_pos = trade_volume
 
-            if self.direction == Direction.SHORT and self.hour_down and ((self.hour_down_rebirth and tick.last_price <= self.hour_down) or (self.position_price and tick.last_price <= min(self.position_price, self.hour_down))):
+            if self.direction == Direction.SHORT and self.hour_down and ((self.hour_down_rebirth and tick.last_price <= self.hour_down) or (self.open_price and tick.last_price <= min(self.open_price, self.hour_down))):
                 # 空头开仓
                 self.hour_down_confirm = True
                 trade_value = self.portfolio.portfolio_value
@@ -310,19 +316,32 @@ class HitNewStrategy(CtaTemplate):
                 is_open = True
 
             if is_open:
-                # 加仓后的持仓价值
-                self.position_value += trade_price * trade_volume
+                # 开仓价值
+                self.open_value += trade_price * trade_volume
 
-                # 持仓均价
-                self.position_price = self.position_value / abs(self.pos)
+                # 开仓均价
+                self.open_price = self.open_value / abs(self.pos)
 
             else:
-                # 平仓后的持仓价值
-                self.position_value = self.position_price * abs(self.pos)
+                # 平仓价值
+                self.close_value += trade_price * trade_volume
+
+                # 平仓数量
+                self.close_volume += trade_volume
 
         else:
-            # 重置持仓价值、持仓均价
-            self.position_value = 0
+            # 计算PNL
+            close_price = self.close_value / self.close_volume
+            rate = close_price / self.open_price - 1
+            if self.direction == Direction.SHORT:
+                rate = rate * -1
+            pnl = self.open_value * rate
+            self.pnl += pnl
+
+            # 重置
+            self.open_value = 0
+            self.close_value = 0
+            self.close_volume = 0
         
         # 邮件提醒
         super().on_trade(trade)
