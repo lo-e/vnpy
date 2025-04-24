@@ -69,6 +69,20 @@ class HitNewStrategy(CtaTemplate):
 
         else:
             raise(f"交易方向配置错误：{self.direction}")
+        
+        # 交易所识别
+        exchange = self.vt_symbol.split(".")[-1]
+        if exchange == "OKX":
+            self.exchange = Exchange.OKX
+        
+        elif exchange == "BINANCE":
+            self.exchange = Exchange.BINANCE
+        
+        elif exchange == "BYBIT":
+            self.exchange = Exchange.BYBIT
+        
+        else:
+            raise(f"合约交易所不支持：{exchange}")
 
         self.bar_lack = False
         self.minute_bar_dt: str = ""
