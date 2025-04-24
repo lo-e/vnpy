@@ -302,7 +302,7 @@ class HitNewStrategy(CtaTemplate):
     def on_trade(self, trade):
         try:
             # 持仓精度自动修正
-            contract = self.main_engine.get_contract(self.vt_symbol)
+            contract = self.cta_engine.main_engine.get_contract(self.vt_symbol)
             if contract:
                 self.pos = round_to(self.pos, contract.min_volume)
 
@@ -323,6 +323,9 @@ class HitNewStrategy(CtaTemplate):
                 self.open_price = self.open_value / abs(self.pos)
 
             else:
+                # 开仓价值
+                self.open_value = self.open_price * abs(self.pos)
+
                 # 平仓价值
                 self.close_value += trade_price * trade_volume
 
