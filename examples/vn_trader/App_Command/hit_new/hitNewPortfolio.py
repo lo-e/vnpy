@@ -225,7 +225,7 @@ class HitNewPortfolio(object):
             signal_long_setting = {
                 "strategy_name": f"HIT_NEW_LONG_{pure_symbol}_OKX",
                 "vt_symbol": vt_symbol,
-                "exchange_user": "lo-e",
+                "exchange_user": "lo-e(test)",
                 "direction": "LONG",
                 "start": True
                 }
@@ -234,7 +234,7 @@ class HitNewPortfolio(object):
             signal_short_setting = {
                 "strategy_name": f"HIT_NEW_SHORT_{pure_symbol}_OKX",
                 "vt_symbol": vt_symbol,
-                "exchange_user": "lo-e",
+                "exchange_user": "lo-e(test)",
                 "direction": "SHORT",
                 "start": True
                 }

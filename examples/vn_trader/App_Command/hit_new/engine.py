@@ -129,7 +129,7 @@ class HitNewEngine(BaseEngine):
             self.portfolio.on_timer()
 
         # 策略推送
-        for strategy in self.strategies.values():
+        for strategy in self.strategies.copy().values():
             if strategy.inited:
                 self.call_strategy_func(strategy, strategy.on_timer)
 
