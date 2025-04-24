@@ -177,6 +177,9 @@ class HitNewStrategy(CtaTemplate):
             msg = f"加载Bar数据出错\n\n{e}"
             self.send_ding_talk(msg)
 
+        # 同步数据
+        self.put_timer_event()
+
     def on_bar(self, bar):
         self.minute_bar_dt = bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
         self.hour_bar_generator.update_bar(bar)
@@ -354,6 +357,9 @@ class HitNewStrategy(CtaTemplate):
         
         # 邮件提醒
         super().on_trade(trade)
+
+        # 同步数据
+        self.put_timer_event()
 
     def send_ding_talk(self, content):
         # 推送钉钉消息

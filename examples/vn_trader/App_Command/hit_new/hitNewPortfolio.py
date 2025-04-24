@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 from copy import copy
-from time import time, sleep
+import time
 from threading import Thread
 from vnpy.trader.utility import DIR_SYMBOL
 from queue import Queue, Empty
@@ -101,7 +101,7 @@ class HitNewPortfolio(object):
             try:
                 # 按交易所分类合约
                 contract_exchange_dict = {}
-                for symbol in self.strategy_symbols:
+                for symbol in self.strategy_symbols.copy():
                     exchange = symbol.split(".")[-1]
                     exchange_symbols = contract_exchange_dict.get(exchange, set())
                     exchange_symbols.add(symbol.split(".")[0])
@@ -130,7 +130,7 @@ class HitNewPortfolio(object):
 
                 # 检查下载结果
                 all_downloaded = True
-                for symbol in self.strategy_symbols:
+                for symbol in self.strategy_symbols.copy():
                     client = MongoClient("localhost", 27017)
                     db = client[MINUTE_DB_NAME]
                     collection = db[symbol]
@@ -218,6 +218,7 @@ class HitNewPortfolio(object):
                 self.send_ding_talk(msg)
 
         # OKX新上市合约
+        new_signal_settings = []
         for instrument in okx_new:
             symbol = instrument["symbol"]
             pure_symbol = symbol.split("-USDT-")[0]
@@ -229,7 +230,7 @@ class HitNewPortfolio(object):
                 "direction": "LONG",
                 "start": True
                 }
-            self.cta_engine.hit_new_strategy(signal_long_setting)
+            new_signal_settings.append(signal_long_setting)
 
             signal_short_setting = {
                 "strategy_name": f"HIT_NEW_SHORT_{pure_symbol}_OKX",
@@ -238,7 +239,7 @@ class HitNewPortfolio(object):
                 "direction": "SHORT",
                 "start": True
                 }
-            self.cta_engine.hit_new_strategy(signal_short_setting)
+            new_signal_settings.append(signal_short_setting)
             
             msg = f"{vt_symbol} 合约上新"
             self.send_ding_talk(msg)
@@ -260,6 +261,16 @@ class HitNewPortfolio(object):
             
             msg = f"{vt_symbol} 合约上新"
             self.send_ding_talk(msg)
+
+        # 执行新策略
+        if new_signal_settings:
+            # 等待Bar数据下载完成
+            while self.bar_downloading:
+                time.sleep(1)
+            time.sleep(5)
+
+            for setting in new_signal_settings:
+                self.cta_engine.hit_new_strategy(setting)
 
         # 重新获取交易所USDT合约列表
         self.load_instruments_data()
