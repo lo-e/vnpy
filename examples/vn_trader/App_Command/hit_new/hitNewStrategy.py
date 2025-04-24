@@ -219,12 +219,14 @@ class HitNewStrategy(CtaTemplate):
                 # 多头平仓
                 trade_price = tick.last_price * 0.995
                 self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(self.target_pos))
+                self.hour_up_rebirth = False
                 self.target_pos = 0
 
             if self.direction == Direction.SHORT and ((self.hour_down and tick.last_price >= self.hour_down * 1.01) or (self.open_price and tick.last_price >= self.open_price * 1.01)):
                 # 空头平仓
                 trade_price = tick.last_price * 1.005
                 self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(self.target_pos))
+                self.hour_down_rebirth = False
                 self.target_pos = 0
         
         elif self.tradable and self.indicator_inited and not self.bar_lack and not self.pos:
