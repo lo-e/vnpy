@@ -300,12 +300,12 @@ class HitNewStrategy(CtaTemplate):
         super().send_order(direction, offset, price, volume)
 
     def on_trade(self, trade):
-        # 持仓精度自动修正
-        contract = self.main_engine.get_contract(self.vt_symbol)
-        if contract:
-            self.pos = round_to(self.pos, contract.min_volume)
+        try:
+            # 持仓精度自动修正
+            contract = self.main_engine.get_contract(self.vt_symbol)
+            if contract:
+                self.pos = round_to(self.pos, contract.min_volume)
 
-        if self.pos:
             trade_price = trade.price
             trade_volume = trade.volume
             is_open = False
@@ -329,19 +329,23 @@ class HitNewStrategy(CtaTemplate):
                 # 平仓数量
                 self.close_volume += trade_volume
 
-        else:
-            # 计算PNL
-            close_price = self.close_value / self.close_volume
-            rate = close_price / self.open_price - 1
-            if self.direction == Direction.SHORT:
-                rate = rate * -1
-            pnl = self.open_value * rate
-            self.pnl += pnl
+            if not self.pos:
+                # 计算PNL
+                close_price = self.close_value / self.close_volume
+                rate = close_price / self.open_price - 1
+                if self.direction == Direction.SHORT:
+                    rate = rate * -1
+                pnl = self.open_value * rate
+                self.pnl += pnl
 
-            # 重置
-            self.open_value = 0
-            self.close_value = 0
-            self.close_volume = 0
+                # 重置开平仓变量
+                self.open_value = 0
+                self.close_value = 0
+                self.close_volume = 0
+        
+        except Exception as e:
+            msg = f"成交处理出错\n\n{e}"
+            self.send_ding_talk(msg)
         
         # 邮件提醒
         super().on_trade(trade)
