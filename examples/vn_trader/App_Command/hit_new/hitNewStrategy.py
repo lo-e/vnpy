@@ -46,10 +46,10 @@ class HitNewStrategy(CtaTemplate):
         "hour_down_rebirth",
         "exit_up",
         "exit_down",
-        "bar_close_price",
+        "hour_bar_close_price",
         "lowest_price_after_short",
         "stop_long",
-        "stop_long"
+        "stop_short"
     ]
 
     # 同步列表
@@ -68,7 +68,7 @@ class HitNewStrategy(CtaTemplate):
         "hour_down_confirm",
         "lowest_price_after_short",
         "stop_long",
-        "stop_long"
+        "stop_short"
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -127,7 +127,7 @@ class HitNewStrategy(CtaTemplate):
         self.hour_down_rebirth = False
         self.exit_up = 0
         self.exit_down = 0
-        self.bar_close_price = 0
+        self.hour_bar_close_price = 0
         self.lowest_price_after_short = 0
         self.stop_long = False
         self.stop_short = False
@@ -228,7 +228,7 @@ class HitNewStrategy(CtaTemplate):
 
         if self.hour_bar:
             self.hour_bar_dt = self.hour_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
-            self.bar_close_price = self.hour_bar.close_price
+            self.hour_bar_close_price = self.hour_bar.close_price
 
         # 入场指标
         if self.entry_am.inited:
@@ -257,8 +257,8 @@ class HitNewStrategy(CtaTemplate):
         # 离场指标
         if self.direction == Direction.SHORT and self.target_pos and self.exit_up:
             self.lowest_price_after_short = min(self.lowest_price_after_short, self.hour_bar.low_price) if self.lowest_price_after_short else self.hour_bar.low_price
-            rise_rate = self.bar_close_price / self.lowest_price_after_short - 1
-            if rise_rate >= 0.2 and self.bar_close_price >= self.exit_up:
+            rise_rate = self.hour_bar_close_price / self.lowest_price_after_short - 1
+            if rise_rate >= 0.2 and self.hour_bar_close_price >= self.exit_up:
                 self.stop_short = True
 
         if self.exit_am.inited:
