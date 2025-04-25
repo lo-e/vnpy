@@ -205,7 +205,7 @@ class HitNewStrategy(CtaTemplate):
                 self.initial_hour_up = hour_up
 
             if not self.initial_hour_down:
-                self.initial_hour_up = hour_down
+                self.initial_hour_down = hour_down
 
             # 判断实际通道
             if not self.hour_up_confirm and self.hour_up != hour_up and hour_up > self.initial_hour_down:
