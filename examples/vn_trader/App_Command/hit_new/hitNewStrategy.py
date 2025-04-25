@@ -53,8 +53,10 @@ class HitNewStrategy(CtaTemplate):
         "close_value",
         "close_volume",
         "pnl",
+        "initial_hour_up",
         "hour_up",
         "hour_up_confirm",
+        "initial_hour_down",
         "hour_down",
         "hour_down_confirm",
     ]
@@ -99,9 +101,11 @@ class HitNewStrategy(CtaTemplate):
         
         self.tradable = True
         self.indicator_inited = False
+        self.initial_hour_up = 0
         self.hour_up = 0
         self.hour_up_confirm = False
         self.hour_up_rebirth = False
+        self.initial_hour_down = 0
         self.hour_down = 0
         self.hour_down_confirm = False
         self.hour_down_rebirth = False
@@ -195,11 +199,20 @@ class HitNewStrategy(CtaTemplate):
         if self.hour_am.inited:
             # 计算上下趋势价格
             hour_up, hour_down = self.hour_am.donchian_oc(5)
-            if not self.hour_up_confirm and self.hour_up != hour_up:
+
+            # 确定初始通道
+            if not self.initial_hour_up:
+                self.initial_hour_up = hour_up
+
+            if not self.initial_hour_down:
+                self.initial_hour_up = hour_down
+
+            # 判断实际通道
+            if not self.hour_up_confirm and self.hour_up != hour_up and hour_up > self.initial_hour_down:
                 self.hour_up = hour_up
                 self.hour_up_rebirth = False
             
-            if not self.hour_down_confirm and self.hour_down != hour_down:
+            if not self.hour_down_confirm and self.hour_down != hour_down and hour_down < self.initial_hour_up:
                 self.hour_down = hour_down
                 self.hour_down_rebirth = False
             
