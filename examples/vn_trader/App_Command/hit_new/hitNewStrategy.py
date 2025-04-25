@@ -216,8 +216,9 @@ class HitNewStrategy(CtaTemplate):
 
     def calculate_indicator(self):
         # 通用指标
-        self.hour_bar_dt = self.hour_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
-        self.bar_close_price = self.hour_bar.close_price
+        if self.hour_bar:
+            self.hour_bar_dt = self.hour_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+            self.bar_close_price = self.hour_bar.close_price
 
         # 入场指标
         if self.entry_am.inited:
@@ -244,7 +245,7 @@ class HitNewStrategy(CtaTemplate):
             self.indicator_inited = True
 
         # 离场指标
-        if self.direction == Direction.SHORT and self.target_pos:
+        if self.direction == Direction.SHORT and self.target_pos and self.exit_up:
             self.lowest_price_after_short = min(self.lowest_price_after_short, self.hour_bar.low_price) if self.lowest_price_after_short else self.hour_bar.low_price
             rise_rate = self.bar_close_price / self.lowest_price_after_short - 1
             if rise_rate >= 0.2 and self.bar_close_price >= self.exit_up:
@@ -268,10 +269,10 @@ class HitNewStrategy(CtaTemplate):
             self.stop_short = False
 
         # 判断离场
-        if self.direction == Direction.LONG and self.target_pos and tick.last_price <= self.exit_down:
+        if self.direction == Direction.LONG and self.target_pos and self.exit_down and tick.last_price <= self.exit_down:
             self.stop_long = True
             
-        if self.direction == Direction.SHORT and self.target_pos and tick.last_price <= self.open_price * 0.5:
+        if self.direction == Direction.SHORT and self.target_pos and self.open_price and tick.last_price <= self.open_price * 0.5:
             self.stop_short = True
         
         if self.target_pos:
@@ -279,6 +280,7 @@ class HitNewStrategy(CtaTemplate):
                 # 多头平仓
                 trade_price = tick.last_price * 0.995
                 self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(self.target_pos))
+
                 self.hour_up_rebirth = False
                 self.target_pos = 0
 
@@ -286,6 +288,7 @@ class HitNewStrategy(CtaTemplate):
                 # 空头平仓
                 trade_price = tick.last_price * 1.005
                 self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(self.target_pos))
+
                 self.hour_down_rebirth = False
                 self.target_pos = 0
                 self.lowest_price_after_short = 0
@@ -298,7 +301,9 @@ class HitNewStrategy(CtaTemplate):
                 trade_price = tick.last_price * 1.005
                 trade_volume = trade_value / tick.last_price
                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, trade_volume)
+
                 self.target_pos = trade_volume
+                self.open_price = 0
 
             if self.direction == Direction.SHORT and self.hour_down and not self.stop_short and ((self.hour_down_rebirth and tick.last_price <= self.hour_down) or (self.open_price and tick.last_price <= min(self.open_price, self.hour_down))):
                 # 空头开仓
@@ -307,7 +312,9 @@ class HitNewStrategy(CtaTemplate):
                 trade_price = tick.last_price * 0.995
                 trade_volume = trade_value / tick.last_price
                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, trade_volume)
+
                 self.target_pos = trade_volume * -1
+                self.open_price = 0
 
         # 同步数据
         self.put_timer_event()
