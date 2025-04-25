@@ -226,6 +226,7 @@ class HitNewPortfolio(object):
         # OKX新上市合约
         for instrument in okx_new:
             symbol = instrument["symbol"]
+            market_on = instrument["on"]
             pure_symbol = symbol.split("-USDT-")[0]
             vt_symbol = f"{symbol}.OKX"
 
@@ -234,6 +235,7 @@ class HitNewPortfolio(object):
                 "vt_symbol": vt_symbol,
                 "exchange_user": "lo-e(test)",
                 "direction": "LONG",
+                "market_on": market_on,
                 "start": True
                 }
 
@@ -242,6 +244,7 @@ class HitNewPortfolio(object):
                 "vt_symbol": vt_symbol,
                 "exchange_user": "lo-e(test)",
                 "direction": "SHORT",
+                "market_on": market_on,
                 "start": True
                 }
             self.new_signal_settings.extend([signal_long_setting, signal_short_setting])
@@ -252,6 +255,7 @@ class HitNewPortfolio(object):
         # BINANCE新上市合约
         for instrument in binance_new:
             symbol = instrument["symbol"]
+            market_on = instrument["on"]
             pure_symbol = symbol.split("USDT")[0]
             vt_symbol = f"{symbol}.BINANCE"
 
@@ -260,6 +264,7 @@ class HitNewPortfolio(object):
                 "vt_symbol": vt_symbol,
                 "exchange_user": "lo-e(test)",
                 "direction": "LONG",
+                "market_on": market_on,
                 "start": True
                 }
 
@@ -268,6 +273,7 @@ class HitNewPortfolio(object):
                 "vt_symbol": vt_symbol,
                 "exchange_user": "lo-e(test)",
                 "direction": "SHORT",
+                "market_on": market_on,
                 "start": True
                 }
             self.new_signal_settings.extend([signal_long_setting, signal_short_setting])

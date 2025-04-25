@@ -6,6 +6,7 @@
       "vt_symbol": "BTCUSDT.BINANCE",
       "exchange_user": "lo-e(test)",
       "direction": "LONG",
+      "market_on": "2025-12-31 00:00:00",
       "start": true
     },
     {
@@ -13,6 +14,7 @@
       "vt_symbol": "BTCUSDT.BINANCE",
       "exchange_user": "lo-e(test)",
       "direction": "SHORT",
+      "market_on": "2025-12-31 00:00:00",
       "start": true
     },
     {
@@ -20,6 +22,7 @@
       "vt_symbol": "PEPE-USDT-SWAP.OKX",
       "exchange_user": "lo-e(test)",
       "direction": "LONG",
+      "market_on": "2025-12-31 00:00:00",
       "start": true
     },
     {
@@ -27,6 +30,7 @@
       "vt_symbol": "PEPE-USDT-SWAP.OKX",
       "exchange_user": "lo-e(test)",
       "direction": "SHORT",
+      "market_on": "2025-12-31 00:00:00",
       "start": true
     }
   ]

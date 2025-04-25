@@ -24,7 +24,8 @@ class HitNewStrategy(CtaTemplate):
         "strategy_name",
         "vt_symbol",
         "exchange_user",
-        "direction"
+        "direction",
+        "market_on"
     ]
 
     # 变量列表
@@ -101,8 +102,12 @@ class HitNewStrategy(CtaTemplate):
         
         else:
             raise(f"合约交易所不支持：{exchange}")
+        
+        # 上市时间
+        self.market_on = datetime.strptime(self.market_on, f"%Y-%m-%d %H:%M:%S")
 
         self.bar_lack = False
+        self.minute_bar: BarData = None
         self.minute_bar_dt: str = ""
         self.hour_bar: BarData = None
         self.hour_bar_dt: str = ""
@@ -203,7 +208,7 @@ class HitNewStrategy(CtaTemplate):
         self.put_timer_event()
 
     def on_bar(self, bar):
-        self.minute_bar_dt = bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+        self.minute_bar = bar
         self.hour_bar_generator.update_bar(bar)
 
     def on_hour_bar(self, bar: BarData):
@@ -216,6 +221,11 @@ class HitNewStrategy(CtaTemplate):
 
     def calculate_indicator(self):
         # 通用指标
+        if self.minute_bar:
+            self.minute_bar_dt = self.minute_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+            if self.minute_bar.datetime >= self.market_on + timedelta(days=5):
+                self.tradable = False
+
         if self.hour_bar:
             self.hour_bar_dt = self.hour_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
             self.bar_close_price = self.hour_bar.close_price
