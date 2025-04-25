@@ -1,5 +1,21 @@
 {
   "portfolio": { "name": "HIT_NEW_PORTFOLIO", "portfolio_value": 6 },
   "signal": [
+    {
+      "strategy_name": "HIT_NEW_LONG_FIS_BINANCE",
+      "vt_symbol": "FISUSDT.BINANCE",
+      "exchange_user": "lo-e",
+      "direction": "LONG",
+      "market_on": "2025-04-25 15:30:00",
+      "start": true
+    },
+    {
+      "strategy_name": "HIT_NEW_SHORT_FIS_BINANCE",
+      "vt_symbol": "FISUSDT.BINANCE",
+      "exchange_user": "lo-e",
+      "direction": "SHORT",
+      "market_on": "2025-04-25 15:30:00",
+      "start": true
+    }
   ]
 }
