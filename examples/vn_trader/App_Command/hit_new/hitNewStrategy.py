@@ -42,7 +42,13 @@ class HitNewStrategy(CtaTemplate):
         "hour_up_rebirth",
         "hour_down",
         "hour_down_confirm",
-        "hour_down_rebirth"
+        "hour_down_rebirth",
+        "exit_up",
+        "exit_down",
+        "bar_close_price",
+        "lowest_price_after_short",
+        "stop_long",
+        "stop_long"
     ]
 
     # 同步列表
@@ -59,6 +65,9 @@ class HitNewStrategy(CtaTemplate):
         "initial_hour_down",
         "hour_down",
         "hour_down_confirm",
+        "lowest_price_after_short",
+        "stop_long",
+        "stop_long"
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -95,9 +104,11 @@ class HitNewStrategy(CtaTemplate):
 
         self.bar_lack = False
         self.minute_bar_dt: str = ""
+        self.hour_bar: BarData = None
         self.hour_bar_dt: str = ""
-        self.hour_bar_generator = None
-        self.hour_am = None
+        self.hour_bar_generator: BarGenerator = None
+        self.entry_am: ArrayManager = None
+        self.exit_am: ArrayManager = None
         
         self.tradable = True
         self.indicator_inited = False
@@ -109,6 +120,12 @@ class HitNewStrategy(CtaTemplate):
         self.hour_down = 0
         self.hour_down_confirm = False
         self.hour_down_rebirth = False
+        self.exit_up = 0
+        self.exit_down = 0
+        self.bar_close_price = 0
+        self.lowest_price_after_short = 0
+        self.stop_long = False
+        self.stop_short = False
         
         self.target_pos = 0
         self.open_value = 0
@@ -137,7 +154,7 @@ class HitNewStrategy(CtaTemplate):
             mc = MongoClient()
             db = mc[MINUTE_DB_NAME]
             collection = db[self.vt_symbol]
-            data_from = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(hours=5)
+            data_from = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(hours=10)
             data_to = datetime.now().replace(second=0, microsecond=0) - timedelta(minutes=1)
             flt = {"datetime": {"$gte": data_from, "$lte": data_to}}
             cursor = collection.find(flt).sort('datetime')
@@ -166,7 +183,8 @@ class HitNewStrategy(CtaTemplate):
 
             if not bar_lack:
                 # 回测Bar数据
-                self.hour_am = ArrayManager(5)
+                self.entry_am = ArrayManager(5)
+                self.exit_am = ArrayManager(10)
                 self.hour_bar_generator = BarGenerator(window=1, on_window_bar=self.on_hour_bar, interval=Interval.HOUR)
                 for bar in bar_list:
                     self.on_bar(bar)
@@ -188,17 +206,23 @@ class HitNewStrategy(CtaTemplate):
         self.minute_bar_dt = bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
         self.hour_bar_generator.update_bar(bar)
 
-    def on_hour_bar(self, bar):
-        self.hour_bar_dt = bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
-        self.hour_am.update_bar(bar)
+    def on_hour_bar(self, bar: BarData):
+        self.hour_bar = bar
+        self.entry_am.update_bar(bar)
+        self.exit_am.update_bar(bar)
 
     def on_bar_updated(self, _):
         self.load_bar_data()
 
     def calculate_indicator(self):
-        if self.hour_am.inited:
-            # 计算上下趋势价格
-            hour_up, hour_down = self.hour_am.donchian_oc(5)
+        # 通用指标
+        self.hour_bar_dt = self.hour_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+        self.bar_close_price = self.hour_bar.close_price
+
+        # 入场指标
+        if self.entry_am.inited:
+            # 计算入场唐奇安通道
+            hour_up, hour_down = self.entry_am.donchian_oc(5)
 
             # 确定初始通道
             if not self.initial_hour_up:
@@ -219,34 +243,55 @@ class HitNewStrategy(CtaTemplate):
             # 指标完成初始化
             self.indicator_inited = True
 
+        # 离场指标
+        if self.direction == Direction.SHORT and self.target_pos:
+            self.lowest_price_after_short = min(self.lowest_price_after_short, self.hour_bar.low_price) if self.lowest_price_after_short else self.hour_bar.low_price
+            rise_rate = self.bar_close_price / self.lowest_price_after_short - 1
+            if rise_rate >= 0.2 and self.bar_close_price >= self.exit_up:
+                self.stop_short = True
+
+        if self.exit_am.inited:
+            # 计算出场唐奇安通道
+            self.exit_up, self.exit_down = self.exit_am.donchian(10)
+
     def on_tick(self, tick: TickData):
         if not self.trading:
             return
         
         # 判断Rebirth
-        if not self.hour_up_rebirth and self.hour_up and tick.last_price < self.hour_up:
+        if self.hour_up and tick.last_price < self.hour_up:
             self.hour_up_rebirth = True
+            self.stop_long = False
 
-        if not self.hour_down_rebirth and self.hour_down and tick.last_price > self.hour_down:
+        if self.hour_down and tick.last_price > self.hour_down:
             self.hour_down_rebirth = True
+            self.stop_short = False
+
+        # 判断离场
+        if self.direction == Direction.LONG and self.target_pos and tick.last_price <= self.exit_down:
+            self.stop_long = True
+            
+        if self.direction == Direction.SHORT and self.target_pos and tick.last_price <= self.open_price * 0.5:
+            self.stop_short = True
         
         if self.target_pos:
-            if self.direction == Direction.LONG and ((self.hour_up and tick.last_price <= self.hour_up * 0.99) or (self.open_price and tick.last_price <= self.open_price * 0.99)):
+            if self.direction == Direction.LONG and (self.stop_long or (self.hour_up and tick.last_price <= self.hour_up * 0.99) or (self.open_price and tick.last_price <= self.open_price * 0.99)):
                 # 多头平仓
                 trade_price = tick.last_price * 0.995
                 self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(self.target_pos))
                 self.hour_up_rebirth = False
                 self.target_pos = 0
 
-            if self.direction == Direction.SHORT and ((self.hour_down and tick.last_price >= self.hour_down * 1.01) or (self.open_price and tick.last_price >= self.open_price * 1.01)):
+            if self.direction == Direction.SHORT and (self.stop_short or (self.hour_down and tick.last_price >= self.hour_down * 1.01) or (self.open_price and tick.last_price >= self.open_price * 1.01)):
                 # 空头平仓
                 trade_price = tick.last_price * 1.005
                 self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(self.target_pos))
                 self.hour_down_rebirth = False
                 self.target_pos = 0
+                self.lowest_price_after_short = 0
         
         elif self.tradable and self.indicator_inited and not self.bar_lack and not self.pos:
-            if self.direction == Direction.LONG and self.hour_up and ((self.hour_up_rebirth and tick.last_price >= self.hour_up) or (self.open_price and tick.last_price >= max(self.hour_up, self.open_price))):
+            if self.direction == Direction.LONG and self.hour_up and not self.stop_long and ((self.hour_up_rebirth and tick.last_price >= self.hour_up) or (self.open_price and tick.last_price >= max(self.hour_up, self.open_price))):
                 # 多头开仓
                 self.hour_up_confirm = True
                 trade_value = self.portfolio.portfolio_value
@@ -255,7 +300,7 @@ class HitNewStrategy(CtaTemplate):
                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, trade_volume)
                 self.target_pos = trade_volume
 
-            if self.direction == Direction.SHORT and self.hour_down and ((self.hour_down_rebirth and tick.last_price <= self.hour_down) or (self.open_price and tick.last_price <= min(self.open_price, self.hour_down))):
+            if self.direction == Direction.SHORT and self.hour_down and not self.stop_short and ((self.hour_down_rebirth and tick.last_price <= self.hour_down) or (self.open_price and tick.last_price <= min(self.open_price, self.hour_down))):
                 # 空头开仓
                 self.hour_down_confirm = True
                 trade_value = self.portfolio.portfolio_value

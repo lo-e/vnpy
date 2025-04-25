@@ -100,6 +100,9 @@ class MonitorEngine(object):
         now = datetime.now()
         if (now.minute % 5 == 0) and (now.second == 0):
             gateway_all_connected = self.check_gateway_connected()
+            if not gateway_all_connected:
+                msg = f"交易所连接断开"
+                self.main_engine.send_ding_talk(msg)
             print(f"{now}\t交易所连接状态：{gateway_all_connected}")
 
 if __name__ == "__main__":
