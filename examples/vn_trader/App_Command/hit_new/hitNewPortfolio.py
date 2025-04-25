@@ -228,6 +228,7 @@ class HitNewPortfolio(object):
             symbol = instrument["symbol"]
             pure_symbol = symbol.split("-USDT-")[0]
             vt_symbol = f"{symbol}.OKX"
+
             signal_long_setting = {
                 "strategy_name": f"HIT_NEW_LONG_{pure_symbol}_OKX",
                 "vt_symbol": vt_symbol,
@@ -243,8 +244,8 @@ class HitNewPortfolio(object):
                 "direction": "SHORT",
                 "start": True
                 }
-            
             self.new_signal_settings.extend([signal_long_setting, signal_short_setting])
+
             msg = f"{vt_symbol} 合约上新"
             self.send_ding_talk(msg)
         
@@ -253,6 +254,23 @@ class HitNewPortfolio(object):
             symbol = instrument["symbol"]
             pure_symbol = symbol.split("USDT")[0]
             vt_symbol = f"{symbol}.BINANCE"
+
+            signal_long_setting = {
+                "strategy_name": f"HIT_NEW_LONG_{pure_symbol}_BINANCE",
+                "vt_symbol": vt_symbol,
+                "exchange_user": "lo-e(test)",
+                "direction": "LONG",
+                "start": True
+                }
+
+            signal_short_setting = {
+                "strategy_name": f"HIT_NEW_SHORT_{pure_symbol}_BINANCE",
+                "vt_symbol": vt_symbol,
+                "exchange_user": "lo-e(test)",
+                "direction": "SHORT",
+                "start": True
+                }
+            self.new_signal_settings.extend([signal_long_setting, signal_short_setting])
 
             msg = f"{vt_symbol} 合约上新"
             self.send_ding_talk(msg)

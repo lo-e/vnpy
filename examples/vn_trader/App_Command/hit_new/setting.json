@@ -2,15 +2,15 @@
   "portfolio": { "name": "HIT_NEW_PORTFOLIO", "portfolio_value": 10000 },
   "signal": [
     {
-      "strategy_name": "HIT_NEW_LONG_BTC_OKX",
-      "vt_symbol": "BTC-USDT-SWAP.OKX",
+      "strategy_name": "HIT_NEW_LONG_BTC_BINANCE",
+      "vt_symbol": "BTCUSDT.BINANCE",
       "exchange_user": "lo-e(test)",
       "direction": "LONG",
       "start": true
     },
     {
-      "strategy_name": "HIT_NEW_SHORT_BTC_OKX",
-      "vt_symbol": "BTC-USDT-SWAP.OKX",
+      "strategy_name": "HIT_NEW_SHORT_BTC_BINANCE",
+      "vt_symbol": "BTCUSDT.BINANCE",
       "exchange_user": "lo-e(test)",
       "direction": "SHORT",
       "start": true
