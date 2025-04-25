@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from copy import copy
 from App_Command.hit_new.engine import HitNewEngine
 
-GATEWAYS = [[OkxGateway, "lo-e(test)"], [BinanceUsdtGateway, "lo-e(test)"]]
+GATEWAYS = [[OkxGateway, "lo-e(test)"], [BinanceUsdtGateway, "lo-e"]]
 class DurationBar(object):
     def __init__(self) -> None:
         self.vt_symbol: str = ""

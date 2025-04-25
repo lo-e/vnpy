@@ -262,7 +262,7 @@ class HitNewPortfolio(object):
             signal_long_setting = {
                 "strategy_name": f"HIT_NEW_LONG_{pure_symbol}_BINANCE",
                 "vt_symbol": vt_symbol,
-                "exchange_user": "lo-e(test)",
+                "exchange_user": "lo-e",
                 "direction": "LONG",
                 "market_on": market_on,
                 "start": True
@@ -271,7 +271,7 @@ class HitNewPortfolio(object):
             signal_short_setting = {
                 "strategy_name": f"HIT_NEW_SHORT_{pure_symbol}_BINANCE",
                 "vt_symbol": vt_symbol,
-                "exchange_user": "lo-e(test)",
+                "exchange_user": "lo-e",
                 "direction": "SHORT",
                 "market_on": market_on,
                 "start": True
