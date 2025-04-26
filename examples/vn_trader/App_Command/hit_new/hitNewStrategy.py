@@ -15,6 +15,10 @@ from utilities.BarGenerator import BarGenerator
 from vnpy.trader.constant import Exchange
 from pymongo import MongoClient
 from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
+from queue import Empty, Queue
+from threading import Thread
+import time
+from copy import copy
 class HitNewStrategy(CtaTemplate):
     className = "HitNewStrategy"
     author = "loe"
@@ -106,6 +110,7 @@ class HitNewStrategy(CtaTemplate):
         # 上市时间
         self.market_on = datetime.strptime(self.market_on, f"%Y-%m-%d %H:%M:%S")
 
+        self.tick: TickData = None
         self.bar_lack = False
         self.minute_bar: BarData = None
         self.minute_bar_dt: str = ""
@@ -114,6 +119,8 @@ class HitNewStrategy(CtaTemplate):
         self.hour_bar_generator: BarGenerator = None
         self.entry_am: ArrayManager = None
         self.exit_am: ArrayManager = None
+        self.check_target_pos_queue = Queue()
+        self.check_target_pos_ts = 0
         
         self.tradable = True
         self.indicator_inited = False
@@ -151,6 +158,9 @@ class HitNewStrategy(CtaTemplate):
         if not gateway:
             msg = f"交易所账户未连接\n\n交易所：{exchange}\n账户：{self.exchange_user}"
             self.send_ding_talk(msg)
+
+    def on_start(self):
+        Thread(target=self.check_target_pos).start()
 
     def load_bar_data(self):
         try:
@@ -265,9 +275,69 @@ class HitNewStrategy(CtaTemplate):
             # 计算出场唐奇安通道
             self.exit_up, self.exit_down = self.exit_am.donchian(10)
 
+    def check_target_pos(self):
+        while True:
+            try:
+                _ = self.check_target_pos_queue.get(block=True, timeout=0.1)
+                if self.target_pos == self.pos:
+                    continue
+
+                # 撮合交易
+                if self.direction == Direction.LONG:
+                    if self.target_pos < 0 or self.pos < 0:
+                        msg = f"仓位异常\n\ntarget {self.target_pos}\npos {self.pos}"
+                        self.send_ding_talk(msg)
+                        continue
+
+                    gap = self.target_pos - self.pos
+                    if gap > 0:
+                        # 多头开仓
+                        trade_price = self.tick.last_price * 1.005
+                        self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(gap))
+                    
+                    elif gap < 0:
+                        # 多头平仓
+                        trade_price = self.tick.last_price * 0.995
+                        self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(gap))
+
+                if self.direction == Direction.SHORT:
+                    if self.target_pos > 0 or self.pos > 0:
+                        msg = f"仓位异常\n\ntarget {self.target_pos}\npos {self.pos}"
+                        self.send_ding_talk(msg)
+                        continue
+
+                    gap = abs(self.target_pos) - abs(self.pos)
+                    if gap > 0:
+                        # 空头开仓
+                        trade_price = self.tick.last_price * 0.995
+                        self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(gap))
+                    
+                    elif gap < 0:
+                        # 空头平仓
+                        trade_price = self.tick.last_price * 1.005
+                        self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(gap))
+            
+            except Empty:
+                pass
+                
+            except Exception as e:
+                msg = f"核查目标仓位出错\n\n{e}"
+                self.send_ding_talk(msg)
+
+    def on_timer(self):
+        # 每隔两秒核查目标仓位
+        if time.time() >= self.check_target_pos_ts + 2:
+            self.check_target_pos_ts = time.time()
+            self.check_target_pos_queue.put("")
+
+        super().on_timer()
+
     def on_tick(self, tick: TickData):
         if not self.trading:
             return
+        
+        # 最新Tick
+        self.tick = copy(tick)
         
         # 判断Rebirth
         if self.hour_up and tick.last_price < self.hour_up:
@@ -287,44 +357,24 @@ class HitNewStrategy(CtaTemplate):
         
         if self.target_pos:
             if self.direction == Direction.LONG and (self.stop_long or (self.hour_up and tick.last_price <= self.hour_up * 0.99) or (self.open_price and tick.last_price <= self.open_price * 0.99)):
-                # 多头平仓
-                trade_price = tick.last_price * 0.995
-                self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(self.target_pos))
-
                 self.hour_up_rebirth = False
                 self.target_pos = 0
 
             if self.direction == Direction.SHORT and (self.stop_short or (self.hour_down and tick.last_price >= self.hour_down * 1.01) or (self.open_price and tick.last_price >= self.open_price * 1.01)):
-                # 空头平仓
-                trade_price = tick.last_price * 1.005
-                self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(self.target_pos))
-
                 self.hour_down_rebirth = False
                 self.target_pos = 0
                 self.lowest_price_after_short = 0
         
-        elif self.tradable and self.indicator_inited and not self.bar_lack and not self.pos:
+        elif self.tradable and self.indicator_inited and not self.bar_lack:
             if self.direction == Direction.LONG and self.hour_up and not self.stop_long and ((self.hour_up_rebirth and tick.last_price >= self.hour_up) or (self.open_price and tick.last_price >= max(self.hour_up, self.open_price))):
                 # 多头开仓
                 self.hour_up_confirm = True
-                trade_value = self.portfolio.portfolio_value
-                trade_price = tick.last_price * 1.005
-                trade_volume = trade_value / tick.last_price
-                self.send_order(Direction.LONG, Offset.OPEN, trade_price, trade_volume)
-
-                self.target_pos = trade_volume
-                self.open_price = 0
+                self.target_pos = self.portfolio.portfolio_value / tick.last_price
 
             if self.direction == Direction.SHORT and self.hour_down and not self.stop_short and ((self.hour_down_rebirth and tick.last_price <= self.hour_down) or (self.open_price and tick.last_price <= min(self.open_price, self.hour_down))):
                 # 空头开仓
                 self.hour_down_confirm = True
-                trade_value = self.portfolio.portfolio_value
-                trade_price = tick.last_price * 0.995
-                trade_volume = trade_value / tick.last_price
-                self.send_order(Direction.SHORT, Offset.OPEN, trade_price, trade_volume)
-
-                self.target_pos = trade_volume * -1
-                self.open_price = 0
+                self.target_pos = self.portfolio.portfolio_value / tick.last_price * -1
 
         # 同步数据
         self.put_timer_event()
