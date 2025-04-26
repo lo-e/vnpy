@@ -200,7 +200,7 @@ class HitNewStrategy(CtaTemplate):
             self.bar_lack = bar_lack
 
         except Exception as e:
-            self.tradable = False
+            self.bar_lack = True
             msg = f"加载Bar数据出错\n\n{e}"
             self.send_ding_talk(msg)
 
