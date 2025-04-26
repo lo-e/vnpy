@@ -42,7 +42,7 @@ from vnpy.trader.event import (
 )
 from collections import OrderedDict
 
-# 中国时区
+# UTC+8
 CHINA_TZ: timezone = timezone("Asia/Shanghai")
 
 # 实盘REST API地址
@@ -154,8 +154,7 @@ class BybitGateway(BaseGateway):
         "Secret": "",
         "服务器": ["REAL", "TESTNET"],
         "代理地址": "",
-        "代理端口": "",
-        "合约模式": ["反向", "正向", "现货"]
+        "代理端口": ""
     }
 
     exchanges: List[Exchange] = [Exchange.BYBIT]

@@ -775,7 +775,6 @@ class BinanceUsdtRestApi(RestClient):
 
         return history
 
-
 class BinanceUsdtTradeWebsocketApi(WebsocketClient):
     """币安正向合约的交易Websocket API"""
 

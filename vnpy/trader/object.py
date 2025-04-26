@@ -255,20 +255,15 @@ class AccountData(BaseData):
     """
 
     accountid: str
-
     balance: float = 0
     frozen: float = 0
-
-    """ modify by loe """
-    # 添加一些属性
-    pre_balance = 0                     # 初始净值
-    trade_commission = 0                # 交易手续费
-    close_profit = 0                    # 平仓盈亏
-    position_profit: float = 0          # 持仓盈亏
-    exchange_user:str = ""              # 账户名称
+    pre_balance: float = 0                      # 初始净值
+    trade_commission: float = 0                 # 交易手续费
+    close_profit: float = 0                     # 平仓盈亏
+    position_profit: float = 0                  # 持仓盈亏
+    exchange_user:str = ""                      # 账户名称
 
     def __post_init__(self):
-        """"""
         self.available = self.balance - self.frozen
         self.vt_accountid = f"{self.accountid}.{self.gateway_name}.{self.exchange_user}"
 

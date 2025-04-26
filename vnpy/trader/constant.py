@@ -140,6 +140,7 @@ class Exchange(Enum):
     OKX = "OKX"
     BITGET = "BITGET"
     BYBIT = "BYBIT"
+    BYBITSPOT = "BYBITSPOT"
     COINBASE = "COINBASE"
     DERIBIT = "DERIBIT"
     GATEIO = "GATEIO"
