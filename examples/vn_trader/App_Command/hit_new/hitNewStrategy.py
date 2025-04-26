@@ -463,10 +463,6 @@ class HitNewStrategy(CtaTemplate):
                 self.close_volume += trade_volume
 
             if not self.pos:
-                # fake
-                msg = f"平仓计算PNL"
-                self.send_ding_talk(msg)\
-                
                 # 计算PNL
                 close_price = self.close_value / self.close_volume
                 rate = close_price / self.open_price - 1
@@ -474,6 +470,10 @@ class HitNewStrategy(CtaTemplate):
                     rate = rate * -1
                 pnl = self.open_value * rate
                 self.pnl += pnl
+
+                # fake
+                msg = f"平仓计算PNL\n\n{self.pnl}@{pnl}"
+                self.send_ding_talk(msg)
 
                 # 重置开平仓变量
                 self.open_value = 0
