@@ -149,15 +149,12 @@ class BinanceUsdtGateway(BaseGateway):
         """构造函数"""
         super().__init__(event_engine)
 
-        self.trade_ws_api: "BinanceUsdtTradeWebsocketApi" = (
-            BinanceUsdtTradeWebsocketApi(self)
-        )
-        self.market_ws_api: "BinanceUsdtDataWebsocketApi" = BinanceUsdtDataWebsocketApi(
-            self
-        )
+        self.trade_ws_api: "BinanceUsdtTradeWebsocketApi" = (BinanceUsdtTradeWebsocketApi(self))
+        self.market_ws_api: "BinanceUsdtDataWebsocketApi" = BinanceUsdtDataWebsocketApi(self)
         self.rest_api: "BinanceUsdtRestApi" = BinanceUsdtRestApi(self)
 
         self.orders: Dict[str, OrderData] = {}
+        self.account_positon_update_wait = 0
 
     def connect(self, setting: dict) -> None:
         """连接交易接口"""
@@ -186,11 +183,11 @@ class BinanceUsdtGateway(BaseGateway):
 
     def query_account(self) -> None:
         """查询资金"""
-        pass
+        self.rest_api.query_account()
 
     def query_position(self) -> None:
         """查询持仓"""
-        pass
+        self.rest_api.query_position()
 
     def query_history(self, req: HistoryRequest) -> List[BarData]:
         """查询历史数据"""
@@ -204,8 +201,16 @@ class BinanceUsdtGateway(BaseGateway):
 
     def process_timer_event(self, event: Event) -> None:
         """定时事件处理"""
+        # 延长listenKey
         self.rest_api.keep_user_stream()
         # self.rest_api.check_trade_ws()
+
+        # 更新账户、持仓
+        if self.account_positon_update_wait >= 30:
+            self.account_positon_update_wait = 0
+            self.query_account()
+            self.query_position()
+        self.account_positon_update_wait += 1
 
     def on_order(self, order: OrderData) -> None:
         """推送委托数据"""
@@ -257,6 +262,9 @@ class BinanceUsdtRestApi(RestClient):
         self.order_count: int = 1_000_000
         self.order_count_lock: Lock = Lock()
         self.connect_time: int = 0
+
+        self.accounts: dict = {}
+        self.positions: dict= {}
 
     def sign(self, request: Request) -> Request:
         """生成币安签名"""
@@ -517,50 +525,58 @@ class BinanceUsdtRestApi(RestClient):
     def on_query_account(self, data: dict, request: Request) -> None:
         """资金查询回报"""
         for asset in data["assets"]:
+            unrealized_profit = float(asset["unrealizedProfit"])
+            frozen = abs(unrealized_profit) if unrealized_profit < 0 else 0
+            accountid = asset["asset"]
             account: AccountData = AccountData(
-                accountid=asset["asset"],
+                accountid=accountid,
                 balance=float(asset["walletBalance"]),
-                frozen=float(asset["maintMargin"]),
+                frozen=frozen,
                 gateway_name=self.gateway_name,
                 exchange_user=self.gateway.account_name,
             )
 
             if account.balance:
+                self.accounts[accountid] = account
                 self.gateway.on_account(account)
 
-        self.gateway.write_log("账户资金查询成功")
+        # self.gateway.write_log("账户资金查询成功")
 
     def on_query_position(self, data: dict, request: Request) -> None:
         """持仓查询回报"""
         for d in data:
+            # 持仓数量
+            volume = d["positionAmt"]
+            if "." in volume:
+                volume = float(d["positionAmt"])
+            else:
+                volume = int(d["positionAmt"])
+
+            # 持仓方向
+            direction = Direction.NET
+            position_side = d.get("positionSide", "")
+            if position_side:
+                if position_side == "LONG":
+                    direction = Direction.LONG
+
+                elif position_side == "SHORT":
+                    direction = Direction.SHORT
+                
+            else:
+                if volume > 0:
+                    direction = Direction.LONG
+
+                elif volume < 0:
+                    direction = Direction.SHORT
+
+            # 持仓合约
+            symbol = d["symbol"]
+            position_symbol = f"{symbol}_{direction.value}"
+
             if float(d["positionAmt"]):
-                # 持仓数量
-                volume = d["positionAmt"]
-                if "." in volume:
-                    volume = float(d["positionAmt"])
-                else:
-                    volume = int(d["positionAmt"])
-
-                # 持仓方向
-                direction = Direction.NET
-                position_side = d.get("positionSide", "")
-                if position_side:
-                    if position_side == "LONG":
-                        direction = Direction.LONG
-
-                    elif position_side == "SHORT":
-                        direction = Direction.SHORT
-                    
-                else:
-                    if volume > 0:
-                        direction = Direction.LONG
-
-                    elif volume < 0:
-                        direction = Direction.SHORT
-
                 # 创建
                 position: PositionData = PositionData(
-                    symbol=d["symbol"],
+                    symbol=symbol,
                     exchange=Exchange.BINANCE,
                     exchange_user=self.gateway.account_name,
                     direction=direction,
@@ -571,9 +587,18 @@ class BinanceUsdtRestApi(RestClient):
                 )
 
                 # 回调
+                self.positions[position_symbol] = position
+                self.gateway.on_position(position)
+            
+            elif position_symbol in self.positions:
+                # 清仓
+                position = self.positions[position_symbol]
+                position.volume = 0
+                position.price = 0
+                position.pnl = 0
                 self.gateway.on_position(position)
 
-        self.gateway.write_log("持仓信息查询成功")
+        # self.gateway.write_log("持仓信息查询成功")
 
     def on_query_order(self, data: dict, request: Request) -> None:
         """未成交委托查询回报"""
@@ -809,9 +834,13 @@ class BinanceUsdtTradeWebsocketApi(WebsocketClient):
             return
 
         if packet["e"] == "ACCOUNT_UPDATE":
-            self.on_account(packet)
+            self.gateway.query_account()
+            self.gateway.query_position()
+            # self.on_account(packet)
+
         elif packet["e"] == "ORDER_TRADE_UPDATE":
             self.on_order(packet)
+
         elif packet["e"] == "listenKeyExpired":
             self.on_listen_key_expired()
 
@@ -835,7 +864,6 @@ class BinanceUsdtTradeWebsocketApi(WebsocketClient):
                 self.gateway.on_account(account)
 
         for pos_data in packet["a"]["P"]:
-            # if pos_data["ps"] == "BOTH":
             volume = pos_data["pa"]
             if "." in volume:
                 volume = float(volume)
