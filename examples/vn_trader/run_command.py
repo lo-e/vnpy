@@ -72,8 +72,8 @@ class MonitorEngine(object):
         minute = tick.datetime.minute
         while minute % 1:
             minute -= 1
-        duration_dt = tick.datetime.replace(minute=minute, second=0, microsecond=0)
 
+        duration_dt = tick.datetime.replace(minute=minute, second=0, microsecond=0)
         duration_bar: DurationBar = self.duration_bar_data.get(tick.vt_symbol, DurationBar())
         if duration_bar.datetime != duration_dt:
             duration_bar = DurationBar()
