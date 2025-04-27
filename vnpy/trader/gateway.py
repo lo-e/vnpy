@@ -306,6 +306,18 @@ class BaseGateway(ABC):
         """
         res = {"gateway":self.gateway_name, "connected":False, "msg":"check_connected未实现"}
         return res
+    
+    def get_accounts(self) -> Dict[str, AccountData]:
+        """
+        获取账户信息
+        """
+        return {}
+    
+    def get_positions(self) -> Dict[str, PositionData]:
+        """
+        获取持仓信息
+        """
+        return {}
 
 class LocalOrderManager:
     """

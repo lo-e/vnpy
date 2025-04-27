@@ -258,6 +258,17 @@ class OkxGateway(BaseGateway):
         res = {"gateway":self.gateway_name, "connected":connected, "msg":msg}
         return res
 
+    def get_accounts(self) -> Dict[str, AccountData]:
+        """
+        获取账户信息
+        """
+        return self.ws_private_api.accounts
+    
+    def get_positions(self) -> Dict[str, PositionData]:
+        """
+        获取持仓信息
+        """
+        return self.ws_private_api.positions
 class OkxRestApi(RestClient):
     """"""
 
@@ -749,6 +760,8 @@ class OkxWebsocketPrivateApi(WebsocketClient):
         }
 
         self.reqid_order_map: Dict[str, OrderData] = {}
+        self.accounts: dict = {}
+        self.positions: dict= {}
 
     def connect(
         self,
@@ -865,14 +878,18 @@ class OkxWebsocketPrivateApi(WebsocketClient):
             return
         buf: dict = packet["data"][0]
         for detail in buf["details"]:
+            unrealized_profit = detail["upl"]
+            unrealized_profit = float(unrealized_profit) if unrealized_profit else 0
+            frozen = abs(unrealized_profit) if unrealized_profit < 0 else 0
+            accountid = detail["ccy"]
             account: AccountData = AccountData(
-                accountid=detail["ccy"],
-                balance=float(detail["eq"]),
+                accountid=accountid,
+                balance=float(detail["cashBal"]),
+                frozen=frozen,
                 gateway_name=self.gateway_name,
                 exchange_user=self.gateway.account_name
             )
-            account.available = float(detail["availEq"]) if len(detail["availEq"]) != 0 else 0.0
-            account.frozen = account.balance - account.available
+            self.accounts[accountid] = account
             self.gateway.on_account(account)
 
     def on_position(self, packet: dict) -> None:
@@ -888,7 +905,7 @@ class OkxWebsocketPrivateApi(WebsocketClient):
             pnl: float = get_float_value(d, "upl")
             pos_side = d["posSide"]
             pos_side = Direction.LONG if pos_side == "long" else Direction.SHORT if pos_side == "short" else Direction.NET
-
+            direction_symbol = f"{symbol}_{pos_side.value}"
             position: PositionData = PositionData(
                 symbol=symbol,
                 exchange=Exchange.OKX,
@@ -899,10 +916,8 @@ class OkxWebsocketPrivateApi(WebsocketClient):
                 pnl=pnl,
                 gateway_name=self.gateway_name,
             )
+            self.positions[direction_symbol] = position
             self.gateway.on_position(position)
-            # fake
-            # print(f"{datetime.now()}\t{self.gateway.account_name}\t{position.symbol}\t{position.exchange.value}\t{position.exchange_user}\{position.direction.value}\t{position.volume}\t{position.price}")
-        # print(f"\n")
 
     def on_send_order(self, packet: dict) -> None:
         """委托下单回报"""

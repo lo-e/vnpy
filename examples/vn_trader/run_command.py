@@ -38,7 +38,8 @@ class MonitorEngine(object):
         for gateway_info in GATEWAYS:
             gateway_class: BaseGateway = gateway_info[0]
             account_name = gateway_info[1]
-            connected = main_engine.get_gateway_connect_status(gateway_class.gateway_name, account_name)
+            connected = self.main_engine.get_gateway_connect_status(gateway_class.gateway_name, account_name)
+
             if not connected:
                 all_connected = False
                 break
@@ -66,7 +67,7 @@ class MonitorEngine(object):
         # 收到Tick数据
         tick: TickData = event.data
         minute = tick.datetime.minute
-        while minute % 5:
+        while minute % 1:
             minute -= 1
         duration_dt = tick.datetime.replace(minute=minute, second=0, microsecond=0)
 
@@ -98,7 +99,7 @@ class MonitorEngine(object):
     
     def on_timer(self, event):
         now = datetime.now()
-        if (now.minute % 5 == 0) and (now.second == 0):
+        if (now.minute % 1 == 0) and (now.second == 0):
             gateway_all_connected = self.check_gateway_connected()
             if not gateway_all_connected:
                 msg = f"交易所连接断开"

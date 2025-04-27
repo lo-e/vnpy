@@ -238,6 +238,17 @@ class BinanceUsdtGateway(BaseGateway):
         res = {"gateway":self.gateway_name, "connected":connected, "msg":msg}
         return res
 
+    def get_accounts(self) -> Dict[str, AccountData]:
+        """
+        获取账户信息
+        """
+        return self.rest_api.accounts
+    
+    def get_positions(self) -> Dict[str, PositionData]:
+        """
+        获取持仓信息
+        """
+        return self.rest_api.positions
 class BinanceUsdtRestApi(RestClient):
     """币安正向合约的REST API"""
 
@@ -571,7 +582,7 @@ class BinanceUsdtRestApi(RestClient):
 
             # 持仓合约
             symbol = d["symbol"]
-            position_symbol = f"{symbol}_{direction.value}"
+            direction_symbol = f"{symbol}_{direction.value}"
 
             if float(d["positionAmt"]):
                 # 创建
@@ -587,12 +598,12 @@ class BinanceUsdtRestApi(RestClient):
                 )
 
                 # 回调
-                self.positions[position_symbol] = position
+                self.positions[direction_symbol] = position
                 self.gateway.on_position(position)
             
-            elif position_symbol in self.positions:
+            elif direction_symbol in self.positions:
                 # 清仓
-                position = self.positions[position_symbol]
+                position = self.positions[direction_symbol]
                 position.volume = 0
                 position.price = 0
                 position.pnl = 0
