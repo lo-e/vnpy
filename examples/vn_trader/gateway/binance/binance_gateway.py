@@ -870,7 +870,7 @@ class BinanceUsdtTradeWebsocketApi(WebsocketClient):
                 gateway_name=self.gateway_name,
                 exchange_user=self.gateway.account_name,
             )
-
+            
             if account.balance:
                 self.gateway.on_account(account)
 

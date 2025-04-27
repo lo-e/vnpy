@@ -114,8 +114,7 @@ TESTNET_PRIVATE_WS_HOST = "wss://stream-testnet.bybit.com/v5/private"  # 主网�
 
 class BybitGateway(BaseGateway):
     """
-    * BYBIT统一账户接口
-    * 只支持单向持仓
+    BYBIT统一账户接口
     """
     
     gateway_name = "BYBIT"
@@ -190,20 +189,14 @@ class BybitGateway(BaseGateway):
     def cancel_order(self, req: CancelRequest):
         self.rest_api.cancel_order(req)
    
-    def query_account(self):
+    def query_account(self) -> None:
         self.rest_api.query_account()
-  
-    def query_order(self, vt_symbol: str):
-        """
-        查询活动委托单
-        """
-        self.rest_api.query_active_order(vt_symbol)
 
-    def query_position(self, vt_symbol: str):
+    def query_position(self) -> None:
         """
         查询持仓
         """
-        self.rest_api.query_position(vt_symbol)
+        self.rest_api.query_position()
 
     def process_timer_event(self, event):
         """
@@ -283,7 +276,7 @@ class BybitRestApi(RestClient):
         self.gateway_name = gateway.gateway_name
         self.key = ""
         self.secret = b""
-        self.account_date = None  # 账户日期
+
         # 确保生成的orderid不发生冲突
         self.order_count: int = 0
         self.order_count_lock: Lock = Lock()
@@ -353,8 +346,10 @@ class BybitRestApi(RestClient):
         self.start()
         self.gateway.write_log(f"REST API 启动成功")
 
-        self.get_server_time()
+        # 获取合约列表、订单、持仓、账户
         self.query_contract()
+        self.query_active_order()
+        self.query_position()
         self.query_account()
     
     def get_category(self, vt_symbol: str):
@@ -447,21 +442,24 @@ class BybitRestApi(RestClient):
         发送委托单
         """
         category = self.get_category(req.vt_symbol)
-        orderid = req.symbol + "-" + str(self.connect_time + self._new_order_id())
+        orderid = f"CUSTOM-{req.symbol}-{str(self.connect_time + self._new_order_id())}"
+        position_side = 0
+        if (req.direction == Direction.LONG and req.offset == Offset.OPEN) or (req.direction == Direction.SHORT and req.offset != Offset.OPEN):
+            position_side = 1
+
+        elif (req.direction == Direction.SHORT and req.offset == Offset.OPEN) or (req.direction == Direction.LONG and req.offset != Offset.OPEN):
+            position_side = 2
         data = {
             "category": category,
             "symbol": req.symbol,
             "price": str(req.price),
             "qty": str(req.volume),
             "side": DIRECTION_VT2BYBIT[req.direction],
+            "positionIdx": position_side,
             "orderType": ORDER_TYPE_VT2BYBIT[req.type],
             "orderLinkId": orderid,
-            "positionIdx": "0",     # 单向持仓
-            "timeInForce": TIMEINFORCE_MAP[req.type]      # 订单执行策略
+            "timeInForce": TIMEINFORCE_MAP[req.type]
         }
-        # 平仓信号仅减仓，reduceOnly参数不适用于现货
-        if req.offset == Offset.CLOSE and category != "spot":
-            data["reduceOnly"] = True
         order = req.create_order_data(orderid, self.gateway_name)
         order.datetime = datetime.now()
 
@@ -509,16 +507,19 @@ class BybitRestApi(RestClient):
             order: OrderData = request.extra
             order.status = Status.REJECTED
             self.gateway.on_order(order)
-            self.gateway.write_log(f"错误委托单：{order}")
             return
     
     def cancel_order(self, req: CancelRequest):
-        order: OrderData = self.gateway.get_order(req.vt_orderid)
-        data = {
-            "category": self.get_category(req.vt_symbol),
-            "orderLinkId": req.orderid,
-            "symbol": req.symbol,
-        }
+        order: OrderData = self.gateway.get_order(req.orderid)
+
+        data = {"category": self.get_category(req.vt_symbol),
+                "symbol": req.symbol}
+        order_id = req.orderid
+        if "CUSTOM" in order_id:
+            data["orderLinkId"] = order_id
+        
+        else:
+            data["orderId"] = order_id
         self.add_request("POST", path="/v5/order/cancel", data=data, callback=self.on_cancel_order, on_failed=self.on_cancel_failed, extra=order)
     
     def on_cancel_order(self, data: dict, request: Request):
@@ -604,12 +605,6 @@ class BybitRestApi(RestClient):
             self.gateway.on_contract(contract)
         self.gateway.write_log(f"{category.upper()}合约信息查询成功")
     
-    def get_float_value(self, value: str) -> float:
-        """
-        将字符串转换为浮点数，处理空值
-        """
-        return float(value) if value else 0
-    
     def query_account(self):
         """
         发送查询资金请求
@@ -622,22 +617,18 @@ class BybitRestApi(RestClient):
         """
         if data["retCode"] == 10016:
             return
+        
         if not data["result"]:
             return
+        
         data = data["result"]["list"][0]
         for account_data in data["coin"]:
-            coin = account_data["coin"]
-            margin = self.get_float_value(account_data["totalPositionIM"])              # 持仓占用保证金
-            total_order_margin = self.get_float_value(account_data["totalOrderIM"])     # 委托单占用保证金
-            locked = self.get_float_value(account_data["locked"])                       # 现货挂单冻结金额
-            frozen = margin + total_order_margin + locked
-
+            unrealized_pnl = float(account_data["unrealisedPnl"])
+            frozen = abs(unrealized_pnl) if unrealized_pnl < 0 else 0
             account = AccountData(
-                accountid=f"{coin}",
-                balance=self.get_float_value(account_data["walletBalance"]),
+                accountid=account_data["coin"],
+                balance=get_float_value(account_data["walletBalance"]),
                 frozen=frozen,
-                position_profit=self.get_float_value(account_data["unrealisedPnl"]),
-                close_profit=self.get_float_value(account_data["cumRealisedPnl"]),
                 gateway_name=self.gateway_name,
                 exchange_user=self.gateway.account_name,
             )
@@ -645,15 +636,14 @@ class BybitRestApi(RestClient):
             if account.balance:
                 self.gateway.on_account(account)
     
-    def query_position(self, vt_symbol: str):
+    def query_position(self):
         """
         发送查询持仓请求
         """
-        symbol, exchange, gateway_name = extract_vt_symbol(vt_symbol)
-        # 查询持仓不支持现货
-        if exchange == Exchange.BYBITSPOT:
-            return
-        params = {"category": self.get_category(vt_symbol), "limit": 50, "symbol": symbol}
+        # category: linear, inverse, option
+        params = {"category": "linear",
+                  "settleCoin": "USDT",
+                  "limit": 200}
         path = "/v5/position/list"
         self.add_request(method="GET", path=path, callback=self.on_query_position, params=params)
     
@@ -663,8 +653,7 @@ class BybitRestApi(RestClient):
         """
         if self.check_error("查询持仓", data):
             if data["retCode"] == 10002:
-                self.gateway.write_log(f"交易接口：{self.gateway_name}，服务器时间与本地时间不同步，重启交易子进程")
-
+                self.gateway.write_log(f"查询持仓：服务器时间与本地时间不同步")
             return
         
         category = data["result"]["category"]
@@ -676,55 +665,33 @@ class BybitRestApi(RestClient):
                 pos = PositionData(
                     symbol=pos_data["symbol"],
                     exchange=exchange,
+                    exchange_user=self.gateway.account_name,
                     direction=direction,
                     volume=abs(float(pos_data["size"])),
                     price=float(pos_data["avgPrice"]),
-                    pnl=float(pos_data["unrealisedPnl"]),  # 持仓盈亏
+                    pnl=float(pos_data["unrealisedPnl"]),
                     gateway_name=self.gateway_name,
                 )
                 self.gateway.on_position(pos)
-            else:
-                long_position = PositionData(
-                    symbol=pos_data["symbol"],
-                    exchange=exchange,
-                    direction=Direction.LONG,
-                    volume=0,
-                    price=0,
-                    pnl=0,
-                    frozen=0,
-                    gateway_name=self.gateway_name,
-                )
-                short_position = PositionData(
-                    symbol=pos_data["symbol"],
-                    exchange=exchange,
-                    direction=Direction.SHORT,
-                    volume=0,
-                    price=0,
-                    pnl=0,
-                    frozen=0,
-                    gateway_name=self.gateway_name,
-                )
-                self.gateway.on_position(long_position)
-                self.gateway.on_position(short_position)
     
-    def query_active_order(self, vt_symbol: str):
+    def query_active_order(self):
         """
-        发送查询活动委托单请求
+        查询活动委托单
         """
-        symbol = extract_vt_symbol(vt_symbol)[0]
+        # category: spot, linear, inverse, option
         params = {
-            "category": self.get_category(vt_symbol),
-            "limit": 20,
-            "symbol": symbol,
+            "category": "linear",
+            "settleCoin": "USDT",
+            "limit": 50,
         }
         path = "/v5/order/realtime"
-        self.add_request("GET", path, callback=self.on_query_order, params=params)
+        self.add_request("GET", path, callback=self.on_query_active_order, params=params)
     
-    def on_query_order(self, data: dict, request: Request):
+    def on_query_active_order(self, data: dict, request: Request):
         """
         收到活动委托单回报
         """
-        if self.check_error("查询未成交委托", data):
+        if self.check_error("查询活动委托单", data):
             return
         
         result = data["result"]["list"]
@@ -734,10 +701,14 @@ class BybitRestApi(RestClient):
         category = data["result"]["category"]
         exchange = CATEGORY_EXCHANGE_MAP[category]
         for order_data in result:
+            orderId = order_data["orderLinkId"]
+            if not orderId:
+                orderId = order_data["orderId"]
+
             order = OrderData(
                 symbol=order_data["symbol"],
                 exchange=exchange,
-                orderid=order_data["orderLinkId"],
+                orderid=orderId,
                 type=ORDER_TYPE_BYBIT2VT[order_data["timeInForce"]],
                 direction=DIRECTION_BYBIT2VT[order_data["side"]],
                 price=float(order_data["price"]),
@@ -832,7 +803,7 @@ class BybitWebsocketDataApi(WebsocketClient):
                 if "already subscribed" in ret_msg:
                     return
                 
-                self.gateway.write_log(f"交易接口：{self.gateway_name}，Websocket API出错，错误信息：{ret_msg}")
+                self.gateway.write_log(f"Websocket API 出错：{ret_msg}")
     
     def on_tick(self, packet: dict):
         """
@@ -956,8 +927,7 @@ class BybitWebsocketTradeApi(WebsocketClient):
         self.start()
     
     def login(self):
-        #expires = generate_timestamp(20)
-        expires = generate_timestamp(0)
+        expires = generate_timestamp(20)
         msg = f"GET/realtime{int(expires)}"
         signature = sign(self.secret, msg.encode())
 
@@ -968,11 +938,12 @@ class BybitWebsocketTradeApi(WebsocketClient):
         """
         收到登录回报
         """
-        self.gateway.write_log(f"交易接口:{self.gateway_name},Websocket API登录成功")
+        self.gateway.write_log(f"Websocket API 交易登录成功")
         self.subscribe_topic("order", self.on_order)
         #self.subscribe_topic("execution", self.on_trade)       # 全品种成交推送
         self.subscribe_topic("execution.fast", self.on_trade)       # 不支持期权
         self.subscribe_topic("position", self.on_position)
+        self.subscribe_topic("wallet", self.on_account)
     
     def subscribe_topic(self, topic: str, callback: Callable[[str, dict], Any]):
         """
@@ -1035,10 +1006,13 @@ class BybitWebsocketTradeApi(WebsocketClient):
         for order_data in packet["data"]:
             category = order_data["category"]
             exchange = CATEGORY_EXCHANGE_MAP[category]
+            orderId = order_data["orderLinkId"]
+            if not orderId:
+                orderId = order_data["orderId"]
             order = OrderData(
                 symbol=order_data["symbol"],
                 exchange=exchange,
-                orderid=order_data["orderLinkId"],
+                orderid=orderId,
                 type=ORDER_TYPE_BYBIT2VT[order_data["timeInForce"]],
                 direction=DIRECTION_BYBIT2VT[order_data["side"]],
                 price=float(order_data["price"]),
@@ -1057,16 +1031,14 @@ class BybitWebsocketTradeApi(WebsocketClient):
         收到持仓回报
         """
         for pos_data in packet["data"]:
-            # 通过杠杆区分现货，合约
-            if pos_data["leverage"] == "20":
-                exchange = Exchange.BYBIT
-            else:
-                exchange = Exchange.BYBITSPOT
+            category = pos_data["category"]
+            exchange = CATEGORY_EXCHANGE_MAP[category]
             direction = DIRECTION_BYBIT2VT.get(pos_data["side"], None)
             if direction:
                 pos = PositionData(
                     symbol=pos_data["symbol"],
                     exchange=exchange,
+                    exchange_user=self.gateway.account_name,
                     direction=direction,
                     volume=abs(float(pos_data["size"])),
                     price=float(pos_data["entryPrice"]),
@@ -1074,29 +1046,34 @@ class BybitWebsocketTradeApi(WebsocketClient):
                     gateway_name=self.gateway_name,
                 )
                 self.gateway.on_position(pos)
-            else:
-                long_position = PositionData(
-                    symbol=pos_data["symbol"],
-                    exchange=exchange,
-                    direction=Direction.LONG,
-                    volume=0,
-                    price=0,
-                    pnl=0,
-                    frozen=0,
-                    gateway_name=self.gateway_name,
-                )
-                short_position = PositionData(
-                    symbol=pos_data["symbol"],
-                    exchange=exchange,
-                    direction=Direction.SHORT,
-                    volume=0,
-                    price=0,
-                    pnl=0,
-                    frozen=0,
-                    gateway_name=self.gateway_name,
-                )
-                self.gateway.on_position(long_position)
-                self.gateway.on_position(short_position)
+
+    def on_account(self, packet):
+        """
+        收到账户回报
+        """
+        data = packet["data"]
+        if not data:
+            return
+        
+        for account_data in data[0]["coin"]:
+            unrealized_pnl = float(account_data["unrealisedPnl"])
+            frozen = abs(unrealized_pnl) if unrealized_pnl < 0 else 0
+            account = AccountData(
+                accountid=account_data["coin"],
+                balance=get_float_value(account_data["walletBalance"]),
+                frozen=frozen,
+                gateway_name=self.gateway_name,
+                exchange_user=self.gateway.account_name,
+            )
+            
+            if account.balance:
+                self.gateway.on_account(account)
+
+def get_float_value(value: str) -> float:
+    """
+    将字符串转换为浮点数，处理空值
+    """
+    return float(value) if value else 0
 
 def generate_timestamp(expire_after: float = 30) -> int:
     """
