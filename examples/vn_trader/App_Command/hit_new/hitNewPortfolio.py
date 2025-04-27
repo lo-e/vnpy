@@ -57,20 +57,23 @@ class HitNewPortfolio(object):
     def on_timer(self):
         # 下载Bar数据
         current_minute_time = datetime.now().replace(second=0, microsecond=0)
-        if self.download_bar_time != current_minute_time and not self.bar_downloading:
+        download_bar_minute_time = self.download_bar_time.replace(second=0, microsecond=0) if self.download_bar_time else None
+        if download_bar_minute_time != current_minute_time and not self.bar_downloading:
             # 核查执行新策略
             for setting in self.new_signal_settings:
                 self.cta_engine.hit_new_strategy(setting)
             self.new_signal_settings = []
 
-            self.download_bar_time = current_minute_time
+            self.download_bar_time = datetime.now()
             thread = Thread(target=self.download_bar_data)
             thread.start()
 
         # 下载合约列表数据
         current_hour_time = datetime.now().replace(minute=0, second=0, microsecond=0)
-        if self.download_instruments_time != current_hour_time and not self.instruments_downloading:
-            self.download_instruments_time = current_hour_time
+        download_instruments_hour_time = self.download_instruments_time.replace(minute=0, second=0, microsecond=0) if self.download_instruments_time else None
+        download_bar_after = True if self.download_bar_time and datetime.now() >= self.download_bar_time + timedelta(seconds=5) else False
+        if download_instruments_hour_time != current_hour_time and download_bar_after and not self.instruments_downloading:
+            self.download_instruments_time = datetime.now()
             thread = Thread(target=self.download_instruments_data)
             thread.start()
 
@@ -117,7 +120,6 @@ class HitNewPortfolio(object):
                 self.download_engine.delete_history_data(target_dir=self.name)
 
                 # 开始下载
-                print(f"\n")
                 for exchange, exchange_symbols in contract_exchange_dict.items():
                     if exchange == "BINANCE":
                         self.download_engine.download_from_binance(

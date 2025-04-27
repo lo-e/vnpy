@@ -31,7 +31,9 @@ class MonitorEngine(object):
         self.event_engine.register(EVENT_TIMER, self.on_timer)
         self.event_engine.register(EVENT_TICK, self.on_tick)
 
+        self.gateway_connected = False
         self.duration_bar_data = {}
+        self.history_duration_bar_data = {}
 
     def check_gateway_connected(self):
         all_connected = True
@@ -43,6 +45,7 @@ class MonitorEngine(object):
             if not connected:
                 all_connected = False
                 break
+
         return all_connected
     
     def subscribe(self, vt_symbol: str):
@@ -73,14 +76,6 @@ class MonitorEngine(object):
 
         duration_bar: DurationBar = self.duration_bar_data.get(tick.vt_symbol, DurationBar())
         if duration_bar.datetime != duration_dt:
-            if duration_bar.datetime:
-                dt_str = duration_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
-                print(f"{dt_str}\t{duration_bar.tick_count}\t{duration_bar.vt_symbol}\t{duration_bar.open}\t{duration_bar.high}\t{duration_bar.low}\t{duration_bar.close}")
-            
-            else:
-                dt_str = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S.%f")
-                print(f"{dt_str}\t{tick.vt_symbol}\t{tick.last_price}")
-
             duration_bar = DurationBar()
             duration_bar.vt_symbol = tick.vt_symbol
             duration_bar.datetime = duration_dt
@@ -89,6 +84,10 @@ class MonitorEngine(object):
             duration_bar.low = tick.last_price
             duration_bar.close = tick.last_price
             duration_bar.tick_count = 1
+
+            history_duration_bar = self.duration_bar_data.get(tick.vt_symbol, None)
+            if history_duration_bar:
+                self.history_duration_bar_data[tick.vt_symbol] = history_duration_bar
             self.duration_bar_data[tick.vt_symbol] = duration_bar
         
         else:
@@ -99,12 +98,21 @@ class MonitorEngine(object):
     
     def on_timer(self, event):
         now = datetime.now()
-        if (now.minute % 1 == 0) and (now.second == 0):
+        if (now.minute % 1 == 0) and (now.second == 15):
+            # 输出Tick信息
+            for _, duration_bar in self.history_duration_bar_data.items():
+                dt_str = duration_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+                print(f"{dt_str}\t{duration_bar.vt_symbol}({duration_bar.tick_count})\t{duration_bar.open}\t{duration_bar.high}\t{duration_bar.low}\t{duration_bar.close}")
+
+            # 检查交易所连接
             gateway_all_connected = self.check_gateway_connected()
-            if not gateway_all_connected:
+            if not gateway_all_connected and self.gateway_connected:
                 msg = f"交易所连接断开"
                 self.main_engine.send_ding_talk(msg)
-            print(f"{now}\t交易所连接状态：{gateway_all_connected}")
+            
+            self.gateway_connected = gateway_all_connected
+            dt_str = now.strftime(f"%Y-%m-%d %H:%M:%S")
+            print(f"{dt_str}\t交易所连接状态：{gateway_all_connected}\n")
 
 if __name__ == "__main__":
     # 引擎
