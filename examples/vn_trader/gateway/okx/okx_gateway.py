@@ -876,12 +876,15 @@ class OkxWebsocketPrivateApi(WebsocketClient):
         """资金更新推送"""
         if len(packet["data"]) == 0:
             return
+        
+        accountids = set()
         buf: dict = packet["data"][0]
         for detail in buf["details"]:
             unrealized_profit = detail["upl"]
             unrealized_profit = float(unrealized_profit) if unrealized_profit else 0
             frozen = abs(unrealized_profit) if unrealized_profit < 0 else 0
             accountid = detail["ccy"]
+            accountids.add(accountid)
             account: AccountData = AccountData(
                 accountid=accountid,
                 balance=float(detail["cashBal"]),
@@ -889,8 +892,22 @@ class OkxWebsocketPrivateApi(WebsocketClient):
                 gateway_name=self.gateway_name,
                 exchange_user=self.gateway.account_name
             )
-            self.accounts[accountid] = account
-            self.gateway.on_account(account)
+
+            if account.balance:
+                self.accounts[accountid] = account
+                self.gateway.on_account(account)
+
+            elif accountid in self.accounts:
+                account = self.accounts[accountid]
+                account.balance = 0
+                account.frozen = 0
+                self.gateway.on_account(account)
+        
+        for accountid, account in self.accounts.items():
+            if accountid not in accountids:
+                account.balance = 0
+                account.frozen = 0
+                self.gateway.on_account(account)
 
     def on_position(self, packet: dict) -> None:
         """持仓更新推送"""

@@ -206,11 +206,11 @@ class BinanceUsdtGateway(BaseGateway):
         # self.rest_api.check_trade_ws()
 
         # 更新账户、持仓
+        self.account_positon_update_wait += 1
         if self.account_positon_update_wait >= 30:
             self.account_positon_update_wait = 0
             self.query_account()
             self.query_position()
-        self.account_positon_update_wait += 1
 
     def on_order(self, order: OrderData) -> None:
         """推送委托数据"""
@@ -535,10 +535,12 @@ class BinanceUsdtRestApi(RestClient):
 
     def on_query_account(self, data: dict, request: Request) -> None:
         """资金查询回报"""
+        accountids = set()
         for asset in data["assets"]:
             unrealized_profit = float(asset["unrealizedProfit"])
             frozen = abs(unrealized_profit) if unrealized_profit < 0 else 0
             accountid = asset["asset"]
+            accountids.add(accountid)
             account: AccountData = AccountData(
                 accountid=accountid,
                 balance=float(asset["walletBalance"]),
@@ -549,6 +551,18 @@ class BinanceUsdtRestApi(RestClient):
 
             if account.balance:
                 self.accounts[accountid] = account
+                self.gateway.on_account(account)
+            
+            elif accountid in self.accounts:
+                account = self.accounts[accountid]
+                account.balance = 0
+                account.frozen = 0
+                self.gateway.on_account(account)
+        
+        for accountid, account in self.accounts.items():
+            if accountid not in accountids:
+                account.balance = 0
+                account.frozen = 0
                 self.gateway.on_account(account)
 
         # self.gateway.write_log("账户资金查询成功")
@@ -584,7 +598,7 @@ class BinanceUsdtRestApi(RestClient):
             symbol = d["symbol"]
             direction_symbol = f"{symbol}_{direction.value}"
 
-            if float(d["positionAmt"]):
+            if volume:
                 # 创建
                 position: PositionData = PositionData(
                     symbol=symbol,

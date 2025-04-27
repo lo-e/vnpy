@@ -142,7 +142,7 @@ class BybitGateway(BaseGateway):
         self.websocket_apis = [self.ws_usdt_data_api]
         # self.websocket_apis = [self.ws_spot_data_api, self.ws_usdt_data_api, self.ws_inverse_data_api, self.ws_option_data_api, self.ws_trade_api]
 
-        self.timer_wait_count: int = 0
+        self.account_positon_update_wait: int = 0
 
     def connect(self, log_account: dict):
         key = log_account["key"]
@@ -202,14 +202,14 @@ class BybitGateway(BaseGateway):
         """
         处理定时任务
         """
-        self.timer_wait_count += 1
-        if self.timer_wait_count < 20:
-            return
-        self.timer_wait_count = 0
-        self.query_account()
-
         for api in self.websocket_apis:
             api.send_packet({"op": "ping"})
+
+        self.account_positon_update_wait += 1
+        if self.account_positon_update_wait >= 30:
+            self.account_positon_update_wait = 0
+            self.query_account()
+            self.query_position()
     
     def on_order(self, order: OrderData) -> None:
         """
@@ -281,6 +281,9 @@ class BybitRestApi(RestClient):
         self.order_count: int = 0
         self.order_count_lock: Lock = Lock()
         self.connect_time: int = 0
+
+        self.accounts: dict = {}
+        self.positions: dict= {}
     
     def get_server_time(self):
         """
@@ -621,12 +624,15 @@ class BybitRestApi(RestClient):
         if not data["result"]:
             return
         
+        accountids = set()
         data = data["result"]["list"][0]
         for account_data in data["coin"]:
+            accountid = account_data["coin"]
+            accountids.add(accountid)
             unrealized_pnl = float(account_data["unrealisedPnl"])
             frozen = abs(unrealized_pnl) if unrealized_pnl < 0 else 0
             account = AccountData(
-                accountid=account_data["coin"],
+                accountid=accountid,
                 balance=get_float_value(account_data["walletBalance"]),
                 frozen=frozen,
                 gateway_name=self.gateway_name,
@@ -634,6 +640,19 @@ class BybitRestApi(RestClient):
             )
             
             if account.balance:
+                self.accounts[accountid] = account
+                self.gateway.on_account(account)
+
+            elif accountid in self.accounts:
+                account = self.accounts[accountid]
+                account.balance = 0
+                account.frozen = 0
+                self.gateway.on_account(account)
+
+        for accountid, account in self.accounts.items():
+            if accountid not in accountids:
+                account.balance = 0
+                account.frozen = 0
                 self.gateway.on_account(account)
     
     def query_position(self):
@@ -656,14 +675,18 @@ class BybitRestApi(RestClient):
                 self.gateway.write_log(f"查询持仓：服务器时间与本地时间不同步")
             return
         
+        total_direction_symbols = set()
         category = data["result"]["category"]
         exchange = CATEGORY_EXCHANGE_MAP[category]
         raw_data = data["result"]["list"]
         for pos_data in raw_data:
+            symbol = pos_data["symbol"]
             direction = DIRECTION_BYBIT2VT.get(pos_data["side"], None)
+            direction_symbol = f"{symbol}_{direction.value}"
             if direction:
-                pos = PositionData(
-                    symbol=pos_data["symbol"],
+                total_direction_symbols.add(direction_symbol)
+                position = PositionData(
+                    symbol=symbol,
                     exchange=exchange,
                     exchange_user=self.gateway.account_name,
                     direction=direction,
@@ -672,7 +695,16 @@ class BybitRestApi(RestClient):
                     pnl=float(pos_data["unrealisedPnl"]),
                     gateway_name=self.gateway_name,
                 )
-                self.gateway.on_position(pos)
+
+                self.positions[direction_symbol] = position
+                self.gateway.on_position(position)
+
+        for direction_symbol, position in self.positions.items():
+            if direction_symbol not in total_direction_symbols:
+                position.volume = 0
+                position.price = 0
+                position.pnl = 0
+                self.gateway.on_position(position)
     
     def query_active_order(self):
         """
@@ -1030,6 +1062,7 @@ class BybitWebsocketTradeApi(WebsocketClient):
         """
         收到持仓回报
         """
+        need_query = False
         for pos_data in packet["data"]:
             category = pos_data["category"]
             exchange = CATEGORY_EXCHANGE_MAP[category]
@@ -1046,6 +1079,13 @@ class BybitWebsocketTradeApi(WebsocketClient):
                     gateway_name=self.gateway_name,
                 )
                 self.gateway.on_position(pos)
+            
+            else:
+                # 可能有某个方向持仓清仓，需要查询确认
+                need_query = True
+
+        if need_query:
+            self.gateway.query_position()
 
     def on_account(self, packet):
         """
