@@ -2,6 +2,7 @@ from vnpy.trader.engine import MainEngine
 from vnpy.event import EventEngine
 from vnpy.trader.gateway import BaseGateway
 from gateway.binance import BinanceUsdtGateway
+from gateway.bybit import BybitGateway
 from gateway.okx import OkxGateway
 from vnpy.trader.utility import load_json
 from vnpy.trader.object import SubscribeRequest
@@ -13,7 +14,7 @@ from datetime import datetime, timedelta
 from copy import copy
 from App_Command.hit_new.engine import HitNewEngine
 
-GATEWAYS = [[OkxGateway, "lo-e(test)"], [BinanceUsdtGateway, "lo-e"]]
+GATEWAYS = [[OkxGateway, "lo-e"], [BinanceUsdtGateway, "lo-e"], [BybitGateway, "loesuperman"]]
 class DurationBar(object):
     def __init__(self) -> None:
         self.vt_symbol: str = ""
