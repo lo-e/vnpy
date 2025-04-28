@@ -422,7 +422,7 @@ class HitNewStrategy(CtaTemplate):
                     self.send_ding_talk(f"开仓订单价值未满足要求\n合约：{self.vt_symbol}\n价格：{tick.last_price}\n数量：{volume}\n价值：{order_value}")
                     return
         
-        # 平仓订单数量处理
+        # 平仓订单数量不超过当前持仓
         if offset != Offset.OPEN:
             volume = min(volume, abs(self.pos))
         
