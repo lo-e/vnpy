@@ -150,3 +150,10 @@ if __name__ == "__main__":
     hit_new_app.init_portfolio()
     hit_new_app.start_portfolio()
 
+    # 订阅合约
+    subscribe_symbols = ["DARKUSDT.BYBIT"]
+    for vt_symbol in subscribe_symbols:
+        contract = main_engine.get_contract(vt_symbol)
+        if contract:
+            req = SubscribeRequest(symbol=contract.symbol, exchange=contract.exchange)
+            main_engine.subscribe(req, contract.gateway_name)
