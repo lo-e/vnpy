@@ -16,6 +16,22 @@
       "direction": "SHORT",
       "market_on": "2025-04-25 15:30:00",
       "start": true
+    },
+    {
+      "strategy_name": "HIT_NEW_LONG_JST_BINANCE",
+      "vt_symbol": "JSTUSDT.BINANCE",
+      "exchange_user": "lo-e",
+      "direction": "LONG",
+      "market_on": "2025-04-28 17:30:00",
+      "start": true
+    },
+    {
+      "strategy_name": "HIT_NEW_SHORT_JST_BINANCE",
+      "vt_symbol": "JSTUSDT.BINANCE",
+      "exchange_user": "lo-e",
+      "direction": "SHORT",
+      "market_on": "2025-04-28 17:30:00",
+      "start": true
     }
   ]
 }

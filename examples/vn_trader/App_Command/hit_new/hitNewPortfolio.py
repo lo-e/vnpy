@@ -286,6 +286,7 @@ class HitNewPortfolio(object):
         # BYBIT新上市合约
         for instrument in bybit_new:
             symbol = instrument["symbol"]
+            market_on = instrument["on"]
             pure_symbol = symbol.split("USDT")[0]
             vt_symbol = f"{symbol}.BYBIT"
 
