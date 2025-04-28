@@ -32,6 +32,70 @@
       "direction": "SHORT",
       "market_on": "2025-04-28 17:30:00",
       "start": true
+    },
+    {
+      "strategy_name": "HIT_NEW_LONG_SIGN_BINANCE",
+      "vt_symbol": "SIGNUSDT.BINANCE",
+      "exchange_user": "lo-e",
+      "direction": "LONG",
+      "market_on": "2025-04-28 19:00:00",
+      "start": true
+    },
+    {
+      "strategy_name": "HIT_NEW_SHORT_SIGN_BINANCE",
+      "vt_symbol": "SIGNUSDT.BINANCE",
+      "exchange_user": "lo-e",
+      "direction": "SHORT",
+      "market_on": "2025-04-28 19:00:00",
+      "start": true
+    },
+    {
+      "strategy_name": "HIT_NEW_LONG_SIGN_OKX",
+      "vt_symbol": "SIGN-USDT-SWAP.OKX",
+      "exchange_user": "lo-e",
+      "direction": "LONG",
+      "market_on": "2025-04-28 19:31:00",
+      "start": false
+    },
+    {
+      "strategy_name": "HIT_NEW_SHORT_SIGN_OKX",
+      "vt_symbol": "SIGN-USDT-SWAP.OKX",
+      "exchange_user": "lo-e",
+      "direction": "SHORT",
+      "market_on": "2025-04-28 19:31:00",
+      "start": false
+    },
+    {
+      "strategy_name": "HIT_NEW_LONG_CLANKER_BYBIT",
+      "vt_symbol": "CLANKERUSDT.BYBIT",
+      "exchange_user": "loesuperman",
+      "direction": "LONG",
+      "market_on": "2025-04-28 18:50:00",
+      "start": false
+    },
+    {
+      "strategy_name": "HIT_NEW_SHORT_CLANKER_BYBIT",
+      "vt_symbol": "CLANKERUSDT.BYBIT",
+      "exchange_user": "loesuperman",
+      "direction": "SHORT",
+      "market_on": "2025-04-28 18:50:00",
+      "start": false
+    },
+    {
+      "strategy_name": "HIT_NEW_LONG_SIGN_BYBIT",
+      "vt_symbol": "SIGNUSDT.BYBIT",
+      "exchange_user": "loesuperman",
+      "direction": "LONG",
+      "market_on": "2025-04-28 19:21:00",
+      "start": false
+    },
+    {
+      "strategy_name": "HIT_NEW_SHORT_SIGN_BYBIT",
+      "vt_symbol": "SIGNUSDT.BYBIT",
+      "exchange_user": "loesuperman",
+      "direction": "SHORT",
+      "market_on": "2025-04-28 19:21:00",
+      "start": false
     }
   ]
 }

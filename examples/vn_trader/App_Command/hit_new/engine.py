@@ -539,10 +539,12 @@ class HitNewEngine(BaseEngine):
     def hit_new_strategy(self, setting):
         try:
             # 执行策略
-            self.add_strategy(setting)
-            strategy_name = setting["strategy_name"]
-            self.initing_strategy(strategy_name)
-            self.start_strategy(strategy_name)
+            start = setting["start"]
+            if start:
+                self.add_strategy(setting)
+                strategy_name = setting["strategy_name"]
+                self.initing_strategy(strategy_name)
+                self.start_strategy(strategy_name)
 
             # 保存策略
             dir_path = Path(os.path.dirname(os.path.realpath(__file__)))
