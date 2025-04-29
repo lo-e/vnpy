@@ -279,6 +279,9 @@ class HitNewStrategy(CtaTemplate):
         while True:
             try:
                 _ = self.check_target_pos_queue.get(block=True, timeout=0.1)
+                if not self.tick:
+                    continue
+                
                 if self.target_pos == self.pos:
                     continue
 

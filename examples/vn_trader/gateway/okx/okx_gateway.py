@@ -213,6 +213,10 @@ class OkxGateway(BaseGateway):
     def cancel_order(self, req: CancelRequest) -> None:
         """委托撤单"""
         self.ws_private_api.cancel_order(req)
+    
+    def query_contract(self) -> None:
+        """查询合约列表"""
+        self.rest_api.query_instrument()
 
     def query_account(self) -> None:
         """查询资金"""

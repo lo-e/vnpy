@@ -188,8 +188,17 @@ class BybitGateway(BaseGateway):
     
     def cancel_order(self, req: CancelRequest):
         self.rest_api.cancel_order(req)
+
+    def query_contract(self) -> None:
+        """
+        查询合约列表
+        """
+        self.rest_api.query_contract()
    
     def query_account(self) -> None:
+        """
+        查询账户信息
+        """
         self.rest_api.query_account()
 
     def query_position(self) -> None:

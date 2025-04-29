@@ -55,15 +55,26 @@ class HitNewPortfolio(object):
         pass
 
     def on_timer(self):
-        # 下载Bar数据
         current_minute_time = datetime.now().replace(second=0, microsecond=0)
         download_bar_minute_time = self.download_bar_time.replace(second=0, microsecond=0) if self.download_bar_time else None
         if download_bar_minute_time != current_minute_time and not self.bar_downloading:
-            # 核查执行新策略
-            for setting in self.new_signal_settings:
-                self.cta_engine.hit_new_strategy(setting)
-            self.new_signal_settings = []
+            # 执行新策略
+            query_contract_gateway_names = set()
+            for setting in self.new_signal_settings.copy():
+                vt_symbol = setting["vt_symbol"]
+                contract = self.cta_engine.main_engine.get_contract(vt_symbol)
+                if contract:                
+                    self.cta_engine.hit_new_strategy(setting)
+                    self.new_signal_settings.remove(setting)
+                
+                else:
+                    query_contract_gateway_names.add(vt_symbol.split(".")[-1])
 
+            # gateway更新合约列表
+            if len(query_contract_gateway_names):
+                self.query_gateway_contract(list(query_contract_gateway_names))
+
+            # 下载Bar数据
             self.download_bar_time = datetime.now()
             thread = Thread(target=self.download_bar_data)
             thread.start()
@@ -226,11 +237,13 @@ class HitNewPortfolio(object):
                 self.send_ding_talk(msg)
 
         # OKX新上市合约
+        query_contract_gateway_names = set()
         for instrument in okx_new:
             symbol = instrument["symbol"]
             market_on = instrument["on"]
             pure_symbol = symbol.split("-USDT-")[0]
             vt_symbol = f"{symbol}.OKX"
+            query_contract_gateway_names.add("OKX")
 
             signal_long_setting = {
                 "strategy_name": f"HIT_NEW_LONG_{pure_symbol}_OKX",
@@ -260,6 +273,7 @@ class HitNewPortfolio(object):
             market_on = instrument["on"]
             pure_symbol = symbol.split("USDT")[0]
             vt_symbol = f"{symbol}.BINANCE"
+            query_contract_gateway_names.add("BINANCE")
 
             signal_long_setting = {
                 "strategy_name": f"HIT_NEW_LONG_{pure_symbol}_BINANCE",
@@ -289,6 +303,7 @@ class HitNewPortfolio(object):
             market_on = instrument["on"]
             pure_symbol = symbol.split("USDT")[0]
             vt_symbol = f"{symbol}.BYBIT"
+            query_contract_gateway_names.add("BYBIT")
 
             signal_long_setting = {
                 "strategy_name": f"HIT_NEW_LONG_{pure_symbol}_BYBIT",
@@ -312,6 +327,10 @@ class HitNewPortfolio(object):
             msg = f"{vt_symbol} 合约上新"
             self.send_ding_talk(msg)
 
+        # gateway更新合约列表
+        if len(query_contract_gateway_names):
+            self.query_gateway_contract(list(query_contract_gateway_names))
+
         # 重新获取交易所USDT合约列表
         self.load_instruments_data()
 
@@ -324,6 +343,12 @@ class HitNewPortfolio(object):
             self.send_ding_talk(msg)
 
         self.instruments_downloading = False
+
+    def query_gateway_contract(self, gateway_names: list):
+        for gateway_name in gateway_names:
+            gateway = self.cta_engine.main_engine.get_default_gateway(gateway_name)
+            if gateway:
+                gateway.query_contract()
 
     def print_(self, msg: str):
         dt = datetime.now().replace(microsecond=0)

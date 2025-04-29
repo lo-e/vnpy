@@ -275,6 +275,13 @@ class BaseGateway(ABC):
         pass
 
     @abstractmethod
+    def query_contract(self) -> None:
+        """
+        Query contracts list.
+        """
+        pass
+
+    @abstractmethod
     def query_account(self) -> None:
         """
         Query account balance.

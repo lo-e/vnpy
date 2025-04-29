@@ -181,6 +181,10 @@ class BinanceUsdtGateway(BaseGateway):
         """委托撤单"""
         self.rest_api.cancel_order(req)
 
+    def query_contract(self) -> None:
+        """查询合约列表"""
+        self.rest_api.query_contract()
+
     def query_account(self) -> None:
         """查询资金"""
         self.rest_api.query_account()
