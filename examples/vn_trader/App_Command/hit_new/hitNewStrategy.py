@@ -355,14 +355,19 @@ class HitNewStrategy(CtaTemplate):
         if self.direction == Direction.SHORT and self.target_pos and self.open_price and tick.last_price <= self.open_price * 0.5:
             self.stop_short = True
         
+        target_pos_updated = False
         if self.target_pos:
             if self.direction == Direction.LONG and (self.stop_long or (self.hour_up and tick.last_price <= self.hour_up * 0.99) or (self.open_price and tick.last_price <= self.open_price * 0.99)):
+                # 多头平仓
                 self.hour_up_rebirth = False
                 self.target_pos = 0
+                target_pos_updated = True
 
             if self.direction == Direction.SHORT and (self.stop_short or (self.hour_down and tick.last_price >= self.hour_down * 1.01) or (self.open_price and tick.last_price >= self.open_price * 1.01)):
+                # 空头平仓
                 self.hour_down_rebirth = False
                 self.target_pos = 0
+                target_pos_updated = True
                 self.lowest_price_after_short = 0
         
         elif self.tradable and self.indicator_inited and not self.bar_lack:
@@ -370,12 +375,18 @@ class HitNewStrategy(CtaTemplate):
                 # 多头开仓
                 self.hour_up_confirm = True
                 self.target_pos = self.portfolio.portfolio_value / tick.last_price
+                target_pos_updated = True
 
             if self.direction == Direction.SHORT and self.hour_down and not self.stop_short and ((self.hour_down_rebirth and tick.last_price <= self.hour_down) or (self.open_price and tick.last_price <= min(self.open_price, self.hour_down))):
                 # 空头开仓
                 self.hour_down_confirm = True
                 self.target_pos = self.portfolio.portfolio_value / tick.last_price * -1
+                target_pos_updated = True
 
+        if target_pos_updated:
+            self.check_target_pos_ts = time.time()
+            self.check_target_pos_queue.put("")
+            
         # 同步数据
         self.put_timer_event()
 
