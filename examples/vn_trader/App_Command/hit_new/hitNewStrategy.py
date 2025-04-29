@@ -37,7 +37,6 @@ class HitNewStrategy(CtaTemplate):
         "target_pos",
         "open_count",
         "open_price",
-        "pnl",
         "tradable",
         "indicator_inited",
         "bar_lack",
@@ -63,8 +62,6 @@ class HitNewStrategy(CtaTemplate):
         "open_count",
         "open_value",
         "open_price",
-        "close_value",
-        "close_volume",
         "pnl",
         "initial_hour_up",
         "hour_up",
@@ -145,9 +142,6 @@ class HitNewStrategy(CtaTemplate):
         self.open_count = 0
         self.open_value = 0
         self.open_price = 0
-        self.close_value = 0
-        self.close_volume = 0
-        self.pnl = 0
 
     def on_init(self):
         # 交易所成功连接判断
@@ -444,19 +438,7 @@ class HitNewStrategy(CtaTemplate):
 
             trade_price = trade.price
             trade_volume = trade.volume
-
-            is_open = False
-            if self.direction == Direction.LONG and trade.direction == Direction.LONG:
-                is_open = True
-
-            elif self.direction == Direction.SHORT and trade.direction == Direction.SHORT:
-                is_open = True
-
             if trade.offset == Offset.OPEN:
-                if is_open:
-                    msg = f"开仓"
-                    self.send_ding_talk(msg)
-
                 # 开仓价值
                 self.open_value += trade_price * trade_volume
 
@@ -464,39 +446,15 @@ class HitNewStrategy(CtaTemplate):
                 self.open_price = self.open_value / abs(self.pos)
 
             else:
-                if not is_open:
-                    msg = f"平仓"
-                    self.send_ding_talk(msg)
-
                 # 开仓价值
                 self.open_value = self.open_price * abs(self.pos)
-
-                # 平仓价值
-                self.close_value += trade_price * trade_volume
-
-                # 平仓数量
-                self.close_volume += trade_volume
 
             if not self.pos:
                 # 统计开仓数量
                 self.open_count += 1
 
-                # 计算PNL
-                close_price = self.close_value / self.close_volume
-                rate = close_price / self.open_price - 1
-                if self.direction == Direction.SHORT:
-                    rate = rate * -1
-                pnl = self.open_value * rate
-                self.pnl += pnl
-
-                # fake
-                msg = f"平仓计算PNL\n\nclose_value {self.close_value}\nclose_volume {self.close_volume}\nopen_price {self.open_price}\nopen_value {self.open_value}\npnl {self.pnl}@{pnl}"
-                self.send_ding_talk(msg)
-
                 # 重置开平仓变量
                 self.open_value = 0
-                self.close_value = 0
-                self.close_volume = 0
         
         except Exception as e:
             msg = f"成交处理出错\n\n{e}"
