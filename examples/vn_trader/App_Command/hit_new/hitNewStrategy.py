@@ -444,14 +444,14 @@ class HitNewStrategy(CtaTemplate):
 
             trade_price = trade.price
             trade_volume = trade.volume
-            is_open = False
-            if self.direction == Direction.LONG and trade.direction == Direction.LONG:
-                is_open = True
+            # is_open = False
+            # if self.direction == Direction.LONG and trade.direction == Direction.LONG:
+            #     is_open = True
 
-            elif self.direction == Direction.SHORT and trade.direction == Direction.SHORT:
-                is_open = True
+            # elif self.direction == Direction.SHORT and trade.direction == Direction.SHORT:
+            #     is_open = True
 
-            if is_open:
+            if trade.offset == Offset.OPEN:
                 # 开仓价值
                 self.open_value += trade_price * trade_volume
 
@@ -471,7 +471,7 @@ class HitNewStrategy(CtaTemplate):
             if not self.pos:
                 # 统计开仓数量
                 self.open_count += 1
-                   
+
                 # 计算PNL
                 close_price = self.close_value / self.close_volume
                 rate = close_price / self.open_price - 1
@@ -481,7 +481,7 @@ class HitNewStrategy(CtaTemplate):
                 self.pnl += pnl
 
                 # fake
-                msg = f"平仓计算PNL\n\n{self.pnl}@{pnl}"
+                msg = f"平仓计算PNL\n\nclose_value {self.close_value}\nclose_volume {self.close_volume}\nopen_price {self.open_price}\nopen_value {self.open_value}\npnl {self.pnl}@{pnl}"
                 self.send_ding_talk(msg)
 
                 # 重置开平仓变量
