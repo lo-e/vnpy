@@ -1,5 +1,6 @@
 {
   "portfolio": { "name": "HIT_NEW_PORTFOLIO", "portfolio_value": 6 },
+  "coins": [],
   "signal": [
     {
       "strategy_name": "HIT_NEW_LONG_FIS_BINANCE",
