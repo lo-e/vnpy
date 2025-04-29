@@ -94,6 +94,7 @@ class HitNewEngine(BaseEngine):
         self.vt_tradeids = set()
         self.offset_converter = OffsetConverter(self.main_engine)
         self.portfolio: HitNewPortfolio = None
+        self.coins = []
 
     def init_engine(self):
         dir_path = Path(os.path.dirname(os.path.realpath(__file__)))
@@ -104,6 +105,9 @@ class HitNewEngine(BaseEngine):
         portfolio_setting = setting.get("portfolio", None)
         self.portfolio = HitNewPortfolio(self, portfolio_setting)
         self.load_portfolio_syncData()
+
+        # 历史交易代币
+        self.coins = setting.get("coins", [])
         
         # 导入策略
         signal_list = setting.get("signal", [])
@@ -538,6 +542,18 @@ class HitNewEngine(BaseEngine):
 
     def hit_new_strategy(self, setting):
         try:
+            # 排除历史交易代币
+            vt_symbol = setting["vt_symbol"]
+            exchange = vt_symbol.split(".")[-1]
+            if exchange == "OKX":
+                coin = vt_symbol.split("-USDT")[0]
+            
+            else:
+                coin = vt_symbol.split("USDT")[0]
+            if coin in self.coins:
+                return
+            self.coins.append(coin)
+
             # 执行策略
             start = setting["start"]
             if start:
@@ -550,7 +566,8 @@ class HitNewEngine(BaseEngine):
             dir_path = Path(os.path.dirname(os.path.realpath(__file__)))
             file_path = dir_path.joinpath("setting.json")
             setting_data = load_json_path(file_path)
-            
+
+            setting_data["coins"] = self.coins
             signal_list = setting_data.get("signal", [])
             signal_list.append(setting)
             setting_data["signal"] = signal_list
