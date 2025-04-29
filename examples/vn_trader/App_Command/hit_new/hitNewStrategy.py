@@ -35,6 +35,7 @@ class HitNewStrategy(CtaTemplate):
     # 变量列表
     variables = [
         "target_pos",
+        "open_count",
         "open_price",
         "pnl",
         "tradable",
@@ -59,6 +60,7 @@ class HitNewStrategy(CtaTemplate):
     # 同步列表
     syncs = [
         "target_pos",
+        "open_count",
         "open_value",
         "open_price",
         "close_value",
@@ -140,6 +142,7 @@ class HitNewStrategy(CtaTemplate):
         self.stop_short = False
         
         self.target_pos = 0
+        self.open_count = 0
         self.open_value = 0
         self.open_price = 0
         self.close_value = 0
@@ -466,6 +469,9 @@ class HitNewStrategy(CtaTemplate):
                 self.close_volume += trade_volume
 
             if not self.pos:
+                # 统计开仓数量
+                self.open_count += 1
+                   
                 # 计算PNL
                 close_price = self.close_value / self.close_volume
                 rate = close_price / self.open_price - 1
