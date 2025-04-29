@@ -444,14 +444,19 @@ class HitNewStrategy(CtaTemplate):
 
             trade_price = trade.price
             trade_volume = trade.volume
-            # is_open = False
-            # if self.direction == Direction.LONG and trade.direction == Direction.LONG:
-            #     is_open = True
 
-            # elif self.direction == Direction.SHORT and trade.direction == Direction.SHORT:
-            #     is_open = True
+            is_open = False
+            if self.direction == Direction.LONG and trade.direction == Direction.LONG:
+                is_open = True
+
+            elif self.direction == Direction.SHORT and trade.direction == Direction.SHORT:
+                is_open = True
 
             if trade.offset == Offset.OPEN:
+                if is_open:
+                    msg = f"开仓"
+                    self.send_ding_talk(msg)
+
                 # 开仓价值
                 self.open_value += trade_price * trade_volume
 
@@ -459,6 +464,10 @@ class HitNewStrategy(CtaTemplate):
                 self.open_price = self.open_value / abs(self.pos)
 
             else:
+                if not is_open:
+                    msg = f"平仓"
+                    self.send_ding_talk(msg)
+
                 # 开仓价值
                 self.open_value = self.open_price * abs(self.pos)
 
