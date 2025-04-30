@@ -222,6 +222,7 @@ class TrendignSniperStrategy(CtaTemplate):
     def on_minute_bar(self, bar: BarData):
         self.minute_bar = bar
         self.minute_am.update_bar(bar)
+        self.calculate_indicator()
 
         self.minute_5_bar_generator.update_bar(bar)
         self.hour_bar_generator.update_bar(bar)
@@ -229,14 +230,17 @@ class TrendignSniperStrategy(CtaTemplate):
     def on_minute_5_bar(self, bar: BarData):
         self.minute_5_bar = bar
         self.minute_5_am.update_bar(bar)
+        self.calculate_indicator()
+
 
     def on_hour_bar(self, bar: BarData):
         self.hour_bar = bar
         self.hour_am.update_bar(bar)
+        self.calculate_indicator()
 
     def on_bar_updated(self, _):
-        if not self.indicator_inited and len(self.live_bars) >= 2:
-            live_bar: BarData = list(self.live_bars.values())[-2]
+        if not self.indicator_inited and len(self.live_bars):
+            live_bar: BarData = list(self.live_bars.values())[0]
             self.load_bar_data(data_to=live_bar.datetime)
 
     def calculate_indicator(self):
