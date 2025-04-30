@@ -216,7 +216,8 @@ class TrendignSniperStrategy(CtaTemplate):
         
         elif len(self.live_bars) >= 2:
             # 下载最新Bar数据
-            self.portfolio.download_bar_data()
+            thread = Thread(target=self.portfolio.download_bar_data)
+            thread.start()
 
     def on_minute_bar(self, bar: BarData):
         self.minute_bar = bar
