@@ -4,7 +4,7 @@
 打新策略
 """
 
-from vnpy.trader.constant import Direction, Offset
+from vnpy.trader.constant import Direction, Offset, Interval
 from vnpy.app.cta_strategy.template import CtaTemplate
 from vnpy.trader.utility import ArrayManager
 from vnpy.app.cta_strategy.base import *
@@ -19,7 +19,7 @@ from queue import Empty, Queue
 from threading import Thread
 import time
 from copy import copy
-
+from collections import OrderedDict
 class TrendignSniperStrategy(CtaTemplate):
     className = "TrendignSniperStrategy"
     author = "loe"
@@ -34,13 +34,20 @@ class TrendignSniperStrategy(CtaTemplate):
     # 变量列表
     variables = [
         "target_pos",
+        "direction",
+        "signal_price",
+        "long_rebirth",
+        "short_rebirth",
         "open_count",
         "open_price",
         "tradable",
         "indicator_inited",
-        "bar_lack",
         "minute_bar_dt",
+        "minute_atr",
+        "minute_5_bar_dt",
+        "minute_5_atr",
         "hour_bar_dt",
+        "hour_atr",
         "exit_up",
         "exit_down"
     ]
@@ -48,6 +55,8 @@ class TrendignSniperStrategy(CtaTemplate):
     # 同步列表
     syncs = [
         "target_pos",
+        "direction",
+        "signal_price",
         "open_count",
         "open_value",
         "open_price"
@@ -60,16 +69,6 @@ class TrendignSniperStrategy(CtaTemplate):
         super(TrendignSniperStrategy, self).__init__(
             cta_engine=ctaEngine, strategy_name="", vt_symbol="", setting=setting
         )
-
-        # 交易方向配置判断
-        if self.direction == "LONG":
-            self.direction = Direction.LONG
-        
-        elif self.direction == "SHORT":
-            self.direction = Direction.SHORT
-
-        else:
-            raise(f"交易方向配置错误：{self.direction}")
         
         # 交易所识别
         exchange = self.vt_symbol.split(".")[-1]
@@ -84,40 +83,39 @@ class TrendignSniperStrategy(CtaTemplate):
         
         else:
             raise(f"合约交易所不支持：{exchange}")
-        
-        # 上市时间
-        self.market_on = datetime.strptime(self.market_on, f"%Y-%m-%d %H:%M:%S")
 
         self.tick: TickData = None
-        self.bar_lack = False
+        self.minute_bar_generator = BarGenerator(on_bar=self.on_live_minute_bar)
+        self.live_bars: OrderedDict = OrderedDict()
+
         self.minute_bar: BarData = None
         self.minute_bar_dt: str = ""
+        self.minute_am: ArrayManager = None
+        self.minute_atr = 0
+
+        self.minute_5_bar: BarData = None
+        self.minute_5_bar_dt: str = ""
+        self.minute_5_bar_generator: BarGenerator = None
+        self.minute_5_am: ArrayManager = None
+        self.minute_5_atr = 0
+
         self.hour_bar: BarData = None
         self.hour_bar_dt: str = ""
         self.hour_bar_generator: BarGenerator = None
-        self.entry_am: ArrayManager = None
-        self.exit_am: ArrayManager = None
+        self.hour_am: ArrayManager = None
+        self.hour_atr = 0
+
         self.check_target_pos_queue = Queue()
         self.check_target_pos_ts = 0
-        
         self.tradable = True
         self.indicator_inited = False
-        self.initial_hour_up = 0
-        self.hour_up = 0
-        self.hour_up_confirm = False
-        self.hour_up_rebirth = False
-        self.initial_hour_down = 0
-        self.hour_down = 0
-        self.hour_down_confirm = False
-        self.hour_down_rebirth = False
         self.exit_up = 0
         self.exit_down = 0
-        self.hour_bar_close_price = 0
-        self.lowest_price_after_short = 0
-        self.stop_long = False
-        self.stop_short = False
-        
         self.target_pos = 0
+        self.direction: Direction = Direction.NET
+        self.signal_price = 0
+        self.long_rebirth = False
+        self.short_rebirth = False
         self.open_count = 0
         self.open_value = 0
         self.open_price = 0
@@ -138,15 +136,13 @@ class TrendignSniperStrategy(CtaTemplate):
     def on_start(self):
         Thread(target=self.check_target_pos).start()
 
-    def load_bar_data(self):
+    def load_bar_data(self, data_to: datetime):
         try:
             # 数据库加载Bar数据
-            bar_lack = False
             mc = MongoClient()
             db = mc[MINUTE_DB_NAME]
             collection = db[self.vt_symbol]
-            data_from = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(hours=10)
-            data_to = datetime.now().replace(second=0, microsecond=0) - timedelta(minutes=1)
+            data_from = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(hours=25)
             flt = {"datetime": {"$gte": data_from, "$lte": data_to}}
             cursor = collection.find(flt).sort('datetime')
 
@@ -173,17 +169,29 @@ class TrendignSniperStrategy(CtaTemplate):
                 self.send_ding_talk(msg)
 
             if not bar_lack:
-                # 回测Bar数据
-                self.entry_am = ArrayManager(5)
-                self.exit_am = ArrayManager(10)
+                # 初始化工具
+                self.minute_am = ArrayManager(21)
+
+                self.minute_5_am = ArrayManager(21)
+                self.minute_5_bar_generator = BarGenerator(window=5, on_window_bar=self.on_minute_5_bar, interval=Interval.MINUTE)
+
+                self.hour_am = ArrayManager(21)
                 self.hour_bar_generator = BarGenerator(window=1, on_window_bar=self.on_hour_bar, interval=Interval.HOUR)
+
+                # 回测数据库Bar数据
                 for bar in bar_list:
-                    self.on_bar(bar)
+                    self.on_minute_bar(bar)
+                last_bar: BarData = bar_list[-1]
+                next_bar_dt = last_bar.datetime + timedelta(minutes=1)
+                
+                # 回测实时Bar数据
+                for live_dt, live_bar in self.live_bars.items():
+                    if live_dt == next_bar_dt:
+                        self.on_minute_bar(live_bar)
+                        next_bar_dt = live_dt.datetime + timedelta(minutes=1)
 
                 # 计算指标
                 self.calculate_indicator()
-
-            self.bar_lack = bar_lack
 
         except Exception as e:
             self.bar_lack = True
@@ -193,63 +201,62 @@ class TrendignSniperStrategy(CtaTemplate):
         # 同步数据
         self.put_timer_event()
 
-    def on_bar(self, bar):
+    def on_live_minute_bar(self, bar: BarData):
+        # 保存Bar数据
+        self.live_bars[bar.datetime] = copy(bar)
+        if len(self.live_bars) > 10:
+            self.live_bars.popitem(last=0)
+
+        # 初始化后用以生成指标
+        if self.indicator_inited:
+            self.on_minute_bar(bar)
+
+    def on_minute_bar(self, bar: BarData):
         self.minute_bar = bar
+        self.minute_am.update_bar(bar)
+
+        self.minute_5_bar_generator.update_bar(bar)
         self.hour_bar_generator.update_bar(bar)
+
+    def on_minute_5_bar(self, bar: BarData):
+        self.minute_5_bar = bar
+        self.minute_5_am.update_bar(bar)
 
     def on_hour_bar(self, bar: BarData):
         self.hour_bar = bar
-        self.entry_am.update_bar(bar)
-        self.exit_am.update_bar(bar)
+        self.hour_am.update_bar(bar)
 
     def on_bar_updated(self, _):
-        self.load_bar_data()
+        if not self.indicator_inited and len(self.live_bars) >= 2:
+            live_bar: BarData = list(self.live_bars.values())[-1]
+            self.load_bar_data(data_to=live_bar.datetime)
 
     def calculate_indicator(self):
         # 通用指标
         if self.minute_bar:
             self.minute_bar_dt = self.minute_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
-            if self.minute_bar.datetime >= self.market_on + timedelta(days=5):
-                self.tradable = False
+
+        if self.minute_5_bar:
+            self.minute_5_bar_dt = self.minute_5_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
 
         if self.hour_bar:
             self.hour_bar_dt = self.hour_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
-            self.hour_bar_close_price = self.hour_bar.close_price
 
-        # 入场指标
-        if self.entry_am.inited:
-            # 计算入场唐奇安通道
-            hour_up, hour_down = self.entry_am.donchian_oc(5)
+        # 分钟指标
+        if self.minute_am.inited:
+            self.minute_atr = self.minute_am.atr(20)
 
-            # 确定初始通道
-            if not self.initial_hour_up:
-                self.initial_hour_up = hour_up
+        # 5分钟指标
+        if self.minute_5_am.inited:
+            self.minute_5_atr = self.minute_5_am.atr(20)
+            self.exit_up, self.exit_down = self.minute_5_am.donchian(10)
 
-            if not self.initial_hour_down:
-                self.initial_hour_down = hour_down
-
-            # 判断实际通道
-            if not self.hour_up_confirm and self.hour_up != hour_up and hour_up > self.initial_hour_down:
-                self.hour_up = hour_up
-                self.hour_up_rebirth = False
+        # 小时指标
+        if self.hour_am.inited:
+            self.hour_atr = self.hour_am.atr(20)
             
-            if not self.hour_down_confirm and self.hour_down != hour_down and hour_down < self.initial_hour_up:
-                self.hour_down = hour_down
-                self.hour_down_rebirth = False
-            
-            # 指标完成初始化
-            self.indicator_inited = True
-
-        # 离场指标
-        if self.direction == Direction.SHORT and self.target_pos and self.exit_up:
-            self.lowest_price_after_short = min(self.lowest_price_after_short, self.hour_bar.low_price) if self.lowest_price_after_short else self.hour_bar.low_price
-            rise_rate = self.hour_bar_close_price / self.lowest_price_after_short - 1
-            if rise_rate >= 0.2 and self.hour_bar_close_price >= self.exit_up:
-                self.stop_short = True
-
-        if self.exit_am.inited:
-            # 计算出场唐奇安通道
-            self.exit_up, self.exit_down = self.exit_am.donchian(10)
+        # 指标完成初始化
+        self.indicator_inited = True
 
     def check_target_pos(self):
         while True:
@@ -317,48 +324,73 @@ class TrendignSniperStrategy(CtaTemplate):
         
         # 最新Tick
         self.tick = copy(tick)
+        self.minute_bar_generator.update_tick(copy(tick))
+
+        # 判断信号
+        if not self.direction and not self.signal_price:
+            minute_high = self.minute_bar_generator.bar.high_price
+            minute_low = self.minute_bar_generator.bar.low_price
+            minute_rise = tick.last_price - minute_low
+            minute_fall = minute_high - tick.last_price
+
+            minute_5_high = self.minute_5_bar_generator.window_bar.high_price
+            minute_5_low = self.minute_5_bar_generator.window_bar.low_price
+            minute_5_rise = tick.last_price - minute_5_low
+            minute_5_fall = minute_5_high - tick.last_price
+
+            hour_high = self.hour_bar_generator.hour_bar.high_price
+            hour_low = self.hour_bar_generator.hour_bar.low_price
+            hour_rise = tick.last_price - hour_low
+            hour_fall = hour_high - tick.last_price
+
+            # 多头趋势
+            if (self.minute_atr and minute_rise >= self.minute_atr * 3) or (self.minute_5_atr and minute_5_rise >= self.minute_5_atr * 3) or (self.hour_atr and hour_rise >= self.hour_atr * 3):
+                self.direction = Direction.LONG
+                self.signal_price = tick.last_price
+                self.long_rebirth = True
+
+            # 空头趋势
+            if (self.minute_atr and minute_fall >= self.minute_atr * 3) or (self.minute_5_atr and minute_5_fall >= self.minute_5_atr * 3) or (self.hour_atr and hour_fall >= self.hour_atr * 3):
+                self.direction = Direction.SHORT
+                self.signal_price = tick.last_price
+                self.short_rebirth = True
         
         # 判断Rebirth
-        if self.hour_up and tick.last_price < self.hour_up:
-            self.hour_up_rebirth = True
-            self.stop_long = False
+        if self.direction == Direction.LONG and self.signal_price and tick.last_price <= self.signal_price * 0.99:
+            self.long_rebirth = True
 
-        if self.hour_down and tick.last_price > self.hour_down:
-            self.hour_down_rebirth = True
-            self.stop_short = False
+        if self.direction == Direction.SHORT and self.signal_price and tick.last_price >= self.signal_price * 1.01:
+            self.short_rebirth = True
 
         # 判断离场
         if self.direction == Direction.LONG and self.target_pos and self.exit_down and tick.last_price <= self.exit_down:
-            self.stop_long = True
+            stop_long = True
             
-        if self.direction == Direction.SHORT and self.target_pos and self.open_price and tick.last_price <= self.open_price * 0.5:
-            self.stop_short = True
+        if self.direction == Direction.SHORT and self.target_pos and self.exit_up and tick.last_price >= self.exit_up:
+            stop_short = True
         
         target_pos_updated = False
         if self.target_pos:
-            if self.direction == Direction.LONG and (self.stop_long or (self.hour_up and tick.last_price <= self.hour_up * 0.99) or (self.open_price and tick.last_price <= self.open_price * 0.99)):
+            if self.direction == Direction.LONG and (self.stop_long or (self.signal_price and tick.last_price <= self.signal_price * 0.99) or (self.open_price and tick.last_price <= self.open_price * 0.99)):
                 # 多头平仓
-                self.hour_up_rebirth = False
+                self.long_rebirth = False
                 self.target_pos = 0
                 target_pos_updated = True
 
-            if self.direction == Direction.SHORT and (self.stop_short or (self.hour_down and tick.last_price >= self.hour_down * 1.01) or (self.open_price and tick.last_price >= self.open_price * 1.01)):
+            if self.direction == Direction.SHORT and (self.stop_short or (self.signal_price and tick.last_price >= self.hour_down * 1.01) or (self.open_price and tick.last_price >= self.open_price * 1.01)):
                 # 空头平仓
-                self.hour_down_rebirth = False
+                self.short_rebirth = False
                 self.target_pos = 0
                 target_pos_updated = True
-                self.lowest_price_after_short = 0
         
-        elif self.tradable and self.indicator_inited and not self.bar_lack:
-            if self.direction == Direction.LONG and self.hour_up and not self.stop_long and ((self.hour_up_rebirth and tick.last_price >= self.hour_up) or (self.open_price and tick.last_price >= max(self.hour_up, self.open_price))):
+        elif self.tradable and self.indicator_inited:
+            if self.direction == Direction.LONG and self.signal_price and ((self.long_rebirth and tick.last_price >= self.signal_price) or (self.open_price and tick.last_price >= max(self.signal_price, self.open_price))):
                 # 多头开仓
-                self.hour_up_confirm = True
                 self.target_pos = self.portfolio.portfolio_value / tick.last_price
                 target_pos_updated = True
 
-            if self.direction == Direction.SHORT and self.hour_down and not self.stop_short and ((self.hour_down_rebirth and tick.last_price <= self.hour_down) or (self.open_price and tick.last_price <= min(self.open_price, self.hour_down))):
+            if self.direction == Direction.SHORT and self.signal_price and ((self.short_rebirth and tick.last_price <= self.signal_price) or (self.open_price and tick.last_price <= min(self.signal_price, self.open_price))):
                 # 空头开仓
-                self.hour_down_confirm = True
                 self.target_pos = self.portfolio.portfolio_value / tick.last_price * -1
                 target_pos_updated = True
 
