@@ -53,15 +53,15 @@ class TrendingSniperPortfolio(object):
         self.check_instruments_data(for_init=True)
 
     def on_timer(self):
+        current_hour_time = datetime.now().replace(minute=0, second=0, microsecond=0)
+
         # 下载Bar数据
-        # current_minute_time = get_minute_time(datetime.now(), 20)
-        # download_bar_minute_time = download_bar_minute_time = get_minute_time(self.download_bar_time, 20) if self.download_bar_time else None
-        # if download_bar_minute_time != current_minute_time and not self.bar_downloading:
+        # download_bar_hour_time = self.download_bar_time.replace(minute=0, second=0, microsecond=0) if self.download_bar_time else None
+        # if download_bar_hour_time != current_hour_time and not self.bar_downloading:
         #     thread = Thread(target=self.download_bar_data)
         #     thread.start()
 
         # 下载合约列表数据
-        current_hour_time = datetime.now().replace(minute=0, second=0, microsecond=0)
         download_instruments_hour_time = self.download_instruments_time.replace(minute=0, second=0, microsecond=0) if self.download_instruments_time else None
         if download_instruments_hour_time != current_hour_time and not self.instruments_downloading:
             self.download_instruments_time = datetime.now()
@@ -150,6 +150,9 @@ class TrendingSniperPortfolio(object):
         self.add_subscribe_vt_symbols(for_init)
 
     def download_bar_data(self):
+        if self.bar_downloading:
+            return
+        
         # 下载Bar数据
         print_(f"Bar数据下载中..")
         self.bar_downloading = True
