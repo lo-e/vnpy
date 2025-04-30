@@ -57,7 +57,6 @@ class TrendingSniperPortfolio(object):
         # current_minute_time = get_minute_time(datetime.now(), 20)
         # download_bar_minute_time = download_bar_minute_time = get_minute_time(self.download_bar_time, 20) if self.download_bar_time else None
         # if download_bar_minute_time != current_minute_time and not self.bar_downloading:
-        #     self.download_bar_time = datetime.now()
         #     thread = Thread(target=self.download_bar_data)
         #     thread.start()
 
@@ -121,7 +120,6 @@ class TrendingSniperPortfolio(object):
 
         # 初始下载Bar数据
         if for_init:
-            self.download_bar_time = datetime.now()
             self.download_bar_data()
 
         # 订阅合约
@@ -143,6 +141,7 @@ class TrendingSniperPortfolio(object):
         # 下载Bar数据
         print_(f"Bar数据下载中..")
         self.bar_downloading = True
+        self.download_bar_time = datetime.now()
         download_success = False
         result_bar_list = []
         try_count = 0

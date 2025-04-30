@@ -74,7 +74,7 @@ class MonitorEngine(object):
         tick: TickData = event.data
         tick_dt = tick.datetime.replace(tzinfo=None)
         delay = time.time() - tick_dt.timestamp()
-        if delay >= 1:
+        if delay >= 2:
             print_(f"{tick.vt_symbol} 数据延迟 {int(time.time())} - {int(tick_dt.timestamp())}")
             if time.time() > self.tick_delay_time + 60:
                 self.tick_delay_time = time.time()
