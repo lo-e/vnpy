@@ -106,10 +106,10 @@ class MonitorEngine(object):
         if (now.minute % 1 == 0) and (now.second == 15):
             # 输出Tick信息
             sorted_duration_bar_list = sorted(self.history_duration_bar_data.values(), key=lambda x: x.tick_count)
-            for duration_bar in sorted_duration_bar_list:
+            for duration_bar in sorted_duration_bar_list[-10:]:
                 dt_str = duration_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                 print_(f"{duration_bar.vt_symbol}({duration_bar.tick_count})\t{duration_bar.open}\t{duration_bar.high}\t{duration_bar.low}\t{duration_bar.close}")
-            print_(f"合约总数 {len(sorted_duration_bar_list)}")
+            print_(f"Tick数据合约总数 {len(sorted_duration_bar_list)}")
 
             # 检查交易所连接
             gateway_all_connected = self.check_gateway_connected()

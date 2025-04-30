@@ -67,7 +67,8 @@ class TurtleCryptoDataDownloading(object):
         from_data_base: bool = False,
         api_check: bool = False,
         save_to: str = "",
-        delete_history_data: bool = True
+        delete_history_data: bool = True,
+        show_progress: bool = True
     ):
         if not to_date:
             to_date = datetime.now() + timedelta(days=2)
@@ -93,6 +94,7 @@ class TurtleCryptoDataDownloading(object):
                 from_data_base=from_data_base,
                 api_check=api_check,
                 save_to=save_to,
+                show_progress=show_progress
             )
             self.threads.append(thread)
             thread.start()
@@ -117,7 +119,8 @@ class TurtleCryptoDataDownloading(object):
         from_data_base: bool = False,
         api_check: bool = False,
         save_to: str = "",
-        delete_history_data: bool = True
+        delete_history_data: bool = True,
+        show_progress: bool = True
     ):
         if not to_date:
             to_date = datetime.now() + timedelta(days=2)
@@ -143,6 +146,7 @@ class TurtleCryptoDataDownloading(object):
                 from_data_base=from_data_base,
                 api_check=api_check,
                 save_to=save_to,
+                show_progress=show_progress
             )
             self.threads.append(thread)
             thread.start()
@@ -167,7 +171,8 @@ class TurtleCryptoDataDownloading(object):
         from_data_base: bool = False,
         api_check: bool = False,
         save_to: str = "",
-        delete_history_data: bool = True
+        delete_history_data: bool = True,
+        show_progress: bool = True
     ):
         if not to_date:
             to_date = datetime.now() + timedelta(days=2)
@@ -193,6 +198,7 @@ class TurtleCryptoDataDownloading(object):
                 from_data_base=from_data_base,
                 api_check=api_check,
                 save_to=save_to,
+                show_progress=show_progress
             )
             self.threads.append(thread)
             thread.start()
@@ -411,6 +417,7 @@ class DownloadThread(object):
         from_data_base: bool = False,
         api_check: bool = False,
         save_to: str = "",
+        show_progress: bool = True
     ):
         self.engine = engine
         self.exchange: Exchange = exchange
@@ -421,6 +428,7 @@ class DownloadThread(object):
         self.from_data_base = from_data_base
         self.api_check = api_check
         self.save_to = save_to
+        self.show_progress = show_progress
 
         self.thread = Thread(target=self.run)
         self.active = False
@@ -438,7 +446,8 @@ class DownloadThread(object):
         vt_symbol = f"{self.contract}.{self.exchange.value}"
         from_time = datetime.now() - timedelta(days=self.days)
         from_time = datetime(from_time.year, from_time.month, from_time.day)
-        print(f"{vt_symbol} Bar数据下载中..")
+        if self.show_progress:
+            print(f"{vt_symbol} Bar数据下载中..")
 
         # 接口获取合约起始时间
         first_bar_dt = None
@@ -514,7 +523,8 @@ class DownloadThread(object):
                 end_data = collection.find_one(sort=[("datetime", DESCENDING)])
                 db_end_dt = end_data["datetime"] if end_data else None
 
-                print(f"{vt_symbol} 数据库起止时间\t{db_start_dt}\t{db_end_dt}")
+                if self.show_progress:
+                    print(f"{vt_symbol} 数据库起止时间\t{db_start_dt}\t{db_end_dt}")
                 if db_end_dt:
                     from_time = db_end_dt - timedelta(minutes=10)
 
@@ -523,8 +533,9 @@ class DownloadThread(object):
         while from_time:
             if from_time >= to_time:
                 break
-
-            print(f"{vt_symbol} {from_time}..")
+            
+            if self.show_progress:
+                print(f"{vt_symbol} {from_time}..")
             download_failed = False
             try:
                 if self.exchange == Exchange.BINANCE:
@@ -567,22 +578,24 @@ class DownloadThread(object):
             elif from_time:
                 from_time = from_time + timedelta(minutes=1)
 
-        print(f"{vt_symbol} Bar数据下载完成！")
+        if self.show_progress:
+            print(f"{vt_symbol} Bar数据下载完成！")
         #"""
         
         #"""
         # 1m数据入数据库
-        print(f"{vt_symbol} Bar数据导入数据库..")
+        if self.show_progress:
+            print(f"{vt_symbol} Bar数据导入数据库..")
         if self.exchange == Exchange.BINANCE:
-            engine = CSVsBinanceBarLocalEngine(duration="1m", contract=self.contract, target_dir=self.save_to)
+            engine = CSVsBinanceBarLocalEngine(duration="1m", contract=self.contract, target_dir=self.save_to, show_progress=self.show_progress)
             engine.startWork()
 
         elif self.exchange == Exchange.OKX:
-            engine = CSVsOKXBarLocalEngine(duration="1m", contract=self.contract, target_dir=self.save_to)
+            engine = CSVsOKXBarLocalEngine(duration="1m", contract=self.contract, target_dir=self.save_to, show_progress=self.show_progress)
             engine.startWork()
 
         elif self.exchange == Exchange.BYBIT:
-            engine = CSVsBybitBarLocalEngine(duration="1", contract=self.contract, target_dir=self.save_to)
+            engine = CSVsBybitBarLocalEngine(duration="1", contract=self.contract, target_dir=self.save_to, show_progress=self.show_progress)
             engine.startWork()
         #"""
 

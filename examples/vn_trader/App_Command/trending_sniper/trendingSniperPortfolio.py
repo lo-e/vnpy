@@ -30,6 +30,7 @@ class TrendingSniperPortfolio(object):
         self.portfolio_value = 0
         self.inited = False
         self.starting = False
+        self.coins = set()
         self.strategy_symbols = set()
         self.exchange_instruments_data = {}
         
@@ -46,27 +47,17 @@ class TrendingSniperPortfolio(object):
                 setattr(self, name, setting[name])
 
     def on_init(self):
-        self.load_instruments_data()
-
-        # 订阅OKX合约
-        start = time.time()
-        print_(f"开始订阅OKX合约..")
-        okx_symbols = list(self.exchange_instruments_data.get("OKX", {}).keys())
-        for symbol in okx_symbols:
-            self.subscribe(f"{symbol}.OKX")
-
-        cost = time.time() - start
-        print_(f"OKX合约订阅完成！（{len(okx_symbols)}）用时 {cost}s")
+        self.check_instruments_data(for_init=True)
 
     def on_start(self):
         pass
 
     def on_timer(self):
         # 下载Bar数据
-        current_minute_time = get_5minute_time(datetime.now())
+        current_minute_time = get_10minute_time(datetime.now())
         download_bar_minute_time = None
         if self.download_bar_time:
-            download_bar_minute_time = get_5minute_time(self.download_bar_time)
+            download_bar_minute_time = get_10minute_time(self.download_bar_time)
         if download_bar_minute_time != current_minute_time and not self.bar_downloading:
             self.download_bar_time = datetime.now()
             thread = Thread(target=self.download_bar_data)
@@ -75,8 +66,7 @@ class TrendingSniperPortfolio(object):
         # 下载合约列表数据
         current_hour_time = datetime.now().replace(minute=0, second=0, microsecond=0)
         download_instruments_hour_time = self.download_instruments_time.replace(minute=0, second=0, microsecond=0) if self.download_instruments_time else None
-        download_bar_after = True if self.download_bar_time and datetime.now() >= self.download_bar_time + timedelta(seconds=5) else False
-        if download_instruments_hour_time != current_hour_time and download_bar_after and not self.instruments_downloading:
+        if download_instruments_hour_time != current_hour_time and not self.instruments_downloading:
             self.download_instruments_time = datetime.now()
             thread = Thread(target=self.download_instruments_data)
             thread.start()
@@ -102,9 +92,57 @@ class TrendingSniperPortfolio(object):
         except Exception as e:
             msg = f"HitNewPortfolio 获取交易所USDT合约列表出错\n\n{e}"
             self.send_ding_talk(msg)
+    
+    def add_subscribe_vt_symbols(self, for_init: bool=False):
+        # 添加合约
+        vt_symbols = set()
+        okx_symbols = list(self.exchange_instruments_data.get("OKX", {}).keys())
+        for symbol in okx_symbols:
+            coin = symbol.split("-USDT")[0]
+            if coin not in self.coins:
+                self.coins.add(coin)
+                vt_symbols.add(f"{symbol}.OKX")
+
+        # binance_symbols = list(self.exchange_instruments_data.get("BINANCE", {}).keys())
+        # for symbol in binance_symbols:
+        #     coin = symbol.split("USDT")[0]
+        #     if coin not in self.coins:
+        #         self.coins.add(coin)
+        #         vt_symbols.add(f"{symbol}.BINANCE")
+        
+        # bybit_symbols = list(self.exchange_instruments_data.get("BYBIT", {}).keys())
+        # for symbol in bybit_symbols:
+        #     coin = symbol.split("USDT")[0]
+        #     if coin not in self.coins:
+        #         self.coins.add(coin)
+        #         vt_symbols.add(f"{symbol}.BYBIT")
+        
+        for vt_symbol in vt_symbols:
+            self.strategy_symbols.add(vt_symbol)
+
+        # 初始下载Bar数据
+        if for_init:
+            self.download_bar_time = datetime.now()
+            self.download_bar_data()
+
+        # 订阅合约
+        start = time.time()
+        print_(f"开始订阅合约（{len(vt_symbols)}）..")
+        for vt_symbol in vt_symbols:
+            self.subscribe(vt_symbol)
+        cost = time.time() - start
+        print_(f"合约订阅完成！（{len(vt_symbols)}）用时 {cost}s\n")
+
+    def check_instruments_data(self, for_init: bool=False):
+        # 导入交易所合约
+        self.load_instruments_data()
+
+        # 添加订阅合约
+        self.add_subscribe_vt_symbols(for_init)
 
     def download_bar_data(self):
         # 下载Bar数据
+        print_(f"Bar数据下载中..")
         self.bar_downloading = True
         download_success = False
         result_bar_list = []
@@ -127,17 +165,17 @@ class TrendingSniperPortfolio(object):
                 for exchange, exchange_symbols in contract_exchange_dict.items():
                     if exchange == "BINANCE":
                         self.download_engine.download_from_binance(
-                            contract_list=exchange_symbols, days=1, from_data_base=True, save_to=self.name, delete_history_data=False
+                            contract_list=exchange_symbols, days=1, from_data_base=True, save_to=self.name, delete_history_data=False, show_progress=False
                         )
 
                     elif exchange == "OKX":
                         self.download_engine.download_from_okx(
-                            contract_list=exchange_symbols, days=1, from_data_base=True, save_to=self.name, delete_history_data=False
+                            contract_list=exchange_symbols, days=1, from_data_base=True, save_to=self.name, delete_history_data=False, show_progress=False
                         )
                     
                     elif exchange == "BYBIT":
                         self.download_engine.download_from_bybit(
-                            contract_list=exchange_symbols, days=1, from_data_base=True, save_to=self.name, delete_history_data=False
+                            contract_list=exchange_symbols, days=1, from_data_base=True, save_to=self.name, delete_history_data=False, show_progress=False
                         )
 
                 # 检查下载结果
@@ -149,8 +187,8 @@ class TrendingSniperPortfolio(object):
 
                     now = datetime.now().replace(second=0, microsecond=0)
                     dt_from = now - timedelta(minutes=10)
-                    dt_to = now - timedelta(minutes=1)
-                    flt = {"datetime": {"$gte": dt_from, "$lte": dt_to}}
+                    dt_to = now - timedelta(minutes=5)
+                    flt = {"datetime": {"$gte": dt_from}}
                     bar_list = list(collection.find(flt).sort("datetime", DESCENDING))
                     if bar_list:
                         data = bar_list[0]
@@ -161,16 +199,13 @@ class TrendingSniperPortfolio(object):
                             datetime=None,
                             endDatetime=None)
                         bar.__dict__ = data
-                        if bar.datetime == dt_to:
-                            result_bar_list.append(copy(bar))
-
-                        else:
+                        result_bar_list.append(copy(bar))
+                        if bar.datetime < dt_to:
                             all_downloaded = False
                             break
 
-                if all_downloaded:
-                    download_success = True
-                    break
+                download_success = all_downloaded
+                break
 
             except Exception as e:
                 msg = f"TrendingSniperPortfolio 下载Bar数据出错\n\n{e}"
@@ -178,10 +213,10 @@ class TrendingSniperPortfolio(object):
 
         if download_success:
             # 输出结果
-            for bar in result_bar_list:
-                print(f"{bar.datetime}\t{bar.vt_symbol}\t{bar.open_price}\t{bar.high_price}\t{bar.low_price}\t{bar.close_price}")
+            # for bar in result_bar_list:
+            #     print(f"{bar.datetime}\t{bar.vt_symbol}\t{bar.open_price}\t{bar.high_price}\t{bar.low_price}\t{bar.close_price}")
 
-            msg = f"Bar数据已更新！\n"
+            msg = f"Bar数据已更新！（{len(result_bar_list)}）\n"
             print_(msg)
 
             # 发送事件
@@ -189,7 +224,7 @@ class TrendingSniperPortfolio(object):
             self.cta_engine.event_engine.put(event)
 
         else:
-            msg = f"TrendingSniperPortfolio 下载Bar数据失败"
+            msg = f"TrendingSniperPortfolio Bar数据下载缺失！"
             self.send_ding_talk(msg)
 
         self.bar_downloading = False
@@ -229,7 +264,7 @@ class TrendingSniperPortfolio(object):
                 msg = f"HitNewPortfolio 下载合约列表数据出错\n\n{e}"
                 self.send_ding_talk(msg)
 
-        # 交易所合约上新，更新Gateway合约列表
+        # 交易所合约上新，更新Gateway合约列表、更新订阅
         update_contract_gateway_names = set()
         if okx_new:
             update_contract_gateway_names.add("OKX")
@@ -242,9 +277,7 @@ class TrendingSniperPortfolio(object):
 
         if len(update_contract_gateway_names):
             self.query_gateway_contract(list(update_contract_gateway_names))
-
-        # 重新获取交易所USDT合约列表
-        self.load_instruments_data()
+            self.check_instruments_data()
 
         if download_success:
             msg = f"合约列表数据已更新！\n"
@@ -269,7 +302,6 @@ class TrendingSniperPortfolio(object):
         while not success:
             contract = self.cta_engine.main_engine.get_contract(vt_symbol)
             if contract:
-                time.sleep(1)
                 req = SubscribeRequest(symbol=contract.symbol, exchange=contract.exchange)
                 self.cta_engine.main_engine.subscribe(req, contract.gateway_name)
                 success = True
@@ -292,6 +324,13 @@ def print_(msg: str):
 def get_5minute_time(dt: datetime):
     minute = dt.minute
     while minute % 5:
+        minute -= 1
+    result = dt.replace(minute=minute, second=0, microsecond=0)
+    return result
+
+def get_10minute_time(dt: datetime):
+    minute = dt.minute
+    while minute % 10:
         minute -= 1
     result = dt.replace(minute=minute, second=0, microsecond=0)
     return result

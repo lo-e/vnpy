@@ -19,11 +19,12 @@ from vnpy.trader.utility import DIR_SYMBOL
 from .utility import get_csv_path
 
 class CSVsBybitBarLocalEngine(object):
-    def __init__(self, duration: str, contract: str, target_dir: str=""):
+    def __init__(self, duration: str, contract: str, target_dir: str="", show_progress: bool=True):
         super(CSVsBybitBarLocalEngine, self).__init__()
         # 周期
         self.duration = duration
         self.contract = contract
+        self.show_progress = show_progress
 
         # 项目路径
         csv_path = get_csv_path(target_dir=target_dir)
@@ -129,19 +130,20 @@ class CSVsBybitBarLocalEngine(object):
                 #         print("*" * 60, "\n")
 
         # 打印进程
-
-        print(f"{self.contract}.BYBIT Bar数据导入数据库完成！")
+        if self.show_progress:
+            print(f"{self.contract}.BYBIT Bar数据导入数据库完成！")
         # if totalCount:
         #     sub = time() - totalStartTime
         #     print("总用时：", sub, "s")
         #     print("总数据量：", totalCount, "\n")
 
 class CSVsOKXBarLocalEngine(object):
-    def __init__(self, duration: str, contract: str, target_dir: str=""):
+    def __init__(self, duration: str, contract: str, target_dir: str="", show_progress: bool=True):
         super(CSVsOKXBarLocalEngine, self).__init__()
         # 周期
         self.duration = duration
         self.contract = contract
+        self.show_progress = show_progress
 
         # 项目路径
         csv_path = get_csv_path(target_dir=target_dir)
@@ -248,7 +250,8 @@ class CSVsOKXBarLocalEngine(object):
                 #         print("*" * 60, "\n")
 
         # 打印进程
-        print(f"{self.contract}.OKX Bar数据导入数据库完成！")
+        if self.show_progress:
+            print(f"{self.contract}.OKX Bar数据导入数据库完成！")
 
         # if totalCount:
         #     sub = time() - totalStartTime
@@ -256,11 +259,12 @@ class CSVsOKXBarLocalEngine(object):
         #     print("总数据量：", totalCount, "\n")
 
 class CSVsBinanceBarLocalEngine(object):
-    def __init__(self, duration: str, contract: str, target_dir: str=""):
+    def __init__(self, duration: str, contract: str, target_dir: str="", show_progress: bool=True):
         super(CSVsBinanceBarLocalEngine, self).__init__()
 
         self.duration = duration                                                # 周期
         self.contract = contract                                                # 合约
+        self.show_progress = show_progress
         full_contract = f"BINANCE.{self.contract}"                              # 完整合约
         csv_path = get_csv_path(target_dir=target_dir)                          # CSVs路径
         self.walkingDir = csv_path + f"{full_contract}{DIR_SYMBOL}{duration}"   # 项目路径
@@ -357,7 +361,8 @@ class CSVsBinanceBarLocalEngine(object):
                 #         print("*" * 60, "\n")
 
         # 打印进程
-        print(f"{self.contract}.BINANCE Bar数据导入数据库完成！")
+        if self.show_progress:
+            print(f"{self.contract}.BINANCE Bar数据导入数据库完成！")
 
         # if totalCount:
         #     sub = time() - totalStartTime
