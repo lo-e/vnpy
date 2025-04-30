@@ -77,6 +77,7 @@ class MonitorEngine(object):
         if delay >= 1:
             print_(f"{tick.vt_symbol} 数据延迟 {time.time()} - {tick_dt.timestamp()}")
             if time.time() > self.tick_delay_time + 60:
+                self.tick_delay_time = time.time()
                 msg = f"Tick数据延迟 {delay}s"
                 self.main_engine.send_ding_talk(msg)
 

@@ -29,8 +29,6 @@ class TrendignSniperStrategy(CtaTemplate):
         "strategy_name",
         "vt_symbol",
         "exchange_user",
-        "direction",
-        "market_on"
     ]
 
     # 变量列表
@@ -43,18 +41,8 @@ class TrendignSniperStrategy(CtaTemplate):
         "bar_lack",
         "minute_bar_dt",
         "hour_bar_dt",
-        "hour_up",
-        "hour_up_confirm",
-        "hour_up_rebirth",
-        "hour_down",
-        "hour_down_confirm",
-        "hour_down_rebirth",
         "exit_up",
-        "exit_down",
-        "hour_bar_close_price",
-        "lowest_price_after_short",
-        "stop_long",
-        "stop_short"
+        "exit_down"
     ]
 
     # 同步列表
@@ -62,17 +50,7 @@ class TrendignSniperStrategy(CtaTemplate):
         "target_pos",
         "open_count",
         "open_value",
-        "open_price",
-        "pnl",
-        "initial_hour_up",
-        "hour_up",
-        "hour_up_confirm",
-        "initial_hour_down",
-        "hour_down",
-        "hour_down_confirm",
-        "lowest_price_after_short",
-        "stop_long",
-        "stop_short"
+        "open_price"
     ]
 
     def __init__(self, ctaEngine, setting):

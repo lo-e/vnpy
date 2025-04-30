@@ -62,7 +62,6 @@ class HitNewStrategy(CtaTemplate):
         "open_count",
         "open_value",
         "open_price",
-        "pnl",
         "initial_hour_up",
         "hour_up",
         "hour_up_confirm",
