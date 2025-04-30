@@ -94,8 +94,9 @@ class TrendingSniperPortfolio(object):
             self.send_ding_talk(msg)
     
     def add_subscribe_vt_symbols(self, for_init: bool=False):
-        # 添加合约
         vt_symbols = set()
+
+        # 添加合约
         okx_symbols = list(self.exchange_instruments_data.get("OKX", {}).keys())
         for symbol in okx_symbols:
             coin = symbol.split("-USDT")[0]
