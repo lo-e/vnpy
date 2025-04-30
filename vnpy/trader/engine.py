@@ -388,10 +388,12 @@ class MainEngine:
                     'upsert':upsert,
                     'callback':callback}
             self.thread_executor.submit(self.do_dbupdate, data)
-        except:
+
+        except Exception as e:
             if callback:
                 back_data = copy(d)
                 back_data['result'] = False
+                back_data['msg'] = str(e)
                 callback(back_data)
 
     def dbLogging(self, event):
@@ -426,9 +428,11 @@ class MainEngine:
             if callback:
                 back_data['result'] = True
                 callback(back_data)
-        except:
+                
+        except Exception as e:
             if callback:
                 back_data['result'] = False
+                back_data['msg'] = str(e)
                 callback(back_data)
 
     def check_gateway_connected(self, gateway_name:str):

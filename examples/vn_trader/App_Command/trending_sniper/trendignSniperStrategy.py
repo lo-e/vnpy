@@ -112,7 +112,7 @@ class TrendignSniperStrategy(CtaTemplate):
         self.exit_up = 0
         self.exit_down = 0
         self.target_pos = 0
-        self.direction: Direction = Direction.NET
+        self.direction = ""
         self.signal_price = 0
         self.long_rebirth = False
         self.short_rebirth = False
@@ -185,13 +185,16 @@ class TrendignSniperStrategy(CtaTemplate):
                 next_bar_dt = last_bar.datetime + timedelta(minutes=1)
                 
                 # 回测实时Bar数据
+                data_valid = False
                 for live_dt, live_bar in self.live_bars.items():
                     if live_dt == next_bar_dt:
+                        data_valid = True
                         self.on_minute_bar(live_bar)
                         next_bar_dt = live_dt.datetime + timedelta(minutes=1)
 
                 # 计算指标
-                self.calculate_indicator()
+                if data_valid:
+                    self.calculate_indicator()
 
         except Exception as e:
             self.bar_lack = True
@@ -273,7 +276,7 @@ class TrendignSniperStrategy(CtaTemplate):
                     continue
 
                 # 撮合交易
-                if self.direction == Direction.LONG:
+                if self.direction == "LONG":
                     if self.target_pos < 0 or self.pos < 0:
                         msg = f"仓位异常\n\ntarget {self.target_pos}\npos {self.pos}"
                         self.send_ding_talk(msg)
@@ -290,7 +293,7 @@ class TrendignSniperStrategy(CtaTemplate):
                         trade_price = self.tick.last_price * 0.995
                         self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(gap))
 
-                if self.direction == Direction.SHORT:
+                if self.direction == "SHORT":
                     if self.target_pos > 0 or self.pos > 0:
                         msg = f"仓位异常\n\ntarget {self.target_pos}\npos {self.pos}"
                         self.send_ding_talk(msg)
@@ -331,7 +334,7 @@ class TrendignSniperStrategy(CtaTemplate):
         self.minute_bar_generator.update_tick(copy(tick))
 
         # 判断信号
-        if not self.direction and not self.signal_price:
+        if not self.direction and not self.signal_price and self.indicator_inited:
             minute_high = self.minute_bar_generator.bar.high_price
             minute_low = self.minute_bar_generator.bar.low_price
             minute_rise = tick.last_price - minute_low
@@ -349,51 +352,51 @@ class TrendignSniperStrategy(CtaTemplate):
 
             # 多头趋势
             if (self.minute_atr and minute_rise >= self.minute_atr * 3) or (self.minute_5_atr and minute_5_rise >= self.minute_5_atr * 3) or (self.hour_atr and hour_rise >= self.hour_atr * 3):
-                self.direction = Direction.LONG
+                self.direction = "LONG"
                 self.signal_price = tick.last_price
                 self.long_rebirth = True
 
             # 空头趋势
             if (self.minute_atr and minute_fall >= self.minute_atr * 3) or (self.minute_5_atr and minute_5_fall >= self.minute_5_atr * 3) or (self.hour_atr and hour_fall >= self.hour_atr * 3):
-                self.direction = Direction.SHORT
+                self.direction = "SHORT"
                 self.signal_price = tick.last_price
                 self.short_rebirth = True
         
         # 判断Rebirth
-        if self.direction == Direction.LONG and self.signal_price and tick.last_price <= self.signal_price * 0.99:
+        if self.direction == "LONG" and self.signal_price and tick.last_price <= self.signal_price * 0.99:
             self.long_rebirth = True
 
-        if self.direction == Direction.SHORT and self.signal_price and tick.last_price >= self.signal_price * 1.01:
+        if self.direction == "SHORT" and self.signal_price and tick.last_price >= self.signal_price * 1.01:
             self.short_rebirth = True
 
         # 判断离场
-        if self.direction == Direction.LONG and self.target_pos and self.exit_down and tick.last_price <= self.exit_down:
+        if self.direction == "LONG" and self.target_pos and self.exit_down and tick.last_price <= self.exit_down:
             stop_long = True
             
-        if self.direction == Direction.SHORT and self.target_pos and self.exit_up and tick.last_price >= self.exit_up:
+        if self.direction == "SHORT" and self.target_pos and self.exit_up and tick.last_price >= self.exit_up:
             stop_short = True
         
         target_pos_updated = False
         if self.target_pos:
-            if self.direction == Direction.LONG and (self.stop_long or (self.signal_price and tick.last_price <= self.signal_price * 0.99) or (self.open_price and tick.last_price <= self.open_price * 0.99)):
+            if self.direction == "LONG" and (stop_long or (self.signal_price and tick.last_price <= self.signal_price * 0.99) or (self.open_price and tick.last_price <= self.open_price * 0.99)):
                 # 多头平仓
                 self.long_rebirth = False
                 self.target_pos = 0
                 target_pos_updated = True
 
-            if self.direction == Direction.SHORT and (self.stop_short or (self.signal_price and tick.last_price >= self.hour_down * 1.01) or (self.open_price and tick.last_price >= self.open_price * 1.01)):
+            if self.direction == "SHORT" and (stop_short or (self.signal_price and tick.last_price >= self.hour_down * 1.01) or (self.open_price and tick.last_price >= self.open_price * 1.01)):
                 # 空头平仓
                 self.short_rebirth = False
                 self.target_pos = 0
                 target_pos_updated = True
         
         elif self.tradable and self.indicator_inited:
-            if self.direction == Direction.LONG and self.signal_price and ((self.long_rebirth and tick.last_price >= self.signal_price) or (self.open_price and tick.last_price >= max(self.signal_price, self.open_price))):
+            if self.direction == "LONG" and self.signal_price and ((self.long_rebirth and tick.last_price >= self.signal_price) or (self.open_price and tick.last_price >= max(self.signal_price, self.open_price))):
                 # 多头开仓
                 self.target_pos = self.portfolio.portfolio_value / tick.last_price
                 target_pos_updated = True
 
-            if self.direction == Direction.SHORT and self.signal_price and ((self.short_rebirth and tick.last_price <= self.signal_price) or (self.open_price and tick.last_price <= min(self.signal_price, self.open_price))):
+            if self.direction == "SHORT" and self.signal_price and ((self.short_rebirth and tick.last_price <= self.signal_price) or (self.open_price and tick.last_price <= min(self.signal_price, self.open_price))):
                 # 空头开仓
                 self.target_pos = self.portfolio.portfolio_value / tick.last_price * -1
                 target_pos_updated = True

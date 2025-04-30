@@ -47,10 +47,10 @@ class TrendingSniperPortfolio(object):
                 setattr(self, name, setting[name])
 
     def on_init(self):
-        self.check_instruments_data(for_init=True)
+        pass
 
     def on_start(self):
-        pass
+        self.check_instruments_data(for_init=True)
 
     def on_timer(self):
         # 下载Bar数据
@@ -118,9 +118,21 @@ class TrendingSniperPortfolio(object):
         for vt_symbol in vt_symbols:
             self.strategy_symbols.add(vt_symbol)
 
+            # 启动策略
+            if vt_symbol == "BTC-USDT-SWAP.OKX":
+                pure_symbol = vt_symbol.split("-USDT-")[0]
+                exchange = vt_symbol.split(".")[-1]
+                setting = {
+                    "strategy_name": f"TRENDING_SNIPER_{pure_symbol}_{exchange}",
+                    "vt_symbol": vt_symbol,
+                    "exchange_user": "lo-e",
+                    "start": True
+                    }
+                self.cta_engine.new_strategy(setting)
+
         # 初始下载Bar数据
-        if for_init:
-            self.download_bar_data()
+        # if for_init:
+        #     self.download_bar_data()
 
         # 订阅合约
         start = time.time()

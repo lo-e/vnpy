@@ -84,7 +84,6 @@ class TrendingSniperEngine(BaseEngine):
         self.vt_tradeids = set()
         self.offset_converter = OffsetConverter(self.main_engine)
         self.portfolio: TrendingSniperPortfolio = None
-        self.coins = []
 
     def init_engine(self):
         dir_path = Path(os.path.dirname(os.path.realpath(__file__)))
@@ -95,9 +94,6 @@ class TrendingSniperEngine(BaseEngine):
         portfolio_setting = setting.get("portfolio", None)
         self.portfolio = TrendingSniperPortfolio(self, portfolio_setting)
         self.load_portfolio_syncData()
-
-        # 历史交易代币
-        self.coins = setting.get("coins", [])
         
         # 导入策略
         signal_list = setting.get("signal", [])
@@ -339,13 +335,13 @@ class TrendingSniperEngine(BaseEngine):
         self.call_strategy_func(strategy, strategy.on_init)
 
         # 订阅合约行情
-        contract = self.main_engine.get_contract(strategy.vt_symbol)
-        if contract:
-            req = SubscribeRequest(symbol=contract.symbol, exchange=contract.exchange)
-            self.main_engine.subscribe(req, contract.gateway_name)
+        # contract = self.main_engine.get_contract(strategy.vt_symbol)
+        # if contract:
+        #     req = SubscribeRequest(symbol=contract.symbol, exchange=contract.exchange)
+        #     self.main_engine.subscribe(req, contract.gateway_name)
 
-        else:
-            self.write_log(f"行情订阅失败，找不到合约{strategy.vt_symbol}", strategy)
+        # else:
+        #     self.write_log(f"行情订阅失败，找不到合约{strategy.vt_symbol}", strategy)
 
         # 策略状态更新（初始化完成）
         strategy.inited = True
@@ -550,9 +546,8 @@ class TrendingSniperEngine(BaseEngine):
             return
 
         # 创建策略实例
-        strategy = HitNewStrategy(self, setting)
+        strategy = TrendignSniperStrategy(self, setting)
         self.event_engine.register(EVENT_BAR_UPDATED, strategy.on_bar_updated)
-        self.portfolio.strategy_symbols.add(strategy.vt_symbol)
 
         # 加载同步数据
         self.load_sync_data(strategy)
@@ -564,6 +559,20 @@ class TrendingSniperEngine(BaseEngine):
 
         # 策略状态更新
         self.put_strategy_event(strategy)
+
+    def new_strategy(self, setting):
+        try:
+            # 执行策略
+            start = setting["start"]
+            if start:
+                self.add_strategy(setting)
+                strategy_name = setting["strategy_name"]
+                self.initing_strategy(strategy_name)
+                self.start_strategy(strategy_name)
+
+        except Exception as e:
+            msg = f"趋势狙击策略上新出错\n\n{setting}\n\n{e}"
+            self.send_dingtalk(msg)
 
     def load_sync_data(self, strategy):
         # 从数据库载入策略历史同步数据
@@ -608,7 +617,7 @@ class TrendingSniperEngine(BaseEngine):
             with open(json_file, 'r') as f:
                 history_data = json.load(f)
 
-        except:
+        except Exception as e:
             pass
         
         if history_data != data:
@@ -617,7 +626,8 @@ class TrendingSniperEngine(BaseEngine):
                     file.write(
                         json.dumps(data, ensure_ascii=False)
                     )
-            except:
+
+            except Exception as e:
                 pass
 
         # 获取策略变量数据
@@ -632,7 +642,7 @@ class TrendingSniperEngine(BaseEngine):
             with open(json_file, 'r') as f:
                 history_data = json.load(f)
 
-        except:
+        except Exception as e:
             pass
         
         if history_data != data:
@@ -641,7 +651,7 @@ class TrendingSniperEngine(BaseEngine):
                     file.write(
                         json.dumps(data, ensure_ascii=False)
                     )
-            except:
+            except Exception as e:
                 pass
     
     def get_strategie_sync_file_path(self, strategy):
