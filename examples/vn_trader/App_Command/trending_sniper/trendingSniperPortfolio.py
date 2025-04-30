@@ -54,12 +54,12 @@ class TrendingSniperPortfolio(object):
 
     def on_timer(self):
         # 下载Bar数据
-        current_minute_time = get_minute_time(datetime.now(), 20)
-        download_bar_minute_time = download_bar_minute_time = get_minute_time(self.download_bar_time, 20) if self.download_bar_time else None
-        if download_bar_minute_time != current_minute_time and not self.bar_downloading:
-            self.download_bar_time = datetime.now()
-            thread = Thread(target=self.download_bar_data)
-            thread.start()
+        # current_minute_time = get_minute_time(datetime.now(), 20)
+        # download_bar_minute_time = download_bar_minute_time = get_minute_time(self.download_bar_time, 20) if self.download_bar_time else None
+        # if download_bar_minute_time != current_minute_time and not self.bar_downloading:
+        #     self.download_bar_time = datetime.now()
+        #     thread = Thread(target=self.download_bar_data)
+        #     thread.start()
 
         # 下载合约列表数据
         current_hour_time = datetime.now().replace(minute=0, second=0, microsecond=0)
