@@ -1,7 +1,0 @@
-params,total_pnl,close_trade,max_drawdown,over_drawdown,over_drawdown_count
-"continuous_increase_rate_0.002, reduce_rate_0.001, trending_increase_rate_0.06, trending_open_loss_rate_0.01",77.32%,538,-5580.66,{},0
-"continuous_increase_rate_0.002, reduce_rate_0.001, trending_increase_rate_0.07, trending_open_loss_rate_0.01",77.45%,538,-5583.84,{},0
-"continuous_increase_rate_0.002, reduce_rate_0.002, trending_increase_rate_0.07, trending_open_loss_rate_0.01",126.41%,395,-8334.54,{},0
-"continuous_increase_rate_0.006, reduce_rate_0.003, trending_increase_rate_0.07, trending_open_loss_rate_0.02",49.9%,197,-8663.35,{},0
-"continuous_increase_rate_0.006, reduce_rate_0.003, trending_increase_rate_0.05, trending_open_loss_rate_0.02",50.64%,196,-7946.61,{},0
-"continuous_increase_rate_0.006, reduce_rate_0.003, trending_increase_rate_0.06, trending_open_loss_rate_0.02",53.59%,195,-8449.28,{},0

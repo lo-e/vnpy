@@ -1,3 +1,0 @@
-symbol,size,priceTick,variableCommission,fixedCommission,slippage,name,is_crypto,min_volume
-BTCUSDT.BYBIT,1,0.5,0.0006,0,6,Bybit永续/BTCUSDT,true,0.001
-ETHUSDT.BYBIT,1,0.05,0.0006,0,6,Bybit永续/ETHUSDT,true,0.01
