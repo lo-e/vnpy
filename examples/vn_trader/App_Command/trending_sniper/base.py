@@ -1,2 +1,2 @@
-APP_NAME = "HitNew"
+APP_NAME = "TrendignSniper"
 EVENT_BAR_UPDATED = "EVENT_BAR_UPDATED"

@@ -13,6 +13,7 @@ from threading import Thread
 from datetime import datetime, timedelta
 from copy import copy
 from App_Command.hit_new.engine import HitNewEngine
+from App_Command.trending_sniper.engine import TrendingSniperEngine
 
 GATEWAYS = [[OkxGateway, "lo-e"], [BinanceUsdtGateway, "lo-e"], [BybitGateway, "loesuperman"]]
 class DurationBar(object):
@@ -54,11 +55,11 @@ class MonitorEngine(object):
         start = time.time()
         success = False
         while not success:
-            contract = main_engine.get_contract(vt_symbol)
+            contract = self.main_engine.get_contract(vt_symbol)
             if contract:
                 time.sleep(1)
                 req = SubscribeRequest(symbol=contract.symbol, exchange=contract.exchange)
-                main_engine.subscribe(req, contract.gateway_name)
+                self.main_engine.subscribe(req, contract.gateway_name)
                 success = True
             
             if time.time() - start >= 5:
@@ -115,7 +116,7 @@ class MonitorEngine(object):
             dt_str = now.strftime(f"%Y-%m-%d %H:%M:%S")
             print(f"{dt_str}\t交易所连接状态：{gateway_all_connected}\n")
 
-if __name__ == "__main__":
+def main():
     # 引擎
     event_engine = EventEngine()
     main_engine = MainEngine(event_engine)
@@ -144,16 +145,17 @@ if __name__ == "__main__":
         else:
             time.sleep(1)
 
-    # 执行策略
-    hit_new_app = HitNewEngine(main_engine=main_engine, event_engine=event_engine)
-    hit_new_app.init_engine()
-    hit_new_app.init_portfolio()
-    hit_new_app.start_portfolio()
+    # # 执行策略（HitNew）
+    # hit_new_app = HitNewEngine(main_engine=main_engine, event_engine=event_engine)
+    # hit_new_app.init_engine()
+    # hit_new_app.init_portfolio()
+    # hit_new_app.start_portfolio()
 
-    # 订阅合约
-    subscribe_symbols = ["DARKUSDT.BYBIT"]
-    for vt_symbol in subscribe_symbols:
-        contract = main_engine.get_contract(vt_symbol)
-        if contract:
-            req = SubscribeRequest(symbol=contract.symbol, exchange=contract.exchange)
-            main_engine.subscribe(req, contract.gateway_name)
+    # 执行策略（TrendingSniper）
+    trendign_sniper_app = TrendingSniperEngine(main_engine=main_engine, event_engine=event_engine)
+    trendign_sniper_app.init_engine()
+    trendign_sniper_app.init_portfolio()
+    trendign_sniper_app.start_portfolio()
+    
+if __name__ == "__main__":
+    main()
