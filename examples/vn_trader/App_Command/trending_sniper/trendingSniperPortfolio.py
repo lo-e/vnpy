@@ -54,10 +54,8 @@ class TrendingSniperPortfolio(object):
 
     def on_timer(self):
         # 下载Bar数据
-        current_minute_time = get_10minute_time(datetime.now())
-        download_bar_minute_time = None
-        if self.download_bar_time:
-            download_bar_minute_time = get_10minute_time(self.download_bar_time)
+        current_minute_time = get_minute_time(datetime.now(), 20)
+        download_bar_minute_time = download_bar_minute_time = get_minute_time(self.download_bar_time, 20) if self.download_bar_time else None
         if download_bar_minute_time != current_minute_time and not self.bar_downloading:
             self.download_bar_time = datetime.now()
             thread = Thread(target=self.download_bar_data)
@@ -322,16 +320,9 @@ def print_(msg: str):
     dt = datetime.now().replace(microsecond=0)
     print(f"{dt}\t{msg}")
 
-def get_5minute_time(dt: datetime):
+def get_minute_time(dt: datetime, gap: int):
     minute = dt.minute
-    while minute % 5:
-        minute -= 1
-    result = dt.replace(minute=minute, second=0, microsecond=0)
-    return result
-
-def get_10minute_time(dt: datetime):
-    minute = dt.minute
-    while minute % 10:
+    while minute % gap:
         minute -= 1
     result = dt.replace(minute=minute, second=0, microsecond=0)
     return result
