@@ -15,7 +15,7 @@ from copy import copy
 from App_Command.hit_new.engine import HitNewEngine
 from App_Command.trending_sniper.engine import TrendingSniperEngine
 
-GATEWAYS = [[OkxGateway, "lo-e"], [BinanceUsdtGateway, "lo-e"], [BybitGateway, "loesuperman"]]
+GATEWAYS = [[OkxGateway, "lo-e"], [BybitGateway, "loesuperman"], [BinanceUsdtGateway, "lo-e"]]
 class DurationBar(object):
     def __init__(self) -> None:
         self.vt_symbol: str = ""
@@ -36,6 +36,7 @@ class MonitorEngine(object):
         self.gateway_connected = False
         self.duration_bar_data = {}
         self.history_duration_bar_data = {}
+        self.tick_delay_time = 0
 
     def check_gateway_connected(self):
         all_connected = True
@@ -72,8 +73,12 @@ class MonitorEngine(object):
         # 收到Tick数据
         tick: TickData = event.data
         tick_dt = tick.datetime.replace(tzinfo=None)
-        if time.time() >= tick_dt.timestamp() + 1:
+        delay = time.time() - tick_dt.timestamp()
+        if delay >= 1:
             print_(f"{tick.vt_symbol} 数据延迟 {time.time()} - {tick_dt.timestamp()}")
+            if time.time() > self.tick_delay_time + 60:
+                msg = f"Tick数据延迟 {delay}s"
+                self.main_engine.send_ding_talk(msg)
 
         minute = tick.datetime.minute
         while minute % 1:

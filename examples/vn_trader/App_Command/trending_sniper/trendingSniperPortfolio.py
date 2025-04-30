@@ -102,19 +102,19 @@ class TrendingSniperPortfolio(object):
                 self.coins.add(coin)
                 vt_symbols.add(f"{symbol}.OKX")
 
-        # binance_symbols = list(self.exchange_instruments_data.get("BINANCE", {}).keys())
-        # for symbol in binance_symbols:
-        #     coin = symbol.split("USDT")[0]
-        #     if coin not in self.coins:
-        #         self.coins.add(coin)
-        #         vt_symbols.add(f"{symbol}.BINANCE")
-        
-        # bybit_symbols = list(self.exchange_instruments_data.get("BYBIT", {}).keys())
-        # for symbol in bybit_symbols:
-        #     coin = symbol.split("USDT")[0]
-        #     if coin not in self.coins:
-        #         self.coins.add(coin)
-        #         vt_symbols.add(f"{symbol}.BYBIT")
+        bybit_symbols = list(self.exchange_instruments_data.get("BYBIT", {}).keys())
+        for symbol in bybit_symbols:
+            coin = symbol.split("USDT")[0]
+            if coin not in self.coins:
+                self.coins.add(coin)
+                vt_symbols.add(f"{symbol}.BYBIT")
+
+        binance_symbols = list(self.exchange_instruments_data.get("BINANCE", {}).keys())
+        for symbol in binance_symbols:
+            coin = symbol.split("USDT")[0]
+            if coin not in self.coins:
+                self.coins.add(coin)
+                vt_symbols.add(f"{symbol}.BINANCE")
         
         for vt_symbol in vt_symbols:
             self.strategy_symbols.add(vt_symbol)
