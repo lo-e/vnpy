@@ -49,10 +49,14 @@ class TrendingSniperPortfolio(object):
         self.load_instruments_data()
 
         # 订阅OKX合约
-        okx_symbols = list(self.exchange_instruments_data.get("OKX", {}).keys())[:10]
+        start = time.time()
+        print_(f"开始订阅OKX合约..")
+        okx_symbols = list(self.exchange_instruments_data.get("OKX", {}).keys())
         for symbol in okx_symbols:
             self.subscribe(f"{symbol}.OKX")
-        print_(f"OKX合约订阅完成！（{len(okx_symbols)}）")
+
+        cost = time.time() - start
+        print_(f"OKX合约订阅完成！（{len(okx_symbols)}）用时 {cost}s")
 
     def on_start(self):
         pass
@@ -282,8 +286,8 @@ class TrendingSniperPortfolio(object):
         self.cta_engine.main_engine.send_ding_talk(content)
 
 def print_(msg: str):
-        dt = datetime.now().replace(microsecond=0)
-        print(f"{dt}\t{msg}")
+    dt = datetime.now().replace(microsecond=0)
+    print(f"{dt}\t{msg}")
 
 def get_5minute_time(dt: datetime):
     minute = dt.minute

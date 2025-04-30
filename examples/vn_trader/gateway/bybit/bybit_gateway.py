@@ -792,8 +792,9 @@ class BybitWebsocketDataApi(WebsocketClient):
         """
         self.subscribed[req.vt_symbol] = req
 
-        tick = TickData(symbol=req.symbol, exchange=req.exchange, datetime=datetime.now(), name=req.symbol, gateway_name=self.gateway_name)
-        self.ticks[req.symbol] = tick
+        if req.symbol not in self.ticks:
+            tick = TickData(symbol=req.symbol, exchange=req.exchange, datetime=datetime.now(), name=req.symbol, gateway_name=self.gateway_name)
+            self.ticks[req.symbol] = tick
 
         # 订阅tick_100ms数据
         # self.subscribe_topic(f"tickers.{req.symbol}", self.on_tick)

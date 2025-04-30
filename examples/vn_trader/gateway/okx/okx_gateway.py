@@ -626,14 +626,15 @@ class OkxWebsocketPublicApi(WebsocketClient):
         self.subscribed[req.vt_symbol] = req
 
         # 创建TICK对象
-        tick: TickData = TickData(
-            symbol=req.symbol,
-            exchange=req.exchange,
-            name=req.symbol,
-            datetime=datetime.now(CHINA_TZ),
-            gateway_name=self.gateway_name,
-        )
-        self.ticks[req.symbol] = tick
+        if req.symbol not in self.ticks:
+            tick: TickData = TickData(
+                symbol=req.symbol,
+                exchange=req.exchange,
+                name=req.symbol,
+                datetime=datetime.now(CHINA_TZ),
+                gateway_name=self.gateway_name,
+            )
+            self.ticks[req.symbol] = tick
 
         # 发送订阅请求
         # tickers 获取产品的最新成交价、买一价、卖一价和24小时交易量等信息，最快100ms推送一次，没有触发事件时不推送，触发推送的事件有：成交、买一卖一发生变动。

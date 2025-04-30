@@ -71,10 +71,13 @@ class MonitorEngine(object):
     def on_tick(self, event):
         # 收到Tick数据
         tick: TickData = event.data
+        tick_dt = tick.datetime.replace(tzinfo=None)
+        if time.time() >= tick_dt.timestamp() + 1:
+            print_(f"{tick.vt_symbol} 数据延迟 {time.time()} - {tick_dt.timestamp()}")
+
         minute = tick.datetime.minute
         while minute % 1:
             minute -= 1
-
         duration_dt = tick.datetime.replace(minute=minute, second=0, microsecond=0)
         duration_bar: DurationBar = self.duration_bar_data.get(tick.vt_symbol, DurationBar())
         if duration_bar.datetime != duration_dt:
@@ -102,9 +105,11 @@ class MonitorEngine(object):
         now = datetime.now()
         if (now.minute % 1 == 0) and (now.second == 15):
             # 输出Tick信息
-            for _, duration_bar in self.history_duration_bar_data.items():
+            sorted_duration_bar_list = sorted(self.history_duration_bar_data.values(), key=lambda x: x.tick_count)
+            for duration_bar in sorted_duration_bar_list:
                 dt_str = duration_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
-                print(f"{dt_str}\t{duration_bar.vt_symbol}({duration_bar.tick_count})\t{duration_bar.open}\t{duration_bar.high}\t{duration_bar.low}\t{duration_bar.close}")
+                print_(f"{duration_bar.vt_symbol}({duration_bar.tick_count})\t{duration_bar.open}\t{duration_bar.high}\t{duration_bar.low}\t{duration_bar.close}")
+            print_(f"合约总数 {len(sorted_duration_bar_list)}")
 
             # 检查交易所连接
             gateway_all_connected = self.check_gateway_connected()
@@ -115,6 +120,10 @@ class MonitorEngine(object):
             self.gateway_connected = gateway_all_connected
             dt_str = now.strftime(f"%Y-%m-%d %H:%M:%S")
             print(f"{dt_str}\t交易所连接状态：{gateway_all_connected}\n")
+
+def print_(msg: str):
+    dt = datetime.now().replace(microsecond=0)
+    print(f"{dt}\t{msg}")
 
 def main():
     # 引擎
