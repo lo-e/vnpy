@@ -885,7 +885,7 @@ class DingTalkEngine(BaseEngine):
         if not isinstance(event, Event):
             return
 
-        key_word_list = ['断开', '异常', '错误', '出错', '触发', '失败', '状态码', 'Error', 'error', 'ERROR', 'Bad', 'bad', 'BAD', 'Traceback']
+        key_word_list = ['断开', '异常', '错误', '出错', '触发', '失败', '状态码', 'Error', 'error', 'ERROR', 'Bad', 'bad', 'Traceback']
         content_dic = event.data.__dict__
         msg = content_dic['msg']
         enable = False

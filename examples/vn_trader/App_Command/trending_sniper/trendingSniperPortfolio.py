@@ -119,16 +119,25 @@ class TrendingSniperPortfolio(object):
             self.strategy_symbols.add(vt_symbol)
 
             # 启动策略
-            if vt_symbol == "BTC-USDT-SWAP.OKX":
+            exchange = vt_symbol.split(".")[-1]
+            if exchange == "OKX":
                 pure_symbol = vt_symbol.split("-USDT-")[0]
-                exchange = vt_symbol.split(".")[-1]
-                setting = {
-                    "strategy_name": f"TRENDING_SNIPER_{pure_symbol}_{exchange}",
-                    "vt_symbol": vt_symbol,
-                    "exchange_user": "lo-e",
-                    "start": True
-                    }
-                self.cta_engine.new_strategy(setting)
+                exchange_user = "lo-e"
+            
+            elif exchange == "BINANCE":
+                pure_symbol = vt_symbol.split("USDT")[0]
+                exchange_user = "lo-e"
+
+            elif exchange == "BYBIT":
+                pure_symbol = vt_symbol.split("USDT")[0]
+                exchange_user = "loesuperman"
+
+            setting = {"strategy_name": f"TRENDING_SNIPER_{pure_symbol}_{exchange}",
+                       "vt_symbol": vt_symbol,
+                       "exchange_user": exchange_user,
+                       "start": True
+                       }
+            self.cta_engine.new_strategy(setting)
 
         # 初始下载Bar数据
         # if for_init:
