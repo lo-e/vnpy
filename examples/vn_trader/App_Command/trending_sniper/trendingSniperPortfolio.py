@@ -141,7 +141,6 @@ class TrendingSniperPortfolio(object):
         print_(f"Bar数据下载中..")
         self.bar_downloading = True
         try:
-            download_success = False
             result_bar_list = []
             try_count = 0
             while try_count < 5:
@@ -175,54 +174,18 @@ class TrendingSniperPortfolio(object):
                                 contract_list=exchange_symbols, days=1, from_data_base=True, save_to=self.name, delete_history_data=False, show_progress=False
                             )
 
-                    # 检查下载结果
-                    all_downloaded = True
-                    for symbol in self.strategy_symbols.copy():
-                        client = MongoClient("localhost", 27017)
-                        db = client[MINUTE_DB_NAME]
-                        collection = db[symbol]
-
-                        now = datetime.now().replace(second=0, microsecond=0)
-                        dt_from = now - timedelta(minutes=10)
-                        dt_to = now - timedelta(minutes=5)
-                        flt = {"datetime": {"$gte": dt_from}}
-                        bar_list = list(collection.find(flt).sort("datetime", DESCENDING))
-                        if bar_list:
-                            data = bar_list[0]
-                            bar = BarData(
-                                gateway_name="",
-                                symbol="",
-                                exchange=Exchange.NONE,
-                                datetime=None,
-                                endDatetime=None)
-                            bar.__dict__ = data
-                            result_bar_list.append(copy(bar))
-                            if bar.datetime < dt_to:
-                                all_downloaded = False
-                                break
-
-                    download_success = all_downloaded
                     break
 
                 except Exception as e:
                     msg = f"TrendingSniperPortfolio 下载Bar数据出错\n\n{e}"
                     self.send_ding_talk(msg)
 
-            if download_success:
-                # 输出结果
-                # for bar in result_bar_list:
-                #     print(f"{bar.datetime}\t{bar.vt_symbol}\t{bar.open_price}\t{bar.high_price}\t{bar.low_price}\t{bar.close_price}")
+            msg = f"Bar数据已更新！（{len(result_bar_list)}）\n"
+            print_(msg)
 
-                msg = f"Bar数据已更新！（{len(result_bar_list)}）\n"
-                print_(msg)
-
-                # 发送事件
-                event = Event(type=EVENT_BAR_UPDATED, data="")
-                self.cta_engine.event_engine.put(event)
-
-            else:
-                msg = f"TrendingSniperPortfolio Bar数据下载缺失！"
-                self.send_ding_talk(msg)
+            # 发送事件
+            event = Event(type=EVENT_BAR_UPDATED, data="")
+            self.cta_engine.event_engine.put(event)
 
         except Exception as e:
             pass
