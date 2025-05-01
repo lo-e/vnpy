@@ -160,12 +160,6 @@ class TrendignSniperStrategy(CtaTemplate):
                 next_bar_dt = bar.datetime + timedelta(minutes=1)
                 bar_list.append(bar)
 
-            if not next_bar_dt or next_bar_dt - timedelta(minutes=1) != data_to:
-                # bar数据缺失
-                bar_lack = True
-                msg = f"Bar数据缺失\n合约 {self.vt_symbol}\n时间 {data_to}"
-                self.send_ding_talk(msg)
-
             if not bar_lack:
                 # 初始化工具
                 self.minute_am = ArrayManager(21)

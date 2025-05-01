@@ -178,16 +178,24 @@ class TrendingSniperPortfolio(object):
                 if indicator_init_need and not self.bar_downloading:
                     # 下载Bar数据
                     download_success = self.download_bar()
-                    
+
                     # 策略指标初始化
                     if download_success:
+                        print_(f"策略指标初始化..")
+                        start = time.time()
+                        count = 0
                         for vt_symbol in self.strategy_symbols:
                             strategies = self.cta_engine.symbol_strategy_map[vt_symbol]
                             for i in range(len(strategies)):
                                 strategy: TrendignSniperStrategy = strategies[i]
                                 if not strategy.indicator_inited and len(strategy.live_bars):
+                                    count += 1
                                     data_to = strategy.live_bars[0].datetime - timedelta(minutes=1)
                                     strategy.load_database_bar(data_to)
+                                    time.sleep(1)
+
+                        cost = time.time() - start
+                        print_(f"策略指标初始化完成 {count} 用时 {cost}s\n")
 
             except Exception as e:
                 pass
@@ -245,7 +253,7 @@ class TrendingSniperPortfolio(object):
                     msg = f"TrendingSniperPortfolio 下载Bar数据出错\n\n{e}"
                     self.send_ding_talk(msg)
 
-            msg = f"Bar数据已更新！（{len(result_bar_list)}）\n"
+            msg = f"Bar数据已更新！\n"
             print_(msg)
 
         except Exception as e:
