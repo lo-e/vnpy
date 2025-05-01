@@ -117,27 +117,7 @@ class TrendingSniperPortfolio(object):
         
         for vt_symbol in vt_symbols:
             self.strategy_symbols.add(vt_symbol)
-
-            # 启动策略
-            exchange = vt_symbol.split(".")[-1]
-            if exchange == "OKX":
-                pure_symbol = vt_symbol.split("-USDT-")[0]
-                exchange_user = "lo-e"
-            
-            elif exchange == "BINANCE":
-                pure_symbol = vt_symbol.split("USDT")[0]
-                exchange_user = "lo-e"
-
-            elif exchange == "BYBIT":
-                pure_symbol = vt_symbol.split("USDT")[0]
-                exchange_user = "loesuperman"
-
-            setting = {"strategy_name": f"TRENDING_SNIPER_{pure_symbol}_{exchange}",
-                       "vt_symbol": vt_symbol,
-                       "exchange_user": exchange_user,
-                       "start": True
-                       }
-            self.cta_engine.new_strategy(setting)
+            # self.new_strategy(vt_symbol)
 
         # 订阅合约
         start = time.time()
@@ -312,6 +292,28 @@ class TrendingSniperPortfolio(object):
             gateway = self.cta_engine.main_engine.get_default_gateway(gateway_name)
             if gateway:
                 gateway.query_contract()
+
+    def new_strategy(self, vt_symbol: str):
+        # 启动策略
+        exchange = vt_symbol.split(".")[-1]
+        if exchange == "OKX":
+            pure_symbol = vt_symbol.split("-USDT-")[0]
+            exchange_user = "lo-e"
+        
+        elif exchange == "BINANCE":
+            pure_symbol = vt_symbol.split("USDT")[0]
+            exchange_user = "lo-e"
+
+        elif exchange == "BYBIT":
+            pure_symbol = vt_symbol.split("USDT")[0]
+            exchange_user = "loesuperman"
+
+        setting = {"strategy_name": f"TRENDING_SNIPER_{pure_symbol}_{exchange}",
+                    "vt_symbol": vt_symbol,
+                    "exchange_user": exchange_user,
+                    "start": True
+                    }
+        self.cta_engine.new_strategy(setting)
 
     def subscribe(self, vt_symbol: str):
         # 订阅合约
