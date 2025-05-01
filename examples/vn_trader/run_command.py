@@ -115,7 +115,7 @@ class MonitorEngine(object):
             for duration_bar in sorted_duration_bar_list[:5]:
                 dt_str = duration_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                 print_(f"{duration_bar.vt_symbol}({duration_bar.tick_count})\t{duration_bar.open}\t{duration_bar.high}\t{duration_bar.low}\t{duration_bar.close}")
-
+            print("------")
             for duration_bar in sorted_duration_bar_list[-10:]:
                 dt_str = duration_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                 print_(f"{duration_bar.vt_symbol}({duration_bar.tick_count})\t{duration_bar.open}\t{duration_bar.high}\t{duration_bar.low}\t{duration_bar.close}")

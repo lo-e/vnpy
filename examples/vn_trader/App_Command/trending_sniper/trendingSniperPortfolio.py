@@ -121,8 +121,8 @@ class TrendingSniperPortfolio(object):
         # 更新组合策略
         for vt_symbol in new_vt_symbols:
             self.strategy_symbols.add(vt_symbol)
-            if "BTC" in vt_symbol:
-                self.new_strategy(vt_symbol)
+            # if "BTC" in vt_symbol:
+            self.new_strategy(vt_symbol)
 
         # 订阅合约
         if new_vt_symbols:
@@ -159,7 +159,8 @@ class TrendingSniperPortfolio(object):
                         for i in range(len(strategies)):
                             strategy: TrendignSniperStrategy = strategies[i]
                             if not strategy.indicator_inited and len(strategy.live_bars):
-                                strategy.load_database_bar(data_to=strategy.live_bars[0].datetime)
+                                data_to = strategy.live_bars[0].datetime - timedelta(minutes=1)
+                                strategy.load_database_bar(data_to)
 
             time.sleep(1)
 
