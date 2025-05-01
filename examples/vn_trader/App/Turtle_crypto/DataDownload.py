@@ -222,7 +222,6 @@ class DownloadUtility(object):
                 download_engine = TurtleCryptoDataDownloading()
                 dir_name = "TEMP"
                 print_(f"Bar数据下载中..")
-                download_success = False
                 result_bar_list = []
                 try_count = 0
                 while try_count < 5:
@@ -256,16 +255,14 @@ class DownloadUtility(object):
                                     contract_list=exchange_symbols, days=1, from_data_base=True, save_to=dir_name, delete_history_data=False, show_progress=False
                                 )
 
-                        # 检查下载结果
-                        all_downloaded = True
+                        # 获取下载结果
                         for symbol in vt_symbols.copy():
                             client = MongoClient("localhost", 27017)
                             db = client[MINUTE_DB_NAME]
                             collection = db[symbol]
 
                             now = datetime.now().replace(second=0, microsecond=0)
-                            dt_from = now - timedelta(minutes=10)
-                            dt_to = now - timedelta(minutes=5)
+                            dt_from = now - timedelta(hours=1)
                             flt = {"datetime": {"$gte": dt_from}}
                             bar_list = list(collection.find(flt).sort("datetime", DESCENDING))
                             if bar_list:
@@ -278,28 +275,23 @@ class DownloadUtility(object):
                                     endDatetime=None)
                                 bar.__dict__ = data
                                 result_bar_list.append(copy(bar))
-                                if bar.datetime < dt_to:
-                                    all_downloaded = False
-                                    break
 
-                        download_success = all_downloaded
                         break
 
                     except Exception as e:
                         msg = f"TrendingSniperPortfolio 下载Bar数据出错\n\n{e}"
                         print_(msg)
 
-                if download_success:
-                    # 输出结果
-                    for bar in result_bar_list[-5:]:
-                        print(f"{bar.datetime}\t{bar.vt_symbol}\t{bar.open_price}\t{bar.high_price}\t{bar.low_price}\t{bar.close_price}")
+                # 输出结果
+                result_bar_list.sort(key=lambda bar: bar.datetime)
+                for bar in result_bar_list[:5]:
+                    print(f"{bar.datetime}\t{bar.vt_symbol}\t{bar.open_price}\t{bar.high_price}\t{bar.low_price}\t{bar.close_price}")
+                print("------")
+                for bar in result_bar_list[-5:]:
+                    print(f"{bar.datetime}\t{bar.vt_symbol}\t{bar.open_price}\t{bar.high_price}\t{bar.low_price}\t{bar.close_price}")
 
-                    msg = f"Bar数据已更新！（{len(result_bar_list)}）\n"
-                    print_(msg)
-
-                else:
-                    msg = f"TrendingSniperPortfolio Bar数据下载缺失！"
-                    print_(msg)
+                msg = f"Bar数据已更新！（{len(result_bar_list)}）\n"
+                print_(msg)
 
                 # 结束下载
                 downloading = False
