@@ -197,7 +197,7 @@ class TrendignSniperStrategy(CtaTemplate):
     def on_live_minute_bar(self, bar: BarData):
         # 保存Bar数据
         self.live_bars.append(copy(bar))
-        if len(self.live_bars) > 10:
+        if len(self.live_bars) > 60:
             self.live_bars.pop(0)
 
         # 初始化后用以生成指标
