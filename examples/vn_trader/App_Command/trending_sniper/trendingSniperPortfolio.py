@@ -119,7 +119,8 @@ class TrendingSniperPortfolio(object):
         # 更新组合策略
         for vt_symbol in new_vt_symbols:
             self.strategy_symbols.add(vt_symbol)
-            # self.new_strategy(vt_symbol)
+            if "BTC" in vt_symbol:
+                self.new_strategy(vt_symbol)
 
         # 订阅合约
         if new_vt_symbols:
@@ -132,6 +133,7 @@ class TrendingSniperPortfolio(object):
 
     def check_download_bar_data(self):
         if not self.bar_downloading:
+            self.bar_downloading = True
             Thread(target=self.download_bar_data).start()
 
     def download_bar_data(self):
@@ -225,6 +227,7 @@ class TrendingSniperPortfolio(object):
 
     def check_download_instruments_data(self):
         if not self.instruments_downloading:
+            self.instruments_downloading = True
             Thread(target=self.download_instruments_data).start()
 
     def download_instruments_data(self):
