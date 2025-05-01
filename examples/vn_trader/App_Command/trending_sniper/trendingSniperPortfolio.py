@@ -195,7 +195,7 @@ class TrendingSniperPortfolio(object):
                                     time.sleep(1)
 
                         cost = time.time() - start
-                        print_(f"策略指标初始化完成 {count} 用时 {cost}s\n")
+                        print_(f"策略指标初始化完成！数量 {count} 用时 {cost}s\n")
 
             except Exception as e:
                 pass
@@ -211,9 +211,9 @@ class TrendingSniperPortfolio(object):
         # 下载Bar数据
         print_(f"Bar数据下载中..")
         self.bar_downloading = True
+        start = time.time()
         success = False
         try:
-            result_bar_list = []
             try_count = 0
             while try_count < 5:
                 try_count += 1
@@ -253,7 +253,8 @@ class TrendingSniperPortfolio(object):
                     msg = f"TrendingSniperPortfolio 下载Bar数据出错\n\n{e}"
                     self.send_ding_talk(msg)
 
-            msg = f"Bar数据已更新！\n"
+            cost = time.time() - start
+            msg = f"Bar数据已更新！ 用时 {cost}s\n"
             print_(msg)
 
         except Exception as e:
