@@ -135,14 +135,33 @@ class TrendingSniperPortfolio(object):
 
     def check_strategy_data_inited(self):
         while True:
+            # 检查策略指标初始化
+            indicator_init_need = False
             for vt_symbol in self.strategy_symbols:
                 strategies = self.cta_engine.symbol_strategy_map[vt_symbol]
                 for i in range(len(strategies)):
                     strategy: TrendignSniperStrategy = strategies[i]
                     if not strategy.indicator_inited and len(strategy.live_bars):
-                        strategy.load_database_bar(data_to=strategy.live_bars[0].datetime)
+                        indicator_init_need = True
+                        break
+                
+                if indicator_init_need:
+                    break
 
-            time.sleep(60)
+            if indicator_init_need and not self.bar_downloading:
+                # 下载Bar数据
+                download_success = self.download_bar()
+                
+                # 策略指标初始化
+                if download_success:
+                    for vt_symbol in self.strategy_symbols:
+                        strategies = self.cta_engine.symbol_strategy_map[vt_symbol]
+                        for i in range(len(strategies)):
+                            strategy: TrendignSniperStrategy = strategies[i]
+                            if not strategy.indicator_inited and len(strategy.live_bars):
+                                strategy.load_database_bar(data_to=strategy.live_bars[0].datetime)
+
+            time.sleep(1)
 
     def check_download_bar(self):
         if not self.bar_downloading:
@@ -153,6 +172,7 @@ class TrendingSniperPortfolio(object):
         # 下载Bar数据
         print_(f"Bar数据下载中..")
         self.bar_downloading = True
+        success = False
         try:
             result_bar_list = []
             try_count = 0
@@ -187,6 +207,7 @@ class TrendingSniperPortfolio(object):
                                 contract_list=exchange_symbols, days=1, from_data_base=True, save_to=self.name, delete_history_data=False, show_progress=False
                             )
 
+                    success = True
                     break
 
                 except Exception as e:
@@ -196,14 +217,11 @@ class TrendingSniperPortfolio(object):
             msg = f"Bar数据已更新！（{len(result_bar_list)}）\n"
             print_(msg)
 
-            # 发送事件
-            event = Event(type=EVENT_BAR_UPDATED, data="")
-            self.cta_engine.event_engine.put(event)
-
         except Exception as e:
             pass
 
         self.bar_downloading = False
+        return success
 
     def check_download_instruments(self):
         if not self.instruments_downloading:
