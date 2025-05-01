@@ -129,9 +129,9 @@ class TrendingSniperEngine(BaseEngine):
         if not strategies:
             return
         
-        for strategy in strategies:
-            if strategy.inited:
-                self.call_strategy_func(strategy, strategy.on_tick, tick)
+        # for strategy in strategies:
+        #     if strategy.inited:
+        #         self.call_strategy_func(strategy, strategy.on_tick, tick)
 
     def process_order_event(self, event: Event):
         order = event.data

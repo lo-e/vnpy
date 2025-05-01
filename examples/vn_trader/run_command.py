@@ -37,6 +37,7 @@ class MonitorEngine(object):
         self.duration_bar_data = {}
         self.history_duration_bar_data = {}
         self.tick_delay_time = 0
+        self.tick = None
 
     def check_gateway_connected(self):
         all_connected = True
@@ -72,6 +73,7 @@ class MonitorEngine(object):
     def on_tick(self, event):
         # 收到Tick数据
         tick: TickData = event.data
+        self.tick = copy(tick)
         tick_dt = tick.datetime.replace(tzinfo=None)
         delay = time.time() - tick_dt.timestamp()
         if delay >= 10 and len(self.history_duration_bar_data):
@@ -119,7 +121,7 @@ class MonitorEngine(object):
             for duration_bar in sorted_duration_bar_list[-10:]:
                 dt_str = duration_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                 print_(f"{duration_bar.vt_symbol}({duration_bar.tick_count})\t{duration_bar.open}\t{duration_bar.high}\t{duration_bar.low}\t{duration_bar.close}")
-            print_(f"Tick数据合约总数 {len(sorted_duration_bar_list)}")
+            print_(f"Tick数据合约总数 {len(sorted_duration_bar_list)} 最新 {self.tick.vt_symbol} {self.tick.datetime.replace(microsecond=0)}")
 
             # 检查交易所连接
             gateway_all_connected = self.check_gateway_connected()
