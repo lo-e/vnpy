@@ -212,10 +212,6 @@ class TrendignSniperStrategy(CtaTemplate):
         # 初始化后用以生成指标
         if self.indicator_inited:
             self.on_minute_bar(bar)
-        
-        elif len(self.live_bars) >= 2:
-            # 下载最新Bar数据
-            self.portfolio.bar_download_request = True
 
     def on_minute_bar(self, bar: BarData):
         self.minute_bar = bar
@@ -232,10 +228,6 @@ class TrendignSniperStrategy(CtaTemplate):
     def on_hour_bar(self, bar: BarData):
         self.hour_bar = bar
         self.hour_am.update_bar(bar)
-
-    def on_bar_updated(self, _):
-        if not self.indicator_inited and len(self.live_bars):
-            self.load_database_bar(data_to=self.live_bars[0].datetime)
 
     def calculate_indicator(self):
         # 通用指标

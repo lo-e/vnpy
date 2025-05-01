@@ -547,7 +547,6 @@ class TrendingSniperEngine(BaseEngine):
 
         # 创建策略实例
         strategy = TrendignSniperStrategy(self, setting)
-        self.event_engine.register(EVENT_BAR_UPDATED, strategy.on_bar_updated)
 
         # 加载同步数据
         self.load_sync_data(strategy)

@@ -16,6 +16,7 @@ from vnpy.trader.object import BarData
 from vnpy.event import Event
 from .base import EVENT_BAR_UPDATED
 from vnpy.trader.object import SubscribeRequest
+from .trendignSniperStrategy import TrendignSniperStrategy
 
 class TrendingSniperPortfolio(object):
     parameters = ["name",
@@ -38,7 +39,6 @@ class TrendingSniperPortfolio(object):
         self.download_engine = TurtleCryptoDataDownloading()
         self.download_bar_time: datetime = None
         self.bar_downloading = False
-        self.bar_download_request = False
         self.download_instruments_time: datetime = None
         self.instruments_downloading = False
 
@@ -51,7 +51,7 @@ class TrendingSniperPortfolio(object):
         pass
 
     def on_start(self):
-        Thread(target=self.check_download_bar_data).start()
+        Thread(target=self.check_strategy_data_inited).start()
         self.update_strategy_symbols()
 
     def on_timer(self):
@@ -61,13 +61,13 @@ class TrendingSniperPortfolio(object):
         # download_bar_hour_time = self.download_bar_time.replace(minute=0, second=0, microsecond=0) if self.download_bar_time else None
         # if download_bar_hour_time != current_hour_time:
         #     self.download_bar_time = datetime.now()
-        #     self.bar_download_request = True
+        #     self.check_download_bar()
 
         # 下载合约列表数据
         download_instruments_hour_time = self.download_instruments_time.replace(minute=0, second=0, microsecond=0) if self.download_instruments_time else None
         if download_instruments_hour_time != current_hour_time:
             self.download_instruments_time = datetime.now()
-            self.check_download_instruments_data()
+            self.check_download_instruments()
 
     def load_instruments_data(self):
         # .csv获取交易所USDT合约列表
@@ -133,18 +133,23 @@ class TrendingSniperPortfolio(object):
             cost = time.time() - start
             print_(f"合约订阅完成！（{len(new_vt_symbols)}）用时 {cost}s\n")
 
-    def check_download_bar_data(self):
+    def check_strategy_data_inited(self):
         while True:
-            sleep_time = 1
-            if self.bar_download_request:
-                self.bar_download_request = False
-                if not self.bar_downloading:
-                    self.bar_downloading = True
-                    Thread(target=self.download_bar_data).start()
-                    sleep_time = 60
-            time.sleep(sleep_time)
+            for vt_symbol in self.strategy_symbols:
+                strategies = self.cta_engine.symbol_strategy_map[vt_symbol]
+                for i in range(len(strategies)):
+                    strategy: TrendignSniperStrategy = strategies[i]
+                    if not strategy.indicator_inited and len(strategy.live_bars):
+                        strategy.load_database_bar(data_to=strategy.live_bars[0].datetime)
 
-    def download_bar_data(self):
+            time.sleep(60)
+
+    def check_download_bar(self):
+        if not self.bar_downloading:
+            self.bar_downloading = True
+            Thread(target=self.download_bar).start()
+
+    def download_bar(self):
         # 下载Bar数据
         print_(f"Bar数据下载中..")
         self.bar_downloading = True
@@ -200,12 +205,12 @@ class TrendingSniperPortfolio(object):
 
         self.bar_downloading = False
 
-    def check_download_instruments_data(self):
+    def check_download_instruments(self):
         if not self.instruments_downloading:
             self.instruments_downloading = True
-            Thread(target=self.download_instruments_data).start()
+            Thread(target=self.download_instruments).start()
 
-    def download_instruments_data(self):
+    def download_instruments(self):
         # 下载合约列表数据
         self.instruments_downloading = True
         try:
