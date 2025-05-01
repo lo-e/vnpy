@@ -331,22 +331,10 @@ class TrendingSniperEngine(BaseEngine):
             return
 
         # 响应策略初始化方法
-        self.write_log(f"{strategy_name}开始执行初始化")
         self.call_strategy_func(strategy, strategy.on_init)
-
-        # 订阅合约行情
-        # contract = self.main_engine.get_contract(strategy.vt_symbol)
-        # if contract:
-        #     req = SubscribeRequest(symbol=contract.symbol, exchange=contract.exchange)
-        #     self.main_engine.subscribe(req, contract.gateway_name)
-
-        # else:
-        #     self.write_log(f"行情订阅失败，找不到合约{strategy.vt_symbol}", strategy)
 
         # 策略状态更新（初始化完成）
         strategy.inited = True
-        self.put_strategy_event(strategy)
-        self.write_log(f"{strategy_name}初始化完成")
 
     def start_strategy(self, strategy_name: str):
         # 启动策略
@@ -364,8 +352,6 @@ class TrendingSniperEngine(BaseEngine):
 
         # 策略状态更新（已启动）
         strategy.trading = True
-        self.put_strategy_event(strategy)
-        self.write_log(f"{strategy_name}启动")
 
     def stop_strategy(self, strategy_name: str):
         # 停止策略
@@ -707,9 +693,9 @@ class TrendingSniperEngine(BaseEngine):
         self.start_all_strategies()
 
         # 启动策略组合
-        if not self.portfolio.starting:
+        if not self.portfolio.started:
             self.portfolio.on_start()
-            self.portfolio.starting = True
+            self.portfolio.started = True
             self.put_portfolio_event()
 
     def stopPortfolio(self):
@@ -717,9 +703,9 @@ class TrendingSniperEngine(BaseEngine):
         self.stop_all_strategies()
 
         # 停止策略组合
-        if self.portfolio.starting:
+        if self.portfolio.started:
             self.portfolio.on_stop()
-            self.portfolio.starting = False
+            self.portfolio.started = False
             self.put_portfolio_event()
 
     def get_portfolio_variables(self):

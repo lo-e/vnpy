@@ -30,7 +30,7 @@ class TrendingSniperPortfolio(object):
         self.name = ""
         self.portfolio_value = 0
         self.inited = False
-        self.starting = False
+        self.started = False
         self.coins = set()
         self.strategy_symbols = set()
         self.exchange_instruments_data = {}
@@ -55,6 +55,9 @@ class TrendingSniperPortfolio(object):
         self.update_strategy_symbols()
 
     def on_timer(self):
+        if not self.started:
+            return
+        
         current_hour_time = datetime.now().replace(minute=0, second=0, microsecond=0)
 
         # 下载Bar数据
@@ -117,15 +120,19 @@ class TrendingSniperPortfolio(object):
             if coin not in self.coins:
                 self.coins.add(coin)
                 new_vt_symbols.add(f"{symbol}.BINANCE")
-        
-        # 更新组合策略
-        for vt_symbol in new_vt_symbols:
-            self.strategy_symbols.add(vt_symbol)
-            # if "BTC" in vt_symbol:
-            self.new_strategy(vt_symbol)
 
-        # 订阅合约
         if new_vt_symbols:
+            # 创建策略
+            start = time.time()
+            print_(f"开始创建策略（{len(new_vt_symbols)}）..")
+            for vt_symbol in new_vt_symbols:
+                self.strategy_symbols.add(vt_symbol)
+                # if "BTC" in vt_symbol:
+                self.new_strategy(vt_symbol)
+            cost = time.time() - start
+            print_(f"创建策略完成！（{len(new_vt_symbols)}）用时 {cost}s\n")
+
+            # 订阅合约
             start = time.time()
             print_(f"开始订阅合约（{len(new_vt_symbols)}）..")
             for vt_symbol in new_vt_symbols:
