@@ -50,7 +50,7 @@ class TrendingSniperPortfolio(object):
         pass
 
     def on_start(self):
-        self.check_instruments_data(for_init=True)
+        self.check_instruments_data()
 
     def on_timer(self):
         current_hour_time = datetime.now().replace(minute=0, second=0, microsecond=0)
@@ -90,7 +90,7 @@ class TrendingSniperPortfolio(object):
             msg = f"HitNewPortfolio 获取交易所USDT合约列表出错\n\n{e}"
             self.send_ding_talk(msg)
     
-    def add_subscribe_vt_symbols(self, for_init: bool=False):
+    def add_subscribe_vt_symbols(self):
         vt_symbols = set()
 
         # 添加合约
@@ -139,10 +139,6 @@ class TrendingSniperPortfolio(object):
                        }
             self.cta_engine.new_strategy(setting)
 
-        # 初始下载Bar数据
-        # if for_init:
-        #     self.download_bar_data()
-
         # 订阅合约
         start = time.time()
         print_(f"开始订阅合约（{len(vt_symbols)}）..")
@@ -151,12 +147,12 @@ class TrendingSniperPortfolio(object):
         cost = time.time() - start
         print_(f"合约订阅完成！（{len(vt_symbols)}）用时 {cost}s\n")
 
-    def check_instruments_data(self, for_init: bool=False):
+    def check_instruments_data(self):
         # 导入交易所合约
         self.load_instruments_data()
 
         # 添加订阅合约
-        self.add_subscribe_vt_symbols(for_init)
+        self.add_subscribe_vt_symbols()
 
     def download_bar_data(self):
         if self.bar_downloading:
