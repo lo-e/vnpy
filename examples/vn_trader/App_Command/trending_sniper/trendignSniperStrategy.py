@@ -86,7 +86,7 @@ class TrendignSniperStrategy(CtaTemplate):
 
         self.tick: TickData = None
         self.minute_bar_generator = BarGenerator(on_bar=self.on_live_minute_bar)
-        self.live_bars: OrderedDict = OrderedDict()
+        self.live_bars = []
 
         self.minute_bar: BarData = None
         self.minute_bar_dt: str = ""
@@ -148,6 +148,7 @@ class TrendignSniperStrategy(CtaTemplate):
 
             bar_list = []
             next_bar_dt = None
+            bar_lack = False
             for d in cursor:
                 bar = BarData(gateway_name = '', symbol = '', exchange = Exchange.NONE, datetime = None, endDatetime = None)
                 bar.__dict__ = d
@@ -186,18 +187,16 @@ class TrendignSniperStrategy(CtaTemplate):
                 
                 # 回测实时Bar数据
                 data_valid = False
-                for live_dt, live_bar in self.live_bars.items():
-                    if live_dt == next_bar_dt:
+                for bar in self.live_bars:
+                    if bar.datetime == next_bar_dt or data_valid:
                         data_valid = True
-                        self.on_minute_bar(live_bar)
-                        next_bar_dt = live_dt.datetime + timedelta(minutes=1)
+                        self.on_minute_bar(bar)
 
-                # 计算指标
+                # 指标完成初始化
                 if data_valid:
-                    self.calculate_indicator()
+                    self.indicator_inited = True
 
         except Exception as e:
-            self.bar_lack = True
             msg = f"加载Bar数据出错\n\n{e}"
             self.send_ding_talk(msg)
 
@@ -206,9 +205,9 @@ class TrendignSniperStrategy(CtaTemplate):
 
     def on_live_minute_bar(self, bar: BarData):
         # 保存Bar数据
-        self.live_bars[bar.datetime] = copy(bar)
+        self.live_bars.append(copy(bar))
         if len(self.live_bars) > 10:
-            self.live_bars.popitem(last=0)
+            self.live_bars.pop(0)
 
         # 初始化后用以生成指标
         if self.indicator_inited:
@@ -222,26 +221,22 @@ class TrendignSniperStrategy(CtaTemplate):
     def on_minute_bar(self, bar: BarData):
         self.minute_bar = bar
         self.minute_am.update_bar(bar)
-        self.calculate_indicator()
 
         self.minute_5_bar_generator.update_bar(bar)
         self.hour_bar_generator.update_bar(bar)
+        self.calculate_indicator()
 
     def on_minute_5_bar(self, bar: BarData):
         self.minute_5_bar = bar
         self.minute_5_am.update_bar(bar)
-        self.calculate_indicator()
-
 
     def on_hour_bar(self, bar: BarData):
         self.hour_bar = bar
         self.hour_am.update_bar(bar)
-        self.calculate_indicator()
 
     def on_bar_updated(self, _):
         if not self.indicator_inited and len(self.live_bars):
-            live_bar: BarData = list(self.live_bars.values())[0]
-            self.load_bar_data(data_to=live_bar.datetime)
+            self.load_bar_data(data_to=self.live_bars[0].datetime)
 
     def calculate_indicator(self):
         # 通用指标
@@ -266,9 +261,6 @@ class TrendignSniperStrategy(CtaTemplate):
         # 小时指标
         if self.hour_am.inited:
             self.hour_atr = self.hour_am.atr(20)
-            
-        # 指标完成初始化
-        self.indicator_inited = True
 
     def check_target_pos(self):
         while True:

@@ -595,7 +595,7 @@ class BybitRestApi(RestClient):
                 delivery_datetime = generate_datetime(delivery_time)
 
                 # 过滤过期合约
-                if delivery_datetime <= datetime.now(CHINA_TZ):
+                if delivery_datetime <= datetime.now():
                     continue
 
                 # 交割合约使用交割日期作为name
@@ -797,10 +797,10 @@ class BybitWebsocketDataApi(WebsocketClient):
             self.ticks[req.symbol] = tick
 
         # 订阅tick_100ms数据
-        # self.subscribe_topic(f"tickers.{req.symbol}", self.on_tick)
+        self.subscribe_topic(f"tickers.{req.symbol}", self.on_tick)
         
         # 订阅成交数据
-        self.subscribe_topic(f"publicTrade.{req.symbol}", self.on_public_trade)
+        # self.subscribe_topic(f"publicTrade.{req.symbol}", self.on_public_trade)
         
         # 订阅200挡深度数据
         # self.subscribe_topic(f"orderbook.200.{req.symbol}", self.on_depth)
@@ -1143,7 +1143,7 @@ def generate_timestamp(expire_after: float = 30) -> int:
 def generate_datetime(timestamp: float) -> datetime:
     """生成时间"""
     dt: datetime = datetime.fromtimestamp(timestamp / 1000)
-    dt: datetime = dt.replace(tzinfo=CHINA_TZ)
+    # dt: datetime = dt.replace(tzinfo=CHINA_TZ)
     return dt
 
 def sign(secret: bytes, data: bytes) -> str:

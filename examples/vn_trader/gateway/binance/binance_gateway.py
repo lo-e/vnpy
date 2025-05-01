@@ -1061,7 +1061,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
                 symbol=symbol_upper,
                 name=symbol_contract_map[symbol_upper].name,
                 exchange=Exchange.BINANCE,
-                datetime=datetime.now(CHINA_TZ),
+                datetime=datetime.now(),
                 gateway_name=self.gateway_name,
             )
             self.ticks[symbol_upper] = tick
@@ -1112,7 +1112,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
             try:
                 symbol = self.subscribe_queue.get(block=True, timeout=1)
                 self.reqid += 1
-                channels = [f"{symbol.lower()}@aggTrade"]
+                channels = [f"{symbol.lower()}@ticker"]
                 req: dict = {"method": "SUBSCRIBE", "params": channels, "id": self.reqid}
                 self.send_packet(req)
 
@@ -1123,5 +1123,5 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
 def generate_datetime(timestamp: float) -> datetime:
     """生成时间"""
     dt: datetime = datetime.fromtimestamp(timestamp / 1000)
-    dt: datetime = dt.replace(tzinfo=CHINA_TZ)
+    # dt: datetime = dt.replace(tzinfo=CHINA_TZ)
     return dt

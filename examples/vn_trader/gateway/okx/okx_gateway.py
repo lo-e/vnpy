@@ -631,7 +631,7 @@ class OkxWebsocketPublicApi(WebsocketClient):
                 symbol=req.symbol,
                 exchange=req.exchange,
                 name=req.symbol,
-                datetime=datetime.now(CHINA_TZ),
+                datetime=datetime.now(),
                 gateway_name=self.gateway_name,
             )
             self.ticks[req.symbol] = tick
@@ -641,7 +641,7 @@ class OkxWebsocketPublicApi(WebsocketClient):
         # trades 获取最近的成交数据，有成交数据就推送，每次推送可能聚合多条成交数据，根据每个taker订单的不同成交价格推送消息，并使用count字段表示聚合的订单匹配数量。
         # books5 获取深度数据，books5是5档频道，首次推5档快照数据，以后定量推送，每100毫秒当5档快照数据有变化推送一次5档数据。
         args: list = []
-        for channel in ["trades"]:
+        for channel in ["tickers"]:
             args.append({
                 "channel": channel,
                 "instId": req.symbol
@@ -1141,7 +1141,8 @@ def generate_timestamp() -> str:
 def parse_timestamp(timestamp: str) -> datetime:
     """解析回报时间戳"""
     dt: datetime = datetime.fromtimestamp(int(timestamp) / 1000)
-    return dt.replace(tzinfo=CHINA_TZ)
+    # dt = dt.replace(tzinfo=CHINA_TZ)
+    return dt
 
 def get_float_value(data: dict, key: str) -> float:
     """获取字典中对应键的浮点数值"""
