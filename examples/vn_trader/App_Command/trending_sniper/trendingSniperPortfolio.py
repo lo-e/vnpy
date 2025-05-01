@@ -38,6 +38,7 @@ class TrendingSniperPortfolio(object):
         self.download_engine = TurtleCryptoDataDownloading()
         self.download_bar_time: datetime = None
         self.bar_downloading = False
+        self.bar_download_request = False
         self.download_instruments_time: datetime = None
         self.instruments_downloading = False
 
@@ -50,6 +51,7 @@ class TrendingSniperPortfolio(object):
         pass
 
     def on_start(self):
+        Thread(target=self.check_download_bar_data).start()
         self.update_strategy_symbols()
 
     def on_timer(self):
@@ -59,7 +61,7 @@ class TrendingSniperPortfolio(object):
         # download_bar_hour_time = self.download_bar_time.replace(minute=0, second=0, microsecond=0) if self.download_bar_time else None
         # if download_bar_hour_time != current_hour_time:
         #     self.download_bar_time = datetime.now()
-        #     self.check_download_bar_data()
+        #     self.bar_download_request = True
 
         # 下载合约列表数据
         download_instruments_hour_time = self.download_instruments_time.replace(minute=0, second=0, microsecond=0) if self.download_instruments_time else None
@@ -132,9 +134,15 @@ class TrendingSniperPortfolio(object):
             print_(f"合约订阅完成！（{len(new_vt_symbols)}）用时 {cost}s\n")
 
     def check_download_bar_data(self):
-        if not self.bar_downloading:
-            self.bar_downloading = True
-            Thread(target=self.download_bar_data).start()
+        while True:
+            sleep_time = 1
+            if self.bar_download_request:
+                self.bar_download_request = False
+                if not self.bar_downloading:
+                    self.bar_downloading = True
+                    Thread(target=self.download_bar_data).start()
+                    sleep_time = 60
+            time.sleep(sleep_time)
 
     def download_bar_data(self):
         # 下载Bar数据

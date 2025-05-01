@@ -136,7 +136,7 @@ class TrendignSniperStrategy(CtaTemplate):
     def on_start(self):
         Thread(target=self.check_target_pos).start()
 
-    def load_bar_data(self, data_to: datetime):
+    def load_database_bar(self, data_to: datetime):
         try:
             # 数据库加载Bar数据
             mc = MongoClient()
@@ -215,7 +215,7 @@ class TrendignSniperStrategy(CtaTemplate):
         
         elif len(self.live_bars) >= 2:
             # 下载最新Bar数据
-            self.portfolio.check_download_bar_data()
+            self.portfolio.bar_download_request = True
 
     def on_minute_bar(self, bar: BarData):
         self.minute_bar = bar
@@ -235,7 +235,7 @@ class TrendignSniperStrategy(CtaTemplate):
 
     def on_bar_updated(self, _):
         if not self.indicator_inited and len(self.live_bars):
-            self.load_bar_data(data_to=self.live_bars[0].datetime)
+            self.load_database_bar(data_to=self.live_bars[0].datetime)
 
     def calculate_indicator(self):
         # 通用指标
