@@ -10,7 +10,7 @@ from vnpy.trader.constant import Interval
 from datetime import datetime, timedelta
 from time import sleep
 from threading import Thread
-from pymongo import MongoClient
+from pymongo import MongoClient, ASCENDING, DESCENDING
 from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 from vnpy.trader.constant import Exchange
 from vnpy.trader.object import BarData
@@ -25,6 +25,7 @@ from reportlab.platypus import Paragraph
 from reportlab.platypus import Spacer
 from vnpy.trader.engine import EmailEngine
 from dataservice.utility import get_csv_path, save_df_data
+from copy import copy
 
 class DownloadUtility(object):
     def __init__(self) -> None:
@@ -159,6 +160,151 @@ class DownloadUtility(object):
 
         dataDownload = TurtleCryptoDataDownloading()
         dataDownload.download_instruments_list(exchange, symbol_instruments_data)
+
+    def download_instruments_bar_data(self, exchanges: list):
+        download_bar_time = None
+        downloading = False
+        while True:
+            current_hour_time = datetime.now().replace(minute=0, second=0, microsecond=0)
+            download_bar_hour_time = download_bar_time.replace(minute=0, second=0, microsecond=0) if download_bar_time else None
+            if download_bar_hour_time != current_hour_time and not downloading:
+                download_bar_time = datetime.now()
+
+                # 开始下载
+                downloading = True
+
+                # 更新交易所合约
+                for exchange in exchanges:
+                    utility.get_new_instruments_list(exchange)
+
+                # 文件获取交易所合约列表
+                exchange_instruments_data = {}
+                csv_dir = get_csv_path()
+                for exchange in exchanges:
+                    symbol_instruments_data = {}
+                    file_path = f"{csv_dir}{exchange.value}{DIR_SYMBOL}instruments.csv"
+                    if not os.path.exists(file_path):
+                        continue
+
+                    df = pd.read_csv(file_path)
+                    for _, row in df.iterrows():
+                        instrument = dict(row)
+                        symbol = instrument["symbol"]
+                        symbol_instruments_data[symbol] = instrument
+                    exchange_instruments_data[exchange.value] = symbol_instruments_data
+
+                # 添加合约
+                vt_symbols = set()
+                coins = set()
+
+                okx_symbols = list(exchange_instruments_data.get("OKX", {}).keys())
+                for symbol in okx_symbols:
+                    coin = symbol.split("-USDT")[0]
+                    if coin not in coins:
+                        coins.add(coin)
+                        vt_symbols.add(f"{symbol}.OKX")
+
+                bybit_symbols = list(exchange_instruments_data.get("BYBIT", {}).keys())
+                for symbol in bybit_symbols:
+                    coin = symbol.split("USDT")[0]
+                    if coin not in coins:
+                        coins.add(coin)
+                        vt_symbols.add(f"{symbol}.BYBIT")
+
+                binance_symbols = list(exchange_instruments_data.get("BINANCE", {}).keys())
+                for symbol in binance_symbols:
+                    coin = symbol.split("USDT")[0]
+                    if coin not in coins:
+                        coins.add(coin)
+                        vt_symbols.add(f"{symbol}.BINANCE")
+                
+                # 下载Bar数据
+                download_engine = TurtleCryptoDataDownloading()
+                dir_name = "TEMP"
+                print_(f"Bar数据下载中..")
+                download_success = False
+                result_bar_list = []
+                try_count = 0
+                while try_count < 5:
+                    try_count += 1
+                    try:
+                        # 按交易所分类合约
+                        contract_exchange_dict = {}
+                        for symbol in vt_symbols.copy():
+                            exchange = symbol.split(".")[-1]
+                            exchange_symbols = contract_exchange_dict.get(exchange, set())
+                            exchange_symbols.add(symbol.split(".")[0])
+                            contract_exchange_dict[exchange] = exchange_symbols
+
+                        # 先清空历史下载数据 
+                        download_engine.delete_history_data(target_dir=dir_name)
+
+                        # 开始下载
+                        for exchange, exchange_symbols in contract_exchange_dict.items():
+                            if exchange == "BINANCE":
+                                download_engine.download_from_binance(
+                                    contract_list=exchange_symbols, days=1, from_data_base=True, save_to=dir_name, delete_history_data=False, show_progress=False
+                                )
+
+                            elif exchange == "OKX":
+                                download_engine.download_from_okx(
+                                    contract_list=exchange_symbols, days=1, from_data_base=True, save_to=dir_name, delete_history_data=False, show_progress=False
+                                )
+                            
+                            elif exchange == "BYBIT":
+                                download_engine.download_from_bybit(
+                                    contract_list=exchange_symbols, days=1, from_data_base=True, save_to=dir_name, delete_history_data=False, show_progress=False
+                                )
+
+                        # 检查下载结果
+                        all_downloaded = True
+                        for symbol in vt_symbols.copy():
+                            client = MongoClient("localhost", 27017)
+                            db = client[MINUTE_DB_NAME]
+                            collection = db[symbol]
+
+                            now = datetime.now().replace(second=0, microsecond=0)
+                            dt_from = now - timedelta(minutes=10)
+                            dt_to = now - timedelta(minutes=5)
+                            flt = {"datetime": {"$gte": dt_from}}
+                            bar_list = list(collection.find(flt).sort("datetime", DESCENDING))
+                            if bar_list:
+                                data = bar_list[0]
+                                bar = BarData(
+                                    gateway_name="",
+                                    symbol="",
+                                    exchange=Exchange.NONE,
+                                    datetime=None,
+                                    endDatetime=None)
+                                bar.__dict__ = data
+                                result_bar_list.append(copy(bar))
+                                if bar.datetime < dt_to:
+                                    all_downloaded = False
+                                    break
+
+                        download_success = all_downloaded
+                        break
+
+                    except Exception as e:
+                        msg = f"TrendingSniperPortfolio 下载Bar数据出错\n\n{e}"
+                        print_(msg)
+
+                if download_success:
+                    # 输出结果
+                    for bar in result_bar_list[-5:]:
+                        print(f"{bar.datetime}\t{bar.vt_symbol}\t{bar.open_price}\t{bar.high_price}\t{bar.low_price}\t{bar.close_price}")
+
+                    msg = f"Bar数据已更新！（{len(result_bar_list)}）\n"
+                    print_(msg)
+
+                else:
+                    msg = f"TrendingSniperPortfolio Bar数据下载缺失！"
+                    print_(msg)
+
+                # 结束下载
+                downloading = False
+
+            sleep(60)
 
     def download_data(self):
         exchange = input("选择交易所（默认1）【Binance：1 OKX：2 Bybit：3】")
@@ -543,6 +689,10 @@ class DownloadUtility(object):
                             email_engine.send_email(subject=f"{exchange}行情推送", content=f"点击附件查看", pdf_file_path=pdf_full_path)
 
             sleep(10)
+
+def print_(msg: str):
+    dt = datetime.now().replace(microsecond=0)
+    print(f"{dt}\t{msg}")
     
 if __name__ == "__main__":
     utility = DownloadUtility()
@@ -553,7 +703,10 @@ if __name__ == "__main__":
     # 获取新上市的合约列表（附上上市日期并保存到.csv文件）
     # utility.get_new_instruments_list(Exchange.OKX)
     # utility.get_new_instruments_list(Exchange.BINANCE)
-    utility.get_new_instruments_list(Exchange.BYBIT)
+    # utility.get_new_instruments_list(Exchange.BYBIT)
+
+    # 下载交易所所有合约分钟Bar数据（相同代币优先级OKX > BYBIT > BINANCE）
+    utility.download_instruments_bar_data([Exchange.OKX, Exchange.BYBIT, Exchange.BINANCE])
 
     # 下载数据
     # utility.download_data()
