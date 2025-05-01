@@ -89,49 +89,46 @@ class TrendingSniperPortfolio(object):
             msg = f"HitNewPortfolio 获取交易所USDT合约列表出错\n\n{e}"
             self.send_ding_talk(msg)
     
-    def add_subscribe_vt_symbols(self):
-        vt_symbols = set()
+    def update_strategy_symbols(self):
+        # 导入交易所合约
+        self.load_instruments_data()
 
-        # 添加合约
+        # 确认新合约
+        new_vt_symbols = set()
         okx_symbols = list(self.exchange_instruments_data.get("OKX", {}).keys())
         for symbol in okx_symbols:
             coin = symbol.split("-USDT")[0]
             if coin not in self.coins:
                 self.coins.add(coin)
-                vt_symbols.add(f"{symbol}.OKX")
+                new_vt_symbols.add(f"{symbol}.OKX")
 
         bybit_symbols = list(self.exchange_instruments_data.get("BYBIT", {}).keys())
         for symbol in bybit_symbols:
             coin = symbol.split("USDT")[0]
             if coin not in self.coins:
                 self.coins.add(coin)
-                vt_symbols.add(f"{symbol}.BYBIT")
+                new_vt_symbols.add(f"{symbol}.BYBIT")
 
         binance_symbols = list(self.exchange_instruments_data.get("BINANCE", {}).keys())
         for symbol in binance_symbols:
             coin = symbol.split("USDT")[0]
             if coin not in self.coins:
                 self.coins.add(coin)
-                vt_symbols.add(f"{symbol}.BINANCE")
+                new_vt_symbols.add(f"{symbol}.BINANCE")
         
-        for vt_symbol in vt_symbols:
+        # 更新组合策略
+        for vt_symbol in new_vt_symbols:
             self.strategy_symbols.add(vt_symbol)
             # self.new_strategy(vt_symbol)
 
         # 订阅合约
-        start = time.time()
-        print_(f"开始订阅合约（{len(vt_symbols)}）..")
-        for vt_symbol in vt_symbols:
-            self.subscribe(vt_symbol)
-        cost = time.time() - start
-        print_(f"合约订阅完成！（{len(vt_symbols)}）用时 {cost}s\n")
-
-    def update_strategy_symbols(self):
-        # 导入交易所合约
-        self.load_instruments_data()
-
-        # 添加订阅合约
-        self.add_subscribe_vt_symbols()
+        if new_vt_symbols:
+            start = time.time()
+            print_(f"开始订阅合约（{len(new_vt_symbols)}）..")
+            for vt_symbol in new_vt_symbols:
+                self.subscribe(vt_symbol)
+            cost = time.time() - start
+            print_(f"合约订阅完成！（{len(new_vt_symbols)}）用时 {cost}s\n")
 
     def check_download_bar_data(self):
         if not self.bar_downloading:
