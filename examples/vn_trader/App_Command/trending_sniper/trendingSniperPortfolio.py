@@ -50,23 +50,22 @@ class TrendingSniperPortfolio(object):
         pass
 
     def on_start(self):
-        self.check_instruments_data()
+        self.update_strategy_symbols()
 
     def on_timer(self):
         current_hour_time = datetime.now().replace(minute=0, second=0, microsecond=0)
 
         # 下载Bar数据
         # download_bar_hour_time = self.download_bar_time.replace(minute=0, second=0, microsecond=0) if self.download_bar_time else None
-        # if download_bar_hour_time != current_hour_time and not self.bar_downloading:
-        #     thread = Thread(target=self.download_bar_data)
-        #     thread.start()
+        # if download_bar_hour_time != current_hour_time:
+        #     self.download_bar_time = datetime.now()
+        #     self.check_download_bar_data()
 
         # 下载合约列表数据
         download_instruments_hour_time = self.download_instruments_time.replace(minute=0, second=0, microsecond=0) if self.download_instruments_time else None
-        if download_instruments_hour_time != current_hour_time and not self.instruments_downloading:
+        if download_instruments_hour_time != current_hour_time:
             self.download_instruments_time = datetime.now()
-            thread = Thread(target=self.download_instruments_data)
-            thread.start()
+            self.check_download_instruments_data()
 
     def load_instruments_data(self):
         # .csv获取交易所USDT合约列表
@@ -127,21 +126,21 @@ class TrendingSniperPortfolio(object):
         cost = time.time() - start
         print_(f"合约订阅完成！（{len(vt_symbols)}）用时 {cost}s\n")
 
-    def check_instruments_data(self):
+    def update_strategy_symbols(self):
         # 导入交易所合约
         self.load_instruments_data()
 
         # 添加订阅合约
         self.add_subscribe_vt_symbols()
 
+    def check_download_bar_data(self):
+        if not self.bar_downloading:
+            Thread(target=self.download_bar_data).start()
+
     def download_bar_data(self):
-        if self.bar_downloading:
-            return
-        
         # 下载Bar数据
         print_(f"Bar数据下载中..")
         self.bar_downloading = True
-        self.download_bar_time = datetime.now()
         download_success = False
         result_bar_list = []
         try_count = 0
@@ -227,6 +226,10 @@ class TrendingSniperPortfolio(object):
 
         self.bar_downloading = False
 
+    def check_download_instruments_data(self):
+        if not self.instruments_downloading:
+            Thread(target=self.download_instruments_data).start()
+
     def download_instruments_data(self):
         # 下载合约列表数据
         self.instruments_downloading = True
@@ -274,8 +277,11 @@ class TrendingSniperPortfolio(object):
             update_contract_gateway_names.add("BYBIT")
 
         if len(update_contract_gateway_names):
+            # gateway更新合约
             self.query_gateway_contract(list(update_contract_gateway_names))
-            self.check_instruments_data()
+
+            # 组合策略更新合约
+            self.update_strategy_symbols()
 
         if download_success:
             msg = f"合约列表数据已更新！\n"
