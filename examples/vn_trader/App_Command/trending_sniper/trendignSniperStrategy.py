@@ -105,12 +105,12 @@ class TrendignSniperStrategy(CtaTemplate):
         self.hour_am: ArrayManager = None
         self.hour_atr = 0
 
-        self.check_target_pos_queue = Queue()
-        self.check_target_pos_ts = 0
         self.tradable = True
         self.indicator_inited = False
         self.exit_up = 0
         self.exit_down = 0
+        self.target_pos_checking = False
+        self.target_pos_check_ts = 0
         self.target_pos = 0
         self.direction = ""
         self.signal_price = 0
@@ -132,9 +132,6 @@ class TrendignSniperStrategy(CtaTemplate):
         if not gateway:
             msg = f"交易所账户未连接\n\n交易所：{exchange}\n账户：{self.exchange_user}"
             self.send_ding_talk(msg)
-
-    def on_start(self):
-        Thread(target=self.check_target_pos).start()
 
     def load_database_bar(self, data_to: datetime):
         try:
@@ -254,64 +251,59 @@ class TrendignSniperStrategy(CtaTemplate):
             self.hour_atr = self.hour_am.atr(20)
 
     def check_target_pos(self):
+        self.target_pos_checking = True
         while True:
             try:
-                _ = self.check_target_pos_queue.get(block=True, timeout=0.1)
-                if not self.tick:
-                    continue
-                
-                if self.target_pos == self.pos:
-                    continue
+                if self.tick and self.target_pos != self.pos and time.time() >= self.target_pos_check_ts + 3:
+                    self.target_pos_check_ts = time.time()
 
-                # 撮合交易
-                if self.direction == "LONG":
-                    if self.target_pos < 0 or self.pos < 0:
-                        msg = f"仓位异常\n\ntarget {self.target_pos}\npos {self.pos}"
-                        self.send_ding_talk(msg)
-                        continue
+                    # 撮合交易
+                    if self.direction == "LONG":
+                        if self.target_pos < 0 or self.pos < 0:
+                            msg = f"仓位异常\n\ntarget {self.target_pos}\npos {self.pos}"
+                            self.send_ding_talk(msg)
+                            break
 
-                    gap = self.target_pos - self.pos
-                    if gap > 0:
-                        # 多头开仓
-                        trade_price = self.tick.last_price * 1.005
-                        self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(gap))
-                    
-                    elif gap < 0:
-                        # 多头平仓
-                        trade_price = self.tick.last_price * 0.995
-                        self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(gap))
+                        gap = self.target_pos - self.pos
+                        if gap > 0:
+                            # 多头开仓
+                            trade_price = self.tick.last_price * 1.005
+                            self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(gap))
+                        
+                        elif gap < 0:
+                            # 多头平仓
+                            trade_price = self.tick.last_price * 0.995
+                            self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(gap))
 
-                if self.direction == "SHORT":
-                    if self.target_pos > 0 or self.pos > 0:
-                        msg = f"仓位异常\n\ntarget {self.target_pos}\npos {self.pos}"
-                        self.send_ding_talk(msg)
-                        continue
+                    if self.direction == "SHORT":
+                        if self.target_pos > 0 or self.pos > 0:
+                            msg = f"仓位异常\n\ntarget {self.target_pos}\npos {self.pos}"
+                            self.send_ding_talk(msg)
+                            break
 
-                    gap = abs(self.target_pos) - abs(self.pos)
-                    if gap > 0:
-                        # 空头开仓
-                        trade_price = self.tick.last_price * 0.995
-                        self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(gap))
-                    
-                    elif gap < 0:
-                        # 空头平仓
-                        trade_price = self.tick.last_price * 1.005
-                        self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(gap))
-            
-            except Empty:
-                pass
-                
+                        gap = abs(self.target_pos) - abs(self.pos)
+                        if gap > 0:
+                            # 空头开仓
+                            trade_price = self.tick.last_price * 0.995
+                            self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(gap))
+                        
+                        elif gap < 0:
+                            # 空头平仓
+                            trade_price = self.tick.last_price * 1.005
+                            self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(gap))
+
+                elif self.target_pos == self.pos and time.time() >= self.target_pos_check_ts + 3:
+                    self.cancel_all()
+
+                elif self.target_pos == self.pos and time.time() >= self.target_pos_check_ts + 60:
+                    break
+
             except Exception as e:
-                msg = f"核查目标仓位出错\n\n{e}"
+                msg = f"核查目标仓位出错\n\n目标 {self.target_pos} 当前 {self.pos}\n{e}"
                 self.send_ding_talk(msg)
-
-    def on_timer(self):
-        # 每隔两秒核查目标仓位
-        if time.time() >= self.check_target_pos_ts + 2:
-            self.check_target_pos_ts = time.time()
-            self.check_target_pos_queue.put("")
-
-        super().on_timer()
+                break
+        
+        self.target_pos_checking = False
 
     def on_tick(self, tick: TickData):
         if not self.trading:
@@ -390,8 +382,10 @@ class TrendignSniperStrategy(CtaTemplate):
                 target_pos_updated = True
 
         if target_pos_updated:
-            self.check_target_pos_ts = time.time()
-            self.check_target_pos_queue.put("")
+            self.target_pos_check_ts = time.time() - 10
+            if not self.target_pos_checking:
+                self.target_pos_checking = True
+                Thread(self.check_target_pos).start()
             
         # 同步数据
         self.put_timer_event()

@@ -51,8 +51,9 @@ class TrendingSniperPortfolio(object):
         pass
 
     def on_start(self):
-        Thread(target=self.check_strategy_data_inited).start()
         self.update_strategy_symbols()
+        Thread(target=self.check_strategy_data_inited).start()
+        Thread(target=self.check_strategy_target_pos).start()
 
     def on_timer(self):
         if not self.started:
@@ -140,34 +141,56 @@ class TrendingSniperPortfolio(object):
             cost = time.time() - start
             print_(f"合约订阅完成！（{len(new_vt_symbols)}）用时 {cost}s\n")
 
+    def check_strategy_target_pos(self):
+        while True:
+            try:
+                for vt_symbol in self.strategy_symbols:
+                    strategies = self.cta_engine.symbol_strategy_map[vt_symbol]
+                    for i in range(len(strategies)):
+                        strategy: TrendignSniperStrategy = strategies[i]
+                        if strategy.target_pos != strategy.pos:
+                            if not strategy.target_pos_checking:
+                                strategy.target_pos_checking = True
+                                strategy.target_pos_check_ts = time.time() - 10
+                                Thread(strategy.check_target_pos).start()
+
+            except Exception as e:
+                pass
+
+            time.sleep(1)
+    
     def check_strategy_data_inited(self):
         while True:
-            # 检查策略指标初始化
-            indicator_init_need = False
-            for vt_symbol in self.strategy_symbols:
-                strategies = self.cta_engine.symbol_strategy_map[vt_symbol]
-                for i in range(len(strategies)):
-                    strategy: TrendignSniperStrategy = strategies[i]
-                    if not strategy.indicator_inited and len(strategy.live_bars):
-                        indicator_init_need = True
+            try:
+                # 检查策略指标初始化
+                indicator_init_need = False
+                for vt_symbol in self.strategy_symbols:
+                    strategies = self.cta_engine.symbol_strategy_map[vt_symbol]
+                    for i in range(len(strategies)):
+                        strategy: TrendignSniperStrategy = strategies[i]
+                        if not strategy.indicator_inited and len(strategy.live_bars):
+                            indicator_init_need = True
+                            break
+                    
+                    if indicator_init_need:
                         break
-                
-                if indicator_init_need:
-                    break
 
-            if indicator_init_need and not self.bar_downloading:
-                # 下载Bar数据
-                download_success = self.download_bar()
-                
-                # 策略指标初始化
-                if download_success:
-                    for vt_symbol in self.strategy_symbols:
-                        strategies = self.cta_engine.symbol_strategy_map[vt_symbol]
-                        for i in range(len(strategies)):
-                            strategy: TrendignSniperStrategy = strategies[i]
-                            if not strategy.indicator_inited and len(strategy.live_bars):
-                                data_to = strategy.live_bars[0].datetime - timedelta(minutes=1)
-                                strategy.load_database_bar(data_to)
+                if indicator_init_need and not self.bar_downloading:
+                    # 下载Bar数据
+                    download_success = self.download_bar()
+                    
+                    # 策略指标初始化
+                    if download_success:
+                        for vt_symbol in self.strategy_symbols:
+                            strategies = self.cta_engine.symbol_strategy_map[vt_symbol]
+                            for i in range(len(strategies)):
+                                strategy: TrendignSniperStrategy = strategies[i]
+                                if not strategy.indicator_inited and len(strategy.live_bars):
+                                    data_to = strategy.live_bars[0].datetime - timedelta(minutes=1)
+                                    strategy.load_database_bar(data_to)
+
+            except Exception as e:
+                pass
 
             time.sleep(1)
 
