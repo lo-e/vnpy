@@ -177,12 +177,12 @@ class TrendingSniperPortfolio(object):
             except Empty:
                 pass
 
-            except Exception as e:
-                msg = f"处理Tick数据出错\t{tick.vt_symbol}\t{tick.datetime}\n{e}"
-                print_(msg)
-                if time.time() >= error_notice_ts + 60:
-                    error_notice_ts = time.time()
-                    self.send_ding_talk(msg)
+            # except Exception as e:
+            #     msg = f"处理Tick数据出错\t{tick.vt_symbol}\t{tick.datetime}\n{e}"
+            #     print_(msg)
+            #     if time.time() >= error_notice_ts + 60:
+            #         error_notice_ts = time.time()
+            #         self.send_ding_talk(msg)
 
     def check_strategy_target_pos(self):
         while True:

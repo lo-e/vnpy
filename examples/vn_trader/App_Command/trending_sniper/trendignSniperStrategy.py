@@ -90,18 +90,24 @@ class TrendignSniperStrategy(CtaTemplate):
         self.minute_bar_dt: str = ""
         self.minute_am: ArrayManager = None
         self.minute_atr = 0
+        self.minute_high = 0
+        self.minute_low = 0
 
         self.minute_5_bar: BarData = None
         self.minute_5_bar_dt: str = ""
         self.minute_5_bar_generator: BarGenerator = None
         self.minute_5_am: ArrayManager = None
         self.minute_5_atr = 0
+        self.minute_5_high = 0
+        self.minute_5_low = 0
 
         self.hour_bar: BarData = None
         self.hour_bar_dt: str = ""
         self.hour_bar_generator: BarGenerator = None
         self.hour_am: ArrayManager = None
         self.hour_atr = 0
+        self.hour_high = 0
+        self.hour_low = 0
 
         self.tradable = True
         self.indicator_inited = False
@@ -210,6 +216,10 @@ class TrendignSniperStrategy(CtaTemplate):
             self.on_minute_bar(bar)
 
     def on_minute_bar(self, bar: BarData):
+        if self.indicator_inited and self.tick:
+            self.minute_high = self.tick.last_price
+            self.minute_low = self.tick.last_price
+
         self.minute_bar = bar
         self.minute_am.update_bar(bar)
 
@@ -218,10 +228,18 @@ class TrendignSniperStrategy(CtaTemplate):
         self.calculate_indicator()
 
     def on_minute_5_bar(self, bar: BarData):
+        if self.indicator_inited and self.tick:
+            self.minute_5_high = self.tick.last_price
+            self.minute_5_low = self.tick.last_price
+
         self.minute_5_bar = bar
         self.minute_5_am.update_bar(bar)
 
     def on_hour_bar(self, bar: BarData):
+        if self.indicator_inited and self.tick:
+            self.hour_high = self.tick.last_price
+            self.hour_low = self.tick.last_price
+
         self.hour_bar = bar
         self.hour_am.update_bar(bar)
 
@@ -314,20 +332,20 @@ class TrendignSniperStrategy(CtaTemplate):
     
         # 判断信号
         if not self.direction and not self.signal_price and self.indicator_inited:
-            minute_high = self.minute_bar_generator.bar.high_price
-            minute_low = self.minute_bar_generator.bar.low_price
-            minute_rise = tick.last_price - minute_low
-            minute_fall = minute_high - tick.last_price
+            self.minute_high = max(self.minute_high, tick.last_price)
+            self.minute_low = min(self.minute_low, tick.last_price) if self.minute_low else tick.last_price
+            minute_rise = tick.last_price - self.minute_low
+            minute_fall = self.minute_high - tick.last_price
 
-            minute_5_high = self.minute_5_bar_generator.window_bar.high_price
-            minute_5_low = self.minute_5_bar_generator.window_bar.low_price
-            minute_5_rise = tick.last_price - minute_5_low
-            minute_5_fall = minute_5_high - tick.last_price
+            self.minute_5_high = max(self.minute_5_high, tick.last_price)
+            self.minute_5_low = min(self.minute_5_low, tick.last_price) if self.minute_5_low else tick.last_price
+            minute_5_rise = tick.last_price - self.minute_5_low
+            minute_5_fall = self.minute_5_high - tick.last_price
 
-            hour_high = self.hour_bar_generator.hour_bar.high_price
-            hour_low = self.hour_bar_generator.hour_bar.low_price
-            hour_rise = tick.last_price - hour_low
-            hour_fall = hour_high - tick.last_price
+            self.hour_high = max(self.hour_high, tick.last_price)
+            self.hour_low = min(self.hour_low, tick.last_price) if self.hour_low else tick.last_price
+            hour_rise = tick.last_price - self.hour_low
+            hour_fall = self.hour_high - tick.last_price
 
             # 多头趋势
             if (self.minute_atr and minute_rise >= self.minute_atr * 3) or (self.minute_5_atr and minute_5_rise >= self.minute_5_atr * 3) or (self.hour_atr and hour_rise >= self.hour_atr * 3):
