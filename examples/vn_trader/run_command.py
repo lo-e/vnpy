@@ -80,7 +80,7 @@ class MonitorEngine(object):
         if delay >= 5 and len(self.history_duration_bar_data):
             self.tick_delay_count += 1
             if time.time() > self.tick_delay_time + 20:
-                msg = f"Tick数据延迟\n时长 {delay:.2f}s 数量 {self.tick_delay_count}"
+                msg = f"Tick数据延迟 时长 {delay:.2f}s 数量 {self.tick_delay_count}"
                 self.main_engine.send_ding_talk(msg)
                 print_(msg)
 
@@ -124,7 +124,7 @@ class MonitorEngine(object):
 
             if len(sorted_duration_bar_list):
                 print("------")
-                
+
             for duration_bar in sorted_duration_bar_list[-10:]:
                 dt_str = duration_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                 print_(f"{duration_bar.vt_symbol}({duration_bar.tick_count})\t{duration_bar.open}\t{duration_bar.high}\t{duration_bar.low}\t{duration_bar.close}")
