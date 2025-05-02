@@ -34,6 +34,7 @@ class TrendignSniperStrategy(CtaTemplate):
         "target_pos",
         "direction",
         "signal_price",
+        "signal_dt_str",
         "long_rebirth",
         "short_rebirth",
         "open_count",
@@ -55,6 +56,7 @@ class TrendignSniperStrategy(CtaTemplate):
         "target_pos",
         "direction",
         "signal_price",
+        "signal_dt_str",
         "open_count",
         "open_value",
         "open_price"
@@ -118,6 +120,7 @@ class TrendignSniperStrategy(CtaTemplate):
         self.target_pos = 0
         self.direction = ""
         self.signal_price = 0
+        self.signal_dt_str = ""
         self.long_rebirth = False
         self.short_rebirth = False
         self.open_count = 0
@@ -351,12 +354,14 @@ class TrendignSniperStrategy(CtaTemplate):
             if (self.minute_atr and minute_rise >= self.minute_atr * 3) or (self.minute_5_atr and minute_5_rise >= self.minute_5_atr * 3) or (self.hour_atr and hour_rise >= self.hour_atr * 3):
                 self.direction = "LONG"
                 self.signal_price = tick.last_price
+                self.signal_dt_str = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                 self.long_rebirth = True
 
             # 空头趋势
             if (self.minute_atr and minute_fall >= self.minute_atr * 3) or (self.minute_5_atr and minute_5_fall >= self.minute_5_atr * 3) or (self.hour_atr and hour_fall >= self.hour_atr * 3):
                 self.direction = "SHORT"
                 self.signal_price = tick.last_price
+                self.signal_dt_str = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                 self.short_rebirth = True
         
         # 判断Rebirth

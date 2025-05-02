@@ -78,6 +78,8 @@ class MonitorEngine(object):
         tick_dt = tick.datetime.replace(tzinfo=None)
         delay = time.time() - tick_dt.timestamp()
         if delay >= 5 and len(self.history_duration_bar_data):
+            # print_(f"Tick数据延迟 {tick.vt_symbol} {delay:.2f}s {tick.datetime}")
+
             self.tick_delay_count += 1
             if time.time() > self.tick_delay_time + 20:
                 msg = f"Tick数据延迟 时长 {delay:.2f}s 数量 {self.tick_delay_count}"

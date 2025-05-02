@@ -71,6 +71,7 @@ class TrendingSniperPortfolio(object):
             self.strategy_monitor_time = now
             total_count = 0
             inited_count = 0
+            signal_symbols_dict = {}
             for vt_symbol in self.strategy_symbols:
                 strategies = self.cta_engine.symbol_strategy_map[vt_symbol]
                 for i in range(len(strategies)):
@@ -78,7 +79,16 @@ class TrendingSniperPortfolio(object):
                     strategy: TrendignSniperStrategy = strategies[i]
                     if strategy.indicator_inited:
                         inited_count += 1
+
+                    if strategy.direction:
+                        signal_symbols_dict[strategy.vt_symbol] = strategy.direction
+
             print_(f"策略总数 {total_count} 已初始化 {inited_count}")
+            # if len(signal_symbols_dict):
+            #     print_(f"信号策略总数 {len(signal_symbols_dict)}")
+            #     for symbol, signal_direction in signal_symbols_dict.items():
+            #         print(f"{symbol}\t{signal_direction}")
+            #     print(f"\n")
 
         # 下载合约列表数据
         current_hour_time = now.replace(minute=0, second=0, microsecond=0)
