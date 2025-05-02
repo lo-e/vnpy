@@ -384,9 +384,9 @@ class TrendignSniperStrategy(CtaTemplate):
 
         if target_pos_updated:
             self.target_pos_check_ts = time.time() - 10
-            if not self.target_pos_checking:
-                self.target_pos_checking = True
-                Thread(target=self.check_target_pos).start()
+            # if not self.target_pos_checking:
+            #     self.target_pos_checking = True
+            #     Thread(target=self.check_target_pos).start()
             
         # 同步数据
         self.put_timer_event()

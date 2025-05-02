@@ -38,6 +38,7 @@ class TrendingSniperPortfolio(object):
         self.strategy_symbols = set()
         self.exchange_instruments_data = {}
         self.tick_queue = Queue()
+        self.strategy_monitor_time: datetime = None
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -58,24 +59,32 @@ class TrendingSniperPortfolio(object):
         self.update_strategy_symbols()
         Thread(target=self.process_tick).start()
         Thread(target=self.check_strategy_data_inited).start()
-        Thread(target=self.check_strategy_target_pos).start()
+        # Thread(target=self.check_strategy_target_pos).start()
 
     def on_timer(self):
         if not self.started:
             return
-        
-        current_hour_time = datetime.now().replace(minute=0, second=0, microsecond=0)
+        now = datetime.now()
 
-        # 下载Bar数据
-        # download_bar_hour_time = self.download_bar_time.replace(minute=0, second=0, microsecond=0) if self.download_bar_time else None
-        # if download_bar_hour_time != current_hour_time:
-        #     self.download_bar_time = datetime.now()
-        #     self.check_download_bar()
+        # 检测策略初始化状态
+        if not self.strategy_monitor_time or self.strategy_monitor_time.minute != now.minute:
+            self.strategy_monitor_time = now
+            total_count = 0
+            inited_count = 0
+            for vt_symbol in self.strategy_symbols:
+                strategies = self.cta_engine.symbol_strategy_map[vt_symbol]
+                for i in range(len(strategies)):
+                    total_count += 1
+                    strategy: TrendignSniperStrategy = strategies[i]
+                    if strategy.indicator_inited:
+                        inited_count += 1
+            print_(f"策略总数 {total_count} 已初始化 {inited_count}")
 
         # 下载合约列表数据
+        current_hour_time = now.replace(minute=0, second=0, microsecond=0)
         download_instruments_hour_time = self.download_instruments_time.replace(minute=0, second=0, microsecond=0) if self.download_instruments_time else None
         if download_instruments_hour_time != current_hour_time:
-            self.download_instruments_time = datetime.now()
+            self.download_instruments_time = now
             self.check_download_instruments()
 
     def load_instruments_data(self):
