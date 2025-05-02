@@ -12,11 +12,14 @@ from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 from App.Turtle_crypto.dataservice.utility import get_csv_path
 import pandas as pd
 import os
-from vnpy.trader.object import BarData
+from vnpy.trader.object import BarData, TickData
 from vnpy.event import Event
 from .base import EVENT_BAR_UPDATED
 from vnpy.trader.object import SubscribeRequest
 from .trendignSniperStrategy import TrendignSniperStrategy
+from queue import Empty, Queue
+from vnpy.trader.utility import DIR_SYMBOL
+import json
 
 class TrendingSniperPortfolio(object):
     parameters = ["name",
@@ -34,6 +37,7 @@ class TrendingSniperPortfolio(object):
         self.coins = set()
         self.strategy_symbols = set()
         self.exchange_instruments_data = {}
+        self.tick_queue = Queue()
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -52,6 +56,7 @@ class TrendingSniperPortfolio(object):
 
     def on_start(self):
         self.update_strategy_symbols()
+        Thread(target=self.process_tick).start()
         Thread(target=self.check_strategy_data_inited).start()
         Thread(target=self.check_strategy_target_pos).start()
 
@@ -141,6 +146,35 @@ class TrendingSniperPortfolio(object):
             cost = time.time() - start
             print_(f"合约订阅完成！（{len(new_vt_symbols)}）用时 {cost}s\n")
 
+    def process_tick(self):
+        error_notice_ts = 0
+        queue_size_ts = time.time()
+        process_count = 0
+        while True:
+            try:
+                tick: TickData = self.tick_queue.get(block=True, timeout=1)
+                # process_count += 1
+                # if time.time() >= queue_size_ts + 10:
+                #     queue_size_ts = time.time()
+                #     print(f"Tick队列数 {self.tick_queue.qsize()} 最近处理 {process_count}")
+                #     process_count = 0
+
+                strategies = self.cta_engine.symbol_strategy_map[tick.vt_symbol]
+                for i in range(len(strategies)):
+                    strategy: TrendignSniperStrategy = strategies[i]
+                    if strategy.inited:
+                        strategy.on_tick(tick)
+
+            except Empty:
+                pass
+
+            except Exception as e:
+                msg = f"处理Tick数据出错\t{tick.vt_symbol}\t{tick.datetime}\n{e}"
+                print_(msg)
+                if time.time() >= error_notice_ts + 60:
+                    error_notice_ts = time.time()
+                    self.send_ding_talk(msg)
+
     def check_strategy_target_pos(self):
         while True:
             try:
@@ -152,7 +186,7 @@ class TrendingSniperPortfolio(object):
                             if not strategy.target_pos_checking:
                                 strategy.target_pos_checking = True
                                 strategy.target_pos_check_ts = time.time() - 10
-                                Thread(strategy.check_target_pos).start()
+                                Thread(target=strategy.check_target_pos).start()
 
             except Exception as e:
                 pass
@@ -175,27 +209,49 @@ class TrendingSniperPortfolio(object):
                     if indicator_init_need:
                         break
 
-                if indicator_init_need and not self.bar_downloading:
-                    # 下载Bar数据
-                    download_success = self.download_bar()
+                if indicator_init_need:
+                    # 请求下载
+                    download_setting = self.get_download_setting()
+                    download_setting["request"] = True
+                    self.save_download_setting(download_setting)
 
-                    # 策略指标初始化
-                    if download_success:
+                    # 等待下载完成
+                    bar_updated = False
+                    check_datetime = datetime.now()
+                    check_count = 0
+                    while check_count < 10:
+                        time.sleep(60)
+                        try:
+                            download_setting = self.get_download_setting()
+                            download_at = download_setting["download_at"]
+                            download_at = datetime.strptime(download_at, f"%Y-%m-%d %H:%M:%S") if download_at else download_at
+                            if download_at and download_at > check_datetime:
+                                bar_updated = True
+                                break
+                        
+                        except Exception as e:
+                            pass
+
+                    if bar_updated:
+                        # 策略指标初始化
                         print_(f"策略指标初始化..")
                         start = time.time()
-                        count = 0
+                        total_count = 0
+                        success_count = 0
                         for vt_symbol in self.strategy_symbols:
                             strategies = self.cta_engine.symbol_strategy_map[vt_symbol]
                             for i in range(len(strategies)):
                                 strategy: TrendignSniperStrategy = strategies[i]
-                                if not strategy.indicator_inited and len(strategy.live_bars):
-                                    count += 1
-                                    data_to = strategy.live_bars[0].datetime - timedelta(minutes=1)
-                                    strategy.load_database_bar(data_to)
-                                    time.sleep(1)
+                                if not strategy.indicator_inited:
+                                    total_count += 1
+                                    if len(strategy.live_bars):
+                                        strategy.load_database_bar()
+                                        if strategy.indicator_inited:
+                                            success_count += 1
+                                        time.sleep(1)
 
                         cost = time.time() - start
-                        print_(f"策略指标初始化完成！数量 {count} 用时 {cost}s\n")
+                        print_(f"策略指标初始化完成！\n总数 {total_count} 成功 {success_count} 用时 {cost}s\n")
 
             except Exception as e:
                 pass
@@ -379,6 +435,20 @@ class TrendingSniperPortfolio(object):
 
         if not success:
             print(f"行情订阅失败，找不到合约{vt_symbol}")
+
+    def get_download_setting(self):
+        setting = {}
+        file_path = f"App{DIR_SYMBOL}Turtle_crypto{DIR_SYMBOL}download_setting.json"
+        if os.path.exists(file_path):
+            with open(file_path, "r", encoding="utf-8") as f:
+                setting = json.load(f)
+        return setting
+    
+    def save_download_setting(self, setting: dict):
+        file_path = f"App{DIR_SYMBOL}Turtle_crypto{DIR_SYMBOL}download_setting.json"
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(json.dumps(setting, ensure_ascii=False))
+
 
     def send_ding_talk(self, content):
         # 推送钉钉消息

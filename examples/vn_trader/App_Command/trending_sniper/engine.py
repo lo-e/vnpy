@@ -76,6 +76,8 @@ class TrendingSniperEngine(BaseEngine):
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
         super(TrendingSniperEngine, self).__init__(main_engine, event_engine, APP_NAME)
         self.strategies = {}
+        self.strategy_sync_data = {}
+        self.strategy_variable_data = {}
         self.symbol_strategy_map = defaultdict(list)
         self.orderid_strategy_map = {}
         self.strategy_orderid_map = defaultdict(set)
@@ -125,9 +127,13 @@ class TrendingSniperEngine(BaseEngine):
 
     def process_tick_event(self, event: Event):
         tick = event.data
-        strategies = self.symbol_strategy_map[tick.vt_symbol]
-        if not strategies:
-            return
+
+        if self.portfolio.started:
+            self.portfolio.tick_queue.put(tick)
+        
+        # strategies = self.symbol_strategy_map[tick.vt_symbol]
+        # if not strategies:
+        #     return
         
         # for strategy in strategies:
         #     if strategy.inited:
@@ -578,64 +584,61 @@ class TrendingSniperEngine(BaseEngine):
         if not strategy.inited:
             return
         
-        # 获取策略同步数据
-        flt = {"strategy_name": strategy.strategy_name, "vt_symbol": strategy.vt_symbol}
-        data = copy(flt)
-        for key in strategy.syncs:
-            data[key] = strategy.__getattribute__(key)
-
-        # 保存策略同步数据到数据库
-        colleciton_name = f"{strategy.__class__.__name__}"
-        self.main_engine.dbUpdate(
-            POSITION_DB_NAME,
-            colleciton_name,
-            data,
-            flt,
-            True,
-            callback=self.strategy_db_Update_callback,
-        )
-
         # 保存策略同步数据到文件（数据有变化时才保存）
-        json_file = self.get_strategie_sync_file_path(strategy)
-        history_data = {}
-        try:
-            with open(json_file, 'r') as f:
-                history_data = json.load(f)
+        flt = {"strategy_name": strategy.strategy_name, "vt_symbol": strategy.vt_symbol}
+        sync_data = copy(flt)
+        for key in strategy.syncs:
+            sync_data[key] = strategy.__getattribute__(key)
 
-        except Exception as e:
-            pass
-        
-        if history_data != data:
+        history_sync_data = self.strategy_sync_data.get(strategy.strategy_name, {})
+        if history_sync_data != sync_data:
+            # 记录历史数据
+            self.strategy_sync_data[strategy.strategy_name] = sync_data
+
             try:
-                with open(json_file, "w", encoding="utf-8") as file:
+                # 保存到数据库
+                colleciton_name = f"{strategy.__class__.__name__}"
+                self.main_engine.dbUpdate(
+                    POSITION_DB_NAME,
+                    colleciton_name,
+                    sync_data,
+                    flt,
+                    True,
+                    callback=self.strategy_db_Update_callback,
+                )
+            
+            except Exception as e:
+                pass
+
+            try:
+                # 保存到文件
+                sync_json_file = self.get_strategie_sync_file_path(strategy)
+                with open(sync_json_file, "w", encoding="utf-8") as file:
                     file.write(
-                        json.dumps(data, ensure_ascii=False)
+                        json.dumps(sync_data, ensure_ascii=False)
                     )
 
             except Exception as e:
                 pass
 
-        # 获取策略变量数据
-        data = {}
-        for key in strategy.variables:
-            data[key] = strategy.__getattribute__(key)
-
         # 保存策略变量数据到文件（数据有变化时才保存）
-        json_file = self.get_strategie_variable_file_path(strategy)
-        history_data = {}
-        try:
-            with open(json_file, 'r') as f:
-                history_data = json.load(f)
+        variable_data = {}
+        for key in strategy.variables:
+            variable_data[key] = strategy.__getattribute__(key)
 
-        except Exception as e:
-            pass
-        
-        if history_data != data:
+        history_variable_data = self.strategy_variable_data.get(strategy.strategy_name, {})
+        if history_variable_data != variable_data:
+            # 记录历史数据
+            self.strategy_variable_data[strategy.strategy_name] = variable_data
+
             try:
-                with open(json_file, "w", encoding="utf-8") as file:
+                # 保存到文件
+                variable_json_file = self.get_strategie_variable_file_path(strategy)
+                with open(variable_json_file, "w", encoding="utf-8") as file:
                     file.write(
-                        json.dumps(data, ensure_ascii=False)
+                        json.dumps(variable_data, ensure_ascii=False)
                     )
+
             except Exception as e:
                 pass
     

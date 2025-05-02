@@ -15,11 +15,9 @@ from utilities.BarGenerator import BarGenerator
 from vnpy.trader.constant import Exchange
 from pymongo import MongoClient
 from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
-from queue import Empty, Queue
 from threading import Thread
 import time
 from copy import copy
-from collections import OrderedDict
 class TrendignSniperStrategy(CtaTemplate):
     className = "TrendignSniperStrategy"
     author = "loe"
@@ -133,20 +131,21 @@ class TrendignSniperStrategy(CtaTemplate):
             msg = f"交易所账户未连接\n\n交易所：{exchange}\n账户：{self.exchange_user}"
             self.send_ding_talk(msg)
 
-    def load_database_bar(self, data_to: datetime):
+    def load_database_bar(self):
         try:
             # 数据库加载Bar数据
             mc = MongoClient()
             db = mc[MINUTE_DB_NAME]
             collection = db[self.vt_symbol]
             data_from = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(hours=25)
-            flt = {"datetime": {"$gte": data_from, "$lte": data_to}}
+            flt = {"datetime": {"$gte": data_from}}
             cursor = collection.find(flt).sort('datetime')
 
             bar_list = []
             next_bar_dt = None
             bar_lack = False
-            for d in cursor:
+            data_list = list(cursor)[:-1]
+            for d in data_list:
                 bar = BarData(gateway_name = '', symbol = '', exchange = Exchange.NONE, datetime = None, endDatetime = None)
                 bar.__dict__ = d
 
@@ -303,7 +302,7 @@ class TrendignSniperStrategy(CtaTemplate):
         if not self.trading:
             return
         
-        # 最新Tick
+        # 保存最新Tick数据、生成实时Bar数据
         self.tick = copy(tick)
         self.minute_bar_generator.update_tick(copy(tick))
 
@@ -344,6 +343,8 @@ class TrendignSniperStrategy(CtaTemplate):
             self.short_rebirth = True
 
         # 判断离场
+        stop_long = False
+        stop_short = False
         if self.direction == "LONG" and self.target_pos and self.exit_down and tick.last_price <= self.exit_down:
             stop_long = True
             
@@ -358,7 +359,7 @@ class TrendignSniperStrategy(CtaTemplate):
                 self.target_pos = 0
                 target_pos_updated = True
 
-            if self.direction == "SHORT" and (stop_short or (self.signal_price and tick.last_price >= self.hour_down * 1.01) or (self.open_price and tick.last_price >= self.open_price * 1.01)):
+            if self.direction == "SHORT" and (stop_short or (self.signal_price and tick.last_price >= self.signal_price * 1.01) or (self.open_price and tick.last_price >= self.open_price * 1.01)):
                 # 空头平仓
                 self.short_rebirth = False
                 self.target_pos = 0
@@ -379,7 +380,7 @@ class TrendignSniperStrategy(CtaTemplate):
             self.target_pos_check_ts = time.time() - 10
             if not self.target_pos_checking:
                 self.target_pos_checking = True
-                Thread(self.check_target_pos).start()
+                Thread(target=self.check_target_pos).start()
             
         # 同步数据
         self.put_timer_event()
@@ -479,3 +480,7 @@ class TrendignSniperStrategy(CtaTemplate):
     def send_email(self, content):
         # 邮件发送通知
         self.cta_engine.send_email(msg=content, subject=f"{self.strategy_name}")
+
+def print_(msg: str):
+    dt = datetime.now().replace(microsecond=0)
+    print(f"{dt}\t{msg}")

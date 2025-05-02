@@ -82,18 +82,13 @@ class BarGenerator:
         if not self.bar:
             new_minute = True
 
-        elif (self.bar.datetime.minute != tick.datetime.minute) or (
-            self.bar.datetime.hour != tick.datetime.hour
-        ):
+        elif (self.bar.datetime.minute != tick.datetime.minute) or (self.bar.datetime.hour != tick.datetime.hour):
             if self.bar_start:
                 self.bar.datetime = self.bar.datetime.replace(second=0, microsecond=0)
                 self.on_bar(self.bar)
-                new_minute = True
 
-            else:
-                # 初始周期
-                self.bar_start = True
-                new_minute = True
+            self.bar_start = True
+            new_minute = True
 
         if new_minute:
             self.bar = BarData(
@@ -108,15 +103,10 @@ class BarGenerator:
                 close_price=tick.last_price,
                 open_interest=tick.open_interest,
             )
+
         else:
             self.bar.high_price = max(self.bar.high_price, tick.last_price)
-            if tick.high_price > self.last_tick.high_price:
-                self.bar.high_price = max(self.bar.high_price, tick.high_price)
-
             self.bar.low_price = min(self.bar.low_price, tick.last_price)
-            if tick.low_price < self.last_tick.low_price:
-                self.bar.low_price = min(self.bar.low_price, tick.low_price)
-
             self.bar.close_price = tick.last_price
             self.bar.open_interest = tick.open_interest
             self.bar.datetime = tick.datetime
