@@ -211,6 +211,7 @@ class TrendingSniperPortfolio(object):
 
                 if indicator_init_need:
                     # 请求下载
+                    print(f"请求下载Bar数据")
                     download_setting = self.get_download_setting()
                     download_setting["request"] = True
                     self.save_download_setting(download_setting)
@@ -220,7 +221,10 @@ class TrendingSniperPortfolio(object):
                     check_datetime = datetime.now()
                     check_count = 0
                     while check_count < 10:
+                        check_count += 1
+                        print(f"等待Bar数据下载完成（{check_count}）..")
                         time.sleep(60)
+                        
                         try:
                             download_setting = self.get_download_setting()
                             download_at = download_setting["download_at"]
