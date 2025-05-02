@@ -153,11 +153,11 @@ class TrendingSniperPortfolio(object):
         while True:
             try:
                 tick: TickData = self.tick_queue.get(block=True, timeout=1)
-                # process_count += 1
-                # if time.time() >= queue_size_ts + 10:
-                #     queue_size_ts = time.time()
-                #     print(f"Tick队列数 {self.tick_queue.qsize()} 最近处理 {process_count}")
-                #     process_count = 0
+                process_count += 1
+                if time.time() >= queue_size_ts + 10:
+                    queue_size_ts = time.time()
+                    print_(f"Tick队列数 {self.tick_queue.qsize()} 最近处理 {process_count}")
+                    process_count = 0
 
                 strategies = self.cta_engine.symbol_strategy_map[tick.vt_symbol]
                 for i in range(len(strategies)):
@@ -212,9 +212,9 @@ class TrendingSniperPortfolio(object):
                 if indicator_init_need:
                     # 请求下载
                     print(f"请求下载Bar数据")
-                    download_setting = self.get_download_setting()
+                    download_setting = get_download_setting()
                     download_setting["request"] = True
-                    self.save_download_setting(download_setting)
+                    save_download_setting(download_setting)
 
                     # 等待下载完成
                     bar_updated = False
@@ -224,9 +224,9 @@ class TrendingSniperPortfolio(object):
                         check_count += 1
                         print(f"等待Bar数据下载完成（{check_count}）..")
                         time.sleep(60)
-                        
+
                         try:
-                            download_setting = self.get_download_setting()
+                            download_setting = get_download_setting()
                             download_at = download_setting["download_at"]
                             download_at = datetime.strptime(download_at, f"%Y-%m-%d %H:%M:%S") if download_at else download_at
                             if download_at and download_at > check_datetime:
@@ -242,6 +242,7 @@ class TrendingSniperPortfolio(object):
                         start = time.time()
                         total_count = 0
                         success_count = 0
+                        notice_ts = time.time()
                         for vt_symbol in self.strategy_symbols:
                             strategies = self.cta_engine.symbol_strategy_map[vt_symbol]
                             for i in range(len(strategies)):
@@ -254,8 +255,14 @@ class TrendingSniperPortfolio(object):
                                             success_count += 1
                                         time.sleep(1)
 
+                            # 提示进度
+                            if time.time() >= notice_ts + 20:
+                                notice_ts = time.time()
+                                cost = time.time() - start
+                                print_(f"策略指标初始化..\t总数 {total_count} 成功 {success_count} 用时 {cost:.2f}s")
+
                         cost = time.time() - start
-                        print_(f"策略指标初始化完成！\n总数 {total_count} 成功 {success_count} 用时 {cost}s\n")
+                        print_(f"策略指标初始化完成！ 总数 {total_count} 成功 {success_count} 用时 {cost:.2f}s\n")
 
             except Exception as e:
                 pass
@@ -440,20 +447,6 @@ class TrendingSniperPortfolio(object):
         if not success:
             print(f"行情订阅失败，找不到合约{vt_symbol}")
 
-    def get_download_setting(self):
-        setting = {}
-        file_path = f"App{DIR_SYMBOL}Turtle_crypto{DIR_SYMBOL}download_setting.json"
-        if os.path.exists(file_path):
-            with open(file_path, "r", encoding="utf-8") as f:
-                setting = json.load(f)
-        return setting
-    
-    def save_download_setting(self, setting: dict):
-        file_path = f"App{DIR_SYMBOL}Turtle_crypto{DIR_SYMBOL}download_setting.json"
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(json.dumps(setting, ensure_ascii=False))
-
-
     def send_ding_talk(self, content):
         # 推送钉钉消息
         content = f"{self.name}\n{content}"
@@ -469,3 +462,23 @@ def get_minute_time(dt: datetime, gap: int):
         minute -= 1
     result = dt.replace(minute=minute, second=0, microsecond=0)
     return result
+
+def get_download_setting_file_path():
+    current_file_path = os.path.abspath(__file__)
+    dir_path = current_file_path.split("App_Command")[0]
+    dir_path = f"{dir_path}App{DIR_SYMBOL}Turtle_crypto"
+    os.makedirs(dir_path, exist_ok=True)
+    return f"{dir_path}{DIR_SYMBOL}download_setting.json"
+
+def get_download_setting():
+    setting = {}
+    file_path = get_download_setting_file_path()
+    if os.path.exists(file_path):
+        with open(file_path, "r", encoding="utf-8") as f:
+            setting = json.load(f)
+    return setting
+
+def save_download_setting(setting: dict):
+    file_path = get_download_setting_file_path()
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write(json.dumps(setting, ensure_ascii=False))

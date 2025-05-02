@@ -159,7 +159,7 @@ class TrendignSniperStrategy(CtaTemplate):
                 next_bar_dt = bar.datetime + timedelta(minutes=1)
                 bar_list.append(bar)
 
-            if not bar_lack:
+            if data_list and not bar_lack:
                 # 初始化工具
                 self.minute_am = ArrayManager(21)
 
@@ -185,6 +185,12 @@ class TrendignSniperStrategy(CtaTemplate):
                 # 指标完成初始化
                 if data_valid:
                     self.indicator_inited = True
+                
+                else:
+                    pass
+            
+            else:
+                pass
 
         except Exception as e:
             msg = f"加载Bar数据出错\n\n{e}"
@@ -305,7 +311,7 @@ class TrendignSniperStrategy(CtaTemplate):
         # 保存最新Tick数据、生成实时Bar数据
         self.tick = copy(tick)
         self.minute_bar_generator.update_tick(copy(tick))
-
+    
         # 判断信号
         if not self.direction and not self.signal_price and self.indicator_inited:
             minute_high = self.minute_bar_generator.bar.high_price

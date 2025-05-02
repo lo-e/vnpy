@@ -38,6 +38,8 @@ examples/TurtleStrategy/result.csv
 examples/TurtleStrategy_crypto/result.csv
 examples/spread_backtesting/result.csv
 examples/PondAI/data/
+examples/vn_trader/App/Turtle_crypto/download_setting.json
+
 # Folder
 examples/vn_trader/App/Turtle_crypto/dataservice/CSVs/
 examples/vn_trader/App/Turtle_crypto/dataservice/CSVs_/

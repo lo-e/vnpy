@@ -37,6 +37,7 @@ class MonitorEngine(object):
         self.duration_bar_data = {}
         self.history_duration_bar_data = {}
         self.tick_delay_time = 0
+        self.tick_delay_count = 0
         self.tick = None
 
     def check_gateway_connected(self):
@@ -76,12 +77,15 @@ class MonitorEngine(object):
         self.tick = copy(tick)
         tick_dt = tick.datetime.replace(tzinfo=None)
         delay = time.time() - tick_dt.timestamp()
-        if delay >= 10 and len(self.history_duration_bar_data):
-            print_(f"{tick.vt_symbol} 数据延迟 {delay:.2f}s")
-            if time.time() > self.tick_delay_time + 60:
-                self.tick_delay_time = time.time()
-                msg = f"Tick数据延迟 {delay}s"
+        if delay >= 5 and len(self.history_duration_bar_data):
+            self.tick_delay_count += 1
+            if time.time() > self.tick_delay_time + 20:
+                msg = f"Tick数据延迟\n时长 {delay:.2f}s 数量 {self.tick_delay_count}"
                 self.main_engine.send_ding_talk(msg)
+                print_(msg)
+
+                self.tick_delay_time = time.time()
+                self.tick_delay_count = 0
 
         minute = tick.datetime.minute
         while minute % 1:
@@ -111,13 +115,16 @@ class MonitorEngine(object):
     
     def on_timer(self, event):
         now = datetime.now()
-        if (now.minute % 1 == 0) and (now.second == 15):
+        if (now.minute % 1 == 0) and (now.second == 15) and self.tick:
             # 输出Tick信息
             sorted_duration_bar_list = sorted(self.history_duration_bar_data.values(), key=lambda x: x.tick_count)
             for duration_bar in sorted_duration_bar_list[:5]:
                 dt_str = duration_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                 print_(f"{duration_bar.vt_symbol}({duration_bar.tick_count})\t{duration_bar.open}\t{duration_bar.high}\t{duration_bar.low}\t{duration_bar.close}")
-            print("------")
+
+            if len(sorted_duration_bar_list):
+                print("------")
+                
             for duration_bar in sorted_duration_bar_list[-10:]:
                 dt_str = duration_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                 print_(f"{duration_bar.vt_symbol}({duration_bar.tick_count})\t{duration_bar.open}\t{duration_bar.high}\t{duration_bar.low}\t{duration_bar.close}")

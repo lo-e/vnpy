@@ -224,14 +224,14 @@ class BybitGateway(BaseGateway):
         """
         收到委托单推送，BaseGateway推送数据
         """
-        self.orders[order.vt_orderid] = copy(order)
+        self.orders[order.orderid] = copy(order)
         super().on_order(order)
     
-    def get_order(self, vt_orderid: str) -> OrderData:
+    def get_order(self, orderid: str) -> OrderData:
         """
-        用vt_orderid获取委托单数据
+        用orderid获取委托单数据
         """
-        return self.orders.get(vt_orderid, None)
+        return self.orders.get(orderid, None)
     
     def close(self):
         self.rest_api.stop()
