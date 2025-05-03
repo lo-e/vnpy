@@ -268,12 +268,12 @@ class TrendignSniperStrategy(CtaTemplate):
         # 5分钟指标
         if self.minute_5_am.inited:
             self.minute_5_atr = self.minute_5_am.atr(20)
-            self.entry_up, self.entry_down = self.minute_5_am.donchian(20)
             self.exit_up, self.exit_down = self.minute_5_am.donchian(10)
 
         # 小时指标
         if self.hour_am.inited:
             self.hour_atr = self.hour_am.atr(20)
+            self.entry_up, self.entry_down = self.hour_am.donchian(10)
 
     def check_target_pos(self):
         self.target_pos_checking = True
