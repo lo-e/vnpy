@@ -357,13 +357,19 @@ class TrendignSniperStrategy(CtaTemplate):
                 self.signal_dt_str = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                 self.long_rebirth = True
 
+                msg = f"多头趋势\n\nsymbol {self.vt_symbol}\ndirection {self.direction}\nprice {tick.last_price}\n\nM_ATR {self.minute_atr}\nM_RISE {minute_rise}\n\nM_5_ATR {self.minute_5_atr}\nM_5_RISE {minute_5_rise}\n\nH_ATR {self.hour_atr}\nH_RISE {hour_rise}"
+                self.send_ding_talk(msg)
+
             # 空头趋势
             if (self.minute_atr and minute_fall >= self.minute_atr * 3) or (self.minute_5_atr and minute_5_fall >= self.minute_5_atr * 3) or (self.hour_atr and hour_fall >= self.hour_atr * 3):
                 self.direction = "SHORT"
                 self.signal_price = tick.last_price
                 self.signal_dt_str = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                 self.short_rebirth = True
-        
+
+                msg = f"空头趋势\n\nsymbol {self.vt_symbol}\ndirection {self.direction}\nprice {tick.last_price}\n\nM_ATR {self.minute_atr}\nM_FALL {minute_fall}\n\nM_5_ATR {self.minute_5_atr}\nM_5_FALL {minute_5_fall}\n\nH_ATR {self.hour_atr}\nH_FALL {hour_fall}"
+                self.send_ding_talk(msg)
+                
         # 判断Rebirth
         if self.direction == "LONG" and self.signal_price and tick.last_price <= self.signal_price * 0.99:
             self.long_rebirth = True
