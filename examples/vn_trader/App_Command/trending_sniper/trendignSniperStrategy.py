@@ -374,7 +374,7 @@ class TrendignSniperStrategy(CtaTemplate):
 
             # 交易额条件
             turnover = tick.turnover if tick.turnover else tick.volume * tick.last_price
-            turnover_valid = True if turnover >= 1_000_000 else False
+            turnover_valid = True if turnover >= 10_000_000 else False
 
             # ATR条件（多头）
             long_atr_valid = False
