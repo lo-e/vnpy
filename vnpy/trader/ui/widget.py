@@ -426,6 +426,7 @@ class TickMonitor(BaseMonitor):
         "name": {"display": "名称", "cell": BaseCell, "update": True},
         "last_price": {"display": "最新价", "cell": BaseCell, "update": True},
         "volume": {"display": "成交量", "cell": BaseCell, "update": True},
+        "turnover": {"display": "成交额", "cell": BaseCell, "update": True},
         "open_price": {"display": "开盘价", "cell": BaseCell, "update": True},
         "high_price": {"display": "最高价", "cell": BaseCell, "update": True},
         "low_price": {"display": "最低价", "cell": BaseCell, "update": True},

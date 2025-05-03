@@ -871,7 +871,10 @@ class BybitWebsocketDataApi(WebsocketClient):
             tick.last_price = float(data["lastPrice"])
 
         if "volume24h" in data:
-            tick.volume = float(data["volume24h"])      # 最近24小时币的成交量
+            tick.volume = float(data["volume24h"])
+
+        if "turnover24h" in data:
+            tick.turnover = float(data["turnover24h"])
 
         # snapshot和delta都推送的数据
         if "bid1Price" in data:
