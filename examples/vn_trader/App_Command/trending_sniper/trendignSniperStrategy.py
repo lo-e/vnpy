@@ -131,6 +131,9 @@ class TrendignSniperStrategy(CtaTemplate):
         self.open_value = 0
         self.open_price = 0
 
+        self.minute_tick_count = 0
+        self.minute_tick_count_list = []
+
     def on_init(self):
         # 交易所成功连接判断
         exchange = self.vt_symbol.split(".")[-1]
@@ -334,6 +337,16 @@ class TrendignSniperStrategy(CtaTemplate):
         if not self.trading:
             return
         
+        # 记录分钟tick数
+        if self.tick and self.tick.datetime.minute != tick.datetime.minute:
+            self.minute_tick_count_list.append(self.minute_tick_count)
+            if len(self.minute_tick_count_list) > 10:
+                self.minute_tick_count_list.pop[0]
+            self.minute_tick_count = 1
+        
+        else:
+            self.minute_tick_count += 1
+        
         # 保存最新Tick数据、生成实时Bar数据
         self.tick = copy(tick)
         self.minute_bar_generator.update_tick(copy(tick))
@@ -365,7 +378,8 @@ class TrendignSniperStrategy(CtaTemplate):
                 self.signal_dt_str = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                 self.long_rebirth = True
 
-                msg = f"多头趋势\n\nsymbol {self.vt_symbol}\ndirection {self.direction}\nprice {tick.last_price}\nup {self.entry_up}\nturnover {turnover}\n\nM_ATR {self.minute_atr}\nM_RISE {minute_rise}\n\nM_5_ATR {self.minute_5_atr}\nM_5_RISE {minute_5_rise}\n\nH_ATR {self.hour_atr}\nH_RISE {hour_rise}"
+                average_tick_count = sum(self.minute_tick_count_list) / len(self.minute_tick_count_list)
+                msg = f"多头趋势\n\nsymbol {self.vt_symbol}\ndirection {self.direction}\nprice {tick.last_price}\nup {self.entry_up}\nturnover {turnover}\ntick_count {self.minute_tick_count}\naverage_count {average_tick_count}\n\nM_ATR {self.minute_atr}\nM_RISE {minute_rise}\n\nM_5_ATR {self.minute_5_atr}\nM_5_RISE {minute_5_rise}\n\nH_ATR {self.hour_atr}\nH_RISE {hour_rise}"
                 self.send_ding_talk(msg)
 
             # 空头趋势
@@ -375,7 +389,8 @@ class TrendignSniperStrategy(CtaTemplate):
                 self.signal_dt_str = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                 self.short_rebirth = True
 
-                msg = f"空头趋势\n\nsymbol {self.vt_symbol}\ndirection {self.direction}\nprice {tick.last_price}\ndown {self.entry_down}\nturnover {turnover}\n\nM_ATR {self.minute_atr}\nM_FALL {minute_fall}\n\nM_5_ATR {self.minute_5_atr}\nM_5_FALL {minute_5_fall}\n\nH_ATR {self.hour_atr}\nH_FALL {hour_fall}"
+                average_tick_count = sum(self.minute_tick_count_list) / len(self.minute_tick_count_list)
+                msg = f"空头趋势\n\nsymbol {self.vt_symbol}\ndirection {self.direction}\nprice {tick.last_price}\ndown {self.entry_down}\nturnover {turnover}\ntick_count {self.minute_tick_count}\naverage_count {average_tick_count}\n\nM_ATR {self.minute_atr}\nM_FALL {minute_fall}\n\nM_5_ATR {self.minute_5_atr}\nM_5_FALL {minute_5_fall}\n\nH_ATR {self.hour_atr}\nH_FALL {hour_fall}"
                 self.send_ding_talk(msg)
 
         # 判断Rebirth
