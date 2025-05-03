@@ -241,10 +241,6 @@ class TrendignSniperStrategy(CtaTemplate):
         if self.indicator_inited and self.tick:
             self.minute_5_high = self.tick.last_price
             self.minute_5_low = self.tick.last_price
-        
-        self.direction = ""
-        self.signal_price = 0
-        self.signal_dt_str = ""
 
         self.minute_5_bar = bar
         self.minute_5_am.update_bar(bar)
@@ -256,6 +252,10 @@ class TrendignSniperStrategy(CtaTemplate):
 
         self.hour_bar = bar
         self.hour_am.update_bar(bar)
+
+        self.direction = ""
+        self.signal_price = 0
+        self.signal_dt_str = ""
 
     def calculate_indicator(self):
         # 通用指标
@@ -378,24 +378,12 @@ class TrendignSniperStrategy(CtaTemplate):
 
             # ATR条件（多头）
             long_atr_valid = False
-            # if self.minute_atr and minute_rise >= self.minute_atr * 3:
-            #     long_atr_valid = True
-
-            if not long_atr_valid and self.minute_5_atr and minute_5_rise >= self.minute_5_atr * 3:
-                long_atr_valid = True
-
-            if not long_atr_valid and self.hour_atr and hour_rise >= self.hour_atr * 3:
+            if self.minute_5_atr and minute_rise >= self.minute_5_atr * 3:
                 long_atr_valid = True
 
             # ATR条件（空头）
             short_atr_valid = False
-            # if self.minute_atr and minute_fall >= self.minute_atr * 3:
-            #     short_atr_valid = True
-
-            if not short_atr_valid and self.minute_5_atr and minute_5_fall >= self.minute_5_atr * 3:
-                short_atr_valid = True
-
-            if not short_atr_valid and self.hour_atr and hour_fall >= self.hour_atr * 3:
+            if self.minute_5_atr and minute_fall >= self.minute_5_atr * 3:
                 short_atr_valid = True
 
             # 多头趋势
