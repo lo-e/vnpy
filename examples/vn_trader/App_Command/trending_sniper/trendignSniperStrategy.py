@@ -365,7 +365,7 @@ class TrendignSniperStrategy(CtaTemplate):
                 self.signal_dt_str = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                 self.long_rebirth = True
 
-                msg = f"多头趋势\n\nsymbol {self.vt_symbol}\ndirection {self.direction}\nprice {tick.last_price}\nup {self.entry_up}\n\nM_ATR {self.minute_atr}\nM_RISE {minute_rise}\n\nM_5_ATR {self.minute_5_atr}\nM_5_RISE {minute_5_rise}\n\nH_ATR {self.hour_atr}\nH_RISE {hour_rise}"
+                msg = f"多头趋势\n\nsymbol {self.vt_symbol}\ndirection {self.direction}\nprice {tick.last_price}\nup {self.entry_up}\nturnover {turnover}\n\nM_ATR {self.minute_atr}\nM_RISE {minute_rise}\n\nM_5_ATR {self.minute_5_atr}\nM_5_RISE {minute_5_rise}\n\nH_ATR {self.hour_atr}\nH_RISE {hour_rise}"
                 self.send_ding_talk(msg)
 
             # 空头趋势
@@ -375,7 +375,7 @@ class TrendignSniperStrategy(CtaTemplate):
                 self.signal_dt_str = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                 self.short_rebirth = True
 
-                msg = f"空头趋势\n\nsymbol {self.vt_symbol}\ndirection {self.direction}\nprice {tick.last_price}\ndown {self.entry_down}\n\nM_ATR {self.minute_atr}\nM_FALL {minute_fall}\n\nM_5_ATR {self.minute_5_atr}\nM_5_FALL {minute_5_fall}\n\nH_ATR {self.hour_atr}\nH_FALL {hour_fall}"
+                msg = f"空头趋势\n\nsymbol {self.vt_symbol}\ndirection {self.direction}\nprice {tick.last_price}\ndown {self.entry_down}\nturnover {turnover}\n\nM_ATR {self.minute_atr}\nM_FALL {minute_fall}\n\nM_5_ATR {self.minute_5_atr}\nM_5_FALL {minute_5_fall}\n\nH_ATR {self.hour_atr}\nH_FALL {hour_fall}"
                 self.send_ding_talk(msg)
 
         # 判断Rebirth
