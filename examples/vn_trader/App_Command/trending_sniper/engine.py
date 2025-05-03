@@ -580,6 +580,18 @@ class TrendingSniperEngine(BaseEngine):
             if key in data:
                 strategy.__setattr__(key, data[key])
 
+        # 记录历史同步数据
+        self.strategy_sync_data[strategy.strategy_name] = data
+
+        # 记录历史变量数据
+        variable_data = {}
+        variable_json_file = self.get_strategie_variable_file_path(strategy)
+        if os.path.exists(variable_json_file):
+            with open(variable_json_file, "r", encoding="utf-8") as file:
+                variable_data = json.load(file)
+                
+        self.strategy_variable_data[strategy.strategy_name] = variable_data
+
     def save_sync_data(self, strategy):
         if not strategy.inited:
             return
@@ -592,7 +604,7 @@ class TrendingSniperEngine(BaseEngine):
 
         history_sync_data = self.strategy_sync_data.get(strategy.strategy_name, {})
         if history_sync_data != sync_data:
-            # 记录历史数据
+            # 记录历史同步数据
             self.strategy_sync_data[strategy.strategy_name] = sync_data
 
             try:
@@ -628,7 +640,7 @@ class TrendingSniperEngine(BaseEngine):
 
         history_variable_data = self.strategy_variable_data.get(strategy.strategy_name, {})
         if history_variable_data != variable_data:
-            # 记录历史数据
+            # 记录历史变量数据
             self.strategy_variable_data[strategy.strategy_name] = variable_data
 
             try:
