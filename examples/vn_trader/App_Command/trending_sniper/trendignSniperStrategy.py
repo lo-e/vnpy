@@ -345,7 +345,7 @@ class TrendignSniperStrategy(CtaTemplate):
         if self.tick and self.tick.datetime.minute != tick.datetime.minute:
             self.minute_tick_count_list.append(self.minute_tick_count)
             if len(self.minute_tick_count_list) > 10:
-                self.minute_tick_count_list.pop[0]
+                self.minute_tick_count_list.pop(0)
             self.minute_tick_count = 1
         
         else:
@@ -372,11 +372,34 @@ class TrendignSniperStrategy(CtaTemplate):
             hour_rise = tick.last_price - self.hour_low
             hour_fall = self.hour_high - tick.last_price
 
+            # 交易额条件
             turnover = tick.turnover if tick.turnover else tick.volume * tick.last_price
-            turnover_valid = True if turnover >= 10_000_000 else False
+            turnover_valid = True if turnover >= 1_000_000 else False
+
+            # ATR条件（多头）
+            long_atr_valid = False
+            # if self.minute_atr and minute_rise >= self.minute_atr * 3:
+            #     long_atr_valid = True
+
+            if not long_atr_valid and self.minute_5_atr and minute_5_rise >= self.minute_5_atr * 3:
+                long_atr_valid = True
+
+            if not long_atr_valid and self.hour_atr and hour_rise >= self.hour_atr * 3:
+                long_atr_valid = True
+
+            # ATR条件（空头）
+            short_atr_valid = False
+            # if self.minute_atr and minute_fall >= self.minute_atr * 3:
+            #     short_atr_valid = True
+
+            if not short_atr_valid and self.minute_5_atr and minute_5_fall >= self.minute_5_atr * 3:
+                short_atr_valid = True
+
+            if not short_atr_valid and self.hour_atr and hour_fall >= self.hour_atr * 3:
+                short_atr_valid = True
 
             # 多头趋势
-            if tick.last_price >= self.entry_up and turnover_valid and ((self.minute_atr and minute_rise >= self.minute_atr * 3) or (self.minute_5_atr and minute_5_rise >= self.minute_5_atr * 3) or (self.hour_atr and hour_rise >= self.hour_atr * 3)):
+            if tick.last_price >= self.entry_up and turnover_valid and long_atr_valid:
                 self.direction = "LONG"
                 self.signal_price = tick.last_price
                 self.signal_dt_str = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
@@ -387,7 +410,7 @@ class TrendignSniperStrategy(CtaTemplate):
                 self.send_ding_talk(msg)
 
             # 空头趋势
-            if tick.last_price <= self.entry_down and turnover_valid and ((self.minute_atr and minute_fall >= self.minute_atr * 3) or (self.minute_5_atr and minute_5_fall >= self.minute_5_atr * 3) or (self.hour_atr and hour_fall >= self.hour_atr * 3)):
+            if tick.last_price <= self.entry_down and turnover_valid and short_atr_valid:
                 self.direction = "SHORT"
                 self.signal_price = tick.last_price
                 self.signal_dt_str = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
