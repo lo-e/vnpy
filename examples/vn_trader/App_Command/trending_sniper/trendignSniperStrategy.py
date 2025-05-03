@@ -47,6 +47,8 @@ class TrendignSniperStrategy(CtaTemplate):
         "minute_5_atr",
         "hour_bar_dt",
         "hour_atr",
+        "entry_up",
+        "entry_down",
         "exit_up",
         "exit_down"
     ]
@@ -113,6 +115,8 @@ class TrendignSniperStrategy(CtaTemplate):
 
         self.tradable = True
         self.indicator_inited = False
+        self.entry_up = 0
+        self.entry_down = 0
         self.exit_up = 0
         self.exit_down = 0
         self.target_pos_checking = False
@@ -264,6 +268,7 @@ class TrendignSniperStrategy(CtaTemplate):
         # 5分钟指标
         if self.minute_5_am.inited:
             self.minute_5_atr = self.minute_5_am.atr(20)
+            self.entry_up, self.entry_down = self.minute_5_am.donchian(20)
             self.exit_up, self.exit_down = self.minute_5_am.donchian(10)
 
         # 小时指标
@@ -351,25 +356,25 @@ class TrendignSniperStrategy(CtaTemplate):
             hour_fall = self.hour_high - tick.last_price
 
             # 多头趋势
-            if (self.minute_atr and minute_rise >= self.minute_atr * 3) or (self.minute_5_atr and minute_5_rise >= self.minute_5_atr * 3) or (self.hour_atr and hour_rise >= self.hour_atr * 3):
+            if tick.last_price >= self.entry_up and ((self.minute_atr and minute_rise >= self.minute_atr * 3) or (self.minute_5_atr and minute_5_rise >= self.minute_5_atr * 3) or (self.hour_atr and hour_rise >= self.hour_atr * 3)):
                 self.direction = "LONG"
                 self.signal_price = tick.last_price
                 self.signal_dt_str = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                 self.long_rebirth = True
 
-                msg = f"多头趋势\n\nsymbol {self.vt_symbol}\ndirection {self.direction}\nprice {tick.last_price}\n\nM_ATR {self.minute_atr}\nM_RISE {minute_rise}\n\nM_5_ATR {self.minute_5_atr}\nM_5_RISE {minute_5_rise}\n\nH_ATR {self.hour_atr}\nH_RISE {hour_rise}"
+                msg = f"多头趋势\n\nsymbol {self.vt_symbol}\ndirection {self.direction}\nprice {tick.last_price}\nup {self.entry_up}\n\nM_ATR {self.minute_atr}\nM_RISE {minute_rise}\n\nM_5_ATR {self.minute_5_atr}\nM_5_RISE {minute_5_rise}\n\nH_ATR {self.hour_atr}\nH_RISE {hour_rise}"
                 self.send_ding_talk(msg)
 
             # 空头趋势
-            if (self.minute_atr and minute_fall >= self.minute_atr * 3) or (self.minute_5_atr and minute_5_fall >= self.minute_5_atr * 3) or (self.hour_atr and hour_fall >= self.hour_atr * 3):
+            if tick.last_price <= self.entry_down and ((self.minute_atr and minute_fall >= self.minute_atr * 3) or (self.minute_5_atr and minute_5_fall >= self.minute_5_atr * 3) or (self.hour_atr and hour_fall >= self.hour_atr * 3)):
                 self.direction = "SHORT"
                 self.signal_price = tick.last_price
                 self.signal_dt_str = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                 self.short_rebirth = True
 
-                msg = f"空头趋势\n\nsymbol {self.vt_symbol}\ndirection {self.direction}\nprice {tick.last_price}\n\nM_ATR {self.minute_atr}\nM_FALL {minute_fall}\n\nM_5_ATR {self.minute_5_atr}\nM_5_FALL {minute_5_fall}\n\nH_ATR {self.hour_atr}\nH_FALL {hour_fall}"
+                msg = f"空头趋势\n\nsymbol {self.vt_symbol}\ndirection {self.direction}\nprice {tick.last_price}\ndown {self.entry_down}\n\nM_ATR {self.minute_atr}\nM_FALL {minute_fall}\n\nM_5_ATR {self.minute_5_atr}\nM_5_FALL {minute_5_fall}\n\nH_ATR {self.hour_atr}\nH_FALL {hour_fall}"
                 self.send_ding_talk(msg)
-                
+
         # 判断Rebirth
         if self.direction == "LONG" and self.signal_price and tick.last_price <= self.signal_price * 0.99:
             self.long_rebirth = True
