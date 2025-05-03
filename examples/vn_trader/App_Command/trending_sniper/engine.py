@@ -581,16 +581,9 @@ class TrendingSniperEngine(BaseEngine):
                 strategy.__setattr__(key, data[key])
 
         # 记录历史同步数据
+        if "_id" in data:
+            data.pop("_id")
         self.strategy_sync_data[strategy.strategy_name] = data
-
-        # 记录历史变量数据
-        variable_data = {}
-        variable_json_file = self.get_strategie_variable_file_path(strategy)
-        if os.path.exists(variable_json_file):
-            with open(variable_json_file, "r", encoding="utf-8") as file:
-                variable_data = json.load(file)
-                
-        self.strategy_variable_data[strategy.strategy_name] = variable_data
 
     def save_sync_data(self, strategy):
         if not strategy.inited:
