@@ -241,6 +241,10 @@ class TrendignSniperStrategy(CtaTemplate):
         if self.indicator_inited and self.tick:
             self.minute_5_high = self.tick.last_price
             self.minute_5_low = self.tick.last_price
+        
+        self.direction = ""
+        self.signal_price = 0
+        self.signal_dt_str = ""
 
         self.minute_5_bar = bar
         self.minute_5_am.update_bar(bar)
