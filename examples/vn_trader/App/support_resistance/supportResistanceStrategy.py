@@ -57,7 +57,8 @@ class SupportResistanceStrategy(CtaTemplate):
         "open_price",
         "high_price",
         "low_price",
-        "profit_half"
+        "profit_half",
+        "target_pos_checking"
     ]
 
     # 同步列表，保存了需要保存到数据库的变量名称
@@ -118,11 +119,13 @@ class SupportResistanceStrategy(CtaTemplate):
         self.entry = False                          # 已开仓
         self.target_pos = 0                         # 目标持仓
         self.target_pos_check_ts = 0                # 仓位检查时间戳
+        self.target_pos_checking = False            # 正在执行目标仓位检查
         self.open_value = 0                         # 持仓价值
         self.open_price = 0                         # 持仓均价
         self.high_price = 0                         # 持仓后最高价
         self.low_price = 0                          # 持仓后最低价
         self.profit_half = False                    # 目标盈利过半
+        self.strategy_data = {}                     # 策略数据（包括常量、变量、同步）
 
     def on_init(self):
         # 交易所成功连接判断
@@ -141,6 +144,7 @@ class SupportResistanceStrategy(CtaTemplate):
             
             # 开仓
             if self.down_price < tick.last_price < self.up_price:
+                # 计算仓位
                 if self.direction == Direction.LONG:
                     est_loss_rate = abs((self.down_price / tick.last_price) - 1)
                 
@@ -148,6 +152,11 @@ class SupportResistanceStrategy(CtaTemplate):
                     est_loss_rate = abs((self.up_price / tick.last_price) - 1)
                 leverage = 0.02 / est_loss_rate
                 self.target_pos = self.portfolio.portfolioValue * leverage / tick.last_price
+
+                # 精度处理
+                contract = self.cta_engine.main_engine.get_contract(self.vt_symbol)
+                self.target_pos = round_to(self.target_pos, contract.min_volume)
+
                 target_pos_updated = True
 
         # 平仓
@@ -187,6 +196,16 @@ class SupportResistanceStrategy(CtaTemplate):
             if not self.target_pos_checking:
                 self.target_pos_checking = True
                 Thread(target=self.check_target_pos).start()
+
+    def on_timer(self):
+        strategy_data = self.get_data()
+        if self.strategy_data != strategy_data:
+            self.strategy_data = strategy_data
+            self.put_timer_event()
+
+            # dt = datetime.now().strftime(f"%Y-%m-%d %H:%M:%S")
+            # print(f"{dt} 同步数据..")
+        super().on_timer()
         
     def check_target_pos(self):
         self.target_pos_checking = True
@@ -197,7 +216,7 @@ class SupportResistanceStrategy(CtaTemplate):
                     self.target_pos_check_ts = time.time()
 
                     # 撮合交易
-                    if self.direction == "LONG":
+                    if self.direction == Direction.LONG:
                         if self.target_pos < 0 or self.pos < 0:
                             msg = f"仓位异常\n\n合约 {self.vt_symbol}\n方向 {self.direction.value}\n目标 {self.target_pos}\n当前 {self.pos}"
                             self.send_ding_talk(msg)
@@ -214,7 +233,7 @@ class SupportResistanceStrategy(CtaTemplate):
                             trade_price = self.tick.last_price * 0.995
                             self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(gap))
 
-                    if self.direction == "SHORT":
+                    if self.direction == Direction.SHORT:
                         if self.target_pos > 0 or self.pos > 0:
                             msg = f"仓位异常\n\n合约 {self.vt_symbol}\n方向 {self.direction.value}\n目标 {self.target_pos}\n当前 {self.pos}"
                             self.send_ding_talk(msg)
@@ -327,9 +346,6 @@ class SupportResistanceStrategy(CtaTemplate):
         
         # 邮件提醒
         super().on_trade(trade)
-
-        # 同步数据
-        self.put_timer_event()
 
     def send_ding_talk(self, content):
         # 推送钉钉消息

@@ -127,6 +127,15 @@ class CtaTemplate(ABC):
         for name in self.variables:
             strategy_variables[name] = getattr(self, name)
         return strategy_variables
+    
+    def get_syncs(self):
+        """
+        Get strategy syncs dict.
+        """
+        strategy_syncs = {}
+        for name in self.syncs:
+            strategy_syncs[name] = getattr(self, name)
+        return strategy_syncs
 
     def get_data(self):
         """
@@ -139,6 +148,7 @@ class CtaTemplate(ABC):
             "author": self.author,
             "parameters": self.get_parameters(),
             "variables": self.get_variables(),
+            "syncs": self.get_syncs(),
         }
         return strategy_data
 
