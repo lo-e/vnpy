@@ -8,11 +8,11 @@
       "strategy_name": "SUPPORT_RESISTANCE_BTC_OKX",
       "vt_symbol":"BTC-USDT-SWAP.OKX",
       "exchange": "OKX",
-      "exchange_user": "lo-e（test）",
+      "exchange_user": "lo-e(test)",
       "direction":"LONG",
       "up_price":120000,
       "down_price":100000,
-      "completed": 1,
+      "completed": 0,
       "start": true
     }
   ]

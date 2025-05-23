@@ -141,7 +141,13 @@ class SupportResistanceStrategy(CtaTemplate):
             
             # 开仓
             if self.down_price < tick.last_price < self.up_price:
-                self.target_pos = self.portfolio.portfolioValue / tick.last_price
+                if self.direction == Direction.LONG:
+                    est_loss_rate = abs((self.down_price / tick.last_price) - 1)
+                
+                else:
+                    est_loss_rate = abs((self.up_price / tick.last_price) - 1)
+                leverage = 0.02 / est_loss_rate
+                self.target_pos = self.portfolio.portfolioValue * leverage / tick.last_price
                 target_pos_updated = True
 
         # 平仓
