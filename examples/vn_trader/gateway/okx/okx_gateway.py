@@ -523,10 +523,12 @@ class OkxRestApi(RestClient):
             if product == Product.SPOT:
                 size: float = 1
             else:
-                size: float = float(d["ctMult"])
+                size = d["ctMult"]
+                size: float = float(size) if size else 0
 
             # 最小下单数量，合约的数量单位是“张”，现货的数量单位是“交易货币”量
-            minSz = float(d["minSz"])
+            minSz = d["minSz"]
+            minSz = float(minSz) if minSz else 0
 
             # 合约面值
             ctValue = d["ctVal"]
@@ -550,13 +552,16 @@ class OkxRestApi(RestClient):
                 futures_type = FuturesType.INVERSE
                 inverse_count += 1
 
+            price_tick = d["tickSz"]
+            price_tick = float(price_tick) if price_tick else 0
+
             contract: ContractData = ContractData(
                 symbol=symbol,
                 exchange=Exchange.OKX,
                 name=symbol,
                 product=product,
                 size=size,
-                pricetick=float(d["tickSz"]),
+                pricetick=price_tick,
                 min_volume=min_volume,
                 contract_value=ctValue,
                 contract_min=minSz,
