@@ -12,6 +12,7 @@ from gateway.bybit import BybitGateway
 
 from App.Turtle_crypto import TurtleCryptoApp
 from App.custom_trading import CustomTradingApp
+from App.support_resistance import SupportResistanceApp
 
 def main():
     # 创建引擎
@@ -27,6 +28,7 @@ def main():
     # Apps
     main_engine.add_app(TurtleCryptoApp)
     main_engine.add_app(CustomTradingApp)
+    main_engine.add_app(SupportResistanceApp)
    
     # 监控程序运行状态
     dir = os.getcwd()

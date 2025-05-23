@@ -1,0 +1,6 @@
+"""
+Defines constants and objects used in CtaStrategy App.
+"""
+
+APP_NAME = "SupportResistance"
+EVENT_SUPPORT_RESISTANCE_PORTFOLIO = "EVENT_SUPPORT_RESISTANCE_PORTFOLIO"
