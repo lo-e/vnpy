@@ -149,10 +149,10 @@ class SupportResistanceStrategy(CtaTemplate):
         self.tick = copy(tick)
         target_pos_updated = False
         if not self.entry:
-            self.entry = True
-            
             # 开仓
             if self.down_price < tick.last_price < self.up_price:
+                self.entry = True
+
                 # 计算仓位
                 if self.direction == Direction.LONG:
                     est_loss_rate = abs((self.down_price / tick.last_price) - 1)
@@ -170,8 +170,12 @@ class SupportResistanceStrategy(CtaTemplate):
 
         # 平仓
         if tick.last_price >= self.up_price or tick.last_price <= self.down_price:
-            self.target_pos = 0
-            target_pos_updated = True
+            if self.entry:
+                self.target_pos = 0
+                target_pos_updated = True
+
+            else:
+                self.on_complete()
 
         if self.open_price:
             if self.direction == Direction.LONG:
