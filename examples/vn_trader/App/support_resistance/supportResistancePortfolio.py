@@ -18,7 +18,7 @@ class SupportResistancePortfolio(object):
 
     variables = [
         "inited",
-        "starting"
+        "started"
     ]
 
     syncs = [
@@ -28,7 +28,7 @@ class SupportResistancePortfolio(object):
         self.cta_engine = engine
         self.name = ""
         self.inited = False
-        self.starting = False
+        self.started = False
         self.strategy_symbols = set()
 
         # 设置参数

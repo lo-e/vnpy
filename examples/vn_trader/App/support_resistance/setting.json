@@ -12,7 +12,7 @@
       "direction":"LONG",
       "up_price":120000,
       "down_price":100000,
-      "completed": 0,
+      "completed": 1,
       "start": true
     }
   ]

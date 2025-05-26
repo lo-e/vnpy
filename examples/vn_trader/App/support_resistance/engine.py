@@ -60,7 +60,7 @@ from vnpy.app.cta_strategy.template import CtaTemplate
 from vnpy.trader.converter import OffsetConverter
 import re
 from collections import OrderedDict
-from time import sleep
+import time
 from decimal import Decimal
 import json
 from .supportResistanceStrategy import SupportResistanceStrategy
@@ -120,8 +120,59 @@ class SupportResistanceEngine(BaseEngine):
         for signal_setting in signal_list:
             self.add_strategy(signal_setting)
 
+        # 监控策略设置文件
+        Thread(target=self.monitoring_setting).start()
+
         self.register_event()
         self.write_log("支撑压力策略引擎初始化成功")
+
+    def monitoring_setting(self):
+        while True:
+            try:
+                if self.portfolio and self.portfolio.started:
+                    dir_path = Path(os.path.dirname(os.path.realpath(__file__)))
+                    file_path = dir_path.joinpath("setting.json")
+                    setting = load_json_path(file_path)
+
+                    # 检查策略设置
+                    signal_list = setting.get("signal", [])
+                    for signal_setting in signal_list:
+                        completed = signal_setting["completed"]
+                        if not completed:
+                            strategy_name = signal_setting["strategy_name"]
+                            strategy: SupportResistanceStrategy = self.strategies.get(strategy_name, None)
+                            if strategy and strategy.completed:
+                                # 停止策略
+                                self.stop_strategy(strategy_name)
+
+                                # 清除合约策略映射
+                                symbol_strategies = self.symbol_strategy_map[strategy.vt_symbol]
+                                if strategy in symbol_strategies:
+                                    symbol_strategies.remove(strategy)
+
+                                # 清除订单策略映射
+                                for k, v in self.orderid_strategy_map.copy().items():
+                                    if v == strategy:
+                                        self.orderid_strategy_map.pop(k)
+
+                                # 清除策略订单映射
+                                self.strategy_orderid_map[strategy.strategy_name] = set()
+
+                                # 清除历史策略
+                                self.strategies.pop(strategy_name)
+
+                            elif strategy:
+                                continue
+
+                            # 添加执行新策略
+                            self.add_strategy(setting=signal_setting, load_sync_data=False)
+                            self.initing_strategy(strategy_name)
+                            self.start_strategy(strategy_name)
+
+            except Exception as e:
+                pass
+
+            time.sleep(1)
 
     def close(self):
         self.stop_all_strategies()
@@ -391,32 +442,37 @@ class SupportResistanceEngine(BaseEngine):
         """
         while not self.init_queue.empty():
             strategy_name = self.init_queue.get()
-            strategy = self.strategies[strategy_name]
-
-            if strategy.inited:
-                self.write_log(f"{strategy_name}已经完成初始化，禁止重复操作")
-                continue
-
-            self.write_log(f"支撑压力策略{strategy_name}开始执行初始化")
-
-            # Call on_init function of strategy
-            self.call_strategy_func(strategy, strategy.on_init)
-
-            # Subscribe market data
-            contract = self.main_engine.get_contract(strategy.vt_symbol)
-            if contract:
-                req = SubscribeRequest(
-                    symbol=contract.symbol, exchange=contract.exchange)
-                self.main_engine.subscribe(req, contract.gateway_name)
-            else:
-                self.write_log(f"行情订阅失败，找不到合约{strategy.vt_symbol}", strategy)
-
-            # Put event to update init completed status.
-            strategy.inited = True
-            self.put_strategy_event(strategy)
-            self.write_log(f"支撑压力策略{strategy_name}初始化完成")
+            self.initing_strategy(strategy_name)
 
         self.init_thread = None
+
+    def initing_strategy(self, strategy_name: str):
+        strategy = self.strategies.get(strategy_name, None)
+        if not strategy:
+            self.write_log(f"{strategy_name}策略不存在，无法进行初始化")
+            return
+
+        if strategy.inited:
+            self.write_log(f"{strategy_name}已经完成初始化，禁止重复操作")
+            return
+        
+        # 响应策略初始化方法
+        self.write_log(f"支撑压力策略{strategy_name}开始执行初始化")
+        self.call_strategy_func(strategy, strategy.on_init)
+
+        # 订阅合约
+        contract = self.main_engine.get_contract(strategy.vt_symbol)
+        if contract:
+            req = SubscribeRequest(symbol=contract.symbol, exchange=contract.exchange)
+            self.main_engine.subscribe(req, contract.gateway_name)
+
+        else:
+            self.write_log(f"行情订阅失败，找不到合约{strategy.vt_symbol}", strategy)
+
+        # 策略状态更新（初始化完成）
+        strategy.inited = True
+        self.put_strategy_event(strategy)
+        self.write_log(f"支撑压力策略{strategy_name}初始化完成")
 
     def start_strategy(self, strategy_name: str):
         """
@@ -611,7 +667,7 @@ class SupportResistanceEngine(BaseEngine):
             l.append(bar)
         return l
 
-    def add_strategy(self, setting):
+    def add_strategy(self, setting, load_sync_data: bool = True):
         """
         添加策略
         """
@@ -637,7 +693,8 @@ class SupportResistanceEngine(BaseEngine):
         self.portfolio.strategy_symbols.add(strategy.vt_symbol)
 
         # 加载同步数据
-        self.loadSyncData(strategy)
+        if load_sync_data:
+            self.loadSyncData(strategy)
         self.strategies[name] = strategy
 
         # Add vt_symbol to strategy map.
@@ -745,18 +802,18 @@ class SupportResistanceEngine(BaseEngine):
         self.start_all_strategies()
 
         # 投资组合启动
-        if not self.portfolio.starting:
+        if not self.portfolio.started:
             self.portfolio.on_start()
-            self.portfolio.starting = True
+            self.portfolio.started = True
             self.put_portfolio_event()
 
     def stopPortfolio(self):
         """停止策略组合"""
         self.stop_all_strategies()
 
-        if self.portfolio.starting:
+        if self.portfolio.started:
             self.portfolio.on_stop()
-            self.portfolio.starting = False
+            self.portfolio.started = False
             self.put_portfolio_event()
 
     def get_portfolio_variables(self):
