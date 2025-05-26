@@ -132,6 +132,15 @@ class SupportResistanceStrategy(CtaTemplate):
         gateway = self.cta_engine.main_engine.get_gateway(gateway_name=self.exchange.value, account_name=self.exchange_user)
         if not gateway:
             raise(f"支撑压力策略交易所未连接：{self.exchange}@{self.exchange_user}")
+        
+    def on_complete(self):
+        result, msg = self.cta_engine.complete_strategy(self.strategy_name)
+        if result:
+            self.completed = True
+        
+        else:
+            msg = f"策略执行完成失败\n\n{msg}"
+            self.send_ding_talk(msg)
 
     def on_tick(self, tick: TickData):
         if not self.trading or self.completed:
@@ -174,7 +183,7 @@ class SupportResistanceStrategy(CtaTemplate):
                     self.profit_half = True
 
                 # 多头过半止盈
-                if self.profit_half and tick.last_price <= self.high_price - abs(self.high_price - self.open_price) * 0.5:
+                if self.profit_half and tick.last_price <= self.high_price - abs(self.high_price - self.open_price) * 0.9:
                     self.target_pos = 0
                     target_pos_updated = True
 
@@ -187,7 +196,7 @@ class SupportResistanceStrategy(CtaTemplate):
                     self.profit_half = True
 
                 # 空头过半止盈
-                if self.profit_half and tick.last_price >= self.low_price + abs(self.open_price - self.low_price) * 0.5:
+                if self.profit_half and tick.last_price >= self.low_price + abs(self.open_price - self.low_price) * 0.9:
                     self.target_pos = 0
                     target_pos_updated = True
 
@@ -209,6 +218,7 @@ class SupportResistanceStrategy(CtaTemplate):
         
     def check_target_pos(self):
         self.target_pos_checking = True
+        result = False
         cancel_ts = 0
         while True:
             try:
@@ -256,12 +266,17 @@ class SupportResistanceStrategy(CtaTemplate):
                         self.cancel_all()
 
                     if time.time() >= self.target_pos_check_ts + 60:
+                        result = True
                         break
 
             except Exception as e:
                 msg = f"核查目标仓位出错\n\n合约 {self.vt_symbol}\n方向 {self.direction.value}\n目标 {self.target_pos}\n当前 {self.pos}\n{e}"
                 self.send_ding_talk(msg)
                 break
+
+        # 判断策略是否完成
+        if result and self.target_pos == 0:
+            self.on_complete()
         
         self.target_pos_checking = False
 

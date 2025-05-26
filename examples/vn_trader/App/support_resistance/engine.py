@@ -174,6 +174,37 @@ class SupportResistanceEngine(BaseEngine):
 
             time.sleep(1)
 
+    def complete_strategy(self, strategy_name: str):
+        result = False
+        msg = ""
+        try:
+            # 获取setting文件
+            dir_path = Path(os.path.dirname(os.path.realpath(__file__)))
+            file_path = dir_path.joinpath("setting.json")
+            setting = load_json_path(file_path)
+
+            # 更新内容
+            found = False
+            signal_list = setting.get("signal", [])
+            for signal_setting in signal_list:
+                if strategy_name == signal_setting["strategy_name"]:
+                    signal_setting["completed"] = 1
+                    found = True
+                    break
+            
+            # 保存文件
+            if found:
+                save_json(file_path, setting)
+                result = True
+            
+            else:
+                msg = f"没有找到策略 {strategy_name}"
+
+        except Exception as e:
+            pass
+
+        return result, msg
+
     def close(self):
         self.stop_all_strategies()
 
