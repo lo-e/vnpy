@@ -120,15 +120,19 @@ class CtaStrategyManager(QtWidgets.QGroupBox):
         if varDict:
             self.varMonitor.updateData(varDict)
 
-    def updateVar(self, event):
-        """更新组合变量"""
+    def updateData(self, event):
+        """更新策略最新状态"""
+        data = event.data
+        parameters = data["parameters"]
+        self.paramMonitor.updateData(parameters)
+
         data = event.data
         variables = data["variables"]
         self.varMonitor.updateData(variables)
 
     def registerEvent(self):
         """注册事件监听"""
-        self.signal.connect(self.updateVar)
+        self.signal.connect(self.updateData)
         self.eventEngine.register(EVENT_CTA_STRATEGY + self.name, self.signal.emit)
 
     def init(self):

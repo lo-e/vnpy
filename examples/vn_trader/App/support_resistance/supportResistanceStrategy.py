@@ -171,19 +171,20 @@ class SupportResistanceStrategy(CtaTemplate):
         # 平仓
         if tick.last_price >= self.up_price or tick.last_price <= self.down_price:
             if self.entry:
-                self.target_pos = 0
-                target_pos_updated = True
+                if self.target_pos:
+                    self.target_pos = 0
+                    target_pos_updated = True
 
             else:
                 self.on_complete()
 
-        if self.open_price:
+        if self.open_price and self.target_pos:
             if self.direction == Direction.LONG:
                 # 多头开仓后最高价
                 self.high_price = max(self.high_price, tick.last_price)
 
                 # 多头盈利目标过半
-                if self.tick.last_price >= self.open_price + abs(self.up_price - self.open_price) * 0.5:
+                if not self.profit_half and self.tick.last_price >= self.open_price + abs(self.up_price - self.open_price) * 0.5:
                     self.profit_half = True
 
                 # 多头过半止盈
@@ -196,7 +197,7 @@ class SupportResistanceStrategy(CtaTemplate):
                 self.low_price = min(self.low_price, tick.last_price) if self.low_price else tick.last_price
             
                 # 空头盈利目标过半
-                if self.tick.last_price <= self.open_price - abs(self.open_price - self.down_price) * 0.5:
+                if not self.profit_half and self.tick.last_price <= self.open_price - abs(self.open_price - self.down_price) * 0.5:
                     self.profit_half = True
 
                 # 空头过半止盈
@@ -279,7 +280,7 @@ class SupportResistanceStrategy(CtaTemplate):
                 break
 
         # 判断策略是否完成
-        if result and self.target_pos == 0:
+        if result and self.entry and self.target_pos == 0:
             self.on_complete()
         
         self.target_pos_checking = False
