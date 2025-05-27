@@ -161,6 +161,8 @@ class SupportResistanceStrategy(CtaTemplate):
                     est_loss_rate = abs((self.up_price / tick.last_price) - 1)
                 leverage = 0.02 / est_loss_rate
                 self.target_pos = self.portfolio.portfolioValue * leverage / tick.last_price
+                if self.direction == Direction.SHORT:
+                    self.target_pos = self.target_pos * -1
 
                 # 精度处理
                 contract = self.cta_engine.main_engine.get_contract(self.vt_symbol)

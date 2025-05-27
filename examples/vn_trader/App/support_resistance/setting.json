@@ -9,9 +9,9 @@
             "vt_symbol": "BTC-USDT-SWAP.OKX",
             "exchange": "OKX",
             "exchange_user": "lo-e(test)",
-            "direction": "LONG",
-            "up_price": 109000,
-            "down_price": 107500,
+            "direction": "SHORT",
+            "up_price": 109500,
+            "down_price": 109000,
             "completed": 0,
             "start": true
         }
