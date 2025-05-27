@@ -11,9 +11,33 @@
             "exchange_user": "lo-e(test)",
             "direction": "SHORT",
             "multiple": 1,
-            "up_price": 109500,
-            "down_price": 107500,
-            "completed": 1,
+            "up_price": 109800,
+            "down_price": 102000,
+            "completed": 0,
+            "start": true
+        },
+        {
+            "strategy_name": "SUPPORT_RESISTANCE_DOGE_OKX",
+            "vt_symbol": "DOGE-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e(test)",
+            "direction": "SHORT",
+            "multiple": 1,
+            "up_price": 0.22896,
+            "down_price": 0.2251,
+            "completed": 0,
+            "start": true
+        },
+        {
+            "strategy_name": "SUPPORT_RESISTANCE_PEPE_OKX",
+            "vt_symbol": "PEPE-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e(test)",
+            "direction": "SHORT",
+            "multiple": 1,
+            "up_price": 1.4226e-05,
+            "down_price": 1.3627e-05,
+            "completed": 0,
             "start": true
         }
     ]

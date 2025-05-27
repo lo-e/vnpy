@@ -9,7 +9,7 @@ from vnpy.trader.ui import QtGui, QtCore, QtWidgets
 from vnpy.app.cta_strategy.base import EVENT_CTA_LOG, EVENT_CTA_STRATEGY
 from .language import text
 from vnpy.trader.engine import MainEngine
-from ..base import APP_NAME, EVENT_SUPPORT_RESISTANCE_PORTFOLIO
+from ..base import APP_NAME, EVENT_SUPPORT_RESISTANCE_PORTFOLIO, EVENT_SUPPORT_RESISTANCE_RELOAD
 
 
 class CtaValueMonitor(QtWidgets.QTableWidget):
@@ -262,6 +262,7 @@ class SupportResistanceManager(QtWidgets.QWidget):
     """引擎管理组件"""
 
     signal = QtCore.pyqtSignal(Event)
+    signal_add_strategy = QtCore.pyqtSignal(Event)
 
     def __init__(self, mainEngine: MainEngine, eventEngine: EventEngine, parent=None):
         super(SupportResistanceManager, self).__init__(parent)
@@ -288,6 +289,8 @@ class SupportResistanceManager(QtWidgets.QWidget):
         # 滚动区域，放置所有的CtaStrategyManager
         self.scrollArea = QtWidgets.QScrollArea()
         # self.scrollArea.setWidgetResizable(True)
+        self.scroll_widget = None
+        self.scroll_vbox = None
 
         # CTA组件的日志监控
         self.ctaLogMonitor = QtWidgets.QTextEdit()
@@ -303,20 +306,30 @@ class SupportResistanceManager(QtWidgets.QWidget):
 
     def initStrategyManager(self):
         """初始化策略管理组件界面"""
-        w = QtWidgets.QWidget()
-        vbox = QtWidgets.QVBoxLayout()
+        self.scroll_widget = QtWidgets.QWidget()
+        self.scroll_vbox = QtWidgets.QVBoxLayout()
 
         l = self.supportResistanceEngine.get_strategy_names()
         for name in l:
             strategyManager = CtaStrategyManager(
                 self.supportResistanceEngine, self.eventEngine, name
             )
-            vbox.addWidget(strategyManager)
+            self.scroll_vbox.addWidget(strategyManager)
 
-        vbox.addStretch()
+        self.scroll_vbox.addStretch()
+        self.scroll_widget.setLayout(self.scroll_vbox)
+        self.scrollArea.setWidget(self.scroll_widget)
 
-        w.setLayout(vbox)
-        self.scrollArea.setWidget(w)
+    def add_strategy(self, event):
+        name = event.data
+        strategyManager = CtaStrategyManager(
+            self.supportResistanceEngine, self.eventEngine, name
+            )
+        self.scroll_vbox.addWidget(strategyManager)
+
+        self.scroll_vbox.addStretch()
+        self.scroll_widget.setLayout(self.scroll_vbox)
+        self.scrollArea.setWidget(self.scroll_widget)
 
     def updateCtaLog(self, event):
         """更新CTA相关日志"""
@@ -328,3 +341,6 @@ class SupportResistanceManager(QtWidgets.QWidget):
         """注册事件监听"""
         self.signal.connect(self.updateCtaLog)
         self.eventEngine.register(EVENT_CTA_LOG, self.signal.emit)
+
+        self.signal_add_strategy.connect(self.add_strategy)
+        self.eventEngine.register(EVENT_SUPPORT_RESISTANCE_RELOAD, self.signal_add_strategy.emit)

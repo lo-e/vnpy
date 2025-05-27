@@ -44,7 +44,7 @@ from vnpy.trader.utility import (
 )
 from vnpy.trader.utility import DIR_SYMBOL
 
-from .base import APP_NAME, EVENT_SUPPORT_RESISTANCE_PORTFOLIO
+from .base import APP_NAME, EVENT_SUPPORT_RESISTANCE_PORTFOLIO, EVENT_SUPPORT_RESISTANCE_RELOAD
 from vnpy.app.cta_strategy.base import (
     EVENT_CTA_LOG,
     EVENT_CTA_STRATEGY,
@@ -168,6 +168,10 @@ class SupportResistanceEngine(BaseEngine):
                             self.add_strategy(setting=signal_setting, load_sync_data=False)
                             self.initing_strategy(strategy_name)
                             self.start_strategy(strategy_name)
+
+                            # 刷新UI
+                            event = Event(type=EVENT_SUPPORT_RESISTANCE_RELOAD, data=strategy_name)
+                            self.event_engine.put(event)
 
             except Exception as e:
                 pass
