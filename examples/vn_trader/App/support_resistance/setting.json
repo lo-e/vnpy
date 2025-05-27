@@ -10,9 +10,10 @@
             "exchange": "OKX",
             "exchange_user": "lo-e(test)",
             "direction": "SHORT",
+            "multiple": 1,
             "up_price": 109500,
-            "down_price": 109000,
-            "completed": 0,
+            "down_price": 107500,
+            "completed": 1,
             "start": true
         }
     ]

@@ -44,6 +44,7 @@ class SupportResistanceStrategy(CtaTemplate):
         "exchange",
         "exchange_user",
         "direction",
+        "multiple",
         "up_price",
         "down_price",
         "completed"
@@ -77,6 +78,7 @@ class SupportResistanceStrategy(CtaTemplate):
         self.exchange: Exchange = Exchange.NONE
         self.exchange_user:str = ""
         self.direction: Direction = Direction.NET
+        self.multiple = 1
         self.up_price: float = 0
         self.down_price: float = 0
         self.completed: bool = False
@@ -160,7 +162,7 @@ class SupportResistanceStrategy(CtaTemplate):
                 else:
                     est_loss_rate = abs((self.up_price / tick.last_price) - 1)
                 leverage = 0.02 / est_loss_rate
-                self.target_pos = self.portfolio.portfolioValue * leverage / tick.last_price
+                self.target_pos = self.portfolio.portfolioValue * self.multiple * leverage / tick.last_price
                 if self.direction == Direction.SHORT:
                     self.target_pos = self.target_pos * -1
 
