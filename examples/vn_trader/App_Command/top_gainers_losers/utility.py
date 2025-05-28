@@ -9,6 +9,8 @@ from threading import Thread
 import time
 import os
 from vnpy.trader.utility import DIR_SYMBOL
+import pandas as pd
+from datetime import datetime
 
 class Chrome(object):
     def __init__(self, cta_engine) -> None:
@@ -118,6 +120,24 @@ class Chrome(object):
             token = data["token"]
             percent = data["percent"]
             print(f"{token}\t{percent}")
+
+        # 保存到文件
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        date = datetime.now().strftime(f"%Y-%m-%d")
+        hour = datetime.now().hour
+        time = datetime.now().strftime(f"%H_%M_%S")
+
+        gainer_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}gainers{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+        os.makedirs(gainer_dir_path, exist_ok=True)
+        gainer_file_path = f"{gainer_dir_path}{DIR_SYMBOL}{time}.csv"
+        df = pd.DataFrame(gainers)
+        df.to_csv(gainer_file_path, index=False)
+
+        loser_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}losers{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+        os.makedirs(loser_dir_path, exist_ok=True)
+        loser_file_path = f"{loser_dir_path}{DIR_SYMBOL}{time}.csv"
+        df = pd.DataFrame(losers)
+        df.to_csv(loser_file_path, index=False)
 
     def load_driver(self):
         # 加载浏览器
