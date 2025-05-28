@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from copy import copy
 from App_Command.hit_new.engine import HitNewEngine
 from App_Command.trending_sniper.engine import TrendingSniperEngine
+from App_Command.top_gainers_losers.engine import TopGainersLosersEngine
 
 GATEWAYS = [[OkxGateway, "lo-e"], [BybitGateway, "loesuperman"], [BinanceUsdtGateway, "lo-e"]]
 class DurationBar(object):
@@ -182,10 +183,16 @@ def main():
     # hit_new_app.start_portfolio()
 
     # 执行策略（TrendingSniper）
-    trendign_sniper_app = TrendingSniperEngine(main_engine=main_engine, event_engine=event_engine)
-    trendign_sniper_app.init_engine()
-    trendign_sniper_app.init_portfolio()
-    trendign_sniper_app.start_portfolio()
+    # trendign_sniper_app = TrendingSniperEngine(main_engine=main_engine, event_engine=event_engine)
+    # trendign_sniper_app.init_engine()
+    # trendign_sniper_app.init_portfolio()
+    # trendign_sniper_app.start_portfolio()
+
+    # 执行策略（TopGainersLosers）
+    top_gainers_losers_app = TopGainersLosersEngine(main_engine=main_engine, event_engine=event_engine)
+    top_gainers_losers_app.init_engine()
+    top_gainers_losers_app.init_portfolio()
+    top_gainers_losers_app.start_portfolio()
     
 if __name__ == "__main__":
     main()
