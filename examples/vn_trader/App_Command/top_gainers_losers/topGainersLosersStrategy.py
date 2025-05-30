@@ -26,42 +26,23 @@ class TopGainersLosersStrategy(CtaTemplate):
     parameters = [
         "strategy_name",
         "vt_symbol",
+        "exchange",
         "exchange_user",
+        "direction"
     ]
 
     # 变量列表
     variables = [
         "target_pos",
-        "direction",
-        "signal_price",
-        "signal_dt_str",
-        "long_rebirth",
-        "short_rebirth",
-        "open_count",
+        "open_value",
         "open_price",
-        "tradable",
-        "indicator_inited",
-        "minute_bar_dt",
-        "minute_atr",
-        "minute_5_bar_dt",
-        "minute_5_atr",
-        "hour_bar_dt",
-        "hour_atr",
-        "entry_up",
-        "entry_down",
-        "exit_up",
-        "exit_down"
     ]
 
     # 同步列表
     syncs = [
         "target_pos",
-        "direction",
-        "signal_price",
-        "signal_dt_str",
-        "open_count",
         "open_value",
-        "open_price"
+        "open_price",
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -100,52 +81,8 @@ class TopGainersLosersStrategy(CtaTemplate):
             raise(f"交易方向配置错误：{self.direction}")
 
         self.tick: TickData = None
-        self.minute_bar_generator = BarGenerator(on_bar=self.on_live_minute_bar)
-        self.live_bars = []
-
-        self.minute_bar: BarData = None
-        self.minute_bar_dt: str = ""
-        self.minute_am: ArrayManager = None
-        self.minute_atr = 0
-        self.minute_high = 0
-        self.minute_low = 0
-
-        self.minute_5_bar: BarData = None
-        self.minute_5_bar_dt: str = ""
-        self.minute_5_bar_generator: BarGenerator = None
-        self.minute_5_am: ArrayManager = None
-        self.minute_5_atr = 0
-        self.minute_5_high = 0
-        self.minute_5_low = 0
-
-        self.hour_bar: BarData = None
-        self.hour_bar_dt: str = ""
-        self.hour_bar_generator: BarGenerator = None
-        self.hour_am: ArrayManager = None
-        self.hour_atr = 0
-        self.hour_high = 0
-        self.hour_low = 0
-
-        self.tradable = True
-        self.indicator_inited = False
-        self.entry_up = 0
-        self.entry_down = 0
-        self.exit_up = 0
-        self.exit_down = 0
-        self.target_pos_checking = False
-        self.target_pos_check_ts = 0
-        self.target_pos = 0
-        self.direction = ""
-        self.signal_price = 0
-        self.signal_dt_str = ""
-        self.long_rebirth = False
-        self.short_rebirth = False
-        self.open_count = 0
         self.open_value = 0
         self.open_price = 0
-
-        self.minute_tick_count = 0
-        self.minute_tick_count_list = []
 
     def on_init(self):
         # 交易所成功连接判断
@@ -161,7 +98,14 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.send_ding_talk(msg)
 
     def on_close(self):
-        pass
+        result, msg = self.cta_engine.remove_strategy_setting(self.strategy_name)
+        if result:
+            self.cta_engine.remove_strategy(self.strategy_name)
+
+        else:
+            msg = f"停止关闭策略失败\n\n{msg}"
+            self.send_ding_talk(msg)
+            print(msg)
 
     def load_database_bar(self):
         try:

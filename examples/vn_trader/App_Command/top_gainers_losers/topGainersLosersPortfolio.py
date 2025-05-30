@@ -71,56 +71,104 @@ class TopGainersLosersPortfolio(object):
             self.check_download_instruments()
 
     def on_top_gainers_losers(self, data: tuple):
-        gainers, losers = data
-        gainers_data = {}
-        losers_data = {}
-        close_strategies = []
-        for data in gainers:
-            gainers_data[data["token"]] = data["percent"]
+        try:
+            gainers, losers = data
 
-        for data in losers:
-            losers_data[data["token"]] = data["percent"]
+            # 保存到文件
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            date = datetime.now().strftime(f"%Y-%m-%d")
+            hour = datetime.now().hour
+            time = datetime.now().strftime(f"%H_%M_%S")
 
-        for name in self.strategies.keys():
-            strategy: TopGainersLosersStrategy = self.strategies[name]
-            pure_symbol = ""
-            if strategy.exchange == Exchange.OKX:
-                pure_symbol = strategy.vt_symbol.split("-")[0]
-            
-            else:
-                pure_symbol = strategy.vt_symbol.split("USDT")[0]
-            
-            if strategy.direction == Direction.LONG:
-                if pure_symbol in gainers_data:
-                    gainers_data.pop(pure_symbol)
+            gainer_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}gainers{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            os.makedirs(gainer_dir_path, exist_ok=True)
+            gainer_file_path = f"{gainer_dir_path}{DIR_SYMBOL}{time}.csv"
+            df = pd.DataFrame(gainers)
+            df.to_csv(gainer_file_path, index=False)
+
+            loser_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}losers{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            os.makedirs(loser_dir_path, exist_ok=True)
+            loser_file_path = f"{loser_dir_path}{DIR_SYMBOL}{time}.csv"
+            df = pd.DataFrame(losers)
+            df.to_csv(loser_file_path, index=False)
+
+            # 判断上新、停止策略
+            gainers_data = {}
+            losers_data = {}
+            close_strategies = []
+            msg = ""
+
+            for data in gainers:
+                gainers_data[data["token"]] = data["percent"]
+
+            for data in losers:
+                losers_data[data["token"]] = data["percent"]
+
+            for name in self.cta_engine.strategies.keys():
+                strategy: TopGainersLosersStrategy = self.cta_engine.strategies[name]
+                pure_symbol = ""
+                if strategy.exchange == Exchange.OKX:
+                    pure_symbol = strategy.vt_symbol.split("-")[0]
                 
                 else:
-                    close_strategies.append(strategy)
-            
-            if strategy.direction == Direction.SHORT:
-                if pure_symbol in losers_data:
-                    losers_data.pop(pure_symbol)
+                    pure_symbol = strategy.vt_symbol.split("USDT")[0]
                 
-                else:
-                    close_strategies.append(strategy)
+                if strategy.direction == Direction.LONG:
+                    if pure_symbol in gainers_data:
+                        gainers_data.pop(pure_symbol)
+                    
+                    else:
+                        close_strategies.append(strategy)
+                
+                if strategy.direction == Direction.SHORT:
+                    if pure_symbol in losers_data:
+                        losers_data.pop(pure_symbol)
+                    
+                    else:
+                        close_strategies.append(strategy)
 
-        # 停止关闭策略
-        for i in range(len(close_strategies)):
-            strategy: TopGainersLosersStrategy = close_strategies[i]
-            strategy.on_close()
+            # 停止关闭策略
+            for i in range(len(close_strategies)):
+                strategy: TopGainersLosersStrategy = close_strategies[i]
+                strategy.on_close()
 
-        # 执行新策略
-        for token in gainers_data.keys():
-            self.new_strategy(token, Direction.LONG)
+            if len(close_strategies):
+                msg = f"{msg}停止关闭策略：{len(close_strategies)}\n"
 
-        for token in losers_data.keys():
-            self.new_strategy(token, Direction.SHORT)
+            # 执行新策略
+            new_giner_count = 0
+            for token in gainers_data.keys():
+                result = self.new_strategy(token, Direction.LONG)
+                if result:
+                    new_giner_count += 1
 
-        # 更新策略合约
-        self.strategy_symbols = set()
-        for name in self.cta_engine.strategies.keys():
-            strategy: TopGainersLosersStrategy = self.cta_engine.strategies[name]
-            self.strategy_symbols.add(strategy.vt_symbol)
+            if new_giner_count:
+                msg = f"{msg}执行上涨合约策略：{new_giner_count}\n"
+
+            new_loser_count = 0
+            for token in losers_data.keys():
+                result = self.new_strategy(token, Direction.SHORT)
+                if result:
+                    new_loser_count += 1
+
+            if new_loser_count:
+                msg = f"{msg}执行下跌合约策略：{new_loser_count}\n"
+
+            # 更新策略合约
+            self.strategy_symbols = set()
+            for name in self.cta_engine.strategies.keys():
+                strategy: TopGainersLosersStrategy = self.cta_engine.strategies[name]
+                self.strategy_symbols.add(strategy.vt_symbol)
+
+            if msg:
+                msg = f"{msg}当前策略总数：{len(self.cta_engine.strategies)}"
+                self.send_ding_talk(msg)
+                print(msg)
+
+        except Exception as e:
+            msg = f"处理涨跌代币数据出错\n\n{e}"
+            self.send_ding_talk(msg)
+            print(msg)
 
     def new_strategy(self, token:str, direction: Direction):
         # 确认合约
@@ -135,30 +183,50 @@ class TopGainersLosersPortfolio(object):
             exchange = "OKX"
             exchange_user = "lo-e"
 
-        bybit_symbols = list(self.exchange_instruments_data.get("BYBIT", {}).keys())
-        symbol = f"{token}USDT"
-        if symbol in bybit_symbols:
-            vt_symbol = f"{symbol}.BYBIT"
-            exchange = "BYBIT"
-            exchange_user = "loesuperman"
+        if not vt_symbol:
+            bybit_symbols = list(self.exchange_instruments_data.get("BYBIT", {}).keys())
+            symbol = f"{token}USDT"
+            if symbol in bybit_symbols:
+                vt_symbol = f"{symbol}.BYBIT"
+                exchange = "BYBIT"
+                exchange_user = "loesuperman"
 
-        binance_symbols = list(self.exchange_instruments_data.get("BINANCE", {}).keys())
-        symbol = f"{token}USDT"
-        if symbol in binance_symbols:
-            vt_symbol = f"{symbol}.BINANCE"
-            exchange = "BINANCE"
-            exchange_user = "lo-e"
-                
+        if not vt_symbol:
+            binance_symbols = list(self.exchange_instruments_data.get("BINANCE", {}).keys())
+            symbol = f"{token}USDT"
+            if symbol in binance_symbols:
+                vt_symbol = f"{symbol}.BINANCE"
+                exchange = "BINANCE"
+                exchange_user = "lo-e"
+        
+        if not vt_symbol:
+            return False
+        
         # 启动策略
-        direction_str = "LONG" if direction == Direction.LONG else "SHORT"
-        setting = {"strategy_name": f"TOP_GAINERS_LOSERS_{token}_{exchange}",
+        if direction == Direction.LONG:
+            strategy_name = f"TOP_GAINERS_{token}_{exchange}"
+            direction_str = "LONG"
+        
+        else:
+            strategy_name = f"TOP_LOSERS_{token}_{exchange}"
+            direction_str = "SHORT"
+
+        setting = {"strategy_name": strategy_name,
                    "vt_symbol": vt_symbol,
                    "exchange": exchange,
                    "exchange_user": exchange_user,
                    "direction": direction_str,
                    "start": True
                    }
-        self.cta_engine.new_strategy(setting)
+        result, msg = self.cta_engine.new_strategy_setting(setting)
+        if result:
+            self.cta_engine.new_strategy(setting)
+        
+        else:
+            msg = f"执行新策略失败\n\n{msg}"
+            self.send_ding_talk(msg)
+            print(msg)
+        return result
 
     def check_download_instruments(self):
         if not self.instruments_downloading:

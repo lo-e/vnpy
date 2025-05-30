@@ -102,7 +102,7 @@ class TopGainersLosersEngine(BaseEngine):
             self.add_strategy(signal_setting)
 
         self.register_event()
-        self.write_log("趋势涨跌策略引擎初始化成功")
+        self.write_log(f"趋势涨跌策略引擎初始化成功\t策略数：{len(self.strategies)}")
 
     def close(self):
         self.stop_all_strategies()
@@ -338,6 +338,15 @@ class TopGainersLosersEngine(BaseEngine):
         # 响应策略初始化方法
         self.call_strategy_func(strategy, strategy.on_init)
 
+        # 订阅合约行情
+        contract = self.main_engine.get_contract(strategy.vt_symbol)
+        if contract:
+            req = SubscribeRequest(symbol=contract.symbol, exchange=contract.exchange)
+            self.main_engine.subscribe(req, contract.gateway_name)
+
+        else:
+            self.write_log(f"行情订阅失败，找不到合约{strategy.vt_symbol}", strategy)
+
         # 策略状态更新（初始化完成）
         strategy.inited = True
 
@@ -564,6 +573,85 @@ class TopGainersLosersEngine(BaseEngine):
         except Exception as e:
             msg = f"趋势涨跌策略上新出错\n\n{setting}\n\n{e}"
             self.send_dingtalk(msg)
+
+    def new_strategy_setting(self, strategy_setting: dict):
+        try:
+            new_strategy_name = strategy_setting["strategy_name"]
+
+            # 获取setting文件
+            dir_path = Path(os.path.dirname(os.path.realpath(__file__)))
+            file_path = dir_path.joinpath("setting.json")
+            setting = load_json_path(file_path)
+
+            # 判断是否策略名存在
+            signal_list = setting.get("signal", [])
+            for signal_setting in signal_list:
+                if new_strategy_name == signal_setting["strategy_name"]:
+                    msg = f"策略名已存在 {new_strategy_name}"
+                    return False, msg
+            
+            # 保存文件
+            signal_list.append(strategy_setting)
+            save_json(file_path, setting)
+            return True, ""
+
+        except Exception as e:
+            return False, str(e)
+        
+    def remove_strategy(self, strategy_name: str):
+        strategy = self.strategies.get(strategy_name, None)
+        if not strategy:
+            return
+        
+        try:
+            # 停止策略
+            self.stop_strategy(strategy_name)
+
+            # 清除合约策略映射
+            symbol_strategies = self.symbol_strategy_map[strategy.vt_symbol]
+            if strategy in symbol_strategies:
+                symbol_strategies.remove(strategy)
+
+            # 清除订单策略映射
+            for k, v in self.orderid_strategy_map.copy().items():
+                if v == strategy:
+                    self.orderid_strategy_map.pop(k)
+
+            # 清除策略订单映射
+            self.strategy_orderid_map[strategy.strategy_name] = set()
+
+            # 清除历史策略
+            self.strategies.pop(strategy_name)
+        
+        except Exception as e:
+            msg = f"趋势涨跌策略移除出错\n\n{strategy_name}\n\n{e}"
+            self.send_dingtalk(msg)
+    
+    def remove_strategy_setting(self, strategy_name: str):
+        try:
+            # 获取setting文件
+            dir_path = Path(os.path.dirname(os.path.realpath(__file__)))
+            file_path = dir_path.joinpath("setting.json")
+            setting = load_json_path(file_path)
+
+            # 判断是否策略名存在
+            found = False
+            signal_list = setting.get("signal", [])
+            for signal_setting in signal_list.copy():
+                if strategy_name == signal_setting["strategy_name"]:
+                    signal_list.remove(signal_setting)
+                    found = True
+            
+            # 保存文件
+            if found:
+                save_json(file_path, setting)
+                return True, ""
+            
+            else:
+                return False, f"策略不存在 {strategy_name}"
+
+        except Exception as e:
+            return False, str(e)
 
     def load_sync_data(self, strategy):
         # 从数据库载入策略历史同步数据

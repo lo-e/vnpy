@@ -1,7 +1,352 @@
 {
-  "portfolio": {
-    "name": "TOP_GAINERS_LOSERS_PORTFOLIO",
-    "portfolio_value": 1000
-  },
-  "signal": []
+    "portfolio": {
+        "name": "TOP_GAINERS_LOSERS_PORTFOLIO",
+        "portfolio_value": 1000
+    },
+    "signal": [
+        {
+            "strategy_name": "TOP_GAINERS_HYPE_OKX",
+            "vt_symbol": "HYPE-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "LONG",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_GAINERS_SUI_OKX",
+            "vt_symbol": "SUI-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "LONG",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_SEI_BYBIT",
+            "vt_symbol": "SEIUSDT.BYBIT",
+            "exchange": "BYBIT",
+            "exchange_user": "loesuperman",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_GAINERS_TRX_OKX",
+            "vt_symbol": "TRX-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "LONG",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_PI_OKX",
+            "vt_symbol": "PI-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_HBAR_OKX",
+            "vt_symbol": "HBAR-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_GAINERS_CRO_OKX",
+            "vt_symbol": "CRO-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "LONG",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_QNT_BYBIT",
+            "vt_symbol": "QNTUSDT.BYBIT",
+            "exchange": "BYBIT",
+            "exchange_user": "loesuperman",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_RENDER_OKX",
+            "vt_symbol": "RENDER-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_GAINERS_INJ_OKX",
+            "vt_symbol": "INJ-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "LONG",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_GAINERS_UNI_OKX",
+            "vt_symbol": "UNI-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "LONG",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_LINK_OKX",
+            "vt_symbol": "LINK-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_ICP_OKX",
+            "vt_symbol": "ICP-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_GAINERS_FARTCOIN_OKX",
+            "vt_symbol": "FARTCOIN-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "LONG",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_GAINERS_JUP_OKX",
+            "vt_symbol": "JUP-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "LONG",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_AAVE_OKX",
+            "vt_symbol": "AAVE-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_VIRTUAL_OKX",
+            "vt_symbol": "VIRTUAL-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_WLD_OKX",
+            "vt_symbol": "WLD-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_XMR_BYBIT",
+            "vt_symbol": "XMRUSDT.BYBIT",
+            "exchange": "BYBIT",
+            "exchange_user": "loesuperman",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_LTC_OKX",
+            "vt_symbol": "LTC-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_IP_OKX",
+            "vt_symbol": "IP-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_ONDO_OKX",
+            "vt_symbol": "ONDO-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_TIA_OKX",
+            "vt_symbol": "TIA-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_CRV_OKX",
+            "vt_symbol": "CRV-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_XRP_OKX",
+            "vt_symbol": "XRP-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_GAINERS_SPX_BYBIT",
+            "vt_symbol": "SPXUSDT.BYBIT",
+            "exchange": "BYBIT",
+            "exchange_user": "loesuperman",
+            "direction": "LONG",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_GAINERS_TRUMP_OKX",
+            "vt_symbol": "TRUMP-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "LONG",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_GAINERS_XLM_OKX",
+            "vt_symbol": "XLM-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "LONG",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_GAINERS_BTC_OKX",
+            "vt_symbol": "BTC-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "LONG",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_ETC_OKX",
+            "vt_symbol": "ETC-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_GAINERS_APT_OKX",
+            "vt_symbol": "APT-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "LONG",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_GAINERS_SOL_OKX",
+            "vt_symbol": "SOL-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "LONG",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_USDC_OKX",
+            "vt_symbol": "USDC-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_TAO_OKX",
+            "vt_symbol": "TAO-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_GAINERS_ENA_BYBIT",
+            "vt_symbol": "ENAUSDT.BYBIT",
+            "exchange": "BYBIT",
+            "exchange_user": "loesuperman",
+            "direction": "LONG",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_GAINERS_WIF_OKX",
+            "vt_symbol": "WIF-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "LONG",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_GAINERS_FTN_BYBIT",
+            "vt_symbol": "FTNUSDT.BYBIT",
+            "exchange": "BYBIT",
+            "exchange_user": "loesuperman",
+            "direction": "LONG",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_GAINERS_DOGE_OKX",
+            "vt_symbol": "DOGE-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "LONG",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_FLR_BYBIT",
+            "vt_symbol": "FLRUSDT.BYBIT",
+            "exchange": "BYBIT",
+            "exchange_user": "loesuperman",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_ARB_OKX",
+            "vt_symbol": "ARB-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_TON_OKX",
+            "vt_symbol": "TON-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_FET_BINANCE",
+            "vt_symbol": "FETUSDT.BINANCE",
+            "exchange": "BINANCE",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_LOSERS_FIL_OKX",
+            "vt_symbol": "FIL-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "start": true
+        }
+    ]
 }
