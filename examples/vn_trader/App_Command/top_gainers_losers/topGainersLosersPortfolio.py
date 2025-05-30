@@ -42,6 +42,7 @@ class TopGainersLosersPortfolio(object):
         self.download_engine = TurtleCryptoDataDownloading()
         self.download_instruments_time: datetime = None
         self.instruments_downloading = False
+        self.bar_download_queue = Queue()
 
         # 设置参数
         for name in self.parameters:
@@ -55,6 +56,9 @@ class TopGainersLosersPortfolio(object):
         # 启动Chrome获取涨跌幅排行榜
         chrome = Chrome(cta_engine=None)
         Thread(target=chrome.fetch_top_gainers_losers, args=(self.on_top_gainers_losers, 60)).start()
+
+        # 启动Bar下载线程
+        Thread(target=self.download_bar).start()
 
     def on_start(self):
         pass
@@ -221,6 +225,7 @@ class TopGainersLosersPortfolio(object):
         result, msg = self.cta_engine.new_strategy_setting(setting)
         if result:
             self.cta_engine.new_strategy(setting)
+            self.bar_download_queue.put(vt_symbol)
         
         else:
             msg = f"执行新策略失败\n\n{msg}"
@@ -299,6 +304,56 @@ class TopGainersLosersPortfolio(object):
             pass
 
         self.instruments_downloading = False
+
+    def download_bar(self):
+        while True:
+            try:
+                vt_symbol = self.bar_download_queue.get(block=True, timeout=1)
+                exchange = vt_symbol.split(".")[-1]
+                symbol = vt_symbol.split(".")[0]
+
+                success = False
+                try_count = 0
+                while not success and try_count < 5:
+                    try_count += 1
+                    try:
+                        # 先清空历史下载数据 
+                        self.download_engine.delete_history_data(target_dir=self.name)
+
+                        # 开始下载
+                        if exchange == "OKX":
+                            self.download_engine.download_from_okx(
+                                contract_list=[symbol], hours=2, from_data_base=False, save_to=self.name, delete_history_data=False, show_progress=False
+                            )
+                        
+                        elif exchange == "BYBIT":
+                            self.download_engine.download_from_bybit(
+                                contract_list=[symbol], hours=2, from_data_base=False, save_to=self.name, delete_history_data=False, show_progress=False
+                            )
+                        
+                        elif exchange == "BINANCE":
+                            self.download_engine.download_from_binance(
+                                contract_list=[symbol], hours=2, from_data_base=False, save_to=self.name, delete_history_data=False, show_progress=False
+                            )
+
+                        success = True
+
+                    except Exception as e:
+                        msg = f"TopGainersLosersPortfolio 下载Bar数据出错\n\n{e}"
+                        self.send_ding_talk(msg)
+
+                if success:
+                    symbol_strategies = self.cta_engine.symbol_strategy_map[vt_symbol]
+                    for i in range(len(symbol_strategies)):
+                        strategy: TopGainersLosersStrategy = symbol_strategies[i]
+                        if not strategy.indicator_inited:
+                            strategy.load_database_bar()
+
+            except Empty:
+                pass
+
+            except Exception as e:
+                pass
 
     def load_instruments_data(self):
         # .csv获取交易所USDT合约列表

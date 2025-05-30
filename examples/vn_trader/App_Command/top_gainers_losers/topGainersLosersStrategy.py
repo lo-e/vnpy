@@ -36,6 +36,8 @@ class TopGainersLosersStrategy(CtaTemplate):
         "target_pos",
         "open_value",
         "open_price",
+        "indicator_inited",
+        "minute_5_bar_dt",
     ]
 
     # 同步列表
@@ -43,6 +45,8 @@ class TopGainersLosersStrategy(CtaTemplate):
         "target_pos",
         "open_value",
         "open_price",
+        "indicator_inited"
+        "minute_5_bar_dt",
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -83,6 +87,15 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.tick: TickData = None
         self.open_value = 0
         self.open_price = 0
+        self.indicator_inited = False
+        self.target_pos_check_ts = 0
+        self.target_pos_checking = False
+        
+        self.minute_5_bar: BarData = None
+        self.minute_5_bar_dt: str = ""
+        self.minute_5_bar_generator: BarGenerator = None
+        self.minute_5_am: ArrayManager = None
+        self.minute_5_atr = 0
 
     def on_init(self):
         # 交易所成功连接判断
@@ -113,7 +126,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             mc = MongoClient()
             db = mc[MINUTE_DB_NAME]
             collection = db[self.vt_symbol]
-            data_from = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(hours=25)
+            data_from = datetime.now().replace(second=0, microsecond=0) - timedelta(hours=2)
             flt = {"datetime": {"$gte": data_from}}
             cursor = collection.find(flt).sort('datetime')
 
@@ -137,110 +150,44 @@ class TopGainersLosersStrategy(CtaTemplate):
 
             if data_list and not bar_lack:
                 # 初始化工具
-                self.minute_am = ArrayManager(21)
-
-                self.minute_5_am = ArrayManager(21)
+                self.minute_5_am = ArrayManager(11)
                 self.minute_5_bar_generator = BarGenerator(window=5, on_window_bar=self.on_minute_5_bar, interval=Interval.MINUTE)
-
-                self.hour_am = ArrayManager(21)
-                self.hour_bar_generator = BarGenerator(window=1, on_window_bar=self.on_hour_bar, interval=Interval.HOUR)
 
                 # 回测数据库Bar数据
                 for bar in bar_list:
                     self.on_minute_bar(bar)
-                last_bar: BarData = bar_list[-1]
-                next_bar_dt = last_bar.datetime + timedelta(minutes=1)
-                
-                # 回测实时Bar数据
-                data_valid = False
-                for bar in self.live_bars:
-                    if bar.datetime == next_bar_dt or data_valid:
-                        data_valid = True
-                        self.on_minute_bar(bar)
-
-                # 指标完成初始化
-                if data_valid:
-                    self.indicator_inited = True
-                
-                else:
-                    pass
             
             else:
                 pass
+
+            # 指标完成初始化
+            if self.minute_5_atr:
+                self.indicator_inited = True
+
+            else:
+                self.portfolio.bar_download_queue.put(self.vt_symbol)
+                msg = f"未完成指标初始化\nsymbol {self.vt_symbol}\nbar {self.minute_5_bar_dt}"
+                self.send_ding_talk(msg)
+                print_(msg)
 
         except Exception as e:
             msg = f"加载Bar数据出错\n\n{e}"
             self.send_ding_talk(msg)
 
-        # 同步数据
-        self.put_timer_event()
-
-    def on_live_minute_bar(self, bar: BarData):
-        # 保存Bar数据
-        self.live_bars.append(copy(bar))
-        if len(self.live_bars) > 60:
-            self.live_bars.pop(0)
-
-        # 初始化后用以生成指标
-        if self.indicator_inited:
-            self.on_minute_bar(bar)
-
     def on_minute_bar(self, bar: BarData):
-        if self.indicator_inited and self.tick:
-            self.minute_high = self.tick.last_price
-            self.minute_low = self.tick.last_price
-
-        self.minute_bar = bar
-        self.minute_am.update_bar(bar)
-
         self.minute_5_bar_generator.update_bar(bar)
-        self.hour_bar_generator.update_bar(bar)
         self.calculate_indicator()
 
     def on_minute_5_bar(self, bar: BarData):
-        if self.indicator_inited and self.tick:
-            self.minute_5_high = self.tick.last_price
-            self.minute_5_low = self.tick.last_price
-
         self.minute_5_bar = bar
         self.minute_5_am.update_bar(bar)
 
-    def on_hour_bar(self, bar: BarData):
-        if self.indicator_inited and self.tick:
-            self.hour_high = self.tick.last_price
-            self.hour_low = self.tick.last_price
-
-        self.hour_bar = bar
-        self.hour_am.update_bar(bar)
-
-        self.direction = ""
-        self.signal_price = 0
-        self.signal_dt_str = ""
-
     def calculate_indicator(self):
-        # 通用指标
-        if self.minute_bar:
-            self.minute_bar_dt = self.minute_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
-
         if self.minute_5_bar:
             self.minute_5_bar_dt = self.minute_5_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
 
-        if self.hour_bar:
-            self.hour_bar_dt = self.hour_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
-
-        # 分钟指标
-        if self.minute_am.inited:
-            self.minute_atr = self.minute_am.atr(20)
-
-        # 5分钟指标
         if self.minute_5_am.inited:
-            self.minute_5_atr = self.minute_5_am.atr(20)
-            self.exit_up, self.exit_down = self.minute_5_am.donchian(10)
-
-        # 小时指标
-        if self.hour_am.inited:
-            self.hour_atr = self.hour_am.atr(20)
-            self.entry_up, self.entry_down = self.hour_am.donchian(10)
+            self.minute_5_atr = self.minute_5_am.atr(10)
 
     def check_target_pos(self):
         self.target_pos_checking = True
@@ -300,120 +247,14 @@ class TopGainersLosersStrategy(CtaTemplate):
     def on_tick(self, tick: TickData):
         if not self.trading:
             return
-        
-        # 记录分钟tick数
-        if self.tick and self.tick.datetime.minute != tick.datetime.minute:
-            self.minute_tick_count_list.append(self.minute_tick_count)
-            if len(self.minute_tick_count_list) > 10:
-                self.minute_tick_count_list.pop(0)
-            self.minute_tick_count = 1
-        
-        else:
-            self.minute_tick_count += 1
-        
-        # 保存最新Tick数据、生成实时Bar数据
         self.tick = copy(tick)
-        self.minute_bar_generator.update_tick(copy(tick))
-    
-        # 判断信号
-        if not self.direction and not self.signal_price and self.indicator_inited:
-            self.minute_high = max(self.minute_high, tick.last_price)
-            self.minute_low = min(self.minute_low, tick.last_price) if self.minute_low else tick.last_price
-            minute_rise = tick.last_price - self.minute_low
-            minute_fall = self.minute_high - tick.last_price
-
-            self.minute_5_high = max(self.minute_5_high, tick.last_price)
-            self.minute_5_low = min(self.minute_5_low, tick.last_price) if self.minute_5_low else tick.last_price
-            minute_5_rise = tick.last_price - self.minute_5_low
-            minute_5_fall = self.minute_5_high - tick.last_price
-
-            self.hour_high = max(self.hour_high, tick.last_price)
-            self.hour_low = min(self.hour_low, tick.last_price) if self.hour_low else tick.last_price
-            hour_rise = tick.last_price - self.hour_low
-            hour_fall = self.hour_high - tick.last_price
-
-            # 交易额条件
-            turnover = tick.turnover if tick.turnover else tick.volume * tick.last_price
-            turnover_valid = True if turnover >= 10_000_000 else False
-
-            # ATR条件（多头）
-            long_atr_valid = False
-            if self.minute_5_atr and minute_rise >= self.minute_5_atr * 3:
-                long_atr_valid = True
-
-            # ATR条件（空头）
-            short_atr_valid = False
-            if self.minute_5_atr and minute_fall >= self.minute_5_atr * 3:
-                short_atr_valid = True
-
-            # 多头趋势
-            if tick.last_price >= self.entry_up and turnover_valid and long_atr_valid:
-                self.direction = "LONG"
-                self.signal_price = tick.last_price
-                self.signal_dt_str = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
-                self.long_rebirth = True
-
-                average_tick_count = sum(self.minute_tick_count_list) / len(self.minute_tick_count_list)
-                msg = f"多头趋势\n\nsymbol {self.vt_symbol}\ndirection {self.direction}\nprice {tick.last_price}\nup {self.entry_up}\nturnover {turnover}\ntick_count {self.minute_tick_count}\naverage_count {average_tick_count}\n\nM_ATR {self.minute_atr}\nM_RISE {minute_rise}\n\nM_5_ATR {self.minute_5_atr}\nM_5_RISE {minute_5_rise}\n\nH_ATR {self.hour_atr}\nH_RISE {hour_rise}"
-                self.send_ding_talk(msg)
-
-            # 空头趋势
-            if tick.last_price <= self.entry_down and turnover_valid and short_atr_valid:
-                self.direction = "SHORT"
-                self.signal_price = tick.last_price
-                self.signal_dt_str = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
-                self.short_rebirth = True
-
-                average_tick_count = sum(self.minute_tick_count_list) / len(self.minute_tick_count_list)
-                msg = f"空头趋势\n\nsymbol {self.vt_symbol}\ndirection {self.direction}\nprice {tick.last_price}\ndown {self.entry_down}\nturnover {turnover}\ntick_count {self.minute_tick_count}\naverage_count {average_tick_count}\n\nM_ATR {self.minute_atr}\nM_FALL {minute_fall}\n\nM_5_ATR {self.minute_5_atr}\nM_5_FALL {minute_5_fall}\n\nH_ATR {self.hour_atr}\nH_FALL {hour_fall}"
-                self.send_ding_talk(msg)
-
-        # 判断Rebirth
-        if self.direction == "LONG" and self.signal_price and tick.last_price <= self.signal_price * 0.99:
-            self.long_rebirth = True
-
-        if self.direction == "SHORT" and self.signal_price and tick.last_price >= self.signal_price * 1.01:
-            self.short_rebirth = True
-
-        # 判断离场
-        stop_long = False
-        stop_short = False
-        if self.direction == "LONG" and self.target_pos and self.exit_down and tick.last_price <= self.exit_down:
-            stop_long = True
-            
-        if self.direction == "SHORT" and self.target_pos and self.exit_up and tick.last_price >= self.exit_up:
-            stop_short = True
         
         target_pos_updated = False
-        if self.target_pos:
-            if self.direction == "LONG" and (stop_long or (self.signal_price and tick.last_price <= self.signal_price * 0.99) or (self.open_price and tick.last_price <= self.open_price * 0.99)):
-                # 多头平仓
-                self.long_rebirth = False
-                self.target_pos = 0
-                target_pos_updated = True
-
-            if self.direction == "SHORT" and (stop_short or (self.signal_price and tick.last_price >= self.signal_price * 1.01) or (self.open_price and tick.last_price >= self.open_price * 1.01)):
-                # 空头平仓
-                self.short_rebirth = False
-                self.target_pos = 0
-                target_pos_updated = True
-        
-        elif self.tradable and self.indicator_inited:
-            if self.direction == "LONG" and self.signal_price and ((self.long_rebirth and tick.last_price >= self.signal_price) or (self.open_price and tick.last_price >= max(self.signal_price, self.open_price))):
-                # 多头开仓
-                self.target_pos = self.portfolio.portfolio_value / tick.last_price
-                target_pos_updated = True
-
-            if self.direction == "SHORT" and self.signal_price and ((self.short_rebirth and tick.last_price <= self.signal_price) or (self.open_price and tick.last_price <= min(self.signal_price, self.open_price))):
-                # 空头开仓
-                self.target_pos = self.portfolio.portfolio_value / tick.last_price * -1
-                target_pos_updated = True
-
         if target_pos_updated:
             self.target_pos_check_ts = time.time() - 10
-            # if not self.target_pos_checking:
-            #     self.target_pos_checking = True
-            #     Thread(target=self.check_target_pos).start()
+            if not self.target_pos_checking:
+                self.target_pos_checking = True
+                Thread(target=self.check_target_pos).start()
             
         # 同步数据
         self.put_timer_event()

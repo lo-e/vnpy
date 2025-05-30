@@ -63,6 +63,7 @@ class TurtleCryptoDataDownloading(object):
         self,
         contract_list,
         days=1,
+        hours=0,
         to_date: datetime = None,
         from_data_base: bool = False,
         api_check: bool = False,
@@ -90,6 +91,7 @@ class TurtleCryptoDataDownloading(object):
                 contract=contract,
                 interval="1",
                 days=days,
+                hours=hours,
                 to_date=to_date,
                 from_data_base=from_data_base,
                 api_check=api_check,
@@ -114,7 +116,8 @@ class TurtleCryptoDataDownloading(object):
     def download_from_okx(
         self,
         contract_list,
-        days=1,
+        days = 1,
+        hours = 0,
         to_date: datetime = None,
         from_data_base: bool = False,
         api_check: bool = False,
@@ -142,6 +145,7 @@ class TurtleCryptoDataDownloading(object):
                 contract=contract,
                 interval="1m",
                 days=days,
+                hours=hours,
                 to_date=to_date,
                 from_data_base=from_data_base,
                 api_check=api_check,
@@ -167,6 +171,7 @@ class TurtleCryptoDataDownloading(object):
         self,
         contract_list,
         days=1,
+        hours=0,
         to_date: datetime = None,
         from_data_base: bool = False,
         api_check: bool = False,
@@ -194,6 +199,7 @@ class TurtleCryptoDataDownloading(object):
                 contract=contract,
                 interval="1m",
                 days=days,
+                hours=hours,
                 to_date=to_date,
                 from_data_base=from_data_base,
                 api_check=api_check,
@@ -413,6 +419,7 @@ class DownloadThread(object):
         contract,
         interval,
         days=1,
+        hours=0,
         to_date: datetime = datetime.now() + timedelta(days=2),
         from_data_base: bool = False,
         api_check: bool = False,
@@ -424,6 +431,7 @@ class DownloadThread(object):
         self.contract = contract
         self.interval = interval
         self.days = days
+        self.hours = hours
         self.to_date = to_date
         self.from_data_base = from_data_base
         self.api_check = api_check
@@ -444,8 +452,13 @@ class DownloadThread(object):
         #"""
         # 获取bar数据
         vt_symbol = f"{self.contract}.{self.exchange.value}"
-        from_time = datetime.now() - timedelta(days=self.days)
-        from_time = datetime(from_time.year, from_time.month, from_time.day)
+        if self.hours:
+            from_time = datetime.now() - timedelta(hours=self.hours)
+            from_time = datetime(from_time.year, from_time.month, from_time.day, from_time.hour, from_time.minute)
+        
+        else:
+            from_time = datetime.now() - timedelta(days=self.days)
+            from_time = datetime(from_time.year, from_time.month, from_time.day)
         if self.show_progress:
             print(f"{vt_symbol} Bar数据下载中..")
 
