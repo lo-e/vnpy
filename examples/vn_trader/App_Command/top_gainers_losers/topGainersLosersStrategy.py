@@ -66,6 +66,9 @@ class TopGainersLosersStrategy(CtaTemplate):
 
     def __init__(self, ctaEngine, setting):
         self.portfolio = ctaEngine.portfolio
+        self.exchange: Exchange = Exchange.NONE
+        self.exchange_user:str = ""
+        self.direction: Direction = Direction.NET
         
         # 完成setting.json参数的配置
         super(TopGainersLosersStrategy, self).__init__(
@@ -85,6 +88,16 @@ class TopGainersLosersStrategy(CtaTemplate):
         
         else:
             raise(f"合约交易所不支持：{exchange}")
+        
+        # 交易方向配置判断
+        if self.direction == "LONG":
+            self.direction = Direction.LONG
+        
+        elif self.direction == "SHORT":
+            self.direction = Direction.SHORT
+
+        else:
+            raise(f"交易方向配置错误：{self.direction}")
 
         self.tick: TickData = None
         self.minute_bar_generator = BarGenerator(on_bar=self.on_live_minute_bar)
@@ -146,6 +159,9 @@ class TopGainersLosersStrategy(CtaTemplate):
         if not gateway:
             msg = f"交易所账户未连接\n\n交易所：{exchange}\n账户：{self.exchange_user}"
             self.send_ding_talk(msg)
+
+    def on_close(self):
+        pass
 
     def load_database_bar(self):
         try:

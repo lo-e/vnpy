@@ -67,7 +67,6 @@ from vnpy.app.cta_strategy.base import (
     DAILY_DB_NAME,
     MinuteDataBaseName,
 )
-from .utility import Chrome
 
 class TopGainersLosersEngine(BaseEngine):
     engine_type = EngineType.LIVE
@@ -87,10 +86,6 @@ class TopGainersLosersEngine(BaseEngine):
         self.portfolio: TopGainersLosersPortfolio = None
 
     def init_engine(self):
-        # 启动Chrome获取涨跌幅排行榜
-        chrome = Chrome(cta_engine=None)
-        Thread(target=chrome.fetch_top_gainers_losers, args=(self.on_top_gainers_losers, 60)).start()
-
         # 获取setting
         dir_path = Path(os.path.dirname(os.path.realpath(__file__)))
         file_path = dir_path.joinpath("setting.json")
@@ -107,11 +102,7 @@ class TopGainersLosersEngine(BaseEngine):
             self.add_strategy(signal_setting)
 
         self.register_event()
-        self.write_log("趋势狙击策略引擎初始化成功")
-
-    def on_top_gainers_losers(self, data: tuple):
-        gainers, losers = data
-        pass
+        self.write_log("趋势涨跌策略引擎初始化成功")
 
     def close(self):
         self.stop_all_strategies()
@@ -547,6 +538,7 @@ class TopGainersLosersEngine(BaseEngine):
 
         # 创建策略实例
         strategy = TopGainersLosersStrategy(self, setting)
+        self.portfolio.strategy_symbols.add(strategy.vt_symbol)
 
         # 加载同步数据
         self.load_sync_data(strategy)
@@ -570,7 +562,7 @@ class TopGainersLosersEngine(BaseEngine):
                 self.start_strategy(strategy_name)
 
         except Exception as e:
-            msg = f"趋势狙击策略上新出错\n\n{setting}\n\n{e}"
+            msg = f"趋势涨跌策略上新出错\n\n{setting}\n\n{e}"
             self.send_dingtalk(msg)
 
     def load_sync_data(self, strategy):
