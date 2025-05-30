@@ -376,6 +376,7 @@ class TopGainersLosersStrategy(CtaTemplate):
 
                 # 保存交易日志
                 if self.trade_logs_updated:
+                    self.trade_logs_updated = False
                     current_dir = os.path.dirname(os.path.abspath(__file__))
                     file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}trade_logs{DIR_SYMBOL}{self.strategy_name}.csv"
                     field_names = list(self.trade_logs[0].keys())

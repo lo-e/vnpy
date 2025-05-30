@@ -526,7 +526,7 @@ class TopGainersLosersEngine(BaseEngine):
             callback(result)
         return result
 
-    def add_strategy(self, setting):
+    def add_strategy(self, setting, load_sync: bool = True):
         # 策略参数
         try:
             name = setting["strategy_name"]
@@ -550,10 +550,11 @@ class TopGainersLosersEngine(BaseEngine):
         self.portfolio.strategy_symbols.add(strategy.vt_symbol)
 
         # 加载同步数据
-        self.load_sync_data(strategy)
-        self.strategies[name] = strategy
+        if load_sync:
+            self.load_sync_data(strategy)
 
         # 添加策略
+        self.strategies[name] = strategy
         strategies = self.symbol_strategy_map[strategy.vt_symbol]
         strategies.append(strategy)
 
@@ -565,7 +566,7 @@ class TopGainersLosersEngine(BaseEngine):
             # 执行策略
             start = setting["start"]
             if start:
-                self.add_strategy(setting)
+                self.add_strategy(setting, load_sync=False)
                 strategy_name = setting["strategy_name"]
                 self.initing_strategy(strategy_name)
                 self.start_strategy(strategy_name)

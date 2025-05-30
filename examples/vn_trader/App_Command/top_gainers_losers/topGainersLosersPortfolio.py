@@ -190,7 +190,7 @@ class TopGainersLosersPortfolio(object):
         exchange = ""
         exchange_user = ""
 
-        filter_tokens = ["USDC"]
+        filter_tokens = ["USDC", "USDT", "DAI"]
         if token not in filter_tokens:
             okx_symbols = list(self.exchange_instruments_data.get("OKX", {}).keys())
             symbol = f"{token}-USDT-SWAP"
