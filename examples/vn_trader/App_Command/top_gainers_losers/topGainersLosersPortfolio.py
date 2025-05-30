@@ -37,6 +37,8 @@ class TopGainersLosersPortfolio(object):
         self.strategy_symbols = set()
         self.exchange_instruments_data = {}
         self.tick_queue = Queue()
+        self.gainers_data = {}
+        self.losers_data = {}
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -57,11 +59,12 @@ class TopGainersLosersPortfolio(object):
         chrome = Chrome(cta_engine=None)
         Thread(target=chrome.fetch_top_gainers_losers, args=(self.on_top_gainers_losers, 60)).start()
 
-        # 启动Bar下载线程
+        # Bar下载
         Thread(target=self.download_bar).start()
 
     def on_start(self):
-        pass
+        # tick 处理
+        Thread(target=self.process_tick).start()
 
     def on_timer(self):
         if not self.started:
@@ -108,6 +111,11 @@ class TopGainersLosersPortfolio(object):
             for data in losers:
                 losers_data[data["token"]] = data["percent"]
 
+            last_gainers_data = self.gainers_data.copy() if self.gainers_data else gainers_data.copy()
+            last_losers_data = self.losers_data.copy() if self.losers_data else losers_data.copy()
+            self.gainers_data = gainers_data.copy()
+            self.losers_data = losers_data.copy()
+
             for name in self.cta_engine.strategies.keys():
                 strategy: TopGainersLosersStrategy = self.cta_engine.strategies[name]
                 pure_symbol = ""
@@ -134,26 +142,28 @@ class TopGainersLosersPortfolio(object):
             # 停止关闭策略
             for i in range(len(close_strategies)):
                 strategy: TopGainersLosersStrategy = close_strategies[i]
-                strategy.on_close()
+                Thread(target=strategy.on_close()).start()
 
             if len(close_strategies):
                 msg = f"{msg}停止关闭策略：{len(close_strategies)}\n"
 
             # 执行新策略
-            new_giner_count = 0
+            new_gainer_count = 0
             for token in gainers_data.keys():
-                result = self.new_strategy(token, Direction.LONG)
-                if result:
-                    new_giner_count += 1
+                if token not in last_gainers_data:
+                    result = self.new_strategy(token, Direction.LONG)
+                    if result:
+                        new_gainer_count += 1
 
-            if new_giner_count:
-                msg = f"{msg}执行上涨合约策略：{new_giner_count}\n"
+            if new_gainer_count:
+                msg = f"{msg}执行上涨合约策略：{new_gainer_count}\n"
 
             new_loser_count = 0
             for token in losers_data.keys():
-                result = self.new_strategy(token, Direction.SHORT)
-                if result:
-                    new_loser_count += 1
+                if token not in last_losers_data:
+                    result = self.new_strategy(token, Direction.SHORT)
+                    if result:
+                        new_loser_count += 1
 
             if new_loser_count:
                 msg = f"{msg}执行下跌合约策略：{new_loser_count}\n"
@@ -180,29 +190,31 @@ class TopGainersLosersPortfolio(object):
         exchange = ""
         exchange_user = ""
 
-        okx_symbols = list(self.exchange_instruments_data.get("OKX", {}).keys())
-        symbol = f"{token}-USDT-SWAP"
-        if symbol in okx_symbols:
-            vt_symbol = f"{symbol}.OKX"
-            exchange = "OKX"
-            exchange_user = "lo-e"
-
-        if not vt_symbol:
-            bybit_symbols = list(self.exchange_instruments_data.get("BYBIT", {}).keys())
-            symbol = f"{token}USDT"
-            if symbol in bybit_symbols:
-                vt_symbol = f"{symbol}.BYBIT"
-                exchange = "BYBIT"
-                exchange_user = "loesuperman"
-
-        if not vt_symbol:
-            binance_symbols = list(self.exchange_instruments_data.get("BINANCE", {}).keys())
-            symbol = f"{token}USDT"
-            if symbol in binance_symbols:
-                vt_symbol = f"{symbol}.BINANCE"
-                exchange = "BINANCE"
+        filter_tokens = ["USDC"]
+        if token not in filter_tokens:
+            okx_symbols = list(self.exchange_instruments_data.get("OKX", {}).keys())
+            symbol = f"{token}-USDT-SWAP"
+            if symbol in okx_symbols:
+                vt_symbol = f"{symbol}.OKX"
+                exchange = "OKX"
                 exchange_user = "lo-e"
-        
+
+            if not vt_symbol:
+                bybit_symbols = list(self.exchange_instruments_data.get("BYBIT", {}).keys())
+                symbol = f"{token}USDT"
+                if symbol in bybit_symbols:
+                    vt_symbol = f"{symbol}.BYBIT"
+                    exchange = "BYBIT"
+                    exchange_user = "loesuperman"
+
+            if not vt_symbol:
+                binance_symbols = list(self.exchange_instruments_data.get("BINANCE", {}).keys())
+                symbol = f"{token}USDT"
+                if symbol in binance_symbols:
+                    vt_symbol = f"{symbol}.BINANCE"
+                    exchange = "BINANCE"
+                    exchange_user = "lo-e"
+
         if not vt_symbol:
             return False
         

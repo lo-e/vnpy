@@ -676,8 +676,6 @@ class TopGainersLosersEngine(BaseEngine):
     def save_sync_data(self, strategy):
         if not strategy.inited:
             return
-
-        return
         
         # 保存策略同步数据到文件（数据有变化时才保存）
         flt = {"strategy_name": strategy.strategy_name, "vt_symbol": strategy.vt_symbol}

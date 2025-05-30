@@ -18,6 +18,11 @@ from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 from threading import Thread
 import time
 from copy import copy
+from vnpy.trader.utility import DIR_SYMBOL
+import os
+import csv
+import shutil
+import pandas as pd
 class TopGainersLosersStrategy(CtaTemplate):
     className = "TopGainersLosersStrategy"
     author = "loe"
@@ -34,19 +39,29 @@ class TopGainersLosersStrategy(CtaTemplate):
     # 变量列表
     variables = [
         "target_pos",
+        "entry",
+        "leverage",
         "open_value",
         "open_price",
+        "open_tick_price",
+        "stop_price",
         "indicator_inited",
         "minute_5_bar_dt",
+        "minute_5_atr",
     ]
 
     # 同步列表
     syncs = [
         "target_pos",
+        "entry",
+        "leverage",
         "open_value",
         "open_price",
-        "indicator_inited"
+        "open_tick_price",
+        "stop_price",
+        "indicator_inited",
         "minute_5_bar_dt",
+        "minute_5_atr",
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -85,11 +100,19 @@ class TopGainersLosersStrategy(CtaTemplate):
             raise(f"交易方向配置错误：{self.direction}")
 
         self.tick: TickData = None
+        self.target_pos = 0
+        self.entry = False
+        self.leverage = 0
         self.open_value = 0
         self.open_price = 0
+        self.open_tick_price = 0
+        self.stop_price = 0
         self.indicator_inited = False
         self.target_pos_check_ts = 0
         self.target_pos_checking = False
+        self.strategy_data = {}                     # 策略数据（包括常量、变量、同步）
+        self.trade_logs = []                        # 交易日志
+        self.trade_logs_updated = False
         
         self.minute_5_bar: BarData = None
         self.minute_5_bar_dt: str = ""
@@ -109,16 +132,54 @@ class TopGainersLosersStrategy(CtaTemplate):
         if not gateway:
             msg = f"交易所账户未连接\n\n交易所：{exchange}\n账户：{self.exchange_user}"
             self.send_ding_talk(msg)
+        
+        # 获取历史交易日志
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}trade_logs{DIR_SYMBOL}{self.strategy_name}.csv"
+        if os.path.exists(file_path):
+            df = pd.read_csv(file_path)
+            for _, row in df.iterrows():
+                self.trade_logs.append(dict(row))
+
+        # 定时检查保存数据
+        Thread(target=self.check_save_data).start()
 
     def on_close(self):
-        result, msg = self.cta_engine.remove_strategy_setting(self.strategy_name)
-        if result:
-            self.cta_engine.remove_strategy(self.strategy_name)
+        try:
+            # 平仓
+            if self.target_pos:
+                self.target_pos = 0
+                # self.target_pos_check_ts = time.time() - 10
+                # if not self.target_pos_checking:
+                #     self.target_pos_checking = True
+                #     Thread(target=self.check_target_pos).start()
 
-        else:
-            msg = f"停止关闭策略失败\n\n{msg}"
+                # 记录日志
+                pnl = 0
+                if self.tick and self.open_tick_price:
+                    pnl = ((self.tick.last_price / self.open_tick_price) - 1) * self.leverage * 100
+                    if self.direction == Direction.SHORT:
+                        pnl = pnl * -1
+                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} CLOSE {pnl:.2f}%"})
+                self.trade_logs_updated = True
+
+            while self.target_pos_checking:
+                time.sleep(1)
+
+            # 移除策略
+            result, msg = self.cta_engine.remove_strategy_setting(self.strategy_name)
+            if result:
+                self.cta_engine.remove_strategy(self.strategy_name)
+
+            else:
+                msg = f"停止关闭策略失败\n\n{msg}"
+                self.send_ding_talk(msg)
+                print_(msg)
+
+        except Exception as e:
+            msg = f"停止关闭策略出错\n\n{e}"
             self.send_ding_talk(msg)
-            print(msg)
+            print_(msg)
 
     def load_database_bar(self):
         try:
@@ -191,15 +252,17 @@ class TopGainersLosersStrategy(CtaTemplate):
 
     def check_target_pos(self):
         self.target_pos_checking = True
+        result = False
+        cancel_ts = 0
         while True:
             try:
                 if self.tick and self.target_pos != self.pos and time.time() >= self.target_pos_check_ts + 3:
                     self.target_pos_check_ts = time.time()
 
                     # 撮合交易
-                    if self.direction == "LONG":
+                    if self.direction == Direction.LONG:
                         if self.target_pos < 0 or self.pos < 0:
-                            msg = f"仓位异常\n\ntarget {self.target_pos}\npos {self.pos}"
+                            msg = f"仓位异常\n\n合约 {self.vt_symbol}\n方向 {self.direction.value}\n目标 {self.target_pos}\n当前 {self.pos}"
                             self.send_ding_talk(msg)
                             break
 
@@ -214,9 +277,9 @@ class TopGainersLosersStrategy(CtaTemplate):
                             trade_price = self.tick.last_price * 0.995
                             self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(gap))
 
-                    if self.direction == "SHORT":
+                    if self.direction == Direction.SHORT:
                         if self.target_pos > 0 or self.pos > 0:
-                            msg = f"仓位异常\n\ntarget {self.target_pos}\npos {self.pos}"
+                            msg = f"仓位异常\n\n合约 {self.vt_symbol}\n方向 {self.direction.value}\n目标 {self.target_pos}\n当前 {self.pos}"
                             self.send_ding_talk(msg)
                             break
 
@@ -232,13 +295,15 @@ class TopGainersLosersStrategy(CtaTemplate):
                             self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(gap))
 
                 elif self.target_pos == self.pos and time.time() >= self.target_pos_check_ts + 3:
-                    self.cancel_all()
+                    if time.time() >= cancel_ts + 3:
+                        cancel_ts = time.time()
+                        self.cancel_all()
 
-                elif self.target_pos == self.pos and time.time() >= self.target_pos_check_ts + 60:
-                    break
+                    if time.time() >= self.target_pos_check_ts + 60:
+                        break
 
             except Exception as e:
-                msg = f"核查目标仓位出错\n\n目标 {self.target_pos} 当前 {self.pos}\n{e}"
+                msg = f"核查目标仓位出错\n\n合约 {self.vt_symbol}\n方向 {self.direction.value}\n目标 {self.target_pos}\n当前 {self.pos}\n{e}"
                 self.send_ding_talk(msg)
                 break
         
@@ -247,17 +312,81 @@ class TopGainersLosersStrategy(CtaTemplate):
     def on_tick(self, tick: TickData):
         if not self.trading:
             return
-        self.tick = copy(tick)
         
+        self.tick = copy(tick)
         target_pos_updated = False
-        if target_pos_updated:
-            self.target_pos_check_ts = time.time() - 10
-            if not self.target_pos_checking:
-                self.target_pos_checking = True
-                Thread(target=self.check_target_pos).start()
+
+        if not self.entry:
+            if self.indicator_inited and self.minute_5_atr:
+                # 开仓
+                self.entry = True
+                self.open_tick_price = tick.last_price
+                if self.direction == Direction.LONG:
+                    self.stop_price = tick.last_price - self.minute_5_atr * 2
+
+                else:
+                    self.stop_price = tick.last_price + self.minute_5_atr * 2
+
+                self.leverage = 0.02 / abs((self.stop_price / tick.last_price) - 1)
+                self.target_pos = self.portfolio.portfolio_value * self.leverage / tick.last_price
+                if self.direction == Direction.SHORT:
+                    self.target_pos = self.target_pos * -1
+
+                # 精度处理
+                contract = self.cta_engine.main_engine.get_contract(self.vt_symbol)
+                self.target_pos = round_to(self.target_pos, contract.min_volume)
+                target_pos_updated = True
+
+                # 记录日志
+                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} OPEN"})
+                self.trade_logs_updated = True
+
+        if self.target_pos and self.stop_price:
+            # 平仓
+            if (self.direction == Direction.LONG and tick.last_price <= self.stop_price) or (self.direction == Direction.SHORT and tick.last_price >= self.stop_price):
+                self.target_pos = 0
+                target_pos_updated = True
+
+                # 记录日志
+                pnl = 0
+                if self.tick and self.open_tick_price:
+                    pnl = ((self.tick.last_price / self.open_tick_price) - 1) * self.leverage * 100
+                    if self.direction == Direction.SHORT:
+                        pnl = pnl * -1
+                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} STOP {pnl:.2f}%"})
+                self.trade_logs_updated = True
+        
+        # 促成仓位
+        # if target_pos_updated:
+        #     self.target_pos_check_ts = time.time() - 10
+        #     if not self.target_pos_checking:
+        #         self.target_pos_checking = True
+        #         Thread(target=self.check_target_pos).start()
+    
+    def check_save_data(self):
+        while True:
+            try:
+                # 保存变量、同步数据
+                strategy_data = self.get_data()
+                if self.strategy_data != strategy_data:
+                    self.strategy_data = strategy_data
+                    self.put_event()
+
+                    # print_(f"同步数据 {self.strategy_name}..")
+
+                # 保存交易日志
+                if self.trade_logs_updated:
+                    current_dir = os.path.dirname(os.path.abspath(__file__))
+                    file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}trade_logs{DIR_SYMBOL}{self.strategy_name}.csv"
+                    field_names = list(self.trade_logs[0].keys())
+                    self.save_csv_data(field_names, self.trade_logs, file_path, True)
             
-        # 同步数据
-        self.put_timer_event()
+            except Exception as e:
+                msg = f"保存策略数据出错\n\n{e}"
+                self.send_ding_talk(msg)
+                print_(msg)
+
+            time.sleep(1)
 
     def send_order(self, direction, offset, price, volume):
         # 撤回历史订单
@@ -330,11 +459,9 @@ class TopGainersLosersStrategy(CtaTemplate):
                 self.open_value = self.open_price * abs(self.pos)
 
             if not self.pos:
-                # 统计开仓数量
-                self.open_count += 1
-
-                # 重置开平仓变量
+                # 重置
                 self.open_value = 0
+                self.open_price = 0
         
         except Exception as e:
             msg = f"成交处理出错\n\n{e}"
@@ -342,9 +469,6 @@ class TopGainersLosersStrategy(CtaTemplate):
         
         # 邮件提醒
         super().on_trade(trade)
-
-        # 同步数据
-        self.put_timer_event()
 
     def send_ding_talk(self, content):
         # 推送钉钉消息
@@ -354,6 +478,23 @@ class TopGainersLosersStrategy(CtaTemplate):
     def send_email(self, content):
         # 邮件发送通知
         self.cta_engine.send_email(msg=content, subject=f"{self.strategy_name}")
+
+    def save_csv_data(self, field_names: list, data: list, file_path:str, check_dir: bool = True):
+        # 确保文件夹存在
+        if check_dir:
+            file_elements = file_path.split(DIR_SYMBOL)
+            dir_path = DIR_SYMBOL.join(file_elements[:-1])
+            os.makedirs(dir_path, exist_ok=True)
+
+        # 保存到临时csv文件
+        temp_file_path = file_path.split(".csv")[0] + f"_temp.csv"
+        with open(temp_file_path, "w", encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=field_names)
+            writer.writeheader()
+            writer.writerows(data)
+
+        # 将临时文件替换为目标文件
+        shutil.move(temp_file_path, file_path)
 
 def print_(msg: str):
     dt = datetime.now().replace(microsecond=0)
