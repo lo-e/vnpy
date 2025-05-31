@@ -57,7 +57,7 @@ class TopGainersLosersPortfolio(object):
 
         # 启动Chrome获取涨跌幅排行榜
         chrome = Chrome(cta_engine=None)
-        Thread(target=chrome.fetch_top_gainers_losers, args=(self.on_top_gainers_losers, 60)).start()
+        Thread(target=chrome.fetch_top_gainers_losers, args=(self.on_top_gainers_losers, 10)).start()
 
         # Bar下载
         Thread(target=self.download_bar).start()
