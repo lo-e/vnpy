@@ -40,6 +40,7 @@ class TopGainersLosersStrategy(CtaTemplate):
     variables = [
         "target_pos",
         "entry",
+        "close",
         "leverage",
         "open_value",
         "open_price",
@@ -54,6 +55,7 @@ class TopGainersLosersStrategy(CtaTemplate):
     syncs = [
         "target_pos",
         "entry",
+        "close",
         "leverage",
         "open_value",
         "open_price",
@@ -102,6 +104,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.tick: TickData = None
         self.target_pos = 0
         self.entry = False
+        self.close = False
         self.leverage = 0
         self.open_value = 0
         self.open_price = 0
@@ -170,6 +173,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             result, msg = self.cta_engine.remove_strategy_setting(self.strategy_name)
             if result:
                 self.cta_engine.remove_strategy(self.strategy_name)
+                self.close = True
 
             else:
                 msg = f"停止关闭策略失败\n\n{msg}"
@@ -364,7 +368,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         #         Thread(target=self.check_target_pos).start()
     
     def check_save_data(self):
-        while True:
+        while not self.close:
             try:
                 # 保存变量、同步数据
                 strategy_data = self.get_data()
