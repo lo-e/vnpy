@@ -80,6 +80,8 @@ class TopGainersLosersPortfolio(object):
     def on_top_gainers_losers(self, data: tuple):
         try:
             gainers, losers = data
+            mean_gainers_percent = pd.DataFrame(gainers)["percent"].mean()
+            mean_losers_percent = pd.DataFrame(losers)["percent"].mean()
 
             # 保存到文件
             current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -102,7 +104,8 @@ class TopGainersLosersPortfolio(object):
             # 判断上新、停止策略
             gainers_data = {}
             losers_data = {}
-            close_strategies = []
+            close_long_strategies = []
+            close_short_strategies = []
             msg = ""
 
             for data in gainers:
@@ -130,22 +133,29 @@ class TopGainersLosersPortfolio(object):
                         gainers_data.pop(pure_symbol)
                     
                     else:
-                        close_strategies.append(strategy)
+                        close_long_strategies.append(strategy)
                 
                 if strategy.direction == Direction.SHORT:
                     if pure_symbol in losers_data:
                         losers_data.pop(pure_symbol)
                     
                     else:
-                        close_strategies.append(strategy)
+                        close_short_strategies.append(strategy)
 
             # 停止关闭策略
-            for i in range(len(close_strategies)):
-                strategy: TopGainersLosersStrategy = close_strategies[i]
+            for i in range(len(close_long_strategies)):
+                strategy: TopGainersLosersStrategy = close_long_strategies[i]
                 Thread(target=strategy.on_close()).start()
 
-            if len(close_strategies):
-                msg = f"{msg}停止关闭策略：{len(close_strategies)}\n"
+            for i in range(len(close_short_strategies)):
+                strategy: TopGainersLosersStrategy = close_short_strategies[i]
+                Thread(target=strategy.on_close()).start()
+
+            if len(close_long_strategies):
+                msg = f"{msg}关闭多头合约：{len(close_long_strategies)}\n"
+
+            if len(close_short_strategies):
+                msg = f"{msg}关闭空头合约：{len(close_short_strategies)}\n"
 
             # 执行新策略
             new_gainer_count = 0
@@ -156,7 +166,7 @@ class TopGainersLosersPortfolio(object):
                         new_gainer_count += 1
 
             if new_gainer_count:
-                msg = f"{msg}执行上涨合约策略：{new_gainer_count}\n"
+                msg = f"{msg}执行多头合约：{new_gainer_count}\n"
 
             new_loser_count = 0
             for token in losers_data.keys():
@@ -166,7 +176,7 @@ class TopGainersLosersPortfolio(object):
                         new_loser_count += 1
 
             if new_loser_count:
-                msg = f"{msg}执行下跌合约策略：{new_loser_count}\n"
+                msg = f"{msg}执行空头合约：{new_loser_count}\n"
 
             # 更新策略合约
             self.strategy_symbols = set()
@@ -175,7 +185,7 @@ class TopGainersLosersPortfolio(object):
                 self.strategy_symbols.add(strategy.vt_symbol)
 
             if msg:
-                msg = f"{msg}当前策略总数：{len(self.cta_engine.strategies)}"
+                msg = f"上涨：{len(gainers)}\t{mean_gainers_percent:.2f}%\n下跌：{len(losers)}\t{mean_losers_percent:.2f}%\n\n{msg}当前策略总数：{len(self.cta_engine.strategies)}"
                 self.send_ding_talk(msg)
                 print(msg)
 

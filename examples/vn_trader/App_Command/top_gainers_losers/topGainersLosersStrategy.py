@@ -166,7 +166,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} CLOSE {pnl:.2f}%"})
                 self.trade_logs_updated = True
 
-            while self.target_pos_checking:
+            while self.target_pos_checking or self.trade_logs_updated:
                 time.sleep(1)
 
             # 移除策略
