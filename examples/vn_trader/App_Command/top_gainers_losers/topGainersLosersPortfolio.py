@@ -185,7 +185,7 @@ class TopGainersLosersPortfolio(object):
                 self.strategy_symbols.add(strategy.vt_symbol)
 
             if msg:
-                msg = f"上涨：{len(gainers)}\t{mean_gainers_percent:.2f}%\n下跌：{len(losers)}\t{mean_losers_percent:.2f}%\n\n{msg}当前策略总数：{len(self.cta_engine.strategies)}"
+                msg = f"上涨：{mean_gainers_percent:.2f}%\t{len(gainers)}\n下跌：{mean_losers_percent:.2f}%\t{len(losers)}\n\n{msg}当前策略总数：{len(self.cta_engine.strategies)}"
                 self.send_ding_talk(msg)
                 print(msg)
 
