@@ -386,7 +386,8 @@ class TopGainersLosersEngine(BaseEngine):
     def init_all_strategies(self):
         # 初始化所有策略
         for strategy_name in self.strategies.keys():
-            self.init_strategy(strategy_name)
+            # self.init_strategy(strategy_name)
+            self.initing_strategy(strategy_name)
 
     def start_all_strategies(self):
         # 启动所有策略
