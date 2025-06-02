@@ -83,6 +83,14 @@ class TopGainersLosersPortfolio(object):
             mean_gainers_percent = pd.DataFrame(gainers)["percent"].mean()
             mean_losers_percent = pd.DataFrame(losers)["percent"].mean()
 
+            trending_long = False
+            trending_short = False
+            if mean_gainers_percent >= 0.5 and len(gainers) >= 10:
+                trending_long = True
+            
+            if mean_losers_percent <= -0.5 and len(losers) >= 10:
+                trending_short = True
+
             # 保存到文件
             current_dir = os.path.dirname(os.path.abspath(__file__))
             date = datetime.now().strftime(f"%Y-%m-%d")
@@ -129,18 +137,18 @@ class TopGainersLosersPortfolio(object):
                     pure_symbol = strategy.vt_symbol.split("USDT")[0]
                 
                 if strategy.direction == Direction.LONG:
+                    if not trending_long or pure_symbol not in gainers_data:
+                        close_long_strategies.append(strategy)
+
                     if pure_symbol in gainers_data:
                         gainers_data.pop(pure_symbol)
-                    
-                    else:
-                        close_long_strategies.append(strategy)
                 
                 if strategy.direction == Direction.SHORT:
+                    if not trending_short or pure_symbol not in losers_data:
+                        close_short_strategies.append(strategy)
+
                     if pure_symbol in losers_data:
                         losers_data.pop(pure_symbol)
-                    
-                    else:
-                        close_short_strategies.append(strategy)
 
             # 停止关闭策略
             for i in range(len(close_long_strategies)):
@@ -159,21 +167,23 @@ class TopGainersLosersPortfolio(object):
 
             # 执行新策略
             new_gainer_count = 0
-            for token in gainers_data.keys():
-                if token not in last_gainers_data:
-                    result = self.new_strategy(token, Direction.LONG)
-                    if result:
-                        new_gainer_count += 1
+            if trending_long:
+                for token in gainers_data.keys():
+                    if token not in last_gainers_data:
+                        result = self.new_strategy(token, Direction.LONG)
+                        if result:
+                            new_gainer_count += 1
 
             if new_gainer_count:
                 msg = f"{msg}执行多头合约：{new_gainer_count}\n"
 
             new_loser_count = 0
-            for token in losers_data.keys():
-                if token not in last_losers_data:
-                    result = self.new_strategy(token, Direction.SHORT)
-                    if result:
-                        new_loser_count += 1
+            if trending_short:
+                for token in losers_data.keys():
+                    if token not in last_losers_data:
+                        result = self.new_strategy(token, Direction.SHORT)
+                        if result:
+                            new_loser_count += 1
 
             if new_loser_count:
                 msg = f"{msg}执行空头合约：{new_loser_count}\n"
