@@ -214,7 +214,7 @@ class TopGainersLosersPortfolio(object):
         exchange = ""
         exchange_user = ""
 
-        filter_tokens = ["USDC", "USDT", "USDE", "USD1", "PYUSD", "USDS", "DAI", "FTN", "PI"]
+        filter_tokens = ["USDC", "USDT", "USDE", "USD1", "PYUSD", "USDS", "DAI", "FTN", "PI", "STETH", "WSTETH", "WBTC"]
         if token not in filter_tokens:
             okx_symbols = list(self.exchange_instruments_data.get("OKX", {}).keys())
             symbol = f"{token}-USDT-SWAP"
@@ -459,12 +459,17 @@ class TopGainersLosersPortfolio(object):
                                     self.send_ding_talk(msg)
 
                                 gap = strategy.target_pos - strategy.pos
-                                if gap > 0 and not strategy.insufficient_value:
-                                    # 多头开仓
-                                    trade_price = strategy.tick.last_price * 1.005
-                                    strategy.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(gap))
+                                # if gap > 0 and not strategy.insufficient_value:
+                                #     # 多头开仓
+                                #     trade_price = strategy.tick.last_price * 1.005
+                                #     strategy.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(gap))
                                 
-                                elif gap < 0:
+                                # elif gap < 0:
+                                #     # 多头平仓
+                                #     trade_price = strategy.tick.last_price * 0.995
+                                #     strategy.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(gap))
+
+                                if gap < 0:
                                     # 多头平仓
                                     trade_price = strategy.tick.last_price * 0.995
                                     strategy.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(gap))
@@ -475,12 +480,17 @@ class TopGainersLosersPortfolio(object):
                                     self.send_ding_talk(msg)
 
                                 gap = abs(strategy.target_pos) - abs(strategy.pos)
-                                if gap > 0 and not strategy.insufficient_value:
-                                    # 空头开仓
-                                    trade_price = strategy.tick.last_price * 0.995
-                                    strategy.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(gap))
+                                # if gap > 0 and not strategy.insufficient_value:
+                                #     # 空头开仓
+                                #     trade_price = strategy.tick.last_price * 0.995
+                                #     strategy.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(gap))
                                 
-                                elif gap < 0:
+                                # elif gap < 0:
+                                #     # 空头平仓
+                                #     trade_price = strategy.tick.last_price * 1.005
+                                #     strategy.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(gap))
+
+                                if gap < 0:
                                     # 空头平仓
                                     trade_price = strategy.tick.last_price * 1.005
                                     strategy.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(gap))
