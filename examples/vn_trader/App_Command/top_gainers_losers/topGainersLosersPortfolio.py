@@ -490,12 +490,10 @@ class TopGainersLosersPortfolio(object):
                             try:
                                 # 移除策略
                                 result, msg = self.cta_engine.remove_strategy_setting(strategy.strategy_name)
-                                if result:
-                                    strategy.check_save_data_()
-                                    self.cta_engine.remove_strategy(strategy.strategy_name)
-
-                                else:
-                                    msg = f"停止关闭策略失败\n\n{msg}"
+                                strategy.check_save_data_()
+                                self.cta_engine.remove_strategy(strategy.strategy_name)
+                                if not result:
+                                    msg = f"停止关闭策略异常\n\n{msg}"
                                     self.send_ding_talk(msg)
                                     print_(msg)
 
