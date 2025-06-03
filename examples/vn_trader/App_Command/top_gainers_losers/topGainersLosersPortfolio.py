@@ -448,7 +448,7 @@ class TopGainersLosersPortfolio(object):
                 for name in self.cta_engine.strategies.copy().keys():
                     strategy: TopGainersLosersStrategy = self.cta_engine.strategies[name]
                     strategy_check_ts = self.strategy_status_check_ts.get(strategy.strategy_name, 0)
-                    if time.time() >= strategy_check_ts + 3:
+                    if time.time() >= strategy_check_ts + 10:
                         self.strategy_status_check_ts[strategy.strategy_name] = time.time()
 
                         # 检查仓位
@@ -486,7 +486,7 @@ class TopGainersLosersPortfolio(object):
                                     strategy.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(gap))
 
                         # 检查关闭策略
-                        if strategy.close:
+                        if strategy.target_pos == strategy.pos and strategy.close:
                             try:
                                 # 移除策略
                                 result, msg = self.cta_engine.remove_strategy_setting(strategy.strategy_name)

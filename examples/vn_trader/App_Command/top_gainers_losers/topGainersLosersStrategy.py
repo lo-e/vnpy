@@ -245,7 +245,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 else:
                     self.stop_price = tick.last_price + self.minute_5_atr * 2
 
-                self.leverage = 0.005 / abs((self.stop_price / tick.last_price) - 1)
+                self.leverage = 0.002 / abs((self.stop_price / tick.last_price) - 1)
                 self.target_pos = self.portfolio.portfolio_value * self.leverage / tick.last_price
                 if self.direction == Direction.SHORT:
                     self.target_pos = self.target_pos * -1
@@ -342,7 +342,21 @@ class TopGainersLosersStrategy(CtaTemplate):
                     value_cross = False
                 
                 if not value_cross:
-                    self.send_ding_talk(f"开仓订单价值未满足要求\n合约：{self.vt_symbol}\n价格：{tick.last_price}\n数量：{volume}\n价值：{order_value}")
+                    # self.send_ding_talk(f"开仓订单价值未满足要求\n合约：{self.vt_symbol}\n价格：{tick.last_price}\n数量：{volume}\n价值：{order_value}")
+                    return
+                
+        # BYBIT开仓有最低价值限制，判断是否满足
+        if offset == Offset.OPEN and self.exchange == Exchange.BYBIT:
+            oms_engine = self.cta_engine.main_engine.engines["oms"]
+            tick = oms_engine.ticks.get(self.vt_symbol, None)
+            if tick:
+                value_cross = True
+                order_value = tick.last_price * volume
+                if order_value <= 5:
+                    value_cross = False
+                
+                if not value_cross:
+                    # self.send_ding_talk(f"开仓订单价值未满足要求\n合约：{self.vt_symbol}\n价格：{tick.last_price}\n数量：{volume}\n价值：{order_value}")
                     return
         
         # 平仓订单数量不超过当前持仓

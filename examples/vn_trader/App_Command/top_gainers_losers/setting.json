@@ -3,5 +3,30 @@
         "name": "TOP_GAINERS_LOSERS_PORTFOLIO",
         "portfolio_value": 10
     },
-    "signal": []
+    "signal": [
+        {
+            "strategy_name": "TOP_GAINERS_SOL_OKX",
+            "vt_symbol": "SOL-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "LONG",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_GAINERS_POL_OKX",
+            "vt_symbol": "POL-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "LONG",
+            "start": true
+        },
+        {
+            "strategy_name": "TOP_GAINERS_ONDO_OKX",
+            "vt_symbol": "ONDO-USDT-SWAP.OKX",
+            "exchange": "OKX",
+            "exchange_user": "lo-e",
+            "direction": "LONG",
+            "start": true
+        }
+    ]
 }
