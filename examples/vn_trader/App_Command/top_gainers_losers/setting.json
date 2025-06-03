@@ -3,14 +3,5 @@
         "name": "TOP_GAINERS_LOSERS_PORTFOLIO",
         "portfolio_value": 10
     },
-    "signal": [
-        {
-            "strategy_name": "TOP_LOSERS_VET_BYBIT",
-            "vt_symbol": "VETUSDT.BYBIT",
-            "exchange": "BYBIT",
-            "exchange_user": "loesuperman",
-            "direction": "SHORT",
-            "start": true
-        }
-    ]
+    "signal": []
 }
