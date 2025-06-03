@@ -332,43 +332,44 @@ class TopGainersLosersEngine(BaseEngine):
         self.init_thread = None
 
     def process_setting_data(self):
-        try:
-            new, data = self.update_setting_queue.get(block=True, timeout=1)
-            if new:
-                # 新增策略
-                setting = data
-                vt_symbol = setting["vt_symbol"]
+        while True:
+            try:
+                new, data = self.update_setting_queue.get(block=True, timeout=1)
+                if new:
+                    # 新增策略
+                    setting = data
+                    vt_symbol = setting["vt_symbol"]
 
-                result, msg = self.new_strategy_setting(setting)
-                if result:
-                    self.new_strategy(setting)
-                    self.portfolio.bar_download_queue.put(vt_symbol)
-                
-                else:
-                    msg = f"执行新策略异常\n\n{data}\n\n{msg}"
-                    self.send_ding_talk(msg)
-                    print(msg)
-
-            else:
-                # 移除策略
-                strategy_name = data
-
-                result, msg = self.remove_strategy_setting(strategy_name)
-                if result:
-                    self.remove_strategy(strategy_name)
+                    result, msg = self.new_strategy_setting(setting)
+                    if result:
+                        self.new_strategy(setting)
+                        self.portfolio.bar_download_queue.put(vt_symbol)
+                    
+                    else:
+                        msg = f"执行新策略异常\n\n{data}\n\n{msg}"
+                        self.send_ding_talk(msg)
+                        print(msg)
 
                 else:
-                    msg = f"停止关闭策略异常\n\n{data}\n\n{msg}"
-                    self.send_ding_talk(msg)
-                    print(msg)
-        
-        except Empty:
-                pass
+                    # 移除策略
+                    strategy_name = data
 
-        except Exception as e:
-            msg = f"新增移除策略出错\n\nnew {new}\ndata {data}\n\n{e}"
-            self.send_ding_talk(msg)
-            print(msg)
+                    result, msg = self.remove_strategy_setting(strategy_name)
+                    if result:
+                        self.remove_strategy(strategy_name)
+
+                    else:
+                        msg = f"停止关闭策略异常\n\n{data}\n\n{msg}"
+                        self.send_ding_talk(msg)
+                        print(msg)
+            
+            except Empty:
+                    pass
+
+            except Exception as e:
+                msg = f"新增移除策略出错\n\nnew {new}\ndata {data}\n\n{e}"
+                self.send_ding_talk(msg)
+                print(msg)
         
 
     def initing_strategy(self, strategy_name: str):
@@ -590,7 +591,6 @@ class TopGainersLosersEngine(BaseEngine):
 
         # 创建策略实例
         strategy = TopGainersLosersStrategy(self, setting)
-        self.portfolio.strategy_symbols.add(strategy.vt_symbol)
 
         # 加载同步数据
         if load_sync:

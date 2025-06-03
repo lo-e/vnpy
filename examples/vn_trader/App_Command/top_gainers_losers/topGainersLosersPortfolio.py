@@ -34,7 +34,6 @@ class TopGainersLosersPortfolio(object):
         self.portfolio_value = 0
         self.inited = False
         self.started = False
-        self.strategy_symbols = set()
         self.exchange_instruments_data = {}
         self.tick_queue = Queue()
         self.gainers_data = {}
@@ -191,12 +190,6 @@ class TopGainersLosersPortfolio(object):
 
             if new_loser_count:
                 msg = f"{msg}执行空头合约：{new_loser_count}\n"
-
-            # 更新策略合约
-            self.strategy_symbols = set()
-            for name in self.cta_engine.strategies.keys():
-                strategy: TopGainersLosersStrategy = self.cta_engine.strategies[name]
-                self.strategy_symbols.add(strategy.vt_symbol)
 
             if msg:
                 msg = f"上涨：{mean_gainers_percent:.2f}%\t{len(gainers)}\n下跌：{mean_losers_percent:.2f}%\t{len(losers)}\n\n{msg}当前策略总数：{len(self.cta_engine.strategies)}"
