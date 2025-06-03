@@ -1045,6 +1045,9 @@ class BybitWebsocketTradeApi(WebsocketClient):
                 datetime=trade_datetime,
                 gateway_name=self.gateway_name,
             )
+            order: OrderData = self.gateway.orders.get(orderId, None)
+            if order:
+                trade.offset = order.offset
             self.gateway.on_trade(trade)
     
     def on_order(self, packet):

@@ -210,7 +210,7 @@ class TopGainersLosersPortfolio(object):
         exchange = ""
         exchange_user = ""
 
-        filter_tokens = ["USDC", "USDT", "USDE", "USD1", "PYUSD", "USDS", "DAI", "FTN"]
+        filter_tokens = ["USDC", "USDT", "USDE", "USD1", "PYUSD", "USDS", "DAI", "FTN", "PI"]
         if token not in filter_tokens:
             okx_symbols = list(self.exchange_instruments_data.get("OKX", {}).keys())
             symbol = f"{token}-USDT-SWAP"
@@ -227,13 +227,13 @@ class TopGainersLosersPortfolio(object):
                     exchange = "BYBIT"
                     exchange_user = "loesuperman"
 
-            if not vt_symbol:
-                binance_symbols = list(self.exchange_instruments_data.get("BINANCE", {}).keys())
-                symbol = f"{token}USDT"
-                if symbol in binance_symbols:
-                    vt_symbol = f"{symbol}.BINANCE"
-                    exchange = "BINANCE"
-                    exchange_user = "lo-e"
+            # if not vt_symbol:
+            #     binance_symbols = list(self.exchange_instruments_data.get("BINANCE", {}).keys())
+            #     symbol = f"{token}USDT"
+            #     if symbol in binance_symbols:
+            #         vt_symbol = f"{symbol}.BINANCE"
+            #         exchange = "BINANCE"
+            #         exchange_user = "lo-e"
 
         if not vt_symbol:
             return False

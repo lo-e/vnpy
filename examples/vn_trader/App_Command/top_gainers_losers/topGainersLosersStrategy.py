@@ -129,7 +129,6 @@ class TopGainersLosersStrategy(CtaTemplate):
         if exchange != "OKX" and exchange != "BINANCE" and exchange != "BYBIT":
             msg = f"未知交易所：{exchange}"
             self.send_ding_talk(msg)
-            return
         
         gateway = self.cta_engine.main_engine.get_gateway(gateway_name=exchange, account_name=self.exchange_user)
         if not gateway:
@@ -152,10 +151,10 @@ class TopGainersLosersStrategy(CtaTemplate):
             # 平仓
             if self.target_pos:
                 self.target_pos = 0
-                # self.target_pos_check_ts = time.time() - 10
-                # if not self.target_pos_checking:
-                #     self.target_pos_checking = True
-                #     Thread(target=self.check_target_pos).start()
+                self.target_pos_check_ts = time.time() - 10
+                if not self.target_pos_checking:
+                    self.target_pos_checking = True
+                    Thread(target=self.check_target_pos).start()
 
                 # 记录日志
                 pnl = 0
@@ -256,7 +255,6 @@ class TopGainersLosersStrategy(CtaTemplate):
 
     def check_target_pos(self):
         self.target_pos_checking = True
-        result = False
         cancel_ts = 0
         while True:
             try:
@@ -331,7 +329,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 else:
                     self.stop_price = tick.last_price + self.minute_5_atr * 2
 
-                self.leverage = 0.02 / abs((self.stop_price / tick.last_price) - 1)
+                self.leverage = 0.005 / abs((self.stop_price / tick.last_price) - 1)
                 self.target_pos = self.portfolio.portfolio_value * self.leverage / tick.last_price
                 if self.direction == Direction.SHORT:
                     self.target_pos = self.target_pos * -1
@@ -361,11 +359,11 @@ class TopGainersLosersStrategy(CtaTemplate):
                 self.trade_logs_updated = True
         
         # 促成仓位
-        # if target_pos_updated:
-        #     self.target_pos_check_ts = time.time() - 10
-        #     if not self.target_pos_checking:
-        #         self.target_pos_checking = True
-        #         Thread(target=self.check_target_pos).start()
+        if target_pos_updated:
+            self.target_pos_check_ts = time.time() - 10
+            if not self.target_pos_checking:
+                self.target_pos_checking = True
+                Thread(target=self.check_target_pos).start()
     
     def check_save_data(self):
         while not self.close:
