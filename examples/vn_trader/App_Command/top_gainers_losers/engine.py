@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Callable
 from datetime import datetime, timedelta
 from threading import Thread
-from queue import Queue
+from queue import Queue, Empty
 from copy import copy
 from vnpy.event import Event, EventEngine
 from vnpy.trader.engine import BaseEngine, MainEngine
@@ -81,6 +81,7 @@ class TopGainersLosersEngine(BaseEngine):
         self.strategy_orderid_map = defaultdict(set)
         self.init_thread = None
         self.init_queue = Queue()
+        self.update_setting_queue = Queue()
         self.vt_tradeids = set()
         self.offset_converter = OffsetConverter(self.main_engine)
         self.portfolio: TopGainersLosersPortfolio = None
@@ -101,6 +102,7 @@ class TopGainersLosersEngine(BaseEngine):
         for signal_setting in signal_list:
             self.add_strategy(signal_setting)
 
+        Thread(target=self.process_setting_data).start()
         self.register_event()
         self.write_log(f"趋势涨跌策略引擎初始化成功\t策略数：{len(self.strategies)}")
 
@@ -328,6 +330,46 @@ class TopGainersLosersEngine(BaseEngine):
             self.initing_strategy(strategy_name)
 
         self.init_thread = None
+
+    def process_setting_data(self):
+        try:
+            new, data = self.update_setting_queue.get(block=True, timeout=1)
+            if new:
+                # 新增策略
+                setting = data
+                vt_symbol = setting["vt_symbol"]
+
+                result, msg = self.new_strategy_setting(setting)
+                if result:
+                    self.new_strategy(setting)
+                    self.portfolio.bar_download_queue.put(vt_symbol)
+                
+                else:
+                    msg = f"执行新策略异常\n\n{data}\n\n{msg}"
+                    self.send_ding_talk(msg)
+                    print(msg)
+
+            else:
+                # 移除策略
+                strategy_name = data
+
+                result, msg = self.remove_strategy_setting(strategy_name)
+                if result:
+                    self.remove_strategy(strategy_name)
+
+                else:
+                    msg = f"停止关闭策略异常\n\n{data}\n\n{msg}"
+                    self.send_ding_talk(msg)
+                    print(msg)
+        
+        except Empty:
+                pass
+
+        except Exception as e:
+            msg = f"新增移除策略出错\n\nnew {new}\ndata {data}\n\n{e}"
+            self.send_ding_talk(msg)
+            print(msg)
+        
 
     def initing_strategy(self, strategy_name: str):
         strategy = self.strategies[strategy_name]

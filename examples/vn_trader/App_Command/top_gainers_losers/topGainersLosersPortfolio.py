@@ -258,16 +258,8 @@ class TopGainersLosersPortfolio(object):
                    "direction": direction_str,
                    "start": True
                    }
-        result, msg = self.cta_engine.new_strategy_setting(setting)
-        if strategy_name not in self.cta_engine.strategies:
-            self.cta_engine.new_strategy(setting)
-            self.bar_download_queue.put(vt_symbol)
-        
-        if not result:
-            msg = f"执行新策略异常\n\n{msg}"
-            self.send_ding_talk(msg)
-            print(msg)
-        return result
+        self.cta_engine.update_setting_queue.put((True, setting))
+        return True
 
     def check_download_instruments(self):
         if not self.instruments_downloading:
@@ -497,20 +489,8 @@ class TopGainersLosersPortfolio(object):
 
                         # 检查关闭策略
                         if strategy.target_pos == strategy.pos and strategy.close:
-                            try:
-                                # 移除策略
-                                result, msg = self.cta_engine.remove_strategy_setting(strategy.strategy_name)
-                                strategy.check_save_data_()
-                                self.cta_engine.remove_strategy(strategy.strategy_name)
-                                if not result:
-                                    msg = f"停止关闭策略异常\n\n{msg}"
-                                    self.send_ding_talk(msg)
-                                    print_(msg)
-
-                            except Exception as e:
-                                msg = f"停止关闭策略出错\n\n{e}"
-                                self.send_ding_talk(msg)
-                                print_(msg)
+                            strategy.check_save_data_()
+                            self.cta_engine.update_setting_queue.put((False, strategy.strategy_name))
 
             except Exception as e:
                 # msg = f"核查策略目标仓位出错\n\n{e}"
