@@ -259,12 +259,12 @@ class TopGainersLosersPortfolio(object):
                    "start": True
                    }
         result, msg = self.cta_engine.new_strategy_setting(setting)
-        if result:
+        if strategy_name not in self.cta_engine.strategies:
             self.cta_engine.new_strategy(setting)
             self.bar_download_queue.put(vt_symbol)
         
-        else:
-            msg = f"执行新策略失败\n\n{msg}"
+        if not result:
+            msg = f"执行新策略异常\n\n{msg}"
             self.send_ding_talk(msg)
             print(msg)
         return result
