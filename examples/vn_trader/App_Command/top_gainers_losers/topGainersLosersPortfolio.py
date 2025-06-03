@@ -459,7 +459,7 @@ class TopGainersLosersPortfolio(object):
                                     self.send_ding_talk(msg)
 
                                 gap = strategy.target_pos - strategy.pos
-                                if gap > 0:
+                                if gap > 0 and not strategy.insufficient_value:
                                     # 多头开仓
                                     trade_price = strategy.tick.last_price * 1.005
                                     strategy.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(gap))
@@ -475,7 +475,7 @@ class TopGainersLosersPortfolio(object):
                                     self.send_ding_talk(msg)
 
                                 gap = abs(strategy.target_pos) - abs(strategy.pos)
-                                if gap > 0:
+                                if gap > 0 and not strategy.insufficient_value:
                                     # 空头开仓
                                     trade_price = strategy.tick.last_price * 0.995
                                     strategy.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(gap))

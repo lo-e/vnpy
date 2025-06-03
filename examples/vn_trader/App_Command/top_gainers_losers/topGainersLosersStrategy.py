@@ -49,6 +49,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         "indicator_inited",
         "minute_5_bar_dt",
         "minute_5_atr",
+        "insufficient_value"
     ]
 
     # 同步列表
@@ -64,6 +65,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         "indicator_inited",
         "minute_5_bar_dt",
         "minute_5_atr",
+        "insufficient_value"
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -116,6 +118,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.strategy_data = {}                     # 策略数据（包括常量、变量、同步）
         self.trade_logs = []                        # 交易日志
         self.trade_logs_updated = False
+        self.insufficient_value = False             # 开仓价值不满足最低
         
         self.minute_5_bar: BarData = None
         self.minute_5_bar_dt: str = ""
@@ -343,6 +346,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 
                 if not value_cross:
                     # self.send_ding_talk(f"开仓订单价值未满足要求\n合约：{self.vt_symbol}\n价格：{tick.last_price}\n数量：{volume}\n价值：{order_value}")
+                    self.insufficient_value = True
                     return
                 
         # BYBIT开仓有最低价值限制，判断是否满足
@@ -357,6 +361,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 
                 if not value_cross:
                     # self.send_ding_talk(f"开仓订单价值未满足要求\n合约：{self.vt_symbol}\n价格：{tick.last_price}\n数量：{volume}\n价值：{order_value}")
+                    self.insufficient_value = True
                     return
         
         # 平仓订单数量不超过当前持仓
