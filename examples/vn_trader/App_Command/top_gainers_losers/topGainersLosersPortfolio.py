@@ -39,6 +39,7 @@ class TopGainersLosersPortfolio(object):
         self.tick_queue = Queue()
         self.gainers_data = {}
         self.losers_data = {}
+        self.strategy_status_check_ts = {}
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -65,6 +66,9 @@ class TopGainersLosersPortfolio(object):
     def on_start(self):
         # tick 处理
         Thread(target=self.process_tick).start()
+
+        # 策略仓位检查
+        Thread(target=self.check_strategy_status).start()
 
     def on_timer(self):
         if not self.started:
@@ -153,11 +157,11 @@ class TopGainersLosersPortfolio(object):
             # 停止关闭策略
             for i in range(len(close_long_strategies)):
                 strategy: TopGainersLosersStrategy = close_long_strategies[i]
-                Thread(target=strategy.on_close()).start()
+                strategy.on_close()
 
             for i in range(len(close_short_strategies)):
                 strategy: TopGainersLosersStrategy = close_short_strategies[i]
-                Thread(target=strategy.on_close()).start()
+                strategy.on_close()
 
             if len(close_long_strategies):
                 msg = f"{msg}关闭多头合约：{len(close_long_strategies)}\n"
@@ -437,6 +441,74 @@ class TopGainersLosersPortfolio(object):
             #     if time.time() >= error_notice_ts + 60:
             #         error_notice_ts = time.time()
             #         self.send_ding_talk(msg)
+
+    def check_strategy_status(self):
+        while True:
+            try:
+                for name in self.cta_engine.strategies.copy().keys():
+                    strategy: TopGainersLosersStrategy = self.cta_engine.strategies[name]
+                    strategy_check_ts = self.strategy_status_check_ts.get(strategy.strategy_name, 0)
+                    if time.time() >= strategy_check_ts + 3:
+                        self.strategy_status_check_ts[strategy.strategy_name] = time.time()
+
+                        # 检查仓位
+                        if strategy.tick and strategy.target_pos != strategy.pos:
+                            if strategy.direction == Direction.LONG:
+                                if strategy.target_pos < 0 or strategy.pos < 0:
+                                    msg = f"仓位异常\n\n合约 {strategy.vt_symbol}\n方向 {strategy.direction.value}\n目标 {strategy.target_pos}\n当前 {strategy.pos}"
+                                    self.send_ding_talk(msg)
+
+                                gap = strategy.target_pos - strategy.pos
+                                if gap > 0:
+                                    # 多头开仓
+                                    trade_price = strategy.tick.last_price * 1.005
+                                    strategy.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(gap))
+                                
+                                elif gap < 0:
+                                    # 多头平仓
+                                    trade_price = strategy.tick.last_price * 0.995
+                                    strategy.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(gap))
+
+                            if strategy.direction == Direction.SHORT:
+                                if strategy.target_pos > 0 or strategy.pos > 0:
+                                    msg = f"仓位异常\n\n合约 {strategy.vt_symbol}\n方向 {strategy.direction.value}\n目标 {strategy.target_pos}\n当前 {strategy.pos}"
+                                    self.send_ding_talk(msg)
+
+                                gap = abs(strategy.target_pos) - abs(strategy.pos)
+                                if gap > 0:
+                                    # 空头开仓
+                                    trade_price = strategy.tick.last_price * 0.995
+                                    strategy.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(gap))
+                                
+                                elif gap < 0:
+                                    # 空头平仓
+                                    trade_price = strategy.tick.last_price * 1.005
+                                    strategy.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(gap))
+
+                        # 检查关闭策略
+                        if strategy.close:
+                            try:
+                                # 移除策略
+                                result, msg = self.cta_engine.remove_strategy_setting(strategy.strategy_name)
+                                if result:
+                                    strategy.check_save_data_()
+                                    self.cta_engine.remove_strategy(strategy.strategy_name)
+
+                                else:
+                                    msg = f"停止关闭策略失败\n\n{msg}"
+                                    self.send_ding_talk(msg)
+                                    print_(msg)
+
+                            except Exception as e:
+                                msg = f"停止关闭策略出错\n\n{e}"
+                                self.send_ding_talk(msg)
+                                print_(msg)
+
+            except Exception as e:
+                # msg = f"核查策略目标仓位出错\n\n{e}"
+                # self.send_ding_talk(msg)
+                # break
+                pass
 
     def subscribe(self, vt_symbol: str):
         # 订阅合约
