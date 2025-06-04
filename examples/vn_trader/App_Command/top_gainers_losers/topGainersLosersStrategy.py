@@ -301,7 +301,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 self.strategy_data = strategy_data
                 self.put_event()
 
-                # print_(f"同步数据 {self.strategy_name}..")
+                print_(f"同步数据 {self.strategy_name}..")
 
             # 保存交易日志
             if self.trade_logs_updated:

@@ -154,14 +154,18 @@ class TopGainersLosersPortfolio(object):
                         losers_data.pop(pure_symbol)
 
             # 停止关闭策略
+            remove_strategy_names = []
             for i in range(len(close_long_strategies)):
                 strategy: TopGainersLosersStrategy = close_long_strategies[i]
                 strategy.on_close()
+                remove_strategy_names.append(strategy.strategy_name)
 
             for i in range(len(close_short_strategies)):
                 strategy: TopGainersLosersStrategy = close_short_strategies[i]
                 strategy.on_close()
-
+                remove_strategy_names.append(strategy.strategy_name)
+            
+            self.cta_engine.remove_strategy_setting(remove_strategy_names)
             if len(close_long_strategies):
                 msg = f"{msg}关闭多头合约：{len(close_long_strategies)}\n"
 
@@ -169,13 +173,15 @@ class TopGainersLosersPortfolio(object):
                 msg = f"{msg}关闭空头合约：{len(close_short_strategies)}\n"
 
             # 执行新策略
+            new_settings = []
             new_gainer_count = 0
             if trending_long:
                 for token in gainers_data.keys():
                     if token not in last_gainers_data:
-                        result = self.new_strategy(token, Direction.LONG)
-                        if result:
+                        setting = self.new_strategy(token, Direction.LONG)
+                        if setting:
                             new_gainer_count += 1
+                            new_settings.append(setting)
 
             if new_gainer_count:
                 msg = f"{msg}执行多头合约：{new_gainer_count}\n"
@@ -184,13 +190,15 @@ class TopGainersLosersPortfolio(object):
             if trending_short:
                 for token in losers_data.keys():
                     if token not in last_losers_data:
-                        result = self.new_strategy(token, Direction.SHORT)
-                        if result:
+                        setting = self.new_strategy(token, Direction.SHORT)
+                        if setting:
                             new_loser_count += 1
+                            new_settings.append(setting)
 
             if new_loser_count:
                 msg = f"{msg}执行空头合约：{new_loser_count}\n"
 
+            self.cta_engine.new_strategy_setting(new_settings)
             if msg:
                 msg = f"上涨：{mean_gainers_percent:.2f}%\t{len(gainers)}\n下跌：{mean_losers_percent:.2f}%\t{len(losers)}\n\n{msg}当前策略总数：{len(self.cta_engine.strategies)}"
                 self.send_ding_talk(msg)
@@ -207,22 +215,22 @@ class TopGainersLosersPortfolio(object):
         exchange = ""
         exchange_user = ""
 
-        filter_tokens = ["USDC", "USDT", "USDE", "USD1", "PYUSD", "USDS", "DAI", "FTN", "PI", "STETH", "WSTETH", "WBTC"]
+        filter_tokens = ["USDC", "USDT", "USDE", "SUSDE", "SUSDS", "USD1", "USDT0", "PYUSD", "USDS", "FDUSD", "DAI", "FTN", "PI", "WETH", "WEETH", "STETH", "WSTETH", "RETH", "RSETH", "METH", "OSETH", "EZETH", "WBTC", "CBBTC", "LBTC", "SOLVBTC", "BUIDL", "WBNB"]
         if token not in filter_tokens:
             okx_symbols = list(self.exchange_instruments_data.get("OKX", {}).keys())
             symbol = f"{token}-USDT-SWAP"
             if symbol in okx_symbols:
                 vt_symbol = f"{symbol}.OKX"
                 exchange = "OKX"
-                exchange_user = "lo-e"
+                exchange_user = "lo-e(test)"
 
-            if not vt_symbol:
-                bybit_symbols = list(self.exchange_instruments_data.get("BYBIT", {}).keys())
-                symbol = f"{token}USDT"
-                if symbol in bybit_symbols:
-                    vt_symbol = f"{symbol}.BYBIT"
-                    exchange = "BYBIT"
-                    exchange_user = "loesuperman"
+            # if not vt_symbol:
+            #     bybit_symbols = list(self.exchange_instruments_data.get("BYBIT", {}).keys())
+            #     symbol = f"{token}USDT"
+            #     if symbol in bybit_symbols:
+            #         vt_symbol = f"{symbol}.BYBIT"
+            #         exchange = "BYBIT"
+            #         exchange_user = "loesuperman"
 
             # if not vt_symbol:
             #     binance_symbols = list(self.exchange_instruments_data.get("BINANCE", {}).keys())
@@ -233,7 +241,7 @@ class TopGainersLosersPortfolio(object):
             #         exchange_user = "lo-e"
 
         if not vt_symbol:
-            return False
+            return {}
         
         # 启动策略
         if direction == Direction.LONG:
@@ -252,8 +260,10 @@ class TopGainersLosersPortfolio(object):
                    "stop_rate": 0.002,
                    "start": True
                    }
-        self.cta_engine.update_setting_queue.put((True, setting))
-        return True
+       
+        self.cta_engine.new_strategy(setting)
+        self.bar_download_queue.put(vt_symbol)
+        return setting
 
     def check_download_instruments(self):
         if not self.instruments_downloading:
@@ -484,7 +494,7 @@ class TopGainersLosersPortfolio(object):
                         # 检查关闭策略
                         if strategy.target_pos == strategy.pos and strategy.close:
                             strategy.check_save_data_()
-                            self.cta_engine.update_setting_queue.put((False, strategy.strategy_name))
+                            self.cta_engine.remove_strategy(strategy.strategy_name)
 
             except Exception as e:
                 # msg = f"核查策略目标仓位出错\n\n{e}"

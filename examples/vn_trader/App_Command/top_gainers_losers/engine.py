@@ -81,7 +81,6 @@ class TopGainersLosersEngine(BaseEngine):
         self.strategy_orderid_map = defaultdict(set)
         self.init_thread = None
         self.init_queue = Queue()
-        self.update_setting_queue = Queue()
         self.vt_tradeids = set()
         self.offset_converter = OffsetConverter(self.main_engine)
         self.portfolio: TopGainersLosersPortfolio = None
@@ -102,7 +101,6 @@ class TopGainersLosersEngine(BaseEngine):
         for signal_setting in signal_list:
             self.add_strategy(signal_setting)
 
-        Thread(target=self.process_setting_data).start()
         self.register_event()
         self.write_log(f"趋势涨跌策略引擎初始化成功\t策略数：{len(self.strategies)}")
 
@@ -330,47 +328,6 @@ class TopGainersLosersEngine(BaseEngine):
             self.initing_strategy(strategy_name)
 
         self.init_thread = None
-
-    def process_setting_data(self):
-        while True:
-            try:
-                new, data = self.update_setting_queue.get(block=True, timeout=1)
-                if new:
-                    # 新增策略
-                    setting = data
-                    vt_symbol = setting["vt_symbol"]
-
-                    result, msg = self.new_strategy_setting(setting)
-                    if result:
-                        self.new_strategy(setting)
-                        self.portfolio.bar_download_queue.put(vt_symbol)
-                    
-                    else:
-                        msg = f"执行新策略异常\n\n{data}\n\n{msg}"
-                        self.send_ding_talk(msg)
-                        print(msg)
-
-                else:
-                    # 移除策略
-                    strategy_name = data
-
-                    result, msg = self.remove_strategy_setting(strategy_name)
-                    if result:
-                        self.remove_strategy(strategy_name)
-
-                    else:
-                        msg = f"停止关闭策略异常\n\n{data}\n\n{msg}"
-                        self.send_ding_talk(msg)
-                        print(msg)
-            
-            except Empty:
-                    pass
-
-            except Exception as e:
-                msg = f"新增移除策略出错\n\nnew {new}\ndata {data}\n\n{e}"
-                self.send_ding_talk(msg)
-                print(msg)
-        
 
     def initing_strategy(self, strategy_name: str):
         strategy = self.strategies[strategy_name]
@@ -608,9 +565,9 @@ class TopGainersLosersEngine(BaseEngine):
         try:
             # 执行策略
             start = setting["start"]
-            if start:
+            strategy_name = setting["strategy_name"]
+            if start and strategy_name not in self.strategies:
                 self.add_strategy(setting, load_sync=False)
-                strategy_name = setting["strategy_name"]
                 self.initing_strategy(strategy_name)
                 self.start_strategy(strategy_name)
 
@@ -618,29 +575,31 @@ class TopGainersLosersEngine(BaseEngine):
             msg = f"趋势涨跌策略上新出错\n\n{setting}\n\n{e}"
             self.send_dingtalk(msg)
 
-    def new_strategy_setting(self, strategy_setting: dict):
+    def new_strategy_setting(self, strategy_settings: list):
         try:
-            new_strategy_name = strategy_setting["strategy_name"]
-
             # 获取setting文件
             dir_path = Path(os.path.dirname(os.path.realpath(__file__)))
             file_path = dir_path.joinpath("setting.json")
             setting = load_json_path(file_path)
-
-            # 判断是否策略名存在
             signal_list = setting.get("signal", [])
+            signal_data = {}
             for signal_setting in signal_list:
-                if new_strategy_name == signal_setting["strategy_name"]:
-                    msg = f"策略名已存在 {new_strategy_name}"
-                    return False, msg
-            
+                signal_data[signal_setting["strategy_name"]] = signal_setting
+
+            updated = False
+            for strategy_setting in strategy_settings:
+                if strategy_setting["strategy_name"] not in signal_data:
+                    signal_list.append(strategy_setting)
+                    updated = True
+                
             # 保存文件
-            signal_list.append(strategy_setting)
-            save_json(file_path, setting)
-            return True, ""
+            if updated:
+                save_json(file_path, setting)
 
         except Exception as e:
             return False, str(e)
+        
+        return True, ""
         
     def remove_strategy(self, strategy_name: str):
         strategy = self.strategies.get(strategy_name, None)
@@ -671,31 +630,32 @@ class TopGainersLosersEngine(BaseEngine):
             msg = f"趋势涨跌策略移除出错\n\n{strategy_name}\n\n{e}"
             self.send_dingtalk(msg)
     
-    def remove_strategy_setting(self, strategy_name: str):
+    def remove_strategy_setting(self, strategy_names: list):
         try:
             # 获取setting文件
             dir_path = Path(os.path.dirname(os.path.realpath(__file__)))
             file_path = dir_path.joinpath("setting.json")
             setting = load_json_path(file_path)
-
-            # 判断是否策略名存在
-            found = False
             signal_list = setting.get("signal", [])
-            for signal_setting in signal_list.copy():
-                if strategy_name == signal_setting["strategy_name"]:
-                    signal_list.remove(signal_setting)
+            signal_data = {}
+            for signal_setting in signal_list:
+                signal_data[signal_setting["strategy_name"]] = signal_setting
+            
+            # 搜寻
+            found = False
+            for name in strategy_names:
+                if name in signal_data:
+                    signal_list.remove(signal_data[name])
                     found = True
             
             # 保存文件
             if found:
                 save_json(file_path, setting)
-                return True, ""
-            
-            else:
-                return False, f"策略不存在 {strategy_name}"
 
         except Exception as e:
             return False, str(e)
+    
+        return True, ""
 
     def load_sync_data(self, strategy):
         # 从数据库载入策略历史同步数据
