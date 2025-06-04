@@ -83,8 +83,19 @@ class TopGainersLosersPortfolio(object):
     def on_top_gainers_losers(self, data: tuple):
         try:
             gainers, losers = data
+
             mean_gainers_percent = pd.DataFrame(gainers)["percent"].mean()
+            mean_gainers_data = {"token": "mean_gainers",
+                                 "percent": mean_gainers_percent}
+            
             mean_losers_percent = pd.DataFrame(losers)["percent"].mean()
+            mean_losers_data = {"token": "mean_losers",
+                                "percent": mean_losers_percent}
+            
+            gainers.insert(0, mean_gainers_data)
+            gainers.insert(0, mean_losers_data)
+            losers.insert(0, mean_gainers_data)
+            losers.insert(0, mean_losers_data)
 
             trending_long = False
             trending_short = False

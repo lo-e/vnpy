@@ -259,15 +259,15 @@ class TopGainersLosersStrategy(CtaTemplate):
                 contract = self.cta_engine.main_engine.get_contract(self.vt_symbol)
                 self.target_pos = round_to(self.target_pos, contract.min_volume)
 
-                if self.direction == Direction.LONG:
-                    # 多头开仓
-                    trade_price = self.tick.last_price * 1.005
-                    self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(self.target_pos))
+                # if self.direction == Direction.LONG:
+                #     # 多头开仓
+                #     trade_price = self.tick.last_price * 1.005
+                #     self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(self.target_pos))
                 
-                elif self.direction == Direction.SHORT:
-                    # 空头开仓
-                    trade_price = self.tick.last_price * 0.995
-                    self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(self.target_pos))
+                # elif self.direction == Direction.SHORT:
+                #     # 空头开仓
+                #     trade_price = self.tick.last_price * 0.995
+                #     self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(self.target_pos))
 
                 # 记录日志
                 self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} OPEN"})
