@@ -33,7 +33,8 @@ class TopGainersLosersStrategy(CtaTemplate):
         "vt_symbol",
         "exchange",
         "exchange_user",
-        "direction"
+        "direction",
+        "stop_rate"
     ]
 
     # 变量列表
@@ -73,6 +74,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.exchange: Exchange = Exchange.NONE
         self.exchange_user:str = ""
         self.direction: Direction = Direction.NET
+        self.stop_rate = 0
         
         # 完成setting.json参数的配置
         super(TopGainersLosersStrategy, self).__init__(
@@ -248,7 +250,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 else:
                     self.stop_price = tick.last_price + self.minute_5_atr * 2
 
-                self.leverage = 0.002 / abs((self.stop_price / tick.last_price) - 1)
+                self.leverage = self.stop_rate / abs((self.stop_price / tick.last_price) - 1)
                 self.target_pos = self.portfolio.portfolio_value * self.leverage / tick.last_price
                 if self.direction == Direction.SHORT:
                     self.target_pos = self.target_pos * -1

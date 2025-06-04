@@ -249,6 +249,7 @@ class TopGainersLosersPortfolio(object):
                    "exchange": exchange,
                    "exchange_user": exchange_user,
                    "direction": direction_str,
+                   "stop_rate": 0.002,
                    "start": True
                    }
         self.cta_engine.update_setting_queue.put((True, setting))
