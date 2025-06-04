@@ -92,10 +92,10 @@ class TopGainersLosersPortfolio(object):
             mean_losers_data = {"token": "mean_losers",
                                 "percent": mean_losers_percent}
             
-            gainers.insert(0, mean_gainers_data)
             gainers.insert(0, mean_losers_data)
-            losers.insert(0, mean_gainers_data)
+            gainers.insert(0, mean_gainers_data)
             losers.insert(0, mean_losers_data)
+            losers.insert(0, mean_gainers_data)
 
             trending_long = False
             trending_short = False
