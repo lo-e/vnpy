@@ -63,8 +63,8 @@ class Chrome(object):
                         percent = gl.find_element(
                             By.XPATH,
                             "td/span[@class='gecko-up']",
-                        ).get_attribute("data-json")
-                        percent = float(percent.split(":")[1][:-1])
+                        ).text
+                        percent = float(percent.split("%")[0])
                         is_gainer = True
 
                     except Exception as e:
@@ -74,8 +74,8 @@ class Chrome(object):
                         percent = gl.find_element(
                             By.XPATH,
                             "td/span[@class='gecko-down']",
-                        ).get_attribute("data-json")
-                        percent = float(percent.split(":")[1][:-1])
+                        ).text
+                        percent = float(percent.split("%")[0])*-1
                         is_gainer = False
                         
                     except Exception as e:
@@ -122,6 +122,19 @@ class Chrome(object):
             print(f"{token}\t{percent}")
 
         # 保存到文件
+        mean_gainers_percent = pd.DataFrame(gainers)["percent"].mean()
+        mean_gainers_data = {"token": "mean_gainers",
+                             "percent": mean_gainers_percent}
+        
+        mean_losers_percent = pd.DataFrame(losers)["percent"].mean()
+        mean_losers_data = {"token": "mean_losers",
+                            "percent": mean_losers_percent}
+        
+        gainers.insert(0, mean_losers_data)
+        gainers.insert(0, mean_gainers_data)
+        losers.insert(0, mean_losers_data)
+        losers.insert(0, mean_gainers_data)
+        
         current_dir = os.path.dirname(os.path.abspath(__file__))
         date = datetime.now().strftime(f"%Y-%m-%d")
         hour = datetime.now().hour
@@ -167,4 +180,4 @@ class Chrome(object):
 
 if __name__ == "__main__":
     chrome = Chrome(cta_engine=None)
-    Thread(target=chrome.fetch_top_gainers_losers, args=(chrome.on_top_gainers_losers, 60)).start()
+    Thread(target=chrome.fetch_top_gainers_losers, args=(chrome.on_top_gainers_losers, 10)).start()
