@@ -84,7 +84,7 @@ class TopGainersLosersPortfolio(object):
     def on_top_gainers_losers(self, data: tuple):
         try:
             gainers, losers = data
-
+            
             gainers_data = OrderedDict()
             losers_data = OrderedDict()
             close_long_strategies = []
@@ -158,17 +158,17 @@ class TopGainersLosersPortfolio(object):
             current_dir = os.path.dirname(os.path.abspath(__file__))
             date = datetime.now().strftime(f"%Y-%m-%d")
             hour = datetime.now().hour
-            time = datetime.now().strftime(f"%H_%M_%S")
+            time_str = datetime.now().strftime(f"%H_%M_%S")
 
             gainer_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}gainers{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             os.makedirs(gainer_dir_path, exist_ok=True)
-            gainer_file_path = f"{gainer_dir_path}{DIR_SYMBOL}{time}.csv"
+            gainer_file_path = f"{gainer_dir_path}{DIR_SYMBOL}{time_str}.csv"
             df = pd.DataFrame(gainers)
             df.to_csv(gainer_file_path, index=False)
 
             loser_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}losers{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             os.makedirs(loser_dir_path, exist_ok=True)
-            loser_file_path = f"{loser_dir_path}{DIR_SYMBOL}{time}.csv"
+            loser_file_path = f"{loser_dir_path}{DIR_SYMBOL}{time_str}.csv"
             df = pd.DataFrame(losers)
             df.to_csv(loser_file_path, index=False)
 
@@ -228,7 +228,7 @@ class TopGainersLosersPortfolio(object):
                 msg = f"{msg}执行多头合约：{new_gainer_count}\n"
 
             new_loser_count = 0
-            for token in short_tokens.keys():
+            for token in short_tokens:
                 setting = self.new_strategy(token, Direction.SHORT)
                 if setting:
                     new_loser_count += 1
