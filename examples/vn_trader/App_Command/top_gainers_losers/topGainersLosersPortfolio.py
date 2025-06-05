@@ -131,7 +131,7 @@ class TopGainersLosersPortfolio(object):
                     if token in top_gainer_tokens:
                         aboard_time = data.get("aboard", 0)
                         top_time = data.get("top", 0)
-                        if not top_time:
+                        if not top_time and len(gainers_data) >= 20:
                             top_time = time.time()
                             data["top"] = top_time
 
@@ -153,7 +153,7 @@ class TopGainersLosersPortfolio(object):
                     if token in top_losers_tokens:
                         aboard_time = data.get("aboard", 0)
                         top_time = data.get("top", 0)
-                        if not top_time:
+                        if not top_time and len(losers_data) >= 20:
                             top_time = time.time()
                             data["top"] = top_time
 
