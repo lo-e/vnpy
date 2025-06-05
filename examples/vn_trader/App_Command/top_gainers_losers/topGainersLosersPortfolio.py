@@ -119,23 +119,25 @@ class TopGainersLosersPortfolio(object):
                 elif token not in self.losers_data:
                     self.losers_data[token] = time.time()
 
-            # 统计做多代币
             top_gainer_tokens = list(gainers_data.keys())[0:3] if len(gainers_data) > 3 else []
             long_tokens = []
             for token, aboard_time in self.gainers_data.copy().items():
+                # 清除未上榜代币
                 if token not in gainers_data:
                     self.gainers_data.pop(token)
 
+                # 统计做多代币
                 elif token in top_gainer_tokens and aboard_time and time.time() - aboard_time <= 10*60:
                     long_tokens.append(token)
             
-            # 统计做空代币
             top_losers_tokens = list(losers_data.keys())[0:3] if len(losers_data) > 3 else []
             short_tokens = []
             for token, aboard_time in self.losers_data.copy().items():
+                # 清除未上榜代币
                 if token not in losers_data:
                     self.losers_data.pop(token)
                 
+                # 统计做空代币
                 elif token in top_losers_tokens and aboard_time and time.time() - aboard_time <= 10*60:
                     short_tokens.append(token)
 
@@ -184,14 +186,14 @@ class TopGainersLosersPortfolio(object):
                 
                 if strategy.direction == Direction.LONG:
                     if pure_symbol in long_tokens:
-                        long_tokens.pop(pure_symbol)
+                        long_tokens.remove(pure_symbol)
 
                     else:
                         close_long_strategies.append(strategy)
                 
                 if strategy.direction == Direction.SHORT:
                     if pure_symbol in short_tokens:
-                        short_tokens.pop(pure_symbol)
+                        short_tokens.remove(pure_symbol)
 
                     else:
                         close_short_strategies.append(strategy)
