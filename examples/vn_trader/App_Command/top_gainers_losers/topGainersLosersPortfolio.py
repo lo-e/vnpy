@@ -102,10 +102,10 @@ class TopGainersLosersPortfolio(object):
                 gainers_data[token] = percent
 
                 if initing:
-                    self.gainers_data[token] = 0
+                    self.gainers_data[token] = {}
                 
                 elif token not in self.gainers_data:
-                    self.gainers_data[token] = time.time()
+                    self.gainers_data[token] = {"aboard": time.time()}
 
             for i in range(len(losers)):
                 data = losers[i]
@@ -114,21 +114,32 @@ class TopGainersLosersPortfolio(object):
                 losers_data[token] = percent
 
                 if initing:
-                    self.losers_data[token] = 0
+                    self.losers_data[token] = {}
                 
                 elif token not in self.losers_data:
-                    self.losers_data[token] = time.time()
+                    self.losers_data[token] = {"aboard": time.time()}
 
             top_gainer_tokens = list(gainers_data.keys())[0:3] if len(gainers_data) > 3 else []
             long_tokens = []
-            for token, aboard_time in self.gainers_data.copy().items():
+            for token, data in self.gainers_data.copy().items():
                 # 清除未上榜代币
                 if token not in gainers_data:
                     self.gainers_data.pop(token)
 
-                # 统计做多代币
-                elif token in top_gainer_tokens and aboard_time and time.time() - aboard_time <= 10*60:
-                    long_tokens.append(token)
+                else:
+                    # 统计做多代币
+                    if token in top_gainer_tokens:
+                        aboard_time = data.get("aboard", 0)
+                        top_time = data.get("top", 0)
+                        if not top_time:
+                            top_time = time.time()
+                            data["top"] = top_time
+
+                        if aboard_time and top_time - aboard_time <= 10*60:
+                            long_tokens.append(token)
+
+                    else:
+                        data["top"] = 0
             
             top_losers_tokens = list(losers_data.keys())[0:3] if len(losers_data) > 3 else []
             short_tokens = []
@@ -137,9 +148,20 @@ class TopGainersLosersPortfolio(object):
                 if token not in losers_data:
                     self.losers_data.pop(token)
                 
-                # 统计做空代币
-                elif token in top_losers_tokens and aboard_time and time.time() - aboard_time <= 10*60:
-                    short_tokens.append(token)
+                else:
+                    # 统计做空代币
+                    if token in top_losers_tokens:
+                        aboard_time = data.get("aboard", 0)
+                        top_time = data.get("top", 0)
+                        if not top_time:
+                            top_time = time.time()
+                            data["top"] = top_time
+
+                        if aboard_time and top_time - aboard_time <= 10*60:
+                            short_tokens.append(token)
+
+                    else:
+                        data["top"] = 0
 
             # 计算均值
             mean_gainers_percent = pd.DataFrame(gainers)["percent"].mean()
