@@ -120,15 +120,14 @@ class TopGainersLosersPortfolio(object):
                     self.losers_data[token] = {"aboard": time.time()}
 
             top_gainer_tokens = []
-            sorted_percents = sorted(set(gainers_data.values()), reverse=True)
-            percent_line = sorted_percents[2] if len(sorted_percents) >= 3 else 0
-            if percent_line:
-                for t, p in gainers_data.items():
-                    if abs(p) >= percent_line:
-                        top_gainer_tokens.append(t)
-                    
-                    else:
-                        break
+            top_percent = 0
+            for t, p in gainers_data.items():
+                if len(top_gainer_tokens) < 3 or abs(p) >= abs(top_percent):
+                    top_gainer_tokens.append(t)
+                    top_percent = p
+
+                else:
+                    break
 
             long_tokens = []
             for token, data in self.gainers_data.copy().items():
@@ -152,15 +151,14 @@ class TopGainersLosersPortfolio(object):
                         data["top"] = 0
             
             top_losers_tokens = []
-            sorted_percents = sorted(set(losers_data.values()), reverse=False)
-            percent_line = sorted_percents[2] if len(sorted_percents) >= 3 else 0
-            if percent_line:
-                for t, p in losers_data.items():
-                    if abs(p) >= abs(percent_line):
-                        top_losers_tokens.append(t)
-                    
-                    else:
-                        break
+            top_percent = 0
+            for t, p in losers_data.items():
+                if len(top_losers_tokens) < 3 or abs(p) >= abs(top_percent):
+                    top_losers_tokens.append(t)
+                    top_percent = p
+
+                else:
+                    break
                         
             short_tokens = []
             for token, data in self.losers_data.copy().items():
