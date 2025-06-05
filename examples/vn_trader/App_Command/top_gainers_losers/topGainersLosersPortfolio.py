@@ -156,7 +156,7 @@ class TopGainersLosersPortfolio(object):
             percent_line = sorted_percents[2] if len(sorted_percents) >= 3 else 0
             if percent_line:
                 for t, p in losers_data.items():
-                    if abs(p) >= percent_line:
+                    if abs(p) >= abs(percent_line):
                         top_losers_tokens.append(t)
                     
                     else:
