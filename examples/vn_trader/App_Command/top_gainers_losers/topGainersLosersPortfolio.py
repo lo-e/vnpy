@@ -119,7 +119,17 @@ class TopGainersLosersPortfolio(object):
                 elif token not in self.losers_data:
                     self.losers_data[token] = {"aboard": time.time()}
 
-            top_gainer_tokens = list(gainers_data.keys())[0:3] if len(gainers_data) > 3 else []
+            top_gainer_tokens = []
+            sorted_percents = sorted(set(gainers_data.values()), reverse=True)
+            percent_line = sorted_percents[2] if len(sorted_percents) >= 3 else 0
+            if percent_line:
+                for t, p in gainers_data.items():
+                    if abs(p) >= percent_line:
+                        top_gainer_tokens.append(t)
+                    
+                    else:
+                        break
+
             long_tokens = []
             for token, data in self.gainers_data.copy().items():
                 # 清除未上榜代币
@@ -141,7 +151,17 @@ class TopGainersLosersPortfolio(object):
                     else:
                         data["top"] = 0
             
-            top_losers_tokens = list(losers_data.keys())[0:3] if len(losers_data) > 3 else []
+            top_losers_tokens = []
+            sorted_percents = sorted(set(losers_data.values()), reverse=False)
+            percent_line = sorted_percents[2] if len(sorted_percents) >= 3 else 0
+            if percent_line:
+                for t, p in losers_data.items():
+                    if abs(p) >= percent_line:
+                        top_losers_tokens.append(t)
+                    
+                    else:
+                        break
+                        
             short_tokens = []
             for token, data in self.losers_data.copy().items():
                 # 清除未上榜代币
