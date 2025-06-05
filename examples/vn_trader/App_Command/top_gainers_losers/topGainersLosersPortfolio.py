@@ -143,7 +143,7 @@ class TopGainersLosersPortfolio(object):
             
             top_losers_tokens = list(losers_data.keys())[0:3] if len(losers_data) > 3 else []
             short_tokens = []
-            for token, aboard_time in self.losers_data.copy().items():
+            for token, data in self.losers_data.copy().items():
                 # 清除未上榜代币
                 if token not in losers_data:
                     self.losers_data.pop(token)
