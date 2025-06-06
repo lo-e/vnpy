@@ -100,6 +100,154 @@ class Chrome(object):
             
             time.sleep(rest)
 
+    def fetch_long_vs_short(self, callback = None, rest: int = 60) -> None:
+        driver = None
+        driver_reboot = True
+        init_fetch = False
+        while True:
+            try:
+                # 启动浏览器
+                if driver_reboot:
+                    print(f"Chrome启动")
+                    self.quit_driver(driver)
+                    driver = self.load_driver()
+
+                driver_reboot = False
+                url = "https://www.coinglass.com/zh/gainers-losers"
+                if not init_fetch:
+                    driver.get(url)
+                    init_fetch = True
+                
+                else:
+                    driver.refresh()
+                
+                tab_buttons_wait = WebDriverWait(driver, timeout=5).until(EC.presence_of_all_elements_located((By.XPATH, "//button[@role='tab']")))
+                tab_buttons = driver.find_elements(
+                    By.XPATH,
+                    "//button[@role='tab']",
+                )
+                for button in tab_buttons:
+                    if "人数多空比" in button.text:
+                        button.click()
+                        break
+                
+                duration_list_wait = WebDriverWait(driver, timeout=5).until(EC.presence_of_all_elements_located((By.XPATH, "//th/div[@class='ant-table-column-sorters']")))
+                duration_list = driver.find_elements(
+                    By.XPATH,
+                    "//th/div[@class='ant-table-column-sorters']",
+                )
+                target_duration = None
+                for duration in duration_list:
+                    if "1小时" in duration.text:
+                        target_duration = duration
+                        break
+                
+                down_up_list = []
+                up_down_list = []
+
+                up_selected = False
+                try_count = 0
+                while not up_selected and try_count < 5:
+                    try:
+                        target_duration.click()
+                        caret_up = target_duration.find_elements(
+                            By.XPATH,
+                            "span/span/span[@aria-label='caret-up']",
+                        )[0]
+
+                        caret_up_class = caret_up.get_attribute("class")
+                        if "active" in caret_up_class:
+                            up_selected = True
+                    
+                    except Exception as e:
+                        pass
+                    try_count += 1
+
+                if up_selected:
+                    # 获取空到多排行榜
+                    row_list = driver.find_elements(
+                        By.XPATH,
+                        "//tr[@class='ant-table-row ant-table-row-level-0']",
+                        )
+                    for row in row_list:
+                        data = self.get_long_short_data(row)
+                        down_up_list.append(data)
+
+                down_selected = False
+                try_count = 0
+                while not down_selected and try_count < 5:
+                    try:
+                        target_duration.click()
+                        caret_down = target_duration.find_elements(
+                            By.XPATH,
+                            "span/span/span[@aria-label='caret-down']",
+                        )[0]
+
+                        caret_down_class = caret_down.get_attribute("class")
+                        if "active" in caret_down_class:
+                            down_selected = True
+                    
+                    except Exception as e:
+                        pass
+                    try_count += 1
+
+                if down_selected:
+                    # 获取多到空排行榜
+                    row_list = driver.find_elements(
+                        By.XPATH,
+                        "//tr[@class='ant-table-row ant-table-row-level-0']",
+                        )
+                    for row in row_list:
+                        data = self.get_long_short_data(row)
+                        up_down_list.append(data)
+
+                if callback:
+                    callback((down_up_list, up_down_list))
+            
+            except Exception as e:
+                print(str(e))
+            
+            time.sleep(rest)
+
+    def get_long_short_data(self, item):
+        # 交易所
+        exchange = ""
+        exchange_key = item.get_attribute("data-row-key")
+        if "OKX" in exchange_key.upper():
+            exchange = "OKX"
+
+        if "BYBIT" in exchange_key.upper():
+            exchange = "BYBIT"
+
+        if "BINANCE" in exchange_key.upper():
+            exchange = "BINANCE"
+
+        # 合约
+        symbol_item = item.find_elements(
+            By.XPATH,
+            "td/div/a/div/div",
+            )[0]
+        symbol = symbol_item.text
+
+        # 多空比
+        rate = item.find_elements(
+            By.XPATH,
+            "td[@class='ant-table-cell']",
+            )[2].text
+        rate = float(rate)
+        
+        # 1小时变化
+        change = item.find_elements(
+            By.XPATH,
+            "td[@class='ant-table-cell ant-table-column-sort']",
+            )[0].text
+        change = float(change.split("%")[0])
+
+        data = {"symbol": f"{symbol}.{exchange}",
+                "rate": rate,
+                "change": change}
+        return data
+
     def on_top_gainers_losers(self, data: tuple):
         gainers, losers = data
         for i in range(len(gainers) + len(losers)):
@@ -152,6 +300,46 @@ class Chrome(object):
         df = pd.DataFrame(losers)
         df.to_csv(loser_file_path, index=False)
 
+    def on_long_vs_short(self, data: tuple):
+        down_up_list, up_down_list = data
+        print(f"多空比递增 {len(down_up_list)} 多空比递减 {len(up_down_list)}")
+
+        if down_up_list and up_down_list:
+            # 保存到文件
+            mean_down_up_rate = pd.DataFrame(down_up_list)["rate"].mean()
+            mean_down_up_change = pd.DataFrame(down_up_list)["change"].mean()
+            mean_down_up_data = {"symbol": "mean_down_up",
+                                 "rate": mean_down_up_rate,
+                                 "change": mean_down_up_change}
+            
+            mean_up_down_rate = pd.DataFrame(up_down_list)["rate"].mean()
+            mean_up_down_change = pd.DataFrame(up_down_list)["change"].mean()
+            mean_up_down_data = {"symbol": "mean_up_down",
+                                 "rate": mean_up_down_rate,
+                                 "change": mean_up_down_change}
+            
+            down_up_list.insert(0, mean_down_up_data)
+            down_up_list.insert(0, mean_up_down_data)
+            up_down_list.insert(0, mean_down_up_data)
+            up_down_list.insert(0, mean_up_down_data)
+
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            date = datetime.now().strftime(f"%Y-%m-%d")
+            hour = datetime.now().hour
+            time = datetime.now().strftime(f"%H_%M_%S")
+
+            down_up_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}ls_rate_up{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            os.makedirs(down_up_dir_path, exist_ok=True)
+            down_up_file_path = f"{down_up_dir_path}{DIR_SYMBOL}{time}.csv"
+            df = pd.DataFrame(down_up_list)
+            df.to_csv(down_up_file_path, index=False)
+
+            up_down_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}ls_rate_down{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            os.makedirs(up_down_dir_path, exist_ok=True)
+            up_down_file_path = f"{up_down_dir_path}{DIR_SYMBOL}{time}.csv"
+            df = pd.DataFrame(up_down_list)
+            df.to_csv(up_down_file_path, index=False)
+
     def load_driver(self):
         # 加载浏览器
         # 获取当前文件所在路径
@@ -180,4 +368,5 @@ class Chrome(object):
 
 if __name__ == "__main__":
     chrome = Chrome(cta_engine=None)
-    Thread(target=chrome.fetch_top_gainers_losers, args=(chrome.on_top_gainers_losers, 10)).start()
+    # Thread(target=chrome.fetch_top_gainers_losers, args=(chrome.on_top_gainers_losers, 10)).start()
+    Thread(target=chrome.fetch_long_vs_short, args=(chrome.on_long_vs_short, 10)).start()

@@ -58,7 +58,8 @@ class TopGainersLosersPortfolio(object):
 
         # 启动Chrome获取涨跌幅排行榜
         chrome = Chrome(cta_engine=None)
-        Thread(target=chrome.fetch_top_gainers_losers, args=(self.on_top_gainers_losers, 10)).start()
+        # Thread(target=chrome.fetch_top_gainers_losers, args=(self.on_top_gainers_losers, 10)).start()
+        Thread(target=chrome.fetch_long_vs_short, args=(chrome.on_long_vs_short, 10)).start()
 
         # Bar下载
         Thread(target=self.download_bar).start()
@@ -289,6 +290,9 @@ class TopGainersLosersPortfolio(object):
             msg = f"处理涨跌代币数据出错\n\n{e}"
             self.send_ding_talk(msg)
             print(msg)
+
+    def on_long_vs_short(self, data: tuple):
+        down_up_list, up_down_list = data
 
     def new_strategy(self, token:str, direction: Direction):
         # 确认合约
