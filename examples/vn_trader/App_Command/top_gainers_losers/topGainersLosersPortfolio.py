@@ -144,7 +144,7 @@ class TopGainersLosersPortfolio(object):
                             top_time = time.time()
                             data["top"] = top_time
 
-                        if aboard_time and top_time - aboard_time <= 10*60:
+                        if aboard_time and top_time and top_time - aboard_time <= 10*60:
                             long_tokens.append(token)
 
                     else:
@@ -175,7 +175,7 @@ class TopGainersLosersPortfolio(object):
                             top_time = time.time()
                             data["top"] = top_time
 
-                        if aboard_time and top_time - aboard_time <= 10*60:
+                        if aboard_time and top_time and top_time - aboard_time <= 10*60:
                             short_tokens.append(token)
 
                     else:
