@@ -145,16 +145,16 @@ class SupportResistanceStrategy(CtaTemplate):
             self.send_ding_talk(msg)
 
     def on_tick(self, tick: TickData):
-        if not self.trading or self.completed:
+        if not self.trading:
             return
         
         self.tick = copy(tick)
-        target_pos_updated = False
+        if self.completed:
+            return
+        
         if not self.entry:
             # 开仓
             if self.down_price < tick.last_price < self.up_price:
-                self.entry = True
-
                 # 计算仓位
                 if self.direction == Direction.LONG:
                     est_loss_rate = abs((self.down_price / tick.last_price) - 1)
@@ -165,19 +165,28 @@ class SupportResistanceStrategy(CtaTemplate):
                 self.target_pos = self.portfolio.portfolioValue * self.multiple * leverage / tick.last_price
                 if self.direction == Direction.SHORT:
                     self.target_pos = self.target_pos * -1
+                self.entry = True
 
                 # 精度处理
                 contract = self.cta_engine.main_engine.get_contract(self.vt_symbol)
                 self.target_pos = round_to(self.target_pos, contract.min_volume)
 
-                target_pos_updated = True
+                if self.direction == Direction.LONG:
+                    # 多头开仓
+                    trade_price = self.tick.last_price * 1.005
+                    self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(self.target_pos))
+                
+                elif self.direction == Direction.SHORT:
+                    # 空头开仓
+                    trade_price = self.tick.last_price * 0.995
+                    self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(self.target_pos))
 
         # 平仓
         if tick.last_price >= self.up_price or tick.last_price <= self.down_price:
             if self.entry:
                 if self.target_pos:
                     self.target_pos = 0
-                    target_pos_updated = True
+                    self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
 
             else:
                 self.on_complete()
@@ -194,7 +203,7 @@ class SupportResistanceStrategy(CtaTemplate):
                 # 多头过半止盈
                 if self.profit_half and tick.last_price <= self.high_price - abs(self.high_price - self.open_price) * 0.9:
                     self.target_pos = 0
-                    target_pos_updated = True
+                    self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
 
             elif self.direction == Direction.SHORT:
                 # 空头开仓后最低价
@@ -207,13 +216,7 @@ class SupportResistanceStrategy(CtaTemplate):
                 # 空头过半止盈
                 if self.profit_half and tick.last_price >= self.low_price + abs(self.open_price - self.low_price) * 0.9:
                     self.target_pos = 0
-                    target_pos_updated = True
-
-        if target_pos_updated:
-            self.target_pos_check_ts = time.time() - 10
-            if not self.target_pos_checking:
-                self.target_pos_checking = True
-                Thread(target=self.check_target_pos).start()
+                    self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
 
     def on_timer(self):
         strategy_data = self.get_data()
@@ -225,70 +228,6 @@ class SupportResistanceStrategy(CtaTemplate):
             # print(f"{dt} 同步数据..")
         super().on_timer()
         
-    def check_target_pos(self):
-        self.target_pos_checking = True
-        result = False
-        cancel_ts = 0
-        while True:
-            try:
-                if self.tick and self.target_pos != self.pos and time.time() >= self.target_pos_check_ts + 3:
-                    self.target_pos_check_ts = time.time()
-
-                    # 撮合交易
-                    if self.direction == Direction.LONG:
-                        if self.target_pos < 0 or self.pos < 0:
-                            msg = f"仓位异常\n\n合约 {self.vt_symbol}\n方向 {self.direction.value}\n目标 {self.target_pos}\n当前 {self.pos}"
-                            self.send_ding_talk(msg)
-                            break
-
-                        gap = self.target_pos - self.pos
-                        if gap > 0:
-                            # 多头开仓
-                            trade_price = self.tick.last_price * 1.005
-                            self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(gap))
-                        
-                        elif gap < 0:
-                            # 多头平仓
-                            trade_price = self.tick.last_price * 0.995
-                            self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(gap))
-
-                    if self.direction == Direction.SHORT:
-                        if self.target_pos > 0 or self.pos > 0:
-                            msg = f"仓位异常\n\n合约 {self.vt_symbol}\n方向 {self.direction.value}\n目标 {self.target_pos}\n当前 {self.pos}"
-                            self.send_ding_talk(msg)
-                            break
-
-                        gap = abs(self.target_pos) - abs(self.pos)
-                        if gap > 0:
-                            # 空头开仓
-                            trade_price = self.tick.last_price * 0.995
-                            self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(gap))
-                        
-                        elif gap < 0:
-                            # 空头平仓
-                            trade_price = self.tick.last_price * 1.005
-                            self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(gap))
-
-                elif self.target_pos == self.pos and time.time() >= self.target_pos_check_ts + 3:
-                    if time.time() >= cancel_ts + 3:
-                        cancel_ts = time.time()
-                        self.cancel_all()
-
-                    if time.time() >= self.target_pos_check_ts + 60:
-                        result = True
-                        break
-
-            except Exception as e:
-                msg = f"核查目标仓位出错\n\n合约 {self.vt_symbol}\n方向 {self.direction.value}\n目标 {self.target_pos}\n当前 {self.pos}\n{e}"
-                self.send_ding_talk(msg)
-                break
-
-        # 判断策略是否完成
-        if result and self.entry and self.target_pos == 0:
-            self.on_complete()
-        
-        self.target_pos_checking = False
-
     def send_order(self, direction, offset, price, volume):
         # 撤回历史订单
         self.cancel_all()
