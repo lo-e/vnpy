@@ -17,8 +17,8 @@ from App_Command.trending_sniper.engine import TrendingSniperEngine
 from App_Command.top_gainers_losers.engine import TopGainersLosersEngine
 
 # GATEWAYS = [[OkxGateway, "lo-e"], [BybitGateway, "loesuperman"], [BinanceUsdtGateway, "lo-e"]]
-GATEWAYS = [[OkxGateway, "lo-e"], [BybitGateway, "loesuperman"]]
-# GATEWAYS = [[OkxGateway, "lo-e(test)"]]
+# GATEWAYS = [[OkxGateway, "lo-e(test)"], [BybitGateway, "loesuperman(test)"], [BinanceUsdtGateway, "lo-e(test)"]]
+GATEWAYS = [[OkxGateway, "lo-e"]]
 class DurationBar(object):
     def __init__(self) -> None:
         self.vt_symbol: str = ""
@@ -191,10 +191,10 @@ def main():
     # trendign_sniper_app.start_portfolio()
 
     # 执行策略（TopGainersLosers）
-    top_gainers_losers_app = TopGainersLosersEngine(main_engine=main_engine, event_engine=event_engine)
-    top_gainers_losers_app.init_engine()
-    top_gainers_losers_app.init_portfolio()
-    top_gainers_losers_app.start_portfolio()
+    # top_gainers_losers_app = TopGainersLosersEngine(main_engine=main_engine, event_engine=event_engine)
+    # top_gainers_losers_app.init_engine()
+    # top_gainers_losers_app.init_portfolio()
+    # top_gainers_losers_app.start_portfolio()
     
 if __name__ == "__main__":
     main()
