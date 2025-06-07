@@ -103,7 +103,7 @@ class Chrome(object):
             
             time.sleep(rest)
 
-    def fetch_long_vs_short(self, callback = None, rest: int = 60) -> None:
+    def fetch_rise_fall_long_short(self, callback = None, rest: int = 60) -> None:
         driver = None
         driver_reboot = True
         while True:
@@ -231,42 +231,45 @@ class Chrome(object):
                     By.XPATH,
                     "span/span",
                 )[0]
+                bybit_checked_need = True
                 bybit_checked = "checked" in bybit_show.get_attribute("class")
                 try_count = 0
-                while not bybit_checked and try_count < 5:
+                while bybit_checked != bybit_checked_need and try_count < 5:
                     bybit_switch.click()
                     bybit_checked = "checked" in bybit_show.get_attribute("class")
                     try_count += 1
 
-                if not bybit_checked:
+                if bybit_checked != bybit_checked_need:
                     continue
-
+                
                 binance_show = binance_switch.find_elements(
                     By.XPATH,
                     "span/span",
                 )[0]
+                binance_checked_need = False
                 binance_checked = "checked" in binance_show.get_attribute("class")
                 try_count = 0
-                while binance_checked and try_count < 5:
+                while binance_checked != binance_checked_need and try_count < 5:
                     binance_switch.click()
                     binance_checked = "checked" in binance_show.get_attribute("class")
                     try_count += 1
 
-                if binance_checked:
+                if binance_checked != binance_checked_need:
                     continue
-
+                    
                 okx_show = okx_switch.find_elements(
                     By.XPATH,
                     "span/span",
                 )[0]
+                okx_checked_need = False
                 okx_checked = "checked" in okx_show.get_attribute("class")
                 try_count = 0
-                while okx_checked and try_count < 5:
+                while okx_checked != okx_checked_need and try_count < 5:
                     okx_switch.click()
                     okx_checked = "checked" in okx_show.get_attribute("class")
                     try_count += 1
 
-                if okx_checked:
+                if okx_checked != okx_checked_need:
                     continue
                 
                 # 按小时排序
@@ -366,10 +369,15 @@ class Chrome(object):
         symbol = symbol_item.text
 
         # 多空比
-        rate = item.find_elements(
-            By.XPATH,
-            "td[@class='ant-table-cell']",
-            )[2].text
+        colume_list = []
+        try_count = 0
+        while len(colume_list) < 9 and try_count < 5:
+            colume_list = item.find_elements(
+                By.XPATH,
+                "td[@class='ant-table-cell']",
+                )
+            time.sleep(0.2)
+        rate = colume_list[2].text
         rate = float(rate)
         
         # 1小时变化
@@ -472,6 +480,10 @@ class Chrome(object):
             mean_up_down_data = {"symbol": "mean_up_down",
                                  "rate": mean_up_down_rate,
                                  "change": mean_up_down_change}
+            
+            # msg = f"mean_up_down {mean_up_down_change}\nmean_down_up {mean_down_up_change}\n"
+            # print(msg)
+            # return
             
             down_up_list.insert(0, mean_down_up_data)
             down_up_list.insert(0, mean_up_down_data)
@@ -596,4 +608,4 @@ if __name__ == "__main__":
     dingtalk = DingTalkEngine()
 
     # Thread(target=chrome.fetch_top_gainers_losers, args=(chrome.on_top_gainers_losers, 10)).start()
-    Thread(target=chrome.fetch_long_vs_short, args=(chrome.on_rise_fall_long_short, 10)).start()
+    Thread(target=chrome.fetch_rise_fall_long_short, args=(chrome.on_rise_fall_long_short, 10)).start()
