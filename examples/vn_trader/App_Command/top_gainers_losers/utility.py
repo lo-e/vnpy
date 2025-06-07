@@ -103,7 +103,6 @@ class Chrome(object):
     def fetch_long_vs_short(self, callback = None, rest: int = 60) -> None:
         driver = None
         driver_reboot = True
-        init_fetch = False
         while True:
             try:
                 # 启动浏览器
@@ -112,16 +111,14 @@ class Chrome(object):
                     self.quit_driver(driver)
                     driver = self.load_driver()
 
-                driver_reboot = False
-                url = "https://www.coinglass.com/zh/gainers-losers"
-                if not init_fetch:
+                    driver_reboot = False
+                    url = "https://www.coinglass.com/zh/gainers-losers"
                     driver.get(url)
-                    init_fetch = True
                 
                 else:
                     driver.refresh()
                 
-                tab_buttons_wait = WebDriverWait(driver, timeout=5).until(EC.presence_of_all_elements_located((By.XPATH, "//button[@role='tab']")))
+                _ = WebDriverWait(driver, timeout=5).until(EC.presence_of_all_elements_located((By.XPATH, "//button[@role='tab']")))
                 tab_buttons = driver.find_elements(
                     By.XPATH,
                     "//button[@role='tab']",
@@ -131,7 +128,70 @@ class Chrome(object):
                         button.click()
                         break
                 
-                duration_list_wait = WebDriverWait(driver, timeout=5).until(EC.presence_of_all_elements_located((By.XPATH, "//th/div[@class='ant-table-column-sorters']")))
+                bybit_switch = None
+                binance_switch = None
+                okx_switch = None
+                refresh_button = None
+                _ = WebDriverWait(driver, timeout=5).until(EC.presence_of_all_elements_located((By.XPATH, "//div/ul/li")))
+                switch_buttons = driver.find_elements(
+                    By.XPATH,
+                    "//div/ul/li",
+                )
+                for i in range(len(switch_buttons)):
+                    button = switch_buttons[i]
+                    if button.text.upper() == "BYBIT":
+                        bybit_switch = button
+                        binance_switch = switch_buttons[i+1]
+                        okx_switch = switch_buttons[i+2]
+                        refresh_button = switch_buttons[i+3]
+                        break
+
+                bybit_show = bybit_switch.find_elements(
+                    By.XPATH,
+                    "span/span",
+                )[0]
+                bybit_checked = "checked" in bybit_show.get_attribute("class")
+                try_count = 0
+                while not bybit_checked and try_count < 5:
+                    bybit_switch.click()
+                    bybit_checked = "checked" in bybit_show.get_attribute("class")
+                    try_count += 1
+
+                if not bybit_checked:
+                    driver_reboot = True
+                    continue
+
+                binance_show = binance_switch.find_elements(
+                    By.XPATH,
+                    "span/span",
+                )[0]
+                binance_checked = "checked" in binance_show.get_attribute("class")
+                try_count = 0
+                while binance_checked and try_count < 5:
+                    binance_switch.click()
+                    binance_checked = "checked" in binance_show.get_attribute("class")
+                    try_count += 1
+
+                if binance_checked:
+                    driver_reboot = True
+                    continue
+
+                okx_show = okx_switch.find_elements(
+                    By.XPATH,
+                    "span/span",
+                )[0]
+                okx_checked = "checked" in okx_show.get_attribute("class")
+                try_count = 0
+                while okx_checked and try_count < 5:
+                    okx_switch.click()
+                    okx_checked = "checked" in okx_show.get_attribute("class")
+                    try_count += 1
+
+                if okx_checked:
+                    driver_reboot = True
+                    continue
+
+                _ = WebDriverWait(driver, timeout=5).until(EC.presence_of_all_elements_located((By.XPATH, "//th/div[@class='ant-table-column-sorters']")))
                 duration_list = driver.find_elements(
                     By.XPATH,
                     "//th/div[@class='ant-table-column-sorters']",
@@ -205,6 +265,7 @@ class Chrome(object):
                     callback((down_up_list, up_down_list))
             
             except Exception as e:
+                driver_reboot = True
                 print(str(e))
             
             time.sleep(rest)
