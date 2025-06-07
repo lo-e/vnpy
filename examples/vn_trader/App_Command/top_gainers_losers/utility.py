@@ -370,6 +370,7 @@ class Chrome(object):
                 "td/div/a/div/div",
                 )
             time.sleep(0.2)
+            try_count += 1
             
         symbol_item = colume_list[0]
         symbol = symbol_item.text
@@ -383,6 +384,7 @@ class Chrome(object):
                 "td[@class='ant-table-cell']",
                 )
             time.sleep(0.2)
+            try_count += 1
         rate = colume_list[2].text
         rate = float(rate)
         
@@ -394,12 +396,15 @@ class Chrome(object):
                 By.XPATH,
                 "td[@class='ant-table-cell ant-table-column-sort']",
                 )
+            time.sleep(0.2)
+            try_count += 1
         change = colume_list[0].text
         change = float(change.split("%")[0])
 
         data = {"symbol": f"{symbol}.{exchange}",
                 "rate": rate,
                 "change": change}
+        
         return data
 
     def get_rise_fall_data(self, item):
