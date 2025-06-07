@@ -158,7 +158,6 @@ class Chrome(object):
                     try_count += 1
 
                 if not bybit_checked:
-                    driver_reboot = True
                     continue
 
                 binance_show = binance_switch.find_elements(
@@ -173,7 +172,6 @@ class Chrome(object):
                     try_count += 1
 
                 if binance_checked:
-                    driver_reboot = True
                     continue
 
                 okx_show = okx_switch.find_elements(
@@ -188,7 +186,6 @@ class Chrome(object):
                     try_count += 1
 
                 if okx_checked:
-                    driver_reboot = True
                     continue
 
                 _ = WebDriverWait(driver, timeout=5).until(EC.presence_of_all_elements_located((By.XPATH, "//th/div[@class='ant-table-column-sorters']")))
@@ -265,7 +262,6 @@ class Chrome(object):
                     callback((down_up_list, up_down_list))
             
             except Exception as e:
-                driver_reboot = True
                 print(str(e))
             
             time.sleep(rest)
