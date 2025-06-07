@@ -362,43 +362,23 @@ class Chrome(object):
             exchange = "BINANCE"
 
         # 合约
-        colume_list = []
-        try_count = 0
-        while len(colume_list) < 1 and try_count < 5:
-            colume_list = item.find_elements(
-                By.XPATH,
-                "td/div/a/div/div",
-                )
-            time.sleep(0.2)
-            try_count += 1
-            
-        symbol_item = colume_list[0]
-        symbol = symbol_item.text
+        symbol = item.find_elements(
+            By.XPATH,
+            "td/div/a/div/div",
+            )[0].text
 
         # 多空比
-        colume_list = []
-        try_count = 0
-        while len(colume_list) < 9 and try_count < 5:
-            colume_list = item.find_elements(
-                By.XPATH,
-                "td[@class='ant-table-cell']",
-                )
-            time.sleep(0.2)
-            try_count += 1
-        rate = colume_list[2].text
+        rate = item.find_elements(
+            By.XPATH,
+            "td[@class='ant-table-cell']",
+            )[2].text
         rate = float(rate)
         
         # 1小时变化
-        colume_list = []
-        try_count = 0
-        while len(colume_list) < 1 and try_count < 5:
-            colume_list = item.find_elements(
-                By.XPATH,
-                "td[@class='ant-table-cell ant-table-column-sort']",
-                )
-            time.sleep(0.2)
-            try_count += 1
-        change = colume_list[0].text
+        change = item.find_elements(
+            By.XPATH,
+            "td[@class='ant-table-cell ant-table-column-sort']",
+            )[0].text
         change = float(change.split("%")[0])
 
         data = {"symbol": f"{symbol}.{exchange}",
