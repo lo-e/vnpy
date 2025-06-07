@@ -127,10 +127,88 @@ class Chrome(object):
                     "//button[@role='tab']",
                 )
                 for button in tab_buttons:
+                    if "涨跌榜" in button.text:
+                        button.click()
+                        break
+
+                # 筛选交易所
+                exchange_button = None
+                buttons = driver.find_elements(
+                    By.XPATH,
+                    "//div[@class='MuiBox-root cg-style-0']",
+                    )
+                for button in buttons:
+                    if button.text == "交易所":
+                        exchange_button = button
+                        break
+                
+                select_canceled = False
+                if exchange_button:
+                    exchange_button.click()
+                    select_buttons = driver.find_elements(
+                        By.XPATH,
+                        "//ul/li/ul/li",
+                    )
+                    for button in select_buttons:
+                        exchange = button.text.upper()
+                        try_count = 1
+                        while not exchange and try_count < 5:
+                            time.sleep(0.2)
+                            exchange = button.text.upper()
+                            try_count += 1
+                        if not exchange:
+                            continue
+
+                        select_need = False
+                        if button.text.upper() in ["BINANCE", "BYBIT", "OKX"]:
+                            select_need = True
+
+                        select_show = button.find_elements(
+                            By.XPATH,
+                            "div/span/span",
+                        )[0]
+                        selected = "checked" in select_show.get_attribute("class")
+                        try_count = 0
+                        while selected != select_need and try_count < 5:
+                            select_canceled = True
+                            select_show.click()
+                            selected = "checked" in select_show.get_attribute("class")
+                            try_count += 1
+
+                        if selected != select_need:
+                            continue
+
+                else:
+                    continue
+                exchange_button.click()
+                if select_canceled:
+                    time.sleep(5)
+                
+                # 获取涨跌排行榜
+                rise_list = []
+                fall_list = []
+                row_list = driver.find_elements(
+                    By.XPATH,
+                    "//tr[@class='rc-table-row rc-table-row-level-0']",
+                    )
+                for row in row_list:
+                    data = self.get_rise_fall_data(row)
+                    change = data["change"]
+                    if change > 0:
+                        rise_list.append(data)
+                    
+                    elif change < 0:
+                        fall_list.append(data)
+
+                # 选择多空比
+                down_up_list = []
+                up_down_list = []
+                for button in tab_buttons:
                     if "人数多空比" in button.text:
                         button.click()
                         break
                 
+                # 筛选交易所
                 bybit_switch = None
                 binance_switch = None
                 okx_switch = None
@@ -190,7 +268,8 @@ class Chrome(object):
 
                 if okx_checked:
                     continue
-
+                
+                # 按小时排序
                 _ = WebDriverWait(driver, timeout=5).until(EC.presence_of_all_elements_located((By.XPATH, "//th/div[@class='ant-table-column-sorters']")))
                 duration_list = driver.find_elements(
                     By.XPATH,
@@ -201,9 +280,6 @@ class Chrome(object):
                     if "1小时" in duration.text:
                         target_duration = duration
                         break
-                
-                down_up_list = []
-                up_down_list = []
 
                 up_selected = False
                 try_count = 0
@@ -262,7 +338,7 @@ class Chrome(object):
                         up_down_list.append(data)
 
                 if callback:
-                    callback((down_up_list, up_down_list))
+                    callback((rise_list, fall_list, down_up_list, up_down_list))
             
             except Exception as e:
                 print(str(e))
@@ -305,6 +381,25 @@ class Chrome(object):
 
         data = {"symbol": f"{symbol}.{exchange}",
                 "rate": rate,
+                "change": change}
+        return data
+
+    def get_rise_fall_data(self, item):
+        # 合约
+        symbol_item = item.find_elements(
+            By.XPATH,
+            "td/div/a/div/div",
+            )[0]
+        symbol = symbol_item.text
+
+        # 涨跌幅
+        change = item.find_elements(
+            By.XPATH,
+            "td[@class='rc-table-cell']",
+            )[2].text
+        change = float(change.split("%")[0])
+
+        data = {"symbol": f"{symbol}",
                 "change": change}
         return data
 
@@ -360,11 +455,11 @@ class Chrome(object):
         df = pd.DataFrame(losers)
         df.to_csv(loser_file_path, index=False)
 
-    def on_long_vs_short(self, data: tuple):
-        down_up_list, up_down_list = data
-        print(f"多空比递增 {len(down_up_list)} 多空比递减 {len(up_down_list)}")
+    def on_rise_fall_long_short(self, data: tuple):
+        rise_list, fall_list, down_up_list, up_down_list = data
+        print(f"上涨 {len(rise_list)} 下跌 {len(fall_list)} 多空比递增 {len(down_up_list)} 多空比递减 {len(up_down_list)}")
 
-        if down_up_list and up_down_list:
+        if rise_list and fall_list and down_up_list and up_down_list:
             # 保存到文件
             mean_down_up_rate = pd.DataFrame(down_up_list)["rate"].mean()
             mean_down_up_change = pd.DataFrame(down_up_list)["change"].mean()
@@ -387,6 +482,18 @@ class Chrome(object):
             date = datetime.now().strftime(f"%Y-%m-%d")
             hour = datetime.now().hour
             time = datetime.now().strftime(f"%H_%M_%S")
+
+            rise_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            os.makedirs(rise_dir_path, exist_ok=True)
+            rise_file_path = f"{rise_dir_path}{DIR_SYMBOL}{time}.csv"
+            df = pd.DataFrame(rise_list)
+            df.to_csv(rise_file_path, index=False)
+
+            fall_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            os.makedirs(fall_dir_path, exist_ok=True)
+            fall_file_path = f"{fall_dir_path}{DIR_SYMBOL}{time}.csv"
+            df = pd.DataFrame(fall_list)
+            df.to_csv(fall_file_path, index=False)
 
             down_up_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}ls_rate_up{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             os.makedirs(down_up_dir_path, exist_ok=True)
@@ -487,6 +594,6 @@ class DingTalkEngine(object):
 if __name__ == "__main__":
     chrome = Chrome(cta_engine=None)
     dingtalk = DingTalkEngine()
-    
+
     # Thread(target=chrome.fetch_top_gainers_losers, args=(chrome.on_top_gainers_losers, 10)).start()
-    Thread(target=chrome.fetch_long_vs_short, args=(chrome.on_long_vs_short, 10)).start()
+    Thread(target=chrome.fetch_long_vs_short, args=(chrome.on_rise_fall_long_short, 10)).start()
