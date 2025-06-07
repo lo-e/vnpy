@@ -487,5 +487,6 @@ class DingTalkEngine(object):
 if __name__ == "__main__":
     chrome = Chrome(cta_engine=None)
     dingtalk = DingTalkEngine()
+    
     # Thread(target=chrome.fetch_top_gainers_losers, args=(chrome.on_top_gainers_losers, 10)).start()
     Thread(target=chrome.fetch_long_vs_short, args=(chrome.on_long_vs_short, 10)).start()
