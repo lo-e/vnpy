@@ -141,8 +141,7 @@ class Chrome(object):
                     if button.text == "交易所":
                         exchange_button = button
                         break
-                
-                select_canceled = False
+
                 if exchange_button:
                     exchange_button.click()
                     select_buttons = driver.find_elements(
@@ -170,7 +169,6 @@ class Chrome(object):
                         selected = "checked" in select_show.get_attribute("class")
                         try_count = 0
                         while selected != select_need and try_count < 5:
-                            select_canceled = True
                             select_show.click()
                             selected = "checked" in select_show.get_attribute("class")
                             try_count += 1
@@ -181,8 +179,36 @@ class Chrome(object):
                 else:
                     continue
                 exchange_button.click()
-                if select_canceled:
-                    time.sleep(5)
+
+                # 选择30分钟
+                select_action = False
+                duration_tabs = driver.find_elements(
+                    By.XPATH,
+                    "//div/div/button[@role='tab']",
+                    )
+                target_tab = None
+                for tab in duration_tabs:
+                    if tab.text == "30分钟":
+                        target_tab = tab
+                        break
+
+                if target_tab:
+                    tab_selected = "selected" in target_tab.get_attribute("class")
+                    try_count = 0
+                    while not tab_selected and try_count < 5:
+                        select_action = True
+                        target_tab.click()
+                        tab_selected = "selected" in target_tab.get_attribute("class")
+                        try_count += 1
+
+                    if not tab_selected:
+                        continue
+                    
+                else:
+                    continue
+
+                if select_action:
+                    time.sleep(1)
                 
                 # 获取涨跌排行榜
                 rise_list = []
@@ -521,6 +547,37 @@ class Chrome(object):
             if abs(mean_down_up_change) >= abs(mean_up_down_change) * 2:
                 msg = f"空头过热 准备做多\n\n增幅 {mean_up_down_change}\n降幅 {mean_down_up_change}"
                 dingtalk.send_ding_talk(msg)
+
+            short_msg = ""
+            long_msg = ""
+            for i in range(2, 12):
+                data = up_down_list[i]
+                symbol = data["symbol"]
+                rate = data["rate"]
+                change = data["change"]
+
+                origin_rate = rate / (1 + abs(change) / 100) 
+                if origin_rate < 1.0:
+                    if not short_msg:
+                        short_msg = "趋势做空"
+                    short_msg = f"{short_msg}\n{symbol} {rate} {change}%"
+
+                data = down_up_list[i]
+                symbol = data["symbol"]
+                rate = data["rate"]
+                change = data["change"]
+                
+                origin_rate = rate / (1 + abs(change) / 100) 
+                if origin_rate < 1.0:
+                    if not long_msg:
+                        long_msg = "趋势做多"
+                    long_msg = f"{long_msg}\n{symbol} {rate} {change}%"
+
+            if long_msg:
+                dingtalk.send_ding_talk(long_msg)
+            
+            if short_msg:
+                dingtalk.send_ding_talk(short_msg)
 
     def load_driver(self):
         # 加载浏览器
