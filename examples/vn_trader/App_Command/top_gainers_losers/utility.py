@@ -486,6 +486,8 @@ class Chrome(object):
 
     def on_rise_fall_long_short(self, data: tuple):
         rise_list, fall_list, down_up_list, up_down_list = data
+        rise_list = sorted(rise_list, key=lambda x: x["change"], reverse=True)
+        fall_list = sorted(fall_list, key=lambda x: x["change"], reverse=False)
         print(f"上涨 {len(rise_list)} 下跌 {len(fall_list)} 多空比递增 {len(down_up_list)} 多空比递减 {len(up_down_list)}")
 
         if rise_list and fall_list and down_up_list and up_down_list:
