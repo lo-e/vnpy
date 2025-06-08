@@ -519,26 +519,26 @@ class Chrome(object):
             rise_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             os.makedirs(rise_dir_path, exist_ok=True)
             rise_file_path = f"{rise_dir_path}{DIR_SYMBOL}{time}.csv"
-            df = pd.DataFrame(rise_list)
-            df.to_csv(rise_file_path, index=False)
+            rise_df = pd.DataFrame(rise_list)
+            rise_df.to_csv(rise_file_path, index=False)
 
             fall_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             os.makedirs(fall_dir_path, exist_ok=True)
             fall_file_path = f"{fall_dir_path}{DIR_SYMBOL}{time}.csv"
-            df = pd.DataFrame(fall_list)
-            df.to_csv(fall_file_path, index=False)
+            fall_df = pd.DataFrame(fall_list)
+            fall_df.to_csv(fall_file_path, index=False)
 
             down_up_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}ls_rate_up{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             os.makedirs(down_up_dir_path, exist_ok=True)
             down_up_file_path = f"{down_up_dir_path}{DIR_SYMBOL}{time}.csv"
-            df = pd.DataFrame(down_up_list)
-            df.to_csv(down_up_file_path, index=False)
+            down_up_df = pd.DataFrame(down_up_list)
+            down_up_df.to_csv(down_up_file_path, index=False)
 
             up_down_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}ls_rate_down{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             os.makedirs(up_down_dir_path, exist_ok=True)
             up_down_file_path = f"{up_down_dir_path}{DIR_SYMBOL}{time}.csv"
-            df = pd.DataFrame(up_down_list)
-            df.to_csv(up_down_file_path, index=False)
+            up_down_df = pd.DataFrame(up_down_list)
+            up_down_df.to_csv(up_down_file_path, index=False)
 
             if abs(mean_up_down_change) >= abs(mean_down_up_change) * 2:
                 msg = f"空头过热 准备做多\n\n增幅 {mean_up_down_change}\n降幅 {mean_down_up_change}"
@@ -548,30 +548,50 @@ class Chrome(object):
                 msg = f"空头过热 准备做多\n\n增幅 {mean_up_down_change}\n降幅 {mean_down_up_change}"
                 dingtalk.send_ding_talk(msg)
 
-            short_msg = ""
             long_msg = ""
+            long_close_msg = ""
+            short_msg = ""
+            short_close_msg = ""
             for i in range(2, 12):
+                data = down_up_list[i]
+                symbol = data["symbol"]
+                rate = data["rate"]
+                change = data["change"]
+                
+                origin_rate = rate / (1 - abs(change) / 100) 
+                if origin_rate > 3.0 and symbol not in long_symbols:
+                    if not long_msg:
+                        long_msg = "多头开仓"
+                    long_msg = f"{long_msg}\n{symbol} {rate} {change}%"
+                    long_symbols.add(symbol)
+
                 data = up_down_list[i]
                 symbol = data["symbol"]
                 rate = data["rate"]
                 change = data["change"]
 
                 origin_rate = rate / (1 + abs(change) / 100) 
-                if origin_rate < 1.0:
+                if origin_rate < 1.0 and symbol not in short_symbols:
                     if not short_msg:
-                        short_msg = "趋势做空"
+                        short_msg = "空头开仓"
                     short_msg = f"{short_msg}\n{symbol} {rate} {change}%"
+                    short_symbols.add(symbol)
 
-                data = down_up_list[i]
-                symbol = data["symbol"]
-                rate = data["rate"]
-                change = data["change"]
-                
-                origin_rate = rate / (1 + abs(change) / 100) 
-                if origin_rate < 1.0:
-                    if not long_msg:
-                        long_msg = "趋势做多"
-                    long_msg = f"{long_msg}\n{symbol} {rate} {change}%"
+            up_down_symbols = up_down_df["symbol"].tolist()
+            for symbol in long_symbols.copy():
+                if symbol in up_down_symbols:
+                    if not long_close_msg:
+                        long_close_msg = "多头平仓"
+                    long_close_msg = f"{long_close_msg}\n{symbol} {rate} {change}%"
+                    long_symbols.remove(symbol)
+
+            down_up_symbols = down_up_df["symbol"].tolist()
+            for symbol in short_symbols.copy():
+                if symbol in down_up_symbols:
+                    if not short_close_msg:
+                        short_close_msg = "空头平仓"
+                    short_close_msg = f"{short_close_msg}\n{symbol} {rate} {change}%"
+                    short_symbols.remove(symbol)
 
             if long_msg:
                 dingtalk.send_ding_talk(long_msg)
@@ -658,6 +678,8 @@ class DingTalkEngine(object):
 if __name__ == "__main__":
     chrome = Chrome(cta_engine=None)
     dingtalk = DingTalkEngine()
+    long_symbols = set()
+    short_symbols = set()
 
     # Thread(target=chrome.fetch_top_gainers_losers, args=(chrome.on_top_gainers_losers, 10)).start()
     Thread(target=chrome.fetch_rise_fall_long_short, args=(chrome.on_rise_fall_long_short, 10)).start()
