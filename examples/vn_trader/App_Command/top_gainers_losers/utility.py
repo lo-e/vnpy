@@ -19,6 +19,9 @@ class Chrome(object):
     def __init__(self, cta_engine) -> None:
         self.cta_engine = cta_engine
 
+        self.long_trending = False
+        self.short_trending = False
+
     def fetch_top_gainers_losers(self, callback = None, rest: int = 60) -> None:
         driver = None
         driver_reboot = True
@@ -530,23 +533,23 @@ class Chrome(object):
             fall_df = pd.DataFrame(fall_list)
             fall_df.to_csv(fall_file_path, index=False)
 
-            if abs(mean_rise_change) >= abs(mean_fall_change) * 2.0 and not long_trending:
-                long_trending = True
+            if abs(mean_rise_change) >= abs(mean_fall_change) * 2.0 and not self.long_trending:
+                self.long_trending = True
                 msg = f"15分钟多头趋势\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
                 dingtalk.send_ding_talk(msg)
 
-            if abs(mean_rise_change) <= abs(mean_fall_change) * 1.5 and long_trending:
-                long_trending = False
+            if abs(mean_rise_change) <= abs(mean_fall_change) * 1.5 and self.long_trending:
+                self.long_trending = False
                 msg = f"15分钟多头停止\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
                 dingtalk.send_ding_talk(msg)
 
-            if abs(mean_fall_change) >= abs(mean_rise_change) * 2.0 and not short_trending:
-                short_trending = True
+            if abs(mean_fall_change) >= abs(mean_rise_change) * 2.0 and not self.short_trending:
+                self.short_trending = True
                 msg = f"15分钟空头趋势\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
                 dingtalk.send_ding_talk(msg)
 
-            if abs(mean_fall_change) <= abs(mean_rise_change) * 1.5 and short_trending:
-                short_trending = False
+            if abs(mean_fall_change) <= abs(mean_rise_change) * 1.5 and self.short_trending:
+                self.short_trending = False
                 msg = f"15分钟空头停止\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
                 dingtalk.send_ding_talk(msg)
 
@@ -669,8 +672,6 @@ class DingTalkEngine(object):
 if __name__ == "__main__":
     chrome = Chrome(cta_engine=None)
     dingtalk = DingTalkEngine()
-    long_trending = False
-    short_trending = False
 
     # Thread(target=chrome.fetch_top_gainers_losers, args=(chrome.on_top_gainers_losers, 10)).start()
     Thread(target=chrome.fetch_rise_fall_long_short, args=(chrome.on_rise_fall_long_short, 10)).start()
