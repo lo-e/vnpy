@@ -3,24 +3,5 @@
         "name": "TOP_GAINERS_LOSERS_PORTFOLIO",
         "portfolio_value": 10
     },
-    "signal": [
-        {
-            "strategy_name": "TOP_GAINERS_ENA_BYBIT",
-            "vt_symbol": "ENAUSDT.BYBIT",
-            "exchange": "BYBIT",
-            "exchange_user": "loesuperman",
-            "direction": "LONG",
-            "stop_rate": 0.002,
-            "start": true
-        },
-        {
-            "strategy_name": "TOP_LOSERS_TRX_OKX",
-            "vt_symbol": "TRX-USDT-SWAP.OKX",
-            "exchange": "OKX",
-            "exchange_user": "lo-e",
-            "direction": "SHORT",
-            "stop_rate": 0.002,
-            "start": true
-        }
-    ]
+    "signal": []
 }

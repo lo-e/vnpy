@@ -191,10 +191,10 @@ def main():
     # trendign_sniper_app.start_portfolio()
 
     # 执行策略（TopGainersLosers）
-    # top_gainers_losers_app = TopGainersLosersEngine(main_engine=main_engine, event_engine=event_engine)
-    # top_gainers_losers_app.init_engine()
-    # top_gainers_losers_app.init_portfolio()
-    # top_gainers_losers_app.start_portfolio()
+    top_gainers_losers_app = TopGainersLosersEngine(main_engine=main_engine, event_engine=event_engine)
+    top_gainers_losers_app.init_engine()
+    top_gainers_losers_app.init_portfolio()
+    top_gainers_losers_app.start_portfolio()
     
 if __name__ == "__main__":
     main()

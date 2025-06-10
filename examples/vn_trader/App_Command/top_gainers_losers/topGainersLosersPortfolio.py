@@ -40,6 +40,8 @@ class TopGainersLosersPortfolio(object):
         self.gainers_data = {}
         self.losers_data = {}
         self.strategy_status_check_ts = {}
+        self.long_trending = False
+        self.short_trending = False
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -59,7 +61,7 @@ class TopGainersLosersPortfolio(object):
         # 启动Chrome获取涨跌幅排行榜
         chrome = Chrome(cta_engine=None)
         # Thread(target=chrome.fetch_top_gainers_losers, args=(self.on_top_gainers_losers, 10)).start()
-        Thread(target=chrome.fetch_long_vs_short, args=(chrome.on_long_vs_short, 10)).start()
+        Thread(target=chrome.fetch_rise_fall_long_short, args=(self.on_rise_fall_long_short, 10)).start()
 
         # Bar下载
         Thread(target=self.download_bar).start()
@@ -82,217 +84,111 @@ class TopGainersLosersPortfolio(object):
             self.download_instruments_time = current_hour_time
             self.check_download_instruments()
 
-    def on_top_gainers_losers(self, data: tuple):
-        try:
-            gainers, losers = data
+    def on_rise_fall_long_short(self, data: tuple):
+        rise_list, fall_list, _, _ = data
+        rise_list = sorted(rise_list, key=lambda x: x["change"], reverse=True)
+        fall_list = sorted(fall_list, key=lambda x: x["change"], reverse=False)
+
+        msg = ""
+        new_settings = []
+        new_long_count = 0
+        new_short_count = 0
+        close = False
+
+        if rise_list and fall_list:
+            # 保存涨跌幅数据到文件
+            mean_rise_change = pd.DataFrame(rise_list)["change"].mean()
+            mean_rise_data = {"symbol": "mean_rise",
+                              "change": mean_rise_change}
             
-            gainers_data = OrderedDict()
-            losers_data = OrderedDict()
-            close_long_strategies = []
-            close_short_strategies = []
-            msg = ""
+            mean_fall_change = pd.DataFrame(fall_list)["change"].mean()
+            mean_fall_data = {"symbol": "mean_fall",
+                              "change": mean_fall_change}
 
-            # 统计上榜的代币
-            initing = True
-            if self.gainers_data or self.losers_data:
-                initing = False
-            for i in range(len(gainers)):
-                data = gainers[i]
-                token = data["token"]
-                percent = data["percent"]
-                gainers_data[token] = percent
+            rise_list.insert(0, mean_fall_data)
+            rise_list.insert(0, mean_rise_data)
+            fall_list.insert(0, mean_fall_data)
+            fall_list.insert(0, mean_rise_data)
 
-                if initing:
-                    self.gainers_data[token] = {}
-                
-                elif token not in self.gainers_data:
-                    self.gainers_data[token] = {"aboard": time.time()}
-
-            for i in range(len(losers)):
-                data = losers[i]
-                token = data["token"]
-                percent = data["percent"]
-                losers_data[token] = percent
-
-                if initing:
-                    self.losers_data[token] = {}
-                
-                elif token not in self.losers_data:
-                    self.losers_data[token] = {"aboard": time.time()}
-
-            top_gainer_tokens = []
-            top_percent = 0
-            for t, p in gainers_data.items():
-                if len(top_gainer_tokens) < 3 or abs(p) >= abs(top_percent):
-                    top_gainer_tokens.append(t)
-                    top_percent = p
-
-                else:
-                    break
-
-            long_tokens = []
-            for token, data in self.gainers_data.copy().items():
-                # 清除未上榜代币
-                if token not in gainers_data:
-                    self.gainers_data.pop(token)
-
-                else:
-                    # 统计做多代币
-                    if token in top_gainer_tokens:
-                        aboard_time = data.get("aboard", 0)
-                        top_time = data.get("top", 0)
-                        if not top_time and len(gainers_data) >= 20:
-                            top_time = time.time()
-                            data["top"] = top_time
-
-                        if aboard_time and top_time and top_time - aboard_time <= 10*60:
-                            long_tokens.append(token)
-
-                    else:
-                        data["top"] = 0
-            
-            top_losers_tokens = []
-            top_percent = 0
-            for t, p in losers_data.items():
-                if len(top_losers_tokens) < 3 or abs(p) >= abs(top_percent):
-                    top_losers_tokens.append(t)
-                    top_percent = p
-
-                else:
-                    break
-                        
-            short_tokens = []
-            for token, data in self.losers_data.copy().items():
-                # 清除未上榜代币
-                if token not in losers_data:
-                    self.losers_data.pop(token)
-                
-                else:
-                    # 统计做空代币
-                    if token in top_losers_tokens:
-                        aboard_time = data.get("aboard", 0)
-                        top_time = data.get("top", 0)
-                        if not top_time and len(losers_data) >= 20:
-                            top_time = time.time()
-                            data["top"] = top_time
-
-                        if aboard_time and top_time and top_time - aboard_time <= 10*60:
-                            short_tokens.append(token)
-
-                    else:
-                        data["top"] = 0
-
-            # 计算均值
-            mean_gainers_percent = pd.DataFrame(gainers)["percent"].mean()
-            mean_gainers_data = {"token": "mean_gainers",
-                                 "percent": mean_gainers_percent}
-            
-            mean_losers_percent = pd.DataFrame(losers)["percent"].mean()
-            mean_losers_data = {"token": "mean_losers",
-                                "percent": mean_losers_percent}
-            
-            # 均值添加到列表
-            gainers.insert(0, mean_losers_data)
-            gainers.insert(0, mean_gainers_data)
-            losers.insert(0, mean_losers_data)
-            losers.insert(0, mean_gainers_data)
-
-            # 保存到文件
             current_dir = os.path.dirname(os.path.abspath(__file__))
             date = datetime.now().strftime(f"%Y-%m-%d")
             hour = datetime.now().hour
-            time_str = datetime.now().strftime(f"%H_%M_%S")
+            time = datetime.now().strftime(f"%H_%M_%S")
 
-            gainer_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}gainers{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
-            os.makedirs(gainer_dir_path, exist_ok=True)
-            gainer_file_path = f"{gainer_dir_path}{DIR_SYMBOL}{time_str}.csv"
-            df = pd.DataFrame(gainers)
-            df.to_csv(gainer_file_path, index=False)
+            rise_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            os.makedirs(rise_dir_path, exist_ok=True)
+            rise_file_path = f"{rise_dir_path}{DIR_SYMBOL}{time}.csv"
+            rise_df = pd.DataFrame(rise_list)
+            rise_df.to_csv(rise_file_path, index=False)
 
-            loser_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}losers{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
-            os.makedirs(loser_dir_path, exist_ok=True)
-            loser_file_path = f"{loser_dir_path}{DIR_SYMBOL}{time_str}.csv"
-            df = pd.DataFrame(losers)
-            df.to_csv(loser_file_path, index=False)
+            fall_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            os.makedirs(fall_dir_path, exist_ok=True)
+            fall_file_path = f"{fall_dir_path}{DIR_SYMBOL}{time}.csv"
+            fall_df = pd.DataFrame(fall_list)
+            fall_df.to_csv(fall_file_path, index=False)
 
-            # 判断上新、停止策略
+            if abs(mean_rise_change) >= abs(mean_fall_change) * 2.0 and not self.long_trending:
+                # 多头趋势
+                self.long_trending = True
+                for i in range(len(rise_list)):
+                    rise_data = rise_list[i]
+                    change = rise_data["change"]
+                    if i >= 2 and abs(change) < abs(mean_rise_change):
+                        setting = self.new_strategy(rise_data["symbol"], Direction.LONG)
+                        if setting:
+                            new_long_count += 1
+                            new_settings.append(setting)
+
+            if abs(mean_rise_change) <= abs(mean_fall_change) * 1.5 and self.long_trending:
+                self.long_trending = False
+                close = True
+
+            if abs(mean_fall_change) >= abs(mean_rise_change) * 2.0 and not self.short_trending:
+                # 空头趋势
+                self.short_trending = True
+                for i in range(len(fall_list)):
+                    fall_data = fall_list[i]
+                    change = fall_data["change"]
+                    if i >= 2 and abs(change) < abs(mean_fall_change):
+                        setting = self.new_strategy(fall_data["symbol"], Direction.SHORT)
+                        if setting:
+                            new_short_count += 1
+                            new_settings.append(setting)
+
+            if abs(mean_fall_change) <= abs(mean_rise_change) * 1.5 and self.short_trending:
+                self.short_trending = False
+                close = True
+
+        # 停止关闭策略
+        if close:
+            remove_strategy_names = []
             for name in self.cta_engine.strategies.keys():
                 strategy: TopGainersLosersStrategy = self.cta_engine.strategies[name]
-                pure_symbol = ""
-                if strategy.exchange == Exchange.OKX:
-                    pure_symbol = strategy.vt_symbol.split("-")[0]
-                
-                else:
-                    pure_symbol = strategy.vt_symbol.split("USDT")[0]
-                
-                if strategy.direction == Direction.LONG:
-                    if pure_symbol in long_tokens:
-                        long_tokens.remove(pure_symbol)
-
-                    else:
-                        close_long_strategies.append(strategy)
-                
-                if strategy.direction == Direction.SHORT:
-                    if pure_symbol in short_tokens:
-                        short_tokens.remove(pure_symbol)
-
-                    else:
-                        close_short_strategies.append(strategy)
-
-            # 停止关闭策略
-            remove_strategy_names = []
-            for i in range(len(close_long_strategies)):
-                strategy: TopGainersLosersStrategy = close_long_strategies[i]
                 strategy.on_close()
                 remove_strategy_names.append(strategy.strategy_name)
-
-            for i in range(len(close_short_strategies)):
-                strategy: TopGainersLosersStrategy = close_short_strategies[i]
-                strategy.on_close()
-                remove_strategy_names.append(strategy.strategy_name)
-            
+                
             self.cta_engine.remove_strategy_setting(remove_strategy_names)
-            if len(close_long_strategies):
-                msg = f"{msg}关闭多头合约：{len(close_long_strategies)}\n"
+            if len(remove_strategy_names):
+                msg = f"{msg}关闭合约：{len(remove_strategy_names)}\n"
 
-            if len(close_short_strategies):
-                msg = f"{msg}关闭空头合约：{len(close_short_strategies)}\n"
+        # 执行新策略
+        new_setting_count = len(new_settings)
+        for setting in new_settings:
+            setting["slot"] = new_setting_count
+            self.cta_engine.new_strategy(setting)
 
-            # 执行新策略
-            new_settings = []
-            new_gainer_count = 0
-            for token in long_tokens:
-                setting = self.new_strategy(token, Direction.LONG)
-                if setting:
-                    new_gainer_count += 1
-                    new_settings.append(setting)
+        self.cta_engine.new_strategy_setting(new_settings)
+        if new_long_count:
+            msg = f"{msg}执行多头合约：{new_long_count}\n"
 
-            if new_gainer_count:
-                msg = f"{msg}执行多头合约：{new_gainer_count}\n"
+        if new_short_count:
+            msg = f"{msg}执行空头合约：{new_short_count}\n"
 
-            new_loser_count = 0
-            for token in short_tokens:
-                setting = self.new_strategy(token, Direction.SHORT)
-                if setting:
-                    new_loser_count += 1
-                    new_settings.append(setting)
-
-            if new_loser_count:
-                msg = f"{msg}执行空头合约：{new_loser_count}\n"
-
-            self.cta_engine.new_strategy_setting(new_settings)
-            if msg:
-                msg = f"上涨：{mean_gainers_percent:.2f}%\t{len(gainers)}\n下跌：{mean_losers_percent:.2f}%\t{len(losers)}\n\n{msg}当前策略总数：{len(self.cta_engine.strategies)}"
-                self.send_ding_talk(msg)
-                print(msg)
-
-        except Exception as e:
-            msg = f"处理涨跌代币数据出错\n\n{e}"
+        if msg:
+            msg = f"rise {mean_rise_change}\nfall {mean_fall_change}\n\n{msg}当前策略总数：{len(self.cta_engine.strategies)}"
             self.send_ding_talk(msg)
             print(msg)
 
-    def on_long_vs_short(self, data: tuple):
-        down_up_list, up_down_list = data
 
     def new_strategy(self, token:str, direction: Direction):
         # 确认合约
@@ -342,12 +238,9 @@ class TopGainersLosersPortfolio(object):
                    "exchange": exchange,
                    "exchange_user": exchange_user,
                    "direction": direction_str,
-                   "stop_rate": 0.002,
                    "start": True
                    }
        
-        self.cta_engine.new_strategy(setting)
-        self.bar_download_queue.put(vt_symbol)
         return setting
 
     def check_download_instruments(self):
