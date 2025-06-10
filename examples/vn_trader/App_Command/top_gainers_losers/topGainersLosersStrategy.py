@@ -271,6 +271,8 @@ class TopGainersLosersStrategy(CtaTemplate):
             time.sleep(1)
 
     def check_save_data_(self):
+        return
+    
         try:
             # 保存变量、同步数据
             strategy_data = self.get_data()
