@@ -119,7 +119,8 @@ class Chrome(object):
                     driver.get(url)
                 
                 else:
-                    driver.refresh()
+                    # driver.refresh()
+                    pass
                 
                 _ = WebDriverWait(driver, timeout=5).until(EC.presence_of_all_elements_located((By.XPATH, "//button[@role='tab']")))
                 tab_buttons = driver.find_elements(
@@ -180,7 +181,7 @@ class Chrome(object):
                     continue
                 exchange_button.click()
 
-                # 选择30分钟
+                # 选择周期
                 select_action = False
                 duration_tabs = driver.find_elements(
                     By.XPATH,
@@ -188,7 +189,7 @@ class Chrome(object):
                     )
                 target_tab = None
                 for tab in duration_tabs:
-                    if tab.text == "30分钟":
+                    if tab.text == "15分钟":
                         target_tab = tab
                         break
 
@@ -208,7 +209,7 @@ class Chrome(object):
                     continue
 
                 if select_action:
-                    time.sleep(1)
+                    time.sleep(10)
                 
                 # 获取涨跌排行榜
                 rise_list = []
@@ -229,6 +230,8 @@ class Chrome(object):
                 # 选择多空比
                 down_up_list = []
                 up_down_list = []
+
+                """
                 for button in tab_buttons:
                     if "人数多空比" in button.text:
                         button.click()
@@ -365,6 +368,7 @@ class Chrome(object):
                     for row in row_list:
                         data = self.get_long_short_data(row)
                         up_down_list.append(data)
+                """
 
                 if callback:
                     callback((rise_list, fall_list, down_up_list, up_down_list))
@@ -490,28 +494,24 @@ class Chrome(object):
         fall_list = sorted(fall_list, key=lambda x: x["change"], reverse=False)
         print(f"上涨 {len(rise_list)} 下跌 {len(fall_list)} 多空比递增 {len(down_up_list)} 多空比递减 {len(up_down_list)}")
 
-        if rise_list and fall_list and down_up_list and up_down_list:
-            # 保存到文件
-            mean_down_up_rate = pd.DataFrame(down_up_list)["rate"].mean()
-            mean_down_up_change = pd.DataFrame(down_up_list)["change"].mean()
-            mean_down_up_data = {"symbol": "mean_down_up",
-                                 "rate": mean_down_up_rate,
-                                 "change": mean_down_up_change}
+        if rise_list and fall_list:
+            # 保存涨跌幅数据到文件
+            mean_rise_change = pd.DataFrame(rise_list)["change"].mean()
+            mean_rise_data = {"symbol": "mean_rise",
+                              "change": mean_rise_change}
             
-            mean_up_down_rate = pd.DataFrame(up_down_list)["rate"].mean()
-            mean_up_down_change = pd.DataFrame(up_down_list)["change"].mean()
-            mean_up_down_data = {"symbol": "mean_up_down",
-                                 "rate": mean_up_down_rate,
-                                 "change": mean_up_down_change}
+            mean_fall_change = pd.DataFrame(fall_list)["change"].mean()
+            mean_fall_data = {"symbol": "mean_fall",
+                              "change": mean_fall_change}
             
-            # msg = f"mean_up_down {mean_up_down_change}\nmean_down_up {mean_down_up_change}\n"
+            # msg = f"mean_rise {mean_rise_change}\nmean_fall {mean_fall_change}"
             # print(msg)
             # return
-            
-            down_up_list.insert(0, mean_down_up_data)
-            down_up_list.insert(0, mean_up_down_data)
-            up_down_list.insert(0, mean_down_up_data)
-            up_down_list.insert(0, mean_up_down_data)
+
+            rise_list.insert(0, mean_fall_data)
+            rise_list.insert(0, mean_rise_data)
+            fall_list.insert(0, mean_fall_data)
+            fall_list.insert(0, mean_rise_data)
 
             current_dir = os.path.dirname(os.path.abspath(__file__))
             date = datetime.now().strftime(f"%Y-%m-%d")
@@ -530,6 +530,54 @@ class Chrome(object):
             fall_df = pd.DataFrame(fall_list)
             fall_df.to_csv(fall_file_path, index=False)
 
+            if abs(mean_rise_change) >= abs(mean_fall_change) * 2.0 and not long_trending:
+                long_trending = True
+                msg = f"15分钟多头趋势\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
+                dingtalk.send_ding_talk(msg)
+
+            if abs(mean_rise_change) <= abs(mean_fall_change) * 1.5 and long_trending:
+                long_trending = False
+                msg = f"15分钟多头停止\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
+                dingtalk.send_ding_talk(msg)
+
+            if abs(mean_fall_change) >= abs(mean_rise_change) * 2.0 and not short_trending:
+                short_trending = True
+                msg = f"15分钟空头趋势\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
+                dingtalk.send_ding_talk(msg)
+
+            if abs(mean_fall_change) <= abs(mean_rise_change) * 1.5 and short_trending:
+                short_trending = False
+                msg = f"15分钟空头停止\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
+                dingtalk.send_ding_talk(msg)
+
+        if down_up_list and up_down_list:
+            # 保存多空比数据到文件
+            mean_down_up_rate = pd.DataFrame(down_up_list)["rate"].mean()
+            mean_down_up_change = pd.DataFrame(down_up_list)["change"].mean()
+            mean_down_up_data = {"symbol": "mean_down_up",
+                                 "rate": mean_down_up_rate,
+                                 "change": mean_down_up_change}
+            
+            mean_up_down_rate = pd.DataFrame(up_down_list)["rate"].mean()
+            mean_up_down_change = pd.DataFrame(up_down_list)["change"].mean()
+            mean_up_down_data = {"symbol": "mean_up_down",
+                                 "rate": mean_up_down_rate,
+                                 "change": mean_up_down_change}
+            
+            # msg = f"mean_up_down {mean_up_down_change}\nmean_down_up {mean_down_up_change}\n"
+            # print(msg)
+            # return
+
+            down_up_list.insert(0, mean_down_up_data)
+            down_up_list.insert(0, mean_up_down_data)
+            up_down_list.insert(0, mean_down_up_data)
+            up_down_list.insert(0, mean_up_down_data)
+
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            date = datetime.now().strftime(f"%Y-%m-%d")
+            hour = datetime.now().hour
+            time = datetime.now().strftime(f"%H_%M_%S")
+
             down_up_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}ls_rate_up{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             os.makedirs(down_up_dir_path, exist_ok=True)
             down_up_file_path = f"{down_up_dir_path}{DIR_SYMBOL}{time}.csv"
@@ -541,66 +589,7 @@ class Chrome(object):
             up_down_file_path = f"{up_down_dir_path}{DIR_SYMBOL}{time}.csv"
             up_down_df = pd.DataFrame(up_down_list)
             up_down_df.to_csv(up_down_file_path, index=False)
-
-            if abs(mean_up_down_change) >= abs(mean_down_up_change) * 2:
-                msg = f"空头过热 准备做多\n\n增幅 {mean_up_down_change}\n降幅 {mean_down_up_change}"
-                dingtalk.send_ding_talk(msg)
-
-            if abs(mean_down_up_change) >= abs(mean_up_down_change) * 2:
-                msg = f"空头过热 准备做多\n\n增幅 {mean_up_down_change}\n降幅 {mean_down_up_change}"
-                dingtalk.send_ding_talk(msg)
-
-            # long_msg = ""
-            # long_close_msg = ""
-            # short_msg = ""
-            # short_close_msg = ""
-            # for i in range(2, 12):
-            #     data = down_up_list[i]
-            #     symbol = data["symbol"]
-            #     rate = data["rate"]
-            #     change = data["change"]
-                
-            #     origin_rate = rate / (1 - abs(change) / 100) 
-            #     if origin_rate > 3.0 and symbol not in long_symbols:
-            #         if not long_msg:
-            #             long_msg = "多头开仓"
-            #         long_msg = f"{long_msg}\n{symbol} {rate} {change}%"
-            #         long_symbols.add(symbol)
-
-            #     data = up_down_list[i]
-            #     symbol = data["symbol"]
-            #     rate = data["rate"]
-            #     change = data["change"]
-
-            #     origin_rate = rate / (1 + abs(change) / 100) 
-            #     if origin_rate < 1.0 and symbol not in short_symbols:
-            #         if not short_msg:
-            #             short_msg = "空头开仓"
-            #         short_msg = f"{short_msg}\n{symbol} {rate} {change}%"
-            #         short_symbols.add(symbol)
-
-            # up_down_symbols = up_down_df["symbol"].tolist()
-            # for symbol in long_symbols.copy():
-            #     if symbol in up_down_symbols:
-            #         if not long_close_msg:
-            #             long_close_msg = "多头平仓"
-            #         long_close_msg = f"{long_close_msg}\n{symbol} {rate} {change}%"
-            #         long_symbols.remove(symbol)
-
-            # down_up_symbols = down_up_df["symbol"].tolist()
-            # for symbol in short_symbols.copy():
-            #     if symbol in down_up_symbols:
-            #         if not short_close_msg:
-            #             short_close_msg = "空头平仓"
-            #         short_close_msg = f"{short_close_msg}\n{symbol} {rate} {change}%"
-            #         short_symbols.remove(symbol)
-
-            # if long_msg:
-            #     dingtalk.send_ding_talk(long_msg)
-            
-            # if short_msg:
-            #     dingtalk.send_ding_talk(short_msg)
-
+    
     def load_driver(self):
         # 加载浏览器
         # 获取当前文件所在路径
@@ -680,8 +669,8 @@ class DingTalkEngine(object):
 if __name__ == "__main__":
     chrome = Chrome(cta_engine=None)
     dingtalk = DingTalkEngine()
-    long_symbols = set()
-    short_symbols = set()
+    long_trending = False
+    short_trending = False
 
     # Thread(target=chrome.fetch_top_gainers_losers, args=(chrome.on_top_gainers_losers, 10)).start()
     Thread(target=chrome.fetch_rise_fall_long_short, args=(chrome.on_rise_fall_long_short, 10)).start()
