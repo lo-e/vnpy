@@ -550,56 +550,56 @@ class Chrome(object):
                 msg = f"空头过热 准备做多\n\n增幅 {mean_up_down_change}\n降幅 {mean_down_up_change}"
                 dingtalk.send_ding_talk(msg)
 
-            long_msg = ""
-            long_close_msg = ""
-            short_msg = ""
-            short_close_msg = ""
-            for i in range(2, 12):
-                data = down_up_list[i]
-                symbol = data["symbol"]
-                rate = data["rate"]
-                change = data["change"]
+            # long_msg = ""
+            # long_close_msg = ""
+            # short_msg = ""
+            # short_close_msg = ""
+            # for i in range(2, 12):
+            #     data = down_up_list[i]
+            #     symbol = data["symbol"]
+            #     rate = data["rate"]
+            #     change = data["change"]
                 
-                origin_rate = rate / (1 - abs(change) / 100) 
-                if origin_rate > 3.0 and symbol not in long_symbols:
-                    if not long_msg:
-                        long_msg = "多头开仓"
-                    long_msg = f"{long_msg}\n{symbol} {rate} {change}%"
-                    long_symbols.add(symbol)
+            #     origin_rate = rate / (1 - abs(change) / 100) 
+            #     if origin_rate > 3.0 and symbol not in long_symbols:
+            #         if not long_msg:
+            #             long_msg = "多头开仓"
+            #         long_msg = f"{long_msg}\n{symbol} {rate} {change}%"
+            #         long_symbols.add(symbol)
 
-                data = up_down_list[i]
-                symbol = data["symbol"]
-                rate = data["rate"]
-                change = data["change"]
+            #     data = up_down_list[i]
+            #     symbol = data["symbol"]
+            #     rate = data["rate"]
+            #     change = data["change"]
 
-                origin_rate = rate / (1 + abs(change) / 100) 
-                if origin_rate < 1.0 and symbol not in short_symbols:
-                    if not short_msg:
-                        short_msg = "空头开仓"
-                    short_msg = f"{short_msg}\n{symbol} {rate} {change}%"
-                    short_symbols.add(symbol)
+            #     origin_rate = rate / (1 + abs(change) / 100) 
+            #     if origin_rate < 1.0 and symbol not in short_symbols:
+            #         if not short_msg:
+            #             short_msg = "空头开仓"
+            #         short_msg = f"{short_msg}\n{symbol} {rate} {change}%"
+            #         short_symbols.add(symbol)
 
-            up_down_symbols = up_down_df["symbol"].tolist()
-            for symbol in long_symbols.copy():
-                if symbol in up_down_symbols:
-                    if not long_close_msg:
-                        long_close_msg = "多头平仓"
-                    long_close_msg = f"{long_close_msg}\n{symbol} {rate} {change}%"
-                    long_symbols.remove(symbol)
+            # up_down_symbols = up_down_df["symbol"].tolist()
+            # for symbol in long_symbols.copy():
+            #     if symbol in up_down_symbols:
+            #         if not long_close_msg:
+            #             long_close_msg = "多头平仓"
+            #         long_close_msg = f"{long_close_msg}\n{symbol} {rate} {change}%"
+            #         long_symbols.remove(symbol)
 
-            down_up_symbols = down_up_df["symbol"].tolist()
-            for symbol in short_symbols.copy():
-                if symbol in down_up_symbols:
-                    if not short_close_msg:
-                        short_close_msg = "空头平仓"
-                    short_close_msg = f"{short_close_msg}\n{symbol} {rate} {change}%"
-                    short_symbols.remove(symbol)
+            # down_up_symbols = down_up_df["symbol"].tolist()
+            # for symbol in short_symbols.copy():
+            #     if symbol in down_up_symbols:
+            #         if not short_close_msg:
+            #             short_close_msg = "空头平仓"
+            #         short_close_msg = f"{short_close_msg}\n{symbol} {rate} {change}%"
+            #         short_symbols.remove(symbol)
 
-            if long_msg:
-                dingtalk.send_ding_talk(long_msg)
+            # if long_msg:
+            #     dingtalk.send_ding_talk(long_msg)
             
-            if short_msg:
-                dingtalk.send_ding_talk(short_msg)
+            # if short_msg:
+            #     dingtalk.send_ding_talk(short_msg)
 
     def load_driver(self):
         # 加载浏览器
