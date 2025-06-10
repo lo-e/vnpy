@@ -375,11 +375,11 @@ class Chrome(object):
 
                 if callback:
                     callback((rise_list, fall_list, down_up_list, up_down_list))
-            
+
+                time.sleep(rest)
+                
             except Exception as e:
                 print(str(e))
-            
-            time.sleep(rest)
 
     def get_long_short_data(self, item):
         # 交易所

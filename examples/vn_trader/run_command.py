@@ -18,7 +18,7 @@ from App_Command.top_gainers_losers.engine import TopGainersLosersEngine
 
 # GATEWAYS = [[OkxGateway, "lo-e"], [BybitGateway, "loesuperman"], [BinanceUsdtGateway, "lo-e"]]
 # GATEWAYS = [[OkxGateway, "lo-e(test)"], [BybitGateway, "loesuperman(test)"], [BinanceUsdtGateway, "lo-e(test)"]]
-GATEWAYS = [[OkxGateway, "lo-e"]]
+GATEWAYS = [[OkxGateway, "lo-e"], [BybitGateway, "loesuperman"]]
 class DurationBar(object):
     def __init__(self) -> None:
         self.vt_symbol: str = ""

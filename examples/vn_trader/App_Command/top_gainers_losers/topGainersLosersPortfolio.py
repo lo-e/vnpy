@@ -189,7 +189,6 @@ class TopGainersLosersPortfolio(object):
             self.send_ding_talk(msg)
             print(msg)
 
-
     def new_strategy(self, token:str, direction: Direction):
         # 确认合约
         vt_symbol = ""
