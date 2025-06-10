@@ -377,7 +377,7 @@ class Chrome(object):
                     callback((rise_list, fall_list, down_up_list, up_down_list))
 
                 time.sleep(rest)
-                
+
             except Exception as e:
                 print(str(e))
 
@@ -527,11 +527,17 @@ class Chrome(object):
             rise_df = pd.DataFrame(rise_list)
             rise_df.to_csv(rise_file_path, index=False)
 
+            rise_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}latest.csv"
+            rise_df.to_csv(rise_latest_file_path, index=False)
+
             fall_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             os.makedirs(fall_dir_path, exist_ok=True)
             fall_file_path = f"{fall_dir_path}{DIR_SYMBOL}{time}.csv"
             fall_df = pd.DataFrame(fall_list)
             fall_df.to_csv(fall_file_path, index=False)
+
+            fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}latest.csv"
+            fall_df.to_csv(fall_latest_file_path, index=False)
 
             if abs(mean_rise_change) >= abs(mean_fall_change) * 2.0 and not self.long_trending:
                 self.long_trending = True

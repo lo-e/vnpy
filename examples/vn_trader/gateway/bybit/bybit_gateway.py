@@ -243,8 +243,14 @@ class BybitGateway(BaseGateway):
         connected = True
         msg = ""
 
+        if not self.rest_api.contract_info_ready:
+            connected = False
+            msg += "Rest API 合约信息未就绪"
+
         if not self.ws_usdt_data_api.connected:
             connected = False
+            if msg:
+                msg += "\n"
             msg += "Websocket API LINEAR行情连接断开"
 
         # if not self.ws_spot_data_api.connected:
@@ -293,6 +299,7 @@ class BybitRestApi(RestClient):
 
         self.accounts: dict = {}
         self.positions: dict= {}
+        self.contract_info_ready = False
     
     def get_server_time(self):
         """
@@ -615,6 +622,8 @@ class BybitRestApi(RestClient):
                 gateway_name=self.gateway_name,
             )
             self.gateway.on_contract(contract)
+        
+        self.contract_info_ready = True
         self.gateway.write_log(f"{category.upper()}合约信息查询成功")
     
     def query_account(self):

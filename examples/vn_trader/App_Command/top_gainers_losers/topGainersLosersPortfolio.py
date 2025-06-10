@@ -42,6 +42,8 @@ class TopGainersLosersPortfolio(object):
         self.strategy_status_check_ts = {}
         self.long_trending = False
         self.short_trending = False
+        self.rise_data_list = []
+        self.fall_data_list = []
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -59,12 +61,11 @@ class TopGainersLosersPortfolio(object):
         self.load_instruments_data()
 
         # 启动Chrome获取涨跌幅排行榜
-        chrome = Chrome(cta_engine=None)
-        # Thread(target=chrome.fetch_top_gainers_losers, args=(self.on_top_gainers_losers, 10)).start()
-        Thread(target=chrome.fetch_rise_fall_long_short, args=(self.on_rise_fall_long_short, 10)).start()
+        # chrome = Chrome(cta_engine=None)
+        # Thread(target=chrome.fetch_rise_fall_long_short, args=(self.on_rise_fall_long_short, 10)).start()
 
         # Bar下载
-        Thread(target=self.download_bar).start()
+        # Thread(target=self.download_bar).start()
 
     def on_start(self):
         # tick 处理
@@ -72,6 +73,9 @@ class TopGainersLosersPortfolio(object):
 
         # 策略仓位检查
         Thread(target=self.check_strategy_status).start()
+
+        # 获取涨跌幅排行榜数据
+        Thread(target=self.check_rank_file_data).start()
 
     def on_timer(self):
         if not self.started:
@@ -241,6 +245,38 @@ class TopGainersLosersPortfolio(object):
                    }
        
         return setting
+
+    def check_rank_file_data(self):
+        while True:
+            try:
+                rise_list = []
+                fall_list = []
+
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                rise_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}latest.csv"
+                df = pd.read_csv(rise_latest_file_path)
+                for _, row in df.iterrows():
+                    rise_list.append(dict(row))
+
+                fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}latest.csv"
+                df = pd.read_csv(fall_latest_file_path)
+                for _, row in df.iterrows():
+                    fall_list.append(dict(row))
+
+                if not self.rise_data_list:
+                    self.rise_data_list = rise_list
+                
+                if not self.fall_data_list:
+                    self.fall_data_list = fall_list
+                
+                if self.rise_data_list != rise_list or self.fall_data_list != fall_list:
+                    self.rise_data_list = rise_list
+                    self.fall_data_list = fall_list
+                    self.on_rise_fall_long_short((rise_list, fall_list, [], []))
+
+            except Exception as e:
+                pass
+            time.sleep(1)
 
     def check_download_instruments(self):
         if not self.instruments_downloading:
