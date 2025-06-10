@@ -380,6 +380,7 @@ class Chrome(object):
 
             except Exception as e:
                 print(str(e))
+                time.sleep(2)
 
     def get_long_short_data(self, item):
         # 交易所
