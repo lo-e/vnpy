@@ -240,9 +240,13 @@ def main():
     # top_gainers_losers_app.init_portfolio()
     # top_gainers_losers_app.start_portfolio()
 
-    monitor_engine.subscribe_lots(symbols=["ETH-USDT-SWAP", "SOL-USDT-SWAP", "DOGE-USDT-SWAP", "PEPE-USDT-SWAP", "LINK-USDT-SWAP"], exchange=Exchange.OKX)
+    # monitor_engine.subscribe_lots(symbols=["ETH-USDT-SWAP", "SOL-USDT-SWAP", "DOGE-USDT-SWAP", "PEPE-USDT-SWAP", "LINK-USDT-SWAP"], exchange=Exchange.OKX)
+    # time.sleep(60)
+    # monitor_engine.unsubscribe_lots(symbols=["ETH-USDT-SWAP", "SOL-USDT-SWAP", "DOGE-USDT-SWAP"], exchange=Exchange.OKX)
+
+    monitor_engine.subscribe_lots(symbols=["ETHUSDT", "SOLUSDT", "DOGEUSDT", "1000PEPEUSDT", "LINKUSDT"], exchange=Exchange.BYBIT)
     time.sleep(60)
-    monitor_engine.unsubscribe_lots(symbols=["ETH-USDT-SWAP", "SOL-USDT-SWAP", "DOGE-USDT-SWAP"], exchange=Exchange.OKX)
+    monitor_engine.unsubscribe_lots(symbols=["ETHUSDT", "SOLUSDT", "DOGEUSDT"], exchange=Exchange.BYBIT)
     
 if __name__ == "__main__":
     main()

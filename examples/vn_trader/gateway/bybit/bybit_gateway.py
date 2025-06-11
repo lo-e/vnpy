@@ -169,32 +169,29 @@ class BybitGateway(BaseGateway):
         self.event_engine.register(EVENT_TIMER, self.process_timer_event)
 
     def subscribe(self, req: SubscribeRequest):
-        exchange = req.exchange
-        if exchange == Exchange.BYBITSPOT:
-            self.ws_spot_data_api.subscribe(req)
-
-        else:
-            category = self.rest_api.get_category(req.vt_symbol)
-            if category == "option":
-                self.ws_option_data_api.subscribe(req)
-
-            elif category == "linear":
-                self.ws_usdt_data_api.subscribe(req)
-
-            else:
-                self.ws_inverse_data_api.subscribe(req)
+        category = self.rest_api.get_category(req.vt_symbol)
+        if category == "linear":
+            self.ws_usdt_data_api.subscribe(req)
 
     def subscribe_lots(self, req: SubscribeLotsRequest) -> None:
         """ 订阅行情 """
-        pass
+        vt_symbol = f"{req.symbols[0]}.{req.exchange.value}"
+        category = self.rest_api.get_category(vt_symbol)
+        if category == "linear":
+            self.ws_usdt_data_api.subscribe_lots(req)
 
     def unsubscribe(self, req: SubscribeRequest) -> None:
         """ 取消订阅 """
-        pass
+        category = self.rest_api.get_category(req.vt_symbol)
+        if category == "linear":
+            self.ws_usdt_data_api.unsubscribe(req)
 
     def unsubscribe_lots(self, req: SubscribeLotsRequest) -> None:
         """ 取消订阅 """
-        pass
+        vt_symbol = f"{req.symbols[0]}.{req.exchange.value}"
+        category = self.rest_api.get_category(vt_symbol)
+        if category == "linear":
+            self.ws_usdt_data_api.unsubscribe_lots(req)
     
     def send_order(self, req: OrderRequest):
         return self.rest_api.send_order(req)
@@ -826,6 +823,53 @@ class BybitWebsocketDataApi(WebsocketClient):
         
         # 订阅200挡深度数据
         # self.subscribe_topic(f"orderbook.200.{req.symbol}", self.on_depth)
+
+    def subscribe_lots(self, req: SubscribeLotsRequest):
+        """
+        订阅tick行情
+        """
+        topics = []
+
+        for symbol in req.symbols:
+            vt_symbol = f"{symbol}.{req.exchange.value}"
+            self.subscribed[vt_symbol] = SubscribeRequest(symbol=symbol, exchange=req.exchange)
+
+            if symbol not in self.ticks:
+                tick = TickData(symbol=symbol, exchange=req.exchange, datetime=datetime.now(), name=symbol, gateway_name=self.gateway_name)
+                self.ticks[symbol] = tick
+
+            # 订阅tick_100ms数据
+            topics.append(f"tickers.{symbol}")
+
+        # 发送订阅请求
+        self.subscribe_topics(topics, self.on_tick)
+
+    def unsubscribe(self, req: SubscribeRequest):
+        """
+        取消订阅tick行情
+        """
+        if req.vt_symbol in self.subscribed:
+            self.subscribed.pop(req.vt_symbol)
+
+        # 取消订阅tick_100ms数据
+        self.unsubscribe_topic(f"tickers.{req.symbol}")
+
+    def unsubscribe_lots(self, req: SubscribeLotsRequest):
+        """
+        取消订阅tick行情
+        """
+        topics = []
+
+        for symbol in req.symbols:
+            vt_symbol = f"{symbol}.{req.exchange.value}"
+            if vt_symbol in self.subscribed:
+                self.subscribed.pop(vt_symbol)
+
+            # 取消订阅tick_100ms数据
+            topics.append(f"tickers.{symbol}")
+
+        # 发送订阅请求
+        self.unsubscribe_topics(topics)
     
     def subscribe_topic(self, topic: str, callback: Callable[[str, dict], Any]):
         """
@@ -838,7 +882,40 @@ class BybitWebsocketDataApi(WebsocketClient):
             "args": [topic],
         }
         self.send_packet(req)
+
+    def subscribe_topics(self, topics: list, callback: Callable[[str, dict], Any]):
+        """
+        订阅私有主题
+        """
+        for topic in topics:
+            self.callbacks[topic] = callback
+
+        req = {
+            "op": "subscribe",
+            "args": topics,
+        }
+        self.send_packet(req)
     
+    def unsubscribe_topic(self, topic: str):
+        """
+        取消订阅私有主题
+        """
+        req = {
+            "op": "unsubscribe",
+            "args": [topic],
+        }
+        self.send_packet(req)
+
+    def unsubscribe_topics(self, topics: list):
+        """
+        取消订阅私有主题
+        """
+        req = {
+            "op": "unsubscribe",
+            "args": topics,
+        }
+        self.send_packet(req)
+
     def on_connected(self):
         self.gateway.write_log(f"Websocket API {self.category} 行情连接成功")
         self.connected = True
