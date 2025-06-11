@@ -541,22 +541,22 @@ class Chrome(object):
 
             if abs(mean_rise_change) >= abs(mean_fall_change) * 2.0 and not self.long_trending:
                 self.long_trending = True
-                msg = f"15分钟多头趋势\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
+                msg = f"多头趋势\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
                 dingtalk.send_ding_talk(msg)
 
             if abs(mean_rise_change) <= abs(mean_fall_change) * 1.5 and self.long_trending:
                 self.long_trending = False
-                msg = f"15分钟多头停止\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
+                msg = f"多头停止\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
                 dingtalk.send_ding_talk(msg)
 
             if abs(mean_fall_change) >= abs(mean_rise_change) * 2.0 and not self.short_trending:
                 self.short_trending = True
-                msg = f"15分钟空头趋势\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
+                msg = f"空头趋势\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
                 dingtalk.send_ding_talk(msg)
 
             if abs(mean_fall_change) <= abs(mean_rise_change) * 1.5 and self.short_trending:
                 self.short_trending = False
-                msg = f"15分钟空头停止\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
+                msg = f"空头停止\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
                 dingtalk.send_ding_talk(msg)
 
         if down_up_list and up_down_list:
