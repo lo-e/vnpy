@@ -33,6 +33,7 @@ from .object import (
     OrderRequest,
     CancelRequest,
     SubscribeRequest,
+    SubscribeLotsRequest,
     HistoryRequest,
     QuoteRequest,
     Exchange,
@@ -219,6 +220,27 @@ class BaseGateway(ABC):
     def subscribe(self, req: SubscribeRequest) -> None:
         """
         Subscribe tick data update.
+        """
+        pass
+
+    @abstractmethod
+    def subscribe_lots(self, req: SubscribeLotsRequest) -> None:
+        """
+        Subscribe tick data update.
+        """
+        pass
+
+    @abstractmethod
+    def unsubscribe(self, req: SubscribeRequest) -> None:
+        """
+        Cancel subscribe tick data update.
+        """
+        pass
+
+    @abstractmethod
+    def unsubscribe_lots(self, req: SubscribeLotsRequest) -> None:
+        """
+        Cancel subscribe tick data update.
         """
         pass
 

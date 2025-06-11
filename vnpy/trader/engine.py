@@ -33,6 +33,7 @@ from .object import (
     QuoteData,
     QuoteRequest,
     SubscribeRequest,
+    SubscribeLotsRequest,
     HistoryRequest,
     OrderData,
     BarData,
@@ -250,6 +251,30 @@ class MainEngine:
         gateway = self.get_default_gateway(gateway_name)
         if gateway:
             gateway.subscribe(req)
+
+    def subscribe_lots(self, req: SubscribeLotsRequest, gateway_name: str) -> None:
+        """
+        Subscribe tick data update of a specific gateway.
+        """
+        gateway = self.get_default_gateway(gateway_name)
+        if gateway:
+            gateway.subscribe_lots(req)
+
+    def unsubscribe(self, req: SubscribeRequest, gateway_name: str) -> None:
+        """
+        Cancel subscribe tick data update of a specific gateway.
+        """
+        gateway = self.get_default_gateway(gateway_name)
+        if gateway:
+            gateway.unsubscribe(req)
+
+    def unsubscribe_lots(self, req: SubscribeLotsRequest, gateway_name: str) -> None:
+        """
+        Cancel subscribe tick data update of a specific gateway.
+        """
+        gateway = self.get_default_gateway(gateway_name)
+        if gateway:
+            gateway.unsubscribe_lots(req)
 
     def send_order(self, req: OrderRequest, gateway_name: str) -> str:
         """

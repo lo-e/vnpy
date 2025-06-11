@@ -37,6 +37,7 @@ from vnpy.trader.object import (
     OrderRequest,
     PositionData,
     SubscribeRequest,
+    SubscribeLotsRequest,
     TickData,
     TradeData,
 )
@@ -182,6 +183,18 @@ class BybitGateway(BaseGateway):
 
             else:
                 self.ws_inverse_data_api.subscribe(req)
+
+    def subscribe_lots(self, req: SubscribeLotsRequest) -> None:
+        """ 订阅行情 """
+        pass
+
+    def unsubscribe(self, req: SubscribeRequest) -> None:
+        """ 取消订阅 """
+        pass
+
+    def unsubscribe_lots(self, req: SubscribeLotsRequest) -> None:
+        """ 取消订阅 """
+        pass
     
     def send_order(self, req: OrderRequest):
         return self.rest_api.send_order(req)

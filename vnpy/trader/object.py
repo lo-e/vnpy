@@ -384,6 +384,14 @@ class SubscribeRequest:
         """"""
         self.vt_symbol = f"{self.symbol}.{self.exchange.value}"
 
+@dataclass
+class SubscribeLotsRequest:
+    """
+    Request sending to specific gateway for subscribing tick data update.
+    """
+
+    symbols: list
+    exchange: Exchange
 
 @dataclass
 class OrderRequest:

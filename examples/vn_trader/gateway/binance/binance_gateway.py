@@ -38,6 +38,7 @@ from vnpy.trader.object import (
     OrderRequest,
     CancelRequest,
     SubscribeRequest,
+    SubscribeLotsRequest,
     HistoryRequest,
 )
 from vnpy.trader.event import EVENT_TIMER
@@ -172,6 +173,18 @@ class BinanceUsdtGateway(BaseGateway):
     def subscribe(self, req: SubscribeRequest) -> None:
         """订阅行情"""
         self.market_ws_api.subscribe(req)
+
+    def subscribe_lots(self, req: SubscribeLotsRequest) -> None:
+        """ 订阅行情 """
+        pass
+
+    def unsubscribe(self, req: SubscribeRequest) -> None:
+        """ 取消订阅 """
+        pass
+
+    def unsubscribe_lots(self, req: SubscribeLotsRequest) -> None:
+        """ 取消订阅 """
+        pass
 
     def send_order(self, req: OrderRequest) -> str:
         """委托下单"""

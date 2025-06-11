@@ -43,6 +43,7 @@ from vnpy.trader.object import (
     OrderRequest,
     PositionData,
     SubscribeRequest,
+    SubscribeLotsRequest,
     TickData,
     TradeData
 )
@@ -203,8 +204,20 @@ class OkxGateway(BaseGateway):
                     break
 
     def subscribe(self, req: SubscribeRequest) -> None:
-        """订阅行情"""
+        """ 订阅行情 """
         self.ws_public_api.subscribe(req)
+
+    def subscribe_lots(self, req: SubscribeLotsRequest) -> None:
+        """ 订阅行情 """
+        self.ws_public_api.subscribe_lots(req)
+
+    def unsubscribe(self, req: SubscribeRequest) -> None:
+        """ 取消订阅 """
+        self.ws_public_api.unsubscribe(req)
+
+    def unsubscribe_lots(self, req: SubscribeLotsRequest) -> None:
+        """ 取消订阅 """
+        self.ws_public_api.unsubscribe_lots(req)
 
     def send_order(self, req: OrderRequest) -> str:
         """委托下单"""
@@ -626,7 +639,7 @@ class OkxWebsocketPublicApi(WebsocketClient):
         self.start()
 
     def subscribe(self, req: SubscribeRequest) -> None:
-        """订阅行情"""
+        """ 订阅行情 """
         # 缓存订阅记录
         self.subscribed[req.vt_symbol] = req
 
@@ -641,7 +654,7 @@ class OkxWebsocketPublicApi(WebsocketClient):
             )
             self.ticks[req.symbol] = tick
 
-        # 发送订阅请求
+        # 订阅参数
         # tickers 获取产品的最新成交价、买一价、卖一价和24小时交易量等信息，最快100ms推送一次，没有触发事件时不推送，触发推送的事件有：成交、买一卖一发生变动。
         # trades 获取最近的成交数据，有成交数据就推送，每次推送可能聚合多条成交数据，根据每个taker订单的不同成交价格推送消息，并使用count字段表示聚合的订单匹配数量。
         # books5 获取深度数据，books5是5档频道，首次推5档快照数据，以后定量推送，每100毫秒当5档快照数据有变化推送一次5档数据。
@@ -652,8 +665,98 @@ class OkxWebsocketPublicApi(WebsocketClient):
                 "instId": req.symbol
             })
 
+        # 发送订阅请求
         req: dict = {
             "op": "subscribe",
+            "args": args
+        }
+        self.send_packet(req)
+
+    def subscribe_lots(self, req: SubscribeLotsRequest) -> None:
+        """ 订阅行情 """
+        args: list = []
+
+        for symbol in req.symbols:
+            # 缓存订阅记录
+            vt_symbol = f"{symbol}.{req.exchange.value}"
+            self.subscribed[vt_symbol] = SubscribeRequest(symbol=symbol, exchange=req.exchange)
+
+            # 创建TICK对象
+            if symbol not in self.ticks:
+                tick: TickData = TickData(
+                    symbol=symbol,
+                    exchange=req.exchange,
+                    name=symbol,
+                    datetime=datetime.now(),
+                    gateway_name=self.gateway_name,
+                )
+                self.ticks[symbol] = tick
+
+            # 订阅参数
+            # tickers 获取产品的最新成交价、买一价、卖一价和24小时交易量等信息，最快100ms推送一次，没有触发事件时不推送，触发推送的事件有：成交、买一卖一发生变动。
+            # trades 获取最近的成交数据，有成交数据就推送，每次推送可能聚合多条成交数据，根据每个taker订单的不同成交价格推送消息，并使用count字段表示聚合的订单匹配数量。
+            # books5 获取深度数据，books5是5档频道，首次推5档快照数据，以后定量推送，每100毫秒当5档快照数据有变化推送一次5档数据。
+            
+            for channel in ["tickers"]:
+                args.append({
+                    "channel": channel,
+                    "instId": symbol
+                })
+
+        # 发送订阅请求
+        req: dict = {
+            "op": "subscribe",
+            "args": args
+        }
+        self.send_packet(req)
+    
+    def unsubscribe(self, req: SubscribeRequest) -> None:
+        """ 取消订阅 """
+        # 清除订阅记录
+        if req.vt_symbol in self.subscribed:
+            self.subscribed.pop(req.vt_symbol)
+
+        # 订阅参数
+        # tickers 获取产品的最新成交价、买一价、卖一价和24小时交易量等信息，最快100ms推送一次，没有触发事件时不推送，触发推送的事件有：成交、买一卖一发生变动。
+        # trades 获取最近的成交数据，有成交数据就推送，每次推送可能聚合多条成交数据，根据每个taker订单的不同成交价格推送消息，并使用count字段表示聚合的订单匹配数量。
+        # books5 获取深度数据，books5是5档频道，首次推5档快照数据，以后定量推送，每100毫秒当5档快照数据有变化推送一次5档数据。
+        args: list = []
+        for channel in ["tickers"]:
+            args.append({
+                "channel": channel,
+                "instId": req.symbol
+            })
+
+        # 发送取消订阅请求
+        req: dict = {
+            "op": "unsubscribe",
+            "args": args
+        }
+        self.send_packet(req)
+
+    def unsubscribe_lots(self, req: SubscribeLotsRequest) -> None:
+        """ 取消订阅 """
+        args: list = []
+
+        for symbol in req.symbols:
+            # 清除缓存订阅记录
+            vt_symbol = f"{symbol}.{req.exchange.value}"
+            if vt_symbol in self.subscribed:
+                self.subscribed.pop(vt_symbol)
+
+            # 订阅参数
+            # tickers 获取产品的最新成交价、买一价、卖一价和24小时交易量等信息，最快100ms推送一次，没有触发事件时不推送，触发推送的事件有：成交、买一卖一发生变动。
+            # trades 获取最近的成交数据，有成交数据就推送，每次推送可能聚合多条成交数据，根据每个taker订单的不同成交价格推送消息，并使用count字段表示聚合的订单匹配数量。
+            # books5 获取深度数据，books5是5档频道，首次推5档快照数据，以后定量推送，每100毫秒当5档快照数据有变化推送一次5档数据。
+            for channel in ["tickers"]:
+                args.append({
+                    "channel": channel,
+                    "instId": symbol
+                })
+
+        # 发送取消订阅请求
+        req: dict = {
+            "op": "unsubscribe",
             "args": args
         }
         self.send_packet(req)

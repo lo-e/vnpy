@@ -5,7 +5,7 @@ from gateway.binance import BinanceUsdtGateway
 from gateway.bybit import BybitGateway
 from gateway.okx import OkxGateway
 from vnpy.trader.utility import load_json
-from vnpy.trader.object import SubscribeRequest
+from vnpy.trader.object import SubscribeRequest, SubscribeLotsRequest
 import time
 from vnpy.trader.event import EVENT_TICK, EVENT_TIMER
 from vnpy.trader.object import TickData
@@ -15,6 +15,7 @@ from copy import copy
 from App_Command.hit_new.engine import HitNewEngine
 from App_Command.trending_sniper.engine import TrendingSniperEngine
 from App_Command.top_gainers_losers.engine import TopGainersLosersEngine
+from vnpy.trader.constant import Exchange
 
 # GATEWAYS = [[OkxGateway, "lo-e"], [BybitGateway, "loesuperman"], [BinanceUsdtGateway, "lo-e"]]
 # GATEWAYS = [[OkxGateway, "lo-e(test)"], [BybitGateway, "loesuperman(test)"], [BinanceUsdtGateway, "lo-e(test)"]]
@@ -58,21 +59,59 @@ class MonitorEngine(object):
     
     def subscribe(self, vt_symbol: str):
         # 订阅合约
-        start = time.time()
-        success = False
-        while not success:
+        contract = self.main_engine.get_contract(vt_symbol)
+        if contract:
+            req = SubscribeRequest(symbol=contract.symbol, exchange=contract.exchange)
+            self.main_engine.subscribe(req, contract.gateway_name)
+            
+        else:
+            print(f"行情订阅失败，找不到合约{vt_symbol}")
+
+    def subscribe_lots(self, symbols: str, exchange: Exchange):
+        # 订阅合约
+        gateway_symbols_data = {}
+        for symbol in symbols:
+            vt_symbol = f"{symbol}.{exchange.value}"
             contract = self.main_engine.get_contract(vt_symbol)
             if contract:
-                time.sleep(1)
-                req = SubscribeRequest(symbol=contract.symbol, exchange=contract.exchange)
-                self.main_engine.subscribe(req, contract.gateway_name)
-                success = True
-            
-            if time.time() - start >= 5:
-                break
+                gateway_symbols = gateway_symbols_data.get(contract.gateway_name, set())
+                gateway_symbols.add(symbol)
+                gateway_symbols_data[contract.gateway_name] = gateway_symbols
 
-        if not success:
+            else:
+                print(f"行情订阅失败，找不到合约{vt_symbol}")
+
+        for gateway_name, gateway_symbols in gateway_symbols_data.items():
+            req = SubscribeLotsRequest(symbols=list(gateway_symbols), exchange=exchange)
+            self.main_engine.subscribe_lots(req, gateway_name)
+
+    def unsubscribe(self, vt_symbol: str):
+        # 取消订阅
+        contract = self.main_engine.get_contract(vt_symbol)
+        if contract:
+            req = SubscribeRequest(symbol=contract.symbol, exchange=contract.exchange)
+            self.main_engine.unsubscribe(req, contract.gateway_name)
+            
+        else:
             print(f"行情订阅失败，找不到合约{vt_symbol}")
+
+    def unsubscribe_lots(self, symbols: str, exchange: Exchange):
+        # 订阅合约
+        gateway_symbols_data = {}
+        for symbol in symbols:
+            vt_symbol = f"{symbol}.{exchange.value}"
+            contract = self.main_engine.get_contract(vt_symbol)
+            if contract:
+                gateway_symbols = gateway_symbols_data.get(contract.gateway_name, set())
+                gateway_symbols.add(symbol)
+                gateway_symbols_data[contract.gateway_name] = gateway_symbols
+
+            else:
+                print(f"取消订阅失败，找不到合约{vt_symbol}")
+
+        for gateway_name, gateway_symbols in gateway_symbols_data.items():
+            req = SubscribeLotsRequest(symbols=list(gateway_symbols), exchange=exchange)
+            self.main_engine.unsubscribe_lots(req, gateway_name)
 
     def on_tick(self, event):
         # 收到Tick数据
@@ -122,16 +161,22 @@ class MonitorEngine(object):
         now = datetime.now()
         if (now.minute % 1 == 0) and (now.second == 15) and self.tick:
             # 输出Tick信息
+            for vt_symbol in self.history_duration_bar_data.copy().keys():
+                duration_bar: DurationBar = self.history_duration_bar_data[vt_symbol]
+                last_minute_dt = (now - timedelta(minutes=1)).replace(second=0, microsecond=0)
+                if duration_bar.datetime < last_minute_dt:
+                    self.history_duration_bar_data.pop(vt_symbol)
+                    if vt_symbol in self.duration_bar_data:
+                        self.duration_bar_data.pop(vt_symbol)
+
             sorted_duration_bar_list = sorted(self.history_duration_bar_data.values(), key=lambda x: x.tick_count)
             for duration_bar in sorted_duration_bar_list[:5]:
-                dt_str = duration_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                 print_(f"{duration_bar.vt_symbol}({duration_bar.tick_count})\t{duration_bar.open}\t{duration_bar.high}\t{duration_bar.low}\t{duration_bar.close}")
 
             if len(sorted_duration_bar_list):
                 print("------")
 
             for duration_bar in sorted_duration_bar_list[-10:]:
-                dt_str = duration_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                 print_(f"{duration_bar.vt_symbol}({duration_bar.tick_count})\t{duration_bar.open}\t{duration_bar.high}\t{duration_bar.low}\t{duration_bar.close}")
             print_(f"Tick数据合约总数 {len(sorted_duration_bar_list)} 最新 {self.tick.vt_symbol} {self.tick.datetime.replace(microsecond=0)}")
 
@@ -142,8 +187,7 @@ class MonitorEngine(object):
                 self.main_engine.send_ding_talk(msg)
             
             self.gateway_connected = gateway_all_connected
-            dt_str = now.strftime(f"%Y-%m-%d %H:%M:%S")
-            print(f"{dt_str}\t交易所连接状态：{gateway_all_connected}\n")
+            print_(f"交易所连接状态：{gateway_all_connected}\n")
 
 def print_(msg: str):
     dt = datetime.now().replace(microsecond=0)
@@ -191,10 +235,14 @@ def main():
     # trendign_sniper_app.start_portfolio()
 
     # 执行策略（TopGainersLosers）
-    top_gainers_losers_app = TopGainersLosersEngine(main_engine=main_engine, event_engine=event_engine)
-    top_gainers_losers_app.init_engine()
-    top_gainers_losers_app.init_portfolio()
-    top_gainers_losers_app.start_portfolio()
+    # top_gainers_losers_app = TopGainersLosersEngine(main_engine=main_engine, event_engine=event_engine)
+    # top_gainers_losers_app.init_engine()
+    # top_gainers_losers_app.init_portfolio()
+    # top_gainers_losers_app.start_portfolio()
+
+    monitor_engine.subscribe_lots(symbols=["ETH-USDT-SWAP", "SOL-USDT-SWAP", "DOGE-USDT-SWAP", "PEPE-USDT-SWAP", "LINK-USDT-SWAP"], exchange=Exchange.OKX)
+    time.sleep(60)
+    monitor_engine.unsubscribe_lots(symbols=["ETH-USDT-SWAP", "SOL-USDT-SWAP", "DOGE-USDT-SWAP"], exchange=Exchange.OKX)
     
 if __name__ == "__main__":
     main()
