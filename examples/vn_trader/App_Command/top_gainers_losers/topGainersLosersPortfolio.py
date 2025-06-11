@@ -163,25 +163,40 @@ class TopGainersLosersPortfolio(object):
                 self.short_trending = False
                 close = True
 
-        # 停止关闭策略
         if close:
+            # 停止关闭策略
             remove_strategy_names = []
+            unsubscribe_vt_symbols = set()
             for name in self.cta_engine.strategies.keys():
                 strategy: TopGainersLosersStrategy = self.cta_engine.strategies[name]
                 strategy.on_close()
+
                 remove_strategy_names.append(strategy.strategy_name)
-                
+                unsubscribe_vt_symbols.add(strategy.vt_symbol)
+            
+            # 清除setting
             self.cta_engine.remove_strategy_setting(remove_strategy_names)
             if len(remove_strategy_names):
                 msg = f"{msg}关闭合约：{len(remove_strategy_names)}\n"
 
+            # 取消订阅合约
+            if unsubscribe_vt_symbols:
+                self.cta_engine.unsubscibe(list(unsubscribe_vt_symbols))
+
         # 执行新策略
+        subscribe_vt_symbols = set()
         new_setting_count = len(new_settings)
         for setting in new_settings:
+            subscribe_vt_symbols.add(setting["vt_symbol"])
             setting["slot"] = new_setting_count
             self.cta_engine.new_strategy(setting)
 
+        # 添加setting
         self.cta_engine.new_strategy_setting(new_settings)
+
+        # 订阅合约
+        self.cta_engine.subscibe(list(subscribe_vt_symbols))
+
         if new_long_count:
             msg = f"{msg}执行多头合约：{new_long_count}\n"
 

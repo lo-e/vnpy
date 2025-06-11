@@ -14,6 +14,7 @@ from vnpy.trader.engine import BaseEngine, MainEngine
 from vnpy.trader.object import (
     OrderRequest,
     SubscribeRequest,
+    SubscribeLotsRequest,
     HistoryRequest,
     LogData,
     TickData,
@@ -178,7 +179,6 @@ class TopGainersLosersEngine(BaseEngine):
 
         # 策略响应
         self.call_strategy_func(strategy, strategy.on_trade, trade)
-        self.put_strategy_event(strategy)
 
     def process_position_event(self, event: Event):
         position = event.data
@@ -239,6 +239,7 @@ class TopGainersLosersEngine(BaseEngine):
         volume: float,
         stop: bool,
         lock: bool,
+        market: bool = False
     ):
         contract = self.main_engine.get_contract(strategy.vt_symbol)
         if not contract:
@@ -250,8 +251,12 @@ class TopGainersLosersEngine(BaseEngine):
         volume = round_to(volume, contract.min_volume)
 
         # 发送订单
+        type = OrderType.LIMIT
+        if market:
+            type = OrderType.MARKET
+
         return self.send_server_order(
-            strategy, contract, direction, offset, price, volume, OrderType.LIMIT, lock
+            strategy, contract, direction, offset, price, volume, type, lock
         )
 
     def send_symbol_order(
@@ -264,6 +269,7 @@ class TopGainersLosersEngine(BaseEngine):
         volume: float,
         stop: bool,
         lock: bool,
+        market: bool = False
     ):
         contract = self.main_engine.get_contract(vt_symbol)
         if not contract:
@@ -275,8 +281,12 @@ class TopGainersLosersEngine(BaseEngine):
         volume = round_to(volume, contract.min_volume)
 
         # 发送订单
+        type = OrderType.LIMIT
+        if market:
+            type = OrderType.MARKET
+
         return self.send_server_order(
-            strategy, contract, direction, offset, price, volume, OrderType.LIMIT, lock
+            strategy, contract, direction, offset, price, volume, type, lock
         )
 
     def cancel_order(self, strategy: CtaTemplate, vt_orderid: str):
@@ -338,15 +348,6 @@ class TopGainersLosersEngine(BaseEngine):
         # 响应策略初始化方法
         self.call_strategy_func(strategy, strategy.on_init)
 
-        # 订阅合约行情
-        contract = self.main_engine.get_contract(strategy.vt_symbol)
-        if contract:
-            req = SubscribeRequest(symbol=contract.symbol, exchange=contract.exchange)
-            self.main_engine.subscribe(req, contract.gateway_name)
-
-        else:
-            self.write_log(f"行情订阅失败，找不到合约{strategy.vt_symbol}", strategy)
-
         # 策略状态更新（初始化完成）
         strategy.inited = True
 
@@ -367,6 +368,45 @@ class TopGainersLosersEngine(BaseEngine):
         # 策略状态更新（已启动）
         strategy.trading = True
 
+    def subscibe(self, vt_symbols: list):
+        # 订阅合约行情
+        exchange_symbols_data = {}
+        exchange_gateway_data = {}
+        for vt_symbol in vt_symbols:
+            contract: ContractData = self.main_engine.get_contract(vt_symbol)
+            if contract:
+                exchange_symbols = exchange_symbols_data.get(contract.exchange, set())
+                exchange_symbols.add(contract.symbol)
+                exchange_symbols_data[contract.exchange] = exchange_symbols
+
+                exchange_gateway_data[contract.exchange] = contract.gateway_name
+
+            else:
+                self.write_log(f"行情订阅失败，找不到合约{vt_symbol}")
+
+        for exchange, exchange_symbols in exchange_symbols_data.items():
+            req = SubscribeLotsRequest(symbols=list(exchange_symbols), exchange=exchange)
+            gateway_name = exchange_gateway_data[exchange]
+            self.main_engine.subscribe_lots(req, gateway_name)
+
+    def unsubscibe(self, vt_symbols: list):
+        # 取消订阅合约行情
+        exchange_symbols_data = {}
+        exchange_gateway_data = {}
+        for vt_symbol in vt_symbols:
+            contract: ContractData = self.main_engine.get_contract(vt_symbol)
+            if contract:
+                exchange_symbols = exchange_symbols_data.get(contract.exchange, set())
+                exchange_symbols.add(contract.symbol)
+                exchange_symbols_data[contract.exchange] = exchange_symbols
+
+                exchange_gateway_data[contract.exchange] = contract.gateway_name
+
+        for exchange, exchange_symbols in exchange_symbols_data.items():
+            req = SubscribeLotsRequest(symbols=list(exchange_symbols), exchange=exchange)
+            gateway_name = exchange_gateway_data[exchange]
+            self.main_engine.unsubscribe_lots(req, gateway_name)
+
     def stop_strategy(self, strategy_name: str):
         # 停止策略
         strategy = self.strategies[strategy_name]
@@ -378,7 +418,6 @@ class TopGainersLosersEngine(BaseEngine):
 
         # 策略状态更新（已停止）
         strategy.trading = False
-        self.put_strategy_event(strategy)
 
         # 取消策略的所有订单
         self.cancel_all(strategy)
@@ -388,6 +427,15 @@ class TopGainersLosersEngine(BaseEngine):
         for strategy_name in self.strategies.keys():
             # self.init_strategy(strategy_name)
             self.initing_strategy(strategy_name)
+        
+        # 订阅合约
+        vt_symbols = set()
+        for strategy_name in self.strategies.keys():
+            strategy: TopGainersLosersStrategy = self.strategies[strategy_name]
+            vt_symbols.add(strategy.vt_symbol)
+        
+        if vt_symbols:
+            self.subscibe(list(vt_symbols))
 
     def start_all_strategies(self):
         # 启动所有策略
@@ -557,9 +605,6 @@ class TopGainersLosersEngine(BaseEngine):
         self.strategies[name] = strategy
         strategies = self.symbol_strategy_map[strategy.vt_symbol]
         strategies.append(strategy)
-
-        # 策略状态更新
-        self.put_strategy_event(strategy)
 
     def new_strategy(self, setting):
         try:

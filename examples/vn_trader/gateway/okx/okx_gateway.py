@@ -775,7 +775,7 @@ class OkxWebsocketPublicApi(WebsocketClient):
             exchange_symbols_data[req.exchange] = exchange_symbols
         
         for exchange, exchange_symbols in exchange_symbols_data.items():
-            req: SubscribeLotsRequest = SubscribeLotsRequest(symbols=exchange_symbols, exchange=exchange)
+            req: SubscribeLotsRequest = SubscribeLotsRequest(symbols=list(exchange_symbols), exchange=exchange)
             self.subscribe_lots(req)
 
     def on_disconnected(self) -> None:
