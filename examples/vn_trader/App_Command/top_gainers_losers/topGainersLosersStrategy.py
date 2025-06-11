@@ -273,12 +273,12 @@ class TopGainersLosersStrategy(CtaTemplate):
     def check_save_data_(self):
         try:
             # 保存变量、同步数据
-            # strategy_data = self.get_data()
-            # if self.strategy_data != strategy_data:
-            #     self.strategy_data = strategy_data
-            #     self.put_event()
+            strategy_data = self.get_data()
+            if self.strategy_data != strategy_data:
+                self.strategy_data = strategy_data
+                self.put_event()
 
-            #     print_(f"同步数据 {self.strategy_name}..")
+                print_(f"同步数据 {self.strategy_name}..")
 
             # 保存交易日志
             if self.trade_logs_updated:
