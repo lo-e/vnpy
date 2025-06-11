@@ -235,18 +235,10 @@ def main():
     # trendign_sniper_app.start_portfolio()
 
     # 执行策略（TopGainersLosers）
-    # top_gainers_losers_app = TopGainersLosersEngine(main_engine=main_engine, event_engine=event_engine)
-    # top_gainers_losers_app.init_engine()
-    # top_gainers_losers_app.init_portfolio()
-    # top_gainers_losers_app.start_portfolio()
-
-    # monitor_engine.subscribe_lots(symbols=["ETH-USDT-SWAP", "SOL-USDT-SWAP", "DOGE-USDT-SWAP", "PEPE-USDT-SWAP", "LINK-USDT-SWAP"], exchange=Exchange.OKX)
-    # time.sleep(60)
-    # monitor_engine.unsubscribe_lots(symbols=["ETH-USDT-SWAP", "SOL-USDT-SWAP", "DOGE-USDT-SWAP"], exchange=Exchange.OKX)
-
-    monitor_engine.subscribe_lots(symbols=["ETHUSDT", "SOLUSDT", "DOGEUSDT", "1000PEPEUSDT", "LINKUSDT"], exchange=Exchange.BYBIT)
-    time.sleep(60)
-    monitor_engine.unsubscribe_lots(symbols=["ETHUSDT", "SOLUSDT", "DOGEUSDT"], exchange=Exchange.BYBIT)
+    top_gainers_losers_app = TopGainersLosersEngine(main_engine=main_engine, event_engine=event_engine)
+    top_gainers_losers_app.init_engine()
+    top_gainers_losers_app.init_portfolio()
+    top_gainers_losers_app.start_portfolio()
     
 if __name__ == "__main__":
     main()

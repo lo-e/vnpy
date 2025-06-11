@@ -766,8 +766,17 @@ class OkxWebsocketPublicApi(WebsocketClient):
         self.gateway.write_log("Websocket Public API连接成功")
         self.connected = True
 
-        for req in list(self.subscribed.values()):
-            self.subscribe(req)
+        # 重新订阅
+        exchange_symbols_data = {}
+        for vt_symbol in self.subscribed.keys():
+            req: SubscribeRequest = self.subscribed[vt_symbol]
+            exchange_symbols = exchange_symbols_data.get(req.exchange, set())
+            exchange_symbols.add(req.symbol)
+            exchange_symbols_data[req.exchange] = exchange_symbols
+        
+        for exchange, exchange_symbols in exchange_symbols_data.items():
+            req: SubscribeLotsRequest = SubscribeLotsRequest(symbols=exchange_symbols, exchange=exchange)
+            self.subscribe_lots(req)
 
     def on_disconnected(self) -> None:
         """连接断开回报"""
