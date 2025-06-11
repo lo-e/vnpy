@@ -104,7 +104,7 @@ class TopGainersLosersPortfolio(object):
         # 保存同步数据
         self.check_save_data()
 
-    def resubscribe(self):
+    def resubscribe(self, event: Event):
         # 取消订阅
         self.subscribe_strategies(unsubscribe=True)
 
