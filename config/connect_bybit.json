@@ -1,0 +1,18 @@
+{
+    "loesuperman": {
+        "账户名称": "loesuperman",
+        "key": "jGMVKAwuj2Pxa2CxDn",
+        "secret": "TsQtOZqc6opAm21o5EvLDxGXzwRrCs62Cfyf",
+        "服务器": "REAL",
+        "代理地址": "192.168.31.140",
+        "代理端口": "10811"
+    },
+    "loesuperman(test)": {
+        "账户名称": "loesuperman(test)",
+        "key": "WfBY1RYv0nELv1yL9R",
+        "secret": "Q91LqBXRhoDWn6mi0buOSxfhgEDVohrhPznd",
+        "服务器": "TESTNET",
+        "代理地址": "192.168.31.140",
+        "代理端口": "10811"
+    }
+}
