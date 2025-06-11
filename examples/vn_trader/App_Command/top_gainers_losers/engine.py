@@ -732,37 +732,27 @@ class TopGainersLosersEngine(BaseEngine):
         for key in strategy.syncs:
             sync_data[key] = strategy.__getattribute__(key)
 
-        history_sync_data = self.strategy_sync_data.get(strategy.strategy_name, {})
-        if history_sync_data != sync_data:
-            # 记录历史同步数据
-            self.strategy_sync_data[strategy.strategy_name] = sync_data
+        # history_sync_data = self.strategy_sync_data.get(strategy.strategy_name, {})
+        # if history_sync_data != sync_data:
+        #     # 记录历史同步数据
+        #     self.strategy_sync_data[strategy.strategy_name] = sync_data
 
-            try:
-                # 保存到数据库
-                colleciton_name = f"{strategy.__class__.__name__}"
-                self.main_engine.dbUpdate(
-                    POSITION_DB_NAME,
-                    colleciton_name,
-                    sync_data,
-                    flt,
-                    True,
-                    callback=self.strategy_db_Update_callback,
-                )
-            
-            except Exception as e:
-                pass
-
-            try:
-                # 保存到文件
-                sync_json_file = self.get_strategie_sync_file_path(strategy)
-                with open(sync_json_file, "w", encoding="utf-8") as file:
-                    file.write(
-                        json.dumps(sync_data, ensure_ascii=False)
-                    )
-
-            except Exception as e:
-                pass
-
+        try:
+            # 保存到数据库
+            colleciton_name = f"{strategy.__class__.__name__}"
+            self.main_engine.dbUpdate(
+                POSITION_DB_NAME,
+                colleciton_name,
+                sync_data,
+                flt,
+                True,
+                callback=self.strategy_db_Update_callback,
+            )
+        
+        except Exception as e:
+            pass
+                
+        """
         # 保存策略变量数据到文件（数据有变化时才保存）
         variable_data = {}
         for key in strategy.variables:
@@ -783,6 +773,7 @@ class TopGainersLosersEngine(BaseEngine):
 
             except Exception as e:
                 pass
+        """
     
     def get_strategie_sync_file_path(self, strategy):
         # 策略同步数据保存文件路径 
@@ -831,7 +822,6 @@ class TopGainersLosersEngine(BaseEngine):
         if not self.portfolio.inited:
             self.portfolio.on_init()
             self.portfolio.inited = True
-            self.put_portfolio_event()
 
     def start_portfolio(self):
         # 启动所有策略
@@ -841,7 +831,6 @@ class TopGainersLosersEngine(BaseEngine):
         if not self.portfolio.started:
             self.portfolio.on_start()
             self.portfolio.started = True
-            self.put_portfolio_event()
 
     def stopPortfolio(self):
         # 停止所有策略
@@ -851,7 +840,6 @@ class TopGainersLosersEngine(BaseEngine):
         if self.portfolio.started:
             self.portfolio.on_stop()
             self.portfolio.started = False
-            self.put_portfolio_event()
 
     def get_portfolio_variables(self):
         # 获取策略组合变量数据

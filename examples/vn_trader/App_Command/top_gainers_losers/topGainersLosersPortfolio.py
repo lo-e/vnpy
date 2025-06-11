@@ -27,6 +27,8 @@ class TopGainersLosersPortfolio(object):
                   "portfolio_value"]
 
     syncs = [
+        "long_trending",
+        "short_trending"
     ]
 
     def __init__(self, engine, setting):
@@ -44,6 +46,7 @@ class TopGainersLosersPortfolio(object):
         self.short_trending = False
         self.rise_data_list = []
         self.fall_data_list = []
+        self.sync_data = {}
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -80,13 +83,16 @@ class TopGainersLosersPortfolio(object):
     def on_timer(self):
         if not self.started:
             return
-        now = datetime.now()
 
         # 下载合约列表数据
+        now = datetime.now()
         current_hour_time = now.replace(minute=0, second=0, microsecond=0)
         if self.download_instruments_time != current_hour_time:
             self.download_instruments_time = current_hour_time
             self.check_download_instruments()
+
+        # 保存同步数据
+        self.check_save_data()
 
     def on_rise_fall_long_short(self, data: tuple):
         rise_list, fall_list, _, _ = data
@@ -131,7 +137,7 @@ class TopGainersLosersPortfolio(object):
             fall_df = pd.DataFrame(fall_list)
             fall_df.to_csv(fall_file_path, index=False)
 
-            if abs(mean_rise_change) >= abs(mean_fall_change) * 2.0 and not self.long_trending:
+            if abs(mean_rise_change) >= abs(mean_fall_change) * 2.0 and not self.long_trending and not self.short_trending:
                 # 多头趋势
                 self.long_trending = True
                 close = True
@@ -149,7 +155,7 @@ class TopGainersLosersPortfolio(object):
                 self.long_trending = False
                 close = True
 
-            if abs(mean_fall_change) >= abs(mean_rise_change) * 2.0 and not self.short_trending:
+            if abs(mean_fall_change) >= abs(mean_rise_change) * 2.0 and not self.long_trending and not self.short_trending:
                 # 空头趋势
                 self.short_trending = True
                 close = True
@@ -171,6 +177,7 @@ class TopGainersLosersPortfolio(object):
             # 停止关闭当前策略
             remove_strategy_names = []
             unsubscribe_vt_symbols = set()
+            
             for name in self.cta_engine.strategies.keys():
                 strategy: TopGainersLosersStrategy = self.cta_engine.strategies[name]
                 strategy.on_close()
@@ -470,6 +477,21 @@ class TopGainersLosersPortfolio(object):
             #         error_notice_ts = time.time()
             #         self.send_ding_talk(msg)
 
+    def check_save_data(self):
+        try:
+            sync_data = {}
+            for key in self.syncs:
+                sync_data[key] = self.__getattribute__(key)
+
+            if self.sync_data != sync_data:
+                self.sync_data = sync_data
+                self.cta_engine.put_portfolio_event()
+        
+        except Exception as e:
+            msg = f"保存组合数据出错\n\n{e}"
+            self.send_ding_talk(msg)
+            print_(msg)
+
     def check_strategy_status(self):
         while True:
             try:
@@ -523,9 +545,11 @@ class TopGainersLosersPortfolio(object):
                                     trade_price = strategy.tick.last_price * 1.005
                                     strategy.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(gap))
 
+                        # 同步策略数据
+                        strategy.check_save_data()
+                        
                         # 检查关闭策略
                         if strategy.target_pos == strategy.pos and strategy.close:
-                            strategy.check_save_data_()
                             self.cta_engine.remove_strategy(strategy.strategy_name)
 
             except Exception as e:

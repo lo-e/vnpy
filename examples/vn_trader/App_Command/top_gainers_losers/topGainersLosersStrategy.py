@@ -148,9 +148,6 @@ class TopGainersLosersStrategy(CtaTemplate):
             for _, row in df.iterrows():
                 self.trade_logs.append(dict(row))
 
-        # 定时检查保存数据
-        Thread(target=self.check_save_data).start()
-
     def on_close(self):
         self.target_pos = 0
         self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
@@ -264,13 +261,8 @@ class TopGainersLosersStrategy(CtaTemplate):
             # 记录日志
             self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} OPEN {self.slot}"})
             self.trade_logs_updated = True
-    
-    def check_save_data(self):
-        while not self.close:
-            self.check_save_data_()
-            time.sleep(1)
 
-    def check_save_data_(self):
+    def check_save_data(self):
         try:
             # 保存变量、同步数据
             strategy_data = self.get_data()
