@@ -22,6 +22,7 @@ plotly
 exchange-calendars
 reportlab
 pymongo
+aiohttp
 
 vnpy_rest==1.0.3
 vnpy_websocket==1.0.2
