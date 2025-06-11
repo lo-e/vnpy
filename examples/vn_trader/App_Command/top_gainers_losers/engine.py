@@ -368,7 +368,7 @@ class TopGainersLosersEngine(BaseEngine):
         # 策略状态更新（已启动）
         strategy.trading = True
 
-    def subscibe(self, vt_symbols: list):
+    def subscribe(self, vt_symbols: list):
         # 订阅合约行情
         exchange_symbols_data = {}
         exchange_gateway_data = {}
@@ -389,7 +389,7 @@ class TopGainersLosersEngine(BaseEngine):
             gateway_name = exchange_gateway_data[exchange]
             self.main_engine.subscribe_lots(req, gateway_name)
 
-    def unsubscibe(self, vt_symbols: list):
+    def unsubscribe(self, vt_symbols: list):
         # 取消订阅合约行情
         exchange_symbols_data = {}
         exchange_gateway_data = {}
@@ -435,7 +435,7 @@ class TopGainersLosersEngine(BaseEngine):
             vt_symbols.add(strategy.vt_symbol)
         
         if vt_symbols:
-            self.subscibe(list(vt_symbols))
+            self.subscribe(list(vt_symbols))
 
     def start_all_strategies(self):
         # 启动所有策略

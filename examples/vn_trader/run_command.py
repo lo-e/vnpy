@@ -1,5 +1,5 @@
 from vnpy.trader.engine import MainEngine
-from vnpy.event import EventEngine
+from vnpy.event import EventEngine, Event
 from vnpy.trader.gateway import BaseGateway
 from gateway.binance import BinanceUsdtGateway
 from gateway.bybit import BybitGateway
@@ -7,7 +7,7 @@ from gateway.okx import OkxGateway
 from vnpy.trader.utility import load_json
 from vnpy.trader.object import SubscribeRequest, SubscribeLotsRequest
 import time
-from vnpy.trader.event import EVENT_TICK, EVENT_TIMER
+from vnpy.trader.event import EVENT_TICK, EVENT_TICK_DELAY, EVENT_TIMER
 from vnpy.trader.object import TickData
 from threading import Thread
 from datetime import datetime, timedelta
@@ -130,6 +130,10 @@ class MonitorEngine(object):
 
                 self.tick_delay_time = time.time()
                 self.tick_delay_count = 0
+
+                # 发出延迟事件
+                event = Event(type=EVENT_TICK_DELAY)
+                self.event_engine.put(event)
 
         minute = tick.datetime.minute
         while minute % 1:

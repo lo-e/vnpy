@@ -21,6 +21,7 @@ from vnpy.trader.utility import DIR_SYMBOL
 import json
 from .utility import Chrome
 from collections import OrderedDict
+from vnpy.trader.event import EVENT_TICK_DELAY
 
 class TopGainersLosersPortfolio(object):
     parameters = ["name",
@@ -47,6 +48,7 @@ class TopGainersLosersPortfolio(object):
         self.rise_data_list = []
         self.fall_data_list = []
         self.sync_data = {}
+        self.unsubscribe_time = 0
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -62,6 +64,9 @@ class TopGainersLosersPortfolio(object):
     def on_init(self):
         # 导入交易所合约
         self.load_instruments_data()
+
+        # 监控行情数据延迟事件
+        self.cta_engine.event_engine.register(EVENT_TICK_DELAY, self.resubscribe)
 
         # 启动Chrome获取涨跌幅排行榜
         # chrome = Chrome(cta_engine=None)
@@ -91,8 +96,33 @@ class TopGainersLosersPortfolio(object):
             self.download_instruments_time = current_hour_time
             self.check_download_instruments()
 
+        # 重新订阅
+        if self.unsubscribe_time and time.time() - self.unsubscribe_time >= 5:
+            self.unsubscribe_time = 0
+            self.subscribe_strategies()
+
         # 保存同步数据
         self.check_save_data()
+
+    def resubscribe(self):
+        # 取消订阅
+        self.subscribe_strategies(unsubscribe=True)
+
+        # 记录取消订阅时间
+        self.unsubscribe_time = time.time()
+
+    def subscribe_strategies(self, unsubscribe: bool = False):
+        vt_symbols = set()
+        for strategy_name in self.cta_engine.strategies.keys():
+            strategy: TopGainersLosersStrategy = self.strategies[strategy_name]
+            vt_symbols.add(strategy.vt_symbol)
+        
+        if vt_symbols:
+            if unsubscribe:
+                self.cta_engine.unsubscribe(list(vt_symbols))
+            
+            else:
+                self.cta_engine.subscribe(list(vt_symbols))
 
     def on_rise_fall_long_short(self, data: tuple):
         rise_list, fall_list, _, _ = data
@@ -174,16 +204,14 @@ class TopGainersLosersPortfolio(object):
                 close = True
 
         if close:
-            # 停止关闭当前策略
+            # 停止当前策略
             remove_strategy_names = []
-            unsubscribe_vt_symbols = set()
             
             for name in self.cta_engine.strategies.keys():
                 strategy: TopGainersLosersStrategy = self.cta_engine.strategies[name]
                 strategy.on_close()
 
                 remove_strategy_names.append(strategy.strategy_name)
-                unsubscribe_vt_symbols.add(strategy.vt_symbol)
             
             # 清除setting
             self.cta_engine.remove_strategy_setting(remove_strategy_names)
@@ -191,14 +219,11 @@ class TopGainersLosersPortfolio(object):
                 msg = f"{msg}关闭合约：{len(remove_strategy_names)}\n"
 
             # 取消订阅合约
-            if unsubscribe_vt_symbols:
-                self.cta_engine.unsubscibe(list(unsubscribe_vt_symbols))
+            self.subscribe_strategies(unsubscribe=True)
 
         # 执行新策略
-        subscribe_vt_symbols = set()
         new_setting_count = len(new_settings)
         for setting in new_settings:
-            subscribe_vt_symbols.add(setting["vt_symbol"])
             setting["slot"] = new_setting_count
             self.cta_engine.new_strategy(setting)
 
@@ -206,7 +231,7 @@ class TopGainersLosersPortfolio(object):
         self.cta_engine.new_strategy_setting(new_settings)
 
         # 订阅合约
-        self.cta_engine.subscibe(list(subscribe_vt_symbols))
+        self.subscribe_strategies()
 
         if new_long_count:
             msg = f"{msg}执行多头合约：{new_long_count}\n"
