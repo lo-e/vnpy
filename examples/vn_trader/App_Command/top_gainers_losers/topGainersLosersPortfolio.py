@@ -134,6 +134,8 @@ class TopGainersLosersPortfolio(object):
             if abs(mean_rise_change) >= abs(mean_fall_change) * 2.0 and not self.long_trending:
                 # 多头趋势
                 self.long_trending = True
+                close = True
+                
                 for i in range(len(rise_list)):
                     rise_data = rise_list[i]
                     change = rise_data["change"]
@@ -150,6 +152,8 @@ class TopGainersLosersPortfolio(object):
             if abs(mean_fall_change) >= abs(mean_rise_change) * 2.0 and not self.short_trending:
                 # 空头趋势
                 self.short_trending = True
+                close = True
+
                 for i in range(len(fall_list)):
                     fall_data = fall_list[i]
                     change = fall_data["change"]
@@ -164,7 +168,7 @@ class TopGainersLosersPortfolio(object):
                 close = True
 
         if close:
-            # 停止关闭策略
+            # 停止关闭当前策略
             remove_strategy_names = []
             unsubscribe_vt_symbols = set()
             for name in self.cta_engine.strategies.keys():
