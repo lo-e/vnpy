@@ -114,7 +114,7 @@ class TopGainersLosersPortfolio(object):
     def subscribe_strategies(self, unsubscribe: bool = False):
         vt_symbols = set()
         for strategy_name in self.cta_engine.strategies.keys():
-            strategy: TopGainersLosersStrategy = self.strategies[strategy_name]
+            strategy: TopGainersLosersStrategy = self.cta_engine.strategies[strategy_name]
             vt_symbols.add(strategy.vt_symbol)
         
         if vt_symbols:
@@ -221,17 +221,18 @@ class TopGainersLosersPortfolio(object):
             # 取消订阅合约
             self.subscribe_strategies(unsubscribe=True)
 
-        # 执行新策略
-        new_setting_count = len(new_settings)
-        for setting in new_settings:
-            setting["slot"] = new_setting_count
-            self.cta_engine.new_strategy(setting)
+        if new_settings:
+            # 执行新策略
+            new_setting_count = len(new_settings)
+            for setting in new_settings:
+                setting["slot"] = new_setting_count
+                self.cta_engine.new_strategy(setting)
 
-        # 添加setting
-        self.cta_engine.new_strategy_setting(new_settings)
+            # 添加setting
+            self.cta_engine.new_strategy_setting(new_settings)
 
-        # 订阅合约
-        self.subscribe_strategies()
+            # 订阅合约
+            self.subscribe_strategies()
 
         if new_long_count:
             msg = f"{msg}执行多头合约：{new_long_count}\n"
