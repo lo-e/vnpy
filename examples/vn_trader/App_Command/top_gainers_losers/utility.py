@@ -539,7 +539,7 @@ class Chrome(object):
             fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}latest.csv"
             fall_df.to_csv(fall_latest_file_path, index=False)
 
-            if abs(mean_rise_change) >= abs(mean_fall_change) * 2.0 and not self.long_trending:
+            if abs(mean_rise_change) >= 1.0 and abs(mean_rise_change) >= abs(mean_fall_change) * 2.0 and not self.long_trending:
                 self.long_trending = True
                 msg = f"多头趋势\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
                 dingtalk.send_ding_talk(msg)
@@ -549,7 +549,7 @@ class Chrome(object):
                 msg = f"多头停止\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
                 dingtalk.send_ding_talk(msg)
 
-            if abs(mean_fall_change) >= abs(mean_rise_change) * 2.0 and not self.short_trending:
+            if abs(mean_fall_change) >= 1.0 and abs(mean_fall_change) >= abs(mean_rise_change) * 2.0 and not self.short_trending:
                 self.short_trending = True
                 msg = f"空头趋势\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
                 dingtalk.send_ding_talk(msg)

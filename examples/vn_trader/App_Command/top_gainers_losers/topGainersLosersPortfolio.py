@@ -169,7 +169,7 @@ class TopGainersLosersPortfolio(object):
             fall_df = pd.DataFrame(fall_list)
             fall_df.to_csv(fall_file_path, index=False)
 
-            if abs(mean_rise_change) >= abs(mean_fall_change) * 2.0 and not self.long_trending and not self.short_trending:
+            if abs(mean_rise_change) >= 1.0 and abs(mean_rise_change) >= abs(mean_fall_change) * 2.0 and not self.long_trending and not self.short_trending:
                 # 多头趋势
                 self.long_trending = True
                 close = True
@@ -187,7 +187,7 @@ class TopGainersLosersPortfolio(object):
                 self.long_trending = False
                 close = True
 
-            if abs(mean_fall_change) >= abs(mean_rise_change) * 2.0 and not self.long_trending and not self.short_trending:
+            if abs(mean_fall_change) >= 1.0 and abs(mean_fall_change) >= abs(mean_rise_change) * 2.0 and not self.long_trending and not self.short_trending:
                 # 空头趋势
                 self.short_trending = True
                 close = True
@@ -294,7 +294,8 @@ class TopGainersLosersPortfolio(object):
                    "exchange": exchange,
                    "exchange_user": exchange_user,
                    "direction": direction_str,
-                   "start": True
+                   "start": True,
+                   "datetime": datetime.now().strftime(f"%Y-%m-%d %H:%M:%S")
                    }
        
         return setting
@@ -452,7 +453,13 @@ class TopGainersLosersPortfolio(object):
 
             except Exception as e:
                 pass
-
+    
+    def query_gateway_contract(self, gateway_names: list):
+        for gateway_name in gateway_names:
+            gateway = self.cta_engine.main_engine.get_default_gateway(gateway_name)
+            if gateway:
+                gateway.query_contract()
+                
     def load_instruments_data(self):
         # .csv获取交易所USDT合约列表
         try:
