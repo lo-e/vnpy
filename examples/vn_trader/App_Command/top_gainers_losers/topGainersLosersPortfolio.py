@@ -328,7 +328,7 @@ class TopGainersLosersPortfolio(object):
 
             except Exception as e:
                 pass
-            time.sleep(10)
+            time.sleep(5)
 
     def check_download_instruments(self):
         if not self.instruments_downloading:
