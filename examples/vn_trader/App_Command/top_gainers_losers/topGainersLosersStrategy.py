@@ -150,17 +150,9 @@ class TopGainersLosersStrategy(CtaTemplate):
 
     def on_close(self):
         self.target_pos = 0
+        self.tick = None
         self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
         self.close = True
-
-        # 记录日志
-        pnl = 0
-        if self.tick and self.open_tick_price:
-            pnl = ((self.tick.last_price / self.open_tick_price) - 1) * 100
-            if self.direction == Direction.SHORT:
-                pnl = pnl * -1
-        self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} CLOSE {pnl:.2f}%"})
-        self.trade_logs_updated = True
 
     def load_database_bar(self):
         try:
@@ -259,8 +251,11 @@ class TopGainersLosersStrategy(CtaTemplate):
             #     self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(self.target_pos))
 
             # 记录日志
-            self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} OPEN {self.slot}"})
+            self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {self.slot}"})
             self.trade_logs_updated = True
+
+            # 取消订阅
+            self.cta_engine.unsubscribe([self.vt_symbol])
 
     def check_save_data(self):
         try:

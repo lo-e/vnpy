@@ -105,6 +105,8 @@ class TopGainersLosersPortfolio(object):
         self.check_save_data()
 
     def resubscribe(self, event: Event):
+        return
+    
         # 取消订阅
         self.subscribe_strategies(unsubscribe=True)
 
@@ -204,9 +206,11 @@ class TopGainersLosersPortfolio(object):
                 close = True
 
         if close:
+            # 订阅合约
+            self.subscribe_strategies()
+
             # 停止当前策略
             remove_strategy_names = []
-            
             for name in self.cta_engine.strategies.keys():
                 strategy: TopGainersLosersStrategy = self.cta_engine.strategies[name]
                 strategy.on_close()
@@ -217,9 +221,6 @@ class TopGainersLosersPortfolio(object):
             self.cta_engine.remove_strategy_setting(remove_strategy_names)
             if len(remove_strategy_names):
                 msg = f"{msg}关闭合约：{len(remove_strategy_names)}\n"
-
-            # 取消订阅合约
-            self.subscribe_strategies(unsubscribe=True)
 
         if new_settings:
             # 执行新策略
@@ -570,13 +571,25 @@ class TopGainersLosersPortfolio(object):
                                     # 空头平仓
                                     trade_price = strategy.tick.last_price * 1.005
                                     strategy.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(gap))
+                        
+                        if strategy.tick and strategy.target_pos == strategy.pos and strategy.close:
+                            # 记录平仓日志
+                            pnl = 0
+                            if strategy.open_tick_price:
+                                pnl = ((strategy.tick.last_price / strategy.open_tick_price) - 1) * 100
+                                if strategy.direction == Direction.SHORT:
+                                    pnl = pnl * -1
+                            strategy.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {strategy.tick.datetime.replace(microsecond=0)} CLOSE {pnl:.2f}%"})
+                            strategy.trade_logs_updated = True
+
+                            # 取消订阅
+                            self.cta_engine.unsubscribe([strategy.vt_symbol])
+
+                            # 策略引擎关闭策略
+                            strategy.cta_engine.remove_strategy(strategy.strategy_name)
 
                         # 同步策略数据
                         strategy.check_save_data()
-                        
-                        # 检查关闭策略
-                        if strategy.target_pos == strategy.pos and strategy.close:
-                            self.cta_engine.remove_strategy(strategy.strategy_name)
 
             except Exception as e:
                 # msg = f"核查策略目标仓位出错\n\n{e}"

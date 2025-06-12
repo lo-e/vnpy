@@ -449,10 +449,7 @@ class TopGainersLosersEngine(BaseEngine):
 
     def put_strategy_event(self, strategy: CtaTemplate):
         # 保存策略同步数据到数据库
-        strategy_name = strategy.strategy_name
-        if strategy_name in self.strategies:
-            strategy = self.strategies[strategy_name]
-            self.save_sync_data(strategy)
+        self.save_sync_data(strategy)
 
     def put_portfolio_event(self):
         # 保存投资组合同步数据到数据库
