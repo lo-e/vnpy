@@ -242,7 +242,7 @@ class TopGainersLosersPortfolio(object):
             msg = f"{msg}执行空头合约：{new_short_count}\n"
 
         if msg:
-            msg = f"rise {mean_rise_change}\nfall {mean_fall_change}\n\n{msg}当前策略总数：{len(self.cta_engine.strategies)}"
+            msg = f"\nrise {mean_rise_change}\nfall {mean_fall_change}\n\n{msg}当前策略总数：{len(self.cta_engine.strategies)}"
             self.send_ding_talk(msg)
             print(msg)
 

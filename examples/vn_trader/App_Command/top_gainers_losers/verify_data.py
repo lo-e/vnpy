@@ -28,21 +28,35 @@ def statistics_pnl():
             logs = df["LOG"].to_list()
 
             open_date_time = ""
+            open_tick_time = ""
             slot = 0
             for log in logs:
                 elements = log.split(" ")
-                offset = elements[2]
+                offset = elements[4]
 
                 if offset == "OPEN":
                     # 开仓，获取合约槽位数
                     offset = Offset.OPEN
                     open_date_time = f"{elements[0]} {elements[1]}"
-                    slot = int(elements[3])
+                    open_tick_time = f"{elements[2]} {elements[3]}"
+                    open_ts = datetime.strptime(open_date_time, "%Y-%m-%d %H:%M:%S").timestamp()
+                    open_tick_ts = datetime.strptime(open_tick_time, "%Y-%m-%d %H:%M:%S").timestamp()
+                    open_delay = abs(open_ts - open_tick_ts)
+                    if open_delay >= 3:
+                        print(f"{symbol}\t{direction.value}\tOPEN_DELAY\t{open_delay}\t{open_date_time}\t{open_tick_time}")
+                    slot = int(elements[5])
                 
                 else:
                     offset = Offset.CLOSE
                     close_date_time = f"{elements[0]} {elements[1]}"
-                    pnl_rate = float(elements[3].split("%")[0])
+                    close_tick_time = f"{elements[2]} {elements[3]}"
+                    close_ts = datetime.strptime(close_date_time, "%Y-%m-%d %H:%M:%S").timestamp()
+                    close_tick_ts = datetime.strptime(close_tick_time, "%Y-%m-%d %H:%M:%S").timestamp()
+                    close_delay = abs(close_ts - close_tick_ts)
+                    if close_delay >= 3:
+                        print(f"{symbol}\t{direction.value}\tCLOSE_DELAY\t{close_delay}\t{close_date_time}\t{close_tick_time}")
+
+                    pnl_rate = float(elements[5].split("%")[0])
                     if not slot:
                         # raise("slot数据缺失！")a
                         print(f"{symbol} {close_date_time} slot数据缺失！")
@@ -51,7 +65,9 @@ def statistics_pnl():
                     data = {"symbol": symbol,
                             "direction": direction,
                             "open_date_time": open_date_time,
+                            "open_tick_time": open_tick_time,
                             "close_date_time": close_date_time,
+                            "close_tick_time": close_tick_time,
                             "slot": slot,
                             "pnl_rate": pnl_rate}
                     
@@ -66,27 +82,36 @@ def statistics_pnl():
     sorted_dt_trades_data = dict(sorted(dt_trades_data.items(), key=lambda x: x[0]))
 
     # 统计盈亏
-    dt_pnl_data = {}
-    for dt, trades_data in sorted_dt_trades_data.items():
-        dt_pnl = 0
-        for data in trades_data:
-            slog = data["slot"]
-            pnl_rate = data["pnl_rate"]
-            dt_pnl += pnl_rate / slog
-
-        dt_pnl_data[dt] = round(dt_pnl, 2)
-    
     total_pnl = 0
-    for dt, dt_pnl in dt_pnl_data.items():
+    for dt, trades_data in sorted_dt_trades_data.items():
+        # 仓位盈亏、开仓时间
+        dt_pnl = 0
+        open_ts = 0
+        direction = ""
+        if dt == "2025-06-12 15:59:02":
+            a = 2
+        for data in trades_data:
+            direction_ = data["direction"].value
+            direction = f"{direction}{direction_}" if direction_ not in direction else direction
+            open_date_time = data["open_date_time"]
+            ts = datetime.strptime(open_date_time, "%Y-%m-%d %H:%M:%S").timestamp()
+            open_ts = min(open_ts, ts) if open_ts else ts
+
+            slot = data["slot"]
+            pnl_rate = data["pnl_rate"]
+            dt_pnl += pnl_rate / slot
+
+        # 持仓时间
+        close_ts = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S").timestamp()
+        position_time = close_ts - open_ts
+        position_minute = int(position_time / 60)
+        position_second = int(position_time - position_minute * 60)
+
+        # 累计盈亏
         total_pnl += dt_pnl
-        print(f"{dt}\t{dt_pnl}\t{total_pnl}")
+        print(f"{dt}\t{direction}\t{position_minute}m {position_second}s\t{len(trades_data)}\t{slot}\t{dt_pnl:.3f}\t{total_pnl:.3f}")
 
     print(f"总计盈亏：{total_pnl}")
-
-    # df = pd.DataFrame(results)
-    # df = df.sort_values(by="close_time")
-    # for i, row in df.iterrows():
-    #     mint = row["mint"]
 
 if __name__ == "__main__":
     statistics_pnl()
