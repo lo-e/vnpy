@@ -227,7 +227,7 @@ class TopGainersLosersPortfolio(object):
                 close = True
 
                 # 模拟以太坊
-                rise_list.append({"symbol": "ETHETH",
+                fall_list.append({"symbol": "ETHETH",
                                   "change": mean_fall_change / 2})
 
                 for i in range(len(fall_list)):
