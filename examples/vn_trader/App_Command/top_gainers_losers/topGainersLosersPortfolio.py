@@ -30,7 +30,9 @@ class TopGainersLosersPortfolio(object):
 
     syncs = [
         "long_trending",
-        "short_trending"
+        "short_trending",
+        "account_ath",
+        "account_drawdown"
     ]
 
     def __init__(self, engine, setting):
@@ -50,6 +52,8 @@ class TopGainersLosersPortfolio(object):
         self.fall_data_list = []
         self.sync_data = {}
         self.unsubscribe_time = 0
+        self.account_ath = 0
+        self.account_drawdown = 0
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -120,7 +124,15 @@ class TopGainersLosersPortfolio(object):
                 on_tradeing = True
                 break
         
-        print(f"{account.gateway_name}（{account.exchange_user}）{account.accountid}余额：{account.balance}")
+        if account.gateway_name == "BYBIT" and account.exchange_user == "loesuperman":
+            # 账户余额最高
+            self.account_ath = max(self.account_ath, account.balance)
+
+            # 账户余额回撤
+            if not on_tradeing:
+                self.account_drawdown = self.account_ath - account.balance
+
+            print_(f"{account.gateway_name}（{account.exchange_user}）{account.accountid} 最高：{self.account_ath:.2f} 余额：{account.balance:.2f} 回撤：{self.account_drawdown:.2f}")
 
     def resubscribe(self, event: Event):
         return
@@ -272,12 +284,12 @@ class TopGainersLosersPortfolio(object):
 
         filter_tokens = ["USDC", "USDT", "USDE", "SUSDE", "SUSDS", "USD1", "USDT0", "PYUSD", "USDS", "FDUSD", "DAI", "FTN", "PI", "WETH", "WEETH", "STETH", "WSTETH", "RETH", "RSETH", "METH", "OSETH", "EZETH", "WBTC", "CBBTC", "LBTC", "SOLVBTC", "BUIDL", "WBNB"]
         if token not in filter_tokens:
-            okx_symbols = list(self.exchange_instruments_data.get("OKX", {}).keys())
-            symbol = f"{token}-USDT-SWAP"
-            if symbol in okx_symbols:
-                vt_symbol = f"{symbol}.OKX"
-                exchange = "OKX"
-                exchange_user = "lo-e"
+            # okx_symbols = list(self.exchange_instruments_data.get("OKX", {}).keys())
+            # symbol = f"{token}-USDT-SWAP"
+            # if symbol in okx_symbols:
+            #     vt_symbol = f"{symbol}.OKX"
+            #     exchange = "OKX"
+            #     exchange_user = "lo-e"
 
             if not vt_symbol:
                 bybit_symbols = list(self.exchange_instruments_data.get("BYBIT", {}).keys())

@@ -19,7 +19,7 @@ from vnpy.trader.constant import Exchange
 
 # GATEWAYS = [[OkxGateway, "lo-e"], [BybitGateway, "loesuperman"], [BinanceUsdtGateway, "lo-e"]]
 # GATEWAYS = [[OkxGateway, "lo-e(test)"], [BybitGateway, "loesuperman(test)"], [BinanceUsdtGateway, "lo-e(test)"]]
-GATEWAYS = [[OkxGateway, "lo-e"], [BybitGateway, "loesuperman"]]
+GATEWAYS = [[BybitGateway, "loesuperman"]]
 class DurationBar(object):
     def __init__(self) -> None:
         self.vt_symbol: str = ""

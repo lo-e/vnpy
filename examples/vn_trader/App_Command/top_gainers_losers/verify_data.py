@@ -59,7 +59,7 @@ def statistics_pnl():
                     pnl_rate = float(elements[5].split("%")[0])
                     if not slot:
                         # raise("slot数据缺失！")
-                        print(f"{symbol} {close_date_time} slot数据缺失！")
+                        print(f"{symbol}\t{direction.value}\t{close_date_time}\tslot数据缺失！")
                         continue
 
                     data = {"symbol": symbol,
