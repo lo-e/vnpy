@@ -21,7 +21,8 @@ from vnpy.trader.utility import DIR_SYMBOL
 import json
 from .utility import Chrome
 from collections import OrderedDict
-from vnpy.trader.event import EVENT_TICK_DELAY
+from vnpy.trader.event import EVENT_TICK_DELAY, EVENT_ACCOUNT
+from vnpy.trader.object import AccountData
 
 class TopGainersLosersPortfolio(object):
     parameters = ["name",
@@ -67,6 +68,7 @@ class TopGainersLosersPortfolio(object):
 
         # 监控行情数据延迟事件
         self.cta_engine.event_engine.register(EVENT_TICK_DELAY, self.resubscribe)
+        self.cta_engine.event_engine.register(EVENT_ACCOUNT, self.on_account)
 
         # 启动Chrome获取涨跌幅排行榜
         # chrome = Chrome(cta_engine=None)
@@ -103,6 +105,22 @@ class TopGainersLosersPortfolio(object):
 
         # 保存同步数据
         self.check_save_data()
+
+    def on_account(self, event: Event):
+        # 筛选USDT
+        account:AccountData = event.data
+        if account.accountid != "USDT":
+            return
+        
+        # 判断是否正在交易
+        on_tradeing = False
+        for strategy_name in self.cta_engine.strategies.keys():
+            strategy: TopGainersLosersStrategy = self.cta_engine.strategies[strategy_name]
+            if strategy.target_pos != strategy.pos or not strategy.close:
+                on_tradeing = True
+                break
+        
+        print(f"{account.gateway_name}（{account.exchange_user}）{account.accountid}余额：{account.balance}")
 
     def resubscribe(self, event: Event):
         return
