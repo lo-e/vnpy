@@ -192,7 +192,7 @@ class Chrome(object):
                     )
                 target_tab = None
                 for tab in duration_tabs:
-                    if tab.text == "15分钟":
+                    if tab.text == "1小时":
                         target_tab = tab
                         break
 

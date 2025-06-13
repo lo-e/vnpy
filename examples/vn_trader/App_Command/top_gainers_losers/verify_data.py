@@ -99,7 +99,7 @@ def statistics_pnl():
             pnl_rate = data["pnl_rate"]
             dt_pnl += pnl_rate / slot
 
-            # if open_date_time == "2025-06-12 15:25:04":
+            # if open_date_time == "2025-06-13 16:08:50":
             #     symbol = data["symbol"]
             #     print(f"{symbol}\t{direction_}\t{open_date_time}")
 
