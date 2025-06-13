@@ -170,34 +170,34 @@ class TopGainersLosersPortfolio(object):
         if rise_list and fall_list:
             # 保存涨跌幅数据到文件
             mean_rise_change = pd.DataFrame(rise_list)["change"].mean()
-            mean_rise_data = {"symbol": "mean_rise",
-                              "change": mean_rise_change}
+            # mean_rise_data = {"symbol": "mean_rise",
+            #                   "change": mean_rise_change}
             
             mean_fall_change = pd.DataFrame(fall_list)["change"].mean()
-            mean_fall_data = {"symbol": "mean_fall",
-                              "change": mean_fall_change}
+            # mean_fall_data = {"symbol": "mean_fall",
+            #                   "change": mean_fall_change}
 
-            rise_list.insert(0, mean_fall_data)
-            rise_list.insert(0, mean_rise_data)
-            fall_list.insert(0, mean_fall_data)
-            fall_list.insert(0, mean_rise_data)
+            # rise_list.insert(0, mean_fall_data)
+            # rise_list.insert(0, mean_rise_data)
+            # fall_list.insert(0, mean_fall_data)
+            # fall_list.insert(0, mean_rise_data)
 
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            date = datetime.now().strftime(f"%Y-%m-%d")
-            hour = datetime.now().hour
-            time = datetime.now().strftime(f"%H_%M_%S")
+            # current_dir = os.path.dirname(os.path.abspath(__file__))
+            # date = datetime.now().strftime(f"%Y-%m-%d")
+            # hour = datetime.now().hour
+            # time = datetime.now().strftime(f"%H_%M_%S")
 
-            rise_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
-            os.makedirs(rise_dir_path, exist_ok=True)
-            rise_file_path = f"{rise_dir_path}{DIR_SYMBOL}{time}.csv"
-            rise_df = pd.DataFrame(rise_list)
-            rise_df.to_csv(rise_file_path, index=False)
+            # rise_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            # os.makedirs(rise_dir_path, exist_ok=True)
+            # rise_file_path = f"{rise_dir_path}{DIR_SYMBOL}{time}.csv"
+            # rise_df = pd.DataFrame(rise_list)
+            # rise_df.to_csv(rise_file_path, index=False)
 
-            fall_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
-            os.makedirs(fall_dir_path, exist_ok=True)
-            fall_file_path = f"{fall_dir_path}{DIR_SYMBOL}{time}.csv"
-            fall_df = pd.DataFrame(fall_list)
-            fall_df.to_csv(fall_file_path, index=False)
+            # fall_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            # os.makedirs(fall_dir_path, exist_ok=True)
+            # fall_file_path = f"{fall_dir_path}{DIR_SYMBOL}{time}.csv"
+            # fall_df = pd.DataFrame(fall_list)
+            # fall_df.to_csv(fall_file_path, index=False)
 
             if abs(mean_rise_change) >= 1.0 and abs(mean_rise_change) >= abs(mean_fall_change) * 2.0 and not self.long_trending and not self.short_trending:
                 # 多头趋势
@@ -211,7 +211,7 @@ class TopGainersLosersPortfolio(object):
                 for i in range(len(rise_list)):
                     rise_data = rise_list[i]
                     change = rise_data["change"]
-                    if i >= 2 and abs(change) < abs(mean_rise_change):
+                    if abs(change) < abs(mean_rise_change):
                         setting = self.new_strategy(rise_data["symbol"], Direction.LONG)
                         if setting:
                             new_long_count += 1
@@ -233,7 +233,7 @@ class TopGainersLosersPortfolio(object):
                 for i in range(len(fall_list)):
                     fall_data = fall_list[i]
                     change = fall_data["change"]
-                    if i >= 2 and abs(change) < abs(mean_fall_change):
+                    if abs(change) < abs(mean_fall_change):
                         setting = self.new_strategy(fall_data["symbol"], Direction.SHORT)
                         if setting:
                             new_short_count += 1
@@ -264,7 +264,13 @@ class TopGainersLosersPortfolio(object):
             # 执行新策略
             new_setting_count = len(new_settings)
             for setting in new_settings:
-                setting["slot"] = new_setting_count
+                # 模拟以太坊
+                strategy_name = setting["strategy_name"]
+                if "ETHETH" in strategy_name:
+                    setting["slot"] = 1
+                
+                else:
+                    setting["slot"] = new_setting_count - 1
                 self.cta_engine.new_strategy(setting)
 
             # 添加setting
@@ -360,6 +366,9 @@ class TopGainersLosersPortfolio(object):
                 df = pd.read_csv(fall_latest_file_path)
                 for _, row in df.iterrows():
                     fall_list.append(dict(row))
+
+                rise_list = rise_list[2:]
+                fall_list = fall_list[2:]
 
                 if not self.rise_data_list:
                     self.rise_data_list = rise_list

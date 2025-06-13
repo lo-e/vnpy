@@ -11,7 +11,7 @@ from vnpy.trader.constant import Direction, Offset
 from vnpy.trader.utility import DIR_SYMBOL
 
 # 统计交易盈亏
-def statistics_pnl():
+def statistics_pnl(for_eth: bool = False):
     main_dir_path = f"data{DIR_SYMBOL}trade_logs"
     dt_trades_data = {}
     for root, _, files in os.walk(main_dir_path):
@@ -22,6 +22,11 @@ def statistics_pnl():
             else:
                 direction = Direction.SHORT
             symbol = file.split("_")[2]
+            if for_eth and symbol != "ETHETH":
+                continue
+
+            if not for_eth and symbol == "ETHETH":
+                continue
 
             file_path = f"{root}{DIR_SYMBOL}{file}"
             df = pd.read_csv(file_path)
@@ -118,4 +123,4 @@ def statistics_pnl():
     print(f"总计盈亏：{total_pnl}")
 
 if __name__ == "__main__":
-    statistics_pnl()
+    statistics_pnl(for_eth=False)
