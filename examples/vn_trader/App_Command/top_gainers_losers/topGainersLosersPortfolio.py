@@ -175,6 +175,29 @@ class TopGainersLosersPortfolio(object):
         close = False
 
         if rise_list and fall_list:
+            # 监控暴涨暴跌
+            rise_top_1_data = rise_list[0]
+            rise_top_1_change = rise_top_1_data["change"]
+
+            rise_top_2_data = rise_list[1]
+            rise_top_2_change = rise_top_2_data["change"]
+
+            if abs(rise_top_1_change) > abs(rise_top_2_change) * 3:
+                rise_top_1_symbol = rise_top_1_data["symbol"]
+                msg = f"\n{rise_top_1_symbol} 暴涨\nTOP1 {rise_top_1_change}\nTOP2 {rise_top_2_change}"
+                self.send_ding_talk(msg)
+
+            fall_top_1_data = fall_list[0]
+            fall_top_1_change = fall_top_1_data["change"]
+
+            fall_top_2_data = fall_list[1]
+            fall_top_2_change = fall_top_2_data["change"]
+
+            if abs(fall_top_1_change) > abs(fall_top_2_change) * 3:
+                fall_top_1_symbol = fall_top_1_data["symbol"]
+                msg = f"\n{fall_top_1_symbol} 暴跌\nTOP1 {fall_top_1_change}\nTOP2 {fall_top_2_change}"
+                self.send_ding_talk(msg)
+
             # 保存涨跌幅数据到文件
             mean_rise_change = pd.DataFrame(rise_list)["change"].mean()
             # mean_rise_data = {"symbol": "mean_rise",
@@ -295,7 +318,7 @@ class TopGainersLosersPortfolio(object):
         if msg:
             msg = f"\nrise {mean_rise_change}\nfall {mean_fall_change}\n\n{msg}当前策略总数：{len(self.cta_engine.strategies)}"
             self.send_ding_talk(msg)
-            print(msg)
+            print_(msg)
 
     def on_rise_fall_data_1h(self, data: tuple):
         rise_list, fall_list = data
