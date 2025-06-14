@@ -336,6 +336,12 @@ class BaseGateway(ABC):
         res = {"gateway":self.gateway_name, "connected":False, "msg":"check_connected未实现"}
         return res
     
+    def set_leverage(self, vt_symbol: str, target: int):
+        """
+        设置合约杠杆
+        """
+        pass
+    
     def get_accounts(self) -> Dict[str, AccountData]:
         """
         获取账户信息

@@ -292,6 +292,9 @@ class BybitGateway(BaseGateway):
         res = {"gateway":self.gateway_name, "connected":connected, "msg":msg}
         return res
     
+    def set_leverage(self, vt_symbol: str, target: int):
+        self.rest_api.set_leverage(vt_symbol, target)
+    
 class BybitRestApi(RestClient):
     """
     ByBit REST API
@@ -401,18 +404,27 @@ class BybitRestApi(RestClient):
         else:
             return "inverse"
     
-    def set_leverage(self, vt_symbol: str):
+    def set_leverage(self, vt_symbol: str, target: int):
         """
         设置合约杠杆
         """
         symbol = extract_vt_symbol(vt_symbol)[0]
         category = self.get_category(vt_symbol)
+
         # 现货无法设置杠杆
         if category == "spot":
             return
+        
+        data = {"category": category,
+                "symbol": symbol,
+                "buyLeverage": str(target),
+                "sellLeverage": str(target)}
         path = "/v5/position/set-leverage"
-        data = {"category": category, "symbol": symbol, "buyLeverage": "20", "sellLeverage": "20"}
-        self.add_request("POST", path, self.on_leverage, data=data, extra={"vt_symbol": vt_symbol})
+        self.add_request("POST",
+                         path,
+                         self.on_leverage,
+                         data=data,
+                         extra={"vt_symbol": vt_symbol})
     
     def on_leverage(self, data: dict, request: Request):
         """

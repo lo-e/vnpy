@@ -484,10 +484,17 @@ class MainEngine:
             self.waiting_check_gateway_names.remove(gateway_name)
 
     def get_gateway_connect_status(self, gateway_name: str, account_name: str):
+        connected = False
         gateway = self.get_gateway(gateway_name, account_name)
-        res = gateway.check_connected()
-        connected = res.get("connected", False)
+        if gateway:
+            res = gateway.check_connected()
+            connected = res.get("connected", False)
         return connected
+    
+    def set_leverage(self, vt_symbol: str, target: int, gateway_name: str, account_name: str):
+        gateway = self.get_gateway(gateway_name, account_name)
+        if gateway:
+            gateway.set_leverage(vt_symbol, target)
 
 class BaseEngine(ABC):
     """
