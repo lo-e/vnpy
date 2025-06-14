@@ -208,9 +208,9 @@ class Chrome(object):
                     tab_1h_selected = "selected" in tab_1h.get_attribute("class")
 
                 if not tab_15m_selected and not tab_1h_selected:
-                    tab_15m.click()
+                    tab_1h.click()
                     time.sleep(5)
-                    tab_15m_selected = "selected" in tab_15m.get_attribute("class")
+                    tab_1h_selected = "selected" in tab_1h.get_attribute("class")
                 
                 if (not tab_15m_selected and not tab_1h_selected) or (tab_15m_selected and tab_1h_selected):
                     driver_reboot = True
@@ -244,8 +244,8 @@ class Chrome(object):
                 if tab_15m_selected:
                     tab_1h.click()
 
-                if tab_1h_selected:
-                    tab_15m.click()
+                # if tab_1h_selected:
+                #     tab_15m.click()
 
                 # 选择多空比
                 down_up_list = []
@@ -699,4 +699,4 @@ if __name__ == "__main__":
     dingtalk = DingTalkEngine()
 
     # Thread(target=chrome.fetch_top_gainers_losers, args=(chrome.on_top_gainers_losers, 10)).start()
-    Thread(target=chrome.fetch_rise_fall_long_short, args=(chrome.on_rise_fall_long_short, 5)).start()
+    Thread(target=chrome.fetch_rise_fall_long_short, args=(chrome.on_rise_fall_long_short, 10)).start()

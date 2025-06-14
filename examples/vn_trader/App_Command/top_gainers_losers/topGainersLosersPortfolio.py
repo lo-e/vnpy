@@ -516,24 +516,24 @@ class TopGainersLosersPortfolio(object):
                 fall_list_15m = []
                 duration = "15m"
 
-                rise_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
-                df = pd.read_csv(rise_latest_file_path)
-                for _, row in df.iterrows():
-                    rise_list_15m.append(dict(row))
+                # rise_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
+                # df = pd.read_csv(rise_latest_file_path)
+                # for _, row in df.iterrows():
+                #     rise_list_15m.append(dict(row))
 
-                fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
-                df = pd.read_csv(fall_latest_file_path)
-                for _, row in df.iterrows():
-                    fall_list_15m.append(dict(row))
+                # fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
+                # df = pd.read_csv(fall_latest_file_path)
+                # for _, row in df.iterrows():
+                #     fall_list_15m.append(dict(row))
 
-                rise_list_15m = rise_list_15m[2:]
-                fall_list_15m = fall_list_15m[2:]
+                # rise_list_15m = rise_list_15m[2:]
+                # fall_list_15m = fall_list_15m[2:]
 
-                if not self.rise_data_list_15m:
-                    self.rise_data_list_15m = rise_list_15m
+                # if not self.rise_data_list_15m:
+                #     self.rise_data_list_15m = rise_list_15m
                 
-                if not self.fall_data_list_15m:
-                    self.fall_data_list_15m = fall_list_15m
+                # if not self.fall_data_list_15m:
+                #     self.fall_data_list_15m = fall_list_15m
                 
                 # 生成信号
                 if self.rise_data_list_1h != rise_list_1h or self.fall_data_list_1h != fall_list_1h or self.rise_data_list_15m != rise_list_15m or self.fall_data_list_15m != fall_list_15m:
@@ -541,8 +541,9 @@ class TopGainersLosersPortfolio(object):
                     self.fall_data_list_1h = fall_list_1h
                     self.rise_data_list_15m = rise_list_15m
                     self.fall_data_list_15m = fall_list_15m
-                    self.on_rise_fall_data_1h((rise_list_1h, fall_list_1h))
-                    self.on_rise_fall_data_15m((rise_list_15m, fall_list_15m))
+                    # self.on_rise_fall_data_1h((rise_list_1h, fall_list_1h))
+                    # self.on_rise_fall_data_15m((rise_list_15m, fall_list_15m))
+                    self.on_rise_fall_data((rise_list_1h, fall_list_1h))
 
             except Exception as e:
                 pass
