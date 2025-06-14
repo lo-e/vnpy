@@ -61,8 +61,8 @@ class TopGainersLosersPortfolio(object):
         self.unsubscribe_time = 0
         self.account_ath = 0
         self.account_drawdown = 0
-        self.fast_rise_tokens = set()
-        self.fast_fall_tokens = set()
+        self.fast_rise_token = ""
+        self.fast_fall_token = ""
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -177,28 +177,39 @@ class TopGainersLosersPortfolio(object):
         close = False
 
         if rise_list and fall_list:
-            # 监控暴涨暴跌
+            # 监控暴涨
             rise_top_1_data = rise_list[0]
+            rise_top_1_symbol = rise_top_1_data["symbol"]
             rise_top_1_change = rise_top_1_data["change"]
 
             rise_top_2_data = rise_list[1]
             rise_top_2_change = rise_top_2_data["change"]
+
+            if rise_top_1_symbol != self.fast_rise_token and self.fast_rise_token:
+                self.fast_rise_token = ""
+                top_msg = f"\n{self.fast_rise_token} 暴涨停止"
+                self.send_ding_talk(top_msg)
             
-            rise_top_1_symbol = rise_top_1_data["symbol"]
-            if rise_top_1_symbol not in self.fast_rise_tokens and abs(rise_top_1_change) > abs(rise_top_2_change) * 3:
-                self.fast_rise_tokens.add(rise_top_1_symbol)
+            if rise_top_1_symbol != self.fast_rise_token and abs(rise_top_1_change) > abs(rise_top_2_change) * 3:
+                self.fast_rise_token = rise_top_1_symbol
                 top_msg = f"\n{rise_top_1_symbol} 暴涨\nTOP1 {rise_top_1_change}\nTOP2 {rise_top_2_change}"
                 self.send_ding_talk(top_msg)
 
+            # 监控暴跌
             fall_top_1_data = fall_list[0]
+            fall_top_1_symbol = fall_top_1_data["symbol"]
             fall_top_1_change = fall_top_1_data["change"]
 
             fall_top_2_data = fall_list[1]
             fall_top_2_change = fall_top_2_data["change"]
 
-            fall_top_1_symbol = fall_top_1_data["symbol"]
-            if fall_top_1_symbol not in self.fast_fall_tokens and abs(fall_top_1_change) > abs(fall_top_2_change) * 3:
-                self.fast_fall_tokens.add(fall_top_1_symbol)
+            if fall_top_1_symbol != self.fast_fall_token and self.fast_fall_token:
+                self.fast_fall_token = ""
+                top_msg = f"\n{self.fast_fall_token} 暴跌停止"
+                self.send_ding_talk(top_msg)
+
+            if fall_top_1_symbol != self.fast_fall_token and abs(fall_top_1_change) > abs(fall_top_2_change) * 3:
+                self.fast_fall_token = fall_top_1_symbol
                 top_msg = f"\n{fall_top_1_symbol} 暴跌\nTOP1 {fall_top_1_change}\nTOP2 {fall_top_2_change}"
                 self.send_ding_talk(top_msg)
 
