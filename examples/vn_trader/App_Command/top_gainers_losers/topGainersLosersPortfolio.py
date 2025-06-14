@@ -23,6 +23,7 @@ from .utility import Chrome
 from collections import OrderedDict
 from vnpy.trader.event import EVENT_TICK_DELAY, EVENT_ACCOUNT
 from vnpy.trader.object import AccountData
+import copy
 
 class TopGainersLosersPortfolio(object):
     parameters = ["name",
@@ -406,8 +407,10 @@ class TopGainersLosersPortfolio(object):
 
         if new_settings:
             # 执行新策略
+            vt_symbols = set()
             for setting in new_settings:
                 # 模拟以太坊
+                vt_symbols.add(setting["vt_symbol"])
                 setting["slot"] = 1
                 self.cta_engine.new_strategy(setting)
 
@@ -415,7 +418,7 @@ class TopGainersLosersPortfolio(object):
             self.cta_engine.new_strategy_setting(new_settings)
 
             # 订阅合约
-            self.subscribe_strategies()
+            self.cta_engine.subscribe(list(vt_symbols))
 
     def new_strategy(self, token:str, direction: Direction):
         # 确认合约
@@ -729,7 +732,7 @@ class TopGainersLosersPortfolio(object):
                 sync_data[key] = self.__getattribute__(key)
 
             if self.sync_data != sync_data:
-                self.sync_data = sync_data
+                self.sync_data = copy.deepcopy(sync_data)
                 self.cta_engine.put_portfolio_event()
         
         except Exception as e:
