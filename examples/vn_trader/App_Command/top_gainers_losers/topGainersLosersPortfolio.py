@@ -61,6 +61,8 @@ class TopGainersLosersPortfolio(object):
         self.unsubscribe_time = 0
         self.account_ath = 0
         self.account_drawdown = 0
+        self.fast_rise_tokens = set()
+        self.fast_fall_tokens = set()
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -181,11 +183,12 @@ class TopGainersLosersPortfolio(object):
 
             rise_top_2_data = rise_list[1]
             rise_top_2_change = rise_top_2_data["change"]
-
-            if abs(rise_top_1_change) > abs(rise_top_2_change) * 3:
-                rise_top_1_symbol = rise_top_1_data["symbol"]
-                msg = f"\n{rise_top_1_symbol} 暴涨\nTOP1 {rise_top_1_change}\nTOP2 {rise_top_2_change}"
-                self.send_ding_talk(msg)
+            
+            rise_top_1_symbol = rise_top_1_data["symbol"]
+            if rise_top_1_symbol not in self.fast_rise_tokens and abs(rise_top_1_change) > abs(rise_top_2_change) * 3:
+                self.fast_rise_tokens.add(rise_top_1_symbol)
+                top_msg = f"\n{rise_top_1_symbol} 暴涨\nTOP1 {rise_top_1_change}\nTOP2 {rise_top_2_change}"
+                self.send_ding_talk(top_msg)
 
             fall_top_1_data = fall_list[0]
             fall_top_1_change = fall_top_1_data["change"]
@@ -193,10 +196,11 @@ class TopGainersLosersPortfolio(object):
             fall_top_2_data = fall_list[1]
             fall_top_2_change = fall_top_2_data["change"]
 
-            if abs(fall_top_1_change) > abs(fall_top_2_change) * 3:
-                fall_top_1_symbol = fall_top_1_data["symbol"]
-                msg = f"\n{fall_top_1_symbol} 暴跌\nTOP1 {fall_top_1_change}\nTOP2 {fall_top_2_change}"
-                self.send_ding_talk(msg)
+            fall_top_1_symbol = fall_top_1_data["symbol"]
+            if fall_top_1_symbol not in self.fast_fall_tokens and abs(fall_top_1_change) > abs(fall_top_2_change) * 3:
+                self.fast_fall_tokens.add(fall_top_1_symbol)
+                top_msg = f"\n{fall_top_1_symbol} 暴跌\nTOP1 {fall_top_1_change}\nTOP2 {fall_top_2_change}"
+                self.send_ding_talk(top_msg)
 
             # 保存涨跌幅数据到文件
             mean_rise_change = pd.DataFrame(rise_list)["change"].mean()
