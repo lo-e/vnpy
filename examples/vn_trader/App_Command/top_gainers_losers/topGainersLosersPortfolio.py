@@ -317,6 +317,7 @@ class TopGainersLosersPortfolio(object):
 
             if abs(mean_rise_change) <= abs(mean_fall_change) * 1.5 and self.long_trending:
                 self.long_trending = False
+                close = True
                 self.top_rise_tokens_15m = []
                 self.top_fall_tokens_15m = []
                 msg = f"\n多头停止\nrise {mean_rise_change}\nfall {mean_fall_change}\n"
@@ -330,6 +331,7 @@ class TopGainersLosersPortfolio(object):
 
             if abs(mean_fall_change) <= abs(mean_rise_change) * 1.5 and self.short_trending:
                 self.short_trending = False
+                close = True
                 self.top_rise_tokens_15m = []
                 self.top_fall_tokens_15m = []
                 msg = f"\n空头停止\nrise {mean_rise_change}\nfall {mean_fall_change}\n"
