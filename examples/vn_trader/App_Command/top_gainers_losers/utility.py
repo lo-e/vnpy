@@ -185,35 +185,43 @@ class Chrome(object):
                 exchange_button.click()
 
                 # 选择周期
-                select_action = False
                 duration_tabs = driver.find_elements(
                     By.XPATH,
                     "//div/div/button[@role='tab']",
                     )
-                target_tab = None
-                for tab in duration_tabs:
-                    if tab.text == "1小时":
-                        target_tab = tab
-                        break
-
-                if target_tab:
-                    tab_selected = "selected" in target_tab.get_attribute("class")
-                    try_count = 0
-                    while not tab_selected and try_count < 5:
-                        select_action = True
-                        target_tab.click()
-                        tab_selected = "selected" in target_tab.get_attribute("class")
-                        try_count += 1
-
-                    if not tab_selected:
-                        continue
-                    
-                else:
-                    continue
-
-                if select_action:
-                    time.sleep(10)
                 
+                tab_15m = None
+                tab_1h = None
+                for tab in duration_tabs:
+                    if tab.text == "15分钟":
+                        tab_15m = tab
+                    
+                    if tab.text == "1小时":
+                        tab_1h = tab
+
+                tab_15m_selected = False
+                tab_1h_selected = False
+                if tab_15m:
+                    tab_15m_selected = "selected" in tab_15m.get_attribute("class")
+
+                if tab_1h:
+                    tab_1h_selected = "selected" in tab_1h.get_attribute("class")
+
+                if not tab_15m_selected and not tab_1h_selected:
+                    tab_15m.click()
+                    time.sleep(5)
+                    tab_15m_selected = "selected" in tab_15m.get_attribute("class")
+                
+                if (not tab_15m_selected and not tab_1h_selected) or (tab_15m_selected and tab_1h_selected):
+                    driver_reboot = True
+                    continue
+                
+                if tab_15m_selected:
+                    duration = "15m"
+                
+                if tab_1h_selected:
+                    duration = "1h"
+
                 # 获取涨跌排行榜
                 rise_list = []
                 fall_list = []
@@ -229,6 +237,15 @@ class Chrome(object):
                     
                     elif change < 0:
                         fall_list.append(data)
+
+                if callback:
+                    callback((rise_list, fall_list), duration)
+
+                if tab_15m_selected:
+                    tab_1h.click()
+
+                if tab_1h_selected:
+                    tab_15m.click()
 
                 # 选择多空比
                 down_up_list = []
@@ -373,9 +390,6 @@ class Chrome(object):
                         up_down_list.append(data)
                 """
 
-                if callback:
-                    callback((rise_list, fall_list, down_up_list, up_down_list))
-
                 time.sleep(rest)
 
             except Exception as e:
@@ -491,11 +505,11 @@ class Chrome(object):
         df = pd.DataFrame(losers)
         df.to_csv(loser_file_path, index=False)
 
-    def on_rise_fall_long_short(self, data: tuple):
-        rise_list, fall_list, down_up_list, up_down_list = data
+    def on_rise_fall_long_short(self, data: tuple, duration: str):
+        rise_list, fall_list = data
         rise_list = sorted(rise_list, key=lambda x: x["change"], reverse=True)
         fall_list = sorted(fall_list, key=lambda x: x["change"], reverse=False)
-        print(f"上涨 {len(rise_list)} 下跌 {len(fall_list)} 多空比递增 {len(down_up_list)} 多空比递减 {len(up_down_list)}")
+        print(f"{duration}\t上涨\t{len(rise_list)}\t下跌 {len(fall_list)}")
 
         if rise_list and fall_list:
             # 保存涨跌幅数据到文件
@@ -521,44 +535,25 @@ class Chrome(object):
             hour = datetime.now().hour
             time = datetime.now().strftime(f"%H_%M_%S")
 
-            rise_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            rise_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             os.makedirs(rise_dir_path, exist_ok=True)
             rise_file_path = f"{rise_dir_path}{DIR_SYMBOL}{time}.csv"
             rise_df = pd.DataFrame(rise_list)
             rise_df.to_csv(rise_file_path, index=False)
 
-            rise_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}latest.csv"
+            rise_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
             rise_df.to_csv(rise_latest_file_path, index=False)
 
-            fall_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            fall_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             os.makedirs(fall_dir_path, exist_ok=True)
             fall_file_path = f"{fall_dir_path}{DIR_SYMBOL}{time}.csv"
             fall_df = pd.DataFrame(fall_list)
             fall_df.to_csv(fall_file_path, index=False)
 
-            fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}latest.csv"
+            fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
             fall_df.to_csv(fall_latest_file_path, index=False)
 
-            if abs(mean_rise_change) >= 1.0 and abs(mean_rise_change) >= abs(mean_fall_change) * 2.0 and not self.long_trending:
-                self.long_trending = True
-                msg = f"多头趋势\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
-                dingtalk.send_ding_talk(msg)
-
-            if abs(mean_rise_change) <= abs(mean_fall_change) * 1.5 and self.long_trending:
-                self.long_trending = False
-                msg = f"多头停止\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
-                dingtalk.send_ding_talk(msg)
-
-            if abs(mean_fall_change) >= 1.0 and abs(mean_fall_change) >= abs(mean_rise_change) * 2.0 and not self.short_trending:
-                self.short_trending = True
-                msg = f"空头趋势\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
-                dingtalk.send_ding_talk(msg)
-
-            if abs(mean_fall_change) <= abs(mean_rise_change) * 1.5 and self.short_trending:
-                self.short_trending = False
-                msg = f"空头停止\n\nrise {mean_rise_change}\nfall {mean_fall_change}"
-                dingtalk.send_ding_talk(msg)
-
+        """
         if down_up_list and up_down_list:
             # 保存多空比数据到文件
             mean_down_up_rate = pd.DataFrame(down_up_list)["rate"].mean()
@@ -598,7 +593,8 @@ class Chrome(object):
             up_down_file_path = f"{up_down_dir_path}{DIR_SYMBOL}{time}.csv"
             up_down_df = pd.DataFrame(up_down_list)
             up_down_df.to_csv(up_down_file_path, index=False)
-    
+        """
+
     def load_driver(self):
         # 加载浏览器
         # 获取当前文件所在路径
@@ -680,4 +676,4 @@ if __name__ == "__main__":
     dingtalk = DingTalkEngine()
 
     # Thread(target=chrome.fetch_top_gainers_losers, args=(chrome.on_top_gainers_losers, 10)).start()
-    Thread(target=chrome.fetch_rise_fall_long_short, args=(chrome.on_rise_fall_long_short, 10)).start()
+    Thread(target=chrome.fetch_rise_fall_long_short, args=(chrome.on_rise_fall_long_short, 5)).start()
