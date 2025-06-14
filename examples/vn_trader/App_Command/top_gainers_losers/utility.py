@@ -208,9 +208,9 @@ class Chrome(object):
                     tab_1h_selected = "selected" in tab_1h.get_attribute("class")
 
                 if not tab_15m_selected and not tab_1h_selected:
-                    tab_1h.click()
+                    tab_15m.click()
                     time.sleep(5)
-                    tab_1h_selected = "selected" in tab_1h.get_attribute("class")
+                    tab_15m_selected = "selected" in tab_15m.get_attribute("class")
                 
                 if (not tab_15m_selected and not tab_1h_selected) or (tab_15m_selected and tab_1h_selected):
                     driver_reboot = True
@@ -241,11 +241,11 @@ class Chrome(object):
                 if callback:
                     callback((rise_list, fall_list), duration)
 
-                if tab_15m_selected:
-                    tab_1h.click()
+                # if tab_15m_selected:
+                #     tab_1h.click()
 
-                # if tab_1h_selected:
-                #     tab_15m.click()
+                if tab_1h_selected:
+                    tab_15m.click()
 
                 # 选择多空比
                 down_up_list = []
@@ -553,7 +553,7 @@ class Chrome(object):
             fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
             fall_df.to_csv(fall_latest_file_path, index=False)
 
-            if duration == "1h":
+            if duration == "15m":
                 msg = ""
                 if abs(mean_rise_change) >= 1.0 and abs(mean_rise_change) >= abs(mean_fall_change) * 2.0 and not self.long_trending and not self.short_trending:
                     # 多头趋势
