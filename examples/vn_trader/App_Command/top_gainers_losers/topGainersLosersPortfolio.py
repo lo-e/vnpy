@@ -76,7 +76,7 @@ class TopGainersLosersPortfolio(object):
 
         # 启动Chrome获取涨跌幅排行榜
         # chrome = Chrome(cta_engine=None)
-        # Thread(target=chrome.fetch_rise_fall_long_short, args=(self.on_rise_fall_long_short, 10)).start()
+        # Thread(target=chrome.fetch_rise_fall_long_short, args=(self.on_rise_fall_data, 10)).start()
 
         # Bar下载
         # Thread(target=self.download_bar).start()
@@ -156,8 +156,8 @@ class TopGainersLosersPortfolio(object):
             else:
                 self.cta_engine.subscribe(list(vt_symbols))
 
-    def on_rise_fall_long_short(self, data: tuple):
-        rise_list, fall_list, _, _ = data
+    def on_rise_fall_data(self, data: tuple):
+        rise_list, fall_list = data
         rise_list = sorted(rise_list, key=lambda x: x["change"], reverse=True)
         fall_list = sorted(fall_list, key=lambda x: x["change"], reverse=False)
 
@@ -357,12 +357,14 @@ class TopGainersLosersPortfolio(object):
                 fall_list = []
 
                 current_dir = os.path.dirname(os.path.abspath(__file__))
-                rise_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}latest.csv"
+                duration = "1h"
+
+                rise_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
                 df = pd.read_csv(rise_latest_file_path)
                 for _, row in df.iterrows():
                     rise_list.append(dict(row))
 
-                fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}latest.csv"
+                fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
                 df = pd.read_csv(fall_latest_file_path)
                 for _, row in df.iterrows():
                     fall_list.append(dict(row))
@@ -379,7 +381,7 @@ class TopGainersLosersPortfolio(object):
                 if self.rise_data_list != rise_list or self.fall_data_list != fall_list:
                     self.rise_data_list = rise_list
                     self.fall_data_list = fall_list
-                    self.on_rise_fall_long_short((rise_list, fall_list, [], []))
+                    self.on_rise_fall_data((rise_list, fall_list))
 
             except Exception as e:
                 pass
