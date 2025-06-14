@@ -54,8 +54,8 @@ class TopGainersLosersPortfolio(object):
         self.fall_data_list_1h = []
         self.rise_data_list_15m = []
         self.fall_data_list_15m = []
-        self.top_rise_tokens_15m = set()
-        self.top_fall_tokens_15m = set()
+        self.top_rise_tokens_15m = []
+        self.top_fall_tokens_15m = []
         self.sync_data = {}
         self.unsubscribe_time = 0
         self.account_ath = 0
@@ -310,27 +310,27 @@ class TopGainersLosersPortfolio(object):
             if abs(mean_rise_change) >= 1.0 and abs(mean_rise_change) >= abs(mean_fall_change) * 2.0 and not self.long_trending and not self.short_trending:
                 # 多头趋势
                 self.long_trending = True
-                self.top_rise_tokens_15m = set()
-                self.top_fall_tokens_15m = set()
+                self.top_rise_tokens_15m = []
+                self.top_fall_tokens_15m = []
                 msg = f"\n多头趋势\nrise {mean_rise_change}\nfall {mean_fall_change}\n"
 
             if abs(mean_rise_change) <= abs(mean_fall_change) * 1.5 and self.long_trending:
                 self.long_trending = False
-                self.top_rise_tokens_15m = set()
-                self.top_fall_tokens_15m = set()
+                self.top_rise_tokens_15m = []
+                self.top_fall_tokens_15m = []
                 msg = f"\n多头停止\nrise {mean_rise_change}\nfall {mean_fall_change}\n"
 
             if abs(mean_fall_change) >= 1.0 and abs(mean_fall_change) >= abs(mean_rise_change) * 2.0 and not self.long_trending and not self.short_trending:
                 # 空头趋势
                 self.short_trending = True
-                self.top_rise_tokens_15m = set()
-                self.top_fall_tokens_15m = set()
+                self.top_rise_tokens_15m = []
+                self.top_fall_tokens_15m = []
                 msg = f"\n空头趋势\nrise {mean_rise_change}\nfall {mean_fall_change}\n"
 
             if abs(mean_fall_change) <= abs(mean_rise_change) * 1.5 and self.short_trending:
                 self.short_trending = False
-                self.top_rise_tokens_15m = set()
-                self.top_fall_tokens_15m = set()
+                self.top_rise_tokens_15m = []
+                self.top_fall_tokens_15m = []
                 msg = f"\n空头停止\nrise {mean_rise_change}\nfall {mean_fall_change}\n"
 
         if close:
@@ -359,7 +359,6 @@ class TopGainersLosersPortfolio(object):
         rise_list = sorted(rise_list, key=lambda x: x["change"], reverse=True)
         fall_list = sorted(fall_list, key=lambda x: x["change"], reverse=False)
 
-        msg = ""
         new_settings = []
         if self.long_trending and rise_list:
             mean_rise_change = pd.DataFrame(rise_list)["change"].mean()
@@ -373,12 +372,12 @@ class TopGainersLosersPortfolio(object):
                     top_rise_tokens.add(symbol)
             
             if not self.top_rise_tokens_15m:
-                self.top_rise_tokens_15m = top_rise_tokens
+                self.top_rise_tokens_15m = list(top_rise_tokens)
             
             else:
                 for token in top_rise_tokens:
                     if token not in self.top_rise_tokens_15m:
-                        self.top_rise_tokens_15m.add(token)
+                        self.top_rise_tokens_15m.append(token)
                         setting = self.new_strategy(token, Direction.LONG)
                         if setting:
                             new_settings.append(setting)
@@ -395,12 +394,12 @@ class TopGainersLosersPortfolio(object):
                     top_fall_tokens.add(symbol)
             
             if not self.top_fall_tokens_15m:
-                self.top_fall_tokens_15m = top_fall_tokens
+                self.top_fall_tokens_15m = list(top_fall_tokens)
             
             else:
                 for token in top_fall_tokens:
                     if token not in self.top_fall_tokens_15m:
-                        self.top_fall_tokens_15m.add(token)
+                        self.top_fall_tokens_15m.append(token)
                         setting = self.new_strategy(token, Direction.SHORT)
                         if setting:
                             new_settings.append(setting)
