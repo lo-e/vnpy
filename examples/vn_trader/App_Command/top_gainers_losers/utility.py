@@ -553,6 +553,29 @@ class Chrome(object):
             fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
             fall_df.to_csv(fall_latest_file_path, index=False)
 
+            if duration == "1h":
+                msg = ""
+                if abs(mean_rise_change) >= 1.0 and abs(mean_rise_change) >= abs(mean_fall_change) * 2.0 and not self.long_trending and not self.short_trending:
+                    # 多头趋势
+                    self.long_trending = True
+                    msg = f"-- 多头趋势 --\nrise {mean_rise_change}\nfall {mean_fall_change}\n"
+
+                if abs(mean_rise_change) <= abs(mean_fall_change) * 1.5 and self.long_trending:
+                    self.long_trending = False
+                    msg = f"-- 多头停止 --\nrise {mean_rise_change}\nfall {mean_fall_change}\n"
+
+                if abs(mean_fall_change) >= 1.0 and abs(mean_fall_change) >= abs(mean_rise_change) * 2.0 and not self.long_trending and not self.short_trending:
+                    # 空头趋势
+                    self.short_trending = True
+                    msg = f"-- 空头趋势 --\nrise {mean_rise_change}\nfall {mean_fall_change}\n"
+
+                if abs(mean_fall_change) <= abs(mean_rise_change) * 1.5 and self.short_trending:
+                    self.short_trending = False
+                    msg = f"-- 空头停止 --\nrise {mean_rise_change}\nfall {mean_fall_change}\n"
+
+                if msg:
+                    dingtalk.send_ding_talk(msg)
+
         """
         if down_up_list and up_down_list:
             # 保存多空比数据到文件
