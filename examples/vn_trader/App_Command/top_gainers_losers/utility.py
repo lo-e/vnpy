@@ -707,4 +707,4 @@ if __name__ == "__main__":
     dingtalk = DingTalkEngine()
 
     # Thread(target=chrome.fetch_top_gainers_losers, args=(chrome.on_top_gainers_losers, 10)).start()
-    Thread(target=chrome.fetch_rise_fall_long_short, args=(chrome.on_rise_fall_long_short, 10)).start()
+    Thread(target=chrome.fetch_rise_fall_long_short, args=(chrome.on_rise_fall_long_short, 5)).start()
