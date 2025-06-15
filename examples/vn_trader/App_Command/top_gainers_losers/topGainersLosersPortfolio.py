@@ -33,7 +33,9 @@ class TopGainersLosersPortfolio(object):
         "long_trending",
         "short_trending",
         "account_ath",
-        "account_drawdown"
+        "account_drawdown",
+        "fast_rise_token",
+        "fast_fall_token"
     ]
 
     def __init__(self, engine, setting):
@@ -82,8 +84,8 @@ class TopGainersLosersPortfolio(object):
         self.cta_engine.event_engine.register(EVENT_ACCOUNT, self.on_account)
 
         # 启动Chrome获取涨跌幅排行榜
-        # chrome = Chrome(cta_engine=None)
-        # Thread(target=chrome.fetch_rise_fall_long_short, args=(self.on_rise_fall_data, 10)).start()
+        chrome = Chrome(cta_engine=None)
+        Thread(target=chrome.fetch_rise_fall_long_short, args=(self.on_rise_fall_data, 5)).start()
 
         # Bar下载
         # Thread(target=self.download_bar).start()
@@ -163,7 +165,7 @@ class TopGainersLosersPortfolio(object):
             else:
                 self.cta_engine.subscribe(list(vt_symbols))
 
-    def on_rise_fall_data(self, data: tuple):
+    def on_rise_fall_data(self, data: tuple, duration: str):
         rise_list, fall_list = data
         rise_list = sorted(rise_list, key=lambda x: x["change"], reverse=True)
         fall_list = sorted(fall_list, key=lambda x: x["change"], reverse=False)
@@ -211,7 +213,7 @@ class TopGainersLosersPortfolio(object):
             if fall_top_1_symbol != self.fast_fall_token and self.fast_fall_token:
                 top_msg = f"\n{self.fast_fall_token} 暴跌停止"
                 self.send_ding_talk(top_msg)
-                
+
                 self.fast_fall_token = ""
                 close = True
 
