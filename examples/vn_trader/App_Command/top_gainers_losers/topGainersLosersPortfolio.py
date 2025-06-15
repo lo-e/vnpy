@@ -49,10 +49,12 @@ class TopGainersLosersPortfolio(object):
         self.strategy_status_check_ts = {}
         self.long_trending = False
         self.short_trending = False
-        self.rise_data_list_1h = []
-        self.fall_data_list_1h = []
+        self.rise_data_list_5m = []
+        self.fall_data_list_5m = []
         self.rise_data_list_15m = []
         self.fall_data_list_15m = []
+        self.rise_data_list_1h = []
+        self.fall_data_list_1h = []
         self.sync_data = {}
         self.unsubscribe_time = 0
         self.account_ath = 0
