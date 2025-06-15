@@ -83,10 +83,6 @@ class TopGainersLosersPortfolio(object):
         self.cta_engine.event_engine.register(EVENT_TICK_DELAY, self.resubscribe)
         self.cta_engine.event_engine.register(EVENT_ACCOUNT, self.on_account)
 
-        # 启动Chrome获取涨跌幅排行榜
-        chrome = Chrome(cta_engine=None)
-        Thread(target=chrome.fetch_rise_fall_long_short, args=(self.on_rise_fall_data, 5)).start()
-
         # Bar下载
         # Thread(target=self.download_bar).start()
 
@@ -248,17 +244,25 @@ class TopGainersLosersPortfolio(object):
             # hour = datetime.now().hour
             # time = datetime.now().strftime(f"%H_%M_%S")
 
-            # rise_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            # rise_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             # os.makedirs(rise_dir_path, exist_ok=True)
             # rise_file_path = f"{rise_dir_path}{DIR_SYMBOL}{time}.csv"
             # rise_df = pd.DataFrame(rise_list)
             # rise_df.to_csv(rise_file_path, index=False)
 
-            # fall_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            # rise_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
+            # rise_df.to_csv(rise_latest_file_path, index=False)
+
+            # fall_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             # os.makedirs(fall_dir_path, exist_ok=True)
             # fall_file_path = f"{fall_dir_path}{DIR_SYMBOL}{time}.csv"
             # fall_df = pd.DataFrame(fall_list)
             # fall_df.to_csv(fall_file_path, index=False)
+
+            # fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
+            # fall_df.to_csv(fall_latest_file_path, index=False)
+
+            # print(f"{duration}\t上涨\t{len(rise_list)}\t下跌 {len(fall_list)}")
 
             # if abs(mean_rise_change) >= 1.0 and abs(mean_rise_change) >= abs(mean_fall_change) * 2.0 and not self.long_trending and not self.short_trending:
             #     # 多头趋势
@@ -471,7 +475,7 @@ class TopGainersLosersPortfolio(object):
                 if self.rise_data_list_5m != rise_list_5m or self.fall_data_list_5m != fall_list_5m:
                     self.rise_data_list_5m = rise_list_5m
                     self.fall_data_list_5m = fall_list_5m
-                    self.on_rise_fall_data((rise_list_5m, fall_list_5m))
+                    self.on_rise_fall_data((rise_list_5m, fall_list_5m), duration)
 
             except Exception as e:
                 pass
