@@ -189,33 +189,44 @@ class Chrome(object):
                     By.XPATH,
                     "//div/div/button[@role='tab']",
                     )
-                
+
+                tab_5m = None
                 tab_15m = None
                 tab_1h = None
                 for tab in duration_tabs:
+                    if tab.text == "5分钟":
+                        tab_5m = tab
+
                     if tab.text == "15分钟":
                         tab_15m = tab
                     
                     if tab.text == "1小时":
                         tab_1h = tab
 
+                tab_5m_selected = False
                 tab_15m_selected = False
                 tab_1h_selected = False
+                if tab_5m:
+                    tab_5m_selected = "selected" in tab_5m.get_attribute("class")
+
                 if tab_15m:
                     tab_15m_selected = "selected" in tab_15m.get_attribute("class")
 
                 if tab_1h:
                     tab_1h_selected = "selected" in tab_1h.get_attribute("class")
 
-                if not tab_15m_selected and not tab_1h_selected:
-                    tab_15m.click()
+                if not tab_5m_selected and not tab_15m_selected and not tab_1h_selected:
+                    tab_5m.click()
                     time.sleep(5)
-                    tab_15m_selected = "selected" in tab_15m.get_attribute("class")
+                    tab_5m_selected = "selected" in tab_5m.get_attribute("class")
                 
-                if (not tab_15m_selected and not tab_1h_selected) or (tab_15m_selected and tab_1h_selected):
+                if (not tab_5m_selected and not tab_15m_selected and not tab_1h_selected) or (tab_5m_selected and tab_15m_selected and tab_1h_selected):
                     driver_reboot = True
                     continue
                 
+                if tab_5m_selected:
+                    duration = "5m"
+
                 if tab_15m_selected:
                     duration = "15m"
                 
@@ -241,11 +252,8 @@ class Chrome(object):
                 if callback:
                     callback((rise_list, fall_list), duration)
 
-                # if tab_15m_selected:
-                #     tab_1h.click()
-
-                if tab_1h_selected:
-                    tab_15m.click()
+                if not tab_5m_selected:
+                    tab_5m.click()
 
                 # 选择多空比
                 down_up_list = []

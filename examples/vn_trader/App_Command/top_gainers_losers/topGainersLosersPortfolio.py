@@ -190,7 +190,7 @@ class TopGainersLosersPortfolio(object):
                 self.send_ding_talk(top_msg)
                 self.fast_rise_token = ""
             
-            if rise_top_1_symbol != self.fast_rise_token and abs(rise_top_1_change) > abs(rise_top_2_change) * 3:
+            if rise_top_1_symbol != self.fast_rise_token and abs(rise_top_1_change) > abs(rise_top_2_change) * 3 and abs(rise_top_1_change) > 3.0:
                 self.fast_rise_token = rise_top_1_symbol
                 top_msg = f"\n{rise_top_1_symbol} 暴涨\nTOP1 {rise_top_1_change}\nTOP2 {rise_top_2_change}"
                 self.send_ding_talk(top_msg)
@@ -208,7 +208,7 @@ class TopGainersLosersPortfolio(object):
                 self.send_ding_talk(top_msg)
                 self.fast_fall_token = ""
 
-            if fall_top_1_symbol != self.fast_fall_token and abs(fall_top_1_change) > abs(fall_top_2_change) * 3:
+            if fall_top_1_symbol != self.fast_fall_token and abs(fall_top_1_change) > abs(fall_top_2_change) * 3 and abs(fall_top_1_change) > 3.0:
                 self.fast_fall_token = fall_top_1_symbol
                 top_msg = f"\n{fall_top_1_symbol} 暴跌\nTOP1 {fall_top_1_change}\nTOP2 {fall_top_2_change}"
                 self.send_ding_talk(top_msg)
