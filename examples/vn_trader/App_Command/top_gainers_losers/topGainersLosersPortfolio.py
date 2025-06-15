@@ -168,9 +168,9 @@ class TopGainersLosersPortfolio(object):
 
         msg = ""
         new_settings = []
+        close_tokens = set()
         new_long_count = 0
         new_short_count = 0
-        close = False
 
         if rise_list and fall_list:
             # 监控暴涨
@@ -185,8 +185,8 @@ class TopGainersLosersPortfolio(object):
                 top_msg = f"\n{self.fast_rise_token} 暴涨停止"
                 self.send_ding_talk(top_msg)
 
+                close_tokens.add(self.fast_rise_token)
                 self.fast_rise_token = ""
-                close = True
             
             if rise_top_1_symbol != self.fast_rise_token and abs(rise_top_1_change) > abs(rise_top_2_change) * 3:
                 self.fast_rise_token = rise_top_1_symbol
@@ -210,8 +210,8 @@ class TopGainersLosersPortfolio(object):
                 top_msg = f"\n{self.fast_fall_token} 暴跌停止"
                 self.send_ding_talk(top_msg)
 
+                close_tokens.add(self.fast_fall_token)
                 self.fast_fall_token = ""
-                close = True
 
             if fall_top_1_symbol != self.fast_fall_token and abs(fall_top_1_change) > abs(fall_top_2_change) * 3:
                 self.fast_fall_token = fall_top_1_symbol
@@ -224,110 +224,40 @@ class TopGainersLosersPortfolio(object):
                 self.send_ding_talk(top_msg)
 
             # 计算涨跌均值
-            mean_rise_change = pd.DataFrame(rise_list)["change"].mean()
-            mean_fall_change = pd.DataFrame(fall_list)["change"].mean()
+            # mean_rise_change = pd.DataFrame(rise_list)["change"].mean()
+            # mean_fall_change = pd.DataFrame(fall_list)["change"].mean()
 
-            # 保存涨跌幅数据到文件
-            # mean_fall_data = {"symbol": "mean_fall",
-            #                   "change": mean_fall_change}
-
-            # mean_rise_data = {"symbol": "mean_rise",
-            #                   "change": mean_rise_change}
-
-            # rise_list.insert(0, mean_fall_data)
-            # rise_list.insert(0, mean_rise_data)
-            # fall_list.insert(0, mean_fall_data)
-            # fall_list.insert(0, mean_rise_data)
-
-            # current_dir = os.path.dirname(os.path.abspath(__file__))
-            # date = datetime.now().strftime(f"%Y-%m-%d")
-            # hour = datetime.now().hour
-            # time = datetime.now().strftime(f"%H_%M_%S")
-
-            # rise_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
-            # os.makedirs(rise_dir_path, exist_ok=True)
-            # rise_file_path = f"{rise_dir_path}{DIR_SYMBOL}{time}.csv"
-            # rise_df = pd.DataFrame(rise_list)
-            # rise_df.to_csv(rise_file_path, index=False)
-
-            # rise_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
-            # rise_df.to_csv(rise_latest_file_path, index=False)
-
-            # fall_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
-            # os.makedirs(fall_dir_path, exist_ok=True)
-            # fall_file_path = f"{fall_dir_path}{DIR_SYMBOL}{time}.csv"
-            # fall_df = pd.DataFrame(fall_list)
-            # fall_df.to_csv(fall_file_path, index=False)
-
-            # fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
-            # fall_df.to_csv(fall_latest_file_path, index=False)
-
-            # print(f"{duration}\t上涨\t{len(rise_list)}\t下跌 {len(fall_list)}")
-
-            # if abs(mean_rise_change) >= 1.0 and abs(mean_rise_change) >= abs(mean_fall_change) * 2.0 and not self.long_trending and not self.short_trending:
-            #     # 多头趋势
-            #     self.long_trending = True
-            #     close = True
-                
-            #     for i in range(len(rise_list)):
-            #         rise_data = rise_list[i]
-            #         change = rise_data["change"]
-            #         if abs(change) < abs(mean_rise_change):
-            #             setting = self.new_strategy(rise_data["symbol"], Direction.LONG)
-            #             if setting:
-            #                 new_long_count += 1
-            #                 new_settings.append(setting)
-
-            # if abs(mean_rise_change) <= abs(mean_fall_change) * 1.5 and self.long_trending:
-            #     self.long_trending = False
-            #     close = True
-
-            # if abs(mean_fall_change) >= 1.0 and abs(mean_fall_change) >= abs(mean_rise_change) * 2.0 and not self.long_trending and not self.short_trending:
-            #     # 空头趋势
-            #     self.short_trending = True
-            #     close = True
-
-            #     for i in range(len(fall_list)):
-            #         fall_data = fall_list[i]
-            #         change = fall_data["change"]
-            #         if abs(change) < abs(mean_fall_change):
-            #             setting = self.new_strategy(fall_data["symbol"], Direction.SHORT)
-            #             if setting:
-            #                 new_short_count += 1
-            #                 new_settings.append(setting)
-
-            # if abs(mean_fall_change) <= abs(mean_rise_change) * 1.5 and self.short_trending:
-            #     self.short_trending = False
-            #     close = True
-
-        if close:
-            # 订阅合约
-            self.subscribe_strategies()
-
+        if close_tokens:
             # 停止当前策略
             remove_strategy_names = []
+            remove_vt_symbols = set()
             for name in self.cta_engine.strategies.keys():
                 strategy: TopGainersLosersStrategy = self.cta_engine.strategies[name]
-                strategy.on_close()
-
-                remove_strategy_names.append(strategy.strategy_name)
+                symbol = strategy.vt_symbol.split("USDT")[0]
+                if symbol in close_tokens:
+                    strategy.on_close()
+                    remove_strategy_names.append(strategy.strategy_name)
+                    remove_vt_symbols.add(strategy.vt_symbol)
             
             # 清除setting
             self.cta_engine.remove_strategy_setting(remove_strategy_names)
-            if len(remove_strategy_names):
-                msg = f"{msg}关闭合约：{len(remove_strategy_names)}\n"
+
+            # 订阅合约
+            self.cta_engine.subscribe(list(remove_vt_symbols))
 
         if new_settings:
             # 执行新策略
+            new_vt_symbols = set()
             for setting in new_settings:
                 setting["slot"] = 1
+                new_vt_symbols.append(setting["vt_symbol"])
                 self.cta_engine.new_strategy(setting)
 
             # 添加setting
             self.cta_engine.new_strategy_setting(new_settings)
 
             # 订阅合约
-            self.subscribe_strategies()
+            self.cta_engine.subscribe(list(new_vt_symbols))
 
         # if new_long_count:
         #     msg = f"{msg}执行多头合约：{new_long_count}\n"
