@@ -42,6 +42,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         "target_pos",
         "entry",
         "close",
+        "closed",
         "leverage",
         "open_value",
         "open_price",
@@ -109,6 +110,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.target_pos = 0
         self.entry = False
         self.close = False
+        self.closed = False
         self.leverage = 0
         self.open_value = 0
         self.open_price = 0
@@ -228,7 +230,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             return
         
         self.tick = copy(tick)
-        if not self.entry:
+        if not self.entry and not self.close:
             # 开仓
             self.entry = True
             self.open_tick_price = tick.last_price
@@ -252,6 +254,22 @@ class TopGainersLosersStrategy(CtaTemplate):
 
             # 记录日志
             self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {self.slot}"})
+            self.trade_logs_updated = True
+
+            # 取消订阅
+            self.cta_engine.unsubscribe([self.vt_symbol])
+
+        if self.close and not self.closed:
+            # 平仓
+            self.closed = True
+
+            # 记录日志
+            pnl = 0
+            if self.open_tick_price:
+                pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
+                if self.direction == Direction.SHORT:
+                    pnl = pnl * -1
+            self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} CLOSE {pnl:.2f}%"})
             self.trade_logs_updated = True
 
             # 取消订阅

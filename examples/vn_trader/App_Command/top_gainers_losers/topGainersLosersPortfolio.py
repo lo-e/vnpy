@@ -728,19 +728,7 @@ class TopGainersLosersPortfolio(object):
                                     trade_price = strategy.tick.last_price * 1.005
                                     strategy.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(gap))
                         
-                        if strategy.tick and strategy.target_pos == strategy.pos and strategy.close:
-                            # 记录平仓日志
-                            pnl = 0
-                            if strategy.open_tick_price:
-                                pnl = ((strategy.tick.last_price / strategy.open_tick_price) - 1) * 100
-                                if strategy.direction == Direction.SHORT:
-                                    pnl = pnl * -1
-                            strategy.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {strategy.tick.datetime.replace(microsecond=0)} CLOSE {pnl:.2f}%"})
-                            strategy.trade_logs_updated = True
-
-                            # 取消订阅
-                            self.cta_engine.unsubscribe([strategy.vt_symbol])
-
+                        if strategy.tick and strategy.target_pos == strategy.pos and strategy.closed:
                             # 策略引擎关闭策略
                             strategy.cta_engine.remove_strategy(strategy.strategy_name)
 
