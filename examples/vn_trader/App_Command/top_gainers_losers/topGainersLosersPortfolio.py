@@ -262,10 +262,6 @@ class TopGainersLosersPortfolio(object):
             #     # 多头趋势
             #     self.long_trending = True
             #     close = True
-
-            #     # 模拟以太坊
-            #     rise_list.append({"symbol": "ETHETH",
-            #                       "change": mean_rise_change / 2})
                 
             #     for i in range(len(rise_list)):
             #         rise_data = rise_list[i]
@@ -284,10 +280,6 @@ class TopGainersLosersPortfolio(object):
             #     # 空头趋势
             #     self.short_trending = True
             #     close = True
-
-            #     # 模拟以太坊
-            #     fall_list.append({"symbol": "ETHETH",
-            #                       "change": mean_fall_change / 2})
 
             #     for i in range(len(fall_list)):
             #         fall_data = fall_list[i]
@@ -321,15 +313,8 @@ class TopGainersLosersPortfolio(object):
 
         if new_settings:
             # 执行新策略
-            new_setting_count = len(new_settings)
             for setting in new_settings:
-                # 模拟以太坊
-                strategy_name = setting["strategy_name"]
-                if "ETHETH" in strategy_name:
-                    setting["slot"] = 1
-                
-                else:
-                    setting["slot"] = new_setting_count - 1
+                setting["slot"] = 1
                 self.cta_engine.new_strategy(setting)
 
             # 添加setting
@@ -371,12 +356,6 @@ class TopGainersLosersPortfolio(object):
                     vt_symbol = f"{symbol}.BYBIT"
                     exchange = "BYBIT"
                     exchange_user = "loesuperman"
-            
-            # 模拟以太坊
-            if not vt_symbol and token == "ETHETH":
-                vt_symbol = f"ETHUSDT.BYBIT"
-                exchange = "BYBIT"
-                exchange_user = "loesuperman"
                 
             # if not vt_symbol:
             #     binance_symbols = list(self.exchange_instruments_data.get("BINANCE", {}).keys())
