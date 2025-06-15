@@ -184,12 +184,19 @@ class TopGainersLosersPortfolio(object):
             rise_top_2_change = rise_top_2_data["change"]
 
             if rise_top_1_symbol != self.fast_rise_token and self.fast_rise_token:
+                self.fast_rise_token = ""
+                close = True
+                
                 top_msg = f"\n{self.fast_rise_token} 暴涨停止"
                 self.send_ding_talk(top_msg)
-                self.fast_rise_token = ""
             
             if rise_top_1_symbol != self.fast_rise_token and abs(rise_top_1_change) > abs(rise_top_2_change) * 3:
                 self.fast_rise_token = rise_top_1_symbol
+                setting = self.new_strategy(rise_top_1_symbol, Direction.LONG)
+                if setting:
+                    new_long_count += 1
+                    new_settings.append(setting)
+
                 top_msg = f"\n{rise_top_1_symbol} 暴涨\nTOP1 {rise_top_1_change}\nTOP2 {rise_top_2_change}"
                 self.send_ding_talk(top_msg)
 
@@ -202,12 +209,19 @@ class TopGainersLosersPortfolio(object):
             fall_top_2_change = fall_top_2_data["change"]
 
             if fall_top_1_symbol != self.fast_fall_token and self.fast_fall_token:
+                self.fast_fall_token = ""
+                close = True
+
                 top_msg = f"\n{self.fast_fall_token} 暴跌停止"
                 self.send_ding_talk(top_msg)
-                self.fast_fall_token = ""
 
             if fall_top_1_symbol != self.fast_fall_token and abs(fall_top_1_change) > abs(fall_top_2_change) * 3:
                 self.fast_fall_token = fall_top_1_symbol
+                setting = self.new_strategy(fall_top_1_symbol, Direction.SHORT)
+                if setting:
+                    new_short_count += 1
+                    new_settings.append(setting)
+
                 top_msg = f"\n{fall_top_1_symbol} 暴跌\nTOP1 {fall_top_1_change}\nTOP2 {fall_top_2_change}"
                 self.send_ding_talk(top_msg)
 
