@@ -217,6 +217,9 @@ class TopGainersLosersPortfolio(object):
                     self.rise_onboard_symbol_time_dict.pop(symbol)
                     if symbol in self.fast_rise_tokens:
                         close_long_tokens.add(symbol)
+
+                        stop_msg = f"\n{symbol} 停止上涨"
+                        self.send_ding_talk(stop_msg)
             
             for symbol in self.fall_onboard_symbol_time_dict.copy().keys():
                 if symbol not in fall_symbol_change_dict:
@@ -224,14 +227,17 @@ class TopGainersLosersPortfolio(object):
                     if symbol in self.fast_fall_tokens:
                         close_short_tokens.add(symbol)
 
+                        stop_msg = f"\n{symbol} 停止下跌"
+                        self.send_ding_talk(stop_msg)
+
             # 判断快速上涨Top1代币
             rise_top_1_symbol = rise_list[0]["symbol"]
             onboard_time = self.rise_onboard_symbol_time_dict.get(rise_top_1_symbol, time.time())
             from_onboard_time = rise_data_time - onboard_time
             if rise_top_1_symbol not in self.fast_rise_tokens and from_onboard_time <= 60:
-                self.fast_rise_tokens.append(rise_top_1_symbol)
                 setting = self.new_strategy(rise_top_1_symbol, Direction.LONG)
                 if setting:
+                    self.fast_rise_tokens.append(rise_top_1_symbol)
                     new_long_count += 1
                     new_settings.append(setting)
 
@@ -245,10 +251,10 @@ class TopGainersLosersPortfolio(object):
             onboard_time = self.fall_onboard_symbol_time_dict.get(fall_top_1_symbol, time.time())
             from_onboard_time = fall_data_time - onboard_time
             if fall_top_1_symbol not in self.fast_fall_tokens and from_onboard_time <= 60:
-                self.fast_fall_tokens.append(fall_top_1_symbol)
                 setting = self.new_strategy(fall_top_1_symbol, Direction.SHORT)
                 if setting:
-                    new_long_count += 1
+                    self.fast_fall_tokens.append(fall_top_1_symbol)
+                    new_short_count += 1
                     new_settings.append(setting)
 
                 onboard_time_str = datetime.fromtimestamp(onboard_time).strftime(f"%H:%M:%S")
