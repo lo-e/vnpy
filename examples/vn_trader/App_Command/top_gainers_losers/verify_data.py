@@ -61,7 +61,7 @@ def statistics_pnl(for_eth: bool = False):
                     if close_delay >= 10:
                         print(f"{symbol}\t{direction.value}\tCLOSE_DELAY\t{close_delay}\t{close_date_time}\t{close_tick_time}")
 
-                    pnl_rate = float(elements[5].split("%")[0])
+                    pnl_rate = float(elements[7].split("%")[0])
                     if not slot:
                         # raise("slot数据缺失！")
                         print(f"{symbol}\t{direction.value}\t{close_date_time}\tslot数据缺失！")
