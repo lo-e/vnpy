@@ -94,6 +94,7 @@ def statistics_pnl(for_eth: bool = False):
         open_ts = 0
         direction = ""
         for data in trades_data:
+            symbol = data["symbol"]
             direction_ = data["direction"].value
             direction = f"{direction}{direction_}" if direction_ not in direction else direction
             open_date_time = data["open_date_time"]
@@ -101,24 +102,35 @@ def statistics_pnl(for_eth: bool = False):
             open_ts = min(open_ts, ts) if open_ts else ts
 
             slot = data["slot"]
-            pnl_rate = data["pnl_rate"]
-            dt_pnl += pnl_rate / slot
+            pnl_rate = data["pnl_rate"] / slot
+            dt_pnl += pnl_rate
 
             # if open_date_time == "2025-06-13 16:08:50":
-            #     symbol = data["symbol"]
             #     print(f"{symbol}\t{direction_}\t{open_date_time}")
 
+            # 持仓时间
+            close_ts = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S").timestamp()
+            position_time = close_ts - ts
+            position_minute = int(position_time / 60)
+            position_second = int(position_time - position_minute * 60)
+
+            # 累计盈亏
+            total_pnl += pnl_rate
+
+            opent_dt = datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
+            print(f"{opent_dt} - {dt}\t{symbol}\t\t{direction_}\t{position_minute}m {position_second}s\t{slot}\t{pnl_rate:.3f}\t{total_pnl:.3f}")
+
         # 持仓时间
-        close_ts = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S").timestamp()
-        position_time = close_ts - open_ts
-        position_minute = int(position_time / 60)
-        position_second = int(position_time - position_minute * 60)
+        # close_ts = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S").timestamp()
+        # position_time = close_ts - open_ts
+        # position_minute = int(position_time / 60)
+        # position_second = int(position_time - position_minute * 60)
 
-        # 累计盈亏
-        total_pnl += dt_pnl
+        # # 累计盈亏
+        # total_pnl += dt_pnl
 
-        opent_dt = datetime.fromtimestamp(open_ts).strftime("%Y-%m-%d %H:%M:%S")
-        print(f"{opent_dt} - {dt}\t{direction}\t{position_minute}m {position_second}s\t{len(trades_data)}\t{slot}\t{dt_pnl:.3f}\t{total_pnl:.3f}")
+        # opent_dt = datetime.fromtimestamp(open_ts).strftime("%Y-%m-%d %H:%M:%S")
+        # print(f"{opent_dt} - {dt}\t{direction}\t{position_minute}m {position_second}s\t{len(trades_data)}\t{slot}\t{dt_pnl:.3f}\t{total_pnl:.3f}")
 
     print(f"总计盈亏：{total_pnl}")
 

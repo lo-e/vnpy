@@ -234,6 +234,7 @@ class TopGainersLosersPortfolio(object):
 
             # 判断快速上涨Top1代币
             rise_top_1_symbol = rise_list[0]["symbol"]
+            rise_top_1_change = rise_list[0]["change"]
             onboard_time = self.rise_onboard_symbol_time_dict.get(rise_top_1_symbol, time.time())
             from_onboard_time = rise_data_time - onboard_time
             if rise_top_1_symbol not in self.fast_rise_tokens and from_onboard_time <= 60:
@@ -245,11 +246,12 @@ class TopGainersLosersPortfolio(object):
 
                 onboard_time_str = datetime.fromtimestamp(onboard_time).strftime(f"%H:%M:%S")
                 top_time_str = datetime.fromtimestamp(rise_data_time).strftime(f"%H:%M:%S")
-                top_msg = f"\n{rise_top_1_symbol} 快速上涨（{from_onboard_time}）\nfrom {onboard_time_str}\nto {top_time_str}"
+                top_msg = f"\n{rise_top_1_symbol} 快速上涨（{rise_top_1_change}）\nfrom {onboard_time_str}\nto {top_time_str}\nin {from_onboard_time}s"
                 self.send_ding_talk(top_msg)
 
             # 判断快速下跌Top1代币
             fall_top_1_symbol = fall_list[0]["symbol"]
+            fall_top_1_change = fall_list[0]["change"]
             onboard_time = self.fall_onboard_symbol_time_dict.get(fall_top_1_symbol, time.time())
             from_onboard_time = fall_data_time - onboard_time
             if fall_top_1_symbol not in self.fast_fall_tokens and from_onboard_time <= 60:
@@ -261,7 +263,7 @@ class TopGainersLosersPortfolio(object):
 
                 onboard_time_str = datetime.fromtimestamp(onboard_time).strftime(f"%H:%M:%S")
                 top_time_str = datetime.fromtimestamp(fall_data_time).strftime(f"%H:%M:%S")
-                top_msg = f"\n{fall_top_1_symbol} 快速下跌（{from_onboard_time}）\nfrom {onboard_time_str}\nto {top_time_str}"
+                top_msg = f"\n{fall_top_1_symbol} 快速下跌（{fall_top_1_change}）\nfrom {onboard_time_str}\nto {top_time_str}\nin {from_onboard_time}"
                 self.send_ding_talk(top_msg)
 
             """
