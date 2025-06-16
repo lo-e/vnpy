@@ -115,6 +115,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.open_value = 0
         self.open_price = 0
         self.open_tick_price = 0
+        self.drawdown_tick_price = 0
         self.stop_price = 0
         self.indicator_inited = False
         self.target_pos_check_ts = 0
@@ -234,6 +235,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             # 开仓
             self.entry = True
             self.open_tick_price = tick.last_price
+            self.drawdown_tick_price = tick.last_price
             self.target_pos = self.portfolio.portfolio_value / (tick.last_price * self.slot)
             if self.direction == Direction.SHORT:
                 self.target_pos = self.target_pos * -1
@@ -257,19 +259,32 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.trade_logs_updated = True
 
             # 取消订阅
-            self.cta_engine.unsubscribe([self.vt_symbol])
+            # self.cta_engine.unsubscribe([self.vt_symbol])
+
+        if self.drawdown_tick_price:
+            if self.direction == Direction.LONG:
+                self.drawdown_tick_price = min(self.drawdown_tick_price, tick.last_price)
+            
+            else:
+                self.drawdown_tick_price = max(self.drawdown_tick_price, tick.last_price)
 
         if self.close and not self.closed:
             # 平仓
             self.closed = True
 
             # 记录日志
+            drawdown = 0
+            if self.open_tick_price:
+                drawdown = ((self.drawdown_tick_price / self.open_tick_price) - 1) * 100
+                if self.direction == Direction.SHORT:
+                    drawdown = drawdown * -1
+
             pnl = 0
             if self.open_tick_price:
                 pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
                 if self.direction == Direction.SHORT:
                     pnl = pnl * -1
-            self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} CLOSE {pnl:.2f}%"})
+            self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} DRAWDOWN {drawdown:.2f}% CLOSE {pnl:.2f}%"})
             self.trade_logs_updated = True
 
             # 取消订阅

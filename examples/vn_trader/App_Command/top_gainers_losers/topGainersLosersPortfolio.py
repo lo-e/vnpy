@@ -334,7 +334,7 @@ class TopGainersLosersPortfolio(object):
             self.cta_engine.remove_strategy_setting(remove_strategy_names)
 
             # 订阅合约
-            self.cta_engine.subscribe(list(remove_vt_symbols))
+            # self.cta_engine.subscribe(list(remove_vt_symbols))
 
         if new_settings:
             # 执行新策略
