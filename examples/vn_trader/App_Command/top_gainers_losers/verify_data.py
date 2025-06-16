@@ -118,7 +118,7 @@ def statistics_pnl(for_eth: bool = False):
             total_pnl += pnl_rate
 
             opent_dt = datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
-            print(f"{opent_dt} - {dt}\t{symbol}\t\t{direction_}\t{position_minute}m {position_second}s\t{slot}\t{pnl_rate:.3f}\t{total_pnl:.3f}")
+            print(f"{opent_dt} - {dt}\t\t{direction_}\t{position_minute}m {position_second}s\t{slot}\t{pnl_rate:.3f}\t{total_pnl:.3f}\t{symbol}")
 
         # 持仓时间
         # close_ts = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S").timestamp()
