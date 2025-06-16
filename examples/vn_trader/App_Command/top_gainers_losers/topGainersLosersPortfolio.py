@@ -34,8 +34,8 @@ class TopGainersLosersPortfolio(object):
         "short_trending",
         "account_ath",
         "account_drawdown",
-        "fast_rise_token",
-        "fast_fall_token"
+        "fast_rise_tokens",
+        "fast_fall_tokens"
     ]
 
     def __init__(self, engine, setting):
@@ -61,8 +61,8 @@ class TopGainersLosersPortfolio(object):
         self.unsubscribe_time = 0
         self.account_ath = 0
         self.account_drawdown = 0
-        self.fast_rise_token = ""
-        self.fast_fall_token = ""
+        self.fast_rise_tokens = []
+        self.fast_fall_tokens = []
         self.rise_onboard_symbol_time_dict = {}
         self.fall_onboard_symbol_time_dict = {}
         
@@ -215,18 +215,21 @@ class TopGainersLosersPortfolio(object):
             for symbol in self.rise_onboard_symbol_time_dict.copy().keys():
                 if symbol not in rise_symbol_change_dict:
                     self.rise_onboard_symbol_time_dict.pop(symbol)
-                    close_long_tokens.add(symbol)
+                    if symbol in self.fast_rise_tokens:
+                        close_long_tokens.add(symbol)
             
             for symbol in self.fall_onboard_symbol_time_dict.copy().keys():
                 if symbol not in fall_symbol_change_dict:
                     self.fall_onboard_symbol_time_dict.pop(symbol)
-                    close_short_tokens.add(symbol)
+                    if symbol in self.fast_fall_tokens:
+                        close_short_tokens.add(symbol)
 
             # 判断快速上涨Top1代币
             rise_top_1_symbol = rise_list[0]["symbol"]
             onboard_time = self.rise_onboard_symbol_time_dict.get(rise_top_1_symbol, time.time())
             from_onboard_time = rise_data_time - onboard_time
-            if from_onboard_time <= 60:
+            if rise_top_1_symbol not in self.fast_rise_tokens and from_onboard_time <= 60:
+                self.fast_rise_tokens.append(rise_top_1_symbol)
                 setting = self.new_strategy(rise_top_1_symbol, Direction.LONG)
                 if setting:
                     new_long_count += 1
@@ -241,7 +244,8 @@ class TopGainersLosersPortfolio(object):
             fall_top_1_symbol = fall_list[0]["symbol"]
             onboard_time = self.fall_onboard_symbol_time_dict.get(fall_top_1_symbol, time.time())
             from_onboard_time = fall_data_time - onboard_time
-            if from_onboard_time <= 60:
+            if fall_top_1_symbol not in self.fast_fall_tokens and from_onboard_time <= 60:
+                self.fast_fall_tokens.append(fall_top_1_symbol)
                 setting = self.new_strategy(fall_top_1_symbol, Direction.SHORT)
                 if setting:
                     new_long_count += 1
