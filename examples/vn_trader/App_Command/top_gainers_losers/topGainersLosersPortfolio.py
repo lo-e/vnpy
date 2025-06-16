@@ -216,6 +216,7 @@ class TopGainersLosersPortfolio(object):
                 if symbol not in rise_symbol_change_dict:
                     self.rise_onboard_symbol_time_dict.pop(symbol)
                     if symbol in self.fast_rise_tokens:
+                        self.fast_rise_tokens.remove(symbol)
                         close_long_tokens.add(symbol)
 
                         stop_msg = f"\n{symbol} 停止上涨"
@@ -225,6 +226,7 @@ class TopGainersLosersPortfolio(object):
                 if symbol not in fall_symbol_change_dict:
                     self.fall_onboard_symbol_time_dict.pop(symbol)
                     if symbol in self.fast_fall_tokens:
+                        self.fast_fall_tokens.remove(symbol)
                         close_short_tokens.add(symbol)
 
                         stop_msg = f"\n{symbol} 停止下跌"
