@@ -521,6 +521,9 @@ class Chrome(object):
 
         if rise_list and fall_list:
             # 保存涨跌幅数据到文件
+            time_data = {"symbol": "data_time",
+                         "change": int(time.time())}
+            
             mean_rise_change = pd.DataFrame(rise_list)["change"].mean()
             mean_rise_data = {"symbol": "mean_rise",
                               "change": mean_rise_change}
@@ -535,17 +538,19 @@ class Chrome(object):
 
             rise_list.insert(0, mean_fall_data)
             rise_list.insert(0, mean_rise_data)
+            rise_list.insert(0, time_data)
             fall_list.insert(0, mean_fall_data)
             fall_list.insert(0, mean_rise_data)
+            fall_list.insert(0, time_data)
 
             current_dir = os.path.dirname(os.path.abspath(__file__))
             date = datetime.now().strftime(f"%Y-%m-%d")
             hour = datetime.now().hour
-            time = datetime.now().strftime(f"%H_%M_%S")
+            full_time = datetime.now().strftime(f"%H_%M_%S")
 
             rise_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             os.makedirs(rise_dir_path, exist_ok=True)
-            rise_file_path = f"{rise_dir_path}{DIR_SYMBOL}{time}.csv"
+            rise_file_path = f"{rise_dir_path}{DIR_SYMBOL}{full_time}.csv"
             rise_df = pd.DataFrame(rise_list)
             rise_df.to_csv(rise_file_path, index=False)
 
@@ -554,7 +559,7 @@ class Chrome(object):
 
             fall_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             os.makedirs(fall_dir_path, exist_ok=True)
-            fall_file_path = f"{fall_dir_path}{DIR_SYMBOL}{time}.csv"
+            fall_file_path = f"{fall_dir_path}{DIR_SYMBOL}{full_time}.csv"
             fall_df = pd.DataFrame(fall_list)
             fall_df.to_csv(fall_file_path, index=False)
 
@@ -583,48 +588,6 @@ class Chrome(object):
 
                 if msg:
                     dingtalk.send_ding_talk(msg)
-
-        """
-        if down_up_list and up_down_list:
-            # 保存多空比数据到文件
-            mean_down_up_rate = pd.DataFrame(down_up_list)["rate"].mean()
-            mean_down_up_change = pd.DataFrame(down_up_list)["change"].mean()
-            mean_down_up_data = {"symbol": "mean_down_up",
-                                 "rate": mean_down_up_rate,
-                                 "change": mean_down_up_change}
-            
-            mean_up_down_rate = pd.DataFrame(up_down_list)["rate"].mean()
-            mean_up_down_change = pd.DataFrame(up_down_list)["change"].mean()
-            mean_up_down_data = {"symbol": "mean_up_down",
-                                 "rate": mean_up_down_rate,
-                                 "change": mean_up_down_change}
-            
-            # msg = f"mean_up_down {mean_up_down_change}\nmean_down_up {mean_down_up_change}\n"
-            # print(msg)
-            # return
-
-            down_up_list.insert(0, mean_down_up_data)
-            down_up_list.insert(0, mean_up_down_data)
-            up_down_list.insert(0, mean_down_up_data)
-            up_down_list.insert(0, mean_up_down_data)
-
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            date = datetime.now().strftime(f"%Y-%m-%d")
-            hour = datetime.now().hour
-            time = datetime.now().strftime(f"%H_%M_%S")
-
-            down_up_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}ls_rate_up{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
-            os.makedirs(down_up_dir_path, exist_ok=True)
-            down_up_file_path = f"{down_up_dir_path}{DIR_SYMBOL}{time}.csv"
-            down_up_df = pd.DataFrame(down_up_list)
-            down_up_df.to_csv(down_up_file_path, index=False)
-
-            up_down_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}ls_rate_down{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
-            os.makedirs(up_down_dir_path, exist_ok=True)
-            up_down_file_path = f"{up_down_dir_path}{DIR_SYMBOL}{time}.csv"
-            up_down_df = pd.DataFrame(up_down_list)
-            up_down_df.to_csv(up_down_file_path, index=False)
-        """
 
     def load_driver(self):
         # 加载浏览器
