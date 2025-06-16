@@ -263,7 +263,7 @@ class TopGainersLosersPortfolio(object):
 
                     onboard_time_str = datetime.fromtimestamp(onboard_time).strftime(f"%H:%M:%S")
                     top_time_str = datetime.fromtimestamp(fall_data_time).strftime(f"%H:%M:%S")
-                    top_msg = f"\n{fall_top_1_symbol} 快速下跌（{fall_top_1_change}）\nfrom {onboard_time_str}\nto {top_time_str}\nin {from_onboard_time}"
+                    top_msg = f"\n{fall_top_1_symbol} 快速下跌（{fall_top_1_change}）\nfrom {onboard_time_str}\nto {top_time_str}\nin {from_onboard_time}s"
                     self.send_ding_talk(top_msg)
 
             """
