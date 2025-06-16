@@ -244,10 +244,10 @@ class TopGainersLosersPortfolio(object):
                     new_long_count += 1
                     new_settings.append(setting)
 
-                onboard_time_str = datetime.fromtimestamp(onboard_time).strftime(f"%H:%M:%S")
-                top_time_str = datetime.fromtimestamp(rise_data_time).strftime(f"%H:%M:%S")
-                top_msg = f"\n{rise_top_1_symbol} 快速上涨（{rise_top_1_change}）\nfrom {onboard_time_str}\nto {top_time_str}\nin {from_onboard_time}s"
-                self.send_ding_talk(top_msg)
+                    onboard_time_str = datetime.fromtimestamp(onboard_time).strftime(f"%H:%M:%S")
+                    top_time_str = datetime.fromtimestamp(rise_data_time).strftime(f"%H:%M:%S")
+                    top_msg = f"\n{rise_top_1_symbol} 快速上涨（{rise_top_1_change}）\nfrom {onboard_time_str}\nto {top_time_str}\nin {from_onboard_time}s"
+                    self.send_ding_talk(top_msg)
 
             # 判断快速下跌Top1代币
             fall_top_1_symbol = fall_list[0]["symbol"]
@@ -261,10 +261,10 @@ class TopGainersLosersPortfolio(object):
                     new_short_count += 1
                     new_settings.append(setting)
 
-                onboard_time_str = datetime.fromtimestamp(onboard_time).strftime(f"%H:%M:%S")
-                top_time_str = datetime.fromtimestamp(fall_data_time).strftime(f"%H:%M:%S")
-                top_msg = f"\n{fall_top_1_symbol} 快速下跌（{fall_top_1_change}）\nfrom {onboard_time_str}\nto {top_time_str}\nin {from_onboard_time}"
-                self.send_ding_talk(top_msg)
+                    onboard_time_str = datetime.fromtimestamp(onboard_time).strftime(f"%H:%M:%S")
+                    top_time_str = datetime.fromtimestamp(fall_data_time).strftime(f"%H:%M:%S")
+                    top_msg = f"\n{fall_top_1_symbol} 快速下跌（{fall_top_1_change}）\nfrom {onboard_time_str}\nto {top_time_str}\nin {from_onboard_time}"
+                    self.send_ding_talk(top_msg)
 
             """
             # 监控暴涨
