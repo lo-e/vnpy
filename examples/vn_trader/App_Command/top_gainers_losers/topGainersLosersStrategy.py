@@ -46,9 +46,12 @@ class TopGainersLosersStrategy(CtaTemplate):
         "entry_tick_price",
         "open_tick_value",
         "open_tick_price",
+        "close_tick_price",
         "open_unit",
         "stop_price",
         "stop_pnl",
+        "stop_tick_price",
+        "stop_tick_dt",
         "indicator_inited",
         "minute_bar_dt",
         "minute_atr",
@@ -67,9 +70,12 @@ class TopGainersLosersStrategy(CtaTemplate):
         "entry_tick_price",
         "open_tick_value",
         "open_tick_price",
+        "close_tick_price",
         "open_unit",
         "stop_price",
         "stop_pnl",
+        "stop_tick_price",
+        "stop_tick_dt",
         "indicator_inited",
         "minute_bar_dt",
         "minute_atr",
@@ -123,10 +129,13 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.entry_tick_price = 0
         self.open_tick_value = 0
         self.open_tick_price = 0
+        self.close_tick_price = 0
         self.open_unit = 0
         self.unit_pos = 0
         self.stop_price = 0
         self.stop_pnl = 0
+        self.stop_tick_price = 0
+        self.stop_tick_dt = 0
         self.indicator_inited = False
         self.target_pos_check_ts = 0
         self.target_pos_checking = False
@@ -305,14 +314,19 @@ class TopGainersLosersStrategy(CtaTemplate):
         if not self.stop_pnl and self.direction == Direction.LONG and self.stop_price and tick.last_price <= self.stop_price:
             self.target_pos = 0
             self.stop_pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
+            self.stop_tick_price = tick.last_price
+            self.stop_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
  
         if not self.stop_pnl and self.direction == Direction.SHORT and self.stop_price and tick.last_price >= self.stop_price:
             self.target_pos = 0
             self.stop_pnl = ((tick.last_price / self.open_tick_price) - 1) * 100 * -1
+            self.stop_tick_price = tick.last_price
+            self.stop_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
 
         if self.close and not self.closed:
             # 平仓
             self.closed = True
+            self.close_tick_price = tick.last_price
 
             # 仓位杠杆
             pos_leverage = self.open_tick_value / self.portfolio.portfolio_value
