@@ -112,11 +112,13 @@ class Chrome(object):
         while True:
             try:
                 # 启动浏览器
+                init_select = False
                 if driver_reboot:
                     print(f"Chrome启动")
                     self.quit_driver(driver)
                     driver = self.load_driver()
 
+                    init_select = True
                     driver_reboot = False
                     url = "https://www.coinglass.com/zh/gainers-losers"
                     driver.get(url)
@@ -134,104 +136,105 @@ class Chrome(object):
                     if "涨跌榜" in button.text:
                         button.click()
                         break
-
-                # 筛选交易所
-                exchange_button = None
-                buttons = driver.find_elements(
-                    By.XPATH,
-                    "//div[@class='MuiBox-root cg-style-0']",
-                    )
-                for button in buttons:
-                    if button.text == "交易所":
-                        exchange_button = button
-                        break
-
-                if exchange_button:
-                    exchange_button.click()
-                    select_buttons = driver.find_elements(
+                
+                if init_select:
+                    # 筛选交易所
+                    exchange_button = None
+                    buttons = driver.find_elements(
                         By.XPATH,
-                        "//ul/li/ul/li",
-                    )
-                    for button in select_buttons:
-                        exchange = button.text.upper()
-                        try_count = 1
-                        while not exchange and try_count < 5:
-                            time.sleep(0.2)
-                            exchange = button.text.upper()
-                            try_count += 1
-                        if not exchange:
-                            continue
+                        "//div[@class='MuiBox-root cg-style-0']",
+                        )
+                    for button in buttons:
+                        if button.text == "交易所":
+                            exchange_button = button
+                            break
 
-                        select_need = False
-                        if button.text.upper() in ["BINANCE", "BYBIT", "OKX"]:
-                            select_need = True
-
-                        select_show = button.find_elements(
+                    if exchange_button:
+                        exchange_button.click()
+                        select_buttons = driver.find_elements(
                             By.XPATH,
-                            "div/span/span",
-                        )[0]
-                        selected = "checked" in select_show.get_attribute("class")
-                        try_count = 0
-                        while selected != select_need and try_count < 5:
-                            select_show.click()
+                            "//ul/li/ul/li",
+                        )
+                        for button in select_buttons:
+                            exchange = button.text.upper()
+                            try_count = 1
+                            while not exchange and try_count < 5:
+                                time.sleep(0.2)
+                                exchange = button.text.upper()
+                                try_count += 1
+                            if not exchange:
+                                continue
+
+                            select_need = False
+                            if button.text.upper() in ["BINANCE", "BYBIT", "OKX"]:
+                                select_need = True
+
+                            select_show = button.find_elements(
+                                By.XPATH,
+                                "div/span/span",
+                            )[0]
                             selected = "checked" in select_show.get_attribute("class")
-                            try_count += 1
+                            try_count = 0
+                            while selected != select_need and try_count < 5:
+                                select_show.click()
+                                selected = "checked" in select_show.get_attribute("class")
+                                try_count += 1
 
-                        if selected != select_need:
-                            continue
+                            if selected != select_need:
+                                continue
 
-                else:
-                    continue
-                exchange_button.click()
+                    else:
+                        continue
+                    exchange_button.click()
 
-                # 选择周期
-                duration_tabs = driver.find_elements(
-                    By.XPATH,
-                    "//div/div/button[@role='tab']",
-                    )
+                    # 选择周期
+                    duration_tabs = driver.find_elements(
+                        By.XPATH,
+                        "//div/div/button[@role='tab']",
+                        )
 
-                tab_5m = None
-                tab_15m = None
-                tab_1h = None
-                for tab in duration_tabs:
-                    if tab.text == "5分钟":
-                        tab_5m = tab
+                    tab_5m = None
+                    tab_15m = None
+                    tab_1h = None
+                    for tab in duration_tabs:
+                        if tab.text == "5分钟":
+                            tab_5m = tab
 
-                    if tab.text == "15分钟":
-                        tab_15m = tab
+                        if tab.text == "15分钟":
+                            tab_15m = tab
+                        
+                        if tab.text == "1小时":
+                            tab_1h = tab
+
+                    tab_5m_selected = False
+                    tab_15m_selected = False
+                    tab_1h_selected = False
+                    if tab_5m:
+                        tab_5m_selected = "selected" in tab_5m.get_attribute("class")
+
+                    if tab_15m:
+                        tab_15m_selected = "selected" in tab_15m.get_attribute("class")
+
+                    if tab_1h:
+                        tab_1h_selected = "selected" in tab_1h.get_attribute("class")
+
+                    if not tab_5m_selected and not tab_15m_selected and not tab_1h_selected:
+                        tab_5m.click()
+                        time.sleep(5)
+                        tab_5m_selected = "selected" in tab_5m.get_attribute("class")
+                
+                    if (not tab_5m_selected and not tab_15m_selected and not tab_1h_selected) or (tab_5m_selected and tab_15m_selected and tab_1h_selected):
+                        driver_reboot = True
+                        continue
                     
-                    if tab.text == "1小时":
-                        tab_1h = tab
+                    if tab_5m_selected:
+                        duration = "5m"
 
-                tab_5m_selected = False
-                tab_15m_selected = False
-                tab_1h_selected = False
-                if tab_5m:
-                    tab_5m_selected = "selected" in tab_5m.get_attribute("class")
-
-                if tab_15m:
-                    tab_15m_selected = "selected" in tab_15m.get_attribute("class")
-
-                if tab_1h:
-                    tab_1h_selected = "selected" in tab_1h.get_attribute("class")
-
-                if not tab_5m_selected and not tab_15m_selected and not tab_1h_selected:
-                    tab_5m.click()
-                    time.sleep(5)
-                    tab_5m_selected = "selected" in tab_5m.get_attribute("class")
-                
-                if (not tab_5m_selected and not tab_15m_selected and not tab_1h_selected) or (tab_5m_selected and tab_15m_selected and tab_1h_selected):
-                    driver_reboot = True
-                    continue
-                
-                if tab_5m_selected:
-                    duration = "5m"
-
-                if tab_15m_selected:
-                    duration = "15m"
-                
-                if tab_1h_selected:
-                    duration = "1h"
+                    if tab_15m_selected:
+                        duration = "15m"
+                    
+                    if tab_1h_selected:
+                        duration = "1h"
 
                 # 获取涨跌排行榜
                 rise_list = []
@@ -517,7 +520,7 @@ class Chrome(object):
         rise_list, fall_list = data
         rise_list = sorted(rise_list, key=lambda x: x["change"], reverse=True)
         fall_list = sorted(fall_list, key=lambda x: x["change"], reverse=False)
-        print(f"{duration}\t上涨\t{len(rise_list)}\t下跌 {len(fall_list)}")
+        print_(f"{duration}\t上涨\t{len(rise_list)}\t下跌 {len(fall_list)}")
 
         if rise_list and fall_list:
             # 保存涨跌幅数据到文件
@@ -664,6 +667,10 @@ class DingTalkEngine(object):
 
         self.active = False
         self.thread.join()
+
+def print_(msg: str):
+    dt = datetime.now().replace(microsecond=0)
+    print(f"{dt}\t{msg}")
         
 if __name__ == "__main__":
     chrome = Chrome(cta_engine=None)
