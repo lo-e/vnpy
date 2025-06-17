@@ -194,7 +194,11 @@ class TopGainersLosersStrategy(CtaTemplate):
             bar_list = []
             next_bar_dt = None
             bar_lack = False
-            data_list = list(cursor)[:-1]
+
+            data_list = list(cursor)
+            last_bar_datetime: datetime = data_list[-1]["datetime"]
+            if datetime.now() < last_bar_datetime.replace(second=50):
+                data_list = data_list[:-1]
             for d in data_list:
                 bar = BarData(gateway_name = '', symbol = '', exchange = Exchange.NONE, datetime = None, endDatetime = None)
                 bar.__dict__ = d
