@@ -287,7 +287,6 @@ class TopGainersLosersPortfolio(object):
             # 执行新策略
             new_vt_symbols = set()
             for setting in new_settings:
-                setting["slot"] = 1
                 vt_symbol = setting["vt_symbol"]
                 new_vt_symbols.add(vt_symbol)
                 self.cta_engine.new_strategy(setting)
