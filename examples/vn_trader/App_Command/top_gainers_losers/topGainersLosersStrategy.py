@@ -279,17 +279,17 @@ class TopGainersLosersStrategy(CtaTemplate):
                 self.add_unit_pos(tick.last_price)
                 open_action = True
             
-            if self.open_unit <= 1 and ((tick.last_price >= self.entry_tick_price + self.minute_atr * 0.5 and self.direction == Direction.LONG) or (tick.last_price <= self.entry_tick_price - self.minute_atr * 0.5 and self.direction == Direction.SHORT)):
-                self.add_unit_pos(tick.last_price)
-                open_action = True
+            # if self.open_unit <= 1 and ((tick.last_price >= self.entry_tick_price + self.minute_atr * 0.5 and self.direction == Direction.LONG) or (tick.last_price <= self.entry_tick_price - self.minute_atr * 0.5 and self.direction == Direction.SHORT)):
+            #     self.add_unit_pos(tick.last_price)
+            #     open_action = True
             
-            if self.open_unit <= 2 and ((tick.last_price >= self.entry_tick_price + self.minute_atr * 1.0 and self.direction == Direction.LONG) or (tick.last_price <= self.entry_tick_price - self.minute_atr * 1.0 and self.direction == Direction.SHORT)):
-                self.add_unit_pos(tick.last_price)
-                open_action = True
+            # if self.open_unit <= 2 and ((tick.last_price >= self.entry_tick_price + self.minute_atr * 1.0 and self.direction == Direction.LONG) or (tick.last_price <= self.entry_tick_price - self.minute_atr * 1.0 and self.direction == Direction.SHORT)):
+            #     self.add_unit_pos(tick.last_price)
+            #     open_action = True
 
-            if self.open_unit <= 3 and ((tick.last_price >= self.entry_tick_price + self.minute_atr * 1.5 and self.direction == Direction.LONG) or (tick.last_price <= self.entry_tick_price - self.minute_atr * 1.5 and self.direction == Direction.SHORT)):
-                self.add_unit_pos(tick.last_price)
-                open_action = True
+            # if self.open_unit <= 3 and ((tick.last_price >= self.entry_tick_price + self.minute_atr * 1.5 and self.direction == Direction.LONG) or (tick.last_price <= self.entry_tick_price - self.minute_atr * 1.5 and self.direction == Direction.SHORT)):
+            #     self.add_unit_pos(tick.last_price)
+            #     open_action = True
 
             if open_action:
                 # 发送订单
