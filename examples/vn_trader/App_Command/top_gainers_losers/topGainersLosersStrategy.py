@@ -308,11 +308,11 @@ class TopGainersLosersStrategy(CtaTemplate):
                 self.drawdown_tick_price = max(self.drawdown_tick_price, tick.last_price)
 
         # 止损判断
-        if self.direction == Direction.LONG and self.stop_price and tick.last_price <= self.stop_price:
-            self.stop_pnl = ((self.stop_price / tick.last_price) - 1) * 100
+        if not self.stop_pnl and self.direction == Direction.LONG and self.stop_price and tick.last_price <= self.stop_price:
+            self.stop_pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
 
-        if self.direction == Direction.SHORT and self.stop_price and tick.last_price >= self.stop_price:
-            self.stop_pnl = ((self.stop_price / tick.last_price) - 1) * 100 * -1
+        if not self.stop_pnl and self.direction == Direction.SHORT and self.stop_price and tick.last_price >= self.stop_price:
+            self.stop_pnl = ((tick.last_price / self.open_tick_price) - 1) * 100 * -1
 
         if self.close and not self.closed:
             # 平仓
