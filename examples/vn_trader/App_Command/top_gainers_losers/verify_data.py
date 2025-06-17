@@ -61,6 +61,7 @@ def statistics_pnl(for_eth: bool = False):
                     if close_delay >= 10:
                         print(f"{symbol}\t{direction.value}\tCLOSE_DELAY\t{close_delay}\t{close_date_time}\t{close_tick_time}")
 
+                    drawdown = float(elements[5].split("%")[0])
                     pnl_rate = float(elements[7].split("%")[0])
                     if not slot:
                         # raise("slot数据缺失！")
@@ -74,6 +75,7 @@ def statistics_pnl(for_eth: bool = False):
                             "close_date_time": close_date_time,
                             "close_tick_time": close_tick_time,
                             "slot": slot,
+                            "drawdown": drawdown,
                             "pnl_rate": pnl_rate}
                     
                     trades_data = dt_trades_data.get(close_date_time, [])
@@ -102,7 +104,13 @@ def statistics_pnl(for_eth: bool = False):
             open_ts = min(open_ts, ts) if open_ts else ts
 
             slot = data["slot"]
+            drawdown = data["drawdown"]
             pnl_rate = data["pnl_rate"] / slot
+
+            # if drawdown <= -1.0:
+            #     pnl_rate = -1.0
+            # pnl_rate -= 0.1
+
             dt_pnl += pnl_rate
 
             # if open_date_time == "2025-06-13 16:08:50":
@@ -118,7 +126,7 @@ def statistics_pnl(for_eth: bool = False):
             total_pnl += pnl_rate
 
             opent_dt = datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
-            print(f"{opent_dt} - {dt}\t\t{direction_}\t{position_minute}m {position_second}s\t{slot}\t{pnl_rate:.3f}\t{total_pnl:.3f}\t{symbol}")
+            print(f"{opent_dt} - {dt}\t{direction_}\t{position_minute}m {position_second}s\t{slot}\t{drawdown}\t{pnl_rate:.3f}\t{total_pnl:.3f}\t{symbol}")
 
         # 持仓时间
         # close_ts = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S").timestamp()

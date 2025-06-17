@@ -86,7 +86,7 @@ class TopGainersLosersPortfolio(object):
         self.cta_engine.event_engine.register(EVENT_ACCOUNT, self.on_account)
 
         # Bar下载
-        # Thread(target=self.download_bar).start()
+        Thread(target=self.download_bar).start()
 
     def on_start(self):
         # tick 处理
@@ -175,7 +175,6 @@ class TopGainersLosersPortfolio(object):
         rise_list = sorted(rise_list, key=lambda x: x["change"], reverse=True)
         fall_list = sorted(fall_list, key=lambda x: x["change"], reverse=False)
 
-        msg = ""
         new_settings = []
         close_long_tokens = set()
         close_short_tokens = set()
@@ -266,58 +265,6 @@ class TopGainersLosersPortfolio(object):
                     top_msg = f"\n{fall_top_1_symbol} 快速下跌（{fall_top_1_change}）\nfrom {onboard_time_str}\nto {top_time_str}\nin {from_onboard_time}s"
                     self.send_ding_talk(top_msg)
 
-            """
-            # 监控暴涨
-            rise_top_1_data = rise_list[0]
-            rise_top_1_symbol = rise_top_1_data["symbol"]
-            rise_top_1_change = rise_top_1_data["change"]
-
-            rise_top_2_data = rise_list[1]
-            rise_top_2_change = rise_top_2_data["change"]
-
-            if rise_top_1_symbol != self.fast_rise_token and self.fast_rise_token:
-                top_msg = f"\n{self.fast_rise_token} 暴涨停止"
-                self.send_ding_talk(top_msg)
-
-                close_long_tokens.add(self.fast_rise_token)
-                self.fast_rise_token = ""
-            
-            if rise_top_1_symbol != self.fast_rise_token and abs(rise_top_1_change) > abs(rise_top_2_change) * 3:
-                self.fast_rise_token = rise_top_1_symbol
-                setting = self.new_strategy(rise_top_1_symbol, Direction.LONG)
-                if setting:
-                    new_long_count += 1
-                    new_settings.append(setting)
-
-                top_msg = f"\n{rise_top_1_symbol} 暴涨\nTOP1 {rise_top_1_change}\nTOP2 {rise_top_2_change}"
-                self.send_ding_talk(top_msg)
-
-            # 监控暴跌
-            fall_top_1_data = fall_list[0]
-            fall_top_1_symbol = fall_top_1_data["symbol"]
-            fall_top_1_change = fall_top_1_data["change"]
-
-            fall_top_2_data = fall_list[1]
-            fall_top_2_change = fall_top_2_data["change"]
-
-            if fall_top_1_symbol != self.fast_fall_token and self.fast_fall_token:
-                top_msg = f"\n{self.fast_fall_token} 暴跌停止"
-                self.send_ding_talk(top_msg)
-
-                close_short_tokens.add(self.fast_fall_token)
-                self.fast_fall_token = ""
-
-            if fall_top_1_symbol != self.fast_fall_token and abs(fall_top_1_change) > abs(fall_top_2_change) * 3:
-                self.fast_fall_token = fall_top_1_symbol
-                setting = self.new_strategy(fall_top_1_symbol, Direction.SHORT)
-                if setting:
-                    new_short_count += 1
-                    new_settings.append(setting)
-
-                top_msg = f"\n{fall_top_1_symbol} 暴跌\nTOP1 {fall_top_1_change}\nTOP2 {fall_top_2_change}"
-                self.send_ding_talk(top_msg)
-            """
-
         if close_long_tokens or close_short_tokens:
             # 停止当前策略
             remove_strategy_names = []
@@ -341,25 +288,16 @@ class TopGainersLosersPortfolio(object):
             new_vt_symbols = set()
             for setting in new_settings:
                 setting["slot"] = 1
-                new_vt_symbols.add(setting["vt_symbol"])
+                vt_symbol = setting["vt_symbol"]
+                new_vt_symbols.add(vt_symbol)
                 self.cta_engine.new_strategy(setting)
+                self.bar_download_queue.put(vt_symbol)
 
             # 添加setting
             self.cta_engine.new_strategy_setting(new_settings)
 
             # 订阅合约
             self.cta_engine.subscribe(list(new_vt_symbols))
-
-        # if new_long_count:
-        #     msg = f"{msg}执行多头合约：{new_long_count}\n"
-
-        # if new_short_count:
-        #     msg = f"{msg}执行空头合约：{new_short_count}\n"
-
-        # if msg:
-        #     msg = f"\nrise {mean_rise_change}\nfall {mean_fall_change}\n\n{msg}当前策略总数：{len(self.cta_engine.strategies)}"
-        #     self.send_ding_talk(msg)
-        #     print_(msg)
 
     def new_strategy(self, token:str, direction: Direction):
         # 确认合约
@@ -583,17 +521,17 @@ class TopGainersLosersPortfolio(object):
                         # 开始下载
                         if exchange == "OKX":
                             self.download_engine.download_from_okx(
-                                contract_list=[symbol], hours=2, from_data_base=False, save_to=self.name, delete_history_data=False, show_progress=False
+                                contract_list=[symbol], hours=1, from_data_base=False, save_to=self.name, delete_history_data=False, show_progress=False
                             )
                         
                         elif exchange == "BYBIT":
                             self.download_engine.download_from_bybit(
-                                contract_list=[symbol], hours=2, from_data_base=False, save_to=self.name, delete_history_data=False, show_progress=False
+                                contract_list=[symbol], hours=1, from_data_base=False, save_to=self.name, delete_history_data=False, show_progress=False
                             )
                         
                         elif exchange == "BINANCE":
                             self.download_engine.download_from_binance(
-                                contract_list=[symbol], hours=2, from_data_base=False, save_to=self.name, delete_history_data=False, show_progress=False
+                                contract_list=[symbol], hours=1, from_data_base=False, save_to=self.name, delete_history_data=False, show_progress=False
                             )
 
                         success = True
