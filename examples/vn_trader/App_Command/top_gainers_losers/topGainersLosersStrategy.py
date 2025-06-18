@@ -155,6 +155,9 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.minute_5_am: ArrayManager = None
         self.minute_5_atr = 0
 
+        self.history_high = 0
+        self.history_low = 0
+
     def on_init(self):
         # 交易所成功连接判断
         exchange = self.vt_symbol.split(".")[-1]
@@ -187,7 +190,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             mc = MongoClient()
             db = mc[MINUTE_DB_NAME]
             collection = db[self.vt_symbol]
-            data_from = datetime.now().replace(second=0, microsecond=0) - timedelta(minutes=10)
+            data_from = datetime.now().replace(second=0, microsecond=0) - timedelta(minutes=60)
             flt = {"datetime": {"$gte": data_from}}
             cursor = collection.find(flt).sort('datetime')
 
@@ -196,9 +199,10 @@ class TopGainersLosersStrategy(CtaTemplate):
             bar_lack = False
 
             data_list = list(cursor)
-            last_bar_datetime: datetime = data_list[-1]["datetime"]
-            if datetime.now() < last_bar_datetime.replace(second=50):
-                data_list = data_list[:-1]
+            # last_bar_datetime: datetime = data_list[-1]["datetime"]
+            # if datetime.now() < last_bar_datetime.replace(second=50):
+            #     data_list = data_list[:-1]
+
             for d in data_list:
                 bar = BarData(gateway_name = '', symbol = '', exchange = Exchange.NONE, datetime = None, endDatetime = None)
                 bar.__dict__ = d
@@ -221,11 +225,27 @@ class TopGainersLosersStrategy(CtaTemplate):
                 # self.minute_5_bar_generator = BarGenerator(window=5, on_window_bar=self.on_minute_5_bar, interval=Interval.MINUTE)
 
                 # 回测数据库Bar数据
-                for bar in bar_list:
+                final_high = 0
+                final_low = 0
+                for i in range(len(bar_list)):
+                    bar: BarData = bar_list[i]
                     self.on_minute_bar(bar)
+
+                    if i >= len(bar_list) - 5:
+                        final_high = max(final_high, bar.high_price)
+                        final_low = min(final_low, bar.low_price) if final_low else bar.low_price
             
             else:
                 pass
+                
+            # 趋势筛选
+            if self.direction == Direction.LONG and final_high < self.history_high:
+                self.portfolio.close_strategy(self)
+                return
+
+            if self.direction == Direction.SHORT and final_low > self.history_low:
+                self.portfolio.close_strategy(self)
+                return
 
             # 指标完成初始化
             if self.minute_atr:
@@ -260,6 +280,10 @@ class TopGainersLosersStrategy(CtaTemplate):
         if self.minute_am.inited:
             self.minute_atr = self.minute_am.atr(5)
             self.unit_pos = (0.01 * self.portfolio.portfolio_value) / (2 * self.minute_atr)
+
+            high, low = self.minute_am.donchian(6)
+            self.history_high = max(self.history_high, high)
+            self.history_low = min(self.history_low, low) if self.history_low else low
 
         # if self.minute_5_bar:
         #     self.minute_5_bar_dt = self.minute_5_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")

@@ -237,7 +237,7 @@ class TopGainersLosersPortfolio(object):
             rise_top_2_change = rise_list[1]["change"]
             onboard_time = self.rise_onboard_symbol_time_dict.get(rise_top_1_symbol, time.time())
             from_onboard_time = rise_data_time - onboard_time
-            if rise_top_1_symbol not in self.fast_rise_tokens and from_onboard_time <= 60 and abs(rise_top_1_change) >= abs(rise_top_2_change) * 3:
+            if rise_top_1_symbol not in self.fast_rise_tokens and from_onboard_time <= 60:
                 setting = self.new_strategy(rise_top_1_symbol, Direction.LONG)
                 if setting:
                     self.fast_rise_tokens.append(rise_top_1_symbol)
@@ -255,7 +255,7 @@ class TopGainersLosersPortfolio(object):
             fall_top_2_change = fall_list[1]["change"]
             onboard_time = self.fall_onboard_symbol_time_dict.get(fall_top_1_symbol, time.time())
             from_onboard_time = fall_data_time - onboard_time
-            if fall_top_1_symbol not in self.fast_fall_tokens and from_onboard_time <= 60 and abs(fall_top_1_change) >= abs(fall_top_2_change) * 3:
+            if fall_top_1_symbol not in self.fast_fall_tokens and from_onboard_time <= 60:
                 setting = self.new_strategy(fall_top_1_symbol, Direction.SHORT)
                 if setting:
                     self.fast_fall_tokens.append(fall_top_1_symbol)
@@ -299,6 +299,20 @@ class TopGainersLosersPortfolio(object):
 
             # 订阅合约
             self.cta_engine.subscribe(list(new_vt_symbols))
+
+    def close_strategy(self, strategy: TopGainersLosersStrategy):
+        symbol = strategy.vt_symbol.split("USDT")[0]
+        if strategy.direction == Direction.LONG and symbol in self.fast_rise_tokens:
+            self.fast_rise_tokens.remove(symbol)
+
+        if strategy.direction == Direction.SHORT and symbol in self.fast_fall_tokens:
+            self.fast_fall_tokens.remove(symbol)
+            
+        self.cta_engine.remove_strategy_setting([strategy.strategy_name])
+        strategy.on_close()
+
+        remove_msg = f"\n{symbol} 过滤"
+        self.send_ding_talk(remove_msg)
 
     def new_strategy(self, token:str, direction: Direction):
         # 确认合约
