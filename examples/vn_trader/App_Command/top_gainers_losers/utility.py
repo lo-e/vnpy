@@ -109,17 +109,22 @@ class Chrome(object):
     def fetch_rise_fall_long_short(self, callback = None, rest: int = 60) -> None:
         driver = None
         driver_reboot = True
+        duration = "5m"
+        duration_select_need = True
+        exchange_select_need = True
+        duration_24h_select_dt = None
         while True:
             try:
                 # 启动浏览器
-                init_select = False
                 if driver_reboot:
                     print(f"Chrome启动")
                     self.quit_driver(driver)
                     driver = self.load_driver()
 
-                    init_select = True
+                    duration_select_need = True
+                    exchange_select_need = True
                     driver_reboot = False
+
                     url = "https://www.coinglass.com/zh/gainers-losers"
                     driver.get(url)
                 
@@ -137,7 +142,9 @@ class Chrome(object):
                         button.click()
                         break
                 
-                if init_select:
+                if exchange_select_need:
+                    exchange_select_need = False
+
                     # 筛选交易所
                     exchange_button = None
                     buttons = driver.find_elements(
@@ -181,60 +188,44 @@ class Chrome(object):
                                 try_count += 1
 
                             if selected != select_need:
+                                driver_reboot = True
                                 continue
 
                     else:
+                        driver_reboot = True
                         continue
                     exchange_button.click()
 
+                if duration_select_need:
                     # 选择周期
                     duration_tabs = driver.find_elements(
                         By.XPATH,
                         "//div/div/button[@role='tab']",
                         )
 
-                    tab_5m = None
-                    tab_15m = None
-                    tab_1h = None
+                    target_tab = None
                     for tab in duration_tabs:
-                        if tab.text == "5分钟":
-                            tab_5m = tab
+                        if duration == "5m" and tab.text == "5分钟":
+                            target_tab = tab
 
-                        if tab.text == "15分钟":
-                            tab_15m = tab
+                        if duration == "15m" and tab.text == "15分钟":
+                            target_tab = tab
                         
-                        if tab.text == "1小时":
-                            tab_1h = tab
+                        if duration == "1h" and tab.text == "1小时":
+                            target_tab = tab
+                        
+                        if duration == "24h" and tab.text == "24小时":
+                            target_tab = tab
 
-                    tab_5m_selected = False
-                    tab_15m_selected = False
-                    tab_1h_selected = False
-                    if tab_5m:
-                        tab_5m_selected = "selected" in tab_5m.get_attribute("class")
-
-                    if tab_15m:
-                        tab_15m_selected = "selected" in tab_15m.get_attribute("class")
-
-                    if tab_1h:
-                        tab_1h_selected = "selected" in tab_1h.get_attribute("class")
-
-                    if not tab_5m_selected and not tab_15m_selected and not tab_1h_selected:
-                        tab_5m.click()
+                    target_tab_selected = "selected" in target_tab.get_attribute("class")
+                    if not target_tab_selected:
+                        target_tab.click()
                         time.sleep(5)
-                        tab_5m_selected = "selected" in tab_5m.get_attribute("class")
+                        target_tab_selected = "selected" in target_tab.get_attribute("class")
                 
-                    if (not tab_5m_selected and not tab_15m_selected and not tab_1h_selected) or (tab_5m_selected and tab_15m_selected and tab_1h_selected):
+                    if not target_tab_selected:
                         driver_reboot = True
                         continue
-                    
-                    if tab_5m_selected:
-                        duration = "5m"
-
-                    if tab_15m_selected:
-                        duration = "15m"
-                    
-                    if tab_1h_selected:
-                        duration = "1h"
 
                 # 获取涨跌排行榜
                 rise_list = []
@@ -255,8 +246,17 @@ class Chrome(object):
                 if callback:
                     callback((rise_list, fall_list), duration)
 
-                if not tab_5m_selected:
-                    tab_5m.click()
+                current_dt = datetime.now().replace(minute=int(datetime.now().minute / 10) * 10, second=0, microsecond=0)
+                if duration_24h_select_dt != current_dt:
+                    duration_24h_select_dt = current_dt
+                    duration = "24h"
+                    duration_select_need = True
+                    continue
+                
+                elif duration != "5m":
+                    duration = "5m"
+                    duration_select_need = True
+                    continue
 
                 # 选择多空比
                 down_up_list = []
