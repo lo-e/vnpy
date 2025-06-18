@@ -35,7 +35,8 @@ class TopGainersLosersPortfolio(object):
         "account_ath",
         "account_drawdown",
         "fast_rise_tokens",
-        "fast_fall_tokens"
+        "fast_fall_tokens",
+        "trending_tokens"
     ]
 
     def __init__(self, engine, setting):
@@ -53,16 +54,15 @@ class TopGainersLosersPortfolio(object):
         self.short_trending = False
         self.rise_data_list_5m = []
         self.fall_data_list_5m = []
-        self.rise_data_list_15m = []
-        self.fall_data_list_15m = []
-        self.rise_data_list_1h = []
-        self.fall_data_list_1h = []
+        self.rise_data_list_24h = []
+        self.fall_data_list_24h = []
         self.sync_data = {}
         self.unsubscribe_time = 0
         self.account_ath = 0
         self.account_drawdown = 0
         self.fast_rise_tokens = []
         self.fast_fall_tokens = []
+        self.trending_tokens = []
         self.rise_onboard_symbol_time_dict = {}
         self.fall_onboard_symbol_time_dict = {}
         
@@ -163,7 +163,35 @@ class TopGainersLosersPortfolio(object):
             else:
                 self.cta_engine.subscribe(list(vt_symbols))
 
-    def on_rise_fall_data(self, data: tuple, duration: str):
+    def on_trending_data(self, data: tuple):
+        rise_trending_list, fall_trending_list = data
+        rise_trending_list = rise_trending_list[3:]
+        fall_trending_list = fall_trending_list[3:]
+        
+        trending_tokens = set()
+        for i in range(min(len(rise_trending_list), 10)):
+            data = rise_trending_list[i]
+            symbol = data["symbol"]
+            change = data["change"]
+            if abs(change) >= 10.0:
+                trending_tokens.add(symbol)
+                if symbol not in self.trending_tokens:
+                    self.trending_tokens.append(symbol)
+
+        for i in range(min(len(fall_trending_list), 10)):
+            data = fall_trending_list[i]
+            symbol = data["symbol"]
+            change = data["change"]
+            if abs(change) >= 10.0:
+                trending_tokens.add(symbol)
+                if symbol not in self.trending_tokens:
+                    self.trending_tokens.append(symbol)
+        
+        for symbol in self.trending_tokens.copy():
+            if symbol in trending_tokens:
+                self.trending_tokens.remove(symbol)
+
+    def on_rise_fall_data(self, data: tuple):
         rise_list, fall_list = data
         rise_data_time = rise_list[0]["change"]
         fall_data_time = fall_list[0]["change"]
@@ -237,7 +265,7 @@ class TopGainersLosersPortfolio(object):
             rise_top_2_change = rise_list[1]["change"]
             onboard_time = self.rise_onboard_symbol_time_dict.get(rise_top_1_symbol, time.time())
             from_onboard_time = rise_data_time - onboard_time
-            if rise_top_1_symbol not in self.fast_rise_tokens and from_onboard_time <= 10*60 and abs(rise_top_1_change) > 1.0:
+            if rise_top_1_symbol in self.trending_tokens and rise_top_1_symbol not in self.fast_rise_tokens and from_onboard_time <= 10*60 and abs(rise_top_1_change) > 1.0:
                 setting = self.new_strategy(rise_top_1_symbol, Direction.LONG)
                 if setting:
                     self.fast_rise_tokens.append(rise_top_1_symbol)
@@ -255,7 +283,7 @@ class TopGainersLosersPortfolio(object):
             fall_top_2_change = fall_list[1]["change"]
             onboard_time = self.fall_onboard_symbol_time_dict.get(fall_top_1_symbol, time.time())
             from_onboard_time = fall_data_time - onboard_time
-            if fall_top_1_symbol not in self.fast_fall_tokens and from_onboard_time <= 10*60 and abs(fall_top_1_change) > 1.0:
+            if fall_top_1_symbol in self.trending_tokens and fall_top_1_symbol not in self.fast_fall_tokens and from_onboard_time <= 10*60 and abs(fall_top_1_change) > 1.0:
                 setting = self.new_strategy(fall_top_1_symbol, Direction.SHORT)
                 if setting:
                     self.fast_fall_tokens.append(fall_top_1_symbol)
@@ -373,74 +401,31 @@ class TopGainersLosersPortfolio(object):
             try:
                 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-                # 获取5m涨跌幅排行榜数据
-                rise_list_5m = []
-                fall_list_5m = []
+                # 获取涨跌幅排行榜数据
+                for duration in ["24h", "5m"]:
+                    rise_list = []
+                    fall_list = []
 
-                duration = "5m"
-                rise_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
-                df = pd.read_csv(rise_latest_file_path)
-                for _, row in df.iterrows():
-                    rise_list_5m.append(dict(row))
+                    rise_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
+                    df = pd.read_csv(rise_latest_file_path)
+                    for _, row in df.iterrows():
+                        rise_list.append(dict(row))
 
-                fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
-                df = pd.read_csv(fall_latest_file_path)
-                for _, row in df.iterrows():
-                    fall_list_5m.append(dict(row))
+                    fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
+                    df = pd.read_csv(fall_latest_file_path)
+                    for _, row in df.iterrows():
+                        fall_list.append(dict(row))
+                    
+                    # 生成信号
+                    if duration == "24h" and (self.rise_data_list_24h != rise_list or self.fall_data_list_24h != fall_list):
+                        self.rise_data_list_24h= rise_list
+                        self.fall_data_list_24h = fall_list
+                        self.on_trending_data((rise_list, fall_list))
 
-                # 获取15m涨跌幅排行榜数据
-                rise_list_15m = []
-                fall_list_15m = []
-
-                # duration = "15m"
-                # rise_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
-                # df = pd.read_csv(rise_latest_file_path)
-                # for _, row in df.iterrows():
-                #     rise_list_15m.append(dict(row))
-
-                # fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
-                # df = pd.read_csv(fall_latest_file_path)
-                # for _, row in df.iterrows():
-                #     fall_list_15m.append(dict(row))
-
-                # rise_list_15m = rise_list_15m[2:]
-                # fall_list_15m = fall_list_15m[2:]
-
-                # if not self.rise_data_list_15m:
-                #     self.rise_data_list_15m = rise_list_15m
-                
-                # if not self.fall_data_list_15m:
-                #     self.fall_data_list_15m = fall_list_15m
-                
-                # 获取1h涨跌幅排行榜数据
-                rise_list_1h = []
-                fall_list_1h = []
-                
-                # duration = "1h"
-                # rise_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
-                # df = pd.read_csv(rise_latest_file_path)
-                # for _, row in df.iterrows():
-                #     rise_list_1h.append(dict(row))
-
-                # fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
-                # df = pd.read_csv(fall_latest_file_path)
-                # for _, row in df.iterrows():
-                #     fall_list_1h.append(dict(row))
-
-                # rise_list_1h = rise_list_1h[2:]
-                # fall_list_1h = fall_list_1h[2:]
-
-                # if not self.rise_data_list_1h:
-                #     self.rise_data_list_1h = rise_list_1h
-                
-                # if not self.fall_data_list_1h:
-                #     self.fall_data_list_1h = fall_list_1h
-                
-                # 生成信号
-                if self.rise_data_list_5m != rise_list_5m or self.fall_data_list_5m != fall_list_5m:
-                    self.rise_data_list_5m = rise_list_5m
-                    self.fall_data_list_5m = fall_list_5m
-                    self.on_rise_fall_data((rise_list_5m, fall_list_5m), duration)
+                    if duration == "5m" and (self.rise_data_list_5m != rise_list or self.fall_data_list_5m != fall_list):
+                        self.rise_data_list_5m = rise_list
+                        self.fall_data_list_5m = fall_list
+                        self.on_rise_fall_data((rise_list, fall_list))
 
             except Exception as e:
                 pass

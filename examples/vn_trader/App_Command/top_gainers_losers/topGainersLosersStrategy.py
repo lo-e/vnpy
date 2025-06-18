@@ -247,7 +247,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             if self.direction == Direction.SHORT and final_low > self.history_low:
                 filter = True
             
-            if self.minute_atr > self.history_minute_atr * 2:
+            if self.minute_atr > self.history_minute_atr * 20:
                 filter = True
             
             if filter:
