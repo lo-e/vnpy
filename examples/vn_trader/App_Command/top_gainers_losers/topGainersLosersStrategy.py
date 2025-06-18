@@ -157,6 +157,7 @@ class TopGainersLosersStrategy(CtaTemplate):
 
         self.history_high = 0
         self.history_low = 0
+        self.history_minute_atr = 0
 
     def on_init(self):
         # 交易所成功连接判断
@@ -239,11 +240,17 @@ class TopGainersLosersStrategy(CtaTemplate):
                 pass
                 
             # 趋势筛选
+            filter = False
             if self.direction == Direction.LONG and final_high < self.history_high:
-                self.portfolio.close_strategy(self)
-                return
+                filter = True
 
             if self.direction == Direction.SHORT and final_low > self.history_low:
+                filter = True
+            
+            if self.minute_atr > self.history_minute_atr * 3:
+                filter = True
+            
+            if filter:
                 self.portfolio.close_strategy(self)
                 return
 
@@ -284,6 +291,9 @@ class TopGainersLosersStrategy(CtaTemplate):
             high, low = self.minute_am.donchian(6)
             self.history_high = max(self.history_high, high)
             self.history_low = min(self.history_low, low) if self.history_low else low
+
+            if self.minute_bar.datetime < datetime.now().replace(second=0, microsecond=0) - timedelta(minutes=5):
+                self.history_minute_atr = self.minute_atr
 
         # if self.minute_5_bar:
         #     self.minute_5_bar_dt = self.minute_5_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
@@ -391,11 +401,11 @@ class TopGainersLosersStrategy(CtaTemplate):
         # 更新止损价格
         if self.direction == Direction.LONG:
             # self.stop_price = tick_price - 2 * self.minute_atr
-            self.stop_price = tick_price * 0.99
+            self.stop_price = tick_price * 0.992
         
         else:
             # self.stop_price = tick_price + 2 * self.minute_atr
-            self.stop_price = tick_price * 1.01
+            self.stop_price = tick_price * 1.008
 
     def check_save_data(self):
         try:
