@@ -301,15 +301,15 @@ class TopGainersLosersPortfolio(object):
             self.cta_engine.subscribe(list(new_vt_symbols))
 
     def close_strategy(self, strategy: TopGainersLosersStrategy):
-        symbol = strategy.vt_symbol.split("USDT")[0]
-        if strategy.direction == Direction.LONG and symbol in self.fast_rise_tokens:
-            self.fast_rise_tokens.remove(symbol)
-
-        if strategy.direction == Direction.SHORT and symbol in self.fast_fall_tokens:
-            self.fast_fall_tokens.remove(symbol)
-            
         self.cta_engine.remove_strategy_setting([strategy.strategy_name])
         strategy.on_close()
+        
+        symbol = strategy.vt_symbol.split("USDT")[0]
+        # if strategy.direction == Direction.LONG and symbol in self.fast_rise_tokens:
+        #     self.fast_rise_tokens.remove(symbol)
+
+        # if strategy.direction == Direction.SHORT and symbol in self.fast_fall_tokens:
+        #     self.fast_fall_tokens.remove(symbol)
 
         remove_msg = f"\n{symbol} 过滤"
         self.send_ding_talk(remove_msg)
