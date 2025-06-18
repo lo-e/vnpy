@@ -188,7 +188,7 @@ class TopGainersLosersPortfolio(object):
                     self.trending_tokens.append(symbol)
         
         for symbol in self.trending_tokens.copy():
-            if symbol in trending_tokens:
+            if symbol not in trending_tokens:
                 self.trending_tokens.remove(symbol)
 
     def on_rise_fall_data(self, data: tuple):
