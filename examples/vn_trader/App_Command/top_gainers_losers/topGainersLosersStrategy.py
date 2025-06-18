@@ -285,15 +285,15 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.minute_bar_dt = self.minute_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
 
         if self.minute_am.inited:
-            self.minute_atr = self.minute_am.atr(5)
+            self.minute_atr = self.minute_am.atr(3)
             self.unit_pos = (0.01 * self.portfolio.portfolio_value) / (2 * self.minute_atr)
 
             high, low = self.minute_am.donchian(6)
             self.history_high = max(self.history_high, high)
             self.history_low = min(self.history_low, low) if self.history_low else low
 
-            if self.minute_bar.datetime < datetime.now().replace(second=0, microsecond=0) - timedelta(minutes=5):
-                self.history_minute_atr = self.minute_atr
+            if self.minute_bar.datetime < datetime.now().replace(second=0, microsecond=0) - timedelta(minutes=3):
+                self.history_minute_atr = self.minute_am.atr(5)
 
         # if self.minute_5_bar:
         #     self.minute_5_bar_dt = self.minute_5_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
