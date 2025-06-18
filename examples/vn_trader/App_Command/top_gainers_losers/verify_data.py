@@ -108,7 +108,7 @@ def statistics_pnl(for_eth: bool = False):
             if stop_rate:
                 real_pnl_rate = stop_rate
             real_pnl_rate -= 0.1
-            real_pnl_rate = real_pnl_rate * leverage
+            # real_pnl_rate = real_pnl_rate * leverage
 
             dt_pnl += real_pnl_rate
 
