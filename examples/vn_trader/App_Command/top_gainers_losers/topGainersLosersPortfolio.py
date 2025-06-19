@@ -175,8 +175,7 @@ class TopGainersLosersPortfolio(object):
             change = data["change"]
             if abs(change) >= 10.0:
                 trending_tokens.add(symbol)
-                if symbol not in self.trending_tokens:
-                    self.trending_tokens[symbol] = change
+                self.trending_tokens[symbol] = change
 
         for i in range(min(len(fall_trending_list), 10)):
             data = fall_trending_list[i]
@@ -184,8 +183,7 @@ class TopGainersLosersPortfolio(object):
             change = data["change"]
             if abs(change) >= 10.0:
                 trending_tokens.add(symbol)
-                if symbol not in self.trending_tokens:
-                    self.trending_tokens[symbol] = change
+                self.trending_tokens[symbol] = change
         
         for symbol in self.trending_tokens.copy().keys():
             if symbol not in trending_tokens:
