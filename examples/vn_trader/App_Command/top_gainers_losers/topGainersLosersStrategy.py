@@ -259,7 +259,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 self.price_cross = True
 
             if not self.price_cross:
-                msg = f"\n{self.vt_symbol} 等待价格突破.."
+                msg = f"\n等待价格突破.."
                 self.send_ding_talk(msg)
                 print_(msg)
 

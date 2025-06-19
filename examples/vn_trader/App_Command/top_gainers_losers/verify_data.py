@@ -80,6 +80,7 @@ def statistics_pnl(for_eth: bool = False):
                     dt_trades_data[close_date_time] = trades_data
 
                     open_date_time = ""
+                    open_tick_time = ""
 
     # 按交易时间排序
     sorted_dt_trades_data = dict(sorted(dt_trades_data.items(), key=lambda x: x[0]))
@@ -88,16 +89,13 @@ def statistics_pnl(for_eth: bool = False):
     total_pnl = 0
     for dt, trades_data in sorted_dt_trades_data.items():
         # 仓位盈亏、开仓时间
-        dt_pnl = 0
-        open_ts = 0
         direction = ""
         for data in trades_data:
             symbol = data["symbol"]
             direction_ = data["direction"].value
             direction = f"{direction}{direction_}" if direction_ not in direction else direction
             open_date_time = data["open_date_time"]
-            ts = datetime.strptime(open_date_time, "%Y-%m-%d %H:%M:%S").timestamp()
-            open_ts = min(open_ts, ts) if open_ts else ts
+            open_ts = datetime.strptime(open_date_time, "%Y-%m-%d %H:%M:%S").timestamp() if open_date_time else 0
             
             unit = data["unit"]
             leverage = data["leverage"]
@@ -110,34 +108,19 @@ def statistics_pnl(for_eth: bool = False):
             real_pnl_rate -= 0.1
             # real_pnl_rate = real_pnl_rate * leverage
 
-            dt_pnl += real_pnl_rate
-
             # if open_date_time == "2025-06-13 16:08:50":
             #     print(f"{symbol}\t{direction_}\t{open_date_time}")
 
             # 持仓时间
             close_ts = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S").timestamp()
-            position_time = close_ts - ts
+            position_time = close_ts - open_ts if open_ts else 0
             position_minute = int(position_time / 60)
             position_second = int(position_time - position_minute * 60)
 
             # 累计盈亏
             total_pnl += real_pnl_rate
 
-            opent_dt = datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
-            print(f"{opent_dt} - {dt}\t{direction_}\t{position_minute}m {position_second}s\tunit {unit}\tleverage {leverage:.3f}\tstop {stop_rate:.3f}\tpnl {pnl_rate:.3f}\t{real_pnl_rate:.3f}\t{total_pnl:.3f}\t{symbol}")
-
-        # 持仓时间
-        # close_ts = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S").timestamp()
-        # position_time = close_ts - open_ts
-        # position_minute = int(position_time / 60)
-        # position_second = int(position_time - position_minute * 60)
-
-        # # 累计盈亏
-        # total_pnl += dt_pnl
-
-        # opent_dt = datetime.fromtimestamp(open_ts).strftime("%Y-%m-%d %H:%M:%S")
-        # print(f"{opent_dt} - {dt}\t{direction}\t{position_minute}m {position_second}s\t{len(trades_data)}\t{dt_pnl:.3f}\t{total_pnl:.3f}")
+            print(f"{open_date_time} - {dt}\t{direction_}\t{position_minute}m {position_second}s\tunit {unit}\tleverage {leverage:.3f}\tstop {stop_rate:.3f}\tpnl {pnl_rate:.3f}\t{real_pnl_rate:.3f}\t{total_pnl:.3f}\t{symbol}")
 
     print(f"总计盈亏：{total_pnl}")
 
