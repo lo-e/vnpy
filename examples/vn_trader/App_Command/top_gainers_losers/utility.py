@@ -220,7 +220,7 @@ class Chrome(object):
                     target_tab_selected = "selected" in target_tab.get_attribute("class")
                     if not target_tab_selected:
                         target_tab.click()
-                        time.sleep(5)
+                        time.sleep(10)
                         target_tab_selected = "selected" in target_tab.get_attribute("class")
                 
                     if not target_tab_selected:
@@ -247,8 +247,10 @@ class Chrome(object):
                     callback((rise_list, fall_list), duration)
 
                 current_dt = datetime.now().replace(minute=int(datetime.now().minute / 10) * 10, second=0, microsecond=0)
-                if duration_24h_select_dt != current_dt:
+                if duration == "24h":
                     duration_24h_select_dt = current_dt
+
+                if duration_24h_select_dt != current_dt:
                     duration = "24h"
                     duration_select_need = True
                     continue
