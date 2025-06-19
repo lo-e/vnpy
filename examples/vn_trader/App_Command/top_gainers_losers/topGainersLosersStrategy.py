@@ -377,14 +377,15 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.close_tick_price = tick.last_price
 
             # 记录日志
-            pnl = 0
-            if self.open_tick_price:
-                pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
-                if self.direction == Direction.SHORT:
-                    pnl = pnl * -1
+            if self.indicator_inited:
+                pnl = 0
+                if self.open_tick_price:
+                    pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
+                    if self.direction == Direction.SHORT:
+                        pnl = pnl * -1
 
-            self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} OPEN_COUNT {self.open_count} STOP_COUNT {self.stop_count} STOP {self.stop_pnl:.2f}% CLOSE {pnl:.2f}%"})
-            self.trade_logs_updated = True
+                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} OPEN_COUNT {self.open_count} STOP_COUNT {self.stop_count} STOP {self.stop_pnl:.2f}% CLOSE {pnl:.2f}%"})
+                self.trade_logs_updated = True
 
             # 取消订阅
             self.cta_engine.unsubscribe([self.vt_symbol])
