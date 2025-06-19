@@ -484,11 +484,10 @@ class TopGainersLosersPortfolio(object):
                 update_contract_gateway_names.add("BYBIT")
 
             if len(update_contract_gateway_names):
-                # gateway更新合约
                 self.query_gateway_contract(list(update_contract_gateway_names))
 
-                # 导入更新交易所合约
-                self.load_instruments_data()
+            # 导入更新交易所合约
+            self.load_instruments_data()
 
             if download_success:
                 msg = f"合约列表数据已更新！\n"

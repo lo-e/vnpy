@@ -217,7 +217,9 @@ class TopGainersLosersStrategy(CtaTemplate):
                 
                 next_bar_dt = bar.datetime + timedelta(minutes=1)
                 bar_list.append(bar)
-
+            
+            final_high = 0
+            final_low = 0
             if data_list and not bar_lack:
                 # 初始化工具
                 self.minute_am = ArrayManager(6)
@@ -226,8 +228,6 @@ class TopGainersLosersStrategy(CtaTemplate):
                 # self.minute_5_bar_generator = BarGenerator(window=5, on_window_bar=self.on_minute_5_bar, interval=Interval.MINUTE)
 
                 # 回测数据库Bar数据
-                final_high = 0
-                final_low = 0
                 for i in range(len(bar_list)):
                     bar: BarData = bar_list[i]
                     self.on_minute_bar(bar)
@@ -241,10 +241,10 @@ class TopGainersLosersStrategy(CtaTemplate):
                 
             # 趋势筛选
             filter = False
-            if self.direction == Direction.LONG and final_high < self.history_high:
+            if self.direction == Direction.LONG and final_high and self.history_high and final_high < self.history_high:
                 filter = True
 
-            if self.direction == Direction.SHORT and final_low > self.history_low:
+            if self.direction == Direction.SHORT and final_low and self.history_low and final_low > self.history_low:
                 filter = True
             
             if self.minute_atr > self.history_minute_atr * 20:
@@ -259,7 +259,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 self.indicator_inited = True
 
             else:
-                self.portfolio.bar_download_queue.put(self.vt_symbol)
+                # self.portfolio.bar_download_queue.put(self.vt_symbol)
                 msg = f"未完成指标初始化\nsymbol {self.vt_symbol}\nbar {self.minute_5_bar_dt}"
                 self.send_ding_talk(msg)
                 print_(msg)
