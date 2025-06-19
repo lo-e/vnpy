@@ -30,12 +30,8 @@ class TopGainersLosersPortfolio(object):
                   "portfolio_value"]
 
     syncs = [
-        "long_trending",
-        "short_trending",
         "account_ath",
         "account_drawdown",
-        "fast_rise_tokens",
-        "fast_fall_tokens",
         "trending_tokens"
     ]
 
@@ -50,8 +46,6 @@ class TopGainersLosersPortfolio(object):
         self.gainers_data = {}
         self.losers_data = {}
         self.strategy_status_check_ts = {}
-        self.long_trending = False
-        self.short_trending = False
         self.rise_data_list_5m = []
         self.fall_data_list_5m = []
         self.rise_data_list_24h = []
@@ -62,6 +56,8 @@ class TopGainersLosersPortfolio(object):
         self.account_drawdown = 0
         self.fast_rise_tokens = []
         self.fast_fall_tokens = []
+        self.strategy_long_tokens = []
+        self.strategy_short_tokens = []
         self.trending_tokens = {}
         self.rise_onboard_symbol_time_dict = {}
         self.fall_onboard_symbol_time_dict = {}
@@ -235,27 +231,33 @@ class TopGainersLosersPortfolio(object):
                     
                     else:
                         self.fall_onboard_symbol_time_dict[symbol] = fall_data_time
-            
+
             # 检索退出排行榜的代币
             for symbol in self.rise_onboard_symbol_time_dict.copy().keys():
                 if symbol not in rise_symbol_change_dict:
                     self.rise_onboard_symbol_time_dict.pop(symbol)
                     if symbol in self.fast_rise_tokens:
                         self.fast_rise_tokens.remove(symbol)
-                        close_long_tokens.add(symbol)
 
-                        stop_msg = f"\n{symbol} 停止上涨"
-                        self.send_ding_talk(stop_msg)
+                        if symbol in self.strategy_long_tokens:
+                            self.strategy_long_tokens.remove(symbol)
+
+                            close_long_tokens.add(symbol)
+                            stop_msg = f"\n{symbol} 停止上涨"
+                            self.send_ding_talk(stop_msg)
             
             for symbol in self.fall_onboard_symbol_time_dict.copy().keys():
                 if symbol not in fall_symbol_change_dict:
                     self.fall_onboard_symbol_time_dict.pop(symbol)
                     if symbol in self.fast_fall_tokens:
                         self.fast_fall_tokens.remove(symbol)
-                        close_short_tokens.add(symbol)
+                        
+                        if symbol in self.strategy_short_tokens:
+                            self.strategy_short_tokens.remove(symbol)
 
-                        stop_msg = f"\n{symbol} 停止下跌"
-                        self.send_ding_talk(stop_msg)
+                            close_short_tokens.add(symbol)
+                            stop_msg = f"\n{symbol} 停止下跌"
+                            self.send_ding_talk(stop_msg)
 
             # 判断快速上涨Top1代币
             rise_top_1_symbol = rise_list[0]["symbol"]
@@ -263,17 +265,22 @@ class TopGainersLosersPortfolio(object):
             rise_top_2_change = rise_list[1]["change"]
             onboard_time = self.rise_onboard_symbol_time_dict.get(rise_top_1_symbol, time.time())
             from_onboard_time = rise_data_time - onboard_time
-            if rise_top_1_symbol in self.trending_tokens and rise_top_1_symbol not in self.fast_rise_tokens and from_onboard_time <= 100*60 and abs(rise_top_1_change) > 1.0:
-                setting = self.new_strategy(rise_top_1_symbol, Direction.LONG)
-                if setting:
-                    self.fast_rise_tokens.append(rise_top_1_symbol)
-                    new_long_count += 1
-                    new_settings.append(setting)
+            if rise_top_1_symbol not in self.fast_rise_tokens and from_onboard_time <= 100*60 and abs(rise_top_1_change) > 1.0:
+                self.fast_rise_tokens.append(rise_top_1_symbol)
 
-                    onboard_time_str = datetime.fromtimestamp(onboard_time).strftime(f"%H:%M:%S")
-                    top_time_str = datetime.fromtimestamp(rise_data_time).strftime(f"%H:%M:%S")
-                    top_msg = f"\n{rise_top_1_symbol} 快速上涨（{rise_top_1_change} {rise_top_2_change}）\nfrom {onboard_time_str}\nto {top_time_str}\nin {from_onboard_time}s"
-                    self.send_ding_talk(top_msg)
+                if rise_top_1_symbol in self.trending_tokens:
+                    setting = self.new_strategy(rise_top_1_symbol, Direction.LONG)
+                    if setting:
+                        if rise_top_1_symbol not in self.strategy_long_tokens:
+                            self.strategy_long_tokens.append(rise_top_1_symbol)
+
+                        new_long_count += 1
+                        new_settings.append(setting)
+
+                        onboard_time_str = datetime.fromtimestamp(onboard_time).strftime(f"%H:%M:%S")
+                        top_time_str = datetime.fromtimestamp(rise_data_time).strftime(f"%H:%M:%S")
+                        top_msg = f"\n{rise_top_1_symbol} 快速上涨（{rise_top_1_change} {rise_top_2_change}）\nfrom {onboard_time_str}\nto {top_time_str}\nin {from_onboard_time}s"
+                        self.send_ding_talk(top_msg)
 
             # 判断快速下跌Top1代币
             fall_top_1_symbol = fall_list[0]["symbol"]
@@ -281,17 +288,22 @@ class TopGainersLosersPortfolio(object):
             fall_top_2_change = fall_list[1]["change"]
             onboard_time = self.fall_onboard_symbol_time_dict.get(fall_top_1_symbol, time.time())
             from_onboard_time = fall_data_time - onboard_time
-            if fall_top_1_symbol in self.trending_tokens and fall_top_1_symbol not in self.fast_fall_tokens and from_onboard_time <= 100*60 and abs(fall_top_1_change) > 1.0:
-                setting = self.new_strategy(fall_top_1_symbol, Direction.SHORT)
-                if setting:
-                    self.fast_fall_tokens.append(fall_top_1_symbol)
-                    new_short_count += 1
-                    new_settings.append(setting)
+            if fall_top_1_symbol not in self.fast_fall_tokens and from_onboard_time <= 100*60 and abs(fall_top_1_change) > 1.0:
+                self.fast_fall_tokens.append(fall_top_1_symbol)
 
-                    onboard_time_str = datetime.fromtimestamp(onboard_time).strftime(f"%H:%M:%S")
-                    top_time_str = datetime.fromtimestamp(fall_data_time).strftime(f"%H:%M:%S")
-                    top_msg = f"\n{fall_top_1_symbol} 快速下跌（{fall_top_1_change} {fall_top_2_change}）\nfrom {onboard_time_str}\nto {top_time_str}\nin {from_onboard_time}s"
-                    self.send_ding_talk(top_msg)
+                if fall_top_1_symbol in self.trending_tokens:
+                    setting = self.new_strategy(fall_top_1_symbol, Direction.SHORT)
+                    if setting:
+                        if fall_top_1_symbol not in self.strategy_short_tokens:
+                            self.strategy_short_tokens.append(fall_top_1_symbol)
+
+                        new_short_count += 1
+                        new_settings.append(setting)
+
+                        onboard_time_str = datetime.fromtimestamp(onboard_time).strftime(f"%H:%M:%S")
+                        top_time_str = datetime.fromtimestamp(fall_data_time).strftime(f"%H:%M:%S")
+                        top_msg = f"\n{fall_top_1_symbol} 快速下跌（{fall_top_1_change} {fall_top_2_change}）\nfrom {onboard_time_str}\nto {top_time_str}\nin {from_onboard_time}s"
+                        self.send_ding_talk(top_msg)
 
         if close_long_tokens or close_short_tokens:
             # 停止当前策略
@@ -316,9 +328,10 @@ class TopGainersLosersPortfolio(object):
             new_vt_symbols = set()
             for setting in new_settings:
                 vt_symbol = setting["vt_symbol"]
+                direction = setting["direction"]
                 new_vt_symbols.add(vt_symbol)
                 self.cta_engine.new_strategy(setting)
-                self.bar_download_queue.put(vt_symbol)
+                self.bar_download_queue.put((vt_symbol, direction))
 
             # 添加setting
             self.cta_engine.new_strategy_setting(new_settings)
@@ -503,7 +516,7 @@ class TopGainersLosersPortfolio(object):
     def download_bar(self):
         while True:
             try:
-                vt_symbol = self.bar_download_queue.get(block=True, timeout=1)
+                vt_symbol, direction = self.bar_download_queue.get(block=True, timeout=1)
                 exchange = vt_symbol.split(".")[-1]
                 symbol = vt_symbol.split(".")[0]
 
@@ -541,7 +554,7 @@ class TopGainersLosersPortfolio(object):
                     symbol_strategies = self.cta_engine.symbol_strategy_map[vt_symbol]
                     for i in range(len(symbol_strategies)):
                         strategy: TopGainersLosersStrategy = symbol_strategies[i]
-                        if not strategy.indicator_inited:
+                        if not strategy.indicator_inited and ((strategy.direction == Direction.LONG and direction == "LONG") or (strategy.direction == Direction.SHORT and direction == "SHORT")):
                             strategy.load_database_bar()
 
             except Empty:
