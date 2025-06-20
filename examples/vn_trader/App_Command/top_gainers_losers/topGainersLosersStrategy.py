@@ -360,9 +360,10 @@ class TopGainersLosersStrategy(CtaTemplate):
 
         # 止损判断
         if self.stop_price and ((self.direction == Direction.LONG and tick.last_price <= self.stop_price) or (self.direction == Direction.SHORT and tick.last_price >= self.stop_price)):
-            self.stop_pnl += ((tick.last_price / self.open_tick_price) - 1) * 100
+            stop_pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
             if self.direction == Direction.SHORT:
-                self.stop_pnl *= -1
+                stop_pnl *= -1
+            self.stop_pnl += stop_pnl
 
             self.target_pos = 0
             self.stop_tick_price = tick.last_price

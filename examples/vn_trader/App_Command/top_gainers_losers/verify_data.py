@@ -59,8 +59,8 @@ def statistics_pnl(for_eth: bool = False):
                     if close_delay >= 10:
                         print(f"{symbol}\t{direction.value}\tCLOSE_DELAY\t{close_delay}\t{close_date_time}\t{close_tick_time}")
 
-                    unit = int(elements[5])
-                    leverage = float(elements[7])
+                    open_count = int(elements[5])
+                    stop_count = int(elements[7])
                     stop_rate = float(elements[9].split("%")[0])
                     pnl_rate = float(elements[11].split("%")[0])
 
@@ -70,8 +70,8 @@ def statistics_pnl(for_eth: bool = False):
                             "open_tick_time": open_tick_time,
                             "close_date_time": close_date_time,
                             "close_tick_time": close_tick_time,
-                            "unit":unit,
-                            "leverage":leverage,
+                            "open_count":open_count,
+                            "stop_count":stop_count,
                             "stop_rate":stop_rate,
                             "pnl_rate": pnl_rate}
                     
@@ -87,29 +87,26 @@ def statistics_pnl(for_eth: bool = False):
 
     # 统计盈亏
     total_pnl = 0
+    stop_pnl_error_count = 0
     for dt, trades_data in sorted_dt_trades_data.items():
         # 仓位盈亏、开仓时间
-        direction = ""
         for data in trades_data:
             symbol = data["symbol"]
-            direction_ = data["direction"].value
-            direction = f"{direction}{direction_}" if direction_ not in direction else direction
+            direction = data["direction"].value
             open_date_time = data["open_date_time"]
             open_ts = datetime.strptime(open_date_time, "%Y-%m-%d %H:%M:%S").timestamp() if open_date_time else 0
-            
-            unit = data["unit"]
-            leverage = data["leverage"]
+            open_count = data["open_count"]
+            stop_count = data["stop_count"]
             stop_rate = data["stop_rate"]
             pnl_rate = data["pnl_rate"]
-
-            real_pnl_rate = pnl_rate
-            if stop_rate:
-                real_pnl_rate = stop_rate
-            real_pnl_rate -= 0.1
-            # real_pnl_rate = real_pnl_rate * leverage
-
-            # if open_date_time == "2025-06-13 16:08:50":
-            #     print(f"{symbol}\t{direction_}\t{open_date_time}")
+            real_pnl_rate = pnl_rate + stop_rate - open_count * 0.1
+            if open_count == stop_count and pnl_rate:
+                raise(f"平仓盈亏异常，检查数据！")
+            
+            # 止损盈亏数据异常判断
+            if stop_count >= 2 and abs(stop_rate) < 0.5:
+                stop_pnl_error_count += 1
+                real_pnl_rate -= stop_count * 0.8
 
             # 持仓时间
             close_ts = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S").timestamp()
@@ -120,8 +117,9 @@ def statistics_pnl(for_eth: bool = False):
             # 累计盈亏
             total_pnl += real_pnl_rate
 
-            print(f"{open_date_time} - {dt}\t{direction_}\t{position_minute}m {position_second}s\tunit {unit}\tleverage {leverage:.3f}\tstop {stop_rate:.3f}\tpnl {pnl_rate:.3f}\t{real_pnl_rate:.3f}\t{total_pnl:.3f}\t{symbol}")
+            print(f"{open_date_time} - {dt}\t{direction}\t{position_minute}m {position_second}s\topen {open_count}\tstop {stop_count}\tstop_pnl {stop_rate:.3f}\tpnl {pnl_rate:.3f}\t{real_pnl_rate:.3f}\t{total_pnl:.3f}\t{symbol}")
 
+    print(f"止损盈亏异常数：{stop_pnl_error_count}")
     print(f"总计盈亏：{total_pnl}")
 
 if __name__ == "__main__":
