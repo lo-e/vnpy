@@ -158,6 +158,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.price_cross = False                    # 价格突破
         self.entry_drawdown = False                 # 入场时大幅度回撤
         self.recent_atr_list = []                   # 初始化时最近ATR
+        self.loading_database = False               # 正在加载数据
         
         self.minute_bar: BarData = None
         self.minute_bar_dt: str = ""
@@ -201,6 +202,8 @@ class TopGainersLosersStrategy(CtaTemplate):
 
     def load_database_bar(self):
         try:
+            self.loading_database = True
+
             # 数据库加载Bar数据
             mc = MongoClient()
             db = mc[MINUTE_DB_NAME]
@@ -234,12 +237,13 @@ class TopGainersLosersStrategy(CtaTemplate):
             
             final_high = 0
             final_low = 0
+            self.history_high = 0
+            self.history_low = 0
+            self.price_cross = False
+            self.recent_atr_list = []
             if len(data_list) >= 60 and not bar_lack:
                 # 初始化工具
                 self.minute_am = ArrayManager(6)
-
-                # self.minute_5_am = ArrayManager(11)
-                # self.minute_5_bar_generator = BarGenerator(window=5, on_window_bar=self.on_minute_5_bar, interval=Interval.MINUTE)
 
                 # 回测数据库Bar数据
                 for i in range(len(bar_list)):
@@ -273,9 +277,6 @@ class TopGainersLosersStrategy(CtaTemplate):
                     self.send_ding_talk(msg)
                     print_(msg)
 
-                # 检查指标初始化
-                self.check_indicator_inited()
-
             else:
                 msg = f"\n初始化数据缺失\n\ncount {len(data_list)}\nlack {bar_lack}"
                 self.send_ding_talk(msg)
@@ -284,6 +285,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         except Exception as e:
             msg = f"加载Bar数据出错\n\n{e}"
             self.send_ding_talk(msg)
+        self.loading_database = False
 
     def on_minute_bar(self, bar: BarData):
         self.minute_bar = bar
@@ -310,7 +312,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.indicator_inited = True
 
     def on_tick(self, tick: TickData):
-        if not self.trading:
+        if not self.trading or self.loading_database:
             return
         
         self.tick = copy(tick)
