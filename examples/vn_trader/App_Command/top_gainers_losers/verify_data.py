@@ -59,6 +59,9 @@ def statistics_pnl(for_eth: bool = False):
                     if not open_tick_time:
                         open_tick_time = open_tick_time_
                 
+                elif offset == "CROSS":
+                    a = 2
+                    
                 elif offset == "OPEN_COUNT":
                     offset = Offset.CLOSE
                     close_date_time = f"{elements[0]} {elements[1]}"

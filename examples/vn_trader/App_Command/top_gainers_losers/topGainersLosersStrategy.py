@@ -172,7 +172,6 @@ class TopGainersLosersStrategy(CtaTemplate):
 
         self.history_high = 0
         self.history_low = 0
-        self.history_minute_atr = 0
 
     def on_init(self):
         # 交易所成功连接判断
@@ -235,7 +234,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             
             final_high = 0
             final_low = 0
-            if data_list and not bar_lack:
+            if len(data_list) >= 60 and not bar_lack:
                 # 初始化工具
                 self.minute_am = ArrayManager(6)
 
@@ -250,32 +249,37 @@ class TopGainersLosersStrategy(CtaTemplate):
                     if i >= len(bar_list) - 5:
                         final_high = max(final_high, bar.high_price)
                         final_low = min(final_low, bar.low_price) if final_low else bar.low_price
-            
+
+                # 计算指标
+                self.calculate_indicator()
+                    
+                # 检查ATR指标
+                if not self.minute_atr:
+                    # self.portfolio.bar_download_queue.put(self.vt_symbol)
+                    msg = f"\n{self.vt_symbol} ATR 指标缺失\n\nbar {self.minute_bar_dt}"
+                    self.send_ding_talk(msg)
+                    print_(msg)
+                    
+                # 是否价格突破
+                self.price_cross = False
+                if self.direction == Direction.LONG and final_high and self.history_high and final_high >= self.history_high:
+                    self.price_cross = True
+
+                if self.direction == Direction.SHORT and final_low and self.history_low and final_low <= self.history_low:
+                    self.price_cross = True
+
+                if not self.price_cross:
+                    msg = f"\n等待价格突破.."
+                    self.send_ding_talk(msg)
+                    print_(msg)
+
+                # 检查指标初始化
+                self.check_indicator_inited()
+
             else:
-                pass
-                
-            # 检查ATR指标
-            if not self.minute_atr:
-                # self.portfolio.bar_download_queue.put(self.vt_symbol)
-                msg = f"\n{self.vt_symbol} ATR 指标缺失\n\nbar {self.minute_bar_dt}"
+                msg = f"\n初始化数据缺失\n\ncount {len(data_list)}\nlack {bar_lack}"
                 self.send_ding_talk(msg)
                 print_(msg)
-                
-            # 是否价格突破
-            self.price_cross = False
-            if self.direction == Direction.LONG and final_high and self.history_high and final_high >= self.history_high:
-                self.price_cross = True
-
-            if self.direction == Direction.SHORT and final_low and self.history_low and final_low <= self.history_low:
-                self.price_cross = True
-
-            if not self.price_cross:
-                msg = f"\n等待价格突破.."
-                self.send_ding_talk(msg)
-                print_(msg)
-
-            # 检查指标初始化
-            self.check_indicator_inited()
 
         except Exception as e:
             msg = f"加载Bar数据出错\n\n{e}"
@@ -283,11 +287,10 @@ class TopGainersLosersStrategy(CtaTemplate):
 
     def on_minute_bar(self, bar: BarData):
         self.minute_bar = bar
+        self.history_high = max(self.history_high, bar.high_price)
+        self.history_low = min(self.history_low, bar.low_price) if self.history_low else bar.low_price
+        
         self.minute_am.update_bar(bar)
-
-        # self.minute_5_bar_generator.update_bar(bar)
-
-        self.calculate_indicator()
 
     def on_minute_5_bar(self, bar: BarData):
         self.minute_5_bar = bar
@@ -302,21 +305,8 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.minute_atr = self.minute_am.atr(3)
             self.unit_pos = (0.01 * self.portfolio.portfolio_value) / (2 * self.minute_atr)
 
-            high, low = self.minute_am.donchian(6)
-            self.history_high = max(self.history_high, high)
-            self.history_low = min(self.history_low, low) if self.history_low else low
-
-            if self.minute_bar.datetime < datetime.now().replace(second=0, microsecond=0) - timedelta(minutes=3):
-                self.history_minute_atr = self.minute_am.atr(5)
-
-        # if self.minute_5_bar:
-        #     self.minute_5_bar_dt = self.minute_5_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
-
-        # if self.minute_5_am.inited:
-        #     self.minute_5_atr = self.minute_5_am.atr(10)
-
     def check_indicator_inited(self):
-        if self.minute_atr and self.price_cross:
+        if self.recent_atr_list and self.price_cross:
             self.indicator_inited = True
 
     def on_tick(self, tick: TickData):
