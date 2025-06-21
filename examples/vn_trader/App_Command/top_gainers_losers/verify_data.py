@@ -34,22 +34,32 @@ def statistics_pnl(for_eth: bool = False):
 
             open_date_time = ""
             open_tick_time = ""
+            last_close_date_time = ""
+            last_profit = False
             for log in logs:
                 elements = log.split(" ")
                 offset = elements[4]
 
                 if offset == "OPEN":
-                    # 开仓，获取合约槽位数
+                    # 开仓
                     offset = Offset.OPEN
-                    open_date_time = f"{elements[0]} {elements[1]}"
-                    open_tick_time = f"{elements[2]} {elements[3]}"
-                    open_ts = datetime.strptime(open_date_time, "%Y-%m-%d %H:%M:%S").timestamp()
-                    open_tick_ts = datetime.strptime(open_tick_time, "%Y-%m-%d %H:%M:%S").timestamp()
+                    open_date_time_ = f"{elements[0]} {elements[1]}"
+                    open_ts = datetime.strptime(open_date_time_, "%Y-%m-%d %H:%M:%S").timestamp()
+
+                    open_tick_time_ = f"{elements[2]} {elements[3]}"
+                    open_tick_ts = datetime.strptime(open_tick_time_, "%Y-%m-%d %H:%M:%S").timestamp()
+                    
                     open_delay = abs(open_ts - open_tick_ts)
                     if open_delay >= 10:
-                        print(f"{symbol}\t{direction.value}\tOPEN_DELAY\t{open_delay}\t{open_date_time}\t{open_tick_time}")
+                        print(f"{symbol}\t{direction.value}\tOPEN_DELAY\t{open_delay}\t{open_date_time_}\t{open_tick_time_}")
+
+                    if not open_date_time:
+                        open_date_time = open_date_time_
+
+                    if not open_tick_time:
+                        open_tick_time = open_tick_time_
                 
-                else:
+                elif offset == "OPEN_COUNT":
                     offset = Offset.CLOSE
                     close_date_time = f"{elements[0]} {elements[1]}"
                     close_tick_time = f"{elements[2]} {elements[3]}"
@@ -70,6 +80,8 @@ def statistics_pnl(for_eth: bool = False):
                             "open_tick_time": open_tick_time,
                             "close_date_time": close_date_time,
                             "close_tick_time": close_tick_time,
+                            "last_close_date_time": last_close_date_time,
+                            "last_profit": last_profit,
                             "open_count":open_count,
                             "stop_count":stop_count,
                             "stop_rate":stop_rate,
@@ -81,6 +93,12 @@ def statistics_pnl(for_eth: bool = False):
 
                     open_date_time = ""
                     open_tick_time = ""
+                    last_close_date_time = close_date_time
+                    if pnl_rate > 0 and stop_count <= 0:
+                        last_profit = True
+                    
+                    else:
+                        last_profit = False
 
     # 按交易时间排序
     sorted_dt_trades_data = dict(sorted(dt_trades_data.items(), key=lambda x: x[0]))
@@ -88,6 +106,7 @@ def statistics_pnl(for_eth: bool = False):
     # 统计盈亏
     total_pnl = 0
     stop_pnl_error_count = 0
+    pnl_count = 0
     for dt, trades_data in sorted_dt_trades_data.items():
         # 仓位盈亏、开仓时间
         for data in trades_data:
@@ -99,14 +118,25 @@ def statistics_pnl(for_eth: bool = False):
             stop_count = data["stop_count"]
             stop_rate = data["stop_rate"]
             pnl_rate = data["pnl_rate"]
-            real_pnl_rate = pnl_rate + stop_rate - open_count * 0.1
             if open_count == stop_count and pnl_rate:
                 raise(f"平仓盈亏异常，检查数据！")
+
+            # 实际盈亏
+            # real_pnl_rate = pnl_rate + stop_rate - open_count * 0.1
+            # if stop_count >= 2 and abs(stop_rate) < 0.5:
+            #     # 止损盈亏数据异常判断
+            #     stop_pnl_error_count += 1
+            #     real_pnl_rate -= stop_count * 0.8
+
+            if stop_count >= 2:
+                real_pnl_rate = -0.9
             
-            # 止损盈亏数据异常判断
-            if stop_count >= 2 and abs(stop_rate) < 0.5:
-                stop_pnl_error_count += 1
-                real_pnl_rate -= stop_count * 0.8
+            elif stop_count >= 1:
+                real_pnl_rate = stop_rate
+            
+            else:
+                real_pnl_rate = pnl_rate
+            real_pnl_rate -= 0.1
 
             # 持仓时间
             close_ts = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S").timestamp()
@@ -114,12 +144,26 @@ def statistics_pnl(for_eth: bool = False):
             position_minute = int(position_time / 60)
             position_second = int(position_time - position_minute * 60)
 
+            # 择时开仓
+            last_close_date_time = data["last_close_date_time"]
+            last_close_ts = datetime.strptime(last_close_date_time, "%Y-%m-%d %H:%M:%S").timestamp() if last_close_date_time else 0
+            if open_ts - last_close_ts > 60 * 60:
+                real_pnl_rate = 0
+
+            # 上次盈利过滤
+            # last_profit = data["last_profit"]
+            # if last_profit:
+            #     real_pnl_rate = 0
+
             # 累计盈亏
             total_pnl += real_pnl_rate
+            if real_pnl_rate:
+                pnl_count += 1
 
             print(f"{open_date_time} - {dt}\t{direction}\t{position_minute}m {position_second}s\topen {open_count}\tstop {stop_count}\tstop_pnl {stop_rate:.3f}\tpnl {pnl_rate:.3f}\t{real_pnl_rate:.3f}\t{total_pnl:.3f}\t{symbol}")
 
     print(f"止损盈亏异常数：{stop_pnl_error_count}")
+    print(f"盈亏交易数：{pnl_count}")
     print(f"总计盈亏：{total_pnl}")
 
 if __name__ == "__main__":

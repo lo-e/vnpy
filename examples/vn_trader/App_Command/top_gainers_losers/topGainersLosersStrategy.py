@@ -23,6 +23,7 @@ import os
 import csv
 import shutil
 import pandas as pd
+import numpy as np
 class TopGainersLosersStrategy(CtaTemplate):
     className = "TopGainersLosersStrategy"
     author = "loe"
@@ -59,6 +60,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         "history_high",
         "history_low",
         "price_cross",
+        "entry_drawdown",
         "unit_pos",
         "minute_5_bar_dt",
         "minute_5_atr",
@@ -87,6 +89,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         "history_high",
         "history_low",
         "price_cross",
+        "entry_drawdown",
         "unit_pos",
         "minute_5_bar_dt",
         "minute_5_atr",
@@ -153,6 +156,8 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.trade_logs_updated = False
         self.insufficient_value = False             # 开仓价值不满足最低
         self.price_cross = False                    # 价格突破
+        self.entry_drawdown = False                 # 入场时大幅度回撤
+        self.recent_atr_list = []                   # 初始化时最近ATR
         
         self.minute_bar: BarData = None
         self.minute_bar_dt: str = ""
@@ -293,6 +298,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.minute_bar_dt = self.minute_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
 
         if self.minute_am.inited:
+            self.recent_atr_list = list(self.minute_am.atr(1, True))
             self.minute_atr = self.minute_am.atr(3)
             self.unit_pos = (0.01 * self.portfolio.portfolio_value) / (2 * self.minute_atr)
 
@@ -326,6 +332,11 @@ class TopGainersLosersStrategy(CtaTemplate):
 
             if self.direction == Direction.SHORT and self.history_low and tick.last_price <= self.history_low:
                 self.price_cross = True
+
+            if self.price_cross:
+                # 记录日志
+                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} CROSS {tick.last_price} {self.history_high} {self.history_low}"})
+                self.trade_logs_updated = True
         
         # 核查指标初始化
         if not self.indicator_inited:
@@ -335,6 +346,25 @@ class TopGainersLosersStrategy(CtaTemplate):
         if self.indicator_inited and not self.close:
             if not self.entry_tick_price:
                 self.entry_tick_price = tick.last_price
+
+                if self.recent_atr_list:
+                    for v in self.recent_atr_list.copy():
+                        if np.isnan(v):
+                            self.recent_atr_list.remove(v)
+                    max_recent_atr = max(self.recent_atr_list)
+                    
+                    if self.direction == Direction.LONG and tick.last_price <= self.history_high - max_recent_atr * 0.5:
+                        self.entry_drawdown = True
+
+                    if self.direction == Direction.SHORT and tick.last_price >= self.history_low + max_recent_atr * 0.5:
+                        self.entry_drawdown = True
+
+                # if self.direction == Direction.LONG and tick.last_price <= self.history_high * 0.98:
+                #     self.entry_drawdown = True
+
+                # if self.direction == Direction.SHORT and tick.last_price >= self.history_low * 1.02:
+                #     self.entry_drawdown = True
+
             last_target_pos = self.target_pos
 
             if not self.target_pos and ((self.direction == Direction.LONG and tick.last_price >= self.entry_tick_price) or (self.direction == Direction.SHORT and tick.last_price <= self.entry_tick_price)):
@@ -385,7 +415,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                     if self.direction == Direction.SHORT:
                         pnl = pnl * -1
 
-                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} OPEN_COUNT {self.open_count} STOP_COUNT {self.stop_count} STOP {self.stop_pnl:.2f}% CLOSE {pnl:.2f}%"})
+                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} OPEN_COUNT {self.open_count} STOP_COUNT {self.stop_count} STOP {self.stop_pnl:.2f}% CLOSE {pnl:.2f}% ENTRY_DRAWDOWN {self.entry_drawdown}"})
                 self.trade_logs_updated = True
 
             # 取消订阅
