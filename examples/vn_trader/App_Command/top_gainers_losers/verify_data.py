@@ -34,6 +34,7 @@ def statistics_pnl(for_eth: bool = False):
 
             open_date_time = ""
             open_tick_time = ""
+            cross = False
             last_close_date_time = ""
             last_profit = False
             for log in logs:
@@ -60,7 +61,7 @@ def statistics_pnl(for_eth: bool = False):
                         open_tick_time = open_tick_time_
                 
                 elif offset == "CROSS":
-                    a = 2
+                    cross = True
                     
                 elif offset == "OPEN_COUNT":
                     offset = Offset.CLOSE
@@ -76,6 +77,11 @@ def statistics_pnl(for_eth: bool = False):
                     stop_count = int(elements[7])
                     stop_rate = float(elements[9].split("%")[0])
                     pnl_rate = float(elements[11].split("%")[0])
+                    
+                    entry_drawdown = False
+                    if len(elements) >= 14:
+                        entry_drawdown = elements[13]
+                        entry_drawdown = True if entry_drawdown == "True" else False
 
                     data = {"symbol": symbol,
                             "direction": direction,
@@ -85,10 +91,12 @@ def statistics_pnl(for_eth: bool = False):
                             "close_tick_time": close_tick_time,
                             "last_close_date_time": last_close_date_time,
                             "last_profit": last_profit,
+                            "cross": cross,
                             "open_count":open_count,
                             "stop_count":stop_count,
                             "stop_rate":stop_rate,
-                            "pnl_rate": pnl_rate}
+                            "pnl_rate": pnl_rate,
+                            "entry_drawdown": entry_drawdown}
                     
                     trades_data = dt_trades_data.get(close_date_time, [])
                     trades_data.append(data)
@@ -96,6 +104,7 @@ def statistics_pnl(for_eth: bool = False):
 
                     open_date_time = ""
                     open_tick_time = ""
+                    cross = False
                     last_close_date_time = close_date_time
                     if pnl_rate > 0 and stop_count <= 0:
                         last_profit = True
@@ -117,10 +126,12 @@ def statistics_pnl(for_eth: bool = False):
             direction = data["direction"].value
             open_date_time = data["open_date_time"]
             open_ts = datetime.strptime(open_date_time, "%Y-%m-%d %H:%M:%S").timestamp() if open_date_time else 0
+            cross = data["cross"]
             open_count = data["open_count"]
             stop_count = data["stop_count"]
             stop_rate = data["stop_rate"]
             pnl_rate = data["pnl_rate"]
+            entry_drawdown = data["entry_drawdown"]
             if open_count == stop_count and pnl_rate:
                 raise(f"平仓盈亏异常，检查数据！")
 
@@ -132,14 +143,10 @@ def statistics_pnl(for_eth: bool = False):
             #     real_pnl_rate -= stop_count * 0.8
 
             if stop_count >= 2:
-                real_pnl_rate = -0.9
-            
-            elif stop_count >= 1:
-                real_pnl_rate = stop_rate
-            
+                real_pnl_rate = -1.6 - 0.1 * 2
+
             else:
-                real_pnl_rate = pnl_rate
-            real_pnl_rate -= 0.1
+                real_pnl_rate = pnl_rate + stop_rate - open_count * 0.1
 
             # 持仓时间
             close_ts = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S").timestamp()
@@ -150,7 +157,7 @@ def statistics_pnl(for_eth: bool = False):
             # 择时开仓
             last_close_date_time = data["last_close_date_time"]
             last_close_ts = datetime.strptime(last_close_date_time, "%Y-%m-%d %H:%M:%S").timestamp() if last_close_date_time else 0
-            if open_ts - last_close_ts > 60 * 60:
+            if open_ts - last_close_ts > 4 * 60 * 60:
                 real_pnl_rate = 0
 
             # 上次盈利过滤
@@ -163,7 +170,7 @@ def statistics_pnl(for_eth: bool = False):
             if real_pnl_rate:
                 pnl_count += 1
 
-            print(f"{open_date_time} - {dt}\t{direction}\t{position_minute}m {position_second}s\topen {open_count}\tstop {stop_count}\tstop_pnl {stop_rate:.3f}\tpnl {pnl_rate:.3f}\t{real_pnl_rate:.3f}\t{total_pnl:.3f}\t{symbol}")
+            print(f"{open_date_time} - {dt}\t{direction}\t{position_minute}m {position_second}s\tcross {cross}\tentry_drawdown {entry_drawdown}\topen {open_count}\tstop {stop_count}\tstop_pnl {stop_rate:.3f}\tpnl {pnl_rate:.3f}\t{real_pnl_rate:.3f}\t{total_pnl:.3f}\t{symbol}")
 
     print(f"止损盈亏异常数：{stop_pnl_error_count}")
     print(f"盈亏交易数：{pnl_count}")
