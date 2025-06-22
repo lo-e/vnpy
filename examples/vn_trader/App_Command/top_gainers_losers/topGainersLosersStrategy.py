@@ -362,6 +362,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 if self.open_count <= 1:
                     last_close_log = ""
                     for log in reversed(self.trade_logs):
+                        log = log["LOG"]
                         elements = log.split(" ")
                         offset = elements[4]
                         if offset == "OPEN_COUNT":
@@ -371,7 +372,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                     if last_close_log:
                         last_close_date_time = f"{elements[0]} {elements[1]}"
                         last_close_ts = datetime.strptime(last_close_date_time, "%Y-%m-%d %H:%M:%S").timestamp()
-                        if time.time() - last_close_ts > 4 * 60 * 60:
+                        if int(time.time()) - last_close_ts > 4 * 60 * 60:
                             self.open_allowed = False
                     
                     else:
