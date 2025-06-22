@@ -529,7 +529,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             volume = min(volume, abs(self.pos))
         
         # 发出订单
-        super().send_order(direction, offset, price, volume, market)
+        super().send_order(direction, offset, price, volume, market=market)
 
     def on_trade(self, trade):
         try:

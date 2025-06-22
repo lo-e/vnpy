@@ -344,10 +344,10 @@ class BybitRestApi(RestClient):
             api_params = json.dumps(request.data if request.data else {})
             request.data = api_params
 
-        #recv_window = str(30 * 1000)
-        #nonce = str(generate_timestamp(-20))
-        recv_window = str(5 * 1000)
-        nonce = str(generate_timestamp(0))
+        recv_window = str(30 * 1000)
+        nonce = str(generate_timestamp(-20))
+        # recv_window = str(5 * 1000)
+        # nonce = str(generate_timestamp(0))
 
         param_str = nonce + self.key + recv_window + api_params
         signature = hmac.new(self.secret, param_str.encode("utf-8"), hashlib.sha256).hexdigest()
