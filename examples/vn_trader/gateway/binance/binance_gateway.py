@@ -176,15 +176,15 @@ class BinanceUsdtGateway(BaseGateway):
 
     def subscribe_lots(self, req: SubscribeLotsRequest) -> None:
         """ 订阅行情 """
-        pass
+        self.market_ws_api.subscribe_lots(req)
 
     def unsubscribe(self, req: SubscribeRequest) -> None:
         """ 取消订阅 """
-        pass
+        self.market_ws_api.unsubscribe(req)
 
     def unsubscribe_lots(self, req: SubscribeLotsRequest) -> None:
         """ 取消订阅 """
-        pass
+        self.market_ws_api.unsubscribe_lots(req)
 
     def send_order(self, req: OrderRequest) -> str:
         """委托下单"""
@@ -242,6 +242,11 @@ class BinanceUsdtGateway(BaseGateway):
         """检查连接状态"""
         connected = True
         msg = ""
+
+        if not self.rest_api.contract_info_ready:
+            connected = False
+            msg += "Rest API 合约信息未就绪"
+
         if not self.market_ws_api.connected:
             connected = False
             msg += "行情Websocket API连接断开"
@@ -293,6 +298,7 @@ class BinanceUsdtRestApi(RestClient):
 
         self.accounts: dict = {}
         self.positions: dict= {}
+        self.contract_info_ready = False
 
     def sign(self, request: Request) -> Request:
         """生成币安签名"""
@@ -465,7 +471,7 @@ class BinanceUsdtRestApi(RestClient):
         elif req.type == OrderType.STOP:
             params["type"] = "STOP_MARKET"
             params["stopPrice"] = float(req.price)
-            
+
         else:
             order_type, time_condition = ORDERTYPE_VT2BINANCES[req.type]
             params["type"] = order_type
@@ -706,6 +712,7 @@ class BinanceUsdtRestApi(RestClient):
 
             symbol_contract_map[contract.symbol] = contract
 
+        self.contract_info_ready = True
         self.gateway.write_log(f"合约信息查询成功：{len(symbol_contract_map)}")
 
     def on_send_order(self, data: dict, request: Request) -> None:
@@ -1018,9 +1025,15 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
         self.ticks: Dict[str, TickData] = {}
         self.reqid: int = 0
 
+        self.subscribed: Dict[str, SubscribeRequest] = {}
+
         self.subscribe_thread = Thread(target=self.run_subscribe)
         self.subscribe_thread.start()
         self.subscribe_queue = Queue()
+
+        self.unsubscribe_thread = Thread(target=self.run_unsubscribe)
+        self.unsubscribe_thread.start()
+        self.unsubscribe_queue = Queue()
 
     def connect(self, proxy_host: str, proxy_port: int, server: str) -> None:
         """连接Websocket行情频道"""
@@ -1037,26 +1050,77 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
         self.connected = True
 
         # 重新订阅行情
-        if self.ticks:
-            subscribe_symbols = list(self.ticks.keys())
-            self.ticks = {}
-            self.subscribe_queue = Queue()
-            # 加入订阅队列
-            for symbol in subscribe_symbols:
-                self.subscribe_queue.put(symbol)
-            # pass
+        exchange_symbols_data = {}
+        for vt_symbol in self.subscribed.keys():
+            req: SubscribeRequest = self.subscribed[vt_symbol]
+            exchange_symbols = exchange_symbols_data.get(req.exchange, set())
+            exchange_symbols.add(req.symbol)
+            exchange_symbols_data[req.exchange] = exchange_symbols
+        
+        for exchange, exchange_symbols in exchange_symbols_data.items():
+            req: SubscribeLotsRequest = SubscribeLotsRequest(symbols=list(exchange_symbols), exchange=exchange)
+            self.subscribe_lots(req)
             
     def subscribe(self, req: SubscribeRequest) -> None:
-        """订阅行情"""
-        if req.symbol in self.ticks:
+        """ 订阅行情 """
+        if req.vt_symbol in self.subscribed:
             return
 
         if req.symbol not in symbol_contract_map:
             self.gateway.write_log(f"找不到该合约代码{req.symbol}")
             return
 
+        # 缓存订阅记录
+        self.subscribed[req.vt_symbol] = req
+
         # 加入订阅队列
         self.subscribe_queue.put(req.symbol)
+
+    def subscribe_lots(self, req: SubscribeLotsRequest) -> None:
+        """ 订阅行情 """
+        for symbol in req.symbols.copy():
+            vt_symbol = f"{symbol}.{req.exchange.value}"
+
+            remove = False
+            if vt_symbol in self.subscribed:
+                req.symbols.remove(symbol)
+                remove = True
+
+            if symbol not in symbol_contract_map:
+                self.gateway.write_log(f"找不到该合约代码{symbol}")
+                req.symbols.remove(symbol)
+                remove = True
+
+            # 缓存订阅记录
+            if not remove:
+                self.subscribed[vt_symbol] = SubscribeRequest(symbol=symbol, exchange=req.exchange)
+
+        if not req.symbols:
+            return
+        
+        # 加入订阅队列
+        self.subscribe_queue.put(req.symbols)
+
+    def unsubscribe(self, req: SubscribeRequest) -> None:
+        """ 取消订阅 """
+
+        # 清除订阅记录
+        if req.vt_symbol in self.subscribed:
+            self.subscribed.pop(req.vt_symbol)
+        
+        # 加入取消订阅队列
+        self.unsubscribe_queue.put(req.symbol)
+
+    def unsubscribe_lots(self, req: SubscribeLotsRequest) -> None:
+        """ 取消订阅 """
+        # 清除缓存订阅记录
+        for symbol in req.symbols:
+            vt_symbol = f"{symbol}.{req.exchange.value}"
+            if vt_symbol in self.subscribed:
+                self.subscribed.pop(vt_symbol)
+        
+        # 加入取消订阅队列
+        self.unsubscribe_queue.put(req.symbols)
 
     def on_packet(self, packet: dict) -> None:
         """推送数据回报"""
@@ -1125,15 +1189,51 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
         # @depth5@100ms 有限档深度信息
         while True:
             try:
-                symbol = self.subscribe_queue.get(block=True, timeout=1)
-                self.reqid += 1
-                channels = [f"{symbol.lower()}@ticker"]
-                req: dict = {"method": "SUBSCRIBE", "params": channels, "id": self.reqid}
-                self.send_packet(req)
+                data = self.subscribe_queue.get(block=True, timeout=1)
+                if isinstance(data, str):
+                    symbol = data
+                    self.reqid += 1
+                    channels = [f"{symbol.lower()}@ticker"]
+                    req: dict = {"method": "SUBSCRIBE", "params": channels, "id": self.reqid}
+                    self.send_packet(req)
+
+                if isinstance(data, list):
+                    symbols = data
+                    self.reqid += 1
+                    channels = []
+                    for symbol in symbols:
+                        channels.append(f"{symbol.lower()}@ticker")
+                    req: dict = {"method": "SUBSCRIBE", "params": channels, "id": self.reqid}
+                    self.send_packet(req)
 
             except:
                 pass
-            sleep(0.2)
+
+    def run_unsubscribe(self):
+        # @ticker 按Symbol刷新的24小时完整ticker信息
+        # @aggTrade # 同一价格、同一方向、同一时间(100ms计算)的归集交易、有限档深度信息
+        # @depth5@100ms 有限档深度信息
+        while True:
+            try:
+                data = self.unsubscribe_queue.get(block=True, timeout=1)
+                if isinstance(data, str):
+                    symbol = data
+                    self.reqid += 1
+                    channels = [f"{symbol.lower()}@ticker"]
+                    req: dict = {"method": "UNSUBSCRIBE", "params": channels, "id": self.reqid}
+                    self.send_packet(req)
+
+                if isinstance(data, list):
+                    symbols = data
+                    self.reqid += 1
+                    channels = []
+                    for symbol in symbols:
+                        channels.append(f"{symbol.lower()}@ticker")
+                    req: dict = {"method": "UNSUBSCRIBE", "params": channels, "id": self.reqid}
+                    self.send_packet(req)
+
+            except:
+                pass
 
 def generate_datetime(timestamp: float) -> datetime:
     """生成时间"""

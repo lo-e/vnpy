@@ -262,6 +262,11 @@ class OkxGateway(BaseGateway):
         """检查连接状态"""
         connected = True
         msg = ""
+        
+        if not self.rest_api.contract_info_ready:
+            connected = False
+            msg += "Rest API 合约信息未就绪"
+            
         if not self.ws_public_api.connected:
             connected = False
             msg += "Websocket Public API连接断开"
@@ -300,6 +305,7 @@ class OkxRestApi(RestClient):
         self.secret: str = ""
         self.passphrase: str = ""
         self.simulated: bool = False
+        self.contract_info_ready = False
 
     def sign(self, request: Request) -> Request:
         """生成欧易V5签名"""
@@ -587,7 +593,8 @@ class OkxRestApi(RestClient):
             # 缓存合约信息并推送
             symbol_contract_map[contract.symbol] = contract
             self.gateway.on_contract(contract)
-
+        
+        self.contract_info_ready = True
         self.gateway.write_log(f"{d['instType']}合约信息查询成功 总计：{total_count}  USDT正向：{usdt_linear_count}  USDC正向：{usdc_linear_count}  反向：{inverse_count}")
 
     def on_error(
