@@ -64,7 +64,8 @@ class TopGainersLosersStrategy(CtaTemplate):
         "unit_pos",
         "minute_5_bar_dt",
         "minute_5_atr",
-        "insufficient_value"
+        "insufficient_value",
+        "open_allowed"
     ]
 
     # 同步列表
@@ -94,7 +95,8 @@ class TopGainersLosersStrategy(CtaTemplate):
         "unit_pos",
         "minute_5_bar_dt",
         "minute_5_atr",
-        "insufficient_value"
+        "insufficient_value",
+        "open_allowed"
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -160,6 +162,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.entry_drawdown = False                 # 入场时大幅度回撤
         self.recent_atr_list = []                   # 初始化时最近ATR
         self.loading_database = False               # 正在加载数据
+        self.open_allowed = True                    # 是否允许开仓
         
         self.minute_bar: BarData = None
         self.minute_bar_dt: str = ""
@@ -355,8 +358,27 @@ class TopGainersLosersStrategy(CtaTemplate):
             if not self.target_pos and ((self.direction == Direction.LONG and tick.last_price >= self.entry_tick_price) or (self.direction == Direction.SHORT and tick.last_price <= self.entry_tick_price)):
                 self.add_unit_pos(tick.last_price)
 
+                # 判断是否允许开仓
+                if self.open_count <= 1:
+                    last_close_log = ""
+                    for log in reversed(self.trade_logs):
+                        elements = log.split(" ")
+                        offset = elements[4]
+                        if offset == "OPEN_COUNT":
+                            last_close_log = log
+                            break
+                    
+                    if last_close_log:
+                        last_close_date_time = f"{elements[0]} {elements[1]}"
+                        last_close_ts = datetime.strptime(last_close_date_time, "%Y-%m-%d %H:%M:%S").timestamp()
+                        if time.time() - last_close_ts > 4 * 60 * 60:
+                            self.open_allowed = False
+                    
+                    else:
+                        self.open_allowed = False
+
                 # 发送订单
-                if self.open_count <= 2:
+                if self.open_allowed and self.open_count <= 2:
                     open_volume = abs(self.target_pos) - abs(last_target_pos)
                     if open_volume:
                         if self.direction == Direction.LONG:
@@ -370,9 +392,6 @@ class TopGainersLosersStrategy(CtaTemplate):
                 # 记录日志
                 self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {self.open_count} {tick.last_price}"})
                 self.trade_logs_updated = True
-
-            # 取消订阅
-            # self.cta_engine.unsubscribe([self.vt_symbol])
 
         # 止损判断
         if self.stop_price and ((self.direction == Direction.LONG and tick.last_price <= self.stop_price) or (self.direction == Direction.SHORT and tick.last_price >= self.stop_price)):
