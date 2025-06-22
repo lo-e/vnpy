@@ -196,7 +196,6 @@ class TopGainersLosersStrategy(CtaTemplate):
 
     def on_close(self):
         self.target_pos = 0
-        self.tick = None
         self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
         self.close = True
 
@@ -305,7 +304,6 @@ class TopGainersLosersStrategy(CtaTemplate):
         if self.minute_am.inited:
             self.recent_atr_list = list(self.minute_am.atr(1, True))
             self.minute_atr = self.minute_am.atr(3)
-            self.unit_pos = (0.01 * self.portfolio.portfolio_value) / (2 * self.minute_atr)
 
     def check_indicator_inited(self):
         if self.recent_atr_list and self.price_cross:
@@ -339,39 +337,34 @@ class TopGainersLosersStrategy(CtaTemplate):
             if not self.entry_tick_price:
                 self.entry_tick_price = tick.last_price
 
+                # 判断初始化时价格回撤过大
                 if self.recent_atr_list:
                     for v in self.recent_atr_list.copy():
                         if np.isnan(v):
                             self.recent_atr_list.remove(v)
                     max_recent_atr = max(self.recent_atr_list)
                     
-                    if self.direction == Direction.LONG and tick.last_price <= self.history_high - max_recent_atr * 0.5:
+                    if self.direction == Direction.LONG and tick.last_price <= self.history_high - max_recent_atr * 0.5 and tick.last_price <= self.history_high * 0.98:
                         self.entry_drawdown = True
 
-                    if self.direction == Direction.SHORT and tick.last_price >= self.history_low + max_recent_atr * 0.5:
+                    if self.direction == Direction.SHORT and tick.last_price >= self.history_low + max_recent_atr * 0.5 and tick.last_price >= self.history_low * 1.02:
                         self.entry_drawdown = True
-
-                # if self.direction == Direction.LONG and tick.last_price <= self.history_high * 0.98:
-                #     self.entry_drawdown = True
-
-                # if self.direction == Direction.SHORT and tick.last_price >= self.history_low * 1.02:
-                #     self.entry_drawdown = True
 
             last_target_pos = self.target_pos
-
             if not self.target_pos and ((self.direction == Direction.LONG and tick.last_price >= self.entry_tick_price) or (self.direction == Direction.SHORT and tick.last_price <= self.entry_tick_price)):
                 self.add_unit_pos(tick.last_price)
 
                 # 发送订单
-                # open_volume = abs(self.target_pos) - abs(last_target_pos)
-                # if open_volume:
-                #     if self.direction == Direction.LONG:
-                #         trade_price = self.tick.last_price * 1.005
-                #         self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume))
-                    
-                #     elif self.direction == Direction.SHORT:
-                #         trade_price = self.tick.last_price * 0.995
-                #         self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume))
+                if self.open_count <= 2:
+                    open_volume = abs(self.target_pos) - abs(last_target_pos)
+                    if open_volume:
+                        if self.direction == Direction.LONG:
+                            trade_price = self.tick.last_price * 1.005
+                            self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), True)
+                        
+                        elif self.direction == Direction.SHORT:
+                            trade_price = self.tick.last_price * 0.995
+                            self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), True)
 
                 # 记录日志
                 self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {self.open_count}"})
@@ -393,11 +386,32 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.stop_count += 1
             self.stop_price = 0
             self.open_tick_price = 0
+            self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
+
+            # 发送订单
+            # if self.pos:
+            #     if self.direction == Direction.LONG:
+            #         trade_price = self.tick.last_price * 0.995
+            #         self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(self.pos), True)
+                
+            #     elif self.direction == Direction.SHORT:
+            #         trade_price = self.tick.last_price * 1.005
+            #         self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(self.pos), True)
 
         # 平仓判断
         if self.close and not self.closed:
             self.closed = True
             self.close_tick_price = tick.last_price
+            
+            # 发送订单
+            # if self.pos:
+            #     if self.direction == Direction.LONG:
+            #         trade_price = self.tick.last_price * 0.995
+            #         self.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(self.pos), True)
+                
+            #     elif self.direction == Direction.SHORT:
+            #         trade_price = self.tick.last_price * 1.005
+            #         self.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(self.pos), True)
 
             # 记录日志
             if self.indicator_inited:
@@ -418,7 +432,10 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.open_count += 1
 
         # 仓位大小
-        self.target_pos = abs(self.target_pos) + abs(self.unit_pos)
+        # self.unit_pos = (0.01 * self.portfolio.portfolio_value) / (2 * self.minute_atr)
+        # self.target_pos = abs(self.target_pos) + abs(self.unit_pos)
+
+        self.target_pos = self.portfolio.portfolio_value / tick_price
         if self.direction == Direction.SHORT:
             self.target_pos *= -1
 
@@ -464,7 +481,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.send_ding_talk(msg)
             print_(msg)
 
-    def send_order(self, direction, offset, price, volume):
+    def send_order(self, direction, offset, price, volume, market: bool = False):
         # 撤回历史订单
         self.cancel_all()
 
@@ -528,7 +545,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             volume = min(volume, abs(self.pos))
         
         # 发出订单
-        super().send_order(direction, offset, price, volume)
+        super().send_order(direction, offset, price, volume, market)
 
     def on_trade(self, trade):
         try:

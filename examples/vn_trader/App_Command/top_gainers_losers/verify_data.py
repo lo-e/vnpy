@@ -142,8 +142,8 @@ def statistics_pnl(for_eth: bool = False):
             #     stop_pnl_error_count += 1
             #     real_pnl_rate -= stop_count * 0.8
 
-            if stop_count >= 2:
-                real_pnl_rate = -1.6 - 0.1 * 2
+            if open_count > 2:
+                real_pnl_rate = -0.9 * 2 - 0.1 * 2
 
             else:
                 real_pnl_rate = pnl_rate + stop_rate - open_count * 0.1
@@ -159,6 +159,9 @@ def statistics_pnl(for_eth: bool = False):
             last_close_ts = datetime.strptime(last_close_date_time, "%Y-%m-%d %H:%M:%S").timestamp() if last_close_date_time else 0
             if open_ts - last_close_ts > 4 * 60 * 60:
                 real_pnl_rate = 0
+
+            # if entry_drawdown and open_ts > datetime.strptime(f"2025-06-22 10:00:00", "%Y-%m-%d %H:%M:%S").timestamp():
+            #     real_pnl_rate = 0
 
             # 上次盈利过滤
             # last_profit = data["last_profit"]

@@ -429,13 +429,13 @@ class TopGainersLosersEngine(BaseEngine):
             self.initing_strategy(strategy_name)
         
         # 订阅合约
-        # vt_symbols = set()
-        # for strategy_name in self.strategies.keys():
-        #     strategy: TopGainersLosersStrategy = self.strategies[strategy_name]
-        #     vt_symbols.add(strategy.vt_symbol)
+        vt_symbols = set()
+        for strategy_name in self.strategies.keys():
+            strategy: TopGainersLosersStrategy = self.strategies[strategy_name]
+            vt_symbols.add(strategy.vt_symbol)
         
-        # if vt_symbols:
-        #     self.subscribe(list(vt_symbols))
+        if vt_symbols:
+            self.subscribe(list(vt_symbols))
 
     def start_all_strategies(self):
         # 启动所有策略
