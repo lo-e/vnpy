@@ -355,19 +355,19 @@ class TopGainersLosersStrategy(CtaTemplate):
                 self.add_unit_pos(tick.last_price)
 
                 # 发送订单
-                # if self.open_count <= 2:
-                #     open_volume = abs(self.target_pos) - abs(last_target_pos)
-                #     if open_volume:
-                #         if self.direction == Direction.LONG:
-                #             trade_price = self.tick.last_price * 1.005
-                #             self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), True)
+                if self.open_count <= 2:
+                    open_volume = abs(self.target_pos) - abs(last_target_pos)
+                    if open_volume:
+                        if self.direction == Direction.LONG:
+                            trade_price = self.tick.last_price * 1.005
+                            self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), True)
                         
-                #         elif self.direction == Direction.SHORT:
-                #             trade_price = self.tick.last_price * 0.995
-                #             self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), True)
+                        elif self.direction == Direction.SHORT:
+                            trade_price = self.tick.last_price * 0.995
+                            self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), True)
 
                 # 记录日志
-                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {self.open_count}"})
+                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {self.open_count} {tick.last_price}"})
                 self.trade_logs_updated = True
 
             # 取消订阅
