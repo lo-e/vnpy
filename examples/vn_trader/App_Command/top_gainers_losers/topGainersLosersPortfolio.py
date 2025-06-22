@@ -367,6 +367,14 @@ class TopGainersLosersPortfolio(object):
             #     vt_symbol = f"{symbol}.OKX"
             #     exchange = "OKX"
             #     exchange_user = "lo-e"
+            
+            if not vt_symbol:
+                binance_symbols = list(self.exchange_instruments_data.get("BINANCE", {}).keys())
+                symbol = f"{token}USDT"
+                if symbol in binance_symbols:
+                    vt_symbol = f"{symbol}.BINANCE"
+                    exchange = "BINANCE"
+                    exchange_user = "lo-e"
 
             if not vt_symbol:
                 bybit_symbols = list(self.exchange_instruments_data.get("BYBIT", {}).keys())
@@ -375,14 +383,6 @@ class TopGainersLosersPortfolio(object):
                     vt_symbol = f"{symbol}.BYBIT"
                     exchange = "BYBIT"
                     exchange_user = "loesuperman"
-                
-            # if not vt_symbol:
-            #     binance_symbols = list(self.exchange_instruments_data.get("BINANCE", {}).keys())
-            #     symbol = f"{token}USDT"
-            #     if symbol in binance_symbols:
-            #         vt_symbol = f"{symbol}.BINANCE"
-            #         exchange = "BINANCE"
-            #         exchange_user = "lo-e"
 
         if not vt_symbol:
             return {}
