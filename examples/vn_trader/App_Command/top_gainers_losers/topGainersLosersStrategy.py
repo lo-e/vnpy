@@ -457,11 +457,13 @@ class TopGainersLosersStrategy(CtaTemplate):
         # 更新止损价格
         if self.direction == Direction.LONG:
             # self.stop_price = tick_price - 2 * self.minute_atr
-            self.stop_price = tick_price * 0.992
+            # self.stop_price = tick_price * 0.992
+            self.stop_price = tick_price * 0.995
         
         else:
             # self.stop_price = tick_price + 2 * self.minute_atr
-            self.stop_price = tick_price * 1.008
+            # self.stop_price = tick_price * 1.008
+            self.stop_price = tick_price * 1.005
 
     def check_save_data(self):
         try:
