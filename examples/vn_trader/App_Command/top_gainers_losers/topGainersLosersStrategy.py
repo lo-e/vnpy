@@ -320,7 +320,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.tick = copy(tick)
 
         # 确认价格突破
-        if not self.price_cross:
+        if not self.price_cross and not self.close:
             if self.direction == Direction.LONG and self.history_high and tick.last_price >= self.history_high:
                 self.price_cross = True
 
@@ -419,7 +419,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.close_tick_price = tick.last_price
 
             # 记录日志
-            if self.indicator_inited:
+            if self.open_count:
                 pnl = 0
                 if self.open_tick_price:
                     pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
@@ -457,13 +457,11 @@ class TopGainersLosersStrategy(CtaTemplate):
         # 更新止损价格
         if self.direction == Direction.LONG:
             # self.stop_price = tick_price - 2 * self.minute_atr
-            # self.stop_price = tick_price * 0.992
-            self.stop_price = tick_price * 0.995
+            self.stop_price = tick_price * 0.992
         
         else:
             # self.stop_price = tick_price + 2 * self.minute_atr
-            # self.stop_price = tick_price * 1.008
-            self.stop_price = tick_price * 1.005
+            self.stop_price = tick_price * 1.008
 
     def check_save_data(self):
         try:
