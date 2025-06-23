@@ -277,9 +277,10 @@ class TopGainersLosersPortfolio(object):
                         new_long_count += 1
                         new_settings.append(setting)
 
+                        vt_symbol = setting["vt_symbol"]
                         onboard_time_str = datetime.fromtimestamp(onboard_time).strftime(f"%H:%M:%S")
                         top_time_str = datetime.fromtimestamp(rise_data_time).strftime(f"%H:%M:%S")
-                        top_msg = f"\n{rise_top_1_symbol} 上涨（{rise_top_1_change} {rise_top_2_change}）\nfrom {onboard_time_str}\nto {top_time_str}\nin {from_onboard_time}s"
+                        top_msg = f"\n{vt_symbol} 上涨（{rise_top_1_change} {rise_top_2_change}）\nfrom {onboard_time_str}\nto {top_time_str}\nin {from_onboard_time}s"
                         self.send_ding_talk(top_msg)
 
             # 判断下跌Top1代币
@@ -300,9 +301,10 @@ class TopGainersLosersPortfolio(object):
                         new_short_count += 1
                         new_settings.append(setting)
 
+                        vt_symbol = setting["vt_symbol"]
                         onboard_time_str = datetime.fromtimestamp(onboard_time).strftime(f"%H:%M:%S")
                         top_time_str = datetime.fromtimestamp(fall_data_time).strftime(f"%H:%M:%S")
-                        top_msg = f"\n{fall_top_1_symbol} 下跌（{fall_top_1_change} {fall_top_2_change}）\nfrom {onboard_time_str}\nto {top_time_str}\nin {from_onboard_time}s"
+                        top_msg = f"\n{vt_symbol} 下跌（{fall_top_1_change} {fall_top_2_change}）\nfrom {onboard_time_str}\nto {top_time_str}\nin {from_onboard_time}s"
                         self.send_ding_talk(top_msg)
 
         if close_long_tokens or close_short_tokens:
@@ -674,7 +676,7 @@ class TopGainersLosersPortfolio(object):
                                     trade_price = strategy.tick.last_price * 1.005
                                     strategy.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(gap), True)
                         
-                        if strategy.target_pos == strategy.pos and (strategy.closed or not strategy.open_count):
+                        if strategy.target_pos == strategy.pos and strategy.close and (strategy.closed or not strategy.open_count):
                             # 策略引擎关闭策略
                             strategy.cta_engine.remove_strategy(strategy.strategy_name)
 
@@ -706,7 +708,7 @@ class TopGainersLosersPortfolio(object):
 
     def send_ding_talk(self, content):
         # 推送钉钉消息
-        content = f"{self.name}\n{content}"
+        # content = f"{self.name}\n{content}"
         self.cta_engine.main_engine.send_ding_talk(content)
 
 def print_(msg: str):
