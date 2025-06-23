@@ -34,7 +34,9 @@ class TopGainersLosersStrategy(CtaTemplate):
         "vt_symbol",
         "exchange",
         "exchange_user",
-        "direction"
+        "direction",
+        "trending_ts",
+        "trending_time"
     ]
 
     # 变量列表
@@ -104,6 +106,8 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.exchange: Exchange = Exchange.NONE
         self.exchange_user:str = ""
         self.direction: Direction = Direction.NET
+        self.trending_ts: float = 0
+        self.trending_time: str = ""
         
         # 完成setting.json参数的配置
         super(TopGainersLosersStrategy, self).__init__(
@@ -162,7 +166,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.entry_drawdown = False                 # 入场时大幅度回撤
         self.recent_atr_list = []                   # 初始化时最近ATR
         self.loading_database = False               # 正在加载数据
-        self.open_allowed = True                    # 是否允许开仓
+        self.open_allowed = False                   # 是否允许开仓
         
         self.minute_bar: BarData = None
         self.minute_bar_dt: str = ""
@@ -372,11 +376,11 @@ class TopGainersLosersStrategy(CtaTemplate):
                     if last_close_log:
                         last_close_date_time = f"{elements[0]} {elements[1]}"
                         last_close_ts = datetime.strptime(last_close_date_time, "%Y-%m-%d %H:%M:%S").timestamp()
-                        if int(time.time()) - last_close_ts > 4 * 60 * 60:
-                            self.open_allowed = False
-                    
-                    else:
-                        self.open_allowed = False
+                        if int(time.time()) - last_close_ts <= 4 * 60 * 60:
+                            self.open_allowed = True
+
+                    if int(time.time()) - self.trending_ts <= 4 * 60 * 60:
+                        self.open_allowed = True
 
                 # 发送订单
                 # if self.open_allowed and self.open_count <= 2:
@@ -426,7 +430,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                     if self.direction == Direction.SHORT:
                         pnl = pnl * -1
 
-                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} OPEN_COUNT {self.open_count} STOP_COUNT {self.stop_count} STOP {self.stop_pnl:.2f}% CLOSE {pnl:.2f}% ENTRY_DRAWDOWN {self.entry_drawdown} PRICE {tick.last_price}"})
+                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} OPEN_COUNT {self.open_count} STOP_COUNT {self.stop_count} STOP {self.stop_pnl:.2f}% CLOSE {pnl:.2f}% ENTRY_DRAWDOWN {self.entry_drawdown} PRICE {tick.last_price} TRENDING {self.trending_ts}"})
                 self.trade_logs_updated = True
 
             # 取消订阅

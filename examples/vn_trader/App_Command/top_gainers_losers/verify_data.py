@@ -143,7 +143,11 @@ def statistics_pnl(for_eth: bool = False):
             #     real_pnl_rate -= stop_count * 0.8
 
             if open_count > 2:
-                real_pnl_rate = -0.9 * 2 - 0.1 * 2
+                if stop_count <= 2:
+                    real_pnl_rate = stop_rate - 0.1 * 2
+                
+                else:
+                    real_pnl_rate = -0.9 * 2 - 0.1 * 2
 
             else:
                 real_pnl_rate = pnl_rate + stop_rate - open_count * 0.1
