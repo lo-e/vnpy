@@ -280,8 +280,8 @@ class TopGainersLosersStrategy(CtaTemplate):
                     self.price_cross = True
 
                 if not self.price_cross:
-                    msg = f"\n等待价格突破.."
-                    self.send_ding_talk(msg)
+                    msg = f"{self.vt_symbol}\n等待价格突破.."
+                    self.cta_engine.main_engine.send_ding_talk(msg)
                     print_(msg)
 
             else:
@@ -432,9 +432,6 @@ class TopGainersLosersStrategy(CtaTemplate):
 
                 self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} OPEN_COUNT {self.open_count} STOP_COUNT {self.stop_count} STOP {self.stop_pnl:.2f}% CLOSE {pnl:.2f}% ENTRY_DRAWDOWN {self.entry_drawdown} PRICE {tick.last_price} TRENDING {self.trending_ts}"})
                 self.trade_logs_updated = True
-
-            # 取消订阅
-            self.cta_engine.unsubscribe([self.vt_symbol])
     
     def add_unit_pos(self, tick_price: float):
         # 开仓数
