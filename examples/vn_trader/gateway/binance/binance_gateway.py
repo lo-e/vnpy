@@ -156,6 +156,7 @@ class BinanceUsdtGateway(BaseGateway):
 
         self.orders: Dict[str, OrderData] = {}
         self.account_positon_update_wait = 0
+        self.server_time_update_wait = 0
 
     def connect(self, setting: dict) -> None:
         """连接交易接口"""
@@ -228,6 +229,11 @@ class BinanceUsdtGateway(BaseGateway):
             self.account_positon_update_wait = 0
             self.query_account()
             self.query_position()
+
+        self.server_time_update_wait += 1
+        if self.server_time_update_wait >= 10:
+            self.server_time_update_wait = 0
+            self.rest_api.query_time()
 
     def on_order(self, order: OrderData) -> None:
         """推送委托数据"""
@@ -318,6 +324,7 @@ class BinanceUsdtRestApi(RestClient):
 
             if self.time_offset > 0:
                 timestamp -= abs(self.time_offset)
+
             elif self.time_offset < 0:
                 timestamp += abs(self.time_offset)
 
@@ -1193,7 +1200,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
                 if isinstance(data, str):
                     symbol = data
                     self.reqid += 1
-                    channels = [f"{symbol.lower()}@aggTrade"]
+                    channels = [f"{symbol.lower()}@ticker"]
                     req: dict = {"method": "SUBSCRIBE", "params": channels, "id": self.reqid}
                     self.send_packet(req)
 
@@ -1202,7 +1209,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
                     self.reqid += 1
                     channels = []
                     for symbol in symbols:
-                        channels.append(f"{symbol.lower()}@aggTrade")
+                        channels.append(f"{symbol.lower()}@ticker")
                     req: dict = {"method": "SUBSCRIBE", "params": channels, "id": self.reqid}
                     self.send_packet(req)
 
@@ -1219,7 +1226,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
                 if isinstance(data, str):
                     symbol = data
                     self.reqid += 1
-                    channels = [f"{symbol.lower()}@aggTrade"]
+                    channels = [f"{symbol.lower()}@ticker"]
                     req: dict = {"method": "UNSUBSCRIBE", "params": channels, "id": self.reqid}
                     self.send_packet(req)
 
@@ -1228,7 +1235,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
                     self.reqid += 1
                     channels = []
                     for symbol in symbols:
-                        channels.append(f"{symbol.lower()}@aggTrade")
+                        channels.append(f"{symbol.lower()}@ticker")
                     req: dict = {"method": "UNSUBSCRIBE", "params": channels, "id": self.reqid}
                     self.send_packet(req)
 
