@@ -1193,7 +1193,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
                 if isinstance(data, str):
                     symbol = data
                     self.reqid += 1
-                    channels = [f"{symbol.lower()}@ticker"]
+                    channels = [f"{symbol.lower()}@aggTrade"]
                     req: dict = {"method": "SUBSCRIBE", "params": channels, "id": self.reqid}
                     self.send_packet(req)
 
@@ -1202,7 +1202,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
                     self.reqid += 1
                     channels = []
                     for symbol in symbols:
-                        channels.append(f"{symbol.lower()}@ticker")
+                        channels.append(f"{symbol.lower()}@aggTrade")
                     req: dict = {"method": "SUBSCRIBE", "params": channels, "id": self.reqid}
                     self.send_packet(req)
 
@@ -1219,7 +1219,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
                 if isinstance(data, str):
                     symbol = data
                     self.reqid += 1
-                    channels = [f"{symbol.lower()}@ticker"]
+                    channels = [f"{symbol.lower()}@aggTrade"]
                     req: dict = {"method": "UNSUBSCRIBE", "params": channels, "id": self.reqid}
                     self.send_packet(req)
 
@@ -1228,7 +1228,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
                     self.reqid += 1
                     channels = []
                     for symbol in symbols:
-                        channels.append(f"{symbol.lower()}@ticker")
+                        channels.append(f"{symbol.lower()}@aggTrade")
                     req: dict = {"method": "UNSUBSCRIBE", "params": channels, "id": self.reqid}
                     self.send_packet(req)
 

@@ -246,7 +246,7 @@ class Chrome(object):
                 if callback:
                     callback((rise_list, fall_list), duration)
 
-                current_dt = datetime.now().replace(minute=int(datetime.now().minute / 10) * 10, second=0, microsecond=0)
+                current_dt = datetime.now().replace(minute=int(datetime.now().minute / 5) * 5, second=0, microsecond=0)
                 if duration == "24h":
                     duration_24h_select_dt = current_dt
 
