@@ -379,7 +379,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                         if int(time.time()) - last_close_ts <= 4 * 60 * 60:
                             self.open_allowed = True
 
-                    if int(time.time()) - self.trending_ts <= 1 * 60 * 60:
+                    if int(time.time()) - self.trending_ts <= 2 * 60 * 60:
                         self.open_allowed = True
 
                 # 发送订单
