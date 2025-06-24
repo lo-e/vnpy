@@ -59,6 +59,7 @@ class TopGainersLosersPortfolio(object):
         self.strategy_long_tokens = []
         self.strategy_short_tokens = []
         self.trending_tokens = {}
+        self.history_trending_data = {}
         self.rise_onboard_symbol_time_dict = {}
         self.fall_onboard_symbol_time_dict = {}
         
@@ -177,9 +178,19 @@ class TopGainersLosersPortfolio(object):
                 trending_tokens.add(symbol)
                 if symbol not in self.trending_tokens:
                     on_board_time = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
-                    self.trending_tokens[symbol] = {"change": change,
-                                                    "on_board_ts": data_time,
-                                                    "on_board": on_board_time}
+                    trending_data = {"change": change,
+                                     "on_board_ts": data_time,
+                                     "on_board": on_board_time}
+                    
+                    history_data = self.history_trending_data.get(symbol, {})
+                    if history_data:
+                        pop_ts = history_data["pop_ts"]
+                        if data_time <= pop_ts + 1 * 60 * 60:
+                            trending_data = {"change": change,
+                                             "on_board_ts": history_data["on_board_ts"],
+                                             "on_board": history_data["on_board"]}
+                            
+                    self.trending_tokens[symbol] = trending_data
 
         for i in range(min(len(fall_trending_list), 20)):
             data = fall_trending_list[i]
@@ -189,12 +200,26 @@ class TopGainersLosersPortfolio(object):
                 trending_tokens.add(symbol)
                 if symbol not in self.trending_tokens:
                     on_board_time = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
-                    self.trending_tokens[symbol] = {"change": change,
-                                                    "on_board_ts": data_time,
-                                                    "on_board": on_board_time}
+                    trending_data = {"change": change,
+                                     "on_board_ts": data_time,
+                                     "on_board": on_board_time}
+                    
+                    history_data = self.history_trending_data.get(symbol, {})
+                    if history_data:
+                        pop_ts = history_data["pop_ts"]
+                        if data_time <= pop_ts + 1 * 60 * 60:
+                            trending_data = {"change": change,
+                                             "on_board_ts": history_data["on_board_ts"],
+                                             "on_board": history_data["on_board"]}
+                            
+                    self.trending_tokens[symbol] = trending_data
         
         for symbol in self.trending_tokens.copy().keys():
             if symbol not in trending_tokens:
+                trending_data = self.trending_tokens[symbol]
+                self.history_trending_data[symbol] = {"pop_ts": data_time,
+                                                      "on_board_ts": trending_data["on_board_ts"],
+                                                      "on_board": trending_data["on_board"]}
                 self.trending_tokens.pop(symbol)
 
     def on_rise_fall_data(self, data: tuple):
