@@ -162,7 +162,13 @@ class MonitorEngine(object):
             duration_bar.tick_count += 1
     
     def on_timer(self, event):
+        # 交易所延迟信息
         now = datetime.now()
+        if now.second % 10 == 0:
+            gateway: BinanceUsdtGateway = self.main_engine.get_default_gateway("BINANCE")
+            if gateway:
+                print_(f"交易所延迟 {gateway.rest_api.time_offset}")
+
         if (now.minute % 1 == 0) and (now.second == 15) and self.tick:
             # 输出Tick信息
             for vt_symbol in self.history_duration_bar_data.copy().keys():

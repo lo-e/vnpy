@@ -68,6 +68,7 @@ from vnpy.app.cta_strategy.base import (
     DAILY_DB_NAME,
     MinuteDataBaseName,
 )
+from gateway.binance import BinanceUsdtGateway
 
 class TopGainersLosersEngine(BaseEngine):
     engine_type = EngineType.LIVE
@@ -85,6 +86,7 @@ class TopGainersLosersEngine(BaseEngine):
         self.vt_tradeids = set()
         self.offset_converter = OffsetConverter(self.main_engine)
         self.portfolio: TopGainersLosersPortfolio = None
+        self.gateway_delay = False
 
     def init_engine(self):
         # 获取setting
@@ -124,6 +126,15 @@ class TopGainersLosersEngine(BaseEngine):
         for strategy in self.strategies.copy().values():
             if strategy.inited:
                 self.call_strategy_func(strategy, strategy.on_timer)
+
+        # 获取交易所连接延迟
+        gateway: BinanceUsdtGateway = self.main_engine.get_default_gateway("BINANCE")
+        if gateway:
+            if gateway.rest_api.time_offset >= 3000:
+                self.gateway_delay = True
+            
+            else:
+                self.gateway_delay = False
 
     def process_tick_event(self, event: Event):
         tick = event.data

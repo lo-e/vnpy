@@ -171,8 +171,6 @@ class WebsocketClient:
             # 捕捉运行过程中异常
             try:
                 # 发起Websocket连接
-                await self._session.close()
-                self._session: ClientSession = ClientSession()
                 self._ws = await self._session.ws_connect(
                     self._host,
                     proxy=self._proxy,

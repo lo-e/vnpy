@@ -51,9 +51,12 @@ from vnpy.trader.utility import (
 STATUS_BYBIT2VT = {
     "Created": Status.NOTTRADED,
     "New": Status.NOTTRADED,
+    "Untriggered": Status.NOTTRADED,
     "PartiallyFilled": Status.PARTTRADED,
     "Filled": Status.ALLTRADED,
+    "Triggered": Status.ALLTRADED,
     "Cancelled": Status.CANCELLED,
+    "Deactivated": Status.CANCELLED,
     "PartiallyFilledCanceled": Status.CANCELLED,
     "Rejected": Status.REJECTED,
 }
@@ -792,6 +795,10 @@ class BybitRestApi(RestClient):
                 datetime=generate_datetime(int(order_data["createdTime"])),
                 gateway_name=self.gateway_name,
             )
+
+            if order_data["orderStatus"] in ["Untriggered", "Deactivated", "Triggered"]:
+                order.price = float(order_data["triggerPrice"])
+
             if order_data["reduceOnly"]:
                 order.offset = Offset.CLOSE
             self.gateway.on_order(order)
@@ -1180,6 +1187,7 @@ class BybitWebsocketTradeApi(WebsocketClient):
             orderId = order_data["orderLinkId"]
             if not orderId:
                 orderId = order_data["orderId"]
+            
             order = OrderData(
                 symbol=order_data["symbol"],
                 exchange=exchange,
@@ -1193,6 +1201,10 @@ class BybitWebsocketTradeApi(WebsocketClient):
                 datetime=generate_datetime(int(order_data["createdTime"])),
                 gateway_name=self.gateway_name,
             )
+
+            if order_data["orderStatus"] in ["Untriggered", "Deactivated", "Triggered"]:
+                order.price = float(order_data["triggerPrice"])
+
             if order_data["reduceOnly"]:
                 order.offset = Offset.CLOSE
             self.gateway.on_order(order)
