@@ -113,6 +113,8 @@ class Chrome(object):
         duration_select_need = True
         exchange_select_need = True
         duration_24h_select_dt = None
+        duration_24h_rise_list_origin = []
+        duration_24h_fall_list_origin = []
         while True:
             try:
                 # 启动浏览器
@@ -220,7 +222,8 @@ class Chrome(object):
                     target_tab_selected = "selected" in target_tab.get_attribute("class")
                     if not target_tab_selected:
                         target_tab.click()
-                        time.sleep(10)
+                        if duration != "24h":
+                            time.sleep(10)
                         target_tab_selected = "selected" in target_tab.get_attribute("class")
                 
                     if not target_tab_selected:
@@ -243,8 +246,22 @@ class Chrome(object):
                     elif change < 0:
                         fall_list.append(data)
 
-                if callback:
-                    callback((rise_list, fall_list), duration)
+                if duration == "24h":
+                    if not duration_24h_rise_list_origin or not duration_24h_fall_list_origin:
+                        duration_24h_rise_list_origin = rise_list
+                        duration_24h_fall_list_origin = fall_list
+                        continue
+
+                    elif duration_24h_rise_list_origin != rise_list or duration_24h_fall_list_origin != fall_list:
+                        if callback:
+                            callback((rise_list, fall_list), duration)
+                    
+                    else:
+                        continue
+                    
+                else:
+                    if callback:
+                        callback((rise_list, fall_list), duration)
 
                 current_dt = datetime.now().replace(minute=int(datetime.now().minute / 5) * 5, second=0, microsecond=0)
                 if duration == "24h":
@@ -253,6 +270,8 @@ class Chrome(object):
                 if duration_24h_select_dt != current_dt:
                     duration = "24h"
                     duration_select_need = True
+                    duration_24h_fall_list_origin = []
+                    duration_24h_fall_list_origin = []
                     continue
                 
                 elif duration != "5m":
