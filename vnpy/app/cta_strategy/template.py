@@ -258,14 +258,15 @@ class CtaTemplate(ABC):
         volume: float,
         stop: bool = False,
         lock: bool = False,
-        market: bool = False
+        market: bool = False,
+        stop_loss_price: float = 0
     ):
         """
         Send a new order.
         """
         if self.trading:
             vt_orderids = self.cta_engine.send_order(
-                self, direction, offset, price, volume, stop, lock, market
+                self, direction, offset, price, volume, stop, lock, market, stop_loss_price
             )
 
             """ modify by loe """

@@ -205,6 +205,7 @@ class TopGainersLosersEngine(BaseEngine):
         volume: float,
         type: OrderType,
         lock: bool,
+        stop_loss_price: float = 0
     ):
         # 创建订单
         original_req = OrderRequest(
@@ -215,6 +216,7 @@ class TopGainersLosersEngine(BaseEngine):
             type=type,
             price=price,
             volume=volume,
+            stop_loss_price=stop_loss_price
         )
         req_list = self.offset_converter.convert_order_request(original_req, lock)
 
@@ -250,7 +252,8 @@ class TopGainersLosersEngine(BaseEngine):
         volume: float,
         stop: bool,
         lock: bool,
-        market: bool = False
+        market: bool = False,
+        stop_loss_price: float = 0
     ):
         contract = self.main_engine.get_contract(strategy.vt_symbol)
         if not contract:
@@ -267,7 +270,7 @@ class TopGainersLosersEngine(BaseEngine):
             type = OrderType.MARKET
 
         return self.send_server_order(
-            strategy, contract, direction, offset, price, volume, type, lock
+            strategy, contract, direction, offset, price, volume, type, lock, stop_loss_price
         )
 
     def send_symbol_order(
@@ -280,7 +283,8 @@ class TopGainersLosersEngine(BaseEngine):
         volume: float,
         stop: bool,
         lock: bool,
-        market: bool = False
+        market: bool = False,
+        stop_loss_price: float = 0
     ):
         contract = self.main_engine.get_contract(vt_symbol)
         if not contract:
@@ -297,7 +301,7 @@ class TopGainersLosersEngine(BaseEngine):
             type = OrderType.MARKET
 
         return self.send_server_order(
-            strategy, contract, direction, offset, price, volume, type, lock
+            strategy, contract, direction, offset, price, volume, type, lock, stop_loss_price
         )
 
     def cancel_order(self, strategy: CtaTemplate, vt_orderid: str):

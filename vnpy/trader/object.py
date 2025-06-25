@@ -407,6 +407,7 @@ class OrderRequest:
     price: float = 0
     offset: Offset = Offset.NONE
     reference: str = ""
+    stop_loss_price: float = 0
 
     def __post_init__(self):
         """"""

@@ -142,12 +142,15 @@ class TopGainersLosersPortfolio(object):
             total_balance = 0
             for _, balance in self.account_balance_data.items():
                 total_balance += balance
+            total_balance = round(total_balance, 2)
             
             if total_balance > self.account_ath:
                 # 净值新高
                 if self.account_ath:
                     msg = f"恭喜！净值新高"
                     self.send_ding_talk(msg)
+                    print_(msg)
+
                 self.account_ath = total_balance
                 self.account_drawdown = 0
 
@@ -155,11 +158,14 @@ class TopGainersLosersPortfolio(object):
                 # 回撤
                 self.account_drawdown = self.account_ath - total_balance
 
-        if int(time.time()) > self.account_notice_ts + 60:
-            self.account_notice_ts = int(time.time())
-            for account_name, balance in self.account_balance_data.items():
-                print_(f"{account_name}\t余额：{balance:.2f}")
-            print_(f"账户ATH：{self.account_ath}\t回撤：{self.account_drawdown}")
+            if int(time.time()) > self.account_notice_ts + 60:
+                self.account_notice_ts = int(time.time())
+
+                print("-"*12)
+                for account_name, balance in self.account_balance_data.items():
+                    print_(f"余额：{balance:.2f}\t{account_name}")
+                print_(f"ATH：{self.account_ath}\t回撤：{self.account_drawdown}")
+                print("-"*12)
 
     def resubscribe(self, event: Event):
         return

@@ -221,7 +221,8 @@ class OkxGateway(BaseGateway):
 
     def send_order(self, req: OrderRequest) -> str:
         """委托下单"""
-        return self.ws_private_api.send_order(req)
+        # return self.ws_private_api.send_order(req)
+        return self.rest_api.send_order(req)
 
     def cancel_order(self, req: CancelRequest) -> None:
         """委托撤单"""
@@ -313,6 +314,9 @@ class OkxRestApi(RestClient):
         self.simulated: bool = False
         self.contract_info_ready = False
 
+        self.order_count: int = 0
+        self.connect_time: int = 0
+
     def sign(self, request: Request) -> Request:
         """生成欧易V5签名"""
         # 签名
@@ -381,7 +385,113 @@ class OkxRestApi(RestClient):
             callback=self.on_leverage,
             data=params
             )
-    
+        
+    def send_order(self, req: OrderRequest) -> str:
+        """委托下单"""
+        # 检查委托类型是否正确
+        if req.type not in ORDERTYPE_VT2OKX:
+            self.gateway.write_log(f"委托失败，不支持的委托类型：{req.type.value}")
+            return
+
+        # 检查合约代码是否正确
+        contract: ContractData = symbol_contract_map.get(req.symbol, None)
+        if not contract:
+            self.gateway.write_log(f"委托失败，找不到该合约代码{req.symbol}")
+            return
+
+        # 生成本地委托号
+        self.order_count += 1
+        count_str = str(self.order_count).rjust(6, "0")
+        orderid = f"{self.connect_time}{count_str}"
+
+        # 订单大小
+        volume = round_to(req.volume / contract.contract_value, contract.contract_min) if contract.contract_value and contract.contract_min else req.volume
+
+        # 生成委托请求
+        # 对2.1892e-07类型价格处理
+        price_str = str(req.price)
+        slice_list = price_str.split("e-")
+        if len(slice_list) == 2:
+            n = 0
+            n_list = slice_list[0].split(".")
+            if len(n_list) == 2:
+                n = n_list[-1]
+                n = re.sub("\D", "", n)
+                n = int(len(n))
+
+            e = slice_list[-1]
+            e = re.sub("\D", "", e)
+            e = int(e)
+
+            price_str = f"{req.price:.{n+e}f}"
+
+        args: dict = {
+            "instId": req.symbol,
+            "clOrdId": orderid,
+            "side": DIRECTION_VT2OKX[req.direction],
+            "ordType": ORDERTYPE_VT2OKX[req.type],
+            "px": price_str,
+            "sz": str(volume)
+        }
+
+        if req.offset == Offset.CLOSE or req.offset == Offset.CLOSETODAY or req.offset == Offset.CLOSEYESTERDAY:
+            # 平仓
+            if req.direction == Direction.LONG:
+                args["posSide"] = "short"
+            
+            elif req.direction == Direction.SHORT:
+                args["posSide"] = "long"
+        
+        else:
+            # 开仓
+            if req.direction == Direction.LONG:
+                args["posSide"] = "long"
+            
+            elif req.direction == Direction.SHORT:
+                args["posSide"] = "short"
+
+        if contract.product == Product.SPOT:
+            args["tdMode"] = "cash"
+        else:
+            args["tdMode"] = "cross"
+
+        # 止损订单
+        if req.stop_loss_price:
+            args["slTriggerPx"] = req.stop_loss_price
+            args["slOrdPx"] = -1
+            args["slTriggerPxType"] = "last"
+
+        self.add_request(
+            "POST",
+            "/api/v5/trade/order",
+            callback=self.on_send_order,
+            data=args
+            )
+
+        # 推送提交中事件
+        order: OrderData = req.create_order_data(orderid, self.gateway_name)
+        self.gateway.on_order(order)
+        return order.vt_orderid
+
+    def on_send_order(self, packet: dict, request: Request) -> None:
+        data: list = packet["data"]
+
+        # 业务逻辑处理失败
+        for d in data:
+            code: str = d["sCode"]
+            if code == "0":
+                return
+
+            orderid: str = d["clOrdId"]
+            order: OrderData = self.gateway.get_order(orderid)
+            if not order:
+                return
+            order.status = Status.REJECTED
+            self.gateway.on_order(copy(order))
+
+            msg: str = d["sMsg"]
+            self.gateway.write_log(f"委托失败，状态码：{code}，信息：{msg}")
+
     def on_leverage(self, packet: dict, request: Request) -> None:
         pass
 
@@ -1254,6 +1364,7 @@ class OkxWebsocketPrivateApi(WebsocketClient):
 
         # 推送提交中事件
         order: OrderData = req.create_order_data(orderid, self.gateway_name)
+        self.reqid_order_map[str(self.reqid)] = order
         self.gateway.on_order(order)
         return order.vt_orderid
 

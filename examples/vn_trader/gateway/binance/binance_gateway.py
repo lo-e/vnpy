@@ -87,6 +87,7 @@ ORDERTYPE_VT2BINANCES: Dict[OrderType, Tuple[str, str]] = {
     OrderType.MARKET: ("MARKET", "GTC"),
     OrderType.FAK: ("LIMIT", "IOC"),
     OrderType.FOK: ("LIMIT", "FOK"),
+    OrderType.MARKET: ("STOP_MARKET", "GTC")
 }
 ORDERTYPE_BINANCES2VT: Dict[Tuple[str, str], OrderType] = {
     v: k for k, v in ORDERTYPE_VT2BINANCES.items()
@@ -507,7 +508,6 @@ class BinanceUsdtRestApi(RestClient):
             params["price"] = float(req.price)
 
         path: str = "/fapi/v1/order"
-
         self.add_request(
             method="POST",
             path=path,

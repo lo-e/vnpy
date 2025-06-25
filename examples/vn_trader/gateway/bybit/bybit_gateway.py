@@ -506,6 +506,12 @@ class BybitRestApi(RestClient):
             "orderLinkId": orderid,
             "timeInForce": TIMEINFORCE_MAP[req.type]
         }
+
+        # 止损订单
+        if req.stop_loss_price:
+            data["stopLoss"] = str(req.stop_loss_price)
+            data["slTriggerBy"] = "LastPrice"
+
         order = req.create_order_data(orderid, self.gateway_name)
         order.datetime = datetime.now()
 

@@ -108,6 +108,9 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.direction: Direction = Direction.NET
         self.trending_ts: float = 0
         self.trending_time: str = ""
+
+        """ fake """
+        # self.send_fake_order = False
         
         # 完成setting.json参数的配置
         super(TopGainersLosersStrategy, self).__init__(
@@ -282,12 +285,10 @@ class TopGainersLosersStrategy(CtaTemplate):
                 if not self.price_cross:
                     msg = f"{self.vt_symbol}\n等待价格突破.."
                     self.cta_engine.main_engine.send_ding_talk(msg)
-                    print_(msg)
 
             else:
                 msg = f"\n初始化数据缺失\n\ncount {len(data_list)}\nlack {bar_lack}"
                 self.send_ding_talk(msg)
-                print_(msg)
 
         except Exception as e:
             msg = f"加载Bar数据出错\n\n{e}"
@@ -322,6 +323,23 @@ class TopGainersLosersStrategy(CtaTemplate):
             return
         
         self.tick = copy(tick)
+
+        """ fake """
+        # if not self.send_fake_order:
+        #     self.send_fake_order = True
+
+        #     self.add_unit_pos(tick.last_price)
+        #     open_volume = abs(self.target_pos)
+        #     if open_volume:
+        #         if self.direction == Direction.LONG:
+        #             trade_price = self.tick.last_price * 1.005
+        #             self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), True, stop_loss_price=self.stop_price)
+                
+        #         elif self.direction == Direction.SHORT:
+        #             trade_price = self.tick.last_price * 0.995
+        #             self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), True, stop_loss_price=self.stop_price)
+
+        # return
 
         # 确认价格突破
         if not self.price_cross and not self.close:
@@ -487,7 +505,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.send_ding_talk(msg)
             print_(msg)
 
-    def send_order(self, direction, offset, price, volume, market: bool = False):
+    def send_order(self, direction, offset, price, volume, market: bool = False, stop_loss_price: float = 0):
         # 撤回历史订单
         self.cancel_all()
 
@@ -551,7 +569,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             volume = min(volume, abs(self.pos))
         
         # 发出订单
-        super().send_order(direction, offset, price, volume, market=market)
+        super().send_order(direction, offset, price, volume, market=market, stop_loss_price=stop_loss_price)
 
     def on_trade(self, trade):
         try:
