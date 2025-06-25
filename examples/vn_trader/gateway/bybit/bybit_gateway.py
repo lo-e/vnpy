@@ -1007,11 +1007,11 @@ class BybitWebsocketDataApi(WebsocketClient):
             tick.turnover = float(data["turnover24h"])
 
         # snapshot和delta都推送的数据
-        if "bid1Price" in data:
+        if "bid1Price" in data and data["bid1Price"]:
             tick.bid_price_1 = float(data["bid1Price"])
             tick.bid_volume_1 = float(data["bid1Size"])
 
-        if "ask1Price" in data:
+        if "ask1Price" in data and data["ask1Price"]:
             tick.ask_price_1 = float(data["ask1Price"])
             tick.ask_volume_1 = float(data["ask1Size"])
 

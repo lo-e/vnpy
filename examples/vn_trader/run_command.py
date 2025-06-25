@@ -163,7 +163,7 @@ class MonitorEngine(object):
     def on_timer(self, event):
         # 交易所延迟信息
         now = datetime.now()
-        if now.second % 10 == 0:
+        if now.second == 0:
             gateway: BinanceUsdtGateway = self.main_engine.get_default_gateway("BINANCE")
             if gateway:
                 print_(f"交易所延迟 {gateway.rest_api.time_offset}")
