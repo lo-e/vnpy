@@ -401,7 +401,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                         self.open_allowed = True
 
                 # 发送订单
-                # if self.open_allowed and self.open_count <= 2 and not self.cta_engine.gateway_delay:
+                # if self.open_allowed and self.open_count <= 2 and not self.pos and not self.cta_engine.gateway_delay and time.time() <= tick.datetime.timestamp() + 3:
                 #     open_volume = abs(self.target_pos) - abs(last_target_pos)
                 #     if open_volume:
                 #         if self.direction == Direction.LONG:
