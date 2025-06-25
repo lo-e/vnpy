@@ -230,7 +230,7 @@ class BybitGateway(BaseGateway):
             api.send_packet({"op": "ping"})
 
         self.account_positon_update_wait += 1
-        if self.account_positon_update_wait >= 30:
+        if self.account_positon_update_wait >= 10:
             self.account_positon_update_wait = 0
             self.query_account()
             self.query_position()

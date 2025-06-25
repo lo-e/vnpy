@@ -225,7 +225,7 @@ class BinanceUsdtGateway(BaseGateway):
 
         # 更新账户、持仓
         self.account_positon_update_wait += 1
-        if self.account_positon_update_wait >= 30:
+        if self.account_positon_update_wait >= 10:
             self.account_positon_update_wait = 0
             self.query_account()
             self.query_position()
@@ -265,6 +265,12 @@ class BinanceUsdtGateway(BaseGateway):
 
         res = {"gateway":self.gateway_name, "connected":connected, "msg":msg}
         return res
+    
+    def set_leverage(self, vt_symbol: str, target: int):
+        """
+        设置合约杠杆
+        """
+        self.rest_api.set_leverage(vt_symbol, target)
 
     def get_accounts(self) -> Dict[str, AccountData]:
         """
@@ -384,6 +390,21 @@ class BinanceUsdtRestApi(RestClient):
         self.query_order()
         self.query_contract()
         self.start_user_stream()
+
+    def set_leverage(self, vt_symbol: str, target: int):
+        symbol = vt_symbol.split(".")[0]
+
+        data: dict = {"security": Security.SIGNED}
+
+        params = {"symbol": symbol,
+                  "leverage": target}
+
+        path: str = "/fapi/v1/leverage"
+
+        return self.add_request("POST", path, callback=self.on_leverage, data=data, params=params)
+    
+    def on_leverage(self, data: dict, request: Request) -> None:
+        pass
 
     def query_time(self) -> None:
         """查询时间"""
@@ -1030,6 +1051,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
         self.gateway_name: str = gateway.gateway_name
 
         self.ticks: Dict[str, TickData] = {}
+        self.tick_ts_data: Dict[str, int] = {}
         self.reqid: int = 0
 
         self.subscribed: Dict[str, SubscribeRequest] = {}
@@ -1139,6 +1161,15 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
 
         symbol, channel = stream.split("@")[:2]
         symbol_upper = symbol.upper()
+
+        # 高频行情数据过滤
+        if channel == "aggTrade":
+            last_ts = self.tick_ts_data.get(symbol_upper, 0)
+            current_ts = int(time.time()*1000)
+            if current_ts - last_ts <= 200:
+                return
+            self.tick_ts_data[symbol_upper] = current_ts
+
         tick = self.ticks.get(symbol_upper, None)
         if not tick:
             # 创建TICK对象

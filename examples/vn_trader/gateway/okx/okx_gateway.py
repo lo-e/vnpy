@@ -279,6 +279,12 @@ class OkxGateway(BaseGateway):
 
         res = {"gateway":self.gateway_name, "connected":connected, "msg":msg}
         return res
+    
+    def set_leverage(self, vt_symbol: str, target: int):
+        """
+        设置合约杠杆
+        """
+        self.rest_api.set_leverage(vt_symbol, target)
 
     def get_accounts(self) -> Dict[str, AccountData]:
         """
@@ -361,6 +367,23 @@ class OkxRestApi(RestClient):
         self.query_time()
         self.query_order()
         self.query_instrument()
+
+    def set_leverage(self, vt_symbol: str, target: int):
+        symbol = vt_symbol.split(".")[0]
+
+        params = {"instId": symbol,
+                  "lever": target,
+                  "mgnMode": "cross"}
+        
+        self.add_request(
+            "POST",
+            "/api/v5/account/set-leverage",
+            callback=self.on_leverage,
+            data=params
+            )
+    
+    def on_leverage(self, packet: dict, request: Request) -> None:
+        pass
 
     def query_time(self) -> None:
         """查询时间"""

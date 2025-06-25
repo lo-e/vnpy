@@ -248,7 +248,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.history_low = 0
             self.price_cross = False
             self.recent_atr_list = []
-            if len(data_list) >= 60 and not bar_lack:
+            if len(data_list) >= 59 and not bar_lack:
                 # 初始化工具
                 self.minute_am = ArrayManager(6)
 

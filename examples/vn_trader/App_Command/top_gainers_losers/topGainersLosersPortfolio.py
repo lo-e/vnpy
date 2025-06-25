@@ -31,7 +31,7 @@ class TopGainersLosersPortfolio(object):
 
     syncs = [
         "account_ath",
-        "account_drawdown",
+        "account_data",
         "trending_tokens"
     ]
 
@@ -52,8 +52,9 @@ class TopGainersLosersPortfolio(object):
         self.fall_data_list_24h = []
         self.sync_data = {}
         self.unsubscribe_time = 0
+        self.account_data = {}
+        self.account_balance_data = {}
         self.account_ath = 0
-        self.account_drawdown = 0
         self.fast_rise_tokens = []
         self.fast_fall_tokens = []
         self.strategy_long_tokens = []
@@ -123,23 +124,52 @@ class TopGainersLosersPortfolio(object):
         if account.accountid != "USDT":
             return
         
+        # 账户名称
+        account_name = f"{account.gateway_name}({account.exchange_user})"
+        
         # 判断是否正在交易
         on_tradeing = False
         for strategy_name in self.cta_engine.strategies.keys():
             strategy: TopGainersLosersStrategy = self.cta_engine.strategies[strategy_name]
-            if strategy.target_pos != strategy.pos or not strategy.close:
+            if strategy.open_count and strategy.open_allowed and (strategy.pos or not strategy.close):
                 on_tradeing = True
                 break
+
+        # 统计所有账户余额
+        self.account_balance_data[account_name] = account.balance
+        total_balance = 0
+        for _, balance in self.account_balance_data.items():
+            total_balance += balance
         
-        if account.gateway_name == "BYBIT" and account.exchange_user == "loesuperman":
-            # 账户余额最高
-            self.account_ath = max(self.account_ath, account.balance)
+        if total_balance > self.account_ath:
+            # 净值新高
+            self.account_ath = total_balance
+            self.account_data = {}
 
-            # 账户余额回撤
-            if not on_tradeing:
-                self.account_drawdown = self.account_ath - account.balance
+            msg = f"恭喜！净值新高"
+            self.send_ding_talk(msg)
 
-            print_(f"{account.gateway_name}（{account.exchange_user}）{account.accountid} 最高：{self.account_ath:.2f} 余额：{account.balance:.2f} 回撤：{self.account_drawdown:.2f}")
+        # 账户余额最高
+        account_data = self.account_data.get(account_name, {})
+        account_ath = account_data.get("ath", 0)
+        account_ath = max(account_ath, account.balance)
+        account_ath = round(account_ath, 2)
+        account_data["ath"] = account_ath
+
+        # 账户余额回撤
+        account_drawdown = account_data.get("drawdown", 0)
+        if not on_tradeing:
+            account_drawdown = account_ath - account.balance
+            account_drawdown = round(account_drawdown, 2)
+            account_data["drawdown"] = account_drawdown
+
+        # 总回撤
+        total_drawdown = 0
+        for _, data in self.account_data.items():
+            total_drawdown += data.get("drawdown", 0)
+
+        self.account_data[account_name] = account_data
+        print_(f"{account_name} {account.accountid} 最高：{account_ath:.2f} 余额：{account.balance:.2f} 回撤：{account_drawdown:.2f} 总回撤：{total_drawdown}")
 
     def resubscribe(self, event: Event):
         return
@@ -354,7 +384,11 @@ class TopGainersLosersPortfolio(object):
             remove_vt_symbols = set()
             for name in self.cta_engine.strategies.keys():
                 strategy: TopGainersLosersStrategy = self.cta_engine.strategies[name]
-                symbol = strategy.vt_symbol.split("USDT")[0]
+                if "OKX" in strategy.vt_symbol:
+                    symbol = strategy.vt_symbol.split("-USDT")[0]
+
+                else:
+                    symbol = strategy.vt_symbol.split("USDT")[0]
                 if (symbol in close_long_tokens and strategy.direction == Direction.LONG) or (symbol in close_short_tokens and strategy.direction == Direction.SHORT):
                     strategy.on_close()
                     remove_strategy_names.append(strategy.strategy_name)
@@ -390,19 +424,20 @@ class TopGainersLosersPortfolio(object):
 
         filter_tokens = ["USDC", "USDT", "USDE", "SUSDE", "SUSDS", "USD1", "USDT0", "PYUSD", "USDS", "FDUSD", "DAI", "FTN", "PI", "WETH", "WEETH", "STETH", "WSTETH", "RETH", "RSETH", "METH", "OSETH", "EZETH", "WBTC", "CBBTC", "LBTC", "SOLVBTC", "BUIDL", "WBNB"]
         if token not in filter_tokens:
-            # okx_symbols = list(self.exchange_instruments_data.get("OKX", {}).keys())
-            # symbol = f"{token}-USDT-SWAP"
-            # if symbol in okx_symbols:
-            #     vt_symbol = f"{symbol}.OKX"
-            #     exchange = "OKX"
-            #     exchange_user = "lo-e"
-            
             if not vt_symbol:
                 binance_symbols = list(self.exchange_instruments_data.get("BINANCE", {}).keys())
                 symbol = f"{token}USDT"
                 if symbol in binance_symbols:
                     vt_symbol = f"{symbol}.BINANCE"
                     exchange = "BINANCE"
+                    exchange_user = "lo-e"
+
+            if not vt_symbol:
+                okx_symbols = list(self.exchange_instruments_data.get("OKX", {}).keys())
+                symbol = f"{token}-USDT-SWAP"
+                if symbol in okx_symbols:
+                    vt_symbol = f"{symbol}.OKX"
+                    exchange = "OKX"
                     exchange_user = "lo-e"
 
             if not vt_symbol:
@@ -691,6 +726,9 @@ class TopGainersLosersPortfolio(object):
             if self.sync_data != sync_data:
                 self.sync_data = copy.deepcopy(sync_data)
                 self.cta_engine.put_portfolio_event()
+
+                msg = f"同步组合数据.."
+                print_(msg)
         
         except Exception as e:
             msg = f"保存组合数据出错\n\n{e}"
@@ -750,7 +788,7 @@ class TopGainersLosersPortfolio(object):
                                     trade_price = strategy.tick.last_price * 1.005
                                     strategy.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(gap), True)
                         
-                        if strategy.target_pos == strategy.pos and strategy.close and (strategy.closed or not strategy.open_count):
+                        if strategy.close and not strategy.pos and (strategy.closed or not strategy.open_count):
                             # 取消订阅
                             self.cta_engine.unsubscribe([strategy.vt_symbol])
 

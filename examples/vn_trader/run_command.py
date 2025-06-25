@@ -5,10 +5,9 @@ from gateway.binance import BinanceUsdtGateway
 from gateway.bybit import BybitGateway
 from gateway.okx import OkxGateway
 from vnpy.trader.utility import load_json
-from vnpy.trader.object import SubscribeRequest, SubscribeLotsRequest
+from vnpy.trader.object import SubscribeRequest, SubscribeLotsRequest, TickData, ContractData
 import time
 from vnpy.trader.event import EVENT_TICK, EVENT_TICK_DELAY, EVENT_TIMER
-from vnpy.trader.object import TickData
 from threading import Thread
 from datetime import datetime, timedelta
 from copy import copy
@@ -19,7 +18,7 @@ from vnpy.trader.constant import Exchange
 
 # GATEWAYS = [[OkxGateway, "lo-e"], [BybitGateway, "loesuperman"], [BinanceUsdtGateway, "lo-e"]]
 # GATEWAYS = [[OkxGateway, "lo-e(test)"], [BybitGateway, "loesuperman(test)"], [BinanceUsdtGateway, "lo-e(test)"]]
-GATEWAYS = [[BybitGateway, "loesuperman"], [BinanceUsdtGateway, "lo-e"]]
+GATEWAYS = [[OkxGateway, "lo-e"], [BinanceUsdtGateway, "lo-e"], [BybitGateway, "loesuperman"]]
 class DurationBar(object):
     def __init__(self) -> None:
         self.vt_symbol: str = ""
@@ -203,6 +202,86 @@ def print_(msg: str):
     dt = datetime.now().replace(microsecond=0)
     print(f"{dt}\t{msg}")
 
+def set_leverage(target_gateway_name:str, leverage: int = 20, target: list = [], specials: dict = {}):
+    event_engine = EventEngine()
+    main_engine = MainEngine(event_engine)
+
+    # 连接交易所
+    for gateway_info in GATEWAYS:
+        gateway_class: BaseGateway = gateway_info[0]
+        account_name = gateway_info[1]
+
+        main_engine.add_gateway(gateway_class)
+        gateway_setting_filename = f"connect_{gateway_class.gateway_name.lower()}.json"
+        connect_setting = load_json(gateway_setting_filename)
+        connect_setting = connect_setting.get(account_name, None)
+        main_engine.connect(connect_setting, gateway_class.gateway_name)
+
+    # 等待交易所连接成功
+    while True:
+        all_connected = True
+        for gateway_info in GATEWAYS:
+            gateway_class: BaseGateway = gateway_info[0]
+            account_name = gateway_info[1]
+            connected = main_engine.get_gateway_connect_status(gateway_class.gateway_name, account_name)
+
+            if not connected:
+                all_connected = False
+                break
+
+        if all_connected:
+            break
+
+        else:
+            time.sleep(1)
+
+    # 获取交易所合约数据
+    vt_symbols = set()
+    if target:
+        for token in target:
+            if target_gateway_name == "OKX":
+                vt_symbols.add(f"{token}-USDT-SWAP.OKX")
+
+            elif target_gateway_name == "BINANCE":
+                vt_symbols.add(f"{token}USDT.BINANCE")
+
+            elif target_gateway_name == "BYBIT":
+                vt_symbols.add(f"{token}USDT.BYBIT")
+
+    else:
+        contracts = main_engine.engines["oms"].contracts
+        for key in contracts.keys():
+            contract: ContractData = contracts[key]
+            if contract.gateway_name == target_gateway_name:
+                vt_symbols.add(contract.vt_symbol)
+    
+    # 设置杠杆
+    gateway = main_engine.get_default_gateway(target_gateway_name)
+    if gateway:
+        count = 0
+        for vt_symbol in vt_symbols:
+            token = ""
+            if target_gateway_name == "OKX":
+                token = vt_symbol.split("-USDT")[0]
+
+            elif target_gateway_name == "BINANCE":
+                token = vt_symbol.split("USDT")[0]
+
+            elif target_gateway_name == "BYBIT":
+                token = vt_symbol.split("USDT")[0]
+
+            if token in specials:
+                gateway.set_leverage(vt_symbol, specials[token])
+            
+            else:
+                gateway.set_leverage(vt_symbol, leverage)
+
+            count += 1
+            print(f"{vt_symbol}\t{count}")
+            time.sleep(1)
+    
+    print(f"杠杆设置完成！\n合约数：{len(vt_symbols)}")
+
 def main():
     # 引擎
     event_engine = EventEngine()
@@ -252,3 +331,5 @@ def main():
     
 if __name__ == "__main__":
     main()
+
+    # set_leverage(target_gateway_name="OKX", leverage=20, target=[], specials={"BTC": 100, "ETH": 50, "SOL": 50})
