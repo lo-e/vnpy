@@ -87,7 +87,7 @@ ORDERTYPE_VT2BINANCES: Dict[OrderType, Tuple[str, str]] = {
     OrderType.MARKET: ("MARKET", "GTC"),
     OrderType.FAK: ("LIMIT", "IOC"),
     OrderType.FOK: ("LIMIT", "FOK"),
-    OrderType.MARKET: ("STOP_MARKET", "GTC")
+    OrderType.STOP: ("STOP_MARKET", "GTC")
 }
 ORDERTYPE_BINANCES2VT: Dict[Tuple[str, str], OrderType] = {
     v: k for k, v in ORDERTYPE_VT2BINANCES.items()
@@ -984,11 +984,13 @@ class BinanceUsdtTradeWebsocketApi(WebsocketClient):
         order_type: OrderType = ORDERTYPE_BINANCES2VT.get(key, None)
         if not order_type:
             return
-        offset = (
-            self.gateway.get_order(ord_data["c"]).offset
-            if self.gateway.get_order(ord_data["c"])
-            else None
-        )
+
+        offset = Offset.NONE
+        if self.gateway.get_order(ord_data["c"]):
+            offset = self.gateway.get_order(ord_data["c"]).offset
+
+        if ord_data["R"]:
+            offset = Offset.CLOSE
 
         order: OrderData = OrderData(
             symbol=ord_data["s"],
@@ -1004,7 +1006,6 @@ class BinanceUsdtTradeWebsocketApi(WebsocketClient):
             gateway_name=self.gateway_name,
             offset=offset,
         )
-
         self.gateway.on_order(order)
 
         # 将成交数量四舍五入到正确精度

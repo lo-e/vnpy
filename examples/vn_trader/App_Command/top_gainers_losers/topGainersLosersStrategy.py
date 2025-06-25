@@ -333,10 +333,12 @@ class TopGainersLosersStrategy(CtaTemplate):
         #     if open_volume:
         #         if self.direction == Direction.LONG:
         #             trade_price = self.tick.last_price * 1.005
+        #             self.stop_price = tick.last_price * 0.999
         #             self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), True, stop_loss_price=self.stop_price)
                 
         #         elif self.direction == Direction.SHORT:
         #             trade_price = self.tick.last_price * 0.995
+        #             self.stop_price = tick.last_price * 1.001
         #             self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), True, stop_loss_price=self.stop_price)
 
         # return

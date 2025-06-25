@@ -805,6 +805,10 @@ class BybitRestApi(RestClient):
             if order_data["orderStatus"] in ["Untriggered", "Deactivated", "Triggered"]:
                 order.price = float(order_data["triggerPrice"])
 
+            order_: OrderData = self.gateway.get_order(orderId)
+            if order_:
+                order.offset = order_.offset
+                
             if order_data["reduceOnly"]:
                 order.offset = Offset.CLOSE
             self.gateway.on_order(order)
@@ -1211,8 +1215,13 @@ class BybitWebsocketTradeApi(WebsocketClient):
             if order_data["orderStatus"] in ["Untriggered", "Deactivated", "Triggered"]:
                 order.price = float(order_data["triggerPrice"])
 
+            order_: OrderData = self.gateway.get_order(orderId)
+            if order_:
+                order.offset = order_.offset
+
             if order_data["reduceOnly"]:
                 order.offset = Offset.CLOSE
+
             self.gateway.on_order(order)
     
     def on_position(self, packet):

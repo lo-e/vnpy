@@ -1100,12 +1100,8 @@ class OkxWebsocketPrivateApi(WebsocketClient):
         data: list = packet["data"]
         for d in data:
             order: OrderData = parse_order_data(d, self.gateway_name)
-            offset = (
-                self.gateway.get_order(order.orderid).offset
-                if self.gateway.get_order(order.orderid)
-                else None
-            )
-            order.offset = offset
+            if self.gateway.get_order(order.orderid):
+                order.offset = self.gateway.get_order(order.orderid).offset
             self.gateway.on_order(order)
 
             # 检查是否有成交
@@ -1440,4 +1436,6 @@ def parse_order_data(data: dict, gateway_name: str) -> OrderData:
         status=STATUS_OKX2VT[data["state"]],
         gateway_name=gateway_name,
     )
+    if data["reduceOnly"] == "true":
+        order.offset = Offset.CLOSE
     return order
