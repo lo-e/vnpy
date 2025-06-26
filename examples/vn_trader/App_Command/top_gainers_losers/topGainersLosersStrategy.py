@@ -24,6 +24,7 @@ import csv
 import shutil
 import pandas as pd
 import numpy as np
+from vnpy.trader.object import ContractData
 class TopGainersLosersStrategy(CtaTemplate):
     className = "TopGainersLosersStrategy"
     author = "loe"
@@ -333,13 +334,23 @@ class TopGainersLosersStrategy(CtaTemplate):
         #     if open_volume:
         #         if self.direction == Direction.LONG:
         #             trade_price = self.tick.last_price * 1.005
-        #             self.stop_price = tick.last_price * 0.999
-        #             self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), True, stop_loss_price=self.stop_price)
+        #             self.stop_price = tick.last_price * 0.9995
+        #             if self.exchange == Exchange.BINANCE:
+        #                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True)
+        #                 self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
+
+        #             else:
+        #                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
                 
         #         elif self.direction == Direction.SHORT:
         #             trade_price = self.tick.last_price * 0.995
-        #             self.stop_price = tick.last_price * 1.001
-        #             self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), True, stop_loss_price=self.stop_price)
+        #             self.stop_price = tick.last_price * 1.0005
+        #             if self.exchange == Exchange.BINANCE:
+        #                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True)
+        #                 self.send_order(Direction.LONG, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
+
+        #             else:
+        #                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
 
         # return
 
@@ -408,11 +419,21 @@ class TopGainersLosersStrategy(CtaTemplate):
                 #     if open_volume:
                 #         if self.direction == Direction.LONG:
                 #             trade_price = self.tick.last_price * 1.005
-                #             self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), True)
+                #             if self.exchange == Exchange.BINANCE:
+                #                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True)
+                #                 self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
+
+                #             else:
+                #                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
                         
                 #         elif self.direction == Direction.SHORT:
                 #             trade_price = self.tick.last_price * 0.995
-                #             self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), True)
+                #             if self.exchange == Exchange.BINANCE:
+                #                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True)
+                #                 self.send_order(Direction.LONG, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
+
+                #             else:
+                #                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
 
                 # 记录日志
                 self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {self.open_count} {tick.last_price}"})
@@ -466,7 +487,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.target_pos *= -1
 
         # 仓位精度处理
-        contract = self.cta_engine.main_engine.get_contract(self.vt_symbol)
+        contract: ContractData = self.cta_engine.main_engine.get_contract(self.vt_symbol)
         self.target_pos = round_to(self.target_pos, contract.min_volume)
 
         # 模拟仓位价值、均价
@@ -507,7 +528,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.send_ding_talk(msg)
             print_(msg)
 
-    def send_order(self, direction, offset, price, volume, market: bool = False, stop_loss_price: float = 0):
+    def send_order(self, direction, offset, price, volume, stop: bool = False, market: bool = False, stop_loss_price: float = 0):
         # 撤回历史订单
         self.cancel_all()
 
@@ -571,7 +592,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             volume = min(volume, abs(self.pos))
         
         # 发出订单
-        super().send_order(direction, offset, price, volume, market=market, stop_loss_price=stop_loss_price)
+        super().send_order(direction, offset, price, volume, stop=stop, market=market, stop_loss_price=stop_loss_price)
 
     def on_trade(self, trade):
         try:

@@ -274,8 +274,12 @@ class TopGainersLosersEngine(BaseEngine):
 
         # 发送订单
         type = OrderType.LIMIT
+        
         if market:
             type = OrderType.MARKET
+
+        if stop:
+            type = OrderType.STOP
 
         return self.send_server_order(
             strategy, contract, direction, offset, price, volume, type, lock, stop_loss_price
