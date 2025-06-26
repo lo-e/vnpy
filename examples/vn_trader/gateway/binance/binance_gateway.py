@@ -1168,7 +1168,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
         if channel == "aggTrade":
             last_ts = self.tick_ts_data.get(symbol_upper, 0)
             current_ts = int(time.time()*1000)
-            if current_ts - last_ts <= 200:
+            if current_ts - last_ts < 200:
                 return
             self.tick_ts_data[symbol_upper] = current_ts
 

@@ -824,6 +824,7 @@ class BybitWebsocketDataApi(WebsocketClient):
         self.callbacks: Dict[str, Callable] = {}
         self.ticks: Dict[str, TickData] = {}
         self.subscribed: Dict[str, SubscribeRequest] = {}
+        self.tick_ts_data: Dict[str, int] = {}
 
         self.order_book_bids = defaultdict(dict)  # 订单簿买单字典
         self.order_book_asks = defaultdict(dict)  # 订单簿卖单字典
@@ -997,6 +998,13 @@ class BybitWebsocketDataApi(WebsocketClient):
         timestamp = packet["ts"]
         symbol = topic.replace("tickers.", "")
         tick = self.ticks[symbol]
+
+        # 高频行情数据过滤
+        last_ts = self.tick_ts_data.get(symbol, 0)
+        current_ts = int(time()*1000)
+        if current_ts - last_ts < 200:
+            return
+        self.tick_ts_data[symbol] = current_ts
 
         # 收到快照数据推送(订阅tick数据后只推送一次)
         if type_ == "snapshot":
