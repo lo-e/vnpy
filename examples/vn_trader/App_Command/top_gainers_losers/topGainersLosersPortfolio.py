@@ -32,7 +32,8 @@ class TopGainersLosersPortfolio(object):
     syncs = [
         "account_ath",
         "account_drawdown",
-        "trending_tokens"
+        "trending_tokens",
+        "banned_token_trending_ts"
     ]
 
     def __init__(self, engine, setting):
@@ -64,6 +65,7 @@ class TopGainersLosersPortfolio(object):
         self.history_trending_data = {}
         self.rise_onboard_symbol_time_dict = {}
         self.fall_onboard_symbol_time_dict = {}
+        self.banned_token_trending_ts = {}
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -786,7 +788,15 @@ class TopGainersLosersPortfolio(object):
                         
                         if strategy.close and not strategy.pos and (strategy.closed or not strategy.open_count):
                             # 取消订阅
-                            self.cta_engine.unsubscribe([strategy.vt_symbol])
+                            symbol = ""
+                            if "OKX" in strategy.vt_symbol:
+                                symbol = strategy.vt_symbol.split("-USDT")[0]
+
+                            else:
+                                symbol = strategy.vt_symbol.split("USDT")[0]
+                                
+                            if symbol not in self.strategy_long_tokens and symbol not in self.strategy_short_tokens:
+                                self.cta_engine.unsubscribe([strategy.vt_symbol])
 
                             # 策略引擎关闭策略
                             strategy.cta_engine.remove_strategy(strategy.strategy_name)

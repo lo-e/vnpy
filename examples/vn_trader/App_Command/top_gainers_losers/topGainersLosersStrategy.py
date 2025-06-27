@@ -395,23 +395,59 @@ class TopGainersLosersStrategy(CtaTemplate):
 
                 # 判断是否允许开仓
                 if self.open_count <= 1:
-                    last_close_log = ""
+                    strategy_token = ""
+                    if "OKX" in self.vt_symbol:
+                        strategy_token = self.vt_symbol.split("-USDT")[0]
+
+                    else:
+                        strategy_token = self.vt_symbol.split("USDT")[0]
+                        
+                    if self.direction == Direction.LONG:
+                        strategy_token = f"{strategy_token}_LONG"
+                    
+                    else:
+                        strategy_token = f"{strategy_token}_SHORT"
+
+                    # 搜索最近平仓log
+                    recent_close_logs = []
                     for log in reversed(self.trade_logs):
                         log = log["LOG"]
                         elements = log.split(" ")
                         offset = elements[4]
                         if offset == "OPEN_COUNT":
-                            last_close_log = log
-                            break
+                            recent_close_logs.append(log)
+                            if len(recent_close_logs) >= 2:
+                                break
                     
-                    if last_close_log:
-                        last_close_date_time = f"{elements[0]} {elements[1]}"
-                        last_close_ts = datetime.strptime(last_close_date_time, "%Y-%m-%d %H:%M:%S").timestamp()
-                        if int(time.time()) - last_close_ts <= 4 * 60 * 60:
-                            self.open_allowed = True
+                    # 判断是否连续大幅亏损
+                    conmtinuous_over_loss_count = 0
+                    for log in reversed(recent_close_logs):
+                        elements = log.split(" ")
+                        stop_count = int(elements[7])
+                        if stop_count >= 2:
+                            conmtinuous_over_loss_count += 1
+                        
+                        else:
+                            conmtinuous_over_loss_count = 0
 
-                    if int(time.time()) - self.trending_ts <= 2 * 60 * 60:
-                        self.open_allowed = True
+                    if conmtinuous_over_loss_count >= 2:
+                        last_close_log = recent_close_logs[0]
+                        elements = last_close_log.split(" ")
+                        last_trending_ts = float(elements[17])
+                        self.portfolio.banned_token_trending_ts[strategy_token] = last_trending_ts
+
+                    # 确定是否允许交易
+                    if self.trending_ts !=  self.portfolio.banned_token_trending_ts.get(strategy_token, 0):
+                        if recent_close_logs:
+                            last_close_log = recent_close_logs[0]
+                            elements = last_close_log.split(" ")
+                            last_close_date_time = f"{elements[0]} {elements[1]}"
+                            last_close_ts = datetime.strptime(last_close_date_time, "%Y-%m-%d %H:%M:%S").timestamp()
+                            if int(time.time()) - last_close_ts <= 4 * 60 * 60:
+                                self.open_allowed = True
+
+                        if int(time.time()) - self.trending_ts <= 2 * 60 * 60:
+                            self.open_allowed = True
 
                 # 发送订单
                 # if self.open_allowed and self.open_count <= 2 and not self.pos and not self.cta_engine.gateway_delay and time.time() <= tick.datetime.timestamp() + 3:
