@@ -200,7 +200,7 @@ def statistics_pnl(for_eth: bool = False):
 
             msg = f"{trending_time}\t{open_date_time} - {dt}\t{direction}\t{position_minute}m {position_second}s\tcross {cross}\tentry_drawdown {entry_drawdown}\topen {open_count}\tstop {stop_count}\tstop_pnl {stop_rate:.3f}\tpnl {pnl_rate:.3f}\t{real_pnl_rate:.3f}\t{total_pnl:.3f}\t{symbol}"
             if banned_trending:
-                msg = f"{msg}*"
+                msg = f"{msg}\t*"
                 
             print(msg)
 
