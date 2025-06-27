@@ -763,6 +763,7 @@ class TopGainersLosersPortfolio(object):
                                 if gap < 0:
                                     # 多头平仓
                                     trade_price = strategy.tick.last_price * 0.995
+                                    strategy.cancel_all()
                                     strategy.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(gap), market=True)
 
                             if strategy.direction == Direction.SHORT:
@@ -784,6 +785,7 @@ class TopGainersLosersPortfolio(object):
                                 if gap < 0:
                                     # 空头平仓
                                     trade_price = strategy.tick.last_price * 1.005
+                                    strategy.cancel_all()
                                     strategy.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(gap), market=True)
                         
                         if strategy.close and not strategy.pos and (strategy.closed or not strategy.open_count):
