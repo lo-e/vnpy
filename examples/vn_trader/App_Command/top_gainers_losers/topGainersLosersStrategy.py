@@ -450,26 +450,26 @@ class TopGainersLosersStrategy(CtaTemplate):
                             self.open_allowed = True
 
                 # 发送订单
-                # if self.open_allowed and self.open_count <= 2 and not self.pos and not self.cta_engine.gateway_delay and time.time() <= tick.datetime.timestamp() + 3:
-                #     open_volume = abs(self.target_pos) - abs(last_target_pos)
-                #     if open_volume:
-                #         if self.direction == Direction.LONG:
-                #             trade_price = self.tick.last_price * 1.005
-                #             if self.exchange == Exchange.BINANCE:
-                #                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True)
-                #                 self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
+                if self.open_allowed and self.open_count <= 2 and not self.pos and time.time() <= tick.datetime.timestamp() + 3:
+                    open_volume = abs(self.target_pos) - abs(last_target_pos)
+                    if open_volume:
+                        if self.direction == Direction.LONG:
+                            trade_price = self.tick.last_price * 1.005
+                            if self.exchange == Exchange.BINANCE:
+                                self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True)
+                                self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
 
-                #             else:
-                #                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
+                            else:
+                                self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
                         
-                #         elif self.direction == Direction.SHORT:
-                #             trade_price = self.tick.last_price * 0.995
-                #             if self.exchange == Exchange.BINANCE:
-                #                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True)
-                #                 self.send_order(Direction.LONG, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
+                        elif self.direction == Direction.SHORT:
+                            trade_price = self.tick.last_price * 0.995
+                            if self.exchange == Exchange.BINANCE:
+                                self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True)
+                                self.send_order(Direction.LONG, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
 
-                #             else:
-                #                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
+                            else:
+                                self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
 
                 # 记录日志
                 self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {self.open_count} {tick.last_price}"})
