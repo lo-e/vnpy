@@ -654,8 +654,9 @@ class TopGainersLosersPortfolio(object):
             self.send_ding_talk(msg)
 
     def load_recent_trending_data(self):
+        print_(f"加载历史趋势数据..")
         self.trending_tokens = {}
-        hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(hours=5)
+        hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=1)
         while hour_time < datetime.now():
             current_dir = os.path.dirname(os.path.abspath(__file__))
             date = hour_time.strftime(f"%Y-%m-%d")
@@ -685,6 +686,8 @@ class TopGainersLosersPortfolio(object):
                                 self.on_trending_data((rise_list, fall_list))
 
             hour_time += timedelta(hours=1)
+        
+        print_(f"历史趋势数据加载完成！")
 
     def process_tick(self):
         error_notice_ts = 0
