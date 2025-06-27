@@ -471,6 +471,9 @@ class TopGainersLosersStrategy(CtaTemplate):
                             else:
                                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
 
+                        msg = f"{self.vt_symbol}\n开仓（{self.direction.value}）"
+                        self.cta_engine.main_engine.send_ding_talk(msg)
+
                 # 记录日志
                 self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {self.open_count} {tick.last_price}"})
                 self.trade_logs_updated = True
