@@ -198,12 +198,10 @@ def statistics_pnl(for_eth: bool = False):
             if real_pnl_rate:
                 pnl_count += 1
 
-            msg = f"{open_date_time} - {dt}\t{direction}\t{position_minute}m {position_second}s\tcross {cross}\tentry_drawdown {entry_drawdown}\topen {open_count}\tstop {stop_count}\tstop_pnl {stop_rate:.3f}\tpnl {pnl_rate:.3f}\t{real_pnl_rate:.3f}\t{total_pnl:.3f}\t{symbol}"
+            msg = f"{trending_time}\t{open_date_time} - {dt}\t{direction}\t{position_minute}m {position_second}s\tcross {cross}\tentry_drawdown {entry_drawdown}\topen {open_count}\tstop {stop_count}\tstop_pnl {stop_rate:.3f}\tpnl {pnl_rate:.3f}\t{real_pnl_rate:.3f}\t{total_pnl:.3f}\t{symbol}"
             if banned_trending:
-                msg = f"{trending_time}*\t{msg}"
+                msg = f"{msg}*"
                 
-            else:
-                msg = f"{trending_time}\t{msg}"
             print(msg)
 
     print(f"止损盈亏异常数：{stop_pnl_error_count}")
