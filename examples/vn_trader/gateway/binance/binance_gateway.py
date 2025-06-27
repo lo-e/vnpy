@@ -500,7 +500,7 @@ class BinanceUsdtRestApi(RestClient):
         elif req.type == OrderType.STOP:
             params["type"] = "STOP_MARKET"
             params["stopPrice"] = float(req.price)
-            # params["closePosition"] = "true"
+            params["closePosition"] = "true"
 
         else:
             order_type, time_condition = ORDERTYPE_VT2BINANCES[req.type]

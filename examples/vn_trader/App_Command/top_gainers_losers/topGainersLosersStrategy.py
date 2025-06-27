@@ -455,6 +455,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                     if open_volume:
                         if self.direction == Direction.LONG:
                             trade_price = self.tick.last_price * 1.005
+                            self.cancel_all()
                             if self.exchange == Exchange.BINANCE:
                                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True)
                                 self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
@@ -464,6 +465,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                         
                         elif self.direction == Direction.SHORT:
                             trade_price = self.tick.last_price * 0.995
+                            self.cancel_all()
                             if self.exchange == Exchange.BINANCE:
                                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True)
                                 self.send_order(Direction.LONG, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
@@ -568,9 +570,6 @@ class TopGainersLosersStrategy(CtaTemplate):
             print_(msg)
 
     def send_order(self, direction, offset, price, volume, stop: bool = False, market: bool = False, stop_loss_price: float = 0):
-        # 撤回历史订单
-        self.cancel_all()
-
         # 精度处理
         contract = self.cta_engine.main_engine.get_contract(self.vt_symbol)
         price = round_to(price, contract.pricetick)
