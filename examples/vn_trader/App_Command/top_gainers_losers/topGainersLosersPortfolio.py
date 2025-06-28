@@ -141,7 +141,7 @@ class TopGainersLosersPortfolio(object):
             if total_balance > self.account_ath:
                 # 净值新高
                 if self.account_ath:
-                    msg = f"恭喜！净值新高"
+                    msg = f"恭喜！净值新高\n\nATH {total_balance}USDT"
                     self.send_ding_talk(msg)
                     print_(msg)
 
