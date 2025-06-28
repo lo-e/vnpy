@@ -7,8 +7,6 @@ from threading import Thread
 from vnpy.trader.utility import DIR_SYMBOL
 from App.Turtle_crypto.dataservice import TurtleCryptoDataDownloading
 from vnpy.trader.constant import Direction, Offset, Exchange
-from pymongo import MongoClient, ASCENDING, DESCENDING
-from vnpy.app.cta_strategy.base import MINUTE_DB_NAME
 from App.Turtle_crypto.dataservice.utility import get_csv_path
 import pandas as pd
 import os
@@ -17,10 +15,6 @@ from vnpy.event import Event
 from vnpy.trader.object import SubscribeRequest
 from .topGainersLosersStrategy import TopGainersLosersStrategy
 from queue import Empty, Queue
-from vnpy.trader.utility import DIR_SYMBOL
-import json
-from .utility import Chrome
-from collections import OrderedDict
 from vnpy.trader.event import EVENT_TICK_DELAY, EVENT_ACCOUNT
 from vnpy.trader.object import AccountData
 import copy

@@ -106,15 +106,14 @@ class Chrome(object):
             
             time.sleep(rest)
 
-    def fetch_rise_fall_long_short(self, callback = None, rest: int = 60) -> None:
+    def fetch_rise_fall_minute_trending(self, callback = None, rest: int = 60) -> None:
         driver = None
         driver_reboot = True
         duration = "5m"
         duration_select_need = True
         exchange_select_need = True
-        duration_24h_select_dt = None
-        duration_24h_rise_list_origin = []
-        duration_24h_fall_list_origin = []
+        rise_list_origin = []
+        fall_list_origin = []
         while True:
             try:
                 # 启动浏览器
@@ -125,6 +124,8 @@ class Chrome(object):
 
                     duration_select_need = True
                     exchange_select_need = True
+                    rise_list_origin = []
+                    fall_list_origin = []
                     driver_reboot = False
 
                     url = "https://www.coinglass.com/zh/gainers-losers"
@@ -199,6 +200,8 @@ class Chrome(object):
                     exchange_button.click()
 
                 if duration_select_need:
+                    duration_select_need = False
+
                     # 选择周期
                     duration_tabs = driver.find_elements(
                         By.XPATH,
@@ -222,8 +225,173 @@ class Chrome(object):
                     target_tab_selected = "selected" in target_tab.get_attribute("class")
                     if not target_tab_selected:
                         target_tab.click()
-                        if duration != "24h":
-                            time.sleep(10)
+                        time.sleep(10)
+                        target_tab_selected = "selected" in target_tab.get_attribute("class")
+                
+                    if not target_tab_selected:
+                        driver_reboot = True
+                        continue
+
+                # 获取涨跌排行榜
+                rise_list = []
+                fall_list = []
+                row_list = driver.find_elements(
+                    By.XPATH,
+                    "//tr[@class='rc-table-row rc-table-row-level-0']",
+                    )
+                for row in row_list:
+                    data = self.get_rise_fall_data(row)
+                    change = data["change"]
+                    if change > 0:
+                        rise_list.append(data)
+                    
+                    elif change < 0:
+                        fall_list.append(data)
+                
+                if not rise_list_origin or not fall_list_origin:
+                    rise_list_origin = rise_list
+                    fall_list_origin = fall_list
+                    time.sleep(1)
+                    continue
+
+                elif rise_list_origin != rise_list or fall_list_origin != fall_list:
+                    if callback:
+                        callback((rise_list, fall_list), duration)
+                
+                else:
+                    time.sleep(1)
+                    continue
+
+                time.sleep(rest)
+
+            except Exception as e:
+                print(str(e))
+
+    def fetch_rise_fall_hour_trending(self, callback = None, rest: int = 60) -> None:
+        driver = None
+        driver_reboot = True
+        duration = "1h"
+        duration_select_need = True
+        exchange_select_need = True
+        duration_1h_rise_list_origin = []
+        duration_1h_fall_list_origin = []
+        duration_24h_select_dt = None
+        duration_24h_rise_list_origin = []
+        duration_24h_fall_list_origin = []
+        while True:
+            try:
+                # 启动浏览器
+                if driver_reboot:
+                    print(f"Chrome启动")
+                    self.quit_driver(driver)
+                    driver = self.load_driver()
+
+                    duration_select_need = True
+                    exchange_select_need = True
+                    duration_1h_rise_list_origin = []
+                    duration_1h_fall_list_origin = []
+                    duration_24h_rise_list_origin = []
+                    duration_24h_fall_list_origin = []
+                    driver_reboot = False
+
+                    url = "https://www.coinglass.com/zh/gainers-losers"
+                    driver.get(url)
+                
+                else:
+                    # driver.refresh()
+                    pass
+                
+                _ = WebDriverWait(driver, timeout=5).until(EC.presence_of_all_elements_located((By.XPATH, "//button[@role='tab']")))
+                tab_buttons = driver.find_elements(
+                    By.XPATH,
+                    "//button[@role='tab']",
+                )
+                for button in tab_buttons:
+                    if "涨跌榜" in button.text:
+                        button.click()
+                        break
+                
+                if exchange_select_need:
+                    exchange_select_need = False
+
+                    # 筛选交易所
+                    exchange_button = None
+                    buttons = driver.find_elements(
+                        By.XPATH,
+                        "//div[@class='MuiBox-root cg-style-0']",
+                        )
+                    for button in buttons:
+                        if button.text == "交易所":
+                            exchange_button = button
+                            break
+
+                    if exchange_button:
+                        exchange_button.click()
+                        select_buttons = driver.find_elements(
+                            By.XPATH,
+                            "//ul/li/ul/li",
+                        )
+                        for button in select_buttons:
+                            exchange = button.text.upper()
+                            try_count = 1
+                            while not exchange and try_count < 5:
+                                time.sleep(0.2)
+                                exchange = button.text.upper()
+                                try_count += 1
+                            if not exchange:
+                                continue
+
+                            select_need = False
+                            if button.text.upper() in ["BINANCE", "BYBIT", "OKX"]:
+                                select_need = True
+
+                            select_show = button.find_elements(
+                                By.XPATH,
+                                "div/span/span",
+                            )[0]
+                            selected = "checked" in select_show.get_attribute("class")
+                            try_count = 0
+                            while selected != select_need and try_count < 5:
+                                select_show.click()
+                                selected = "checked" in select_show.get_attribute("class")
+                                try_count += 1
+
+                            if selected != select_need:
+                                driver_reboot = True
+                                continue
+
+                    else:
+                        driver_reboot = True
+                        continue
+                    exchange_button.click()
+
+                if duration_select_need:
+                    duration_select_need = False
+                    
+                    # 选择周期
+                    duration_tabs = driver.find_elements(
+                        By.XPATH,
+                        "//div/div/button[@role='tab']",
+                        )
+
+                    target_tab = None
+                    for tab in duration_tabs:
+                        if duration == "5m" and tab.text == "5分钟":
+                            target_tab = tab
+
+                        if duration == "15m" and tab.text == "15分钟":
+                            target_tab = tab
+                        
+                        if duration == "1h" and tab.text == "1小时":
+                            target_tab = tab
+                        
+                        if duration == "24h" and tab.text == "24小时":
+                            target_tab = tab
+
+                    target_tab_selected = "selected" in target_tab.get_attribute("class")
+                    if not target_tab_selected:
+                        target_tab.click()
+                        time.sleep(1)
                         target_tab_selected = "selected" in target_tab.get_attribute("class")
                 
                     if not target_tab_selected:
@@ -246,10 +414,26 @@ class Chrome(object):
                     elif change < 0:
                         fall_list.append(data)
 
-                if duration == "24h":
+                if duration == "1h":
+                    if not duration_1h_rise_list_origin or not duration_1h_fall_list_origin:
+                        duration_1h_rise_list_origin = rise_list
+                        duration_1h_fall_list_origin = fall_list
+                        time.sleep(1)
+                        continue
+
+                    elif duration_1h_rise_list_origin != rise_list or duration_1h_fall_list_origin != fall_list:
+                        if callback:
+                            callback((rise_list, fall_list), duration)
+                    
+                    else:
+                        time.sleep(1)
+                        continue
+
+                elif duration == "24h":
                     if not duration_24h_rise_list_origin or not duration_24h_fall_list_origin:
                         duration_24h_rise_list_origin = rise_list
                         duration_24h_fall_list_origin = fall_list
+                        time.sleep(1)
                         continue
 
                     elif duration_24h_rise_list_origin != rise_list or duration_24h_fall_list_origin != fall_list:
@@ -257,11 +441,12 @@ class Chrome(object):
                             callback((rise_list, fall_list), duration)
                     
                     else:
+                        time.sleep(1)
                         continue
-                    
+
                 else:
-                    if callback:
-                        callback((rise_list, fall_list), duration)
+                    msg = f"获取小时趋势涨跌数据出错\n周期不支持：{duration}"
+                    dingtalk.send_ding_talk(msg)
 
                 current_dt = datetime.now().replace(minute=int(datetime.now().minute / 5) * 5, second=0, microsecond=0)
                 if duration == "24h":
@@ -270,162 +455,22 @@ class Chrome(object):
                 if duration_24h_select_dt != current_dt:
                     duration = "24h"
                     duration_select_need = True
-                    duration_24h_fall_list_origin = []
+                    duration_24h_rise_list_origin = []
                     duration_24h_fall_list_origin = []
                     continue
                 
-                elif duration != "5m":
-                    duration = "5m"
+                elif duration != "1h":
+                    duration = "1h"
                     duration_select_need = True
+                    duration_1h_rise_list_origin = []
+                    duration_1h_fall_list_origin = []
                     continue
-
-                # 选择多空比
-                down_up_list = []
-                up_down_list = []
-
-                """
-                for button in tab_buttons:
-                    if "人数多空比" in button.text:
-                        button.click()
-                        break
-                
-                # 筛选交易所
-                bybit_switch = None
-                binance_switch = None
-                okx_switch = None
-                refresh_button = None
-                _ = WebDriverWait(driver, timeout=5).until(EC.presence_of_all_elements_located((By.XPATH, "//div/ul/li")))
-                switch_buttons = driver.find_elements(
-                    By.XPATH,
-                    "//div/ul/li",
-                )
-                for i in range(len(switch_buttons)):
-                    button = switch_buttons[i]
-                    if button.text.upper() == "BYBIT":
-                        bybit_switch = button
-                        binance_switch = switch_buttons[i+1]
-                        okx_switch = switch_buttons[i+2]
-                        refresh_button = switch_buttons[i+3]
-                        break
-
-                bybit_show = bybit_switch.find_elements(
-                    By.XPATH,
-                    "span/span",
-                )[0]
-                bybit_checked_need = True
-                bybit_checked = "checked" in bybit_show.get_attribute("class")
-                try_count = 0
-                while bybit_checked != bybit_checked_need and try_count < 5:
-                    bybit_switch.click()
-                    bybit_checked = "checked" in bybit_show.get_attribute("class")
-                    try_count += 1
-
-                if bybit_checked != bybit_checked_need:
-                    continue
-                
-                binance_show = binance_switch.find_elements(
-                    By.XPATH,
-                    "span/span",
-                )[0]
-                binance_checked_need = False
-                binance_checked = "checked" in binance_show.get_attribute("class")
-                try_count = 0
-                while binance_checked != binance_checked_need and try_count < 5:
-                    binance_switch.click()
-                    binance_checked = "checked" in binance_show.get_attribute("class")
-                    try_count += 1
-
-                if binance_checked != binance_checked_need:
-                    continue
-                    
-                okx_show = okx_switch.find_elements(
-                    By.XPATH,
-                    "span/span",
-                )[0]
-                okx_checked_need = False
-                okx_checked = "checked" in okx_show.get_attribute("class")
-                try_count = 0
-                while okx_checked != okx_checked_need and try_count < 5:
-                    okx_switch.click()
-                    okx_checked = "checked" in okx_show.get_attribute("class")
-                    try_count += 1
-
-                if okx_checked != okx_checked_need:
-                    continue
-                
-                # 按小时排序
-                _ = WebDriverWait(driver, timeout=5).until(EC.presence_of_all_elements_located((By.XPATH, "//th/div[@class='ant-table-column-sorters']")))
-                duration_list = driver.find_elements(
-                    By.XPATH,
-                    "//th/div[@class='ant-table-column-sorters']",
-                )
-                target_duration = None
-                for duration in duration_list:
-                    if "1小时" in duration.text:
-                        target_duration = duration
-                        break
-
-                up_selected = False
-                try_count = 0
-                while not up_selected and try_count < 5:
-                    try:
-                        target_duration.click()
-                        caret_up = target_duration.find_elements(
-                            By.XPATH,
-                            "span/span/span[@aria-label='caret-up']",
-                        )[0]
-
-                        caret_up_class = caret_up.get_attribute("class")
-                        if "active" in caret_up_class:
-                            up_selected = True
-                    
-                    except Exception as e:
-                        pass
-                    try_count += 1
-
-                if up_selected:
-                    # 获取空到多排行榜
-                    row_list = driver.find_elements(
-                        By.XPATH,
-                        "//tr[@class='ant-table-row ant-table-row-level-0']",
-                        )
-                    for row in row_list:
-                        data = self.get_long_short_data(row)
-                        down_up_list.append(data)
-
-                down_selected = False
-                try_count = 0
-                while not down_selected and try_count < 5:
-                    try:
-                        target_duration.click()
-                        caret_down = target_duration.find_elements(
-                            By.XPATH,
-                            "span/span/span[@aria-label='caret-down']",
-                        )[0]
-
-                        caret_down_class = caret_down.get_attribute("class")
-                        if "active" in caret_down_class:
-                            down_selected = True
-                    
-                    except Exception as e:
-                        pass
-                    try_count += 1
-
-                if down_selected:
-                    # 获取多到空排行榜
-                    row_list = driver.find_elements(
-                        By.XPATH,
-                        "//tr[@class='ant-table-row ant-table-row-level-0']",
-                        )
-                    for row in row_list:
-                        data = self.get_long_short_data(row)
-                        up_down_list.append(data)
-                """
 
                 time.sleep(rest)
 
             except Exception as e:
                 print(str(e))
+
 
     def get_long_short_data(self, item):
         # 交易所
@@ -537,7 +582,7 @@ class Chrome(object):
         df = pd.DataFrame(losers)
         df.to_csv(loser_file_path, index=False)
 
-    def on_rise_fall_long_short(self, data: tuple, duration: str):
+    def on_rise_fall_trending_data(self, data: tuple, duration: str):
         rise_list, fall_list = data
         rise_list = sorted(rise_list, key=lambda x: x["change"], reverse=True)
         fall_list = sorted(fall_list, key=lambda x: x["change"], reverse=False)
@@ -697,5 +742,5 @@ if __name__ == "__main__":
     chrome = Chrome(cta_engine=None)
     dingtalk = DingTalkEngine()
 
-    # Thread(target=chrome.fetch_top_gainers_losers, args=(chrome.on_top_gainers_losers, 10)).start()
-    Thread(target=chrome.fetch_rise_fall_long_short, args=(chrome.on_rise_fall_long_short, 5)).start()
+    Thread(target=chrome.fetch_rise_fall_minute_trending, args=(chrome.on_rise_fall_trending_data, 5)).start()
+    Thread(target=chrome.fetch_rise_fall_hour_trending, args=(chrome.on_rise_fall_trending_data, 60)).start()
