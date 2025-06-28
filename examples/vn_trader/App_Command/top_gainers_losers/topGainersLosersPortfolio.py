@@ -648,7 +648,7 @@ class TopGainersLosersPortfolio(object):
     def load_recent_trending_data(self):
         print_(f"加载历史趋势数据..")
         self.trending_tokens = {}
-        hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=1)
+        hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(hours=5)
         while hour_time < datetime.now():
             current_dir = os.path.dirname(os.path.abspath(__file__))
             date = hour_time.strftime(f"%Y-%m-%d")
