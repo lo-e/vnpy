@@ -430,14 +430,8 @@ class TopGainersLosersStrategy(CtaTemplate):
                         else:
                             conmtinuous_over_loss_count = 0
 
-                    if conmtinuous_over_loss_count >= 2:
-                        last_close_log = recent_close_logs[0]
-                        elements = last_close_log.split(" ")
-                        last_trending_ts = float(elements[17])
-                        self.portfolio.banned_token_trending_ts[strategy_token] = last_trending_ts
-
                     # 确定是否允许交易
-                    if self.trending_ts !=  self.portfolio.banned_token_trending_ts.get(strategy_token, 0):
+                    if conmtinuous_over_loss_count < 2:
                         if recent_close_logs:
                             last_close_log = recent_close_logs[0]
                             elements = last_close_log.split(" ")
@@ -523,7 +517,14 @@ class TopGainersLosersStrategy(CtaTemplate):
         # self.unit_pos = (0.01 * self.portfolio.portfolio_value) / (2 * self.minute_atr)
         # self.target_pos = abs(self.target_pos) + abs(self.unit_pos)
 
-        self.target_pos = self.portfolio.portfolio_value / tick_price
+        leverage = 1
+        if abs(self.portfolio.account_drawdown) >= self.portfolio.portfolio_value * 0.1:
+            leverage = 3
+        
+        if abs(self.portfolio.account_drawdown) >= self.portfolio.portfolio_value * 0.4:
+            leverage = 6
+
+        self.target_pos = self.portfolio.portfolio_value * leverage / tick_price
         if self.direction == Direction.SHORT:
             self.target_pos *= -1
 

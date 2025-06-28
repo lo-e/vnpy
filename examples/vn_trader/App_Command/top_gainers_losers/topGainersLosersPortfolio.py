@@ -33,7 +33,6 @@ class TopGainersLosersPortfolio(object):
         "account_ath",
         "account_drawdown",
         "trending_tokens",
-        "banned_token_trending_ts"
     ]
 
     def __init__(self, engine, setting):
@@ -65,7 +64,6 @@ class TopGainersLosersPortfolio(object):
         self.history_trending_data = {}
         self.rise_onboard_symbol_time_dict = {}
         self.fall_onboard_symbol_time_dict = {}
-        self.banned_token_trending_ts = {}
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()

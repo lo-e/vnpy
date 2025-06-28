@@ -38,7 +38,7 @@ def statistics_pnl(for_eth: bool = False):
             last_close_date_time = ""
             last_profit = False
             conmtinuous_over_loss_count = 0
-            banned_trending_ts = 0
+            over_loss_datetime = ""
             for log in logs:
                 elements = log.split(" ")
                 offset = elements[4]
@@ -100,7 +100,7 @@ def statistics_pnl(for_eth: bool = False):
                             "pnl_rate": pnl_rate,
                             "entry_drawdown": entry_drawdown,
                             "trending_ts": trending_ts,
-                            "banned_trending_ts": banned_trending_ts}
+                            "over_loss_datetime": over_loss_datetime}
                     
                     trades_data = dt_trades_data.get(close_date_time, [])
                     trades_data.append(data)
@@ -118,7 +118,7 @@ def statistics_pnl(for_eth: bool = False):
                     else:
                         last_profit = False
 
-                    # 连续大亏，禁止当前趋势交易
+                    # 连续大亏，暂停下一次交易
                     if stop_count >= 2:
                         conmtinuous_over_loss_count += 1
                     
@@ -126,7 +126,10 @@ def statistics_pnl(for_eth: bool = False):
                         conmtinuous_over_loss_count = 0
                     
                     if conmtinuous_over_loss_count >= 2:
-                        banned_trending_ts = trending_ts
+                        over_loss_datetime = close_date_time
+
+                    else:
+                        over_loss_datetime = ""
 
     # 按交易时间排序
     sorted_dt_trades_data = dict(sorted(dt_trades_data.items(), key=lambda x: x[0]))
@@ -176,22 +179,17 @@ def statistics_pnl(for_eth: bool = False):
 
             # 择时开仓
             trending_ts = data["trending_ts"]
-            banned_trending_ts = data["banned_trending_ts"]
             trending_time = datetime.fromtimestamp(trending_ts).strftime(f"%Y-%m-%d %H:%M:%S")
             last_close_date_time = data["last_close_date_time"]
             last_close_ts = datetime.strptime(last_close_date_time, "%Y-%m-%d %H:%M:%S").timestamp() if last_close_date_time else 0
             if (open_ts - last_close_ts > 4 * 60 * 60) and (open_ts - trending_ts > 2 * 60 * 60):
+            # if (open_ts - trending_ts > 2 * 60 * 60):
                 real_pnl_rate = 0
             
-            banned_trending = False
-            if trending_ts == banned_trending_ts:
-                banned_trending = True
+            over_loss_flag = False
+            if data["over_loss_datetime"]:
+                over_loss_flag = True
                 real_pnl_rate = 0
-
-            # 上次盈利过滤
-            # last_profit = data["last_profit"]
-            # if last_profit:
-            #     real_pnl_rate = 0
 
             # 累计盈亏
             total_pnl += real_pnl_rate
@@ -199,7 +197,7 @@ def statistics_pnl(for_eth: bool = False):
                 pnl_count += 1
 
             msg = f"{trending_time}\t{open_date_time} - {dt}\t{direction}\t{position_minute}m {position_second}s\tcross {cross}\tentry_drawdown {entry_drawdown}\topen {open_count}\tstop {stop_count}\tstop_pnl {stop_rate:.3f}\tpnl {pnl_rate:.3f}\t{real_pnl_rate:.3f}\t{total_pnl:.3f}\t{symbol}"
-            if banned_trending:
+            if over_loss_flag:
                 msg = f"{msg}\t*"
                 
             print(msg)
