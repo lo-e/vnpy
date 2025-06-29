@@ -37,7 +37,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         "exchange_user",
         "direction",
         "trending_ts_1h",
-        "trending_time_1h"
+        "trending_time_1h",
         "trending_ts_24h",
         "trending_time_24h"
     ]
