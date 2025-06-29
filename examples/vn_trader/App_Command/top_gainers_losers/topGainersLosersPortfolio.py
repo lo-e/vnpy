@@ -62,6 +62,7 @@ class TopGainersLosersPortfolio(object):
         self.history_trending_data = {}
         self.rise_onboard_symbol_time_dict = {}
         self.fall_onboard_symbol_time_dict = {}
+        self.trade_enable = True
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -75,6 +76,12 @@ class TopGainersLosersPortfolio(object):
                 setattr(self, name, setting[name])
 
     def on_init(self):
+        if abs(self.account_drawdown) < self.portfolio_value * 1.0:
+            self.trade_enable = True
+
+        else:
+            self.trade_enable = False
+
         # 导入交易所合约
         self.load_instruments_data()
 
@@ -164,6 +171,13 @@ class TopGainersLosersPortfolio(object):
                     print_(f"余额：{balance:.2f}\t{account_name}")
                 print_(f"ATH：{self.account_ath}\t回撤：{self.account_drawdown}")
                 print("-"*12)
+
+        # 回撤过大停止交易
+        if abs(self.account_drawdown) < self.portfolio_value * 1.0:
+            self.trade_enable = True
+
+        else:
+            self.trade_enable = False
 
     def resubscribe(self, event: Event):
         return
@@ -366,6 +380,7 @@ class TopGainersLosersPortfolio(object):
                 if rise_top_1_symbol in self.trending_tokens_24h:
                     setting = self.new_strategy(rise_top_1_symbol, Direction.LONG)
                     if setting:
+                        setting["trending_change_1h"] = self.trending_tokens_1h.get(rise_top_1_symbol, {}).get("change", 0)
                         setting["trending_ts_1h"] = self.trending_tokens_1h.get(rise_top_1_symbol, {}).get("on_board_ts", 0)
                         setting["trending_time_1h"] = self.trending_tokens_1h.get(rise_top_1_symbol, {}).get("on_board", "")
                         setting["trending_ts_24h"] = self.trending_tokens_24h[rise_top_1_symbol]["on_board_ts"]
@@ -394,6 +409,7 @@ class TopGainersLosersPortfolio(object):
                 if fall_top_1_symbol in self.trending_tokens_24h:
                     setting = self.new_strategy(fall_top_1_symbol, Direction.SHORT)
                     if setting:
+                        setting["trending_change_1h"] = self.trending_tokens_1h.get(fall_top_1_symbol, {}).get("change", 0)
                         setting["trending_ts_1h"] = self.trending_tokens_1h.get(fall_top_1_symbol, {}).get("on_board_ts", 0)
                         setting["trending_time_1h"] = self.trending_tokens_1h.get(fall_top_1_symbol, {}).get("on_board", "")
                         setting["trending_ts_24h"] = self.trending_tokens_24h[fall_top_1_symbol]["on_board_ts"]
@@ -859,19 +875,24 @@ class TopGainersLosersPortfolio(object):
                                     strategy.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(gap), market=True)
                         
                         if strategy.close and not strategy.pos and (strategy.closed or not strategy.open_count):
-                            # 取消订阅
-                            symbol = ""
-                            if "OKX" in strategy.vt_symbol:
-                                symbol = strategy.vt_symbol.split("-USDT")[0]
-
+                            vt_orderids = self.cta_engine.strategy_orderid_map[strategy.strategy_name]
+                            if vt_orderids:
+                                strategy.cancel_all()
+                            
                             else:
-                                symbol = strategy.vt_symbol.split("USDT")[0]
-                                
-                            if symbol not in self.strategy_long_tokens and symbol not in self.strategy_short_tokens:
-                                self.cta_engine.unsubscribe([strategy.vt_symbol])
+                                # 取消订阅
+                                symbol = ""
+                                if "OKX" in strategy.vt_symbol:
+                                    symbol = strategy.vt_symbol.split("-USDT")[0]
 
-                            # 策略引擎关闭策略
-                            strategy.cta_engine.remove_strategy(strategy.strategy_name)
+                                else:
+                                    symbol = strategy.vt_symbol.split("USDT")[0]
+                                    
+                                if symbol not in self.strategy_long_tokens and symbol not in self.strategy_short_tokens:
+                                    self.cta_engine.unsubscribe([strategy.vt_symbol])
+
+                                # 策略引擎关闭策略
+                                strategy.cta_engine.remove_strategy(strategy.strategy_name)
 
                         # 同步策略数据
                         strategy.check_save_data()

@@ -20,6 +20,7 @@ from vnpy.trader.object import (
     TickData,
     BarData,
     ContractData,
+    TradeData
 )
 from vnpy.trader.event import (
     EVENT_TICK,
@@ -166,7 +167,7 @@ class TopGainersLosersEngine(BaseEngine):
         self.call_strategy_func(strategy, strategy.on_order, order)
 
     def process_trade_event(self, event: Event):
-        trade = event.data
+        trade: TradeData = event.data
         if trade.vt_tradeid in self.vt_tradeids:
             return
         
