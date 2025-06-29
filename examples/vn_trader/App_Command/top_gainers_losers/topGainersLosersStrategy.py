@@ -36,8 +36,10 @@ class TopGainersLosersStrategy(CtaTemplate):
         "exchange",
         "exchange_user",
         "direction",
-        "trending_ts",
-        "trending_time"
+        "trending_ts_1h",
+        "trending_time_1h"
+        "trending_ts_24h",
+        "trending_time_24h"
     ]
 
     # 变量列表
@@ -107,8 +109,10 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.exchange: Exchange = Exchange.NONE
         self.exchange_user:str = ""
         self.direction: Direction = Direction.NET
-        self.trending_ts: float = 0
-        self.trending_time: str = ""
+        self.trending_ts_1h: float = 0
+        self.trending_time_1h: str = ""
+        self.trending_ts_24h: float = 0
+        self.trending_time_24h: str = ""
 
         """ fake """
         # self.send_fake_order = False
@@ -432,15 +436,18 @@ class TopGainersLosersStrategy(CtaTemplate):
 
                     # 确定是否允许交易
                     if conmtinuous_over_loss_count < 2:
-                        if recent_close_logs:
-                            last_close_log = recent_close_logs[0]
-                            elements = last_close_log.split(" ")
-                            last_close_date_time = f"{elements[0]} {elements[1]}"
-                            last_close_ts = datetime.strptime(last_close_date_time, "%Y-%m-%d %H:%M:%S").timestamp()
-                            if int(time.time()) - last_close_ts <= 4 * 60 * 60:
-                                self.open_allowed = True
+                        # if recent_close_logs:
+                        #     last_close_log = recent_close_logs[0]
+                        #     elements = last_close_log.split(" ")
+                        #     last_close_date_time = f"{elements[0]} {elements[1]}"
+                        #     last_close_ts = datetime.strptime(last_close_date_time, "%Y-%m-%d %H:%M:%S").timestamp()
+                        #     if int(time.time()) - last_close_ts <= 4 * 60 * 60:
+                        #         self.open_allowed = True
 
-                        if int(time.time()) - self.trending_ts <= 2 * 60 * 60:
+                        # if int(time.time()) - self.trending_ts_24h <= 2 * 60 * 60:
+                        #     self.open_allowed = True
+
+                        if int(time.time()) - self.trending_ts_1h <= 2 * 60 * 60:
                             self.open_allowed = True
 
                 # 发送订单
@@ -506,7 +513,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                     if self.direction == Direction.SHORT:
                         pnl = pnl * -1
 
-                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} OPEN_COUNT {self.open_count} STOP_COUNT {self.stop_count} STOP {self.stop_pnl:.2f}% CLOSE {pnl:.2f}% ENTRY_DRAWDOWN {self.entry_drawdown} PRICE {tick.last_price} TRENDING {self.trending_ts} {self.trending_time}"})
+                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} OPEN_COUNT {self.open_count} STOP_COUNT {self.stop_count} STOP {self.stop_pnl:.2f}% CLOSE {pnl:.2f}% ENTRY_DRAWDOWN {self.entry_drawdown} PRICE {tick.last_price} TRENDING_1H {self.trending_ts_1h} {self.trending_time_1h} TRENDING_24H {self.trending_ts_24h} {self.trending_time_24h}"})
                 self.trade_logs_updated = True
     
     def add_unit_pos(self, tick_price: float):

@@ -26,7 +26,8 @@ class TopGainersLosersPortfolio(object):
     syncs = [
         "account_ath",
         "account_drawdown",
-        "trending_tokens",
+        "trending_tokens_1h",
+        "trending_tokens_24h",
     ]
 
     def __init__(self, engine, setting):
@@ -42,6 +43,8 @@ class TopGainersLosersPortfolio(object):
         self.strategy_status_check_ts = {}
         self.rise_data_list_5m = []
         self.fall_data_list_5m = []
+        self.rise_data_list_1h = []
+        self.fall_data_list_1h = []
         self.rise_data_list_24h = []
         self.fall_data_list_24h = []
         self.sync_data = {}
@@ -54,7 +57,8 @@ class TopGainersLosersPortfolio(object):
         self.fast_fall_tokens = []
         self.strategy_long_tokens = []
         self.strategy_short_tokens = []
-        self.trending_tokens = {}
+        self.trending_tokens_1h = {}
+        self.trending_tokens_24h = {}
         self.history_trending_data = {}
         self.rise_onboard_symbol_time_dict = {}
         self.fall_onboard_symbol_time_dict = {}
@@ -143,7 +147,7 @@ class TopGainersLosersPortfolio(object):
                 if self.account_ath:
                     msg = f"恭喜！净值新高\n\nATH {total_balance}USDT"
                     self.send_ding_talk(msg)
-                    print_(msg)
+                    # print_(msg)
 
                 self.account_ath = total_balance
                 self.account_drawdown = 0
@@ -183,7 +187,35 @@ class TopGainersLosersPortfolio(object):
             else:
                 self.cta_engine.subscribe(list(vt_symbols))
 
-    def on_trending_data(self, data: tuple):
+    def on_trending_data_1h(self, data: tuple):
+        rise_trending_list, fall_trending_list = data
+        data_time = rise_trending_list[0]["change"]
+        rise_trending_list = rise_trending_list[3:]
+        fall_trending_list = fall_trending_list[3:]
+        
+        for i in range(min(len(rise_trending_list), 1)):
+            data = rise_trending_list[i]
+            symbol = data["symbol"]
+            change = data["change"]
+            on_board_time = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
+
+            trending_data = {"change": change,
+                             "on_board_ts": data_time,
+                             "on_board": on_board_time}
+            self.trending_tokens_1h[symbol] = trending_data
+
+        for i in range(min(len(fall_trending_list), 1)):
+            data = fall_trending_list[i]
+            symbol = data["symbol"]
+            change = data["change"]
+            on_board_time = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
+
+            trending_data = {"change": change,
+                             "on_board_ts": data_time,
+                             "on_board": on_board_time}
+            self.trending_tokens_1h[symbol] = trending_data
+
+    def on_trending_data_24h(self, data: tuple):
         rise_trending_list, fall_trending_list = data
         data_time = rise_trending_list[0]["change"]
         rise_trending_list = rise_trending_list[3:]
@@ -196,7 +228,7 @@ class TopGainersLosersPortfolio(object):
             change = data["change"]
             if abs(change) >= 20.0 or (abs(change) >= 15.0 and i < 10):
                 trending_tokens.add(symbol)
-                if symbol not in self.trending_tokens:
+                if symbol not in self.trending_tokens_24h:
                     on_board_time = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
                     trending_data = {"change": change,
                                      "on_board_ts": data_time,
@@ -210,7 +242,7 @@ class TopGainersLosersPortfolio(object):
                                              "on_board_ts": history_data["on_board_ts"],
                                              "on_board": history_data["on_board"]}
                             
-                    self.trending_tokens[symbol] = trending_data
+                    self.trending_tokens_24h[symbol] = trending_data
 
         for i in range(min(len(fall_trending_list), 20)):
             data = fall_trending_list[i]
@@ -218,7 +250,7 @@ class TopGainersLosersPortfolio(object):
             change = data["change"]
             if abs(change) >= 20.0 or (abs(change) >= 15.0 and i < 10):
                 trending_tokens.add(symbol)
-                if symbol not in self.trending_tokens:
+                if symbol not in self.trending_tokens_24h:
                     on_board_time = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
                     trending_data = {"change": change,
                                      "on_board_ts": data_time,
@@ -232,15 +264,15 @@ class TopGainersLosersPortfolio(object):
                                              "on_board_ts": history_data["on_board_ts"],
                                              "on_board": history_data["on_board"]}
                             
-                    self.trending_tokens[symbol] = trending_data
+                    self.trending_tokens_24h[symbol] = trending_data
         
-        for symbol in self.trending_tokens.copy().keys():
+        for symbol in self.trending_tokens_24h.copy().keys():
             if symbol not in trending_tokens:
-                trending_data = self.trending_tokens[symbol]
+                trending_data = self.trending_tokens_24h[symbol]
                 self.history_trending_data[symbol] = {"pop_ts": data_time,
                                                       "on_board_ts": trending_data["on_board_ts"],
                                                       "on_board": trending_data["on_board"]}
-                self.trending_tokens.pop(symbol)
+                self.trending_tokens_24h.pop(symbol)
 
     def on_rise_fall_data(self, data: tuple):
         rise_list, fall_list = data
@@ -325,11 +357,13 @@ class TopGainersLosersPortfolio(object):
             if rise_top_1_symbol not in self.fast_rise_tokens and from_onboard_time <= 100*60 and abs(rise_top_1_change) > 1.0:
                 self.fast_rise_tokens.append(rise_top_1_symbol)
 
-                if rise_top_1_symbol in self.trending_tokens:
+                if rise_top_1_symbol in self.trending_tokens_24h:
                     setting = self.new_strategy(rise_top_1_symbol, Direction.LONG)
                     if setting:
-                        setting["trending_ts"] = self.trending_tokens[rise_top_1_symbol]["on_board_ts"]
-                        setting["trending_time"] = self.trending_tokens[rise_top_1_symbol]["on_board"]
+                        setting["trending_ts_1h"] = self.trending_tokens_1h.get(rise_top_1_symbol, {}).get("on_board_ts", 0)
+                        setting["trending_time_1h"] = self.trending_tokens_1h.get(rise_top_1_symbol, {}).get("on_board", "")
+                        setting["trending_ts_24h"] = self.trending_tokens_24h[rise_top_1_symbol]["on_board_ts"]
+                        setting["trending_time_24h"] = self.trending_tokens_24h[rise_top_1_symbol]["on_board"]
                         if rise_top_1_symbol not in self.strategy_long_tokens:
                             self.strategy_long_tokens.append(rise_top_1_symbol)
 
@@ -351,11 +385,13 @@ class TopGainersLosersPortfolio(object):
             if fall_top_1_symbol not in self.fast_fall_tokens and from_onboard_time <= 100*60 and abs(fall_top_1_change) > 1.0:
                 self.fast_fall_tokens.append(fall_top_1_symbol)
 
-                if fall_top_1_symbol in self.trending_tokens:
+                if fall_top_1_symbol in self.trending_tokens_24h:
                     setting = self.new_strategy(fall_top_1_symbol, Direction.SHORT)
                     if setting:
-                        setting["trending_ts"] = self.trending_tokens[fall_top_1_symbol]["on_board_ts"]
-                        setting["trending_time"] = self.trending_tokens[fall_top_1_symbol]["on_board"]
+                        setting["trending_ts_1h"] = self.trending_tokens_1h.get(fall_top_1_symbol, {}).get("on_board_ts", 0)
+                        setting["trending_time_1h"] = self.trending_tokens_1h.get(fall_top_1_symbol, {}).get("on_board", "")
+                        setting["trending_ts_24h"] = self.trending_tokens_24h[fall_top_1_symbol]["on_board_ts"]
+                        setting["trending_time_24h"] = self.trending_tokens_24h[fall_top_1_symbol]["on_board"]
                         if fall_top_1_symbol not in self.strategy_short_tokens:
                             self.strategy_short_tokens.append(fall_top_1_symbol)
 
@@ -467,7 +503,7 @@ class TopGainersLosersPortfolio(object):
                 current_dir = os.path.dirname(os.path.abspath(__file__))
 
                 # 获取涨跌幅排行榜数据
-                for duration in ["24h", "5m"]:
+                for duration in ["1h", "24h", "5m"]:
                     rise_list = []
                     fall_list = []
 
@@ -482,10 +518,15 @@ class TopGainersLosersPortfolio(object):
                         fall_list.append(dict(row))
                     
                     # 生成信号
+                    if duration == "1h" and (self.rise_data_list_1h != rise_list or self.fall_data_list_1h != fall_list):
+                        self.rise_data_list_1h= rise_list
+                        self.fall_data_list_1h = fall_list
+                        self.on_trending_data_1h((rise_list, fall_list))
+
                     if duration == "24h" and (self.rise_data_list_24h != rise_list or self.fall_data_list_24h != fall_list):
                         self.rise_data_list_24h= rise_list
                         self.fall_data_list_24h = fall_list
-                        self.on_trending_data((rise_list, fall_list))
+                        self.on_trending_data_24h((rise_list, fall_list))
 
                     if duration == "5m" and (self.rise_data_list_5m != rise_list or self.fall_data_list_5m != fall_list):
                         self.rise_data_list_5m = rise_list
@@ -647,12 +688,40 @@ class TopGainersLosersPortfolio(object):
 
     def load_recent_trending_data(self):
         print_(f"加载历史趋势数据..")
-        self.trending_tokens = {}
-        hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(hours=5)
+        self.trending_tokens_1h = {}
+        self.trending_tokens_24h = {}
+        hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(hours=3)
         while hour_time < datetime.now():
             current_dir = os.path.dirname(os.path.abspath(__file__))
             date = hour_time.strftime(f"%Y-%m-%d")
             hour = hour_time.hour
+
+            # 1小时趋势数据
+            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}1h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            if os.path.exists(dir_path):
+                for root, _, files in os.walk(dir_path):
+                    for file in files:
+                        rise_list = []
+                        fall_list = []
+
+                        rise_file_path = f"{root}{DIR_SYMBOL}{file}"
+                        fall_file_path = rise_file_path.replace("rank_rise", "rank_fall")
+                        if os.path.exists(fall_file_path):
+                            df_rise = pd.read_csv(rise_file_path)
+                            for _, row in df_rise.iterrows():
+                                rise_list.append(dict(row))
+
+                            df_fall = pd.read_csv(fall_file_path)
+                            for _, row in df_fall.iterrows():
+                                fall_list.append(dict(row))
+
+                            # 生成信号
+                            if self.rise_data_list_1h != rise_list or self.fall_data_list_1h != fall_list:
+                                self.rise_data_list_1h= rise_list
+                                self.fall_data_list_1h = fall_list
+                                self.on_trending_data_1h((rise_list, fall_list))
+
+            # 24小时趋势数据
             dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}24h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             if os.path.exists(dir_path):
                 for root, _, files in os.walk(dir_path):
@@ -675,7 +744,7 @@ class TopGainersLosersPortfolio(object):
                             if self.rise_data_list_24h != rise_list or self.fall_data_list_24h != fall_list:
                                 self.rise_data_list_24h= rise_list
                                 self.fall_data_list_24h = fall_list
-                                self.on_trending_data((rise_list, fall_list))
+                                self.on_trending_data_24h((rise_list, fall_list))
 
             hour_time += timedelta(hours=1)
         
