@@ -70,7 +70,8 @@ class TopGainersLosersStrategy(CtaTemplate):
         "minute_5_bar_dt",
         "minute_5_atr",
         "insufficient_value",
-        "open_allowed"
+        "open_allowed",
+        "trade_enable"
     ]
 
     # 同步列表
@@ -101,7 +102,8 @@ class TopGainersLosersStrategy(CtaTemplate):
         "minute_5_bar_dt",
         "minute_5_atr",
         "insufficient_value",
-        "open_allowed"
+        "open_allowed",
+        "trade_enable"
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -175,6 +177,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.recent_atr_list = []                   # 初始化时最近ATR
         self.loading_database = False               # 正在加载数据
         self.open_allowed = False                   # 是否允许开仓
+        self.trade_enable = True
         
         self.minute_bar: BarData = None
         self.minute_bar_dt: str = ""
@@ -451,7 +454,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                             self.open_allowed = True
 
                 # 发送订单
-                if self.open_allowed and self.open_count <= 2 and not self.pos and time.time() <= tick.datetime.timestamp() + 3:
+                if self.trade_enable and self.open_allowed and self.open_count <= 2 and not self.pos and time.time() <= tick.datetime.timestamp() + 3:
                     open_volume = abs(self.target_pos) - abs(last_target_pos)
                     if open_volume:
                         if self.direction == Direction.LONG:
@@ -530,6 +533,9 @@ class TopGainersLosersStrategy(CtaTemplate):
         
         if abs(self.portfolio.account_drawdown) >= self.portfolio.portfolio_value * 0.4:
             leverage = 6
+
+        if abs(self.portfolio.account_drawdown) >= self.portfolio.portfolio_value * 1.0:
+            self.trade_enable = False
 
         self.target_pos = self.portfolio.portfolio_value * leverage / tick_price
         if self.direction == Direction.SHORT:
