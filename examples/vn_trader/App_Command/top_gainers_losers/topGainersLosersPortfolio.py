@@ -215,6 +215,9 @@ class TopGainersLosersPortfolio(object):
                              "on_board": on_board_time}
             self.trending_tokens_1h[symbol] = trending_data
 
+        # 排序
+        self.trending_tokens_1h = dict(sorted(self.trending_tokens_1h.items()))
+
     def on_trending_data_24h(self, data: tuple):
         rise_trending_list, fall_trending_list = data
         data_time = rise_trending_list[0]["change"]
@@ -233,7 +236,7 @@ class TopGainersLosersPortfolio(object):
                     trending_data = {"change": change,
                                      "on_board_ts": data_time,
                                      "on_board": on_board_time}
-                    
+
                     history_data = self.history_trending_data.get(symbol, {})
                     if history_data:
                         pop_ts = history_data["pop_ts"]
@@ -273,6 +276,9 @@ class TopGainersLosersPortfolio(object):
                                                       "on_board_ts": trending_data["on_board_ts"],
                                                       "on_board": trending_data["on_board"]}
                 self.trending_tokens_24h.pop(symbol)
+        
+        # 排序
+        self.trending_tokens_24h = dict(sorted(self.trending_tokens_24h.items()))
 
     def on_rise_fall_data(self, data: tuple):
         rise_list, fall_list = data
