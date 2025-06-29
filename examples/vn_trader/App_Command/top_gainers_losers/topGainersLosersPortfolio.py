@@ -207,27 +207,29 @@ class TopGainersLosersPortfolio(object):
         rise_trending_list = rise_trending_list[3:]
         fall_trending_list = fall_trending_list[3:]
         
-        for i in range(min(len(rise_trending_list), 1)):
+        for i in range(min(len(rise_trending_list), 5)):
             data = rise_trending_list[i]
             symbol = data["symbol"]
             change = data["change"]
             on_board_time = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
+            
+            if abs(change) >= 5.0:
+                trending_data = {"change": change,
+                                "on_board_ts": data_time,
+                                "on_board": on_board_time}
+                self.trending_tokens_1h[symbol] = trending_data
 
-            trending_data = {"change": change,
-                             "on_board_ts": data_time,
-                             "on_board": on_board_time}
-            self.trending_tokens_1h[symbol] = trending_data
-
-        for i in range(min(len(fall_trending_list), 1)):
+        for i in range(min(len(fall_trending_list), 5)):
             data = fall_trending_list[i]
             symbol = data["symbol"]
             change = data["change"]
             on_board_time = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
 
-            trending_data = {"change": change,
-                             "on_board_ts": data_time,
-                             "on_board": on_board_time}
-            self.trending_tokens_1h[symbol] = trending_data
+            if abs(change) >= 5.0:
+                trending_data = {"change": change,
+                                "on_board_ts": data_time,
+                                "on_board": on_board_time}
+                self.trending_tokens_1h[symbol] = trending_data
 
         # 排序
         self.trending_tokens_1h = dict(sorted(self.trending_tokens_1h.items()))
