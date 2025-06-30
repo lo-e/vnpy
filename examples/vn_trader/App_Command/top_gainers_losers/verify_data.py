@@ -230,6 +230,9 @@ def statistics_pnl(for_eth: bool = False):
             msg = f"{trending_time_1h}\t{trending_change_1h}\t{trending_time_24h}\t{open_date_time} - {dt}\t{direction}\t{position_minute}m {position_second}s\tcross {cross}\tentry_drawdown {entry_drawdown}\topen {open_count}\tstop {stop_count}\tstop_pnl {stop_rate:.3f}\tpnl {pnl_rate:.3f}\t{real_pnl_rate:.3f}\t{total_pnl:.3f}\t{symbol}"
             if over_loss_flag:
                 msg = f"{msg}\t*"
+            
+            if pnl_rate >= 5.0:
+                msg = f"{msg}\n"
                 
             print(msg)
 
