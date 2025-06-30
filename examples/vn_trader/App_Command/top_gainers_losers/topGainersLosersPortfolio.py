@@ -213,7 +213,7 @@ class TopGainersLosersPortfolio(object):
             change = data["change"]
             on_board_time = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
             
-            if abs(change) >= 5.0:
+            if abs(change) >= 10.0:
                 trending_data = {"change": change,
                                 "on_board_ts": data_time,
                                 "on_board": on_board_time}
@@ -225,7 +225,7 @@ class TopGainersLosersPortfolio(object):
             change = data["change"]
             on_board_time = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
 
-            if abs(change) >= 5.0:
+            if abs(change) >= 10.0:
                 trending_data = {"change": change,
                                 "on_board_ts": data_time,
                                 "on_board": on_board_time}

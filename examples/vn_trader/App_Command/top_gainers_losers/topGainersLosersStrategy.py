@@ -520,6 +520,10 @@ class TopGainersLosersStrategy(CtaTemplate):
 
                 self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} OPEN_COUNT {self.open_count} STOP_COUNT {self.stop_count} STOP {self.stop_pnl:.2f}% CLOSE {pnl:.2f}% ENTRY_DRAWDOWN {self.entry_drawdown} PRICE {tick.last_price} TRENDING_1H {self.trending_change_1h} {self.trending_ts_1h} {self.trending_time_1h} TRENDING_24H {self.trending_ts_24h} {self.trending_time_24h}"})
                 self.trade_logs_updated = True
+
+                if pnl >= 5.0:
+                    msg = f"恭喜！赢麻了！\n\nPNL {pnl:.2f}%"
+                    self.send_ding_talk(msg)
     
     def add_unit_pos(self, tick_price: float):
         # 开仓数

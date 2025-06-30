@@ -83,13 +83,29 @@ def statistics_pnl(for_eth: bool = False):
                     entry_drawdown = False
                     entry_drawdown = elements[13]
                     entry_drawdown = True if entry_drawdown == "True" else False
-                    if len(elements) < 24:
-                        trending_ts_1h = 0
-                        trending_ts_24h = float(elements[17])
-                    
-                    else:
-                        trending_ts_1h = float(elements[17])
-                        trending_ts_24h = float(elements[21])
+
+                    # 1H趋势数据
+                    trending_change_1h = 0
+                    trending_ts_1h = 0
+                    trending_1h_index = elements.index("TRENDING_1H") if "TRENDING_1H" in elements else -1
+                    if trending_1h_index >= 0:
+                        value_1 = elements[trending_1h_index + 1]
+                        if float(value_1) < 100:
+                            trending_change_1h = float(value_1)
+                            value_2 = elements[trending_1h_index + 2]
+                            if len(value_2):
+                                trending_ts_1h = float(value_2)
+                        
+                        else:
+                            trending_ts_1h = float(value_1)
+
+                    # 24H趋势数据
+                    trending_ts_24h = 0
+                    trending_24h_index = elements.index("TRENDING_24H") if "TRENDING_24H" in elements else -1
+                    if trending_24h_index < 0:
+                        trending_24h_index = elements.index("TRENDING") if "TRENDING" in elements else -1
+                    if trending_24h_index >= 0:
+                        trending_ts_24h = float(elements[trending_24h_index + 1])
 
                     data = {"symbol": symbol,
                             "direction": direction,
@@ -105,6 +121,7 @@ def statistics_pnl(for_eth: bool = False):
                             "stop_rate":stop_rate,
                             "pnl_rate": pnl_rate,
                             "entry_drawdown": entry_drawdown,
+                            "trending_change_1h": round(trending_change_1h, 2),
                             "trending_ts_1h": trending_ts_1h,
                             "trending_ts_24h": trending_ts_24h,
                             "over_loss_datetime": over_loss_datetime}
@@ -185,6 +202,7 @@ def statistics_pnl(for_eth: bool = False):
             position_second = int(position_time - position_minute * 60)
 
             # 择时开仓
+            trending_change_1h = data["trending_change_1h"]
             trending_ts_1h = data["trending_ts_1h"]
             trending_time_1h = datetime.fromtimestamp(trending_ts_1h).strftime(f"%Y-%m-%d %H:%M:%S")
 
@@ -194,9 +212,9 @@ def statistics_pnl(for_eth: bool = False):
             last_close_date_time = data["last_close_date_time"]
             last_close_ts = datetime.strptime(last_close_date_time, "%Y-%m-%d %H:%M:%S").timestamp() if last_close_date_time else 0
 
-            # if (open_ts - last_close_ts > 4 * 60 * 60) and (open_ts - trending_ts_24h > 2 * 60 * 60):
+            if (open_ts - last_close_ts > 4 * 60 * 60) and (open_ts - trending_ts_24h > 2 * 60 * 60):
             # if (open_ts - trending_ts_24h > 2 * 60 * 60):
-            if (open_ts - trending_ts_1h > 2 * 60 * 60):
+            # if (open_ts - trending_ts_1h > 2 * 60 * 60):
                 real_pnl_rate = 0
             
             over_loss_flag = False
@@ -209,7 +227,7 @@ def statistics_pnl(for_eth: bool = False):
             if real_pnl_rate:
                 pnl_count += 1
 
-            msg = f"{trending_time_1h}\t{trending_time_24h}\t{open_date_time} - {dt}\t{direction}\t{position_minute}m {position_second}s\tcross {cross}\tentry_drawdown {entry_drawdown}\topen {open_count}\tstop {stop_count}\tstop_pnl {stop_rate:.3f}\tpnl {pnl_rate:.3f}\t{real_pnl_rate:.3f}\t{total_pnl:.3f}\t{symbol}"
+            msg = f"{trending_time_1h}\t{trending_change_1h}\t{trending_time_24h}\t{open_date_time} - {dt}\t{direction}\t{position_minute}m {position_second}s\tcross {cross}\tentry_drawdown {entry_drawdown}\topen {open_count}\tstop {stop_count}\tstop_pnl {stop_rate:.3f}\tpnl {pnl_rate:.3f}\t{real_pnl_rate:.3f}\t{total_pnl:.3f}\t{symbol}"
             if over_loss_flag:
                 msg = f"{msg}\t*"
                 
