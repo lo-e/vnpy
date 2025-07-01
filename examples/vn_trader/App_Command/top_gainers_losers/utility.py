@@ -114,6 +114,7 @@ class Chrome(object):
         exchange_select_need = True
         rise_list_origin = []
         fall_list_origin = []
+        last_data_ts = 0
         while True:
             try:
                 # 启动浏览器
@@ -261,10 +262,13 @@ class Chrome(object):
                 else:
                     time.sleep(1)
                     continue
-
+                
+                last_data_ts = time.time()
                 time.sleep(rest)
 
             except Exception as e:
+                if last_data_ts and time.time() - last_data_ts >= 5 * 60:
+                    driver_reboot = True
                 print(str(e))
 
     def fetch_rise_fall_hour_trending(self, callback = None, rest: int = 60) -> None:
@@ -278,6 +282,7 @@ class Chrome(object):
         duration_24h_select_dt = None
         duration_24h_rise_list_origin = []
         duration_24h_fall_list_origin = []
+        last_data_ts = 0
         while True:
             try:
                 # 启动浏览器
@@ -465,10 +470,13 @@ class Chrome(object):
                     duration_1h_rise_list_origin = []
                     duration_1h_fall_list_origin = []
                     continue
-
+                
+                last_data_ts = time.time()
                 time.sleep(rest)
 
             except Exception as e:
+                if last_data_ts and time.time() - last_data_ts >= 5 * 60:
+                    driver_reboot = True
                 print(str(e))
 
 

@@ -239,6 +239,21 @@ class TopGainersLosersPortfolio(object):
         data_time = rise_trending_list[0]["change"]
         rise_trending_list = rise_trending_list[3:]
         fall_trending_list = fall_trending_list[3:]
+
+        # 剔除历史趋势数据
+        for symbol, data in self.history_trending_data.copy().items():
+            pop_ts = data["pop_ts"]
+            if data_time > pop_ts + 1 * 60 * 60:
+                on_board_ts = data["on_board_ts"]
+                on_board = data["on_board"]
+                self.history_trending_data.pop(symbol)
+
+                off_board = datetime.now().replace(microsecond=0)
+                boarding_time = int(time.time() - on_board_ts)
+                boarding_minute = int(boarding_time / 60)
+                boarding_second = int(boarding_time - boarding_minute * 60)
+                msg = f"趋势停止\n\n{symbol}\non：{on_board}\noff：{off_board}\ntime：{boarding_minute}m {boarding_second}s"
+                self.send_ding_talk(msg)
         
         trending_tokens = set()
         for i in range(min(len(rise_trending_list), 20)):
@@ -376,28 +391,27 @@ class TopGainersLosersPortfolio(object):
             rise_top_2_change = rise_list[1]["change"]
             onboard_time = self.rise_onboard_symbol_time_dict.get(rise_top_1_symbol, time.time())
             from_onboard_time = rise_data_time - onboard_time
-            if rise_top_1_symbol not in self.fast_rise_tokens and from_onboard_time <= 100*60 and abs(rise_top_1_change) > 1.0:
+            if rise_top_1_symbol in self.trending_tokens_24h and rise_top_1_symbol not in self.fast_rise_tokens and from_onboard_time <= 100*60 and abs(rise_top_1_change) > 1.0:
                 self.fast_rise_tokens.append(rise_top_1_symbol)
 
-                if rise_top_1_symbol in self.trending_tokens_24h:
-                    setting = self.new_strategy(rise_top_1_symbol, Direction.LONG)
-                    if setting:
-                        setting["trending_change_1h"] = self.trending_tokens_1h.get(rise_top_1_symbol, {}).get("change", 0)
-                        setting["trending_ts_1h"] = self.trending_tokens_1h.get(rise_top_1_symbol, {}).get("on_board_ts", 0)
-                        setting["trending_time_1h"] = self.trending_tokens_1h.get(rise_top_1_symbol, {}).get("on_board", "")
-                        setting["trending_ts_24h"] = self.trending_tokens_24h[rise_top_1_symbol]["on_board_ts"]
-                        setting["trending_time_24h"] = self.trending_tokens_24h[rise_top_1_symbol]["on_board"]
-                        if rise_top_1_symbol not in self.strategy_long_tokens:
-                            self.strategy_long_tokens.append(rise_top_1_symbol)
+                setting = self.new_strategy(rise_top_1_symbol, Direction.LONG)
+                if setting:
+                    setting["trending_change_1h"] = self.trending_tokens_1h.get(rise_top_1_symbol, {}).get("change", 0)
+                    setting["trending_ts_1h"] = self.trending_tokens_1h.get(rise_top_1_symbol, {}).get("on_board_ts", 0)
+                    setting["trending_time_1h"] = self.trending_tokens_1h.get(rise_top_1_symbol, {}).get("on_board", "")
+                    setting["trending_ts_24h"] = self.trending_tokens_24h[rise_top_1_symbol]["on_board_ts"]
+                    setting["trending_time_24h"] = self.trending_tokens_24h[rise_top_1_symbol]["on_board"]
+                    if rise_top_1_symbol not in self.strategy_long_tokens:
+                        self.strategy_long_tokens.append(rise_top_1_symbol)
 
-                        new_long_count += 1
-                        new_settings.append(setting)
+                    new_long_count += 1
+                    new_settings.append(setting)
 
-                        vt_symbol = setting["vt_symbol"]
-                        onboard_time_str = datetime.fromtimestamp(onboard_time).strftime(f"%H:%M:%S")
-                        top_time_str = datetime.fromtimestamp(rise_data_time).strftime(f"%H:%M:%S")
-                        top_msg = f"{rise_top_1_symbol} 上涨\n{vt_symbol}（{rise_top_1_change} {rise_top_2_change}）\nfrom {onboard_time_str}\nto {top_time_str}\nin {from_onboard_time}s"
-                        self.send_ding_talk(top_msg)
+                    vt_symbol = setting["vt_symbol"]
+                    onboard_time_str = datetime.fromtimestamp(onboard_time).strftime(f"%H:%M:%S")
+                    top_time_str = datetime.fromtimestamp(rise_data_time).strftime(f"%H:%M:%S")
+                    top_msg = f"{rise_top_1_symbol} 上涨\n{vt_symbol}（{rise_top_1_change} {rise_top_2_change}）\nfrom {onboard_time_str}\nto {top_time_str}\nin {from_onboard_time}s"
+                    self.send_ding_talk(top_msg)
 
             # 判断下跌Top1代币
             fall_top_1_symbol = fall_list[0]["symbol"]
@@ -405,28 +419,27 @@ class TopGainersLosersPortfolio(object):
             fall_top_2_change = fall_list[1]["change"]
             onboard_time = self.fall_onboard_symbol_time_dict.get(fall_top_1_symbol, time.time())
             from_onboard_time = fall_data_time - onboard_time
-            if fall_top_1_symbol not in self.fast_fall_tokens and from_onboard_time <= 100*60 and abs(fall_top_1_change) > 1.0:
+            if fall_top_1_symbol in self.trending_tokens_24h and fall_top_1_symbol not in self.fast_fall_tokens and from_onboard_time <= 100*60 and abs(fall_top_1_change) > 1.0:
                 self.fast_fall_tokens.append(fall_top_1_symbol)
 
-                if fall_top_1_symbol in self.trending_tokens_24h:
-                    setting = self.new_strategy(fall_top_1_symbol, Direction.SHORT)
-                    if setting:
-                        setting["trending_change_1h"] = self.trending_tokens_1h.get(fall_top_1_symbol, {}).get("change", 0)
-                        setting["trending_ts_1h"] = self.trending_tokens_1h.get(fall_top_1_symbol, {}).get("on_board_ts", 0)
-                        setting["trending_time_1h"] = self.trending_tokens_1h.get(fall_top_1_symbol, {}).get("on_board", "")
-                        setting["trending_ts_24h"] = self.trending_tokens_24h[fall_top_1_symbol]["on_board_ts"]
-                        setting["trending_time_24h"] = self.trending_tokens_24h[fall_top_1_symbol]["on_board"]
-                        if fall_top_1_symbol not in self.strategy_short_tokens:
-                            self.strategy_short_tokens.append(fall_top_1_symbol)
+                setting = self.new_strategy(fall_top_1_symbol, Direction.SHORT)
+                if setting:
+                    setting["trending_change_1h"] = self.trending_tokens_1h.get(fall_top_1_symbol, {}).get("change", 0)
+                    setting["trending_ts_1h"] = self.trending_tokens_1h.get(fall_top_1_symbol, {}).get("on_board_ts", 0)
+                    setting["trending_time_1h"] = self.trending_tokens_1h.get(fall_top_1_symbol, {}).get("on_board", "")
+                    setting["trending_ts_24h"] = self.trending_tokens_24h[fall_top_1_symbol]["on_board_ts"]
+                    setting["trending_time_24h"] = self.trending_tokens_24h[fall_top_1_symbol]["on_board"]
+                    if fall_top_1_symbol not in self.strategy_short_tokens:
+                        self.strategy_short_tokens.append(fall_top_1_symbol)
 
-                        new_short_count += 1
-                        new_settings.append(setting)
+                    new_short_count += 1
+                    new_settings.append(setting)
 
-                        vt_symbol = setting["vt_symbol"]
-                        onboard_time_str = datetime.fromtimestamp(onboard_time).strftime(f"%H:%M:%S")
-                        top_time_str = datetime.fromtimestamp(fall_data_time).strftime(f"%H:%M:%S")
-                        top_msg = f"{fall_top_1_symbol} 下跌\n{vt_symbol}（{fall_top_1_change} {fall_top_2_change}）\nfrom {onboard_time_str}\nto {top_time_str}\nin {from_onboard_time}s"
-                        self.send_ding_talk(top_msg)
+                    vt_symbol = setting["vt_symbol"]
+                    onboard_time_str = datetime.fromtimestamp(onboard_time).strftime(f"%H:%M:%S")
+                    top_time_str = datetime.fromtimestamp(fall_data_time).strftime(f"%H:%M:%S")
+                    top_msg = f"{fall_top_1_symbol} 下跌\n{vt_symbol}（{fall_top_1_change} {fall_top_2_change}）\nfrom {onboard_time_str}\nto {top_time_str}\nin {from_onboard_time}s"
+                    self.send_ding_talk(top_msg)
 
         if close_long_tokens or close_short_tokens:
             # 停止当前策略
@@ -711,16 +724,15 @@ class TopGainersLosersPortfolio(object):
             self.send_ding_talk(msg)
 
     def load_recent_trending_data(self):
-        print_(f"加载历史趋势数据..")
+        # 1小时趋势数据
+        print_(f"加载1H历史趋势数据..")
         self.trending_tokens_1h = {}
-        self.trending_tokens_24h = {}
         hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(hours=3)
         while hour_time < datetime.now():
             current_dir = os.path.dirname(os.path.abspath(__file__))
             date = hour_time.strftime(f"%Y-%m-%d")
             hour = hour_time.hour
 
-            # 1小时趋势数据
             dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}1h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             if os.path.exists(dir_path):
                 for root, _, files in os.walk(dir_path):
@@ -745,7 +757,17 @@ class TopGainersLosersPortfolio(object):
                                 self.fall_data_list_1h = fall_list
                                 self.on_trending_data_1h((rise_list, fall_list))
 
-            # 24小时趋势数据
+            hour_time += timedelta(hours=1)
+
+        # 24小时趋势数据
+        print_(f"加载24H历史趋势数据..")
+        self.trending_tokens_24h = {}
+        hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=3)
+        while hour_time < datetime.now():
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            date = hour_time.strftime(f"%Y-%m-%d")
+            hour = hour_time.hour
+
             dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}24h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             if os.path.exists(dir_path):
                 for root, _, files in os.walk(dir_path):
@@ -769,7 +791,7 @@ class TopGainersLosersPortfolio(object):
                                 self.rise_data_list_24h= rise_list
                                 self.fall_data_list_24h = fall_list
                                 self.on_trending_data_24h((rise_list, fall_list))
-
+            
             hour_time += timedelta(hours=1)
         
         print_(f"历史趋势数据加载完成！")
