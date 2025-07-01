@@ -268,6 +268,7 @@ class Chrome(object):
 
             except Exception as e:
                 if last_data_ts and time.time() - last_data_ts >= 5 * 60:
+                    last_data_ts = 0
                     driver_reboot = True
                 print(str(e))
 
@@ -476,6 +477,7 @@ class Chrome(object):
 
             except Exception as e:
                 if last_data_ts and time.time() - last_data_ts >= 5 * 60:
+                    last_data_ts = 0
                     driver_reboot = True
                 print(str(e))
 

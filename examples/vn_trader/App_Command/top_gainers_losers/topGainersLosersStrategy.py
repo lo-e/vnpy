@@ -110,7 +110,6 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.exchange: Exchange = Exchange.NONE
         self.exchange_user:str = ""
         self.direction: Direction = Direction.NET
-        self.trending_change_recent: float = 0
         self.trending_change_1h: float = 0
         self.trending_ts_1h: float = 0
         self.trending_time_1h: str = ""
@@ -281,14 +280,6 @@ class TopGainersLosersStrategy(CtaTemplate):
                     msg = f"\n{self.vt_symbol} ATR 指标缺失\n\nbar {self.minute_bar_dt}"
                     self.send_ding_talk(msg)
                     print_(msg)
-
-                # 回测周期内最大振幅
-                if self.direction == Direction.LONG:
-                    self.trending_change_recent = abs(((self.history_high / self.history_low) - 1) * 100)
-                
-                else:
-                    self.trending_change_recent = abs(((self.history_low / self.history_high) - 1) * 100)
-                self.trending_change_recent = round(self.trending_change_recent, 2)
 
                 # 是否价格突破
                 self.price_cross = False
@@ -527,7 +518,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                     if self.direction == Direction.SHORT:
                         pnl = pnl * -1
 
-                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} OPEN_COUNT {self.open_count} STOP_COUNT {self.stop_count} STOP {self.stop_pnl:.2f}% CLOSE {pnl:.2f}% ENTRY_DRAWDOWN {self.entry_drawdown} PRICE {tick.last_price} TRENDING_RECENT {self.trending_change_recent} TRENDING_1H {self.trending_change_1h} {self.trending_ts_1h} {self.trending_time_1h} TRENDING_24H {self.trending_ts_24h} {self.trending_time_24h}"})
+                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} OPEN_COUNT {self.open_count} STOP_COUNT {self.stop_count} STOP {self.stop_pnl:.2f}% CLOSE {pnl:.2f}% ENTRY_DRAWDOWN {self.entry_drawdown} PRICE {tick.last_price} TRENDING_1H {self.trending_change_1h} {self.trending_ts_1h} {self.trending_time_1h} TRENDING_24H {self.trending_ts_24h} {self.trending_time_24h}"})
                 self.trade_logs_updated = True
 
                 if pnl >= 5.0:
