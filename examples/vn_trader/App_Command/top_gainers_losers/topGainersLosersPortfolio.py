@@ -321,8 +321,6 @@ class TopGainersLosersPortfolio(object):
         #             # self.send_ding_talk(msg)
 
     def on_rise_fall_data(self, data: tuple):
-        return
-    
         rise_list, fall_list = data
         rise_data_time = rise_list[0]["change"]
         fall_data_time = fall_list[0]["change"]
