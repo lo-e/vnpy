@@ -301,22 +301,24 @@ class TopGainersLosersPortfolio(object):
         # 排序
         self.trending_tokens_24h = dict(sorted(self.trending_tokens_24h.items()))
 
-        # 剔除历史趋势数据
-        for symbol, data in self.history_trending_data.copy().items():
-            pop_ts = data["pop_ts"]
-            if data_time > pop_ts + 1 * 60 * 60:
-                change = data["change"]
-                on_board_ts = data["on_board_ts"]
-                on_board = data["on_board"]
-                self.history_trending_data.pop(symbol)
+        # 趋势停止判断
+        # for symbol, data in self.history_trending_data.copy().items():
+        #     pop_ts = data["pop_ts"]
+        #     if data_time > pop_ts + 1 * 60 * 60:
+        #         change = data["change"]
+        #         on_board_ts = data["on_board_ts"]
+        #         on_board = data["on_board"]
+        #         self.history_trending_data.pop(symbol)
 
-                off_board = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
-                boarding_time = int(data_time - on_board_ts)
-                boarding_hour = int(boarding_time / 3600)
-                boarding_minute = int((boarding_time - (boarding_hour * 3600)) / 60)
-                boarding_second = int(boarding_time - boarding_hour * 3600 - boarding_minute * 60)
-                msg = f"趋势停止\n\n{symbol}\nchange：{change}\non：{on_board}\noff：{off_board}\ntime：{boarding_hour}h {boarding_minute}m {boarding_second}s"
-                self.send_ding_talk(msg)
+        #         if not self.inited:
+        #             off_board = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
+        #             boarding_time = int(data_time - on_board_ts)
+        #             boarding_hour = int(boarding_time / 3600)
+        #             boarding_minute = int((boarding_time - (boarding_hour * 3600)) / 60)
+        #             boarding_second = int(boarding_time - boarding_hour * 3600 - boarding_minute * 60)
+        #             msg = f"趋势停止 {symbol}\nchange：{change}\non：{on_board}\noff：{off_board}\ntime：{boarding_hour}h {boarding_minute}m {boarding_second}s\n"
+        #             print(msg)
+        #             # self.send_ding_talk(msg)
 
     def on_rise_fall_data(self, data: tuple):
         return
