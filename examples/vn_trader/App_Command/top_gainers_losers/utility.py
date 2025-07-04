@@ -534,7 +534,7 @@ class Chrome(object):
             By.XPATH,
             "td[@class='rc-table-cell']",
             )[2].text
-        change = float(change.split("%")[0])
+        change = float(change.split("%")[0]) if change else 0
 
         data = {"symbol": f"{symbol}",
                 "change": change}
