@@ -29,7 +29,7 @@ class Backtesting(object):
         print(f"加载24H历史趋势数据..")
         self.trending_tokens_24h = {}
         hour_time = datetime.strptime(f"2025-06-29 00:00:00", f"%Y-%m-%d %H:%M:%S")
-        # hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=6)
+        # hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=3)
         while hour_time < datetime.now():
             current_dir = os.path.dirname(os.path.abspath(__file__))
             date = hour_time.strftime(f"%Y-%m-%d")
@@ -115,7 +115,7 @@ class Backtesting(object):
 
     def search_1h_trending_data(self, from_ts: float, direction: str, symbol: str, top: int):
         result = []
-        start_hour_time = datetime.fromtimestamp(from_ts).replace(minute=0, second=0, microsecond=0)
+        start_hour_time = (datetime.fromtimestamp(from_ts) - timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
         hour_time = start_hour_time
         while hour_time <= datetime.now():
             current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -130,13 +130,7 @@ class Backtesting(object):
                         t = file.split(".")[0].replace("_", ":")
                         dt = f"{date} {t}"
                         file_ts = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S").timestamp()
-                        if file_ts > from_ts:
-                            file_path = f"{root}{DIR_SYMBOL}{file}"
-                            df = pd.read_csv(file_path)
-                            result = []
-                            for _, row in df.iterrows():
-                                result.append(dict(row))
-                            
+                        if file_ts > from_ts and result:
                             rank_1h = 0
                             symbols_1h = []
                             trending_list = result[3:]
@@ -149,6 +143,12 @@ class Backtesting(object):
                             if 1 <= rank_1h <= top:
                                 ts = result[0]["change"]
                                 return ts, rank_1h
+                        
+                        file_path = f"{root}{DIR_SYMBOL}{file}"
+                        df = pd.read_csv(file_path)
+                        result = []
+                        for _, row in df.iterrows():
+                            result.append(dict(row))
 
             hour_time += timedelta(hours=1)
         return 0, 0
@@ -524,4 +524,4 @@ if __name__ == "__main__":
     # statistics_pnl(for_eth=False)
 
     backtesting = Backtesting()
-    backtesting.start(BacktestingMode.TRENDING)
+    backtesting.start(BacktestingMode.REVERSE)
