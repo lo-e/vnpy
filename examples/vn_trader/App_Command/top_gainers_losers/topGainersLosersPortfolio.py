@@ -50,7 +50,7 @@ class TopGainersLosersPortfolio(object):
         self.sync_data = {}
         self.unsubscribe_time = 0
         self.account_ath = 0
-        self.account_drawdown = {}
+        self.account_drawdown = 0
         self.account_balance_data = {}
         self.account_notice_ts = 0
         self.fast_rise_tokens = []
