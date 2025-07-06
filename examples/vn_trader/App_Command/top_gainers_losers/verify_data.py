@@ -63,6 +63,7 @@ class Backtesting(object):
         
         print(f"-"*20)
         for symbol, trending_data in self.trending_tokens_24h.items():
+            direction = trending_data["direction"]
             mean_rise = trending_data["mean_rise"]
             mean_fall = trending_data["mean_fall"]
             change = trending_data["change"]
@@ -70,15 +71,38 @@ class Backtesting(object):
             on_board_ts = trending_data["on_board_ts"]
             on_board = trending_data["on_board"]
             
-            if 1 <= rank_1h <= 3:
-                data_time = time.time()
-                off_board = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
-                boarding_time = int(data_time - on_board_ts)
-                boarding_hour = int(boarding_time / 3600)
-                boarding_minute = int((boarding_time - (boarding_hour * 3600)) / 60)
-                boarding_second = int(boarding_time - boarding_hour * 3600 - boarding_minute * 60)
-                msg = f"趋势停止 {symbol}\nmean_rise：{mean_rise}\nmean_fall：{mean_fall}\nchange：{change}\nrank_1h：{rank_1h}\non：{on_board}\noff：{off_board}\ntime：{boarding_hour}h {boarding_minute}m {boarding_second}s\ncount：{self.signal_count}\n"
-                print(msg)
+            if self.mode == BacktestingMode.TRENDING:
+                # 趋势信号
+                if ((direction == "LONG" and abs(mean_rise) > abs(mean_fall) * 2) or (direction == "SHORT" and abs(mean_fall) > abs(mean_rise) * 2)) and 1 <= rank_1h <= 3:
+                    data_time = time.time()
+                    off_board = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
+                    boarding_time = int(data_time - on_board_ts)
+                    boarding_hour = int(boarding_time / 3600)
+                    boarding_minute = int((boarding_time - (boarding_hour * 3600)) / 60)
+                    boarding_second = int(boarding_time - boarding_hour * 3600 - boarding_minute * 60)
+                    msg = f"趋势停止 {symbol}\nmean_rise：{mean_rise}\nmean_fall：{mean_fall}\nchange：{change}\nrank_1h：{rank_1h}\non：{on_board}\noff：{off_board}\ntime：{boarding_hour}h {boarding_minute}m {boarding_second}s\ncount：{self.signal_count}\n"
+                    print(msg)
+
+            elif self.mode == BacktestingMode.REVERSE:
+                # 反转信号
+                if rank_1h <= 0 or rank_1h > 3:
+                    if direction == "LONG":
+                        search_direction = "fall"
+                    
+                    else:
+                        search_direction = "rise"
+                    reverse_ts, reverse_rank_1h = self.search_1h_trending_data(from_ts=on_board_ts, direction=search_direction, symbol=symbol, top=5)
+                    reverse_time = datetime.fromtimestamp(reverse_ts).strftime(f"%Y-%m-%d %H:%M:%S") if reverse_ts else ""
+
+                    self.signal_count += 1
+                    off_board = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
+                    boarding_time = int(data_time - on_board_ts)
+                    boarding_hour = int(boarding_time / 3600)
+                    boarding_minute = int((boarding_time - (boarding_hour * 3600)) / 60)
+                    boarding_second = int(boarding_time - boarding_hour * 3600 - boarding_minute * 60)
+                    msg = f"反转停止 {symbol}\nmean_rise：{mean_rise}\nmean_fall：{mean_fall}\nchange：{change}\nrank_1h：{rank_1h}\non：{on_board}\noff：{off_board}\ntime：{boarding_hour}h {boarding_minute}m {boarding_second}s\nreverse_1h：{reverse_time}\nreverse_rank_1h：{reverse_rank_1h}\ncount：{self.signal_count}\n"
+                    print(msg)
+
 
         print(f"历史趋势数据加载完成！")
 
@@ -237,7 +261,6 @@ class Backtesting(object):
                 if self.mode == BacktestingMode.TRENDING:
                     # 趋势信号
                     if ((direction == "LONG" and abs(mean_rise) > abs(mean_fall) * 2) or (direction == "SHORT" and abs(mean_fall) > abs(mean_rise) * 2)) and 1 <= rank_1h <= 3:
-                    # if 1 <= rank_1h <= 3:
                         self.signal_count += 1
                         off_board = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
                         boarding_time = int(data_time - on_board_ts)
@@ -524,4 +547,4 @@ if __name__ == "__main__":
     # statistics_pnl(for_eth=False)
 
     backtesting = Backtesting()
-    backtesting.start(BacktestingMode.TRENDING)
+    backtesting.start(BacktestingMode.REVERSE)
