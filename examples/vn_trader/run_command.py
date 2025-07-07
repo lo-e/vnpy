@@ -328,6 +328,10 @@ def main():
     top_gainers_losers_app.init_engine()
     top_gainers_losers_app.init_portfolio()
     top_gainers_losers_app.start_portfolio()
+
+    # 启动事件循环并保持运行
+    while True:
+        time.sleep(100)
     
 if __name__ == "__main__":
     main()
