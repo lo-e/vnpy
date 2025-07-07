@@ -93,8 +93,8 @@ class Backtesting(object):
                         search_direction = "rise"
                     reverse_ts, reverse_rank_1h = self.search_1h_trending_data(from_ts=on_board_ts, direction=search_direction, symbol=symbol, top=5)
                     reverse_time = datetime.fromtimestamp(reverse_ts).strftime(f"%Y-%m-%d %H:%M:%S") if reverse_ts else ""
-
-                    self.signal_count += 1
+                    
+                    data_time = time.time()
                     off_board = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
                     boarding_time = int(data_time - on_board_ts)
                     boarding_hour = int(boarding_time / 3600)
