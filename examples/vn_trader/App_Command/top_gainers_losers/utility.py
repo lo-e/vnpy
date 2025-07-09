@@ -575,7 +575,7 @@ class Chrome(object):
         losers.insert(0, mean_losers_data)
         losers.insert(0, mean_gainers_data)
         
-        current_dir = os.path.dirname(os.path.abspath(__file__))
+        current_dir = get_current_dir_path()
         date = datetime.now().strftime(f"%Y-%m-%d")
         hour = datetime.now().hour
         time = datetime.now().strftime(f"%H_%M_%S")
@@ -622,7 +622,7 @@ class Chrome(object):
             fall_list.insert(0, mean_rise_data)
             fall_list.insert(0, time_data)
 
-            current_dir = os.path.dirname(os.path.abspath(__file__))
+            current_dir = get_current_dir_path()
             date = datetime.now().strftime(f"%Y-%m-%d")
             hour = datetime.now().hour
             full_time = datetime.now().strftime(f"%H_%M_%S")
@@ -671,10 +671,10 @@ class Chrome(object):
     def load_driver(self):
         # 加载浏览器
         # 获取当前文件所在路径
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        DRIVER_PATH = f"{current_dir}{DIR_SYMBOL}chromedriver/chromedriver.exe"
+        current_dir = get_current_dir_path()
+        DRIVER_PATH = f"{current_dir}{DIR_SYMBOL}chromedriver{DIR_SYMBOL}chromedriver.exe"
         if not os.path.exists(DRIVER_PATH):
-            DRIVER_PATH = f"{current_dir}{DIR_SYMBOL}chromedriver/chromedriver"
+            DRIVER_PATH = f"{current_dir}{DIR_SYMBOL}chromedriver{DIR_SYMBOL}chromedriver"
         options = Options()
         # options.add_argument("--headless")
         # options.add_argument("--disable-web-security")
@@ -743,6 +743,12 @@ class DingTalkEngine(object):
 
         self.active = False
         self.thread.join()
+
+def get_current_dir_path():
+    if "__file__" in globals():
+        return os.path.dirname(os.path.abspath(__file__))
+    else:
+        return os.getcwd()
 
 def print_(msg: str):
     dt = datetime.now().replace(microsecond=0)
