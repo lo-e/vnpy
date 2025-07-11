@@ -597,6 +597,7 @@ class Backtesting(object):
                 mean_fall = trending_data["mean_fall"]
                 change = trending_data["change"]
                 rank_1h = trending_data["rank_1h"]
+                trending_ts = trending_data["trending_ts"]
                 trending_time = trending_data["trending_time"]
 
                 if direction == "LONG":
@@ -604,7 +605,7 @@ class Backtesting(object):
                 
                 else:
                     search_direction = "fall"
-                trending_24h_ts, rank_24h = self.search_24h_trending_data(from_ts=data_time, direction=search_direction, symbol=symbol, top=1)
+                trending_24h_ts, rank_24h = self.search_24h_trending_data(from_ts=trending_ts, direction=search_direction, symbol=symbol, top=1)
                 trending_24h_time = datetime.fromtimestamp(trending_24h_ts).strftime(f"%Y-%m-%d %H:%M:%S") if trending_24h_ts else ""
                 
                 rank_24h_off = 0
@@ -876,7 +877,7 @@ def statistics_pnl(for_eth: bool = False):
 
 if __name__ == "__main__":
     backtesting = Backtesting()
-    backtesting.start(BacktestingMode.TRENDING_24H)
+    # backtesting.start(BacktestingMode.TRENDING_24H)
     # backtesting.start(BacktestingMode.TRENDING_24H_QUICK)
-    # backtesting.start(BacktestingMode.TRENDING_1H)
+    backtesting.start(BacktestingMode.TRENDING_1H)
     # backtesting.start(BacktestingMode.REVERSE)
