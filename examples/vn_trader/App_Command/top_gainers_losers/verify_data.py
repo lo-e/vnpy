@@ -615,7 +615,7 @@ class Backtesting(object):
                     trending_24h_time_off = datetime.fromtimestamp(off_trending_24h_ts).strftime(f"%Y-%m-%d %H:%M:%S") if off_trending_24h_ts else ""
 
                 self.signal_count += 1
-                trending_wait = int(trending_24h_ts - data_time)
+                trending_wait = int(trending_24h_ts - trending_ts) if trending_24h_ts else 0
                 wait_hour = int(trending_wait / 3600)
                 wait_minute = int((trending_wait - (wait_hour * 3600)) / 60)
                 wait_second = int(trending_wait - wait_hour * 3600 - wait_minute * 60)
