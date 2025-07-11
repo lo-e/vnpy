@@ -19,7 +19,7 @@ class BacktestingMode(Enum):
 
 class Backtesting(object):
     def __init__(self):
-        self.mode = BacktestingMode.TRENDING
+        self.mode = BacktestingMode.TRENDING_24H
         self.trending_tokens_24h = {}
         self.trending_tokens_1h = {}
         self.rise_onboard_data = {}
@@ -40,8 +40,8 @@ class Backtesting(object):
         # 24小时趋势数据
         print(f"加载24H历史趋势数据..")
         self.trending_tokens_24h = {}
-        # hour_time = datetime.strptime(f"2025-06-29 00:00:00", f"%Y-%m-%d %H:%M:%S")
-        hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=3)
+        hour_time = datetime.strptime(f"2025-06-29 00:00:00", f"%Y-%m-%d %H:%M:%S")
+        # hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=3)
         while hour_time < datetime.now():
             current_dir = os.path.dirname(os.path.abspath(__file__))
             date = hour_time.strftime(f"%Y-%m-%d")
@@ -320,7 +320,7 @@ class Backtesting(object):
                 on_board_ts = trending_data["on_board_ts"]
                 on_board = trending_data["on_board"]
 
-                if self.mode == BacktestingMode.TRENDING:
+                if self.mode == BacktestingMode.TRENDING_24H:
                     # 趋势信号
                     if ((direction == "LONG" and abs(mean_rise) > abs(mean_fall) * 2) or (direction == "SHORT" and abs(mean_fall) > abs(mean_rise) * 2)) and 1 <= rank_1h <= 3:
                         self.signal_count += 1
@@ -332,7 +332,7 @@ class Backtesting(object):
                         msg = f"趋势停止 {symbol}\nmean_rise：{mean_rise}\nmean_fall：{mean_fall}\nchange：{change}\nrank_1h：{rank_1h}\non：{on_board}\noff：{off_board}\ntime：{boarding_hour}h {boarding_minute}m {boarding_second}s\ncount：{self.signal_count}\n"
                         print(msg)
 
-                elif self.mode == BacktestingMode.REVERSE:
+                elif self.mode == BacktestingMode.REVERSE_24H:
                     # 反转信号
                     if rank_1h <= 0 or rank_1h > 3:
                         if direction == "LONG":
