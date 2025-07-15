@@ -529,15 +529,27 @@ class Chrome(object):
             )[0]
         symbol = symbol_item.text
 
-        # 涨跌幅
-        change = item.find_elements(
+        elements = item.find_elements(
             By.XPATH,
             "td[@class='rc-table-cell']",
-            )[2].text
+            )
+        
+        # 价格
+        price = elements[1].text
+        price = float(price.split("$")[1]) if price else 0
+        
+        # 涨跌幅
+        change = elements[2].text
         change = float(change.split("%")[0]) if change else 0
 
+        # 24小时成交额
+        volume = elements[3].text
+        volume = volume.split("$")[1] if volume else ""
+
         data = {"symbol": f"{symbol}",
-                "change": change}
+                "price": price,
+                "change": change,
+                "volume": volume}
         return data
 
     def on_top_gainers_losers(self, data: tuple):
