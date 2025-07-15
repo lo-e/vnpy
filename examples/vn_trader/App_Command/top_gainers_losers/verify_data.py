@@ -82,8 +82,8 @@ class Backtesting(object):
         # 1小时趋势数据
         print(f"加载1H历史趋势数据..")
         self.trending_tokens_1h = {}
-        hour_time = datetime.strptime(f"2025-06-29 00:00:00", f"%Y-%m-%d %H:%M:%S")
-        # hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=5)
+        # hour_time = datetime.strptime(f"2025-06-29 00:00:00", f"%Y-%m-%d %H:%M:%S")
+        hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=5)
         while hour_time < datetime.now():
             current_dir = os.path.dirname(os.path.abspath(__file__))
             date = hour_time.strftime(f"%Y-%m-%d")
@@ -360,76 +360,81 @@ class Backtesting(object):
         rise_trending_list = rise_trending_list[3:]
         fall_trending_list = fall_trending_list[3:]
         
+        # 1H趋势
         trending_tokens = set()
-        for i in range(min(len(rise_trending_list), 3)):
+        for i in range(min(len(rise_trending_list), 5)):
             data = rise_trending_list[i]
             symbol = data["symbol"]
             change = data["change"]
-            if abs(change) >= 10.0:
-                trending_tokens.add(symbol)
-                if symbol not in self.trending_tokens_1h:
-                    trending_time = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
-                    trending_data = {"direction": "LONG",
-                                     "mean_rise": mean_rise_change,
-                                     "mean_fall": mean_fall_change,
-                                     "change": change,
-                                     "rank_1h": i + 1,
-                                     "trending_ts": data_time,
-                                     "trending_time": trending_time}
-                            
-                    self.trending_tokens_1h[symbol] = trending_data
+            trending_tokens.add(symbol)
 
-        for i in range(min(len(fall_trending_list), 3)):
+            if symbol not in self.trending_tokens_1h:
+                trending_time = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
+                trending_data = {
+                    "direction": "LONG",
+                    "mean_rise": mean_rise_change,
+                    "mean_fall": mean_fall_change,
+                    "change": change,
+                    "trending_1h_rank": i + 1,
+                    "trending_1h_ts": data_time,
+                    "trending_1h_time": trending_time
+                    }
+                        
+                self.trending_tokens_1h[symbol] = trending_data
+
+        for i in range(min(len(fall_trending_list), 5)):
             data = fall_trending_list[i]
             symbol = data["symbol"]
             change = data["change"]
-            if abs(change) >= 10.0:
-                trending_tokens.add(symbol)
-                if symbol not in self.trending_tokens_1h:
-                    trending_time = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
-                    trending_data = {"direction": "SHORT",
-                                     "mean_rise": mean_rise_change,
-                                     "mean_fall": mean_fall_change,
-                                     "change": change,
-                                     "rank_1h": i + 1,
-                                     "trending_ts": data_time,
-                                     "trending_time": trending_time}
-                            
-                    self.trending_tokens_1h[symbol] = trending_data
+            trending_tokens.add(symbol)
 
+            if symbol not in self.trending_tokens_1h:
+                trending_time = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
+                trending_data = {
+                    "direction": "SHORT",
+                    "mean_rise": mean_rise_change,
+                    "mean_fall": mean_fall_change,
+                    "change": change,
+                    "trending_1h_rank": i + 1,
+                    "trending_1h_ts": data_time,
+                    "trending_1h_time": trending_time
+                    }
+                        
+                self.trending_tokens_1h[symbol] = trending_data
+
+        # 信号判断
         for symbol, trending_data in self.trending_tokens_1h.copy().items():
-            trending_ts = trending_data["trending_ts"]
-            if symbol not in trending_tokens and data_time - trending_ts >= 24 * 60 * 60:                
+            trending_1h_ts = trending_data["trending_1h_ts"]
+            if symbol not in trending_tokens:                
                 direction = trending_data["direction"]
                 mean_rise = trending_data["mean_rise"]
                 mean_fall = trending_data["mean_fall"]
                 change = trending_data["change"]
-                rank_1h = trending_data["rank_1h"]
-                trending_ts = trending_data["trending_ts"]
-                trending_time = trending_data["trending_time"]
+                trending_1h_rank = trending_data["trending_1h_rank"]
+                trending_1h_ts = trending_data["trending_1h_ts"]
+                trending_1h_time = trending_data["trending_1h_time"]
 
-                if direction == "LONG":
-                    search_direction = "rise"
+                rank_24h = 0
+                if change >= 0:
+                    direction = "rise"
                 
                 else:
-                    search_direction = "fall"
-                trending_24h_ts, rank_24h = self.search_24h_trending_data(from_ts=trending_ts, direction=search_direction, symbol=symbol, top=1)
-                trending_24h_time = datetime.fromtimestamp(trending_24h_ts).strftime(f"%Y-%m-%d %H:%M:%S") if trending_24h_ts else ""
-                
-                rank_24h_off = 0
-                trending_24h_time_off = ""
-                if trending_24h_ts:
-                    off_trending_24h_ts, rank_24h_off = self.search_24h_trending_data(from_ts=trending_24h_ts, direction=search_direction, symbol=symbol, top=5, reverse=True)
-                    trending_24h_time_off = datetime.fromtimestamp(off_trending_24h_ts).strftime(f"%Y-%m-%d %H:%M:%S") if off_trending_24h_ts else ""
+                    direction = "fall"
+                trending_list_24h = self.load_24h_trending_data(to_ts=trending_1h_ts, direction=direction)
+                if trending_list_24h:
+                    trending_list_24h = trending_list_24h[3:]
+                    symbols_24h = []
+                    for data_24h in trending_list_24h:
+                        symbols_24h.append(data_24h["symbol"])
 
-                self.signal_count += 1
-                trending_wait = int(trending_24h_ts - trending_ts) if trending_24h_ts else 0
-                wait_hour = int(trending_wait / 3600)
-                wait_minute = int((trending_wait - (wait_hour * 3600)) / 60)
-                wait_second = int(trending_wait - wait_hour * 3600 - wait_minute * 60)
-                msg = f"1H趋势启动 {symbol}\nmean_rise：{mean_rise}\nmean_fall：{mean_fall}\nchange：{change}\nrank_1h：{rank_1h}\nrank_24h：{rank_24h}\nrank_24h_off：{rank_24h_off}\ntrending_1h：{trending_time}\ntrending_24h：{trending_24h_time}\ntrending_24h_off：{trending_24h_time_off}\ntime：{wait_hour}h {wait_minute}m {wait_second}s\ncount：{self.signal_count}\n"
-                print(msg)
-                
+                    if symbol in symbols_24h:
+                        rank_24h = symbols_24h.index(symbol) + 1
+
+                if abs(change) >= 10 and rank_24h == 0:
+                    self.signal_count += 1
+                    msg = f"1H趋势启动 {symbol}\nmean_rise：{mean_rise}\nmean_fall：{mean_fall}\nchange：{change}\ntrending_1h_rank：{trending_1h_rank}\ntrending_1h_time：{trending_1h_time}\ncount：{self.signal_count}\n"
+                    print(msg)
+
                 self.trending_tokens_1h.pop(symbol)
 
         # 排序
@@ -512,6 +517,44 @@ class Backtesting(object):
 
             hour_time += timedelta(hours=1)
         return 0, 0
+    
+    def load_24h_trending_data(self, to_ts: float, direction: str):
+        result = []
+        start_hour_time = (datetime.fromtimestamp(to_ts) - timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+        hour_time = start_hour_time
+        while hour_time <= start_hour_time + timedelta(hours=2):
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            date = hour_time.strftime(f"%Y-%m-%d")
+            hour = hour_time.hour
+
+            rank_direction = f"rank_{direction}"
+            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}{rank_direction}{DIR_SYMBOL}24h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            if os.path.exists(dir_path):
+                for root, _, files in os.walk(dir_path):
+                    for file in files:
+                        t = file.split(".")[0].replace("_", ":")
+                        dt = f"{date} {t}"
+                        file_ts = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S").timestamp()
+                        if file_ts < to_ts:
+                            # file_path = f"{root}{DIR_SYMBOL}{file}"
+                            # df = pd.read_csv(file_path)
+                            # result = []
+                            # for _, row in df.iterrows():
+                            #     result.append(dict(row))
+                            pass
+                        
+                        else:
+                            file_path = f"{root}{DIR_SYMBOL}{file}"
+                            df = pd.read_csv(file_path)
+                            result = []
+                            for _, row in df.iterrows():
+                                result.append(dict(row))
+
+                            return result
+                            
+
+            hour_time += timedelta(hours=1)
+        return result
     
     def search_24h_trending_data(self, from_ts: float, direction: str, symbol: str, top: int, reverse: bool = False):
         result = []
@@ -813,6 +856,6 @@ def statistics_pnl(for_eth: bool = False):
 
 if __name__ == "__main__":
     backtesting = Backtesting()
-    backtesting.start(BacktestingMode.TRENDING_24H)
+    # backtesting.start(BacktestingMode.TRENDING_24H)
     # backtesting.start(BacktestingMode.TRENDING_24H_QUICK)
-    # backtesting.start(BacktestingMode.TRENDING_1H)
+    backtesting.start(BacktestingMode.TRENDING_1H)
