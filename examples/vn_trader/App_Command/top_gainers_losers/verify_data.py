@@ -12,9 +12,9 @@ from vnpy.trader.utility import DIR_SYMBOL
 from enum import Enum
 
 class BacktestingMode(Enum):
-    TRENDING_1H = "1H趋势"
     TRENDING_24H = "24H趋势"
     TRENDING_24H_QUICK = "24H快速趋势"
+    TRENDING_1H = "1H趋势"
 
 class Backtesting(object):
     def __init__(self):
@@ -29,10 +29,10 @@ class Backtesting(object):
 
     def start(self, mode: BacktestingMode):
         self.mode = mode
-        if self.mode == BacktestingMode.TRENDING_24H or self.mode == BacktestingMode.TRENDING_24H_QUICK:
+        if "24H" in self.mode.value:
             self.load_recent_24h_trending_data()
         
-        elif self.mode == BacktestingMode.TRENDING_1H:
+        elif "1H" in self.mode.value:
             self.load_recent_1h_trending_data()
 
     def load_recent_24h_trending_data(self):
