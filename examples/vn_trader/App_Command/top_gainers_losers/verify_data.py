@@ -432,7 +432,16 @@ class Backtesting(object):
 
                 if abs(change) >= 10 and rank_24h == 0:
                     self.signal_count += 1
-                    msg = f"1H趋势启动 {symbol}\nmean_rise：{mean_rise}\nmean_fall：{mean_fall}\nchange：{change}\ntrending_1h_rank：{trending_1h_rank}\ntrending_1h_time：{trending_1h_time}\ncount：{self.signal_count}\n"
+
+                    trending_24h_ts, trending_24h_rank = self.search_24h_trending_data(from_ts=trending_1h_ts, direction=direction, symbol=symbol, top=3)
+                    trending_24h_time = datetime.fromtimestamp(trending_24h_ts).strftime(f"%Y-%m-%d %H:%M:%S")
+                    off_24h_rank = 0
+                    off_24h_time = ""
+                    if trending_24h_ts:
+                        off_24h_ts, off_24h_rank = self.search_24h_trending_data(from_ts=trending_24h_ts, direction=direction, symbol=symbol, top=5, reverse=True)
+                        off_24h_time = datetime.fromtimestamp(off_24h_ts).strftime(f"%Y-%m-%d %H:%M:%S")
+
+                    msg = f"1H趋势启动 {symbol}\nmean_rise：{mean_rise}\nmean_fall：{mean_fall}\nchange：{change}\ntrending_1h_rank：{trending_1h_rank}\ntrending_1h_time：{trending_1h_time}\ntrending_24h_rank：{trending_24h_rank}\ntrending_24h_time：{trending_24h_time}\noff_24h_rank：{off_24h_rank}\noff_24h_time：{off_24h_time}\ncount：{self.signal_count}\n"
                     print(msg)
 
                 self.trending_tokens_1h.pop(symbol)
