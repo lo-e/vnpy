@@ -117,134 +117,6 @@ class Backtesting(object):
         
         print(f"历史趋势数据加载完成！")
 
-    def load_1h_trending_data(self, to_ts: float, direction: str):
-        result = []
-        start_hour_time = (datetime.fromtimestamp(to_ts) - timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
-        hour_time = start_hour_time
-        while hour_time <= start_hour_time + timedelta(hours=2):
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            date = hour_time.strftime(f"%Y-%m-%d")
-            hour = hour_time.hour
-
-            rank_direction = f"rank_{direction}"
-            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}{rank_direction}{DIR_SYMBOL}1h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
-            if os.path.exists(dir_path):
-                for root, _, files in os.walk(dir_path):
-                    for file in files:
-                        t = file.split(".")[0].replace("_", ":")
-                        dt = f"{date} {t}"
-                        file_ts = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S").timestamp()
-                        if file_ts < to_ts:
-                            # file_path = f"{root}{DIR_SYMBOL}{file}"
-                            # df = pd.read_csv(file_path)
-                            # result = []
-                            # for _, row in df.iterrows():
-                            #     result.append(dict(row))
-                            pass
-                        
-                        else:
-                            file_path = f"{root}{DIR_SYMBOL}{file}"
-                            df = pd.read_csv(file_path)
-                            result = []
-                            for _, row in df.iterrows():
-                                result.append(dict(row))
-
-                            return result
-                            
-
-            hour_time += timedelta(hours=1)
-        return result
-
-    def search_1h_trending_data(self, from_ts: float, direction: str, symbol: str, top: int):
-        result = []
-        start_hour_time = (datetime.fromtimestamp(from_ts) - timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
-        hour_time = start_hour_time
-        while hour_time <= datetime.now():
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            date = hour_time.strftime(f"%Y-%m-%d")
-            hour = hour_time.hour
-
-            rank_direction = f"rank_{direction}"
-            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}{rank_direction}{DIR_SYMBOL}1h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
-            if os.path.exists(dir_path):
-                for root, _, files in os.walk(dir_path):
-                    for file in files:
-                        t = file.split(".")[0].replace("_", ":")
-                        dt = f"{date} {t}"
-                        file_ts = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S").timestamp()
-                        if file_ts > from_ts and result:
-                            rank_1h = 0
-                            symbols_1h = []
-                            trending_list = result[3:]
-                            for data_1h in trending_list:
-                                symbols_1h.append(data_1h["symbol"])
-
-                            if symbol in symbols_1h:
-                                rank_1h = symbols_1h.index(symbol) + 1
-
-                            if 1 <= rank_1h <= top:
-                                ts = result[0]["change"]
-                                return ts, rank_1h
-                        
-                        file_path = f"{root}{DIR_SYMBOL}{file}"
-                        df = pd.read_csv(file_path)
-                        result = []
-                        for _, row in df.iterrows():
-                            result.append(dict(row))
-
-            hour_time += timedelta(hours=1)
-        return 0, 0
-    
-    def search_24h_trending_data(self, from_ts: float, direction: str, symbol: str, top: int, reverse: bool = False):
-        result = []
-        start_hour_time = (datetime.fromtimestamp(from_ts) - timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
-        if reverse:
-            end_time = datetime.now()
-        
-        else:
-            end_time = start_hour_time + timedelta(hours=25)
-            
-        hour_time = start_hour_time
-        while hour_time <= end_time:
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            date = hour_time.strftime(f"%Y-%m-%d")
-            hour = hour_time.hour
-
-            rank_direction = f"rank_{direction}"
-            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}{rank_direction}{DIR_SYMBOL}24h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
-            if os.path.exists(dir_path):
-                for root, _, files in os.walk(dir_path):
-                    for file in files:
-                        t = file.split(".")[0].replace("_", ":")
-                        dt = f"{date} {t}"
-                        file_ts = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S").timestamp()
-                        if file_ts > from_ts and result:
-                            rank_24h = 0
-                            symbols_24h = []
-                            trending_list = result[3:]
-                            for data_1h in trending_list:
-                                symbols_24h.append(data_1h["symbol"])
-
-                            if symbol in symbols_24h:
-                                rank_24h = symbols_24h.index(symbol) + 1
-
-                            if 1 <= rank_24h <= top and not reverse:
-                                ts = result[0]["change"]
-                                return ts, rank_24h
-                            
-                            if rank_24h > top and reverse:
-                                ts = result[0]["change"]
-                                return ts, rank_24h
-                        
-                        file_path = f"{root}{DIR_SYMBOL}{file}"
-                        df = pd.read_csv(file_path)
-                        result = []
-                        for _, row in df.iterrows():
-                            result.append(dict(row))
-
-            hour_time += timedelta(hours=1)
-        return 0, 0
-
     def on_trending_data_24h(self, data: tuple):
         rise_trending_list, fall_trending_list = data
         data_time = rise_trending_list[0]["change"]
@@ -562,6 +434,134 @@ class Backtesting(object):
 
         # 排序
         self.trending_tokens_1h = dict(sorted(self.trending_tokens_1h.items()))
+
+    def load_1h_trending_data(self, to_ts: float, direction: str):
+        result = []
+        start_hour_time = (datetime.fromtimestamp(to_ts) - timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+        hour_time = start_hour_time
+        while hour_time <= start_hour_time + timedelta(hours=2):
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            date = hour_time.strftime(f"%Y-%m-%d")
+            hour = hour_time.hour
+
+            rank_direction = f"rank_{direction}"
+            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}{rank_direction}{DIR_SYMBOL}1h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            if os.path.exists(dir_path):
+                for root, _, files in os.walk(dir_path):
+                    for file in files:
+                        t = file.split(".")[0].replace("_", ":")
+                        dt = f"{date} {t}"
+                        file_ts = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S").timestamp()
+                        if file_ts < to_ts:
+                            # file_path = f"{root}{DIR_SYMBOL}{file}"
+                            # df = pd.read_csv(file_path)
+                            # result = []
+                            # for _, row in df.iterrows():
+                            #     result.append(dict(row))
+                            pass
+                        
+                        else:
+                            file_path = f"{root}{DIR_SYMBOL}{file}"
+                            df = pd.read_csv(file_path)
+                            result = []
+                            for _, row in df.iterrows():
+                                result.append(dict(row))
+
+                            return result
+                            
+
+            hour_time += timedelta(hours=1)
+        return result
+
+    def search_1h_trending_data(self, from_ts: float, direction: str, symbol: str, top: int):
+        result = []
+        start_hour_time = (datetime.fromtimestamp(from_ts) - timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+        hour_time = start_hour_time
+        while hour_time <= datetime.now():
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            date = hour_time.strftime(f"%Y-%m-%d")
+            hour = hour_time.hour
+
+            rank_direction = f"rank_{direction}"
+            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}{rank_direction}{DIR_SYMBOL}1h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            if os.path.exists(dir_path):
+                for root, _, files in os.walk(dir_path):
+                    for file in files:
+                        t = file.split(".")[0].replace("_", ":")
+                        dt = f"{date} {t}"
+                        file_ts = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S").timestamp()
+                        if file_ts > from_ts and result:
+                            rank_1h = 0
+                            symbols_1h = []
+                            trending_list = result[3:]
+                            for data_1h in trending_list:
+                                symbols_1h.append(data_1h["symbol"])
+
+                            if symbol in symbols_1h:
+                                rank_1h = symbols_1h.index(symbol) + 1
+
+                            if 1 <= rank_1h <= top:
+                                ts = result[0]["change"]
+                                return ts, rank_1h
+                        
+                        file_path = f"{root}{DIR_SYMBOL}{file}"
+                        df = pd.read_csv(file_path)
+                        result = []
+                        for _, row in df.iterrows():
+                            result.append(dict(row))
+
+            hour_time += timedelta(hours=1)
+        return 0, 0
+    
+    def search_24h_trending_data(self, from_ts: float, direction: str, symbol: str, top: int, reverse: bool = False):
+        result = []
+        start_hour_time = (datetime.fromtimestamp(from_ts) - timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+        if reverse:
+            end_time = datetime.now()
+        
+        else:
+            end_time = start_hour_time + timedelta(hours=25)
+            
+        hour_time = start_hour_time
+        while hour_time <= end_time:
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            date = hour_time.strftime(f"%Y-%m-%d")
+            hour = hour_time.hour
+
+            rank_direction = f"rank_{direction}"
+            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}{rank_direction}{DIR_SYMBOL}24h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            if os.path.exists(dir_path):
+                for root, _, files in os.walk(dir_path):
+                    for file in files:
+                        t = file.split(".")[0].replace("_", ":")
+                        dt = f"{date} {t}"
+                        file_ts = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S").timestamp()
+                        if file_ts > from_ts and result:
+                            rank_24h = 0
+                            symbols_24h = []
+                            trending_list = result[3:]
+                            for data_1h in trending_list:
+                                symbols_24h.append(data_1h["symbol"])
+
+                            if symbol in symbols_24h:
+                                rank_24h = symbols_24h.index(symbol) + 1
+
+                            if 1 <= rank_24h <= top and not reverse:
+                                ts = result[0]["change"]
+                                return ts, rank_24h
+                            
+                            if rank_24h > top and reverse:
+                                ts = result[0]["change"]
+                                return ts, rank_24h
+                        
+                        file_path = f"{root}{DIR_SYMBOL}{file}"
+                        df = pd.read_csv(file_path)
+                        result = []
+                        for _, row in df.iterrows():
+                            result.append(dict(row))
+
+            hour_time += timedelta(hours=1)
+        return 0, 0
 
 # 统计交易盈亏
 def statistics_pnl(for_eth: bool = False):
