@@ -361,6 +361,44 @@ class Backtesting(object):
         mean_fall_change = rise_trending_list[2]["change"]
         rise_trending_list = rise_trending_list[3:]
         fall_trending_list = fall_trending_list[3:]
+
+        # 上榜时间
+        is_init = True if not self.rise_onboard_data_1h else False
+        rise_onboard_tokens = set()
+        for i in range(len(rise_trending_list)):
+            data = rise_trending_list[i]
+            symbol = data["symbol"]
+            change = data["change"]
+            rise_onboard_tokens.add(symbol)
+
+            if symbol not in self.rise_onboard_data_1h:
+                if is_init:
+                    self.rise_onboard_data_1h[symbol] = 0
+
+                else:
+                    self.rise_onboard_data_1h[symbol] = data_time
+
+        for symbol in self.rise_onboard_data_1h.copy().keys():
+            if symbol not in rise_onboard_tokens:
+                self.rise_onboard_data_1h.pop(symbol)
+
+        fall_onboard_tokens = set()
+        for i in range(len(fall_trending_list)):
+            data = fall_trending_list[i]
+            symbol = data["symbol"]
+            change = data["change"]
+            fall_onboard_tokens.add(symbol)
+
+            if symbol not in self.fall_onboard_data_1h:
+                if is_init:
+                    self.fall_onboard_data_1h[symbol] = 0
+
+                else:
+                    self.fall_onboard_data_1h[symbol] = data_time
+
+        for symbol in self.fall_onboard_data_1h.copy().keys():
+            if symbol not in fall_onboard_tokens:
+                self.fall_onboard_data_1h.pop(symbol)
         
         # 1H趋势
         trending_tokens = set()
@@ -867,6 +905,6 @@ def statistics_pnl(for_eth: bool = False):
 
 if __name__ == "__main__":
     backtesting = Backtesting()
-    backtesting.start(BacktestingMode.TRENDING_24H)
+    # backtesting.start(BacktestingMode.TRENDING_24H)
     # backtesting.start(BacktestingMode.TRENDING_24H_QUICK)
-    # backtesting.start(BacktestingMode.TRENDING_1H)
+    backtesting.start(BacktestingMode.TRENDING_1H)
