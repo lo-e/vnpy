@@ -84,8 +84,8 @@ class Backtesting(object):
         # 1小时趋势数据
         print(f"加载1H历史趋势数据..")
         self.trending_tokens_1h = {}
-        # hour_time = datetime.strptime(f"2025-06-29 00:00:00", f"%Y-%m-%d %H:%M:%S")
-        hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=5)
+        hour_time = datetime.strptime(f"2025-06-29 00:00:00", f"%Y-%m-%d %H:%M:%S")
+        # hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=5)
         while hour_time < datetime.now():
             current_dir = os.path.dirname(os.path.abspath(__file__))
             date = hour_time.strftime(f"%Y-%m-%d")
@@ -417,7 +417,8 @@ class Backtesting(object):
                     "change": change,
                     "trending_1h_rank": i + 1,
                     "trending_1h_ts": data_time,
-                    "trending_1h_time": trending_time
+                    "trending_1h_time": trending_time,
+                    "onboard_ts": self.rise_onboard_data_1h.get(symbol, 0)
                     }
                         
                 self.trending_tokens_1h[symbol] = trending_data
@@ -437,7 +438,8 @@ class Backtesting(object):
                     "change": change,
                     "trending_1h_rank": i + 1,
                     "trending_1h_ts": data_time,
-                    "trending_1h_time": trending_time
+                    "trending_1h_time": trending_time,
+                    "onboard_ts": self.rise_onboard_data_1h.get(symbol, 0)
                     }
                         
                 self.trending_tokens_1h[symbol] = trending_data
@@ -453,6 +455,8 @@ class Backtesting(object):
                 trending_1h_rank = trending_data["trending_1h_rank"]
                 trending_1h_ts = trending_data["trending_1h_ts"]
                 trending_1h_time = trending_data["trending_1h_time"]
+                onboard_ts = trending_data["onboard_ts"]
+                onboard_time = datetime.fromtimestamp(onboard_ts).strftime(f"%Y-%m-%d %H:%M:%S")
 
                 rank_24h = 0
                 if change >= 0:
