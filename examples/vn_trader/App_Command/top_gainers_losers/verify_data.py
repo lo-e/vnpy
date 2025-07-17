@@ -39,8 +39,8 @@ class Backtesting(object):
         # 24小时趋势数据
         print(f"加载24H历史趋势数据..")
         self.trending_tokens_24h = {}
-        hour_time = datetime.strptime(f"2025-06-29 00:00:00", f"%Y-%m-%d %H:%M:%S")
-        # hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=3)
+        # hour_time = datetime.strptime(f"2025-06-29 00:00:00", f"%Y-%m-%d %H:%M:%S")
+        hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=3)
         while hour_time < datetime.now():
             current_dir = os.path.dirname(os.path.abspath(__file__))
             date = hour_time.strftime(f"%Y-%m-%d")
@@ -865,6 +865,6 @@ def statistics_pnl(for_eth: bool = False):
 
 if __name__ == "__main__":
     backtesting = Backtesting()
-    # backtesting.start(BacktestingMode.TRENDING_24H)
+    backtesting.start(BacktestingMode.TRENDING_24H)
     # backtesting.start(BacktestingMode.TRENDING_24H_QUICK)
-    backtesting.start(BacktestingMode.TRENDING_1H)
+    # backtesting.start(BacktestingMode.TRENDING_1H)
