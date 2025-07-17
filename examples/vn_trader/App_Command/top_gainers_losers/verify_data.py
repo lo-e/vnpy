@@ -20,9 +20,11 @@ class Backtesting(object):
     def __init__(self):
         self.mode = BacktestingMode.TRENDING_24H
         self.trending_tokens_24h = {}
+        self.rise_onboard_data_24h = {}
+        self.fall_onboard_data_24h = {}
         self.trending_tokens_1h = {}
-        self.rise_onboard_data = {}
-        self.fall_onboard_data = {}
+        self.rise_onboard_data_1h = {}
+        self.fall_onboard_data_1h = {}
         self.history_rise_symbol_trending_ts = {}
         self.history_fall_symbol_trending_ts = {}
         self.signal_count = 0
@@ -221,7 +223,7 @@ class Backtesting(object):
         mean_fall_change = rise_trending_list[2]["change"]
         rise_trending_list = rise_trending_list[3:]
         fall_trending_list = fall_trending_list[3:]
-        is_init = True if not self.rise_onboard_data else False
+        is_init = True if not self.rise_onboard_data_24h else False
 
         rise_onboard_tokens = set()
         for i in range(len(rise_trending_list)):
@@ -230,16 +232,16 @@ class Backtesting(object):
             change = data["change"]
             rise_onboard_tokens.add(symbol)
 
-            if symbol not in self.rise_onboard_data:
+            if symbol not in self.rise_onboard_data_24h:
                 if is_init:
-                    self.rise_onboard_data[symbol] = 0
+                    self.rise_onboard_data_24h[symbol] = 0
 
                 else:
-                    self.rise_onboard_data[symbol] = data_time
+                    self.rise_onboard_data_24h[symbol] = data_time
 
-        for symbol in self.rise_onboard_data.copy().keys():
+        for symbol in self.rise_onboard_data_24h.copy().keys():
             if symbol not in rise_onboard_tokens:
-                self.rise_onboard_data.pop(symbol)
+                self.rise_onboard_data_24h.pop(symbol)
 
                 if symbol in self.trending_tokens_24h:
                     self.trending_tokens_24h.pop(symbol)
@@ -251,16 +253,16 @@ class Backtesting(object):
             change = data["change"]
             fall_onboard_tokens.add(symbol)
 
-            if symbol not in self.fall_onboard_data:
+            if symbol not in self.fall_onboard_data_24h:
                 if is_init:
-                    self.fall_onboard_data[symbol] = 0
+                    self.fall_onboard_data_24h[symbol] = 0
 
                 else:
-                    self.fall_onboard_data[symbol] = data_time
+                    self.fall_onboard_data_24h[symbol] = data_time
 
-        for symbol in self.fall_onboard_data.copy().keys():
+        for symbol in self.fall_onboard_data_24h.copy().keys():
             if symbol not in fall_onboard_tokens:
-                self.fall_onboard_data.pop(symbol)
+                self.fall_onboard_data_24h.pop(symbol)
 
                 if symbol in self.trending_tokens_24h:
                     self.trending_tokens_24h.pop(symbol)
@@ -269,7 +271,7 @@ class Backtesting(object):
             data = rise_trending_list[i]
             symbol = data["symbol"]
             change = data["change"]
-            onboard_ts = self.rise_onboard_data.get(symbol, 0)
+            onboard_ts = self.rise_onboard_data_24h.get(symbol, 0)
             onboard_time = datetime.fromtimestamp(onboard_ts).strftime(f"%Y-%m-%d %H:%M:%S")
             boarding_time = data_time - onboard_ts
             history_symbol_trending_ts = self.history_rise_symbol_trending_ts.get(symbol, 0)
@@ -312,7 +314,7 @@ class Backtesting(object):
             data = fall_trending_list[i]
             symbol = data["symbol"]
             change = data["change"]
-            onboard_ts = self.fall_onboard_data.get(symbol, 0)
+            onboard_ts = self.fall_onboard_data_24h.get(symbol, 0)
             onboard_time = datetime.fromtimestamp(onboard_ts).strftime(f"%Y-%m-%d %H:%M:%S")
             boarding_time = data_time - onboard_ts
             istory_symbol_trending_ts = self.history_fall_symbol_trending_ts.get(symbol, 0)
