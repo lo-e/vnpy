@@ -491,7 +491,7 @@ class Backtesting(object):
                         signal_ts = self.signal_tokens_1h.get(symbol, 0)
                         self.signal_tokens_1h[symbol] = data_time
 
-                        if data_time >= signal_ts + 24 * 60 * 60:
+                        if data_time >= signal_ts + 1 * 60 * 60:
                             self.signal_count += 1
                             trending_24h_ts, trending_24h_rank = self.search_24h_trending_data(from_ts=trending_1h_ts, direction=direction, symbol=symbol, top=3)
                             trending_24h_time = datetime.fromtimestamp(trending_24h_ts).strftime(f"%Y-%m-%d %H:%M:%S")
@@ -603,19 +603,18 @@ class Backtesting(object):
                         dt = f"{date} {t}"
                         file_ts = datetime.strptime(dt, "%Y-%m-%d %H:%M:%S").timestamp()
                         if file_ts < to_ts:
-                            # file_path = f"{root}{DIR_SYMBOL}{file}"
-                            # df = pd.read_csv(file_path)
-                            # result = []
-                            # for _, row in df.iterrows():
-                            #     result.append(dict(row))
-                            pass
-                        
-                        else:
                             file_path = f"{root}{DIR_SYMBOL}{file}"
                             df = pd.read_csv(file_path)
                             result = []
                             for _, row in df.iterrows():
                                 result.append(dict(row))
+                        
+                        else:
+                            # file_path = f"{root}{DIR_SYMBOL}{file}"
+                            # df = pd.read_csv(file_path)
+                            # result = []
+                            # for _, row in df.iterrows():
+                            #     result.append(dict(row))
 
                             return result
                             
