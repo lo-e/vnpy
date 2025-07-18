@@ -444,7 +444,7 @@ class Backtesting(object):
                 "trending_1h_ts": data_time,
                 "trending_1h_time": trending_time,
                 "trending_1h_start": data_time,
-                "onboard_ts": self.rise_onboard_data_1h.get(symbol, 0)
+                "onboard_ts": self.fall_onboard_data_1h.get(symbol, 0)
                 }
             
             history_trending_data = self.trending_tokens_1h.get(symbol, {})
@@ -469,7 +469,7 @@ class Backtesting(object):
                 onboard_ts = trending_data["onboard_ts"]
                 onboard_time = datetime.fromtimestamp(onboard_ts).strftime(f"%Y-%m-%d %H:%M:%S")
 
-                if abs(change) >= 10:
+                if abs(change) >= 10 and data_time <= onboard_ts + 10 * 60:
                     # 查询24h排行
                     rank_24h = 0
                     if change >= 0:
