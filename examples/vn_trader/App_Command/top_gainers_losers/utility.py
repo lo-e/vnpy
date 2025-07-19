@@ -115,8 +115,13 @@ class Chrome(object):
         rise_list_origin = []
         fall_list_origin = []
         last_data_ts = 0
+        reboot_ts = 0
         while True:
             try:
+                # 定期重新启动浏览器
+                if time.time() >= reboot_ts + 10:
+                    driver_reboot = True
+
                 # 启动浏览器
                 if driver_reboot:
                     print(f"Chrome启动")
@@ -128,6 +133,7 @@ class Chrome(object):
                     rise_list_origin = []
                     fall_list_origin = []
                     driver_reboot = False
+                    reboot_ts = time.time()
 
                     url = "https://www.coinglass.com/zh/gainers-losers"
                     driver.get(url)
@@ -284,8 +290,13 @@ class Chrome(object):
         duration_24h_rise_list_origin = []
         duration_24h_fall_list_origin = []
         last_data_ts = 0
+        reboot_ts = 0
         while True:
             try:
+                # 定期重新启动浏览器
+                if time.time() >= reboot_ts + 10:
+                    driver_reboot = True
+
                 # 启动浏览器
                 if driver_reboot:
                     print(f"Chrome启动")
@@ -299,6 +310,7 @@ class Chrome(object):
                     duration_24h_rise_list_origin = []
                     duration_24h_fall_list_origin = []
                     driver_reboot = False
+                    reboot_ts = time.time()
 
                     url = "https://www.coinglass.com/zh/gainers-losers"
                     driver.get(url)
