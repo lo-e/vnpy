@@ -119,7 +119,7 @@ class Chrome(object):
         while True:
             try:
                 # 定期重新启动浏览器
-                if time.time() >= reboot_ts + 10:
+                if time.time() >= reboot_ts + 60 * 60:
                     driver_reboot = True
 
                 # 启动浏览器
@@ -294,7 +294,7 @@ class Chrome(object):
         while True:
             try:
                 # 定期重新启动浏览器
-                if time.time() >= reboot_ts + 10:
+                if time.time() >= reboot_ts + 60 * 60:
                     driver_reboot = True
 
                 # 启动浏览器
