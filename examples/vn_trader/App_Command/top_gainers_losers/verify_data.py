@@ -487,7 +487,7 @@ class Backtesting(object):
                         if symbol in symbols_24h:
                             rank_24h = symbols_24h.index(symbol) + 1
 
-                    if rank_24h == 0:
+                    if rank_24h == 0 or rank_24h > 10:
                         signal_ts = self.signal_tokens_1h.get(symbol, 0)
                         self.signal_tokens_1h[symbol] = data_time
 
