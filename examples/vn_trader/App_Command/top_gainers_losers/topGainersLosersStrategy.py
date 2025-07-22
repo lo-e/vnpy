@@ -35,12 +35,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         "vt_symbol",
         "exchange",
         "exchange_user",
-        "direction",
-        "trending_change_1h",
-        "trending_ts_1h",
-        "trending_time_1h",
-        "trending_ts_24h",
-        "trending_time_24h"
+        "direction"
     ]
 
     # 变量列表
@@ -60,11 +55,9 @@ class TopGainersLosersStrategy(CtaTemplate):
         "stop_tick_price",
         "stop_tick_dt",
         "stop_count",
+        "database_loaded",
         "indicator_inited",
         "minute_bar_dt",
-        "minute_atr",
-        "history_high",
-        "history_low",
         "price_cross",
         "entry_drawdown",
         "unit_pos",
@@ -93,9 +86,6 @@ class TopGainersLosersStrategy(CtaTemplate):
         "stop_count",
         "indicator_inited",
         "minute_bar_dt",
-        "minute_atr",
-        "history_high",
-        "history_low",
         "price_cross",
         "entry_drawdown",
         "unit_pos",
@@ -110,11 +100,6 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.exchange: Exchange = Exchange.NONE
         self.exchange_user:str = ""
         self.direction: Direction = Direction.NET
-        self.trending_change_1h: float = 0
-        self.trending_ts_1h: float = 0
-        self.trending_time_1h: str = ""
-        self.trending_ts_24h: float = 0
-        self.trending_time_24h: str = ""
 
         """ fake """
         # self.send_fake_order = False
@@ -165,6 +150,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.stop_tick_price = 0
         self.stop_tick_dt = 0
         self.stop_count = 0
+        self.database_loaded = False
         self.indicator_inited = False
         self.target_pos_check_ts = 0
         self.target_pos_checking = False
@@ -174,23 +160,35 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.insufficient_value = False             # 开仓价值不满足最低
         self.price_cross = False                    # 价格突破
         self.entry_drawdown = False                 # 入场时大幅度回撤
-        self.recent_atr_list = []                   # 初始化时最近ATR
         self.loading_database = False               # 正在加载数据
         self.open_allowed = False                   # 是否允许开仓
+        self.bar_lack = False                       # 数据缺失
+        self.hour_6_high_cross = False              # 6H最高价
+        self.hour_6_low_cross = False               # 6H最低价
+
+
+        self.database_minute_bar_list = []
+        self.tick_minute_bar_list = []
+        self.tick_minute_bar_generator: BarGenerator = BarGenerator(on_bar=self.on_tick_minute_bar)
+        self.tick_minute_bar_generator.bar_start = True
         
         self.minute_bar: BarData = None
         self.minute_bar_dt: str = ""
-        self.minute_am: ArrayManager = None
-        self.minute_atr = 0
+        self.minute_am: ArrayManager = ArrayManager(60)
+        self.history_minute_am: ArrayManager = ArrayManager(360)
+
+        self.hour_up: float = 0
+        self.hour_up_ts: float = 0
+        self.hour_down: float = 0
+        self.hour_down_ts: float = 0
+        self.hour_6_up: float = 0
+        self.hour_6_down: float = 0
 
         self.minute_5_bar: BarData = None
         self.minute_5_bar_dt: str = ""
         self.minute_5_bar_generator: BarGenerator = None
         self.minute_5_am: ArrayManager = None
         self.minute_5_atr = 0
-
-        self.history_high = 0
-        self.history_low = 0
 
     def on_init(self):
         # 交易所成功连接判断
@@ -225,7 +223,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             mc = MongoClient()
             db = mc[MINUTE_DB_NAME]
             collection = db[self.vt_symbol]
-            data_from = datetime.now().replace(second=0, microsecond=0) - timedelta(minutes=60)
+            data_from = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(hours=6)
             flt = {"datetime": {"$gte": data_from}}
             cursor = collection.find(flt).sort('datetime')
 
@@ -252,46 +250,8 @@ class TopGainersLosersStrategy(CtaTemplate):
                 next_bar_dt = bar.datetime + timedelta(minutes=1)
                 bar_list.append(bar)
             
-            final_high = 0
-            final_low = 0
-            self.history_high = 0
-            self.history_low = 0
-            self.price_cross = False
-            self.recent_atr_list = []
-            if len(data_list) >= 59 and not bar_lack:
-                # 初始化工具
-                self.minute_am = ArrayManager(6)
-
-                # 回测数据库Bar数据
-                for i in range(len(bar_list)):
-                    bar: BarData = bar_list[i]
-                    self.on_minute_bar(bar)
-
-                    if i >= len(bar_list) - 5:
-                        final_high = max(final_high, bar.high_price)
-                        final_low = min(final_low, bar.low_price) if final_low else bar.low_price
-
-                # 计算指标
-                self.calculate_indicator()
-                    
-                # 检查ATR指标
-                if not self.minute_atr:
-                    # self.portfolio.bar_download_queue.put(self.vt_symbol)
-                    msg = f"\n{self.vt_symbol} ATR 指标缺失\n\nbar {self.minute_bar_dt}"
-                    self.send_ding_talk(msg)
-                    print_(msg)
-
-                # 是否价格突破
-                self.price_cross = False
-                if self.direction == Direction.LONG and final_high and self.history_high and final_high >= self.history_high:
-                    self.price_cross = True
-
-                if self.direction == Direction.SHORT and final_low and self.history_low and final_low <= self.history_low:
-                    self.price_cross = True
-
-                if not self.price_cross:
-                    msg = f"{self.vt_symbol}\n等待价格突破.."
-                    self.cta_engine.main_engine.send_ding_talk(msg)
+            if not bar_lack:
+                self.database_minute_bar_list = bar_list
 
             else:
                 msg = f"\n初始化数据缺失\n\ncount {len(data_list)}\nlack {bar_lack}"
@@ -300,14 +260,74 @@ class TopGainersLosersStrategy(CtaTemplate):
         except Exception as e:
             msg = f"加载Bar数据出错\n\n{e}"
             self.send_ding_talk(msg)
+
         self.loading_database = False
+    
+    def on_tick_minute_bar(self, bar: BarData):
+        self.tick_minute_bar_list.append(bar)
+        if not self.database_loaded and len(self.database_minute_bar_list) < 359:
+            return
+
+        # 回测数据库Bar数据
+        if not self.database_loaded:
+            self.database_loaded = True
+
+            bar_lack = True
+            for i in range(len(self.database_minute_bar_list)):
+                database_minute_bar: BarData = self.database_minute_bar_list[i]
+                if i < len(self.database_minute_bar_list) - 1:
+                    self.on_minute_bar(database_minute_bar)
+                
+                else:
+                    for j in range(len(self.tick_minute_bar_list)):
+                        tick_minute_bar: BarData = self.tick_minute_bar_list[j]
+                        if tick_minute_bar.datetime < database_minute_bar.datetime:
+                            continue
+
+                        elif tick_minute_bar.datetime == database_minute_bar.datetime:
+                            bar_lack = False
+                            database_minute_bar.high_price = max(database_minute_bar.high_price, tick_minute_bar.high_price)
+                            database_minute_bar.low_price = min(database_minute_bar.low_price, tick_minute_bar.low_price)
+                            self.on_minute_bar(database_minute_bar)
+
+                        else:
+                            if bar_lack:
+                                if tick_minute_bar.datetime == database_minute_bar.datetime + timedelta(minutes=1):
+                                    bar_lack = False
+                                    self.on_minute_bar(database_minute_bar)
+                            
+                            if not bar_lack:
+                                self.on_minute_bar(tick_minute_bar)
+                            
+                            else:
+                                tick_first_bar_dt = self.tick_minute_bar_list[0].datetime
+                                msg = f"{self.vt_symbol} Bar数据缺失\ndatabase {database_minute_bar.datetime}\ntick {tick_first_bar_dt}"
+                                self.send_ding_talk(msg)
+                                break
+
+            self.bar_lack = bar_lack
+            if self.direction == Direction.LONG and self.hour_up and self.hour_6_up and self.hour_up >= self.hour_6_up * 0.98:
+                self.hour_6_high_cross = True
+
+            if self.direction == Direction.SHORT and self.hour_down and self.hour_6_down and self.hour_down <= self.hour_6_down * 1.02:
+                self.hour_6_low_cross = True
+
+
+        else:
+            self.on_minute_bar(bar)
+        
+        # 确认指标初始化
+        self.check_indicator_inited()
+
+        # 保留最近行情数据
+        if len(self.tick_minute_bar_list) > 10:
+            self.tick_minute_bar_list = self.tick_minute_bar_list[1:]
 
     def on_minute_bar(self, bar: BarData):
         self.minute_bar = bar
-        self.history_high = max(self.history_high, bar.high_price)
-        self.history_low = min(self.history_low, bar.low_price) if self.history_low else bar.low_price
-        
         self.minute_am.update_bar(bar)
+        self.history_minute_am.update_bar(bar)
+        self.calculate_indicator()
 
     def on_minute_5_bar(self, bar: BarData):
         self.minute_5_bar = bar
@@ -318,18 +338,42 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.minute_bar_dt = self.minute_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
 
         if self.minute_am.inited:
-            self.recent_atr_list = list(self.minute_am.atr(1, True))
-            self.minute_atr = self.minute_am.atr(3)
+            hour_up, hour_down = self.minute_am.donchian(60)
+            if self.direction == Direction.LONG:
+                if hour_up != self.hour_up:
+                    self.hour_up = hour_up
+                    self.hour_down = hour_down
+                    self.hour_up_ts = self.minute_bar.datetime.timestamp()
+            
+            if self.direction == Direction.SHORT:
+                if hour_down != self.hour_down:
+                    self.hour_down = hour_down
+                    self.hour_up = hour_up
+                    self.hour_down_ts = self.minute_bar.datetime.timestamp()
 
+        if self.history_minute_am.inited:
+            self.hour_6_up, self.hour_6_down = self.history_minute_am.donchian(360)
+    
     def check_indicator_inited(self):
-        if self.recent_atr_list and self.price_cross:
-            self.indicator_inited = True
+        if self.bar_lack or (self.direction == Direction.LONG and not self.hour_6_high_cross) or (self.direction == Direction.SHORT and not self.hour_6_low_cross):
+            self.indicator_inited = False
+            return
+        
+        if self.direction == Direction.LONG:
+            if self.hour_up and self.hour_down and self.minute_bar.datetime.timestamp() >= self.hour_up_ts + 2 * 60:
+                self.indicator_inited = True
+            
+        if self.direction == Direction.SHORT:
+            if self.hour_up and self.hour_down and self.minute_bar.datetime.timestamp() >= self.hour_down_ts + 2 * 60:
+                self.indicator_inited = True
 
     def on_tick(self, tick: TickData):
+        self.tick_minute_bar_generator.update_tick(tick)
         if not self.trading or self.loading_database:
             return
         
         self.tick = copy(tick)
+        return
 
         """ fake """
         """
@@ -362,41 +406,11 @@ class TopGainersLosersStrategy(CtaTemplate):
 
         return
         """
-
-        # 确认价格突破
-        if not self.price_cross and not self.close:
-            if self.direction == Direction.LONG and self.history_high and tick.last_price >= self.history_high:
-                self.price_cross = True
-
-            if self.direction == Direction.SHORT and self.history_low and tick.last_price <= self.history_low:
-                self.price_cross = True
-
-            if self.price_cross:
-                # 记录日志
-                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} CROSS {tick.last_price} {self.history_high} {self.history_low}"})
-                self.trade_logs_updated = True
-        
-        # 核查指标初始化
-        if not self.indicator_inited:
-            self.check_indicator_inited()
         
         # 开仓判断
         if self.indicator_inited and not self.close:
             if not self.entry_tick_price:
                 self.entry_tick_price = tick.last_price
-
-                # 判断初始化时价格回撤过大
-                if self.recent_atr_list:
-                    for v in self.recent_atr_list.copy():
-                        if np.isnan(v):
-                            self.recent_atr_list.remove(v)
-                    max_recent_atr = max(self.recent_atr_list)
-                    
-                    if self.direction == Direction.LONG and tick.last_price <= self.history_high - max_recent_atr * 0.5 and tick.last_price <= self.history_high * 0.98:
-                        self.entry_drawdown = True
-
-                    if self.direction == Direction.SHORT and tick.last_price >= self.history_low + max_recent_atr * 0.5 and tick.last_price >= self.history_low * 1.02:
-                        self.entry_drawdown = True
 
             last_target_pos = self.target_pos
             if not self.target_pos and ((self.direction == Direction.LONG and tick.last_price >= self.entry_tick_price) or (self.direction == Direction.SHORT and tick.last_price <= self.entry_tick_price)):
@@ -449,11 +463,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                         #     if int(time.time()) - last_close_ts <= 4 * 60 * 60:
                         #         self.open_allowed = True
 
-                        # if int(time.time()) - self.trending_ts_24h <= 2 * 60 * 60:
-                        #     self.open_allowed = True
-
-                        if int(time.time()) - self.trending_ts_1h <= 2 * 60 * 60:
-                            self.open_allowed = True
+                        pass
 
                 # 发送订单
                 # if self.portfolio.trade_enable and self.open_allowed and self.open_count <= 2 and not self.pos and time.time() <= tick.datetime.timestamp() + 3:
@@ -518,7 +528,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                     if self.direction == Direction.SHORT:
                         pnl = pnl * -1
 
-                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} OPEN_COUNT {self.open_count} STOP_COUNT {self.stop_count} STOP {self.stop_pnl:.2f}% CLOSE {pnl:.2f}% ENTRY_DRAWDOWN {self.entry_drawdown} PRICE {tick.last_price} TRENDING_1H {self.trending_change_1h} {self.trending_ts_1h} {self.trending_time_1h} TRENDING_24H {self.trending_ts_24h} {self.trending_time_24h}"})
+                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)}"})
                 self.trade_logs_updated = True
 
                 if pnl >= 5.0:
@@ -528,10 +538,6 @@ class TopGainersLosersStrategy(CtaTemplate):
     def add_unit_pos(self, tick_price: float):
         # 开仓数
         self.open_count += 1
-
-        # 仓位大小
-        # self.unit_pos = (0.01 * self.portfolio.portfolio_value) / (2 * self.minute_atr)
-        # self.target_pos = abs(self.target_pos) + abs(self.unit_pos)
 
         leverage = 1
         if abs(self.portfolio.account_drawdown) >= self.portfolio.portfolio_value * 0.1:
@@ -556,11 +562,9 @@ class TopGainersLosersStrategy(CtaTemplate):
 
         # 更新止损价格
         if self.direction == Direction.LONG:
-            # self.stop_price = tick_price - 2 * self.minute_atr
             self.stop_price = tick_price * 0.992
         
         else:
-            # self.stop_price = tick_price + 2 * self.minute_atr
             self.stop_price = tick_price * 1.008
 
     def check_save_data(self):

@@ -454,7 +454,7 @@ class DownloadThread(object):
         vt_symbol = f"{self.contract}.{self.exchange.value}"
         if self.hours:
             from_time = datetime.now() - timedelta(hours=self.hours)
-            from_time = datetime(from_time.year, from_time.month, from_time.day, from_time.hour, from_time.minute)
+            from_time = datetime(from_time.year, from_time.month, from_time.day, from_time.hour)
         
         else:
             from_time = datetime.now() - timedelta(days=self.days)
