@@ -35,21 +35,24 @@ class TopGainersLosersStrategy(CtaTemplate):
         "vt_symbol",
         "exchange",
         "exchange_user",
-        "direction"
+        "direction",
+        "datetime"
     ]
 
     # 变量列表
     variables = [
         "target_pos",
-        "close",
+        "stop_open",
         "closed",
         "open_value",
         "open_price",
         "entry_tick_price",
         "open_tick_value",
         "open_tick_price",
+        "open_tick_dt",
         "close_tick_price",
         "open_count",
+        "profit_price",
         "stop_price",
         "stop_pnl",
         "stop_tick_price",
@@ -70,15 +73,17 @@ class TopGainersLosersStrategy(CtaTemplate):
     # 同步列表
     syncs = [
         "target_pos",
-        "close",
+        "stop_open",
         "closed",
         "open_value",
         "open_price",
         "entry_tick_price",
         "open_tick_value",
         "open_tick_price",
+        "open_tick_dt",
         "close_tick_price",
         "open_count",
+        "profit_price",
         "stop_price",
         "stop_pnl",
         "stop_tick_price",
@@ -100,6 +105,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.exchange: Exchange = Exchange.NONE
         self.exchange_user:str = ""
         self.direction: Direction = Direction.NET
+        self.datetime = ""
 
         """ fake """
         # self.send_fake_order = False
@@ -135,18 +141,19 @@ class TopGainersLosersStrategy(CtaTemplate):
 
         self.tick: TickData = None
         self.target_pos = 0
-        self.close = False
+        self.stop_open = False
         self.closed = False
         self.open_value = 0
         self.open_price = 0
         self.entry_tick_price = 0
         self.open_tick_value = 0
         self.open_tick_price = 0
+        self.open_tick_dt = None
         self.close_tick_price = 0
         self.open_count = 0
         self.unit_pos = 0
+        self.profit_price = 0
         self.stop_price = 0
-        self.stop_pnl = 0
         self.stop_tick_price = 0
         self.stop_tick_dt = 0
         self.stop_count = 0
@@ -210,11 +217,6 @@ class TopGainersLosersStrategy(CtaTemplate):
             for _, row in df.iterrows():
                 self.trade_logs.append(dict(row))
 
-    def on_close(self):
-        self.target_pos = 0
-        self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
-        self.close = True
-
     def load_database_bar(self):
         try:
             self.loading_database = True
@@ -270,8 +272,6 @@ class TopGainersLosersStrategy(CtaTemplate):
 
         # 回测数据库Bar数据
         if not self.database_loaded:
-            self.database_loaded = True
-
             bar_lack = True
             for i in range(len(self.database_minute_bar_list)):
                 database_minute_bar: BarData = self.database_minute_bar_list[i]
@@ -306,12 +306,13 @@ class TopGainersLosersStrategy(CtaTemplate):
                                 break
 
             self.bar_lack = bar_lack
-            if self.direction == Direction.LONG and self.hour_up and self.hour_6_up and self.hour_up >= self.hour_6_up * 0.98:
+            if self.direction == Direction.SHORT and self.hour_up and self.hour_6_up and self.hour_up >= self.hour_6_up * 0.98:
                 self.hour_6_high_cross = True
 
-            if self.direction == Direction.SHORT and self.hour_down and self.hour_6_down and self.hour_down <= self.hour_6_down * 1.02:
+            if self.direction == Direction.LONG and self.hour_down and self.hour_6_down and self.hour_down <= self.hour_6_down * 1.02:
                 self.hour_6_low_cross = True
 
+            self.database_loaded = True
 
         else:
             self.on_minute_bar(bar)
@@ -339,13 +340,13 @@ class TopGainersLosersStrategy(CtaTemplate):
 
         if self.minute_am.inited:
             hour_up, hour_down = self.minute_am.donchian(60)
-            if self.direction == Direction.LONG:
+            if self.direction == Direction.SHORT:
                 if hour_up != self.hour_up:
                     self.hour_up = hour_up
                     self.hour_down = hour_down
                     self.hour_up_ts = self.minute_bar.datetime.timestamp()
             
-            if self.direction == Direction.SHORT:
+            if self.direction == Direction.LONG:
                 if hour_down != self.hour_down:
                     self.hour_down = hour_down
                     self.hour_up = hour_up
@@ -355,25 +356,23 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.hour_6_up, self.hour_6_down = self.history_minute_am.donchian(360)
     
     def check_indicator_inited(self):
-        if self.bar_lack or (self.direction == Direction.LONG and not self.hour_6_high_cross) or (self.direction == Direction.SHORT and not self.hour_6_low_cross):
+        if self.bar_lack or (self.direction == Direction.SHORT and not self.hour_6_high_cross) or (self.direction == Direction.LONG and not self.hour_6_low_cross):
             self.indicator_inited = False
             return
         
-        if self.direction == Direction.LONG:
+        if self.direction == Direction.SHORT:
             if self.hour_up and self.hour_down and self.minute_bar.datetime.timestamp() >= self.hour_up_ts + 2 * 60:
                 self.indicator_inited = True
             
-        if self.direction == Direction.SHORT:
+        if self.direction == Direction.LONG:
             if self.hour_up and self.hour_down and self.minute_bar.datetime.timestamp() >= self.hour_down_ts + 2 * 60:
                 self.indicator_inited = True
 
     def on_tick(self, tick: TickData):
-        self.tick_minute_bar_generator.update_tick(tick)
-        if not self.trading or self.loading_database:
-            return
-        
         self.tick = copy(tick)
-        return
+        self.tick_minute_bar_generator.update_tick(tick)
+        if not self.trading or not self.database_loaded:
+            return
 
         """ fake """
         """
@@ -407,67 +406,41 @@ class TopGainersLosersStrategy(CtaTemplate):
         return
         """
         
-        # 开仓判断
-        if self.indicator_inited and not self.close:
-            if not self.entry_tick_price:
-                self.entry_tick_price = tick.last_price
+        # 1h新高新低，指标重置
+        if self.indicator_inited and ((self.direction == Direction.SHORT and tick.last_price > self.hour_up) or (self.direction == Direction.LONG and tick.last_price < self.hour_down)):
+            self.indicator_inited = False
 
-            last_target_pos = self.target_pos
-            if not self.target_pos and ((self.direction == Direction.LONG and tick.last_price >= self.entry_tick_price) or (self.direction == Direction.SHORT and tick.last_price <= self.entry_tick_price)):
+        # 价格突破1h最高最低中线，停止开仓，止损价为开仓价
+        if not self.stop_open and ((self.direction == Direction.SHORT and tick.last_price <= self.hour_up - ((self.hour_up - self.hour_down) / 2)) or (self.direction == Direction.LONG and tick.last_price >= self.hour_down + ((self.hour_up - self.hour_down) / 2))):
+            self.stop_open = True
+            self.stop_price = self.open_tick_price
+            if self.pos and self.exchange == Exchange.BINANCE:
+                self.cancel_all()
+                self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(self.pos), stop=True)
+
+        # 超时1h停止开仓
+        if not self.stop_open and tick.datetime >= datetime.strptime(self.datetime, f"%Y-%m-%d %H:%M:%S") + timedelta(hours=1):
+            self.stop_open = True
+
+        # 未开仓前已停止开仓，做平仓处理
+        if self.stop_open and not self.target_pos:
+            self.closed = True
+
+        # 开仓判断
+        if self.indicator_inited and not self.target_pos and not self.stop_open and not self.closed:
+            open_allowed = False
+            if self.direction == Direction.SHORT and tick.last_price <= self.hour_up - ((self.hour_up - self.hour_down) / 10) and tick.last_price >= self.hour_up - ((self.hour_up - self.hour_down) / 3):
+                open_allowed = True
+
+            if self.direction == Direction.LONG and tick.last_price >= self.hour_down + ((self.hour_up - self.hour_down) / 10) and tick.last_price <= self.hour_down + ((self.hour_up - self.hour_down) / 3):
+                open_allowed = True
+
+            if open_allowed:
                 self.add_unit_pos(tick.last_price)
 
-                # 判断是否允许开仓
-                if self.open_count <= 1:
-                    strategy_token = ""
-                    if "OKX" in self.vt_symbol:
-                        strategy_token = self.vt_symbol.split("-USDT")[0]
-
-                    else:
-                        strategy_token = self.vt_symbol.split("USDT")[0]
-                        
-                    if self.direction == Direction.LONG:
-                        strategy_token = f"{strategy_token}_LONG"
-                    
-                    else:
-                        strategy_token = f"{strategy_token}_SHORT"
-
-                    # 搜索最近平仓log
-                    recent_close_logs = []
-                    for log in reversed(self.trade_logs):
-                        log = log["LOG"]
-                        elements = log.split(" ")
-                        offset = elements[4]
-                        if offset == "OPEN_COUNT":
-                            recent_close_logs.append(log)
-                            if len(recent_close_logs) >= 2:
-                                break
-                    
-                    # 判断是否连续大幅亏损
-                    conmtinuous_over_loss_count = 0
-                    for log in reversed(recent_close_logs):
-                        elements = log.split(" ")
-                        stop_count = int(elements[7])
-                        if stop_count >= 2:
-                            conmtinuous_over_loss_count += 1
-                        
-                        else:
-                            conmtinuous_over_loss_count = 0
-
-                    # 确定是否允许交易
-                    if conmtinuous_over_loss_count < 2:
-                        # if recent_close_logs:
-                        #     last_close_log = recent_close_logs[0]
-                        #     elements = last_close_log.split(" ")
-                        #     last_close_date_time = f"{elements[0]} {elements[1]}"
-                        #     last_close_ts = datetime.strptime(last_close_date_time, "%Y-%m-%d %H:%M:%S").timestamp()
-                        #     if int(time.time()) - last_close_ts <= 4 * 60 * 60:
-                        #         self.open_allowed = True
-
-                        pass
-
                 # 发送订单
-                # if self.portfolio.trade_enable and self.open_allowed and self.open_count <= 2 and not self.pos and time.time() <= tick.datetime.timestamp() + 3:
-                #     open_volume = abs(self.target_pos) - abs(last_target_pos)
+                # if self.portfolio.trade_enable and not self.pos and time.time() <= tick.datetime.timestamp() + 3:
+                #     open_volume = abs(self.target_pos)
                 #     if open_volume:
                 #         if self.direction == Direction.LONG:
                 #             trade_price = self.tick.last_price * 1.005
@@ -492,61 +465,67 @@ class TopGainersLosersStrategy(CtaTemplate):
                 #         msg = f"{self.vt_symbol}\n开仓（{self.direction.value}）"
                 #         self.cta_engine.main_engine.send_ding_talk(msg)
 
-                # 记录日志
-                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {self.open_count} {tick.last_price}"})
+                # 开仓日志
+                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {tick.last_price}"})
                 self.trade_logs_updated = True
 
         # 止损判断
         if self.stop_price and ((self.direction == Direction.LONG and tick.last_price <= self.stop_price) or (self.direction == Direction.SHORT and tick.last_price >= self.stop_price)):
-            stop_pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
-            if self.direction == Direction.SHORT:
-                stop_pnl *= -1
-            self.stop_pnl += stop_pnl
+            stop_pnl = 0
+            if self.open_tick_price:
+                stop_pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
+                if self.direction == Direction.SHORT:
+                    stop_pnl *= -1
 
-            self.target_pos = 0
+            self.stop_price = 0
+            self.stop_count += 1
             self.stop_tick_price = tick.last_price
             self.stop_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
-            self.stop_count += 1
-            self.stop_price = 0
-            self.open_tick_price = 0
+            self.closed = True
+            self.target_pos = 0
             self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
 
-            # 记录日志
-            self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} STOP {tick.last_price}"})
+            # 止损日志
+            self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} STOP {tick.last_price} {stop_pnl}%"})
             self.trade_logs_updated = True
 
         # 平仓判断
-        if self.close and not self.closed:
-            self.closed = True
+        if not self.closed and ((self.direction == Direction.LONG and self.profit_price and tick.last_price >= self.profit_price) or (self.direction == Direction.SHORT and self.profit_price and tick.last_price <= self.profit_price) or (self.open_tick_dt and tick.datetime > self.open_tick_dt + timedelta(hours=2))):
             self.close_tick_price = tick.last_price
+            self.closed = True
+            self.target_pos = 0
+            self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
 
-            # 记录日志
-            if self.open_count:
-                pnl = 0
-                if self.open_tick_price:
-                    pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
-                    if self.direction == Direction.SHORT:
-                        pnl = pnl * -1
+            # 平仓日志
+            pnl = 0
+            if self.open_tick_price:
+                pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
+                if self.direction == Direction.SHORT:
+                    pnl = pnl * -1
 
-                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)}"})
-                self.trade_logs_updated = True
-
-                if pnl >= 5.0:
-                    msg = f"恭喜！赢麻了！\n\nPNL {pnl:.2f}%"
-                    self.send_ding_talk(msg)
+            self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} CLOSE {tick.last_price} {pnl}%"})
+            self.trade_logs_updated = True
     
     def add_unit_pos(self, tick_price: float):
-        # 开仓数
-        self.open_count += 1
-
+        # 计算仓位大小
         leverage = 1
-        if abs(self.portfolio.account_drawdown) >= self.portfolio.portfolio_value * 0.1:
+        if abs(self.portfolio.account_drawdown) >= self.portfolio.portfolio_value * 0.03:
             leverage = 3
         
-        if abs(self.portfolio.account_drawdown) >= self.portfolio.portfolio_value * 0.4:
+        if abs(self.portfolio.account_drawdown) >= self.portfolio.portfolio_value * 0.12:
             leverage = 6
 
-        self.target_pos = self.portfolio.portfolio_value * leverage / tick_price
+        if abs(self.portfolio.account_drawdown) >= self.portfolio.portfolio_value * 0.24:
+            leverage = 0
+        
+        order_value = 0
+        if self.direction == Direction.LONG:
+            order_value = self.portfolio.portfolio_value * leverage * (0.01 / abs((self.hour_down / tick_price) - 1))
+        
+        if self.direction == Direction.SHORT:
+            order_value = self.portfolio.portfolio_value * leverage * (0.01 / abs((self.hour_up / tick_price) - 1))
+
+        self.target_pos = order_value / tick_price
         if self.direction == Direction.SHORT:
             self.target_pos *= -1
 
@@ -554,18 +533,26 @@ class TopGainersLosersStrategy(CtaTemplate):
         contract: ContractData = self.cta_engine.main_engine.get_contract(self.vt_symbol)
         self.target_pos = round_to(self.target_pos, contract.min_volume)
 
-        # 模拟仓位价值、均价
-        # self.open_tick_value = self.open_tick_value + abs(self.unit_pos) * tick_price
-        # self.open_tick_price = self.open_tick_value / abs(self.target_pos)
-        self.open_tick_value = self.portfolio.portfolio_value
+        # 开仓价值、价格、时间
+        self.open_tick_value = order_value
         self.open_tick_price = tick_price
+        self.open_tick_dt = self.tick.datetime
+
+        # 更新止盈价格
+        if self.direction == Direction.LONG:
+            self.profit_price = tick_price * (1 + (abs((self.hour_down / tick_price) - 1) * 3))
+            self.profit_price = max(self.profit_price, self.hour_down + ((self.hour_up - self.hour_down) * 0.6))
+        
+        if self.direction == Direction.SHORT:
+            self.profit_price = tick_price * (1 - (abs((self.hour_up / tick_price) - 1) * 3))
+            self.profit_price = min(self.profit_price, self.hour_up - ((self.hour_up - self.hour_down) * 0.6))
 
         # 更新止损价格
         if self.direction == Direction.LONG:
-            self.stop_price = tick_price * 0.992
+            self.stop_price = self.hour_down
         
-        else:
-            self.stop_price = tick_price * 1.008
+        if self.direction == Direction.SHORT:
+            self.stop_price = self.hour_up
 
     def check_save_data(self):
         try:
@@ -662,22 +649,22 @@ class TopGainersLosersStrategy(CtaTemplate):
 
             # 止损触发
             if not self.pos and self.target_pos:
+                stop_pnl = 0
                 if self.tick and self.open_tick_price:
                     stop_pnl = ((self.tick.last_price / self.open_tick_price) - 1) * 100
                     if self.direction == Direction.SHORT:
                         stop_pnl *= -1
-                    self.stop_pnl += stop_pnl
 
-                self.target_pos = 0
+                self.stop_price = 0
+                self.stop_count += 1
                 self.stop_tick_price = self.tick.last_price
                 self.stop_tick_dt = self.tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
-                self.stop_count += 1
-                self.stop_price = 0
-                self.open_tick_price = 0
+                self.closed = True
+                self.target_pos = 0
                 self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
 
                 # 记录日志
-                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} AUTO_STOP {self.tick.last_price}"})
+                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} AUTO_STOP {self.tick.last_price} {stop_pnl}%"})
                 self.trade_logs_updated = True
         
         except Exception as e:
