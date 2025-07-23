@@ -54,7 +54,6 @@ class TopGainersLosersStrategy(CtaTemplate):
         "open_count",
         "profit_price",
         "stop_price",
-        "stop_pnl",
         "stop_tick_price",
         "stop_tick_dt",
         "stop_count",
@@ -67,7 +66,11 @@ class TopGainersLosersStrategy(CtaTemplate):
         "minute_5_bar_dt",
         "minute_5_atr",
         "insufficient_value",
-        "open_allowed"
+        "open_allowed",
+        "hour_6_high_cross",
+        "hour_6_low_cross",
+        "hour_up",
+        "hour_down"
     ]
 
     # 同步列表
@@ -85,7 +88,6 @@ class TopGainersLosersStrategy(CtaTemplate):
         "open_count",
         "profit_price",
         "stop_price",
-        "stop_pnl",
         "stop_tick_price",
         "stop_tick_dt",
         "stop_count",
@@ -97,7 +99,11 @@ class TopGainersLosersStrategy(CtaTemplate):
         "minute_5_bar_dt",
         "minute_5_atr",
         "insufficient_value",
-        "open_allowed"
+        "open_allowed",
+        "hour_6_high_cross",
+        "hour_6_low_cross",
+        "hour_up",
+        "hour_down"
     ]
 
     def __init__(self, ctaEngine, setting):
