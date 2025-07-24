@@ -327,7 +327,7 @@ class TopGainersLosersPortfolio(object):
                     # 信号生成
                     if rank_24h == 0 or rank_24h > 10:
                         signal_dt_str = self.signal_tokens_1h.get(symbol, "")
-                        signal_ts = datetime.strptime(signal_dt_str, f"%Y-%m-%d %H:%M:%S").timestamp()
+                        signal_ts = datetime.strptime(signal_dt_str, f"%Y-%m-%d %H:%M:%S").timestamp() if signal_dt_str else 0
                         self.signal_tokens_1h[symbol] = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
 
                         if data_time >= signal_ts + 6 * 60 * 60:
