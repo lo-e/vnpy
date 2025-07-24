@@ -326,13 +326,15 @@ class TopGainersLosersPortfolio(object):
 
                     # 信号生成
                     if rank_24h == 0 or rank_24h > 10:
-                        signal_ts = self.signal_tokens_1h.get(symbol, 0)
-                        self.signal_tokens_1h[symbol] = data_time
+                        signal_dt_str = self.signal_tokens_1h.get(symbol, "")
+                        signal_ts = datetime.strptime(signal_dt_str, f"%Y-%m-%d %H:%M:%S").timestamp()
+                        self.signal_tokens_1h[symbol] = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
 
                         if data_time >= signal_ts + 6 * 60 * 60:
                             if direction == "LONG":
                                 setting = self.new_strategy(symbol, Direction.SHORT)
-                                if setting:
+                                strategy_name = setting.get("strategy_name", "")
+                                if setting and strategy_name not in self.cta_engine.strategies:
                                     vt_symbol = setting["vt_symbol"]
                                     instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
                                     on_timestamp = instrument_data["on_timestamp"]
@@ -346,7 +348,8 @@ class TopGainersLosersPortfolio(object):
                             
                             elif direction == "SHORT":
                                 setting = self.new_strategy(symbol, Direction.LONG)
-                                if setting:
+                                strategy_name = setting.get("strategy_name", "")
+                                if setting and strategy_name not in self.cta_engine.strategies:
                                     vt_symbol = setting["vt_symbol"]
                                     instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
                                     on_timestamp = instrument_data["on_timestamp"]
