@@ -50,19 +50,22 @@ class TopGainersLosersStrategy(CtaTemplate):
         "open_tick_value",
         "open_tick_price",
         "open_tick_dt",
-        "close_tick_price",
-        "profit_price",
         "stop_price",
         "stop_tick_price",
         "stop_tick_dt",
-        "stop_count",
+        "profit_price",
+        "close_tick_price",
+        "leverage",
+        "open_count",
         "indicator_inited",
-        "minute_bar_dt",
-        "insufficient_value",
         "hour_6_high_cross",
         "hour_6_low_cross",
         "hour_up",
-        "hour_down"
+        "hour_up_ts",
+        "hour_down",
+        "hour_down_ts",
+        "minute_bar_dt",
+        "insufficient_value",
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -116,7 +119,8 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.stop_price = 0
         self.stop_tick_price = 0
         self.stop_tick_dt = 0
-        self.stop_count = 0
+        self.leverage = 0
+        self.open_count = 0
         self.database_loaded = False
         self.indicator_inited = False
         self.target_pos_check_ts = 0
@@ -424,7 +428,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 #         self.cta_engine.main_engine.send_ding_talk(msg)
 
                 # 开仓日志
-                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {tick.last_price}"})
+                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {self.open_count} {tick.last_price}"})
                 self.trade_logs_updated = True
 
         # 止损判断
@@ -432,11 +436,11 @@ class TopGainersLosersStrategy(CtaTemplate):
             stop_pnl = 0
             if self.open_tick_price:
                 stop_pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
+                stop_pnl *= self.leverage
                 if self.direction == Direction.SHORT:
                     stop_pnl *= -1
 
             self.stop_price = 0
-            self.stop_count += 1
             self.stop_tick_price = tick.last_price
             self.stop_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
             self.closed = True
@@ -444,7 +448,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
 
             # 止损日志
-            self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} STOP {tick.last_price} {stop_pnl}%"})
+            self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} STOP {stop_pnl}% {tick.last_price}"})
             self.trade_logs_updated = True
 
         # 平仓判断
@@ -455,13 +459,14 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
 
             # 平仓日志
-            pnl = 0
+            close_pnl = 0
             if self.open_tick_price:
-                pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
+                close_pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
+                close_pnl *= self.leverage
                 if self.direction == Direction.SHORT:
-                    pnl = pnl * -1
+                    close_pnl = close_pnl * -1
 
-            self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} CLOSE {tick.last_price} {pnl}%"})
+            self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} CLOSE {close_pnl}% {tick.last_price}"})
             self.trade_logs_updated = True
     
     def add_unit_pos(self, tick_price: float):
@@ -475,13 +480,27 @@ class TopGainersLosersStrategy(CtaTemplate):
 
         if abs(self.portfolio.account_drawdown) >= self.portfolio.portfolio_value * 0.24:
             leverage = 0
+
+        # if self.open_count < 3:
+        #     leverage = 1
+        
+        # elif self.open_count < 6:
+        #     leverage = 3
+
+        # elif self.open_count < 9:
+        #     leverage = 6
+        
+        # else:
+        #     leverage = 0
         
         order_value = 0
         if self.direction == Direction.LONG:
-            order_value = self.portfolio.portfolio_value * leverage * (0.01 / abs((self.hour_down / tick_price) - 1))
+            self.leverage = leverage * (0.01 / abs((self.hour_down / tick_price) - 1))
+            order_value = self.portfolio.portfolio_value * self.leverage
         
         if self.direction == Direction.SHORT:
-            order_value = self.portfolio.portfolio_value * leverage * (0.01 / abs((self.hour_up / tick_price) - 1))
+            self.leverage = leverage * (0.01 / abs((self.hour_up / tick_price) - 1))
+            order_value = self.portfolio.portfolio_value * self.leverage
 
         self.target_pos = order_value / tick_price
         if self.direction == Direction.SHORT:
@@ -511,6 +530,9 @@ class TopGainersLosersStrategy(CtaTemplate):
         
         if self.direction == Direction.SHORT:
             self.stop_price = self.hour_up
+        
+        # 开仓计数
+        self.open_count += 1
 
     def check_save_data(self):
         try:
@@ -609,12 +631,12 @@ class TopGainersLosersStrategy(CtaTemplate):
             if not self.pos and self.target_pos:
                 stop_pnl = 0
                 if self.tick and self.open_tick_price:
-                    stop_pnl = ((self.tick.last_price / self.open_tick_price) - 1) * 100
+                    stop_pnl = ((trade.price / self.open_tick_price) - 1) * 100
+                    stop_pnl *= self.leverage
                     if self.direction == Direction.SHORT:
                         stop_pnl *= -1
 
                 self.stop_price = 0
-                self.stop_count += 1
                 self.stop_tick_price = self.tick.last_price
                 self.stop_tick_dt = self.tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                 self.closed = True
@@ -622,7 +644,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
 
                 # 记录日志
-                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} AUTO_STOP {self.tick.last_price} {stop_pnl}%"})
+                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} AUTO_STOP {stop_pnl}% {self.tick.last_price}"})
                 self.trade_logs_updated = True
         
         except Exception as e:
