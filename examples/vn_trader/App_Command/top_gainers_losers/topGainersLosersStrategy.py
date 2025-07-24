@@ -135,7 +135,6 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.bar_lack = False                       # 数据缺失
         self.hour_6_high_cross = False              # 6H最高价
         self.hour_6_low_cross = False               # 6H最低价
-        self.tick_minute_bar_queue = Queue()
 
         self.database_minute_bar_list = []
         self.tick_minute_bar_list = []
@@ -179,9 +178,6 @@ class TopGainersLosersStrategy(CtaTemplate):
             df = pd.read_csv(file_path)
             for _, row in df.iterrows():
                 self.trade_logs.append(dict(row))
-
-        # 处理tick_minute_bar线程
-        Thread(target=self.process_tick_minute_bar).start()
 
     def load_database_bar(self):
         try:
@@ -232,86 +228,84 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.loading_database = False
     
     def on_tick_minute_bar(self, bar: BarData):
-        self.tick_minute_bar_queue.put(bar)
+        Thread(target=self.process_tick_minute_bar, args=(bar,)).start()
 
-    def process_tick_minute_bar(self):
-        while True:
-            try:
-                bar: BarData = self.tick_minute_bar_queue.get(block=True, timeout=1)
-                self.tick_minute_bar_list.append(bar)
-                if not self.database_loaded and len(self.database_minute_bar_list) < 359:
-                    return
+    def process_tick_minute_bar(self, bar: BarData):
+        try:
+            self.tick_minute_bar_list.append(bar)
+            if not self.database_loaded and len(self.database_minute_bar_list) < 359:
+                return
 
-                # 回测数据库Bar数据
-                if not self.database_loaded:
-                    bar_lack = True
-                    for i in range(len(self.database_minute_bar_list)):
-                        database_minute_bar: BarData = self.database_minute_bar_list[i]
-                        if i < len(self.database_minute_bar_list) - 1:
-                            self.on_minute_bar(database_minute_bar)
-                        
-                        else:
-                            for j in range(len(self.tick_minute_bar_list)):
-                                tick_minute_bar: BarData = self.tick_minute_bar_list[j]
-                                if tick_minute_bar.datetime < database_minute_bar.datetime:
-                                    continue
+            # 回测数据库Bar数据
+            if not self.database_loaded:
+                bar_lack = True
+                for i in range(len(self.database_minute_bar_list)):
+                    database_minute_bar: BarData = self.database_minute_bar_list[i]
+                    if i < len(self.database_minute_bar_list) - 1:
+                        self.on_minute_bar(database_minute_bar)
+                    
+                    else:
+                        for j in range(len(self.tick_minute_bar_list)):
+                            tick_minute_bar: BarData = self.tick_minute_bar_list[j]
+                            if tick_minute_bar.datetime < database_minute_bar.datetime:
+                                continue
 
-                                elif tick_minute_bar.datetime == database_minute_bar.datetime:
-                                    bar_lack = False
-                                    database_minute_bar.high_price = max(database_minute_bar.high_price, tick_minute_bar.high_price)
-                                    database_minute_bar.low_price = min(database_minute_bar.low_price, tick_minute_bar.low_price)
-                                    self.on_minute_bar(database_minute_bar)
+                            elif tick_minute_bar.datetime == database_minute_bar.datetime:
+                                bar_lack = False
+                                database_minute_bar.high_price = max(database_minute_bar.high_price, tick_minute_bar.high_price)
+                                database_minute_bar.low_price = min(database_minute_bar.low_price, tick_minute_bar.low_price)
+                                self.on_minute_bar(database_minute_bar)
 
+                            else:
+                                if bar_lack:
+                                    if tick_minute_bar.datetime == database_minute_bar.datetime + timedelta(minutes=1):
+                                        bar_lack = False
+                                        self.on_minute_bar(database_minute_bar)
+                                
+                                if not bar_lack:
+                                    self.on_minute_bar(tick_minute_bar)
+                                
                                 else:
-                                    if bar_lack:
-                                        if tick_minute_bar.datetime == database_minute_bar.datetime + timedelta(minutes=1):
-                                            bar_lack = False
-                                            self.on_minute_bar(database_minute_bar)
-                                    
-                                    if not bar_lack:
-                                        self.on_minute_bar(tick_minute_bar)
-                                    
-                                    else:
-                                        tick_first_bar_dt = self.tick_minute_bar_list[0].datetime
-                                        msg = f"{self.vt_symbol} Bar数据缺失\ndatabase {database_minute_bar.datetime}\ntick {tick_first_bar_dt}"
-                                        self.send_ding_talk(msg)
-                                        break
+                                    tick_first_bar_dt = self.tick_minute_bar_list[0].datetime
+                                    msg = f"{self.vt_symbol} Bar数据缺失\ndatabase {database_minute_bar.datetime}\ntick {tick_first_bar_dt}"
+                                    self.send_ding_talk(msg)
+                                    break
 
-                    self.bar_lack = bar_lack
-                    if self.direction == Direction.SHORT:
-                        if self.hour_up and self.hour_6_up and self.hour_up >= self.hour_6_up * 0.98:
-                            self.hour_6_high_cross = True
-                        
-                        else:
-                            self.hour_6_high_cross = False
-                            self.stop_open = True
+                self.bar_lack = bar_lack
+                if self.direction == Direction.SHORT:
+                    if self.hour_up and self.hour_6_up and self.hour_up >= self.hour_6_up * 0.98:
+                        self.hour_6_high_cross = True
+                    
+                    else:
+                        self.hour_6_high_cross = False
+                        self.stop_open = True
 
-                    if self.direction == Direction.LONG:
-                        if self.hour_down and self.hour_6_down and self.hour_down <= self.hour_6_down * 1.02:
-                            self.hour_6_low_cross = True
-                        
-                        else:
-                            self.hour_6_low_cross = False
-                            self.stop_open = True
+                if self.direction == Direction.LONG:
+                    if self.hour_down and self.hour_6_down and self.hour_down <= self.hour_6_down * 1.02:
+                        self.hour_6_low_cross = True
+                    
+                    else:
+                        self.hour_6_low_cross = False
+                        self.stop_open = True
 
-                    self.database_loaded = True
+                self.database_loaded = True
 
-                else:
-                    self.on_minute_bar(bar)
-                
-                # 确认指标初始化
-                self.check_indicator_inited()
+            else:
+                self.on_minute_bar(bar)
+            
+            # 确认指标初始化
+            self.check_indicator_inited()
 
-                # 保留最近行情数据
-                if len(self.tick_minute_bar_list) > 10:
-                    self.tick_minute_bar_list = self.tick_minute_bar_list[1:]
+            # 保留最近行情数据
+            if len(self.tick_minute_bar_list) > 10:
+                self.tick_minute_bar_list = self.tick_minute_bar_list[1:]
 
-            except Empty:
-                pass
+        except Empty:
+            pass
 
-            except Exception as e:
-                msg = f"处理tick_minute_bar出错\n\n{e}"
-                self.send_ding_talk(msg)
+        except Exception as e:
+            msg = f"处理tick_minute_bar出错\n\n{e}"
+            self.send_ding_talk(msg)
 
     def on_minute_bar(self, bar: BarData):
         self.minute_bar = bar
