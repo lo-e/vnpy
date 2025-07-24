@@ -139,7 +139,7 @@ class TopGainersLosersPortfolio(object):
         on_trading = False
         for strategy_name in self.cta_engine.strategies.keys():
             strategy: TopGainersLosersStrategy = self.cta_engine.strategies[strategy_name]
-            if strategy.open_count and strategy.open_allowed and (strategy.pos or not strategy.close):
+            if strategy.pos:
                 on_trading = True
                 break
 
