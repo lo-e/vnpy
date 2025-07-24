@@ -271,7 +271,6 @@ class TopGainersLosersStrategy(CtaTemplate):
                                     self.send_ding_talk(msg)
                                     break
 
-                self.bar_lack = bar_lack
                 if self.direction == Direction.SHORT:
                     if self.hour_up and self.hour_6_up and self.hour_up >= self.hour_6_up * 0.98:
                         self.hour_6_high_cross = True
@@ -288,7 +287,12 @@ class TopGainersLosersStrategy(CtaTemplate):
                         self.hour_6_low_cross = False
                         self.stop_open = True
 
+                self.bar_lack = bar_lack
                 self.database_loaded = True
+
+                if self.bar_lack:
+                    msg = f"{self.vt_symbol} 初始化数据缺失\n\ndatabase {len(self.database_minute_bar_list)}\ntick {len(self.tick_minute_bar_list)}"
+                    self.send_ding_talk(msg)
 
             else:
                 self.on_minute_bar(bar)
