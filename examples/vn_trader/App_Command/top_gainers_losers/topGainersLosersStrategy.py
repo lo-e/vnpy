@@ -40,52 +40,17 @@ class TopGainersLosersStrategy(CtaTemplate):
     ]
 
     # 变量列表
-    variables = [
-        "target_pos",
-        "stop_open",
-        "closed",
-        "open_value",
-        "open_price",
-        "entry_tick_price",
-        "open_tick_value",
-        "open_tick_price",
-        "open_tick_dt",
-        "close_tick_price",
-        "open_count",
-        "profit_price",
-        "stop_price",
-        "stop_tick_price",
-        "stop_tick_dt",
-        "stop_count",
-        "database_loaded",
-        "indicator_inited",
-        "minute_bar_dt",
-        "price_cross",
-        "entry_drawdown",
-        "unit_pos",
-        "minute_5_bar_dt",
-        "minute_5_atr",
-        "insufficient_value",
-        "open_allowed",
-        "hour_6_high_cross",
-        "hour_6_low_cross",
-        "hour_up",
-        "hour_down"
-    ]
+    variables = []
 
     # 同步列表
     syncs = [
         "target_pos",
         "stop_open",
         "closed",
-        "open_value",
-        "open_price",
-        "entry_tick_price",
         "open_tick_value",
         "open_tick_price",
         "open_tick_dt",
         "close_tick_price",
-        "open_count",
         "profit_price",
         "stop_price",
         "stop_tick_price",
@@ -93,13 +58,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         "stop_count",
         "indicator_inited",
         "minute_bar_dt",
-        "price_cross",
-        "entry_drawdown",
-        "unit_pos",
-        "minute_5_bar_dt",
-        "minute_5_atr",
         "insufficient_value",
-        "open_allowed",
         "hour_6_high_cross",
         "hour_6_low_cross",
         "hour_up",
@@ -149,15 +108,10 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.target_pos = 0
         self.stop_open = False
         self.closed = False
-        self.open_value = 0
-        self.open_price = 0
-        self.entry_tick_price = 0
         self.open_tick_value = 0
         self.open_tick_price = 0
         self.open_tick_dt = None
         self.close_tick_price = 0
-        self.open_count = 0
-        self.unit_pos = 0
         self.profit_price = 0
         self.stop_price = 0
         self.stop_tick_price = 0
@@ -171,10 +125,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.trade_logs = []                        # 交易日志
         self.trade_logs_updated = False
         self.insufficient_value = False             # 开仓价值不满足最低
-        self.price_cross = False                    # 价格突破
-        self.entry_drawdown = False                 # 入场时大幅度回撤
         self.loading_database = False               # 正在加载数据
-        self.open_allowed = False                   # 是否允许开仓
         self.bar_lack = False                       # 数据缺失
         self.hour_6_high_cross = False              # 6H最高价
         self.hour_6_low_cross = False               # 6H最低价
