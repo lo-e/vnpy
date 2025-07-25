@@ -955,12 +955,12 @@ class OkxWebsocketPublicApi(WebsocketClient):
         """ 行情推送回报 """
         for d in data:
             # 高频行情数据过滤
-            symbol = d["instId"]
-            last_ts = self.tick_ts_data.get(symbol, 0)
-            current_ts = int(time.time()*1000)
-            if current_ts - last_ts < 200:
-                return
-            self.tick_ts_data[symbol] = current_ts
+            # symbol = d["instId"]
+            # last_ts = self.tick_ts_data.get(symbol, 0)
+            # current_ts = int(time.time()*1000)
+            # if current_ts - last_ts < 200:
+            #     return
+            # self.tick_ts_data[symbol] = current_ts
 
             tick: TickData = self.ticks[d["instId"]]
             tick.last_price = float(d["last"])
