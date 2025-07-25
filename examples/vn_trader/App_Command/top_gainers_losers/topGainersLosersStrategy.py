@@ -56,6 +56,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         "stop_tick_dt",
         "profit_price",
         "close_tick_price",
+        "close_tick_dt",
         "leverage",
         "open_count",
         "indicator_inited",
@@ -116,11 +117,12 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.open_tick_value = 0
         self.open_tick_price = 0
         self.open_tick_dt = None
-        self.close_tick_price = 0
-        self.profit_price = 0
         self.stop_price = 0
         self.stop_tick_price = 0
-        self.stop_tick_dt = 0
+        self.stop_tick_dt = ""
+        self.profit_price = 0
+        self.close_tick_price = 0
+        self.close_tick_dt = ""
         self.leverage = 0
         self.open_count = 0
         self.database_loaded = False
@@ -480,6 +482,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         # 平仓判断
         if not self.closed and ((self.direction == Direction.LONG and self.profit_price and tick.last_price >= self.profit_price) or (self.direction == Direction.SHORT and self.profit_price and tick.last_price <= self.profit_price) or (self.open_tick_dt and tick.datetime > self.open_tick_dt + timedelta(hours=2))):
             self.close_tick_price = tick.last_price
+            self.close_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
             self.closed = True
             self.target_pos = 0
             self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
