@@ -460,7 +460,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 self.trade_logs_updated = True
 
         # 止损判断
-        if self.stop_price and ((self.direction == Direction.LONG and tick.last_price <= self.stop_price) or (self.direction == Direction.SHORT and tick.last_price >= self.stop_price)):
+        if not self.closed and ((self.direction == Direction.LONG and tick.last_price <= self.stop_price) or (self.direction == Direction.SHORT and tick.last_price >= self.stop_price)):
             stop_pnl = 0
             if self.open_tick_price:
                 stop_pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
@@ -468,7 +468,6 @@ class TopGainersLosersStrategy(CtaTemplate):
                 if self.direction == Direction.SHORT:
                     stop_pnl *= -1
 
-            self.stop_price = 0
             self.stop_tick_price = tick.last_price
             self.stop_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
             self.closed = True
@@ -665,7 +664,6 @@ class TopGainersLosersStrategy(CtaTemplate):
                     if self.direction == Direction.SHORT:
                         stop_pnl *= -1
 
-                self.stop_price = 0
                 self.stop_tick_price = self.tick.last_price
                 self.stop_tick_dt = self.tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                 self.closed = True
