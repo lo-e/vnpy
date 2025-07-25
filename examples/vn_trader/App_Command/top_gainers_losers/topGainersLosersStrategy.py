@@ -454,7 +454,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 #         self.cta_engine.main_engine.send_ding_talk(msg)
 
                 # 开仓日志
-                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {self.open_count} {tick.last_price}"})
+                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {self.open_count} {self.leverage} {tick.last_price}"})
                 self.trade_logs_updated = True
 
         # 止损判断
