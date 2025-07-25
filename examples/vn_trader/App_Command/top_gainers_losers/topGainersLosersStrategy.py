@@ -414,6 +414,7 @@ class TopGainersLosersStrategy(CtaTemplate):
 
         # 未开仓前已停止开仓，做平仓处理
         if self.stop_open and not self.target_pos:
+            self.close_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
             self.closed = True
 
         # 开仓判断
