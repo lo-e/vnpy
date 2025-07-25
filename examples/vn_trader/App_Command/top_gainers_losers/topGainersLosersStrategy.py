@@ -456,7 +456,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
 
                 # 开仓日志
-                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {self.open_count} {self.leverage} {tick.last_price}"})
+                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {self.open_count} {self.leverage:.2f} {tick.last_price}"})
                 self.trade_logs_updated = True
 
                 msg = f"{self.vt_symbol} {self.direction.value}\n开仓"

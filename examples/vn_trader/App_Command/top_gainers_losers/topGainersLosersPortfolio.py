@@ -338,7 +338,7 @@ class TopGainersLosersPortfolio(object):
                                     vt_symbol = setting["vt_symbol"]
                                     instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
                                     on_timestamp = instrument_data["on_timestamp"]
-                                    if data_time >= on_timestamp + 5 * 24 * 60 * 60:
+                                    if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60:
                                         new_settings.append(setting)
                                         if symbol not in self.strategy_short_tokens:
                                             self.strategy_short_tokens.append(symbol)
@@ -353,7 +353,7 @@ class TopGainersLosersPortfolio(object):
                                     vt_symbol = setting["vt_symbol"]
                                     instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
                                     on_timestamp = instrument_data["on_timestamp"]
-                                    if data_time >= on_timestamp + 5 * 24 * 60 * 60:
+                                    if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60:
                                         new_settings.append(setting)
                                         if symbol not in self.strategy_long_tokens:
                                             self.strategy_long_tokens.append(symbol)
