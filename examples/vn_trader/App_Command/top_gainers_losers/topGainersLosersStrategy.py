@@ -329,7 +329,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         if self.minute_bar:
             self.minute_bar_dt = self.minute_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
 
-        if self.minute_am.inited:
+        if self.minute_am.inited and not self.indicator_inited:
             hour_up, hour_down = self.minute_am.donchian(60)
             if self.direction == Direction.SHORT:
                 if hour_up != self.hour_up:
@@ -465,7 +465,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {self.open_count} {self.leverage:.2f} {tick.last_price}"})
                 self.trade_logs_updated = True
 
-                msg = f"{self.vt_symbol} {self.direction.value}\n开仓"
+                msg = f"{self.vt_symbol} {self.direction.value}\n开仓（{self.open_count}）"
                 self.cta_engine.main_engine.send_ding_talk(msg)
 
         # 止损判断
