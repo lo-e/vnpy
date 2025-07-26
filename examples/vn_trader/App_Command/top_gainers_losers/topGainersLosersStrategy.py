@@ -404,7 +404,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 self.stop_open = False
 
             # 价格突破1h最高最低中线，停止开仓，止损价为开仓价
-            if not self.stop_open and ((self.direction == Direction.SHORT and tick.last_price <= self.hour_up - ((self.hour_up - self.hour_down) / 2)) or (self.direction == Direction.LONG and tick.last_price >= self.hour_down + ((self.hour_up - self.hour_down) / 2))):
+            if (self.direction == Direction.SHORT and tick.last_price <= self.hour_up - ((self.hour_up - self.hour_down) / 2)) or (self.direction == Direction.LONG and tick.last_price >= self.hour_down + ((self.hour_up - self.hour_down) / 2)):
                 self.stop_open = True
                 self.stop_price = self.open_tick_price
                 if self.pos and self.exchange == Exchange.BINANCE:
