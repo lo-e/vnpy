@@ -249,13 +249,14 @@ class TurtleCryptoDataDownloading(object):
                         except Exception:
                             try_count += 1
                     
-                    first_bar_dt_str = first_bar_dt.strftime(f"%Y-%m-%d %H:%M:%S") if first_bar_dt else ""
-                    ts = first_bar_dt.timestamp() if first_bar_dt else 0
-                    instrument_data = {"symbol": symbol,
-                                       "on": first_bar_dt_str,
-                                       "on_timestamp": ts}
-                    result.append(instrument_data)
-                    new_data.append(instrument_data)
+                    if first_bar_dt:
+                        first_bar_dt_str = first_bar_dt.strftime(f"%Y-%m-%d %H:%M:%S")
+                        ts = first_bar_dt.timestamp()
+                        instrument_data = {"symbol": symbol,
+                                           "on": first_bar_dt_str,
+                                           "on_timestamp": ts}
+                        result.append(instrument_data)
+                        new_data.append(instrument_data)
             
             # 输出结果
             print(f"{exchange.value} USDT永续合约总计：{len(symbol_list)} 新上市合约：{len(new_data)}")
@@ -283,13 +284,14 @@ class TurtleCryptoDataDownloading(object):
                         except Exception:
                             try_count += 1
                     
-                    first_bar_dt_str = first_bar_dt.strftime(f"%Y-%m-%d %H:%M:%S") if first_bar_dt else ""
-                    ts = first_bar_dt.timestamp() if first_bar_dt else 0
-                    instrument_data = {"symbol": symbol,
-                                       "on": first_bar_dt_str,
-                                       "on_timestamp": ts}
-                    result.append(instrument_data)
-                    new_data.append(instrument_data)
+                    if first_bar_dt:
+                        first_bar_dt_str = first_bar_dt.strftime(f"%Y-%m-%d %H:%M:%S")
+                        ts = first_bar_dt.timestamp()
+                        instrument_data = {"symbol": symbol,
+                                           "on": first_bar_dt_str,
+                                           "on_timestamp": ts}
+                        result.append(instrument_data)
+                        new_data.append(instrument_data)
 
             # 输出结果
             print(f"{exchange.value} USDT永续合约总计：{len(symbol_list)} 新上市合约：{len(new_data)}")
@@ -317,13 +319,14 @@ class TurtleCryptoDataDownloading(object):
                         except Exception:
                             try_count += 1
                     
-                    first_bar_dt_str = first_bar_dt.strftime(f"%Y-%m-%d %H:%M:%S") if first_bar_dt else ""
-                    ts = first_bar_dt.timestamp() if first_bar_dt else 0
-                    instrument_data = {"symbol": symbol,
-                                       "on": first_bar_dt_str,
-                                       "on_timestamp": ts}
-                    result.append(instrument_data)
-                    new_data.append(instrument_data)
+                    if first_bar_dt:
+                        first_bar_dt_str = first_bar_dt.strftime(f"%Y-%m-%d %H:%M:%S")
+                        ts = first_bar_dt.timestamp()
+                        instrument_data = {"symbol": symbol,
+                                           "on": first_bar_dt_str,
+                                           "on_timestamp": ts}
+                        result.append(instrument_data)
+                        new_data.append(instrument_data)
 
             # 输出结果
             print(f"{exchange.value} USDT永续合约总计：{len(symbol_list)} 新上市合约：{len(new_data)}")
