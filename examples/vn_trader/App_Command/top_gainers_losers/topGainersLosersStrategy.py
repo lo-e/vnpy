@@ -47,6 +47,7 @@ class TopGainersLosersStrategy(CtaTemplate):
     syncs = [
         "target_pos",
         "stop_open",
+        "stop_open_dt",
         "closed",
         "open_tick_value",
         "open_tick_price",
@@ -114,6 +115,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.tick: TickData = None
         self.target_pos = 0
         self.stop_open = False
+        self.stop_open_dt = ""
         self.closed = False
         self.open_tick_value = 0
         self.open_tick_price = 0
@@ -405,7 +407,10 @@ class TopGainersLosersStrategy(CtaTemplate):
 
             # 价格突破1h最高最低中线，停止开仓，止损价为开仓价
             if (self.direction == Direction.SHORT and tick.last_price <= self.hour_up - ((self.hour_up - self.hour_down) / 2)) or (self.direction == Direction.LONG and tick.last_price >= self.hour_down + ((self.hour_up - self.hour_down) / 2)):
-                self.stop_open = True
+                if not self.stop_open:
+                    self.stop_open = True
+                    self.stop_open_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+
                 self.stop_price = self.open_tick_price
                 if self.pos and self.exchange == Exchange.BINANCE:
                     self.cancel_all()
@@ -415,6 +420,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             # if not self.stop_open and (tick.datetime >= datetime.strptime(self.datetime, f"%Y-%m-%d %H:%M:%S") + timedelta(hours=1) or (self.direction == Direction.LONG and tick.datetime.timestamp() >= self.hour_down_ts + 20 * 60) or (self.direction == Direction.SHORT and tick.datetime.timestamp() >= self.hour_up_ts + 20 * 60)):
             if not self.stop_open and ((self.direction == Direction.LONG and tick.datetime.timestamp() >= self.hour_down_ts + 20 * 60) or (self.direction == Direction.SHORT and tick.datetime.timestamp() >= self.hour_up_ts + 20 * 60)):
                 self.stop_open = True
+                self.stop_open_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
 
         # 未开仓前已停止开仓，做平仓处理
         # if self.stop_open and not self.target_pos:
