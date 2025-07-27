@@ -342,12 +342,18 @@ class TopGainersLosersStrategy(CtaTemplate):
                     self.hour_up = hour_up
                     self.hour_down = hour_down
                     self.hour_up_ts = self.minute_bar.datetime.timestamp()
+
+                    self.stop_open = False
+                    self.middle_cross = False
             
             if self.direction == Direction.LONG:
                 if hour_down != self.hour_down:
                     self.hour_down = hour_down
                     self.hour_up = hour_up
                     self.hour_down_ts = self.minute_bar.datetime.timestamp()
+
+                    self.stop_open = False
+                    self.middle_cross = False
 
         if self.history_minute_am.inited:
             self.hour_6_up, self.hour_6_down = self.history_minute_am.donchian(360)
@@ -424,8 +430,6 @@ class TopGainersLosersStrategy(CtaTemplate):
             # 1h新高新低，指标重置
             if ((self.direction == Direction.SHORT and tick.last_price > self.hour_up) or (self.direction == Direction.LONG and tick.last_price < self.hour_down)):
                 self.indicator_inited = False
-                self.middle_cross = False
-                self.stop_open = False
 
         # 未开仓前已停止开仓，做平仓处理
         # if self.stop_open and not self.target_pos:
@@ -481,18 +485,21 @@ class TopGainersLosersStrategy(CtaTemplate):
 
         # 止损判断
         if self.target_pos and ((self.direction == Direction.LONG and tick.last_price <= self.stop_price) or (self.direction == Direction.SHORT and tick.last_price >= self.stop_price)):
+            self.stop_tick_price = tick.last_price
+            self.stop_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+            self.target_pos = 0
+            self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
+            if not self.stop_open:
+                self.stop_open = True
+                self.stop_open_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+
             stop_pnl = 0
             if self.open_tick_price:
                 stop_pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
                 stop_pnl *= self.leverage
                 if self.direction == Direction.SHORT:
                     stop_pnl *= -1
-
             self.pnl += stop_pnl
-            self.stop_tick_price = tick.last_price
-            self.stop_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
-            self.target_pos = 0
-            self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
             if self.pnl > 0:
                 self.closed = True
 
@@ -509,13 +516,16 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.close_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
             self.target_pos = 0
             self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
+            if not self.stop_open:
+                self.stop_open = True
+                self.stop_open_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
 
             close_pnl = 0
             if self.open_tick_price:
                 close_pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
                 close_pnl *= self.leverage
                 if self.direction == Direction.SHORT:
-                    close_pnl = close_pnl * -1
+                    close_pnl *= -1
             self.pnl += close_pnl
             if self.pnl > 0:
                 self.closed = True
@@ -684,18 +694,21 @@ class TopGainersLosersStrategy(CtaTemplate):
 
             # 止损触发
             if not self.pos and self.target_pos:
+                self.stop_tick_price = self.tick.last_price
+                self.stop_tick_dt = self.tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+                self.target_pos = 0
+                self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
+                if not self.stop_open:
+                    self.stop_open = True
+                    self.stop_open_dt = self.tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+
                 stop_pnl = 0
                 if self.tick and self.open_tick_price:
                     stop_pnl = ((trade.price / self.open_tick_price) - 1) * 100
                     stop_pnl *= self.leverage
                     if self.direction == Direction.SHORT:
                         stop_pnl *= -1
-                
                 self.pnl += stop_pnl
-                self.stop_tick_price = self.tick.last_price
-                self.stop_tick_dt = self.tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
-                self.target_pos = 0
-                self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
                 if self.pnl > 0:
                     self.closed = True
 
