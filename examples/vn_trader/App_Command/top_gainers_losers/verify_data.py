@@ -201,6 +201,21 @@ class Backtesting(object):
                 on_board_ts = trending_data["on_board_ts"]
                 on_board = trending_data["on_board"]
 
+                # 退出排行榜排名
+                off_rank = 0
+                if direction == "LONG":
+                    off_trending_list = rise_trending_list
+                
+                else:
+                    off_trending_list = fall_trending_list
+
+                off_symbols = []
+                for off_data in off_trending_list:
+                    off_symbols.append(off_data["symbol"])
+
+                if symbol in off_symbols:
+                    off_rank = off_symbols.index(symbol) + 1
+
                 # 趋势信号
                 if ((direction == "LONG" and abs(mean_rise) > abs(mean_fall) * 2) or (direction == "SHORT" and abs(mean_fall) > abs(mean_rise) * 2)) and 1 <= rank_1h <= 3:
                     self.signal_count += 1
@@ -209,7 +224,7 @@ class Backtesting(object):
                     boarding_hour = int(boarding_time / 3600)
                     boarding_minute = int((boarding_time - (boarding_hour * 3600)) / 60)
                     boarding_second = int(boarding_time - boarding_hour * 3600 - boarding_minute * 60)
-                    msg = f"趋势停止 {symbol}\nmean_rise：{mean_rise}\nmean_fall：{mean_fall}\nchange：{change}\nrank_1h：{rank_1h}\non：{on_board}\noff：{off_board}\ntime：{boarding_hour}h {boarding_minute}m {boarding_second}s\ncount：{self.signal_count}\n"
+                    msg = f"趋势停止 {symbol}\nmean_rise：{mean_rise}\nmean_fall：{mean_fall}\nchange：{change}\nrank_1h：{rank_1h}\noff_rank_24h：{off_rank}\non：{on_board}\noff：{off_board}\ntime：{boarding_hour}h {boarding_minute}m {boarding_second}s\ncount：{self.signal_count}\n"
                     print(msg)
 
                 self.trending_tokens_24h.pop(symbol)
@@ -914,6 +929,6 @@ def statistics_pnl(for_eth: bool = False):
 
 if __name__ == "__main__":
     backtesting = Backtesting()
-    # backtesting.start(BacktestingMode.TRENDING_24H)
+    backtesting.start(BacktestingMode.TRENDING_24H)
     # backtesting.start(BacktestingMode.TRENDING_24H_QUICK)
-    backtesting.start(BacktestingMode.TRENDING_1H)
+    # backtesting.start(BacktestingMode.TRENDING_1H)
