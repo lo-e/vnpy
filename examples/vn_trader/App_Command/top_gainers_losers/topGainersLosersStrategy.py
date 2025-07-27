@@ -64,6 +64,8 @@ class TopGainersLosersStrategy(CtaTemplate):
         "indicator_inited",
         "hour_6_high_cross",
         "hour_6_low_cross",
+        "middle_cross",
+        "middle_cross_dt",
         "hour_up",
         "hour_up_ts",
         "hour_down",
@@ -141,6 +143,8 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.bar_lack = False                       # 数据缺失
         self.hour_6_high_cross = False              # 6H最高价
         self.hour_6_low_cross = False               # 6H最低价
+        self.middle_cross = False                   # 中线突破
+        self.middle_cross_dt = ""
 
         self.database_minute_bar_list = []
         self.tick_minute_bar_list = []
@@ -400,27 +404,28 @@ class TopGainersLosersStrategy(CtaTemplate):
         """
         
         if self.indicator_inited:
+            # 中线突破
+            if not self.middle_cross and ((self.direction == Direction.SHORT and tick.last_price <= self.hour_up - ((self.hour_up - self.hour_down) / 2)) or (self.direction == Direction.LONG and tick.last_price >= self.hour_down + ((self.hour_up - self.hour_down) / 2))):
+                self.middle_cross = True
+                self.middle_cross_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+
+                # 开仓价止损
+                if self.target_pos:
+                    self.stop_price = self.open_tick_price
+                    if self.pos and self.exchange == Exchange.BINANCE:
+                        self.cancel_all()
+                        self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(self.pos), stop=True)
+
+            # 中线突破、超时20m，停止开仓
+            if not self.stop_open and (self.middle_cross or (self.direction == Direction.LONG and tick.datetime.timestamp() >= self.hour_down_ts + 20 * 60) or (self.direction == Direction.SHORT and tick.datetime.timestamp() >= self.hour_up_ts + 20 * 60)):
+                self.stop_open = True
+                self.stop_open_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+
             # 1h新高新低，指标重置
             if ((self.direction == Direction.SHORT and tick.last_price > self.hour_up) or (self.direction == Direction.LONG and tick.last_price < self.hour_down)):
                 self.indicator_inited = False
+                self.middle_cross = False
                 self.stop_open = False
-
-            # 价格突破1h最高最低中线，停止开仓，止损价为开仓价
-            if (self.direction == Direction.SHORT and tick.last_price <= self.hour_up - ((self.hour_up - self.hour_down) / 2)) or (self.direction == Direction.LONG and tick.last_price >= self.hour_down + ((self.hour_up - self.hour_down) / 2)):
-                if not self.stop_open:
-                    self.stop_open = True
-                    self.stop_open_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
-
-                self.stop_price = self.open_tick_price
-                if self.pos and self.exchange == Exchange.BINANCE:
-                    self.cancel_all()
-                    self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(self.pos), stop=True)
-
-            # 超时1h停止开仓，1h最高最低超时20m停止开仓
-            # if not self.stop_open and (tick.datetime >= datetime.strptime(self.datetime, f"%Y-%m-%d %H:%M:%S") + timedelta(hours=1) or (self.direction == Direction.LONG and tick.datetime.timestamp() >= self.hour_down_ts + 20 * 60) or (self.direction == Direction.SHORT and tick.datetime.timestamp() >= self.hour_up_ts + 20 * 60)):
-            if not self.stop_open and ((self.direction == Direction.LONG and tick.datetime.timestamp() >= self.hour_down_ts + 20 * 60) or (self.direction == Direction.SHORT and tick.datetime.timestamp() >= self.hour_up_ts + 20 * 60)):
-                self.stop_open = True
-                self.stop_open_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
 
         # 未开仓前已停止开仓，做平仓处理
         # if self.stop_open and not self.target_pos:
