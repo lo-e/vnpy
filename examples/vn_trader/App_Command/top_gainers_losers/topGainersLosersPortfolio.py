@@ -505,12 +505,13 @@ class TopGainersLosersPortfolio(object):
             return {}
         
         # 启动策略
+        dt = datetime.now().strftime(f"%m%d%H%M%S")
         if direction == Direction.LONG:
-            strategy_name = f"LONG_1H_{token}_{exchange}"
+            strategy_name = f"{dt}_LONG_1H_{token}_{exchange}"
             direction_str = "LONG"
         
         else:
-            strategy_name = f"SHORT_1H_{token}_{exchange}"
+            strategy_name = f"{dt}_SHORT_1H_{token}_{exchange}"
             direction_str = "SHORT"
 
         setting = {"strategy_name": strategy_name,
