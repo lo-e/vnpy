@@ -1165,12 +1165,12 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
         symbol_upper = symbol.upper()
 
         # 高频行情数据过滤
-        # if channel == "aggTrade":
-        #     last_ts = self.tick_ts_data.get(symbol_upper, 0)
-        #     current_ts = int(time.time()*1000)
-        #     if current_ts - last_ts < 200:
-        #         return
-        #     self.tick_ts_data[symbol_upper] = current_ts
+        if channel == "aggTrade":
+            last_ts = self.tick_ts_data.get(symbol_upper, 0)
+            current_ts = int(time.time()*1000)
+            if current_ts - last_ts < 100:
+                return
+            self.tick_ts_data[symbol_upper] = current_ts
 
         tick = self.ticks.get(symbol_upper, None)
         if not tick:
