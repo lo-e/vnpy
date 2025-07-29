@@ -967,8 +967,8 @@ class OkxWebsocketPublicApi(WebsocketClient):
             # self.tick_ts_data[symbol] = current_ts
 
             # 高频行情数据过滤（按价格）
-            if tick.datetime.minute == dt.minute and tick.last_price == last_price:
-                return
+            # if tick.datetime.minute == dt.minute and tick.last_price == last_price:
+            #     return
 
             tick.last_price = last_price
             tick.open_price = float(d["open24h"])

@@ -1010,8 +1010,8 @@ class BybitWebsocketDataApi(WebsocketClient):
         # self.tick_ts_data[symbol] = current_ts
 
         # 高频行情数据过滤（按价格）
-        if tick.datetime.minute == dt.minute and tick.last_price == last_price:
-            return
+        # if tick.datetime.minute == dt.minute and tick.last_price == last_price:
+        #     return
 
         # 收到快照数据推送(订阅tick数据后只推送一次)
         if type_ == "snapshot":
