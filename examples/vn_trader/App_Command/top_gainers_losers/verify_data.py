@@ -216,11 +216,13 @@ class Backtesting(object):
                 if symbol in off_symbols:
                     off_rank = off_symbols.index(symbol) + 1
 
+                # 上榜时间
+                boarding_time = int(data_time - on_board_ts)
+
                 # 趋势信号
                 if ((direction == "LONG" and abs(mean_rise) > abs(mean_fall) * 2) or (direction == "SHORT" and abs(mean_fall) > abs(mean_rise) * 2)) and 1 <= rank_1h <= 3:
                     self.signal_count += 1
                     off_board = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
-                    boarding_time = int(data_time - on_board_ts)
                     boarding_hour = int(boarding_time / 3600)
                     boarding_minute = int((boarding_time - (boarding_hour * 3600)) / 60)
                     boarding_second = int(boarding_time - boarding_hour * 3600 - boarding_minute * 60)
