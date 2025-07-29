@@ -329,6 +329,9 @@ class TopGainersLosersPortfolio(object):
                         signal_dt_str = self.signal_tokens_1h.get(symbol, "")
                         signal_ts = datetime.strptime(signal_dt_str, f"%Y-%m-%d %H:%M:%S").timestamp() if signal_dt_str else 0
                         self.signal_tokens_1h[symbol] = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
+                        for signal_symbol, ts in self.signal_tokens_1h.copy().items():
+                            if data_time >= ts + 6 * 60 * 60:
+                                self.signal_tokens_1h.pop(signal_symbol)
 
                         if data_time >= signal_ts + 6 * 60 * 60:
                             if direction == "LONG":
