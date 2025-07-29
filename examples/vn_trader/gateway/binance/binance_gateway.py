@@ -1185,18 +1185,20 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
 
         elif channel == "aggTrade":
             last_price = float(data["p"])
-            dt = generate_datetime(float(data["T"]))
+            timestamp = float(data["T"])
+            dt = generate_datetime(timestamp)
 
             # 高频行情数据过滤（按时间）
-            # last_ts = self.tick_ts_data.get(symbol_upper, 0)
+            last_ts = self.tick_ts_data.get(symbol_upper, 0)
             # current_ts = int(time.time()*1000)
-            # if current_ts - last_ts < 100:
-            #     return
-            # self.tick_ts_data[symbol_upper] = current_ts
+            current_ts = timestamp
+            if current_ts - last_ts < 100:
+                return
+            self.tick_ts_data[symbol_upper] = current_ts
 
             # 高频行情数据过滤（按价格）
-            if tick.datetime.minute == dt.minute and tick.last_price == float(data["p"]):
-                return
+            # if tick.datetime.minute == dt.minute and tick.last_price == float(data["p"]):
+            #     return
         
             tick.volume = float(data["q"])
             tick.last_price = last_price
@@ -1236,7 +1238,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
                 if isinstance(data, str):
                     symbol = data
                     self.reqid += 1
-                    channels = [f"{symbol.lower()}@ticker"]
+                    channels = [f"{symbol.lower()}@aggTrade"]
                     req: dict = {"method": "SUBSCRIBE", "params": channels, "id": self.reqid}
                     self.send_packet(req)
 
@@ -1245,7 +1247,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
                     self.reqid += 1
                     channels = []
                     for symbol in symbols:
-                        channels.append(f"{symbol.lower()}@ticker")
+                        channels.append(f"{symbol.lower()}@aggTrade")
                     req: dict = {"method": "SUBSCRIBE", "params": channels, "id": self.reqid}
                     self.send_packet(req)
 
@@ -1262,7 +1264,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
                 if isinstance(data, str):
                     symbol = data
                     self.reqid += 1
-                    channels = [f"{symbol.lower()}@ticker"]
+                    channels = [f"{symbol.lower()}@aggTrade"]
                     req: dict = {"method": "UNSUBSCRIBE", "params": channels, "id": self.reqid}
                     self.send_packet(req)
 
@@ -1271,7 +1273,7 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
                     self.reqid += 1
                     channels = []
                     for symbol in symbols:
-                        channels.append(f"{symbol.lower()}@ticker")
+                        channels.append(f"{symbol.lower()}@aggTrade")
                     req: dict = {"method": "UNSUBSCRIBE", "params": channels, "id": self.reqid}
                     self.send_packet(req)
 
