@@ -996,15 +996,22 @@ class BybitWebsocketDataApi(WebsocketClient):
         type_ = packet["type"]
         data = packet["data"]
         timestamp = packet["ts"]
+
+        last_price = float(data.get("lastPrice", 0))
+        dt = generate_datetime(int(timestamp))
         symbol = topic.replace("tickers.", "")
         tick = self.ticks[symbol]
 
-        # 高频行情数据过滤
-        last_ts = self.tick_ts_data.get(symbol, 0)
-        current_ts = int(time()*1000)
-        if current_ts - last_ts < 100:
+        # 高频行情数据过滤（按时间）
+        # last_ts = self.tick_ts_data.get(symbol, 0)
+        # current_ts = int(time()*1000)
+        # if current_ts - last_ts < 100:
+        #     return
+        # self.tick_ts_data[symbol] = current_ts
+
+        # 高频行情数据过滤（按价格）
+        if tick.datetime.minute == dt.minute and tick.last_price == last_price:
             return
-        self.tick_ts_data[symbol] = current_ts
 
         # 收到快照数据推送(订阅tick数据后只推送一次)
         if type_ == "snapshot":
@@ -1014,9 +1021,6 @@ class BybitWebsocketDataApi(WebsocketClient):
 
         if "openInterest" in data:
             tick.open_interest = float(data["openInterest"])
-
-        if "lastPrice" in data:
-            tick.last_price = float(data["lastPrice"])
 
         if "volume24h" in data:
             tick.volume = float(data["volume24h"])
@@ -1033,7 +1037,8 @@ class BybitWebsocketDataApi(WebsocketClient):
             tick.ask_price_1 = float(data["ask1Price"])
             tick.ask_volume_1 = float(data["ask1Size"])
 
-        tick.datetime = generate_datetime(int(timestamp))
+        tick.last_price = last_price
+        tick.datetime = dt
         self.gateway.on_tick(copy(tick))
     
     def on_depth(self, packet: dict):

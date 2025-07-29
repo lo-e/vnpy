@@ -1155,24 +1155,14 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
     def on_packet(self, packet: dict) -> None:
         """推送数据回报"""
         stream: str = packet.get("stream", None)
-
         if not stream:
             return
 
         data: dict = packet["data"]
-
         symbol, channel = stream.split("@")[:2]
         symbol_upper = symbol.upper()
-
-        # 高频行情数据过滤
-        if channel == "aggTrade":
-            last_ts = self.tick_ts_data.get(symbol_upper, 0)
-            current_ts = int(time.time()*1000)
-            if current_ts - last_ts < 100:
-                return
-            self.tick_ts_data[symbol_upper] = current_ts
-
         tick = self.ticks.get(symbol_upper, None)
+
         if not tick:
             # 创建TICK对象
             tick: TickData = TickData(
@@ -1194,9 +1184,23 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
             tick.datetime = generate_datetime(float(data["E"]))
 
         elif channel == "aggTrade":
+            last_price = float(data["p"])
+            dt = generate_datetime(float(data["T"]))
+
+            # 高频行情数据过滤（按时间）
+            # last_ts = self.tick_ts_data.get(symbol_upper, 0)
+            # current_ts = int(time.time()*1000)
+            # if current_ts - last_ts < 100:
+            #     return
+            # self.tick_ts_data[symbol_upper] = current_ts
+
+            # 高频行情数据过滤（按价格）
+            if tick.datetime.minute == dt.minute and tick.last_price == float(data["p"]):
+                return
+        
             tick.volume = float(data["q"])
-            tick.last_price = float(data["p"])
-            tick.datetime = generate_datetime(float(data["T"]))
+            tick.last_price = last_price
+            tick.datetime = dt
 
         elif channel == "depth5":
             dt = generate_datetime(data["E"])

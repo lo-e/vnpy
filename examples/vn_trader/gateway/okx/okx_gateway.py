@@ -954,21 +954,28 @@ class OkxWebsocketPublicApi(WebsocketClient):
     def on_ticker(self, data: list) -> None:
         """ 行情推送回报 """
         for d in data:
-            # 高频行情数据过滤
-            symbol = d["instId"]
-            last_ts = self.tick_ts_data.get(symbol, 0)
-            current_ts = int(time.time()*1000)
-            if current_ts - last_ts < 100:
-                return
-            self.tick_ts_data[symbol] = current_ts
-
+            last_price = float(d["last"])
+            dt = parse_timestamp(d["ts"])
             tick: TickData = self.ticks[d["instId"]]
-            tick.last_price = float(d["last"])
+
+            # 高频行情数据过滤（按时间）
+            # symbol = d["instId"]
+            # last_ts = self.tick_ts_data.get(symbol, 0)
+            # current_ts = int(time.time()*1000)
+            # if current_ts - last_ts < 100:
+            #     return
+            # self.tick_ts_data[symbol] = current_ts
+
+            # 高频行情数据过滤（按价格）
+            if tick.datetime.minute == dt.minute and tick.last_price == last_price:
+                return
+
+            tick.last_price = last_price
             tick.open_price = float(d["open24h"])
             tick.high_price = float(d["high24h"])
             tick.low_price = float(d["low24h"])
             tick.volume = float(d["volCcy24h"])
-            tick.datetime = parse_timestamp(d["ts"])
+            tick.datetime = dt
 
             self.gateway.on_tick(copy(tick))
 
