@@ -496,9 +496,10 @@ class TopGainersLosersStrategy(CtaTemplate):
             stop_pnl = 0
             if self.open_tick_price:
                 stop_pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
-                stop_pnl *= self.leverage
                 if self.direction == Direction.SHORT:
                     stop_pnl *= -1
+                stop_pnl -= 0.2
+                stop_pnl *= self.leverage
             self.pnl += stop_pnl
             if self.pnl > 0:
                 self.closed = True
@@ -523,9 +524,10 @@ class TopGainersLosersStrategy(CtaTemplate):
             close_pnl = 0
             if self.open_tick_price:
                 close_pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
-                close_pnl *= self.leverage
                 if self.direction == Direction.SHORT:
                     close_pnl *= -1
+                close_pnl -= 0.2
+                close_pnl *= self.leverage
             self.pnl += close_pnl
             if self.pnl > 0:
                 self.closed = True
@@ -582,11 +584,11 @@ class TopGainersLosersStrategy(CtaTemplate):
 
         # 更新止盈价格
         if self.direction == Direction.LONG:
-            self.profit_price = tick_price * (1 + (abs((self.hour_down / tick_price) - 1) * 3))
+            self.profit_price = tick_price * (1 + (abs((self.hour_down / tick_price) - 1) * max(abs(self.pnl) / leverage, 3)))
             self.profit_price = max(self.profit_price, self.hour_down + ((self.hour_up - self.hour_down) * 0.6))
         
         if self.direction == Direction.SHORT:
-            self.profit_price = tick_price * (1 - (abs((self.hour_up / tick_price) - 1) * 3))
+            self.profit_price = tick_price * (1 - (abs((self.hour_up / tick_price) - 1) * max(abs(self.pnl) / leverage, 3)))
             self.profit_price = min(self.profit_price, self.hour_up - ((self.hour_up - self.hour_down) * 0.6))
 
         # 更新止损价格
@@ -705,9 +707,10 @@ class TopGainersLosersStrategy(CtaTemplate):
                 stop_pnl = 0
                 if self.tick and self.open_tick_price:
                     stop_pnl = ((trade.price / self.open_tick_price) - 1) * 100
-                    stop_pnl *= self.leverage
                     if self.direction == Direction.SHORT:
                         stop_pnl *= -1
+                    stop_pnl -= 0.2
+                    stop_pnl *= self.leverage
                 self.pnl += stop_pnl
                 if self.pnl > 0:
                     self.closed = True
