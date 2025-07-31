@@ -18,6 +18,7 @@ from queue import Empty, Queue
 from vnpy.trader.event import EVENT_TICK_DELAY, EVENT_ACCOUNT
 from vnpy.trader.object import AccountData
 import copy
+import re
 
 class TopGainersLosersPortfolio(object):
     parameters = ["name",
@@ -335,35 +336,52 @@ class TopGainersLosersPortfolio(object):
                                 self.signal_tokens_1h.pop(signal_symbol)
 
                         if data_time >= signal_ts + 6 * 60 * 60:
+                            pure_symbol = re.sub(r'[^a-zA-Z]', '', symbol)
                             if direction == "LONG":
-                                setting = self.new_strategy(symbol, Direction.SHORT)
-                                strategy_name = setting.get("strategy_name", "")
-                                if setting and strategy_name not in self.cta_engine.strategies:
-                                    vt_symbol = setting["vt_symbol"]
-                                    instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
-                                    on_timestamp = instrument_data["on_timestamp"]
-                                    if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60:
-                                        new_settings.append(setting)
-                                        if symbol not in self.strategy_short_tokens:
-                                            self.strategy_short_tokens.append(symbol)
+                                flt = False
+                                for target_token in self.strategy_short_tokens:
+                                    pure_target_token = re.sub(r'[^a-zA-Z]', '', target_token)
+                                    if pure_symbol == pure_target_token:
+                                        flt = True
+                                        break
 
-                                        msg = f"{symbol} 上涨过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}"
-                                        self.send_ding_talk(msg)
+                                if not flt:
+                                    setting = self.new_strategy(symbol, Direction.SHORT)
+                                    strategy_name = setting.get("strategy_name", "")
+                                    if setting and strategy_name not in self.cta_engine.strategies:
+                                        vt_symbol = setting["vt_symbol"]
+                                        instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
+                                        on_timestamp = instrument_data["on_timestamp"]
+                                        if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60:
+                                            new_settings.append(setting)
+                                            if symbol not in self.strategy_short_tokens:
+                                                self.strategy_short_tokens.append(symbol)
+
+                                            msg = f"{symbol} 上涨过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}"
+                                            self.send_ding_talk(msg)
                             
                             elif direction == "SHORT":
-                                setting = self.new_strategy(symbol, Direction.LONG)
-                                strategy_name = setting.get("strategy_name", "")
-                                if setting and strategy_name not in self.cta_engine.strategies:
-                                    vt_symbol = setting["vt_symbol"]
-                                    instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
-                                    on_timestamp = instrument_data["on_timestamp"]
-                                    if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60:
-                                        new_settings.append(setting)
-                                        if symbol not in self.strategy_long_tokens:
-                                            self.strategy_long_tokens.append(symbol)
+                                flt = False
+                                for target_token in self.strategy_long_tokens:
+                                    pure_target_token = re.sub(r'[^a-zA-Z]', '', target_token)
+                                    if pure_symbol == pure_target_token:
+                                        flt = True
+                                        break
+                                
+                                if not flt:
+                                    setting = self.new_strategy(symbol, Direction.LONG)
+                                    strategy_name = setting.get("strategy_name", "")
+                                    if setting and strategy_name not in self.cta_engine.strategies:
+                                        vt_symbol = setting["vt_symbol"]
+                                        instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
+                                        on_timestamp = instrument_data["on_timestamp"]
+                                        if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60:
+                                            new_settings.append(setting)
+                                            if symbol not in self.strategy_long_tokens:
+                                                self.strategy_long_tokens.append(symbol)
 
-                                        msg = f"{symbol} 下跌过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}"
-                                        self.send_ding_talk(msg)
+                                            msg = f"{symbol} 下跌过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}"
+                                            self.send_ding_talk(msg)
 
         if new_settings:
             # 执行新策略
