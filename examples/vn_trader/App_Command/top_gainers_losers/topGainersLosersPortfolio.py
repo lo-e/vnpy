@@ -308,7 +308,7 @@ class TopGainersLosersPortfolio(object):
                 trending_1h_time = trending_data["trending_1h_time"]
                 onboard_ts = trending_data["onboard_ts"]
 
-                if abs(change) >= 10 and data_time <= onboard_ts + 10 * 60:
+                if abs(change) >= 10 and data_time <= onboard_ts + 600000 * 60:
                     # 查询24h排行
                     rank_24h = 0
                     trending_list_24h = []
@@ -326,7 +326,7 @@ class TopGainersLosersPortfolio(object):
                         rank_24h = symbols_24h.index(symbol) + 1
 
                     # 信号生成
-                    if rank_24h == 0 or rank_24h > 10:
+                    if rank_24h == 0 or rank_24h > 0:
                         signal_dt_str = self.signal_tokens_1h.get(symbol, "")
                         signal_ts = datetime.strptime(signal_dt_str, f"%Y-%m-%d %H:%M:%S").timestamp() if signal_dt_str else 0
                         self.signal_tokens_1h[symbol] = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
