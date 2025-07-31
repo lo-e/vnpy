@@ -423,9 +423,9 @@ class TopGainersLosersStrategy(CtaTemplate):
             #             self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(self.pos), stop=True)
 
             # 中线突破、超时20m，停止开仓
-            if not self.stop_open and ((self.direction == Direction.LONG and tick.datetime.timestamp() >= self.hour_down_ts + 20 * 60) or (self.direction == Direction.SHORT and tick.datetime.timestamp() >= self.hour_up_ts + 20 * 60)):
-                self.stop_open = True
-                self.stop_open_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+            # if not self.stop_open and ((self.direction == Direction.LONG and tick.datetime.timestamp() >= self.hour_down_ts + 20 * 60) or (self.direction == Direction.SHORT and tick.datetime.timestamp() >= self.hour_up_ts + 20 * 60)):
+            #     self.stop_open = True
+            #     self.stop_open_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
 
             # 1h新高新低，指标重置
             if ((self.direction == Direction.SHORT and tick.last_price > self.hour_up) or (self.direction == Direction.LONG and tick.last_price < self.hour_down)):
