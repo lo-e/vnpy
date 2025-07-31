@@ -584,11 +584,11 @@ class TopGainersLosersStrategy(CtaTemplate):
 
         # 更新止盈价格
         if self.direction == Direction.LONG:
-            self.profit_price = tick_price * (1 + (abs((self.hour_down / tick_price) - 1) * max(abs(self.pnl) / leverage, 3)))
+            self.profit_price = tick_price * (1 + (abs((self.hour_down / tick_price) - 1) * max(abs(self.pnl) / leverage, 3.5)))
             self.profit_price = max(self.profit_price, self.hour_down + ((self.hour_up - self.hour_down) * 0.6))
         
         if self.direction == Direction.SHORT:
-            self.profit_price = tick_price * (1 - (abs((self.hour_up / tick_price) - 1) * max(abs(self.pnl) / leverage, 3)))
+            self.profit_price = tick_price * (1 - (abs((self.hour_up / tick_price) - 1) * max(abs(self.pnl) / leverage, 3.5)))
             self.profit_price = min(self.profit_price, self.hour_up - ((self.hour_up - self.hour_down) * 0.6))
 
         # 更新止损价格
