@@ -364,11 +364,11 @@ class TopGainersLosersStrategy(CtaTemplate):
             return
         
         if self.direction == Direction.SHORT:
-            if self.hour_up and self.hour_down and self.minute_bar.datetime.timestamp() >= self.hour_up_ts + 2 * 60:
+            if self.hour_up and self.hour_down and self.minute_bar.datetime.timestamp() >= self.hour_up_ts + 0 * 60:
                 self.indicator_inited = True
             
         if self.direction == Direction.LONG:
-            if self.hour_up and self.hour_down and self.minute_bar.datetime.timestamp() >= self.hour_down_ts + 2 * 60:
+            if self.hour_up and self.hour_down and self.minute_bar.datetime.timestamp() >= self.hour_down_ts + 0 * 60:
                 self.indicator_inited = True
 
     def on_tick(self, tick: TickData):
