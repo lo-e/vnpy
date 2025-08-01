@@ -360,7 +360,14 @@ class TopGainersLosersPortfolio(object):
                                 if not flt:
                                     setting = self.new_strategy(symbol, Direction.SHORT)
                                     strategy_name = setting.get("strategy_name", "")
-                                    if setting and strategy_name not in self.cta_engine.strategies:
+                                    pure_strategy_name = "_".join(strategy_name.split("_")[1:])
+                                    for name in self.cta_engine.strategies.keys():
+                                        pure_name = "_".join(name.split("_")[1:])
+                                        if pure_strategy_name == pure_name:
+                                            flt = True
+                                            break
+                                    
+                                    if setting and not flt:
                                         vt_symbol = setting["vt_symbol"]
                                         instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
                                         on_timestamp = instrument_data["on_timestamp"]
@@ -383,7 +390,14 @@ class TopGainersLosersPortfolio(object):
                                 if not flt:
                                     setting = self.new_strategy(symbol, Direction.LONG)
                                     strategy_name = setting.get("strategy_name", "")
-                                    if setting and strategy_name not in self.cta_engine.strategies:
+                                    pure_strategy_name = "_".join(strategy_name.split("_")[1:])
+                                    for name in self.cta_engine.strategies.keys():
+                                        pure_name = "_".join(name.split("_")[1:])
+                                        if pure_strategy_name == pure_name:
+                                            flt = True
+                                            break
+                                    
+                                    if setting and not flt:
                                         vt_symbol = setting["vt_symbol"]
                                         instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
                                         on_timestamp = instrument_data["on_timestamp"]
