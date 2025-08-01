@@ -443,10 +443,10 @@ class TopGainersLosersStrategy(CtaTemplate):
         # 开仓判断
         if self.indicator_inited and not self.target_pos and not self.stop_open and not self.closed:
             open_allowed = False
-            if self.direction == Direction.SHORT and tick.last_price <= self.hour_up - ((self.hour_up - self.hour_down) * 0.2) and tick.last_price >= self.hour_up - ((self.hour_up - self.hour_down) / 3):
+            if self.direction == Direction.SHORT and tick.last_price <= self.hour_up - ((self.hour_up - self.hour_down) * 0.3) and tick.last_price >= self.hour_up - ((self.hour_up - self.hour_down) / 3):
                 open_allowed = True
 
-            if self.direction == Direction.LONG and tick.last_price >= self.hour_down + ((self.hour_up - self.hour_down) * 0.2) and tick.last_price <= self.hour_down + ((self.hour_up - self.hour_down) / 3):
+            if self.direction == Direction.LONG and tick.last_price >= self.hour_down + ((self.hour_up - self.hour_down) * 0.3) and tick.last_price <= self.hour_down + ((self.hour_up - self.hour_down) / 3):
                 open_allowed = True
 
             if open_allowed:
