@@ -71,7 +71,6 @@ class TopGainersLosersStrategy(CtaTemplate):
         "hour_down",
         "hour_down_ts",
         "minute_bar_dt",
-        "database_loaded",
         "insufficient_value",
     ]
 
@@ -375,7 +374,7 @@ class TopGainersLosersStrategy(CtaTemplate):
     def on_tick(self, tick: TickData):
         self.tick = copy(tick)
         self.tick_minute_bar_generator.update_tick(tick)
-        if not self.trading or not self.database_loaded:
+        if not self.trading:
             return
 
         """ fake """
