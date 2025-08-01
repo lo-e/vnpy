@@ -699,7 +699,7 @@ class TopGainersLosersPortfolio(object):
                     symbol_strategies = self.cta_engine.symbol_strategy_map[vt_symbol]
                     for i in range(len(symbol_strategies)):
                         strategy: TopGainersLosersStrategy = symbol_strategies[i]
-                        if not strategy.indicator_inited and ((strategy.direction == Direction.LONG and direction == "LONG") or (strategy.direction == Direction.SHORT and direction == "SHORT")):
+                        if (strategy.direction == Direction.LONG and direction == "LONG") or (strategy.direction == Direction.SHORT and direction == "SHORT"):
                             strategy.load_database_bar()
 
             except Empty:
