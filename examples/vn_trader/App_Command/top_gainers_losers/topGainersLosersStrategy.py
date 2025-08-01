@@ -453,7 +453,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 self.add_unit_pos(tick.last_price)
 
                 # 发送订单
-                # if self.portfolio.trade_enable and not self.pos and time.time() <= tick.datetime.timestamp() + 3:
+                # if not self.pos and self.portfolio.trade_enable and self.pnl > -12.0 and time.time() <= tick.datetime.timestamp() + 3:
                 #     open_volume = abs(self.target_pos)
                 #     if open_volume:
                 #         if self.direction == Direction.LONG:
