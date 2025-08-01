@@ -281,21 +281,22 @@ class TopGainersLosersStrategy(CtaTemplate):
                                     self.send_ding_talk(msg)
                                     break
 
-                if self.direction == Direction.SHORT:
-                    if self.hour_up and self.hour_6_up and self.hour_up >= self.hour_6_up * 0.98:
-                        self.hour_6_high_cross = True
-                    
-                    else:
-                        self.hour_6_high_cross = False
-                        self.closed = True
+                if not self.hour_6_high_cross and not self.hour_6_low_cross:
+                    if self.direction == Direction.SHORT:
+                        if self.hour_up and self.hour_6_up and self.hour_up >= self.hour_6_up * 0.98:
+                            self.hour_6_high_cross = True
+                        
+                        else:
+                            self.hour_6_high_cross = False
+                            self.closed = True
 
-                if self.direction == Direction.LONG:
-                    if self.hour_down and self.hour_6_down and self.hour_down <= self.hour_6_down * 1.02:
-                        self.hour_6_low_cross = True
-                    
-                    else:
-                        self.hour_6_low_cross = False
-                        self.closed = True
+                    if self.direction == Direction.LONG:
+                        if self.hour_down and self.hour_6_down and self.hour_down <= self.hour_6_down * 1.02:
+                            self.hour_6_low_cross = True
+                        
+                        else:
+                            self.hour_6_low_cross = False
+                            self.closed = True
 
                 self.bar_lack = bar_lack
                 self.database_loaded = True
