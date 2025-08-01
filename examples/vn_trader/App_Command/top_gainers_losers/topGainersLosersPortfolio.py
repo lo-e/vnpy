@@ -108,6 +108,18 @@ class TopGainersLosersPortfolio(object):
         # 获取涨跌幅排行榜数据
         Thread(target=self.check_rank_file_data).start()
 
+        # 下载当前策略Bar数据
+        for name in self.cta_engine.strategies.copy().keys():
+            strategy: TopGainersLosersStrategy = self.cta_engine.strategies[name]
+            direction = ""
+            if strategy.direction == Direction.LONG:
+                direction = "LONG"
+
+            elif strategy.direction == Direction.SHORT:
+                direction = "SHORT"
+
+            self.bar_download_queue.put((strategy.vt_symbol, direction))
+
     def on_timer(self):
         if not self.started:
             return
