@@ -436,7 +436,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         #     self.close_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
         #     self.closed = True
 
-        if not self.closed and not self.target_pos and ((tick.datetime >= datetime.strptime(self.datetime, f"%Y-%m-%d %H:%M:%S") + timedelta(hours=12)) or (self.stop_open and not self.pnl) or self.pnl <= - 30.0):
+        if not self.closed and not self.target_pos and ((tick.datetime >= datetime.strptime(self.datetime, f"%Y-%m-%d %H:%M:%S") + timedelta(hours=24)) or (self.stop_open and not self.pnl) or self.pnl <= - 30.0):
             self.close_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
             self.closed = True
 
@@ -512,7 +512,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.cta_engine.main_engine.send_ding_talk(msg)
 
         # 平仓判断
-        if self.target_pos and ((self.direction == Direction.LONG and self.profit_price and tick.last_price >= self.profit_price) or (self.direction == Direction.SHORT and self.profit_price and tick.last_price <= self.profit_price) or (self.open_tick_dt and tick.datetime > self.open_tick_dt + timedelta(hours=2))):
+        if self.target_pos and ((self.direction == Direction.LONG and self.profit_price and tick.last_price >= self.profit_price) or (self.direction == Direction.SHORT and self.profit_price and tick.last_price <= self.profit_price) or (self.open_tick_dt and tick.datetime > self.open_tick_dt + timedelta(hours=12))):
             self.close_tick_price = tick.last_price
             self.close_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
             self.target_pos = 0
