@@ -374,7 +374,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             if self.hour_up and self.hour_down and self.minute_bar.datetime.timestamp() >= self.hour_up_ts + 2 * 60:
                 self.indicator_inited = True
 
-            if self.hour_up and self.hour_down and self.hour_6_up and self.hour_6_down and self.hour_down >= self.hour_up - (self.hour_up - self.hour_6_down) * 0.5:
+            if self.hour_up and self.hour_down and self.hour_6_up and self.hour_6_down and self.hour_down >= self.hour_up - ((self.hour_up - self.hour_6_down) * 0.5):
                 self.indicator_started = True
 
             
@@ -382,7 +382,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             if self.hour_up and self.hour_down and self.minute_bar.datetime.timestamp() >= self.hour_down_ts + 2 * 60:
                 self.indicator_inited = True
 
-            if self.hour_up and self.hour_down and self.hour_6_up and self.hour_6_down and self.hour_up <= self.hour_down + (self.hour_6_up - self.hour_down) * 0.5:
+            if self.hour_up and self.hour_down and self.hour_6_up and self.hour_6_down and self.hour_up <= self.hour_down + ((self.hour_6_up - self.hour_down) * 0.5):
                 self.indicator_started = True
 
     def on_tick(self, tick: TickData):
