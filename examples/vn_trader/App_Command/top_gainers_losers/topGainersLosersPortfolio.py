@@ -80,7 +80,7 @@ class TopGainersLosersPortfolio(object):
                 setattr(self, name, setting[name])
 
     def on_init(self):
-        if abs(self.account_drawdown) < self.portfolio_value * 0.24:
+        if abs(self.account_drawdown) < self.portfolio_value * 0.30:
             self.trade_enable = True
 
         else:
@@ -189,7 +189,7 @@ class TopGainersLosersPortfolio(object):
                 print("-"*12)
 
         # 回撤过大停止交易
-        if abs(self.account_drawdown) < self.portfolio_value * 0.24:
+        if abs(self.account_drawdown) < self.portfolio_value * 0.30:
             self.trade_enable = True
 
         else:
