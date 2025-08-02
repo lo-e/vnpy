@@ -62,6 +62,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         "leverage",
         "open_count",
         "indicator_inited",
+        "indicator_started",
         "hour_6_high_cross",
         "hour_6_low_cross",
         "middle_cross",
@@ -70,6 +71,8 @@ class TopGainersLosersStrategy(CtaTemplate):
         "hour_up_ts",
         "hour_down",
         "hour_down_ts",
+        "hour_6_up",
+        "hour_6_down",
         "minute_bar_dt",
         "insufficient_value",
     ]
@@ -132,6 +135,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.open_count = 0
         self.database_loaded = False
         self.indicator_inited = False
+        self.indicator_started = False
         self.target_pos_check_ts = 0
         self.target_pos_checking = False
         self.strategy_data = {}                     # 策略数据（包括常量、变量、同步）
@@ -343,6 +347,9 @@ class TopGainersLosersStrategy(CtaTemplate):
                     self.hour_down = hour_down
                     self.hour_up_ts = self.minute_bar.datetime.timestamp()
 
+                    if self.history_minute_am.inited:
+                        self.hour_6_up, self.hour_6_down = self.history_minute_am.donchian(360)
+
                     self.stop_open = False
                     self.middle_cross = False
             
@@ -352,11 +359,11 @@ class TopGainersLosersStrategy(CtaTemplate):
                     self.hour_up = hour_up
                     self.hour_down_ts = self.minute_bar.datetime.timestamp()
 
+                    if self.history_minute_am.inited:
+                        self.hour_6_up, self.hour_6_down = self.history_minute_am.donchian(360)
+
                     self.stop_open = False
                     self.middle_cross = False
-
-        if self.history_minute_am.inited:
-            self.hour_6_up, self.hour_6_down = self.history_minute_am.donchian(360)
     
     def check_indicator_inited(self):
         if self.bar_lack or (self.direction == Direction.SHORT and not self.hour_6_high_cross) or (self.direction == Direction.LONG and not self.hour_6_low_cross):
@@ -364,12 +371,19 @@ class TopGainersLosersStrategy(CtaTemplate):
             return
         
         if self.direction == Direction.SHORT:
-            if self.hour_up and self.hour_down and self.minute_bar.datetime.timestamp() >= self.hour_up_ts + 0 * 60:
+            if self.hour_up and self.hour_down and self.minute_bar.datetime.timestamp() >= self.hour_up_ts + 2 * 60:
                 self.indicator_inited = True
+
+            if self.hour_up and self.hour_down and self.hour_6_up and self.hour_6_down and self.hour_down >= self.hour_up - (self.hour_up - self.hour_6_down) * 0.5:
+                self.indicator_started = True
+
             
         if self.direction == Direction.LONG:
-            if self.hour_up and self.hour_down and self.minute_bar.datetime.timestamp() >= self.hour_down_ts + 0 * 60:
+            if self.hour_up and self.hour_down and self.minute_bar.datetime.timestamp() >= self.hour_down_ts + 2 * 60:
                 self.indicator_inited = True
+
+            if self.hour_up and self.hour_down and self.hour_6_up and self.hour_6_down and self.hour_up <= self.hour_down + (self.hour_6_up - self.hour_down) * 0.5:
+                self.indicator_started = True
 
     def on_tick(self, tick: TickData):
         self.tick = copy(tick)
@@ -411,37 +425,36 @@ class TopGainersLosersStrategy(CtaTemplate):
         
         if self.indicator_inited:
             # 中线突破
-            if not self.middle_cross and ((self.direction == Direction.SHORT and tick.last_price <= self.open_tick_price - (abs(self.open_tick_price - self.profit_price) * 0.8)) or (self.direction == Direction.LONG and tick.last_price >= self.open_tick_price + (abs(self.profit_price - self.open_tick_price) * 0.8))):
+            if not self.middle_cross and self.target_pos and ((self.direction == Direction.SHORT and tick.last_price <= self.open_tick_price - (abs(self.open_tick_price - self.profit_price) * 0.8)) or (self.direction == Direction.LONG and tick.last_price >= self.open_tick_price + (abs(self.profit_price - self.open_tick_price) * 0.8))):
                 self.middle_cross = True
                 self.middle_cross_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
 
                 # 开仓价止损
-                if self.target_pos:
-                    self.stop_price = self.open_tick_price
-                    if self.pos and self.exchange == Exchange.BINANCE:
-                        self.cancel_all()
-                        self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(self.pos), stop=True)
+                self.stop_price = self.open_tick_price
+                if self.pos and self.exchange == Exchange.BINANCE:
+                    self.cancel_all()
+                    self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(self.pos), stop=True)
 
             # 接近止盈，停止开仓
-            if not self.stop_open and self.middle_cross:
-                self.stop_open = True
-                self.stop_open_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+            # if not self.stop_open and self.middle_cross:
+            #     self.stop_open = True
+            #     self.stop_open_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
 
             # 1h新高新低，指标重置
             if ((self.direction == Direction.SHORT and tick.last_price > self.hour_up) or (self.direction == Direction.LONG and tick.last_price < self.hour_down)):
                 self.indicator_inited = False
 
-        if not self.closed and not self.target_pos and ((tick.datetime >= datetime.strptime(self.datetime, f"%Y-%m-%d %H:%M:%S") + timedelta(days=3)) or (self.stop_open and not self.pnl) or self.pnl <= - 12.0):
+        if not self.closed and not self.target_pos and ((not self.indicator_started and (tick.datetime >= datetime.strptime(self.datetime, f"%Y-%m-%d %H:%M:%S") + timedelta(days=1))) or (self.stop_open and not self.pnl) or self.pnl <= - 12.0):
             self.close_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
             self.closed = True
 
         # 开仓判断
-        if self.indicator_inited and not self.target_pos and not self.stop_open and not self.closed:
+        if self.indicator_inited and self.indicator_started and not self.target_pos and not self.stop_open and not self.closed:
             open_allowed = False
-            if self.direction == Direction.SHORT and tick.last_price <= self.hour_up - ((self.hour_up - self.hour_down) * 0.3) and tick.last_price >= self.hour_up - ((self.hour_up - self.hour_down) / 3):
+            if self.direction == Direction.SHORT and tick.last_price <= self.hour_up - ((self.hour_up - self.hour_down) * 0.1) and tick.last_price >= self.hour_up - ((self.hour_up - self.hour_down) / 3):
                 open_allowed = True
 
-            if self.direction == Direction.LONG and tick.last_price >= self.hour_down + ((self.hour_up - self.hour_down) * 0.3) and tick.last_price <= self.hour_down + ((self.hour_up - self.hour_down) / 3):
+            if self.direction == Direction.LONG and tick.last_price >= self.hour_down + ((self.hour_up - self.hour_down) * 0.1) and tick.last_price <= self.hour_down + ((self.hour_up - self.hour_down) / 3):
                 open_allowed = True
 
             if open_allowed:
