@@ -38,6 +38,7 @@ class TopGainersLosersPortfolio(object):
         self.started = False
         self.exchange_instruments_data = {}
         self.tick_queue = Queue()
+        self.tick_ts = time.time()
         self.gainers_data = {}
         self.losers_data = {}
         self.strategy_status_check_ts = {}
@@ -609,6 +610,13 @@ class TopGainersLosersPortfolio(object):
                         self.fall_data_list_5m = fall_list
                         # self.on_trending_data_5m((rise_list, fall_list))
 
+                # 检查tick行情推送是否异常
+                tick_wait = time.time() - self.tick_ts
+                if self.cta_engine.strategies and tick_wait > 60:
+                    self.tick_ts = time.time()
+                    msg = f"TICK推送异常，检查线程阻塞"
+                    self.send_ding_talk(msg)
+
             except Exception as e:
                 pass
             time.sleep(3)
@@ -842,6 +850,7 @@ class TopGainersLosersPortfolio(object):
         while True:
             try:
                 tick: TickData = self.tick_queue.get(block=True, timeout=1)
+                self.tick_ts = time.time()
                 process_count += 1
                 if time.time() >= queue_size_ts + 10:
                     queue_size_ts = time.time()
