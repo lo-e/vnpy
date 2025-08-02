@@ -436,7 +436,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         #     self.close_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
         #     self.closed = True
 
-        if not self.closed and not self.target_pos and ((tick.datetime >= datetime.strptime(self.datetime, f"%Y-%m-%d %H:%M:%S") + timedelta(days=3)) or (self.stop_open and not self.pnl) or self.pnl <= - 30.0):
+        if not self.closed and not self.target_pos and ((tick.datetime >= datetime.strptime(self.datetime, f"%Y-%m-%d %H:%M:%S") + timedelta(days=3)) or (self.stop_open and not self.pnl) or self.pnl <= - 12.0):
             self.close_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
             self.closed = True
 
