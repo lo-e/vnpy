@@ -85,7 +85,7 @@ class Backtesting(object):
         # 1小时趋势数据
         print(f"加载1H历史趋势数据..")
         self.trending_tokens_1h = {}
-        hour_time = datetime.strptime(f"2025-07-20 00:00:00", f"%Y-%m-%d %H:%M:%S")
+        hour_time = datetime.strptime(f"2025-08-02 00:00:00", f"%Y-%m-%d %H:%M:%S")
         # hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=5)
         while hour_time < datetime.now():
             current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -486,7 +486,7 @@ class Backtesting(object):
                 onboard_ts = trending_data["onboard_ts"]
                 onboard_time = datetime.fromtimestamp(onboard_ts).strftime(f"%Y-%m-%d %H:%M:%S")
 
-                if abs(change) >= 10 and data_time <= onboard_ts + 10 * 60:
+                if abs(change) >= 10 and data_time <= onboard_ts + 600000 * 60:
                     # 查询24h排行
                     rank_24h = 0
                     if change >= 0:
@@ -504,7 +504,7 @@ class Backtesting(object):
                         if symbol in symbols_24h:
                             rank_24h = symbols_24h.index(symbol) + 1
 
-                    if rank_24h == 0 or rank_24h > 10:
+                    if rank_24h == 0 or rank_24h > 0:
                         signal_ts = self.signal_tokens_1h.get(symbol, 0)
                         self.signal_tokens_1h[symbol] = data_time
 
@@ -931,6 +931,6 @@ def statistics_pnl(for_eth: bool = False):
 
 if __name__ == "__main__":
     backtesting = Backtesting()
-    backtesting.start(BacktestingMode.TRENDING_24H)
+    # backtesting.start(BacktestingMode.TRENDING_24H)
     # backtesting.start(BacktestingMode.TRENDING_24H_QUICK)
-    # backtesting.start(BacktestingMode.TRENDING_1H)
+    backtesting.start(BacktestingMode.TRENDING_1H)
