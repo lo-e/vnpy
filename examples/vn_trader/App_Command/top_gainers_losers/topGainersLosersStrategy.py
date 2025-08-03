@@ -376,7 +376,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 self.pnl = 0
                 self.open_count = 0
 
-            wait = 2 if self.indicator_started else 0
+            wait = 0 if self.indicator_started else 2
             if self.hour_up and self.hour_down and self.minute_bar.datetime.timestamp() >= self.hour_up_ts + wait * 60:
                 self.indicator_inited = True
 
@@ -387,7 +387,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 self.pnl = 0
                 self.open_count = 0
 
-            wait = 2 if self.indicator_started else 0
+            wait = 0 if self.indicator_started else 2
             if self.hour_up and self.hour_down and self.minute_bar.datetime.timestamp() >= self.hour_down_ts + wait * 60:
                 self.indicator_inited = True
 
@@ -519,7 +519,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 stop_pnl -= 0.2
                 stop_pnl *= self.leverage
             self.pnl += stop_pnl
-            if self.pnl > 0:
+            if self.pnl > 0 and self.indicator_started:
                 self.closed = True
 
             # 止损日志
@@ -547,7 +547,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 close_pnl -= 0.2
                 close_pnl *= self.leverage
             self.pnl += close_pnl
-            if self.pnl > 0:
+            if self.pnl > 0 and self.indicator_started:
                 self.closed = True
             
             # 平仓日志
@@ -738,7 +738,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                     stop_pnl -= 0.2
                     stop_pnl *= self.leverage
                 self.pnl += stop_pnl
-                if self.pnl > 0:
+                if self.pnl > 0 and self.indicator_started:
                     self.closed = True
 
                 # 记录日志
