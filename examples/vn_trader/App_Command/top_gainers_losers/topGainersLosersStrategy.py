@@ -441,7 +441,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             #     self.stop_open_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
 
             # 1h新高新低，指标重置
-            if ((self.direction == Direction.SHORT and tick.last_price > self.hour_up) or (self.direction == Direction.LONG and tick.last_price < self.hour_down)):
+            if ((self.direction == Direction.SHORT and tick.last_price >= self.hour_up) or (self.direction == Direction.LONG and tick.last_price <= self.hour_down)):
                 self.indicator_inited = False
 
         if not self.closed and not self.target_pos and ((not self.indicator_started and (tick.datetime >= datetime.strptime(self.datetime, f"%Y-%m-%d %H:%M:%S") + timedelta(days=1))) or (self.stop_open and not self.pnl) or self.pnl <= - 12.0):
