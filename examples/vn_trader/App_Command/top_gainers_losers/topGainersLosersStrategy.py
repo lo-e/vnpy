@@ -664,22 +664,23 @@ class TopGainersLosersStrategy(CtaTemplate):
             if tick:
                 value_cross = True
                 order_value = tick.last_price * volume
-                if "BTC" in self.vt_symbol and order_value <= 100:
+                pure_symbol = self.vt_symbol.split("USDT")[0]
+                if pure_symbol == "BTC" and order_value <= 100:
                     value_cross = False
 
-                if "ETH" in self.vt_symbol and order_value <= 20:
+                if pure_symbol == "ETH" and order_value <= 20:
                     value_cross = False
                 
-                if "BCH" in self.vt_symbol and order_value <= 20:
+                if pure_symbol == "BCH" and order_value <= 20:
                     value_cross = False
 
-                if "ETC" in self.vt_symbol and order_value <= 20:
+                if pure_symbol == "ETC" and order_value <= 20:
                     value_cross = False
 
-                if "LINK" in self.vt_symbol and order_value <= 20:
+                if pure_symbol == "LINK" and order_value <= 20:
                     value_cross = False
 
-                if "LTC" in self.vt_symbol and order_value <= 20:
+                if pure_symbol == "LTC" and order_value <= 20:
                     value_cross = False
 
                 if order_value <= 5:
