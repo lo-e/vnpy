@@ -380,7 +380,6 @@ class TopGainersLosersStrategy(CtaTemplate):
             if self.hour_up and self.hour_down and self.minute_bar.datetime.timestamp() >= self.hour_up_ts + wait * 60:
                 self.indicator_inited = True
 
-            
         if self.direction == Direction.LONG:
             if not self.indicator_started and self.hour_up and self.hour_down and self.hour_6_up and self.hour_6_down and self.hour_up <= self.hour_down + ((self.hour_6_up - self.hour_down) * 0.5):
                 self.indicator_started = True
