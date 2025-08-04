@@ -430,7 +430,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         
         if self.indicator_inited:
             # 中线突破
-            if not self.middle_cross and self.indicator_started and self.target_pos and ((self.direction == Direction.SHORT and tick.last_price <= self.open_tick_price - (abs(self.open_tick_price - self.profit_price) * 0.8)) or (self.direction == Direction.LONG and tick.last_price >= self.open_tick_price + (abs(self.profit_price - self.open_tick_price) * 0.8))):
+            if not self.middle_cross and self.indicator_started and self.target_pos and ((self.direction == Direction.SHORT and tick.last_price <= self.open_tick_price - (abs(self.open_tick_price - self.profit_price) * 0.9)) or (self.direction == Direction.LONG and tick.last_price >= self.open_tick_price + (abs(self.profit_price - self.open_tick_price) * 0.9))):
                 self.middle_cross = True
                 self.middle_cross_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
 
