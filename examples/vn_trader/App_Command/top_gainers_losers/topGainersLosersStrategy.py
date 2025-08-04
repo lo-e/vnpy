@@ -741,7 +741,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                     self.closed = True
 
                 # 记录日志
-                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} AUTO_STOP {stop_pnl:.2f}%({self.pnl:.2f}%) {self.tick.last_price}"})
+                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} AUTO_STOP {stop_pnl:.2f}%({self.pnl:.2f}%) {trade.price}"})
                 self.trade_logs_updated = True
 
                 msg = f"{self.vt_symbol} {self.direction.value}\n自动止损 {stop_pnl:.2f}%({self.pnl:.2f}%)"
