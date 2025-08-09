@@ -530,6 +530,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 stop_pnl -= 0.2
                 stop_pnl *= self.leverage
             self.pnl += stop_pnl
+            self.portfolio.on_pnl(self, self.pnl)
 
             self.on_close(tick)
 
@@ -556,6 +557,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 close_pnl -= 0.2
                 close_pnl *= self.leverage
             self.pnl += close_pnl
+            self.portfolio.on_pnl(self, self.pnl)
 
             self.on_close(tick)
             
@@ -750,6 +752,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                     stop_pnl -= 0.2
                     stop_pnl *= self.leverage
                 self.pnl += stop_pnl
+                self.portfolio.on_pnl(self, self.pnl)
 
                 self.on_close(self.tick)
 
