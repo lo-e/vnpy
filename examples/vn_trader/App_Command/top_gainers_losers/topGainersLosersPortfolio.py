@@ -27,7 +27,6 @@ class TopGainersLosersPortfolio(object):
     syncs = [
         "account_ath",
         "account_drawdown",
-        "last_signal_dt",
         "signal_tokens_1h"
     ]
 
@@ -68,7 +67,6 @@ class TopGainersLosersPortfolio(object):
         self.rise_onboard_symbol_time_dict = {}
         self.fall_onboard_symbol_time_dict = {}
         self.trade_enable = True
-        self.last_signal_dt = ""
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -374,9 +372,7 @@ class TopGainersLosersPortfolio(object):
                                         vt_symbol = setting["vt_symbol"]
                                         instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
                                         on_timestamp = instrument_data["on_timestamp"]
-                                        last_signal_ts = datetime.strptime(self.last_signal_dt, f"%Y-%m-%d %H:%M:%S").timestamp() if self.last_signal_dt else 0
-                                        if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60 and data_time >= last_signal_ts + 30 * 60:
-                                            self.last_signal_dt = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
+                                        if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60:
                                             new_settings.append(setting)
                                             if symbol not in self.strategy_short_tokens:
                                                 self.strategy_short_tokens.append(symbol)
@@ -406,9 +402,7 @@ class TopGainersLosersPortfolio(object):
                                         vt_symbol = setting["vt_symbol"]
                                         instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
                                         on_timestamp = instrument_data["on_timestamp"]
-                                        last_signal_ts = datetime.strptime(self.last_signal_dt, f"%Y-%m-%d %H:%M:%S").timestamp() if self.last_signal_dt else 0
-                                        if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60 and data_time >= last_signal_ts + 30 * 60:
-                                            self.last_signal_dt = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
+                                        if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60:
                                             new_settings.append(setting)
                                             if symbol not in self.strategy_long_tokens:
                                                 self.strategy_long_tokens.append(symbol)
