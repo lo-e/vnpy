@@ -19,6 +19,8 @@ from vnpy.trader.event import EVENT_TICK_DELAY, EVENT_ACCOUNT
 from vnpy.trader.object import AccountData
 import copy
 import re
+import csv
+import shutil
 
 class TopGainersLosersPortfolio(object):
     parameters = ["name",
@@ -67,6 +69,7 @@ class TopGainersLosersPortfolio(object):
         self.rise_onboard_symbol_time_dict = {}
         self.fall_onboard_symbol_time_dict = {}
         self.trade_enable = True
+        self.pnl_data = {}
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -194,6 +197,20 @@ class TopGainersLosersPortfolio(object):
 
         else:
             self.trade_enable = False
+
+    def on_pnl(self, strategy: TopGainersLosersStrategy, pnl: float):
+        data = {"datetime": strategy.datetime,
+                "vt_symbol": strategy.vt_symbol,
+                "direction": strategy.direction.value,
+                "pnl": f"{pnl:.2f}%"}
+        date_str = datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S").strftime(f"%Y-%m-%d")
+
+        date_data = self.pnl_data.get(date_str, {})
+        date_data["updated"] = True
+        data_list = date_data.get("data", [])
+        data_list.append(data)
+        date_data["data"] = data_list
+        self.pnl_data[date_str] = date_data
 
     def resubscribe(self, event: Event):
         return
@@ -875,6 +892,7 @@ class TopGainersLosersPortfolio(object):
 
     def check_save_data(self):
         try:
+            # 保存变量、同步数据
             sync_data = {}
             for key in self.syncs:
                 sync_data[key] = self.__getattribute__(key)
@@ -885,11 +903,39 @@ class TopGainersLosersPortfolio(object):
 
                 msg = f"同步组合数据.."
                 print_(msg)
+
+            # 保存组合盈亏数据
+            for date_str, date_data in self.pnl_data.items():
+                updated = date_data["updated"]
+                if updated:
+                    data_list = date_data["data"]
+                    current_dir = os.path.dirname(os.path.abspath(__file__))
+                    file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}trade_pnls{DIR_SYMBOL}{date_str}.csv"
+                    field_names = list(data_list[0].keys())
+                    self.save_csv_data(field_names, data_list, file_path, True)
+                    date_data["updated"] = False
         
         except Exception as e:
             msg = f"保存组合数据出错\n\n{e}"
             self.send_ding_talk(msg)
             print_(msg)
+
+    def save_csv_data(self, field_names: list, data: list, file_path:str, check_dir: bool = True):
+        # 确保文件夹存在
+        if check_dir:
+            file_elements = file_path.split(DIR_SYMBOL)
+            dir_path = DIR_SYMBOL.join(file_elements[:-1])
+            os.makedirs(dir_path, exist_ok=True)
+
+        # 保存到临时csv文件
+        temp_file_path = file_path.split(".csv")[0] + f"_temp.csv"
+        with open(temp_file_path, "w", encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=field_names)
+            writer.writeheader()
+            writer.writerows(data)
+
+        # 将临时文件替换为目标文件
+        shutil.move(temp_file_path, file_path)
 
     def check_strategy_status(self):
         while True:
