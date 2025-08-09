@@ -92,6 +92,9 @@ class TopGainersLosersPortfolio(object):
         # 导入交易所合约
         self.load_instruments_data()
 
+        # 导入历史交易PNL
+        self.load_history_pnl_data()
+
         # 导入最近趋势数据
         # self.load_recent_trending_data()
 
@@ -788,6 +791,21 @@ class TopGainersLosersPortfolio(object):
         except Exception as e:
             msg = f"TopGainersLosersPortfolio 获取交易所USDT合约列表出错\n\n{e}"
             self.send_ding_talk(msg)
+
+    def load_history_pnl_data(self):
+        # 获取历史交易日志
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        for i in range(7):
+            date_str = (today - timedelta(days=i)).strftime(f"%Y-%m-%d")
+            file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}trade_pnls{DIR_SYMBOL}{date_str}.csv"
+            if os.path.exists(file_path):
+                data_list = []
+                df = pd.read_csv(file_path)
+                for _, row in df.iterrows():
+                    data_list.append(dict(row))
+                self.pnl_data[date_str] = {"updated": False,
+                                           "data": data_list}
 
     def load_recent_trending_data(self):
         # 1小时趋势数据
