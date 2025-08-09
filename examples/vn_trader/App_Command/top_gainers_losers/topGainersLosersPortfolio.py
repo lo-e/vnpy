@@ -199,12 +199,14 @@ class TopGainersLosersPortfolio(object):
             self.trade_enable = False
 
     def on_pnl(self, strategy: TopGainersLosersStrategy, pnl: float):
+        dt = datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S")
         data = {"datetime": strategy.datetime,
+                "timestamp": dt.timestamp(),
                 "vt_symbol": strategy.vt_symbol,
                 "direction": strategy.direction.value,
                 "pnl": f"{pnl:.2f}%"}
-        date_str = datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S").strftime(f"%Y-%m-%d")
-
+        
+        date_str = dt.strftime(f"%Y-%m-%d")
         date_data = self.pnl_data.get(date_str, {})
         date_data["updated"] = True
         data_list = date_data.get("data", [])
@@ -908,9 +910,11 @@ class TopGainersLosersPortfolio(object):
             for date_str, date_data in self.pnl_data.items():
                 updated = date_data["updated"]
                 if updated:
-                    data_list = date_data["data"]
                     current_dir = os.path.dirname(os.path.abspath(__file__))
                     file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}trade_pnls{DIR_SYMBOL}{date_str}.csv"
+
+                    data_list = date_data["data"]
+                    data_list = sorted(data_list, key=lambda x: x['timestamp'])
                     field_names = list(data_list[0].keys())
                     self.save_csv_data(field_names, data_list, file_path, True)
                     date_data["updated"] = False
