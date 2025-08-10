@@ -375,8 +375,11 @@ class Backtesting(object):
     def on_trending_data_1h(self, data: tuple):
         rise_trending_list, fall_trending_list = data
         data_time = rise_trending_list[0]["change"]
-        mean_rise_change = rise_trending_list[1]["change"]
-        mean_fall_change = rise_trending_list[2]["change"]
+        # mean_rise_change = rise_trending_list[1]["change"]
+        # mean_fall_change = rise_trending_list[2]["change"]
+        mean_rise_change = pd.DataFrame(rise_trending_list[3:8])["change"].mean()
+        mean_fall_change = pd.DataFrame(fall_trending_list[3:8])["change"].mean()
+
         rise_trending_list = rise_trending_list[3:]
         fall_trending_list = fall_trending_list[3:]
 
