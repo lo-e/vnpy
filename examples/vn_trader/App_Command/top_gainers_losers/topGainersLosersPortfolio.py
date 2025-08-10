@@ -331,6 +331,8 @@ class TopGainersLosersPortfolio(object):
 
         # 信号判断
         new_settings = []
+        long_signal_count = 0
+        short_signal_count = 0
         for symbol, trending_data in self.trending_tokens_1h.copy().items():
             if symbol not in trending_tokens:
                 self.trending_tokens_1h.pop(symbol)
@@ -390,11 +392,12 @@ class TopGainersLosersPortfolio(object):
                                             flt = True
                                             break
                                     
-                                    if setting and not flt:
+                                    if setting and not flt and short_signal_count < 1:
                                         vt_symbol = setting["vt_symbol"]
                                         instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
                                         on_timestamp = instrument_data["on_timestamp"]
                                         if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60:
+                                            short_signal_count += 1
                                             new_settings.append(setting)
                                             if symbol not in self.strategy_short_tokens:
                                                 self.strategy_short_tokens.append(symbol)
@@ -420,11 +423,12 @@ class TopGainersLosersPortfolio(object):
                                             flt = True
                                             break
                                     
-                                    if setting and not flt:
+                                    if setting and not flt and long_signal_count < 1:
                                         vt_symbol = setting["vt_symbol"]
                                         instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
                                         on_timestamp = instrument_data["on_timestamp"]
                                         if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60:
+                                            long_signal_count += 1
                                             new_settings.append(setting)
                                             if symbol not in self.strategy_long_tokens:
                                                 self.strategy_long_tokens.append(symbol)
