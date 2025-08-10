@@ -489,7 +489,11 @@ class Backtesting(object):
                 onboard_ts = trending_data["onboard_ts"]
                 onboard_time = datetime.fromtimestamp(onboard_ts).strftime(f"%Y-%m-%d %H:%M:%S")
 
-                if abs(change) >= 10 and data_time <= onboard_ts + 600000 * 60:
+                over_trending = False
+                if (direction == "LONG" and abs(mean_rise) >= abs(mean_fall) * 3) or (direction == "SHORT" and abs(mean_fall) >= abs(mean_rise) * 3):
+                    over_trending = True
+
+                if abs(change) >= 10 and not over_trending and data_time <= onboard_ts + 600000 * 60:
                     # 查询24h排行
                     rank_24h = 0
                     if change >= 0:
