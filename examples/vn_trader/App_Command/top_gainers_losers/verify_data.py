@@ -377,8 +377,8 @@ class Backtesting(object):
         data_time = rise_trending_list[0]["change"]
         # mean_rise_change = rise_trending_list[1]["change"]
         # mean_fall_change = rise_trending_list[2]["change"]
-        mean_rise_change = pd.DataFrame(rise_trending_list[3:8])["change"].mean()
-        mean_fall_change = pd.DataFrame(fall_trending_list[3:8])["change"].mean()
+        mean_rise_change = pd.DataFrame(rise_trending_list[3:6])["change"].mean()
+        mean_fall_change = pd.DataFrame(fall_trending_list[3:6])["change"].mean()
 
         rise_trending_list = rise_trending_list[3:]
         fall_trending_list = fall_trending_list[3:]
@@ -489,20 +489,22 @@ class Backtesting(object):
                 onboard_ts = trending_data["onboard_ts"]
                 onboard_time = datetime.fromtimestamp(onboard_ts).strftime(f"%Y-%m-%d %H:%M:%S")
 
-                over_trending = False
-                if (direction == "LONG" and abs(mean_rise) >= abs(mean_fall) * 3) or (direction == "SHORT" and abs(mean_fall) >= abs(mean_rise) * 3):
-                    over_trending = True
-
-                if abs(change) >= 10 and not over_trending and data_time <= onboard_ts + 600000 * 60:
+                if abs(change) >= 10 and data_time <= onboard_ts + 600000 * 60:
                     # 查询24h排行
                     rank_24h = 0
+                    reverse_direction = ""
                     if change >= 0:
                         direction = "rise"
+                        reverse_direction = "fall"
                     
                     else:
                         direction = "fall"
+                        reverse_direction = "rise"
+                    
+                    trending_top_mean_change = 0
                     trending_list_24h = self.load_24h_trending_data(to_ts=trending_1h_ts, direction=direction)
                     if trending_list_24h:
+                        trending_top_mean_change = pd.DataFrame(trending_list_24h[3:6])["change"].mean()
                         trending_list_24h = trending_list_24h[3:]
                         symbols_24h = []
                         for data_24h in trending_list_24h:
@@ -510,14 +512,23 @@ class Backtesting(object):
 
                         if symbol in symbols_24h:
                             rank_24h = symbols_24h.index(symbol) + 1
+                    
+                    reverse_top_mean_change = 0
+                    reverse_list_24h = self.load_24h_trending_data(to_ts=trending_1h_ts, direction=reverse_direction)
+                    if reverse_list_24h:
+                        reverse_top_mean_change = pd.DataFrame(reverse_list_24h[3:6])["change"].mean()
 
-                    if rank_24h == 0 or rank_24h > 0:
+                    over_trending = False
+                    if abs(trending_top_mean_change) >= abs(reverse_top_mean_change) * 1.5:
+                        over_trending = True
+
+                    if not over_trending:
                         signal_ts = self.signal_tokens_1h.get(symbol, 0)
                         self.signal_tokens_1h[symbol] = data_time
 
                         if data_time >= signal_ts + 6 * 60 * 60:
                             self.signal_count += 1
-                            msg = f"1H趋势启动 {symbol}\nmean_rise：{mean_rise}\nmean_fall：{mean_fall}\nchange：{change}\ntrending_1h_rank：{trending_1h_rank}\ntrending_1h_time：{trending_1h_time}\nrank_24h：{rank_24h}\ncount：{self.signal_count}\n"
+                            msg = f"1H趋势启动 {symbol}\nmean_rise：{mean_rise}\nmean_fall：{mean_fall}\nchange：{change}\ntrending_1h_rank：{trending_1h_rank}\ntrending_1h_time：{trending_1h_time}\nrank_24h：{rank_24h}\ntrending_24h_top：{trending_top_mean_change}\nreverse_24h_top：{reverse_top_mean_change}\ncount：{self.signal_count}\n"
                             print(msg)
 
         # 排序
