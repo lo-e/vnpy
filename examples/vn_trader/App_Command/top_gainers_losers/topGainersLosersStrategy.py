@@ -462,15 +462,15 @@ class TopGainersLosersStrategy(CtaTemplate):
         if self.indicator_inited and not self.target_pos and not self.stop_open and not self.closed:
             open_allowed = False
 
-            if self.direction == Direction.SHORT and tick.last_price <= self.hour_up - ((self.hour_up - self.hour_down) * 0.1):
-                if tick.last_price >= self.hour_up - ((self.hour_up - self.hour_down) / 3):
+            if self.direction == Direction.SHORT:
+                if tick.last_price <= self.hour_up - ((self.hour_up - self.hour_down) * 0.1) and tick.last_price >= self.hour_up - ((self.hour_up - self.hour_down) / 3):
                     open_allowed = True
                 
                 elif tick.datetime.timestamp() >= self.hour_up_ts + 20 * 60:
                     self.on_close(tick)
 
-            if self.direction == Direction.LONG and tick.last_price >= self.hour_down + ((self.hour_up - self.hour_down) * 0.1):
-                if tick.last_price <= self.hour_down + ((self.hour_up - self.hour_down) / 3):
+            if self.direction == Direction.LONG:
+                if tick.last_price >= self.hour_down + ((self.hour_up - self.hour_down) * 0.1) and tick.last_price <= self.hour_down + ((self.hour_up - self.hour_down) / 3):
                     open_allowed = True
 
                 elif tick.datetime.timestamp() >= self.hour_down_ts + 20 * 60:
