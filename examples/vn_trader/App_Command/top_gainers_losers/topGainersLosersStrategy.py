@@ -37,6 +37,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         "exchange",
         "exchange_user",
         "direction",
+        "phase",
         "datetime"
     ]
 
@@ -45,6 +46,7 @@ class TopGainersLosersStrategy(CtaTemplate):
 
     # 同步列表
     syncs = [
+        "phase",
         "target_pos",
         "stop_open",
         "stop_open_dt",
@@ -82,6 +84,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.exchange_user:str = ""
         self.direction: Direction = Direction.NET
         self.datetime = ""
+        self.phase = 0
 
         """ fake """
         # self.send_fake_order = False

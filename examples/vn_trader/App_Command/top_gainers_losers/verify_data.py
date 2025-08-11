@@ -505,13 +505,13 @@ class Backtesting(object):
                     trending_list_24h = self.load_24h_trending_data(to_ts=trending_1h_ts, direction=direction)
                     if trending_list_24h:
                         trending_top_mean_change = pd.DataFrame(trending_list_24h[3:6])["change"].mean()
-                        trending_list_24h = trending_list_24h[3:]
-                        symbols_24h = []
-                        for data_24h in trending_list_24h:
-                            symbols_24h.append(data_24h["symbol"])
+                        # trending_list_24h = trending_list_24h[3:]
+                        # symbols_24h = []
+                        # for data_24h in trending_list_24h:
+                        #     symbols_24h.append(data_24h["symbol"])
 
-                        if symbol in symbols_24h:
-                            rank_24h = symbols_24h.index(symbol) + 1
+                        # if symbol in symbols_24h:
+                        #     rank_24h = symbols_24h.index(symbol) + 1
                     
                     reverse_top_mean_change = 0
                     reverse_list_24h = self.load_24h_trending_data(to_ts=trending_1h_ts, direction=reverse_direction)
@@ -519,7 +519,7 @@ class Backtesting(object):
                         reverse_top_mean_change = pd.DataFrame(reverse_list_24h[3:6])["change"].mean()
 
                     over_trending = False
-                    if abs(trending_top_mean_change) >= abs(reverse_top_mean_change) * 1:
+                    if abs(trending_top_mean_change) >= abs(reverse_top_mean_change) * 2:
                         over_trending = True
 
                     if not over_trending:

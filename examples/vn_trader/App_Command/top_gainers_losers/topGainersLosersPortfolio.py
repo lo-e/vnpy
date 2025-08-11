@@ -29,7 +29,8 @@ class TopGainersLosersPortfolio(object):
     syncs = [
         "account_ath",
         "account_drawdown",
-        "signal_tokens_1h"
+        "signal_tokens_1h",
+        "loss_list"
     ]
 
     def __init__(self, engine, setting):
@@ -70,6 +71,7 @@ class TopGainersLosersPortfolio(object):
         self.fall_onboard_symbol_time_dict = {}
         self.trade_enable = True
         self.pnl_data = {}
+        self.loss_list = []
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -202,6 +204,7 @@ class TopGainersLosersPortfolio(object):
             self.trade_enable = False
 
     def on_pnl(self, strategy: TopGainersLosersStrategy, pnl: float):
+        # 记录盈亏
         dt = datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S")
         data = {"datetime": strategy.datetime,
                 "timestamp": dt.timestamp(),
@@ -216,6 +219,13 @@ class TopGainersLosersPortfolio(object):
         data_list.append(data)
         date_data["data"] = data_list
         self.pnl_data[date_str] = date_data
+
+        # 亏损记录
+        if pnl < 0:
+            loss_data = {"datetime": strategy.datetime,
+                         "vt_symbol": strategy.vt_symbol,
+                         "phase": strategy.phase}
+            self.loss_list.append(loss_data)
 
     def resubscribe(self, event: Event):
         return
@@ -391,7 +401,14 @@ class TopGainersLosersPortfolio(object):
                                         break
 
                                 if not flt:
-                                    setting = self.new_strategy(symbol, Direction.SHORT)
+                                    phase = 1
+                                    if self.loss_list:
+                                        loss_data = self.loss_list[0]
+                                        loss_ts = datetime.strptime(loss_data["datetime"], f"%Y-%m-%d %H:%M:%S").timestamp()
+                                        if data_time >= loss_ts + 24 * 60 * 60:
+                                            phase = loss_data["phase"] + 1
+                                        
+                                    setting = self.new_strategy(symbol, Direction.SHORT, phase=phase)
                                     strategy_name = setting.get("strategy_name", "")
                                     pure_strategy_name = "_".join(strategy_name.split("_")[1:])
                                     for name in self.cta_engine.strategies.keys():
@@ -410,6 +427,9 @@ class TopGainersLosersPortfolio(object):
                                             if symbol not in self.strategy_short_tokens:
                                                 self.strategy_short_tokens.append(symbol)
 
+                                            if phase > 1:
+                                                self.loss_list.pop(0)
+
                                             msg = f"{symbol} 上涨过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}\ntrending_top {trending_top_mean_change}\nreverse_top {reverse_top_mean_change}"
                                             self.send_ding_talk(msg)
                             
@@ -422,7 +442,14 @@ class TopGainersLosersPortfolio(object):
                                         break
                                 
                                 if not flt:
-                                    setting = self.new_strategy(symbol, Direction.LONG)
+                                    phase = 1
+                                    if self.loss_list:
+                                        loss_data = self.loss_list[0]
+                                        loss_ts = datetime.strptime(loss_data["datetime"], f"%Y-%m-%d %H:%M:%S").timestamp()
+                                        if data_time >= loss_ts + 24 * 60 * 60:
+                                            phase = loss_data["phase"] + 1
+
+                                    setting = self.new_strategy(symbol, Direction.LONG, phase=1)
                                     strategy_name = setting.get("strategy_name", "")
                                     pure_strategy_name = "_".join(strategy_name.split("_")[1:])
                                     for name in self.cta_engine.strategies.keys():
@@ -440,6 +467,9 @@ class TopGainersLosersPortfolio(object):
                                             new_settings.append(setting)
                                             if symbol not in self.strategy_long_tokens:
                                                 self.strategy_long_tokens.append(symbol)
+
+                                            if phase > 1:
+                                                self.loss_list.pop(0)
 
                                             msg = f"{symbol} 下跌过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}\ntrending_top {trending_top_mean_change}\nreverse_top {reverse_top_mean_change}"
                                             self.send_ding_talk(msg)
@@ -552,7 +582,7 @@ class TopGainersLosersPortfolio(object):
     def on_trending_data_5m(self, data: tuple):
         pass
 
-    def new_strategy(self, token:str, direction: Direction):
+    def new_strategy(self, token:str, direction: Direction, phase: int):
         # 确认合约
         vt_symbol = ""
         exchange = ""
@@ -603,6 +633,7 @@ class TopGainersLosersPortfolio(object):
                    "exchange_user": exchange_user,
                    "direction": direction_str,
                    "start": True,
+                   "phase": phase,
                    "datetime": datetime.now().strftime(f"%Y-%m-%d %H:%M:%S")
                    }
        
