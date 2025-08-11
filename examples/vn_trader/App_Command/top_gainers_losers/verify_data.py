@@ -85,7 +85,7 @@ class Backtesting(object):
         # 1小时趋势数据
         print(f"加载1H历史趋势数据..")
         self.trending_tokens_1h = {}
-        hour_time = datetime.strptime(f"2025-06-29 00:00:00", f"%Y-%m-%d %H:%M:%S")
+        hour_time = datetime.strptime(f"2025-08-09 00:00:00", f"%Y-%m-%d %H:%M:%S")
         # hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=5)
         while hour_time < datetime.now():
             current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -519,7 +519,7 @@ class Backtesting(object):
                         reverse_top_mean_change = pd.DataFrame(reverse_list_24h[3:6])["change"].mean()
 
                     over_trending = False
-                    if abs(trending_top_mean_change) >= abs(reverse_top_mean_change) * 1.5:
+                    if abs(trending_top_mean_change) >= abs(reverse_top_mean_change) * 1:
                         over_trending = True
 
                     if not over_trending:
@@ -528,7 +528,7 @@ class Backtesting(object):
 
                         if data_time >= signal_ts + 6 * 60 * 60:
                             self.signal_count += 1
-                            msg = f"1H趋势启动 {symbol}\nmean_rise：{mean_rise}\nmean_fall：{mean_fall}\nchange：{change}\ntrending_1h_rank：{trending_1h_rank}\ntrending_1h_time：{trending_1h_time}\nrank_24h：{rank_24h}\ntrending_24h_top：{trending_top_mean_change}\nreverse_24h_top：{reverse_top_mean_change}\ncount：{self.signal_count}\n"
+                            msg = f"1H趋势启动 {symbol}\nchange：{change}\ntrending_1h_rank：{trending_1h_rank}\ntrending_1h_time：{trending_1h_time}\nrank_24h：{rank_24h}\ntrending_24h_top：{trending_top_mean_change}\nreverse_24h_top：{reverse_top_mean_change}\ncount：{self.signal_count}\n"
                             print(msg)
 
         # 排序

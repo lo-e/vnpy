@@ -348,12 +348,17 @@ class TopGainersLosersPortfolio(object):
                 if abs(change) >= 10 and data_time <= onboard_ts + 600000 * 60:
                     # 查询24h排行
                     rank_24h = 0
+                    trending_top_mean_change = 0
+                    reverse_top_mean_change = 0
                     trending_list_24h = []
+                    reverse_list_24h = []
                     if change >= 0:
                         trending_list_24h = self.rise_data_list_24h[3:]
+                        reverse_list_24h = self.fall_data_list_24h[3:]
                     
                     else:
                         trending_list_24h = self.fall_data_list_24h[3:]
+                        reverse_list_24h = self.rise_data_list_24h[3:]
 
                     symbols_24h = []
                     for data_24h in trending_list_24h:
@@ -361,6 +366,9 @@ class TopGainersLosersPortfolio(object):
 
                     if symbol in symbols_24h:
                         rank_24h = symbols_24h.index(symbol) + 1
+
+                    trending_top_mean_change = pd.DataFrame(trending_list_24h[0:3])["change"].mean()
+                    reverse_top_mean_change = pd.DataFrame(reverse_list_24h[0:3])["change"].mean()
 
                     # 信号生成
                     if rank_24h == 0 or rank_24h > 0:
@@ -402,7 +410,7 @@ class TopGainersLosersPortfolio(object):
                                             if symbol not in self.strategy_short_tokens:
                                                 self.strategy_short_tokens.append(symbol)
 
-                                            msg = f"{symbol} 上涨过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}"
+                                            msg = f"{symbol} 上涨过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}\ntrending_top {trending_top_mean_change}\nreverse_top {reverse_top_mean_change}"
                                             self.send_ding_talk(msg)
                             
                             elif direction == "SHORT":
@@ -433,7 +441,7 @@ class TopGainersLosersPortfolio(object):
                                             if symbol not in self.strategy_long_tokens:
                                                 self.strategy_long_tokens.append(symbol)
 
-                                            msg = f"{symbol} 下跌过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}"
+                                            msg = f"{symbol} 下跌过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}\ntrending_top {trending_top_mean_change}\nreverse_top {reverse_top_mean_change}"
                                             self.send_ding_talk(msg)
 
         if new_settings:
