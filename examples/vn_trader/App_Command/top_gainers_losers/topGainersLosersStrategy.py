@@ -38,7 +38,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         "exchange_user",
         "direction",
         "phase",
-        "phase_datetime"
+        "phase_datetime",
         "datetime"
     ]
 
@@ -48,7 +48,7 @@ class TopGainersLosersStrategy(CtaTemplate):
     # 同步列表
     syncs = [
         "phase",
-        "phase_datetime"
+        "phase_datetime",
         "target_pos",
         "stop_open",
         "stop_open_dt",
