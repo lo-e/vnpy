@@ -519,7 +519,7 @@ class Backtesting(object):
                         reverse_top_mean_change = pd.DataFrame(reverse_list_24h[3:6])["change"].mean()
 
                     over_trending = False
-                    if abs(trending_top_mean_change) >= abs(reverse_top_mean_change) * 1:
+                    if abs(trending_top_mean_change) >= abs(reverse_top_mean_change) * 2:
                         over_trending = True
 
                     if not over_trending:

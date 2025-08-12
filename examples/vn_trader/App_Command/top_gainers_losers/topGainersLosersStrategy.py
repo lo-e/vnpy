@@ -38,6 +38,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         "exchange_user",
         "direction",
         "phase",
+        "phase_datetime"
         "datetime"
     ]
 
@@ -47,6 +48,7 @@ class TopGainersLosersStrategy(CtaTemplate):
     # 同步列表
     syncs = [
         "phase",
+        "phase_datetime"
         "target_pos",
         "stop_open",
         "stop_open_dt",
@@ -83,8 +85,9 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.exchange: Exchange = Exchange.NONE
         self.exchange_user:str = ""
         self.direction: Direction = Direction.NET
-        self.datetime = ""
         self.phase = 0
+        self.phase_datetime = ""
+        self.datetime = ""
 
         """ fake """
         # self.send_fake_order = False
@@ -292,7 +295,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                         
                         else:
                             self.hour_6_high_cross = False
-                            self.closed = True
+                            self.on_close()
 
                     if self.direction == Direction.LONG:
                         if self.hour_down and self.hour_6_down and self.hour_down <= self.hour_6_down * 1.02:
@@ -300,7 +303,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                         
                         else:
                             self.hour_6_low_cross = False
-                            self.closed = True
+                            self.on_close()
 
                 self.bar_lack = bar_lack
                 self.database_loaded = True
@@ -533,7 +536,6 @@ class TopGainersLosersStrategy(CtaTemplate):
                 stop_pnl -= 0.2
                 stop_pnl *= self.leverage
             self.pnl += stop_pnl
-            self.portfolio.on_pnl(self, self.pnl)
 
             self.on_close(tick)
 
@@ -560,7 +562,6 @@ class TopGainersLosersStrategy(CtaTemplate):
                 close_pnl -= 0.2
                 close_pnl *= self.leverage
             self.pnl += close_pnl
-            self.portfolio.on_pnl(self, self.pnl)
 
             self.on_close(tick)
             
@@ -642,6 +643,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.close_tick_price = tick.last_price
             self.close_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
         self.closed = True
+        self.portfolio.on_pnl(self, self.pnl)
 
     def check_save_data(self):
         try:
@@ -755,7 +757,6 @@ class TopGainersLosersStrategy(CtaTemplate):
                     stop_pnl -= 0.2
                     stop_pnl *= self.leverage
                 self.pnl += stop_pnl
-                self.portfolio.on_pnl(self, self.pnl)
 
                 self.on_close(self.tick)
 

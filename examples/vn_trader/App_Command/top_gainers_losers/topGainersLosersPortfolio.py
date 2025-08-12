@@ -227,6 +227,12 @@ class TopGainersLosersPortfolio(object):
                          "phase": strategy.phase}
             self.loss_list.append(loss_data)
 
+        elif pnl == 0 and strategy.phase > 1:
+            loss_data = {"datetime": strategy.phase_datetime,
+                         "vt_symbol": strategy.vt_symbol,
+                         "phase": strategy.phase - 1}
+            self.loss_list.insert(0, loss_data)
+
     def resubscribe(self, event: Event):
         return
     
@@ -402,13 +408,16 @@ class TopGainersLosersPortfolio(object):
 
                                 if not flt:
                                     phase = 1
+                                    phase_datetime = ""
                                     if self.loss_list:
                                         loss_data = self.loss_list[0]
-                                        loss_ts = datetime.strptime(loss_data["datetime"], f"%Y-%m-%d %H:%M:%S").timestamp()
+                                        loss_dt = loss_data["datetime"]
+                                        loss_ts = datetime.strptime(loss_dt, f"%Y-%m-%d %H:%M:%S").timestamp()
                                         if data_time >= loss_ts + 24 * 60 * 60:
                                             phase = loss_data["phase"] + 1
+                                            phase_datetime = loss_dt
                                         
-                                    setting = self.new_strategy(symbol, Direction.SHORT, phase=phase)
+                                    setting = self.new_strategy(symbol, Direction.SHORT, phase=phase, phase_datetime=phase_datetime)
                                     strategy_name = setting.get("strategy_name", "")
                                     pure_strategy_name = "_".join(strategy_name.split("_")[1:])
                                     for name in self.cta_engine.strategies.keys():
@@ -443,13 +452,16 @@ class TopGainersLosersPortfolio(object):
                                 
                                 if not flt:
                                     phase = 1
+                                    phase_datetime = ""
                                     if self.loss_list:
                                         loss_data = self.loss_list[0]
-                                        loss_ts = datetime.strptime(loss_data["datetime"], f"%Y-%m-%d %H:%M:%S").timestamp()
+                                        loss_dt = loss_data["datetime"]
+                                        loss_ts = datetime.strptime(loss_dt, f"%Y-%m-%d %H:%M:%S").timestamp()
                                         if data_time >= loss_ts + 24 * 60 * 60:
                                             phase = loss_data["phase"] + 1
+                                            phase_datetime = loss_dt
 
-                                    setting = self.new_strategy(symbol, Direction.LONG, phase=1)
+                                    setting = self.new_strategy(symbol, Direction.LONG, phase=phase, phase_datetime=phase_datetime)
                                     strategy_name = setting.get("strategy_name", "")
                                     pure_strategy_name = "_".join(strategy_name.split("_")[1:])
                                     for name in self.cta_engine.strategies.keys():
@@ -582,7 +594,7 @@ class TopGainersLosersPortfolio(object):
     def on_trending_data_5m(self, data: tuple):
         pass
 
-    def new_strategy(self, token:str, direction: Direction, phase: int):
+    def new_strategy(self, token:str, direction: Direction, phase: int, phase_datetime: str):
         # 确认合约
         vt_symbol = ""
         exchange = ""
@@ -634,6 +646,7 @@ class TopGainersLosersPortfolio(object):
                    "direction": direction_str,
                    "start": True,
                    "phase": phase,
+                   "phase_datetime": phase_datetime,
                    "datetime": datetime.now().strftime(f"%Y-%m-%d %H:%M:%S")
                    }
        
