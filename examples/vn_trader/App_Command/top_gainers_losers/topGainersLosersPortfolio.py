@@ -227,7 +227,7 @@ class TopGainersLosersPortfolio(object):
                          "phase": strategy.phase}
             self.loss_list.append(loss_data)
 
-        elif pnl > 0 and strategy.phase > 5:
+        elif pnl > 0 and strategy.phase > 3:
             loss_data = {"datetime": strategy.datetime,
                          "vt_symbol": strategy.vt_symbol,
                          "phase": strategy.phase - 2}
