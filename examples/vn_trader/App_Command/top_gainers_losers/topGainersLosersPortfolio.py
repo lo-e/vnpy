@@ -30,7 +30,8 @@ class TopGainersLosersPortfolio(object):
         "account_ath",
         "account_drawdown",
         "signal_tokens_1h",
-        "loss_list"
+        "loss_list",
+        "pnl"
     ]
 
     def __init__(self, engine, setting):
@@ -72,6 +73,7 @@ class TopGainersLosersPortfolio(object):
         self.trade_enable = True
         self.pnl_data = {}
         self.loss_list = []
+        self.pnl = 0
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -227,11 +229,15 @@ class TopGainersLosersPortfolio(object):
                          "phase": strategy.phase}
             self.loss_list.append(loss_data)
 
-        elif pnl > 0 and strategy.phase > 3:
-            loss_data = {"datetime": strategy.datetime,
-                         "vt_symbol": strategy.vt_symbol,
-                         "phase": strategy.phase - 2}
-            self.loss_list.append(loss_data)
+        elif pnl > 0:
+            if strategy.phase > 3:
+                loss_data = {"datetime": strategy.datetime,
+                             "vt_symbol": strategy.vt_symbol,
+                             "phase": strategy.phase - 2}
+                self.loss_list.append(loss_data)\
+            
+            else:
+                self.pnl += 1
 
         elif pnl == 0 and strategy.phase > 1:
             loss_data = {"datetime": strategy.phase_datetime,
