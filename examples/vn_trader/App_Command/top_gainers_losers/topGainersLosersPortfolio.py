@@ -234,7 +234,7 @@ class TopGainersLosersPortfolio(object):
                 loss_data = {"datetime": strategy.datetime,
                              "vt_symbol": strategy.vt_symbol,
                              "phase": strategy.phase - 2}
-                self.loss_list.append(loss_data)\
+                self.loss_list.append(loss_data)
             
             else:
                 self.pnl += 1
