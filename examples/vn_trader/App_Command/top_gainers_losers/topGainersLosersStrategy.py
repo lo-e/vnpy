@@ -235,6 +235,8 @@ class TopGainersLosersStrategy(CtaTemplate):
                 self.database_minute_bar_list = bar_list
 
             else:
+                self.on_close()
+
                 msg = f"\n初始化数据缺失\n\ncount {len(data_list)}\nlack {bar_lack}"
                 self.send_ding_talk(msg)
 
@@ -309,6 +311,8 @@ class TopGainersLosersStrategy(CtaTemplate):
                 self.database_loaded = True
 
                 if self.bar_lack:
+                    self.on_close()
+                    
                     msg = f"{self.vt_symbol} 初始化数据缺失\n\ndatabase {len(self.database_minute_bar_list)}\ntick {len(self.tick_minute_bar_list)}"
                     self.send_ding_talk(msg)
 
