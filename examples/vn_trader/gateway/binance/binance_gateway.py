@@ -1190,8 +1190,8 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
 
             # 高频行情数据过滤（按时间）
             last_ts = self.tick_ts_data.get(symbol_upper, 0)
-            # current_ts = int(time.time()*1000)
-            current_ts = timestamp
+            current_ts = int(time.time()*1000)
+            # current_ts = timestamp
             if current_ts - last_ts < 100:
                 return
             self.tick_ts_data[symbol_upper] = current_ts
