@@ -396,7 +396,6 @@ class TopGainersLosersStrategy(CtaTemplate):
 
         return quick_trending
 
-
     def on_tick(self, tick: TickData):
         self.tick = copy(tick)
         self.tick_minute_bar_generator.update_tick(tick)
