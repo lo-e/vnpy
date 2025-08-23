@@ -308,13 +308,13 @@ class TopGainersLosersStrategy(CtaTemplate):
                             self.on_close()
 
                 self.bar_lack = bar_lack
-                self.database_loaded = True
-
                 if self.bar_lack:
                     self.on_close()
                     
                     msg = f"{self.vt_symbol} 初始化数据缺失\n\ndatabase {len(self.database_minute_bar_list)}\ntick {len(self.tick_minute_bar_list)}"
                     self.send_ding_talk(msg)
+
+                self.database_loaded = True
 
             else:
                 self.on_minute_bar(bar)
@@ -434,7 +434,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         return
         """
         
-        if not self.indicator_inited and self.hour_up and self.hour_down:
+        if not self.indicator_inited and self.database_loaded and self.hour_up and self.hour_down:
             if self.direction == Direction.SHORT and tick.last_price <= self.hour_up - ((self.hour_up - self.hour_down) * 0.2):
                 self.indicator_inited = True
             
