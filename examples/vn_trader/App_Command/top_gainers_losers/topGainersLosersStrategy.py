@@ -642,6 +642,9 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.open_count += 1
 
     def on_close(self, tick: TickData = None):
+        if self.closed:
+            return
+        
         if tick:
             self.close_tick_price = tick.last_price
             self.close_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
