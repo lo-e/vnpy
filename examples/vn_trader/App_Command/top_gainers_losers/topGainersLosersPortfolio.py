@@ -230,7 +230,7 @@ class TopGainersLosersPortfolio(object):
             self.loss_list.append(loss_data)
 
         elif pnl > 0:
-            if strategy.phase > 3:
+            if strategy.phase > 5:
                 loss_data = {"datetime": strategy.datetime,
                              "vt_symbol": strategy.vt_symbol,
                              "phase": strategy.phase - 2}
@@ -413,6 +413,39 @@ class TopGainersLosersPortfolio(object):
                                 self.signal_tokens_1h.pop(signal_symbol)
 
                         if data_time >= signal_ts + 6 * 60 * 60:
+                            # 确认phase
+                            phase = 1
+                            phase_datetime = ""
+                            phase_index = -1
+                            over_loss_index = -1
+                            for i in range(len(self.loss_list)):
+                                loss_data = self.losers_data[i]
+                                loss_phase = loss_data["phase"]
+                                if loss_phase > 3:
+                                    over_loss_index = i
+                                    break
+
+                            for name in self.cta_engine.strategies.copy().keys():
+                                strategy: TopGainersLosersStrategy = self.cta_engine.strategies[name]
+                                if strategy.phase > 3:
+                                    over_loss_index = 1000
+                                    break
+
+                            for i in range(len(self.loss_list)):
+                                loss_data = self.losers_data[i]
+                                loss_phase = loss_data["phase"]
+                                if loss_phase >= 3:
+                                    if over_loss_index >= 0 and over_loss_index != i:
+                                        continue
+                                
+                                loss_dt = loss_data["datetime"]
+                                loss_ts = datetime.strptime(loss_dt, f"%Y-%m-%d %H:%M:%S").timestamp()
+                                if data_time >= loss_ts + 24 * 60 * 60:
+                                    phase = loss_data["phase"] + 1
+                                    phase_datetime = loss_dt
+                                    phase_index = i
+
+                            # 过滤正在交易的相同代币
                             pure_symbol = re.sub(r'[^a-zA-Z]', '', symbol)
                             if direction == "LONG":
                                 flt = False
@@ -423,16 +456,6 @@ class TopGainersLosersPortfolio(object):
                                         break
 
                                 if not flt:
-                                    phase = 1
-                                    phase_datetime = ""
-                                    if self.loss_list:
-                                        loss_data = self.loss_list[0]
-                                        loss_dt = loss_data["datetime"]
-                                        loss_ts = datetime.strptime(loss_dt, f"%Y-%m-%d %H:%M:%S").timestamp()
-                                        if data_time >= loss_ts + 24 * 60 * 60:
-                                            phase = loss_data["phase"] + 1
-                                            phase_datetime = loss_dt
-                                        
                                     setting = self.new_strategy(symbol, Direction.SHORT, phase=phase, phase_datetime=phase_datetime)
                                     strategy_name = setting.get("strategy_name", "")
                                     pure_strategy_name = "_".join(strategy_name.split("_")[1:])
@@ -452,8 +475,8 @@ class TopGainersLosersPortfolio(object):
                                             if symbol not in self.strategy_short_tokens:
                                                 self.strategy_short_tokens.append(symbol)
 
-                                            if phase > 1:
-                                                self.loss_list.pop(0)
+                                            if phase_index >= 0:
+                                                self.loss_list.pop(phase_index)
 
                                             msg = f"{symbol} 上涨过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}\ntrending_top {trending_top_mean_change}\nreverse_top {reverse_top_mean_change}"
                                             self.send_ding_talk(msg)
@@ -467,16 +490,6 @@ class TopGainersLosersPortfolio(object):
                                         break
                                 
                                 if not flt:
-                                    phase = 1
-                                    phase_datetime = ""
-                                    if self.loss_list:
-                                        loss_data = self.loss_list[0]
-                                        loss_dt = loss_data["datetime"]
-                                        loss_ts = datetime.strptime(loss_dt, f"%Y-%m-%d %H:%M:%S").timestamp()
-                                        if data_time >= loss_ts + 24 * 60 * 60:
-                                            phase = loss_data["phase"] + 1
-                                            phase_datetime = loss_dt
-
                                     setting = self.new_strategy(symbol, Direction.LONG, phase=phase, phase_datetime=phase_datetime)
                                     strategy_name = setting.get("strategy_name", "")
                                     pure_strategy_name = "_".join(strategy_name.split("_")[1:])
@@ -496,8 +509,8 @@ class TopGainersLosersPortfolio(object):
                                             if symbol not in self.strategy_long_tokens:
                                                 self.strategy_long_tokens.append(symbol)
 
-                                            if phase > 1:
-                                                self.loss_list.pop(0)
+                                            if phase_index >= 0:
+                                                self.loss_list.pop(phase_index)
 
                                             msg = f"{symbol} 下跌过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}\ntrending_top {trending_top_mean_change}\nreverse_top {reverse_top_mean_change}"
                                             self.send_ding_talk(msg)
