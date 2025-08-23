@@ -431,6 +431,12 @@ class TopGainersLosersPortfolio(object):
                                     over_loss_index = 1000
                                     break
 
+                            for setting in new_settings:
+                                setting_phase = setting["phase"]
+                                if setting_phase > 3:
+                                    over_loss_index = 1000
+                                    break
+
                             for i in range(len(self.loss_list)):
                                 loss_data = self.losers_data[i]
                                 loss_phase = loss_data["phase"]
