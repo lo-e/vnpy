@@ -398,8 +398,12 @@ class TopGainersLosersPortfolio(object):
                     trending_top_mean_change = pd.DataFrame(trending_list_24h[0:3])["change"].mean()
                     reverse_top_mean_change = pd.DataFrame(reverse_list_24h[0:3])["change"].mean()
 
+                    over_trending = False
+                    if abs(trending_top_mean_change) >= abs(reverse_top_mean_change) * 3:
+                        over_trending = True
+
                     # 信号生成
-                    if rank_24h == 0 or rank_24h > 0:
+                    if not over_trending:
                         signal_dt_str = self.signal_tokens_1h.get(symbol, "")
                         signal_ts = datetime.strptime(signal_dt_str, f"%Y-%m-%d %H:%M:%S").timestamp() if signal_dt_str else 0
                         self.signal_tokens_1h[symbol] = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
