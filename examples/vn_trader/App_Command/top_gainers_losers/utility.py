@@ -627,11 +627,11 @@ class Chrome(object):
             time_data = {"symbol": "data_time",
                          "change": int(time.time())}
             
-            mean_rise_change = pd.DataFrame(rise_list[0:3])["change"].mean()
+            mean_rise_change = pd.DataFrame(rise_list[0:5])["change"].mean()
             mean_rise_data = {"symbol": "mean_rise",
                               "change": mean_rise_change}
             
-            mean_fall_change = pd.DataFrame(fall_list[0:3])["change"].mean()
+            mean_fall_change = pd.DataFrame(fall_list[0:5])["change"].mean()
             mean_fall_data = {"symbol": "mean_fall",
                               "change": mean_fall_change}
             

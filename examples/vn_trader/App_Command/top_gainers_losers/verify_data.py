@@ -377,8 +377,8 @@ class Backtesting(object):
         data_time = rise_trending_list[0]["change"]
         # mean_rise_change = rise_trending_list[1]["change"]
         # mean_fall_change = rise_trending_list[2]["change"]
-        mean_rise_change = pd.DataFrame(rise_trending_list[3:6])["change"].mean()
-        mean_fall_change = pd.DataFrame(fall_trending_list[3:6])["change"].mean()
+        mean_rise_change = pd.DataFrame(rise_trending_list[3:8])["change"].mean()
+        mean_fall_change = pd.DataFrame(fall_trending_list[3:8])["change"].mean()
 
         rise_trending_list = rise_trending_list[3:]
         fall_trending_list = fall_trending_list[3:]
@@ -504,19 +504,12 @@ class Backtesting(object):
                     trending_top_mean_change = 0
                     trending_list_24h = self.load_24h_trending_data(to_ts=trending_1h_ts, direction=direction)
                     if trending_list_24h:
-                        trending_top_mean_change = pd.DataFrame(trending_list_24h[3:6])["change"].mean()
-                        # trending_list_24h = trending_list_24h[3:]
-                        # symbols_24h = []
-                        # for data_24h in trending_list_24h:
-                        #     symbols_24h.append(data_24h["symbol"])
-
-                        # if symbol in symbols_24h:
-                        #     rank_24h = symbols_24h.index(symbol) + 1
+                        trending_top_mean_change = pd.DataFrame(trending_list_24h[3:8])["change"].mean()
                     
                     reverse_top_mean_change = 0
                     reverse_list_24h = self.load_24h_trending_data(to_ts=trending_1h_ts, direction=reverse_direction)
                     if reverse_list_24h:
-                        reverse_top_mean_change = pd.DataFrame(reverse_list_24h[3:6])["change"].mean()
+                        reverse_top_mean_change = pd.DataFrame(reverse_list_24h[3:8])["change"].mean()
 
                     over_trending = False
                     if abs(trending_top_mean_change) >= abs(reverse_top_mean_change) * 3:
