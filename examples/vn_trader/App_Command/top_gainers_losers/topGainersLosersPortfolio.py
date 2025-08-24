@@ -43,8 +43,6 @@ class TopGainersLosersPortfolio(object):
         self.exchange_instruments_data = {}
         self.tick_queue = Queue()
         self.tick_ts = time.time()
-        self.gainers_data = {}
-        self.losers_data = {}
         self.strategy_status_check_ts = {}
         self.rise_data_list_5m = []
         self.fall_data_list_5m = []
@@ -118,6 +116,7 @@ class TopGainersLosersPortfolio(object):
 
         # 获取涨跌幅排行榜数据
         Thread(target=self.check_rank_file_data).start()
+        # Thread(target=self.backtesting).start()
 
         # 下载当前策略Bar数据
         for name in self.cta_engine.strategies.copy().keys():
@@ -373,7 +372,7 @@ class TopGainersLosersPortfolio(object):
                 trending_1h_time = trending_data["trending_1h_time"]
                 onboard_ts = trending_data["onboard_ts"]
 
-                if abs(change) >= 10 and data_time <= onboard_ts + 600000 * 60:
+                if abs(change) >= 10:
                     # 查询24h排行
                     rank_24h = 0
                     trending_top_mean_change = 0
@@ -419,7 +418,7 @@ class TopGainersLosersPortfolio(object):
                             phase_index = -1
                             over_loss_index = -1
                             for i in range(len(self.loss_list)):
-                                loss_data = self.losers_data[i]
+                                loss_data = self.loss_list[i]
                                 loss_phase = loss_data["phase"]
                                 if loss_phase > 3:
                                     over_loss_index = i
@@ -438,7 +437,7 @@ class TopGainersLosersPortfolio(object):
                                     break
 
                             for i in range(len(self.loss_list)):
-                                loss_data = self.losers_data[i]
+                                loss_data = self.loss_list[i]
                                 loss_phase = loss_data["phase"]
                                 if loss_phase >= 3:
                                     if over_loss_index >= 0 and over_loss_index != i:
@@ -733,6 +732,85 @@ class TopGainersLosersPortfolio(object):
             except Exception as e:
                 pass
             time.sleep(3)
+
+    def backtesting(self):
+        # 1小时趋势数据
+        print(f"加载1H历史趋势数据..")
+        self.trending_tokens_1h = {}
+        hour_time = datetime.strptime(f"2025-08-23 20:00:00", f"%Y-%m-%d %H:%M:%S")
+        # hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=5)
+        while hour_time < datetime.now():
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            date = hour_time.strftime(f"%Y-%m-%d")
+            hour = hour_time.hour
+
+            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}1h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            if os.path.exists(dir_path):
+                for root, _, files in os.walk(dir_path):
+                    for file in files:
+                        rise_list = []
+                        fall_list = []
+
+                        rise_file_path = f"{root}{DIR_SYMBOL}{file}"
+                        fall_file_path = rise_file_path.replace("rank_rise", "rank_fall")
+                        if os.path.exists(fall_file_path):
+                            df_rise = pd.read_csv(rise_file_path)
+                            for _, row in df_rise.iterrows():
+                                rise_list.append(dict(row))
+
+                            df_fall = pd.read_csv(fall_file_path)
+                            for _, row in df_fall.iterrows():
+                                fall_list.append(dict(row))
+
+                            data_time = rise_list[0]["change"]
+
+                            # 获取24小时趋势数据
+                            hour_time_24h = hour_time - timedelta(hours=1)
+                            searching_end_24h = False
+                            while not searching_end_24h:
+                                date_24h = hour_time_24h.strftime(f"%Y-%m-%d")
+                                hour_24h = hour_time_24h.hour
+                                dir_path_24h = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}24h{DIR_SYMBOL}{date_24h}{DIR_SYMBOL}{hour_24h}"
+                                if os.path.exists(dir_path_24h):
+                                    for root_24h, _, files_24h in os.walk(dir_path_24h):
+                                        for file_24h in files_24h:
+                                            rise_list_24h = []
+                                            fall_list_24h = []
+
+                                            rise_file_path_24h = f"{root_24h}{DIR_SYMBOL}{file_24h}"
+                                            fall_file_path_24h = rise_file_path_24h.replace("rank_rise", "rank_fall")
+                                            if os.path.exists(fall_file_path_24h):
+                                                df_rise_24h = pd.read_csv(rise_file_path_24h)
+                                                for _, row in df_rise_24h.iterrows():
+                                                    rise_list_24h.append(dict(row))
+
+                                                df_fall_24h = pd.read_csv(fall_file_path_24h)
+                                                for _, row in df_fall_24h.iterrows():
+                                                    fall_list_24h.append(dict(row))
+                                                
+                                                data_time_24h = rise_list_24h[0]["change"]
+                                                if data_time_24h and data_time_24h >= data_time:
+                                                    searching_end_24h = True
+                                                    break
+                                                
+                                                else:
+                                                    self.rise_data_list_24h = rise_list_24h
+                                                    self.fall_data_list_24h = fall_list_24h
+
+                                            else:
+                                                raise(f"24h文件状态异常，检查代码")
+                                            
+                                hour_time_24h += timedelta(hours=1)
+
+                            # 生成信号
+                            self.on_trending_data_1h((rise_list, fall_list))
+                        
+                        else:
+                            raise(f"1h文件状态异常，检查代码")
+            
+            hour_time += timedelta(hours=1)
+        
+        print(f"历史趋势数据加载完成！")
 
     def check_download_instruments(self):
         if not self.instruments_downloading:
