@@ -493,6 +493,93 @@ class Chrome(object):
                     driver_reboot = True
                 print(str(e))
 
+    def fetch_Liquidation(self, callback = None, rest: int = 60) -> None:
+        driver = None
+        driver_reboot = True
+        last_data_ts = 0
+        reboot_ts = 0
+        while True:
+            try:
+                # 定期重新启动浏览器
+                if time.time() >= reboot_ts + 60 * 60:
+                    driver_reboot = True
+
+                # 启动浏览器
+                if driver_reboot:
+                    print(f"Chrome启动")
+                    self.quit_driver(driver)
+                    driver = self.load_driver()
+                    driver_reboot = False
+                    reboot_ts = time.time()
+
+                    url = "https://www.coinglass.com/zh/LiquidationData"
+                    driver.get(url)
+                
+                else:
+                    # driver.refresh()
+                    pass
+                
+                # 找到模块
+                _ = WebDriverWait(driver, timeout=5).until(EC.presence_of_all_elements_located((By.XPATH, "//div[@class='ant-row']")))
+                zone = driver.find_elements(
+                    By.XPATH,
+                    "//div[@class='ant-row']",
+                )[1]
+
+                modules = zone.find_elements(
+                    By.XPATH,
+                    "div",
+                    )
+                
+                # 获取各周期爆仓数据
+                data = {}
+                for module in modules:
+                    text = module.text
+                    duration = ""
+                    if text.startswith("1小时爆仓"):
+                        duration = "1h"
+                    
+                    elif text.startswith("4小时爆仓"):
+                        duration = "4h"
+
+                    elif text.startswith("12小时爆仓"):
+                        duration = "12h"
+
+                    elif text.startswith("24小时爆仓"):
+                        duration = "24h"
+
+                    if not duration:
+                        continue
+
+                    total = module.find_elements(
+                        By.XPATH,
+                        "div/div/div[@class='Number undefined    ']",
+                        )[0].text
+                    data[f"{duration}_total"] = total.split("$")[1]
+                    
+                    long = module.find_elements(
+                        By.XPATH,
+                        "div/div/div[@class='Number undefined rise-color   ']",
+                        )[0].text
+                    data[f"{duration}_long"] = long.split("$")[1]
+                    
+                    short = module.find_elements(
+                        By.XPATH,
+                        "div/div/div[@class='Number undefined  fall-color  ']",
+                        )[0].text
+                    data[f"{duration}_short"] = short.split("$")[1]
+
+                if len(data) == 12 and callback:
+                    callback(data)
+                
+                last_data_ts = time.time()
+                time.sleep(rest)
+
+            except Exception as e:
+                if last_data_ts and time.time() - last_data_ts >= 5 * 60:
+                    last_data_ts = 0
+                    driver_reboot = True
+                print(str(e))
 
     def get_long_short_data(self, item):
         # 交易所
@@ -692,6 +779,37 @@ class Chrome(object):
                 if msg:
                     dingtalk.send_ding_talk(msg)
 
+    def on_liquidation_data(self, data: dict):
+        total_1h = data["1h_total"]
+        print_(f"1h爆仓 {total_1h}")
+
+        if data:
+            current_dir = get_current_dir_path()
+            now = datetime.now()
+            date = now.strftime(f"%Y-%m-%d")
+            hour = now.hour
+            data["datetime"] = now.strftime(f"%Y-%m-%d %H:%M:%S")
+            data = {"datetime": data["datetime"], **{k: v for k, v in data.items() if k != "datetime"}}
+
+            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}liquidation{DIR_SYMBOL}{date}"
+            os.makedirs(dir_path, exist_ok=True)
+            file_path = f"{dir_path}{DIR_SYMBOL}{hour}.csv"
+            
+            # 获取历史数据
+            data_list = []
+            if os.path.exists(file_path):
+                df = pd.read_csv(file_path)
+                for _, row in df.iterrows():
+                    data_list.append(dict(row))
+            data_list.append(data)
+
+            df = pd.DataFrame(data_list)
+            df.to_csv(file_path, index=False)
+
+            latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}liquidation{DIR_SYMBOL}latest.csv"
+            latest_df = pd.DataFrame([data])
+            latest_df.to_csv(latest_file_path, index=False)
+
     def load_driver(self):
         # 加载浏览器
         # 获取当前文件所在路径
@@ -784,3 +902,4 @@ if __name__ == "__main__":
 
     Thread(target=chrome.fetch_rise_fall_minute_trending, args=(chrome.on_rise_fall_trending_data, 5)).start()
     Thread(target=chrome.fetch_rise_fall_hour_trending, args=(chrome.on_rise_fall_trending_data, 60)).start()
+    Thread(target=chrome.fetch_Liquidation, args=(chrome.on_liquidation_data, 60)).start()
