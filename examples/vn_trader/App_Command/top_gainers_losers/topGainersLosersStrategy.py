@@ -204,7 +204,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             mc = MongoClient()
             db = mc[MINUTE_DB_NAME]
             collection = db[self.vt_symbol]
-            data_from = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(hours=6)
+            data_from = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(hours=7)
             flt = {"datetime": {"$gte": data_from}}
             cursor = collection.find(flt).sort('datetime')
 

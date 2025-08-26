@@ -901,17 +901,17 @@ class TopGainersLosersPortfolio(object):
                         # 开始下载
                         if exchange == "OKX":
                             self.download_engine.download_from_okx(
-                                contract_list=[symbol], hours=6, from_data_base=False, save_to=self.name, delete_history_data=False, show_progress=False
+                                contract_list=[symbol], hours=7, from_data_base=False, save_to=self.name, delete_history_data=False, show_progress=False
                             )
                         
                         elif exchange == "BYBIT":
                             self.download_engine.download_from_bybit(
-                                contract_list=[symbol], hours=6, from_data_base=False, save_to=self.name, delete_history_data=False, show_progress=False
+                                contract_list=[symbol], hours=7, from_data_base=False, save_to=self.name, delete_history_data=False, show_progress=False
                             )
                         
                         elif exchange == "BINANCE":
                             self.download_engine.download_from_binance(
-                                contract_list=[symbol], hours=6, from_data_base=False, save_to=self.name, delete_history_data=False, show_progress=False
+                                contract_list=[symbol], hours=7, from_data_base=False, save_to=self.name, delete_history_data=False, show_progress=False
                             )
 
                         success = True
