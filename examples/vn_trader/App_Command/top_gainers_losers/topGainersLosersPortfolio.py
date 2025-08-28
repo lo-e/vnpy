@@ -210,6 +210,7 @@ class TopGainersLosersPortfolio(object):
         dt = datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S")
         data = {"datetime": strategy.datetime,
                 "timestamp": dt.timestamp(),
+                "liquidation_1h": strategy.liquidation_1h,
                 "vt_symbol": strategy.vt_symbol,
                 "direction": strategy.direction.value,
                 "pnl": f"{pnl:.2f}%"}
@@ -374,10 +375,7 @@ class TopGainersLosersPortfolio(object):
                 onboard_ts = trending_data["onboard_ts"]
 
                 if abs(change) >= 10:
-                    # 查询24h排行
-                    rank_24h = 0
-                    trending_top_mean_change = 0
-                    reverse_top_mean_change = 0
+                    # 24h趋势数据
                     trending_list_24h = []
                     reverse_list_24h = []
                     if change >= 0:
@@ -392,6 +390,7 @@ class TopGainersLosersPortfolio(object):
                     for data_24h in trending_list_24h:
                         symbols_24h.append(data_24h["symbol"])
 
+                    rank_24h = 0
                     if symbol in symbols_24h:
                         rank_24h = symbols_24h.index(symbol) + 1
 
@@ -401,6 +400,9 @@ class TopGainersLosersPortfolio(object):
                     over_trending = False
                     if abs(trending_top_mean_change) >= abs(reverse_top_mean_change) * 3:
                         over_trending = True
+
+                    # 1h清算数据
+                    liquidation_1h = self.liquidation_data.get("1h_total", "")
 
                     # 信号生成
                     if not over_trending:
@@ -484,7 +486,7 @@ class TopGainersLosersPortfolio(object):
                                             if phase_index >= 0:
                                                 self.loss_list.pop(phase_index)
 
-                                            msg = f"{symbol} 上涨过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}\ntrending_top {trending_top_mean_change}\nreverse_top {reverse_top_mean_change}"
+                                            msg = f"{symbol} 上涨过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nliquidation_1h {liquidation_1h}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}\ntrending_top {trending_top_mean_change}\nreverse_top {reverse_top_mean_change}"
                                             self.send_ding_talk(msg)
                             
                             elif direction == "SHORT":
@@ -518,7 +520,7 @@ class TopGainersLosersPortfolio(object):
                                             if phase_index >= 0:
                                                 self.loss_list.pop(phase_index)
 
-                                            msg = f"{symbol} 下跌过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}\ntrending_top {trending_top_mean_change}\nreverse_top {reverse_top_mean_change}"
+                                            msg = f"{symbol} 下跌过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nliquidation_1h {liquidation_1h}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}\ntrending_top {trending_top_mean_change}\nreverse_top {reverse_top_mean_change}"
                                             self.send_ding_talk(msg)
 
         if new_settings:
@@ -664,6 +666,9 @@ class TopGainersLosersPortfolio(object):
         if not vt_symbol:
             return {}
         
+        # 1h清算数据
+        liquidation_1h = self.liquidation_data.get("1h_total", "")
+
         # 启动策略
         dt = datetime.now().strftime(f"%m%d%H%M%S")
         if direction == Direction.LONG:
@@ -679,6 +684,7 @@ class TopGainersLosersPortfolio(object):
                    "exchange": exchange,
                    "exchange_user": exchange_user,
                    "direction": direction_str,
+                   "liquidation_1h": liquidation_1h,
                    "start": True,
                    "phase": phase,
                    "phase_datetime": phase_datetime,
