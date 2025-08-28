@@ -50,6 +50,7 @@ class TopGainersLosersPortfolio(object):
         self.fall_data_list_1h = []
         self.rise_data_list_24h = []
         self.fall_data_list_24h = []
+        self.liquidation_data = {}
         self.sync_data = {}
         self.unsubscribe_time = 0
         self.account_ath = 0
@@ -721,6 +722,15 @@ class TopGainersLosersPortfolio(object):
                         self.rise_data_list_5m = rise_list
                         self.fall_data_list_5m = fall_list
                         # self.on_trending_data_5m((rise_list, fall_list))
+
+                # 获取清算数据
+                liquidation_data = {}
+                liquidation_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}liquidation{DIR_SYMBOL}latest.csv"
+                df = pd.read_csv(liquidation_latest_file_path)
+                for _, row in df.iterrows():
+                    liquidation_data = dict(row)
+                if self.liquidation_data != liquidation_data:
+                    self.liquidation_data = liquidation_data
 
                 # 检查tick行情推送是否异常
                 tick_wait = time.time() - self.tick_ts
