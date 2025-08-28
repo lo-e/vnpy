@@ -210,6 +210,7 @@ class TopGainersLosersPortfolio(object):
         dt = datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S")
         data = {"datetime": strategy.datetime,
                 "timestamp": dt.timestamp(),
+                "volume_24h": strategy.volume_24h,
                 "liquidation_1h": strategy.liquidation_1h,
                 "vt_symbol": strategy.vt_symbol,
                 "direction": strategy.direction.value,
@@ -316,12 +317,14 @@ class TopGainersLosersPortfolio(object):
             data = rise_trending_list[i]
             symbol = data["symbol"]
             change = data["change"]
+            volume = data["volume"]
             trending_tokens.add(symbol)
 
             trending_time = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
             trending_data = {
                 "direction": "LONG",
                 "change": change,
+                "volume_24h": volume,
                 "trending_1h_rank": i + 1,
                 "trending_1h_ts": data_time,
                 "trending_1h_time": trending_time,
@@ -339,12 +342,14 @@ class TopGainersLosersPortfolio(object):
             data = fall_trending_list[i]
             symbol = data["symbol"]
             change = data["change"]
+            volume = data["volume"]
             trending_tokens.add(symbol)
 
             trending_time = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
             trending_data = {
                 "direction": "SHORT",
                 "change": change,
+                "volume_24h": volume,
                 "trending_1h_rank": i + 1,
                 "trending_1h_ts": data_time,
                 "trending_1h_time": trending_time,
@@ -369,6 +374,7 @@ class TopGainersLosersPortfolio(object):
             else:
                 direction = trending_data["direction"]
                 change = trending_data["change"]
+                volume_24h = trending_data["volume_24h"]
                 trending_1h_rank = trending_data["trending_1h_rank"]
                 trending_1h_ts = trending_data["trending_1h_ts"]
                 trending_1h_time = trending_data["trending_1h_time"]
@@ -464,7 +470,7 @@ class TopGainersLosersPortfolio(object):
                                         break
 
                                 if not flt:
-                                    setting = self.new_strategy(symbol, Direction.SHORT, phase=phase, phase_datetime=phase_datetime)
+                                    setting = self.new_strategy(symbol, Direction.SHORT, volume_24h, phase=phase, phase_datetime=phase_datetime)
                                     strategy_name = setting.get("strategy_name", "")
                                     pure_strategy_name = "_".join(strategy_name.split("_")[1:])
                                     for name in self.cta_engine.strategies.keys():
@@ -498,7 +504,7 @@ class TopGainersLosersPortfolio(object):
                                         break
                                 
                                 if not flt:
-                                    setting = self.new_strategy(symbol, Direction.LONG, phase=phase, phase_datetime=phase_datetime)
+                                    setting = self.new_strategy(symbol, Direction.LONG, volume_24h, phase=phase, phase_datetime=phase_datetime)
                                     strategy_name = setting.get("strategy_name", "")
                                     pure_strategy_name = "_".join(strategy_name.split("_")[1:])
                                     for name in self.cta_engine.strategies.keys():
@@ -631,7 +637,7 @@ class TopGainersLosersPortfolio(object):
     def on_trending_data_5m(self, data: tuple):
         pass
 
-    def new_strategy(self, token:str, direction: Direction, phase: int, phase_datetime: str):
+    def new_strategy(self, token:str, direction: Direction, volume_24h: str, phase: int, phase_datetime: str):
         # 确认合约
         vt_symbol = ""
         exchange = ""
@@ -684,6 +690,7 @@ class TopGainersLosersPortfolio(object):
                    "exchange": exchange,
                    "exchange_user": exchange_user,
                    "direction": direction_str,
+                   "volume_24h": volume_24h,
                    "liquidation_1h": liquidation_1h,
                    "start": True,
                    "phase": phase,
@@ -697,9 +704,18 @@ class TopGainersLosersPortfolio(object):
         while True:
             try:
                 current_dir = os.path.dirname(os.path.abspath(__file__))
+                
+                # 获取清算数据
+                liquidation_data = {}
+                liquidation_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}liquidation{DIR_SYMBOL}latest.csv"
+                df = pd.read_csv(liquidation_latest_file_path)
+                for _, row in df.iterrows():
+                    liquidation_data = dict(row)
+                if self.liquidation_data != liquidation_data:
+                    self.liquidation_data = liquidation_data
 
                 # 获取涨跌幅排行榜数据
-                for duration in ["1h", "24h"]:
+                for duration in ["24h", "1h"]:
                     rise_list = []
                     fall_list = []
 
@@ -714,29 +730,20 @@ class TopGainersLosersPortfolio(object):
                         fall_list.append(dict(row))
                     
                     # 生成信号
-                    if duration == "1h" and (self.rise_data_list_1h != rise_list or self.fall_data_list_1h != fall_list):
-                        self.rise_data_list_1h= rise_list
-                        self.fall_data_list_1h = fall_list
-                        self.on_trending_data_1h((rise_list, fall_list))
-
                     if duration == "24h" and (self.rise_data_list_24h != rise_list or self.fall_data_list_24h != fall_list):
                         self.rise_data_list_24h= rise_list
                         self.fall_data_list_24h = fall_list
                         # self.on_trending_data_24h((rise_list, fall_list))
 
+                    if duration == "1h" and (self.rise_data_list_1h != rise_list or self.fall_data_list_1h != fall_list):
+                        self.rise_data_list_1h= rise_list
+                        self.fall_data_list_1h = fall_list
+                        self.on_trending_data_1h((rise_list, fall_list))
+
                     if duration == "5m" and (self.rise_data_list_5m != rise_list or self.fall_data_list_5m != fall_list):
                         self.rise_data_list_5m = rise_list
                         self.fall_data_list_5m = fall_list
                         # self.on_trending_data_5m((rise_list, fall_list))
-
-                # 获取清算数据
-                liquidation_data = {}
-                liquidation_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}liquidation{DIR_SYMBOL}latest.csv"
-                df = pd.read_csv(liquidation_latest_file_path)
-                for _, row in df.iterrows():
-                    liquidation_data = dict(row)
-                if self.liquidation_data != liquidation_data:
-                    self.liquidation_data = liquidation_data
 
                 # 检查tick行情推送是否异常
                 tick_wait = time.time() - self.tick_ts
