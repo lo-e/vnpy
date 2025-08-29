@@ -492,7 +492,7 @@ class TopGainersLosersPortfolio(object):
                                             if phase_index >= 0:
                                                 self.loss_list.pop(phase_index)
 
-                                            msg = f"{symbol} 上涨过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nliquidation_1h {liquidation_1h}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}\ntrending_top {trending_top_mean_change}\nreverse_top {reverse_top_mean_change}"
+                                            msg = f"{symbol} 上涨过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nliquidation_1h {liquidation_1h}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}\ntrending_top {trending_top_mean_change}\nreverse_top {reverse_top_mean_change}"
                                             self.send_ding_talk(msg)
                             
                             elif direction == "SHORT":
@@ -526,7 +526,7 @@ class TopGainersLosersPortfolio(object):
                                             if phase_index >= 0:
                                                 self.loss_list.pop(phase_index)
 
-                                            msg = f"{symbol} 下跌过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nliquidation_1h {liquidation_1h}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}\ntrending_top {trending_top_mean_change}\nreverse_top {reverse_top_mean_change}"
+                                            msg = f"{symbol} 下跌过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nliquidation_1h {liquidation_1h}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}\ntrending_top {trending_top_mean_change}\nreverse_top {reverse_top_mean_change}"
                                             self.send_ding_talk(msg)
 
         if new_settings:
