@@ -454,7 +454,7 @@ class TopGainersLosersPortfolio(object):
                                 
                                 loss_dt = loss_data["datetime"]
                                 loss_ts = datetime.strptime(loss_dt, f"%Y-%m-%d %H:%M:%S").timestamp()
-                                if data_time >= loss_ts + 24 * 60 * 60:
+                                if data_time >= loss_ts + 1 * 60 * 60:
                                     phase = loss_data["phase"] + 1
                                     phase_datetime = loss_dt
                                     phase_index = i
