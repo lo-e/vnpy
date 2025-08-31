@@ -589,7 +589,7 @@ class TopGainersLosersStrategy(CtaTemplate):
     
     def add_unit_pos(self, tick_price: float):
         # 计算仓位大小
-        self.phase_leverage = int(self.phase_lose) + 1 if self.phase_lose else 1
+        self.phase_leverage = abs(int(self.phase_lose)) + 1 if self.phase_lose else 1
 
         order_value = 0
         if self.direction == Direction.LONG:
