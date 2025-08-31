@@ -208,13 +208,15 @@ class TopGainersLosersPortfolio(object):
     def on_pnl(self, strategy: TopGainersLosersStrategy, pnl: float):
         # 记录盈亏
         dt = datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S")
+        phase_pnl = strategy.phase_leverage * pnl + strategy.phase_lose
         data = {"datetime": strategy.datetime,
                 "timestamp": dt.timestamp(),
                 "volume_24h": strategy.volume_24h,
                 "liquidation_1h": strategy.liquidation_1h,
                 "vt_symbol": strategy.vt_symbol,
                 "direction": strategy.direction.value,
-                "pnl": f"{pnl:.2f}%"}
+                "pnl": f"{pnl:.2f}%",
+                "phase_pnl": f"{phase_pnl:.2f}%"}
         
         date_str = dt.strftime(f"%Y-%m-%d")
         date_data = self.pnl_data.get(date_str, {})
@@ -228,23 +230,26 @@ class TopGainersLosersPortfolio(object):
         if pnl < 0:
             loss_data = {"datetime": strategy.datetime,
                          "vt_symbol": strategy.vt_symbol,
-                         "phase": strategy.phase}
+                         "phase": strategy.phase,
+                         "phase_pnl": phase_pnl}
             self.loss_list.append(loss_data)
 
         elif pnl > 0:
-            if strategy.phase > 5:
+            if phase_pnl < 0:
                 loss_data = {"datetime": strategy.datetime,
                              "vt_symbol": strategy.vt_symbol,
-                             "phase": strategy.phase - 2}
+                             "phase": strategy.phase,
+                             "phase_pnl": phase_pnl}
                 self.loss_list.append(loss_data)
             
             else:
-                self.pnl += 1
+                self.pnl += phase_pnl
 
         elif pnl == 0 and strategy.phase > 1:
             loss_data = {"datetime": strategy.phase_datetime,
                          "vt_symbol": strategy.vt_symbol,
-                         "phase": strategy.phase - 1}
+                         "phase": strategy.phase - 1,
+                         "phase_pnl": phase_pnl}
             self.loss_list.insert(0, loss_data)
 
     def resubscribe(self, event: Event):
