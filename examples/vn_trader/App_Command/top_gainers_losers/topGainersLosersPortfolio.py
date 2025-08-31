@@ -231,7 +231,7 @@ class TopGainersLosersPortfolio(object):
             loss_data = {"datetime": strategy.datetime,
                          "vt_symbol": strategy.vt_symbol,
                          "phase": strategy.phase,
-                         "phase_pnl": phase_pnl}
+                         "phase_lose": phase_pnl}
             self.loss_list.append(loss_data)
 
         elif pnl > 0:
@@ -239,7 +239,7 @@ class TopGainersLosersPortfolio(object):
                 loss_data = {"datetime": strategy.datetime,
                              "vt_symbol": strategy.vt_symbol,
                              "phase": strategy.phase,
-                             "phase_pnl": phase_pnl}
+                             "phase_lose": phase_pnl}
                 self.loss_list.append(loss_data)
             
             else:
@@ -249,7 +249,7 @@ class TopGainersLosersPortfolio(object):
             loss_data = {"datetime": strategy.phase_datetime,
                          "vt_symbol": strategy.vt_symbol,
                          "phase": strategy.phase - 1,
-                         "phase_pnl": phase_pnl}
+                         "phase_lose": phase_pnl}
             self.loss_list.insert(0, loss_data)
 
     def resubscribe(self, event: Event):
@@ -428,6 +428,7 @@ class TopGainersLosersPortfolio(object):
                         if data_time >= signal_ts + 6 * 60 * 60:
                             # 确认phase
                             phase = 1
+                            phase_lose = 0
                             phase_datetime = ""
                             phase_index = -1
                             over_loss_index = -1
@@ -461,6 +462,7 @@ class TopGainersLosersPortfolio(object):
                                 loss_ts = datetime.strptime(loss_dt, f"%Y-%m-%d %H:%M:%S").timestamp()
                                 if data_time >= loss_ts + 1 * 60 * 60:
                                     phase = loss_data["phase"] + 1
+                                    phase_lose = loss_data["phase_lose"]
                                     phase_datetime = loss_dt
                                     phase_index = i
 
@@ -475,7 +477,7 @@ class TopGainersLosersPortfolio(object):
                                         break
 
                                 if not flt:
-                                    setting = self.new_strategy(symbol, Direction.SHORT, volume_24h, phase=phase, phase_datetime=phase_datetime)
+                                    setting = self.new_strategy(symbol, Direction.SHORT, volume_24h, phase=phase, phase_lose=phase_lose, phase_datetime=phase_datetime)
                                     strategy_name = setting.get("strategy_name", "")
                                     pure_strategy_name = "_".join(strategy_name.split("_")[1:])
                                     for name in self.cta_engine.strategies.keys():
@@ -509,7 +511,7 @@ class TopGainersLosersPortfolio(object):
                                         break
                                 
                                 if not flt:
-                                    setting = self.new_strategy(symbol, Direction.LONG, volume_24h, phase=phase, phase_datetime=phase_datetime)
+                                    setting = self.new_strategy(symbol, Direction.LONG, volume_24h, phase=phase, phase_lose=phase_lose, phase_datetime=phase_datetime)
                                     strategy_name = setting.get("strategy_name", "")
                                     pure_strategy_name = "_".join(strategy_name.split("_")[1:])
                                     for name in self.cta_engine.strategies.keys():
@@ -642,7 +644,7 @@ class TopGainersLosersPortfolio(object):
     def on_trending_data_5m(self, data: tuple):
         pass
 
-    def new_strategy(self, token:str, direction: Direction, volume_24h: str, phase: int, phase_datetime: str):
+    def new_strategy(self, token:str, direction: Direction, volume_24h: str, phase: int, phase_lose: float, phase_datetime: str):
         # 确认合约
         vt_symbol = ""
         exchange = ""
@@ -699,6 +701,7 @@ class TopGainersLosersPortfolio(object):
                    "liquidation_1h": liquidation_1h,
                    "start": True,
                    "phase": phase,
+                   "phase_lose": phase_lose,
                    "phase_datetime": phase_datetime,
                    "datetime": datetime.now().strftime(f"%Y-%m-%d %H:%M:%S")
                    }
