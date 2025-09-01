@@ -51,6 +51,7 @@ class TopGainersLosersStrategy(CtaTemplate):
     # 同步列表
     syncs = [
         "phase",
+        "phase_lose",
         "phase_datetime",
         "target_pos",
         "stop_open",
