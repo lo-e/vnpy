@@ -216,6 +216,7 @@ class TopGainersLosersPortfolio(object):
                 "vt_symbol": strategy.vt_symbol,
                 "direction": strategy.direction.value,
                 "pnl": f"{pnl:.2f}%",
+                "phase": strategy.phase,
                 "phase_pnl": f"{phase_pnl:.2f}%"}
         
         date_str = dt.strftime(f"%Y-%m-%d")
