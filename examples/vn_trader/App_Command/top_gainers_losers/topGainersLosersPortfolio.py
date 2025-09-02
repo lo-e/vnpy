@@ -86,11 +86,11 @@ class TopGainersLosersPortfolio(object):
                 setattr(self, name, setting[name])
 
     def on_init(self):
-        if abs(self.account_drawdown) < self.portfolio_value * 0.30:
-            self.trade_enable = True
+        # if abs(self.account_drawdown) < self.portfolio_value * 0.30:
+        #     self.trade_enable = True
 
-        else:
-            self.trade_enable = False
+        # else:
+        #     self.trade_enable = False
 
         # 导入交易所合约
         self.load_instruments_data()
@@ -199,11 +199,11 @@ class TopGainersLosersPortfolio(object):
                 print("-"*12)
 
         # 回撤过大停止交易
-        if abs(self.account_drawdown) < self.portfolio_value * 0.30:
-            self.trade_enable = True
+        # if abs(self.account_drawdown) < self.portfolio_value * 0.30:
+        #     self.trade_enable = True
 
-        else:
-            self.trade_enable = False
+        # else:
+        #     self.trade_enable = False
 
     def on_pnl(self, strategy: TopGainersLosersStrategy, pnl: float):
         # 记录盈亏
