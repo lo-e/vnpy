@@ -217,7 +217,8 @@ class TopGainersLosersPortfolio(object):
                 "direction": strategy.direction.value,
                 "pnl": f"{pnl:.2f}%",
                 "phase": strategy.phase,
-                "phase_pnl": f"{phase_pnl:.2f}%"}
+                "phase_pnl": f"{phase_pnl:.2f}%",
+                "real_trade": strategy.real_trade}
         
         date_str = dt.strftime(f"%Y-%m-%d")
         date_data = self.pnl_data.get(date_str, {})
@@ -228,30 +229,31 @@ class TopGainersLosersPortfolio(object):
         self.pnl_data[date_str] = date_data
 
         # 亏损记录
-        if pnl < 0:
-            loss_data = {"datetime": strategy.datetime,
-                         "vt_symbol": strategy.vt_symbol,
-                         "phase": strategy.phase,
-                         "phase_lose": phase_pnl}
-            self.loss_list.append(loss_data)
-
-        elif pnl > 0:
-            if phase_pnl < 0:
+        if strategy.real_trade:
+            if pnl < 0:
                 loss_data = {"datetime": strategy.datetime,
-                             "vt_symbol": strategy.vt_symbol,
-                             "phase": strategy.phase,
-                             "phase_lose": phase_pnl}
+                            "vt_symbol": strategy.vt_symbol,
+                            "phase": strategy.phase,
+                            "phase_lose": phase_pnl}
                 self.loss_list.append(loss_data)
-            
-            else:
-                self.pnl += phase_pnl
 
-        elif pnl == 0 and strategy.phase > 1:
-            loss_data = {"datetime": strategy.phase_datetime,
-                         "vt_symbol": strategy.vt_symbol,
-                         "phase": strategy.phase - 1,
-                         "phase_lose": phase_pnl}
-            self.loss_list.insert(0, loss_data)
+            elif pnl > 0:
+                if phase_pnl < 0:
+                    loss_data = {"datetime": strategy.datetime,
+                                "vt_symbol": strategy.vt_symbol,
+                                "phase": strategy.phase,
+                                "phase_lose": phase_pnl}
+                    self.loss_list.append(loss_data)
+                
+                else:
+                    self.pnl += phase_pnl
+
+            elif pnl == 0 and strategy.phase > 1:
+                loss_data = {"datetime": strategy.phase_datetime,
+                            "vt_symbol": strategy.vt_symbol,
+                            "phase": strategy.phase - 1,
+                            "phase_lose": phase_pnl}
+                self.loss_list.insert(0, loss_data)
 
     def resubscribe(self, event: Event):
         return
@@ -427,6 +429,16 @@ class TopGainersLosersPortfolio(object):
                                 self.signal_tokens_1h.pop(signal_symbol)
 
                         if data_time >= signal_ts + 6 * 60 * 60:
+                            # 筛选过高代币交易量、过高市场清算额
+                            volume_v = float(re.sub(r'[^\d.]', '', volume_24h))
+                            volume_u = re.sub(r'[\d.]', '', volume_24h)
+                            liquidation_v = float(re.sub(r'[^\d.]', '', liquidation_1h))
+                            liquidation_u = re.sub(r'[\d.]', '', liquidation_1h)
+
+                            real_trade = True
+                            if volume_u == "亿" or liquidation_u == "亿" or (liquidation_u == "万" and liquidation_v >= 3000):
+                                real_trade = False
+
                             # 确认phase
                             phase = 1
                             phase_lose = 0
@@ -455,17 +467,18 @@ class TopGainersLosersPortfolio(object):
                             for i in range(len(self.loss_list)):
                                 loss_data = self.loss_list[i]
                                 loss_phase = loss_data["phase"]
-                                if loss_phase >= 3:
-                                    if over_loss_index >= 0 and over_loss_index != i:
-                                        continue
+                                # if loss_phase >= 3:
+                                #     if over_loss_index >= 0 and over_loss_index != i:
+                                #         continue
                                 
                                 loss_dt = loss_data["datetime"]
                                 loss_ts = datetime.strptime(loss_dt, f"%Y-%m-%d %H:%M:%S").timestamp()
-                                if data_time >= loss_ts + 1 * 60 * 60:
+                                if data_time >= loss_ts + 1 * 60 * 60 and real_trade:
                                     phase = loss_data["phase"] + 1
                                     phase_lose = loss_data["phase_lose"]
                                     phase_datetime = loss_dt
                                     phase_index = i
+                                    break
 
                             # 过滤正在交易的相同代币
                             pure_symbol = re.sub(r'[^a-zA-Z]', '', symbol)
@@ -478,7 +491,7 @@ class TopGainersLosersPortfolio(object):
                                         break
 
                                 if not flt:
-                                    setting = self.new_strategy(symbol, Direction.SHORT, volume_24h, phase=phase, phase_lose=phase_lose, phase_datetime=phase_datetime)
+                                    setting = self.new_strategy(symbol, Direction.SHORT, volume_24h, phase=phase, phase_lose=phase_lose, phase_datetime=phase_datetime, real_trade=real_trade)
                                     strategy_name = setting.get("strategy_name", "")
                                     pure_strategy_name = "_".join(strategy_name.split("_")[1:])
                                     for name in self.cta_engine.strategies.keys():
@@ -512,7 +525,7 @@ class TopGainersLosersPortfolio(object):
                                         break
                                 
                                 if not flt:
-                                    setting = self.new_strategy(symbol, Direction.LONG, volume_24h, phase=phase, phase_lose=phase_lose, phase_datetime=phase_datetime)
+                                    setting = self.new_strategy(symbol, Direction.LONG, volume_24h, phase=phase, phase_lose=phase_lose, phase_datetime=phase_datetime, real_trade=real_trade)
                                     strategy_name = setting.get("strategy_name", "")
                                     pure_strategy_name = "_".join(strategy_name.split("_")[1:])
                                     for name in self.cta_engine.strategies.keys():
@@ -645,7 +658,7 @@ class TopGainersLosersPortfolio(object):
     def on_trending_data_5m(self, data: tuple):
         pass
 
-    def new_strategy(self, token:str, direction: Direction, volume_24h: str, phase: int, phase_lose: float, phase_datetime: str):
+    def new_strategy(self, token:str, direction: Direction, volume_24h: str, phase: int, phase_lose: float, phase_datetime: str, real_trade: bool):
         # 确认合约
         vt_symbol = ""
         exchange = ""
@@ -661,13 +674,13 @@ class TopGainersLosersPortfolio(object):
                     exchange = "BINANCE"
                     exchange_user = "lo-e"
 
-            if not vt_symbol:
-                okx_symbols = list(self.exchange_instruments_data.get("OKX", {}).keys())
-                symbol = f"{token}-USDT-SWAP"
-                if symbol in okx_symbols:
-                    vt_symbol = f"{symbol}.OKX"
-                    exchange = "OKX"
-                    exchange_user = "lo-e"
+            # if not vt_symbol:
+            #     okx_symbols = list(self.exchange_instruments_data.get("OKX", {}).keys())
+            #     symbol = f"{token}-USDT-SWAP"
+            #     if symbol in okx_symbols:
+            #         vt_symbol = f"{symbol}.OKX"
+            #         exchange = "OKX"
+            #         exchange_user = "lo-e"
 
             if not vt_symbol:
                 bybit_symbols = list(self.exchange_instruments_data.get("BYBIT", {}).keys())
@@ -704,6 +717,7 @@ class TopGainersLosersPortfolio(object):
                    "phase": phase,
                    "phase_lose": phase_lose,
                    "phase_datetime": phase_datetime,
+                   "real_trade": real_trade,
                    "datetime": datetime.now().strftime(f"%Y-%m-%d %H:%M:%S")
                    }
        

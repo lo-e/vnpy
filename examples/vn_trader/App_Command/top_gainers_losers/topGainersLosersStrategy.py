@@ -42,6 +42,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         "phase",
         "phase_lose",
         "phase_datetime",
+        "real_trade",
         "datetime"
     ]
 
@@ -53,6 +54,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         "phase",
         "phase_lose",
         "phase_datetime",
+        "real_trade",
         "target_pos",
         "stop_open",
         "stop_open_dt",
@@ -95,6 +97,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.phase = 0
         self.phase_lose = 0
         self.phase_datetime = ""
+        self.real_trade = False
         self.datetime = ""
 
         """ fake """
@@ -500,28 +503,28 @@ class TopGainersLosersStrategy(CtaTemplate):
                     self.add_unit_pos(tick.last_price)
 
                     # 发送订单
-                    # if not self.pos and self.portfolio.trade_enable and time.time() <= tick.datetime.timestamp() + 3:
-                    #     open_volume = abs(self.target_pos)
-                    #     if open_volume:
-                    #         if self.direction == Direction.LONG:
-                    #             trade_price = self.tick.last_price * 1.005
-                    #             self.cancel_all()
-                    #             if self.exchange == Exchange.BINANCE:
-                    #                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True)
-                    #                 self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
+                    if not self.pos and self.real_trade and self.portfolio.trade_enable and time.time() <= tick.datetime.timestamp() + 3:
+                        open_volume = abs(self.target_pos)
+                        if open_volume:
+                            if self.direction == Direction.LONG:
+                                trade_price = self.tick.last_price * 1.005
+                                self.cancel_all()
+                                if self.exchange == Exchange.BINANCE:
+                                    self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True)
+                                    self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
 
-                    #             else:
-                    #                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
+                                else:
+                                    self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
                             
-                    #         elif self.direction == Direction.SHORT:
-                    #             trade_price = self.tick.last_price * 0.995
-                    #             self.cancel_all()
-                    #             if self.exchange == Exchange.BINANCE:
-                    #                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True)
-                    #                 self.send_order(Direction.LONG, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
+                            elif self.direction == Direction.SHORT:
+                                trade_price = self.tick.last_price * 0.995
+                                self.cancel_all()
+                                if self.exchange == Exchange.BINANCE:
+                                    self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True)
+                                    self.send_order(Direction.LONG, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
 
-                    #             else:
-                    #                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
+                                else:
+                                    self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
 
                     # 开仓日志
                     self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {self.phase} {self.leverage:.2f} {tick.last_price}"})
