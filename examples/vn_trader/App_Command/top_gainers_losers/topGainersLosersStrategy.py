@@ -551,7 +551,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                     stop_pnl *= -1
                 stop_pnl -= 0.2
                 stop_pnl *= self.leverage
-                phase_stop_pnl = stop_pnl * self.phase_leverage
+                phase_stop_pnl = stop_pnl * self.phase_leverage + self.phase_lose
             self.pnl += stop_pnl
 
             self.on_close(tick)
@@ -579,7 +579,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                     close_pnl *= -1
                 close_pnl -= 0.2
                 close_pnl *= self.leverage
-                phase_stop_pnl = close_pnl * self.phase_leverage
+                phase_stop_pnl = close_pnl * self.phase_leverage + self.phase_lose
             self.pnl += close_pnl
 
             self.on_close(tick)
@@ -763,7 +763,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                         stop_pnl *= -1
                     stop_pnl -= 0.2
                     stop_pnl *= self.leverage
-                    phase_stop_pnl = stop_pnl * self.phase_leverage
+                    phase_stop_pnl = stop_pnl * self.phase_leverage + self.phase_lose
                 self.pnl += stop_pnl
 
                 self.on_close(self.tick)

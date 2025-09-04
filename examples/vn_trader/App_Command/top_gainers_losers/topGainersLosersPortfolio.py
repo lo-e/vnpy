@@ -436,7 +436,7 @@ class TopGainersLosersPortfolio(object):
                             liquidation_u = re.sub(r'[\d.]', '', liquidation_1h)
 
                             real_trade = True
-                            if volume_u == "亿" or liquidation_u == "亿" or (liquidation_u == "万" and liquidation_v >= 3000):
+                            if volume_u == "亿" or liquidation_u == "亿" or (liquidation_u == "万" and liquidation_v >= 5000):
                                 real_trade = False
 
                             # 确认phase
