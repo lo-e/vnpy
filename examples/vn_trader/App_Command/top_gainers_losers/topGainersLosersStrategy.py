@@ -85,6 +85,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         "hour_6_down",
         "minute_bar_dt",
         "insufficient_value",
+        "real_trade_confirmed"
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -164,6 +165,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.hour_6_low_cross = False               # 6H最低价
         self.middle_cross = False                   # 中线突破
         self.middle_cross_dt = ""
+        self.real_trade_confirmed = False           # 确认有真实成交
 
         self.database_minute_bar_list = []
         self.tick_minute_bar_list = []
