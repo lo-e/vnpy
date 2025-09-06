@@ -229,7 +229,7 @@ class TopGainersLosersPortfolio(object):
         self.pnl_data[date_str] = date_data
 
         # 亏损记录
-        if strategy.real_trade:
+        if strategy.real_trade_confirmed:
             if pnl < 0:
                 loss_data = {"datetime": strategy.datetime,
                             "vt_symbol": strategy.vt_symbol,

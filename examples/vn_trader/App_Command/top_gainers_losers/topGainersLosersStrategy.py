@@ -742,6 +742,10 @@ class TopGainersLosersStrategy(CtaTemplate):
 
     def on_trade(self, trade):
         try:
+            # 确认有真实成交
+            if self.pos and not self.real_trade_confirmed:
+                self.real_trade_confirmed = True
+                
             # 持仓精度自动修正
             contract = self.cta_engine.main_engine.get_contract(self.vt_symbol)
             if contract:
