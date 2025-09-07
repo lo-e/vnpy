@@ -253,6 +253,9 @@ def set_leverage(target_gateway_name:str, leverage: int = 20, target: list = [],
         for key in contracts.keys():
             contract: ContractData = contracts[key]
             if contract.gateway_name == target_gateway_name:
+                if contract.gateway_name == "BYBIT" and "-" in contract.vt_symbol:
+                    # 过滤BYBIT交割合约
+                    continue
                 vt_symbols.add(contract.vt_symbol)
     
     # 设置杠杆
@@ -335,5 +338,5 @@ def main():
     
 if __name__ == "__main__":
     main()
-
-    # set_leverage(target_gateway_name="OKX", leverage=20, target=[], specials={"BTC": 100, "ETH": 50, "SOL": 50})
+    
+    # set_leverage(target_gateway_name="BINANCE", leverage=20, target=[], specials={"BTC": 100, "ETH": 50, "SOL": 50})

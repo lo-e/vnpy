@@ -402,10 +402,23 @@ class BinanceUsdtRestApi(RestClient):
 
         path: str = "/fapi/v1/leverage"
 
-        return self.add_request("POST", path, callback=self.on_leverage, data=data, params=params)
+        return self.add_request("POST", path, callback=self.on_leverage, data=data, params=params, on_failed=self.on_leverage_failed, on_error=self.on_leverage_error, extra=params)
     
     def on_leverage(self, data: dict, request: Request) -> None:
+        # symbol = request.extra.get("symbol", "")
+        # leverage = request.extra.get("leverage", "")
+        # print(f"{symbol} leverage {leverage} 成功")
         pass
+
+    def on_leverage_failed(self, status_code: str, request: Request) -> None:
+        symbol = request.extra.get("symbol", "")
+        leverage = request.extra.get("leverage", "")
+        print(f"{symbol} leverage {leverage} 失败")
+
+    def on_leverage_error(self, exception_type: type, exception_value: Exception, tb, request: Request) -> None:
+        symbol = request.extra.get("symbol", "")
+        leverage = request.extra.get("leverage", "")
+        print(f"{symbol} leverage {leverage} 失败")
 
     def query_time(self) -> None:
         """查询时间"""

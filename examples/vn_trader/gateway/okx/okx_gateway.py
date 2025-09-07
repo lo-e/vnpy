@@ -383,7 +383,8 @@ class OkxRestApi(RestClient):
             "POST",
             "/api/v5/account/set-leverage",
             callback=self.on_leverage,
-            data=params
+            data=params,
+            extra=params
             )
         
     def send_order(self, req: OrderRequest) -> str:
@@ -493,7 +494,11 @@ class OkxRestApi(RestClient):
             self.gateway.write_log(f"委托失败，状态码：{code}，信息：{msg}")
 
     def on_leverage(self, packet: dict, request: Request) -> None:
-        pass
+        code = int(packet.get(f"code", "0"))
+        if code:
+            symbol = request.extra.get("instId", "")
+            leverage = request.extra.get("lever", "")
+            print(f"{symbol} leverage {leverage} 失败")
 
     def query_time(self) -> None:
         """查询时间"""

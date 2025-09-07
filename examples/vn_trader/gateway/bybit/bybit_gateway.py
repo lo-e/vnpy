@@ -427,14 +427,18 @@ class BybitRestApi(RestClient):
                          path,
                          self.on_leverage,
                          data=data,
-                         extra={"vt_symbol": vt_symbol})
+                         extra=data)
     
     def on_leverage(self, data: dict, request: Request):
         """
         * 收到设置杠杆回调
-        * reMsg:110043杠杆没有修改,0杠杆修改成功
+        * retCode:110043杠杆没有修改, 0杠杆修改成功
         """
-        pass
+        ret_code = data.get(f"retCode", 0)
+        if ret_code and ret_code != 110043:
+            symbol = request.extra.get("symbol", "")
+            leverage = request.extra.get("buyLeverage", "")
+            print(f"{symbol} leverage {leverage} 失败")
     
     def switch_isolated(self, vt_symbol: str):
         """
