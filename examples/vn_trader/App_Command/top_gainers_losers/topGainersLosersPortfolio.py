@@ -233,30 +233,38 @@ class TopGainersLosersPortfolio(object):
         self.pnl_data[date_str] = date_data
 
         # 亏损记录
-        if strategy.real_trade_confirmed:
-            if pnl < 0:
-                loss_data = {"datetime": strategy.datetime,
-                            "vt_symbol": strategy.vt_symbol,
-                            "phase": strategy.phase,
-                            "phase_lose": phase_pnl}
-                self.loss_list.append(loss_data)
-
-            elif pnl > 0:
-                if phase_pnl < 0:
+        if strategy.real_trade:
+            if strategy.real_trade_confirmed:
+                if pnl < 0:
                     loss_data = {"datetime": strategy.datetime,
-                                "vt_symbol": strategy.vt_symbol,
-                                "phase": strategy.phase,
-                                "phase_lose": phase_pnl}
+                                 "vt_symbol": strategy.vt_symbol,
+                                 "phase": strategy.phase,
+                                 "phase_lose": phase_pnl}
                     self.loss_list.append(loss_data)
-                
-                else:
-                    self.pnl += phase_pnl
 
-            elif pnl == 0 and strategy.phase > 1:
+                elif pnl > 0:
+                    if phase_pnl < 0:
+                        loss_data = {"datetime": strategy.datetime,
+                                     "vt_symbol": strategy.vt_symbol,
+                                     "phase": strategy.phase,
+                                     "phase_lose": phase_pnl}
+                        self.loss_list.append(loss_data)
+                    
+                    else:
+                        self.pnl += phase_pnl
+
+                elif pnl == 0 and strategy.phase > 1:
+                    loss_data = {"datetime": strategy.phase_datetime,
+                                 "vt_symbol": strategy.vt_symbol,
+                                 "phase": strategy.phase - 1,
+                                 "phase_lose": strategy.phase_lose}
+                    self.loss_list.insert(0, loss_data)
+            
+            else:
                 loss_data = {"datetime": strategy.phase_datetime,
-                            "vt_symbol": strategy.vt_symbol,
-                            "phase": strategy.phase - 1,
-                            "phase_lose": phase_pnl}
+                             "vt_symbol": strategy.vt_symbol,
+                             "phase": strategy.phase - 1,
+                             "phase_lose": strategy.phase_lose}
                 self.loss_list.insert(0, loss_data)
 
     def resubscribe(self, event: Event):
