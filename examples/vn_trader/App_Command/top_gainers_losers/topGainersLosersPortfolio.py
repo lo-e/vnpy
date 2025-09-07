@@ -260,7 +260,7 @@ class TopGainersLosersPortfolio(object):
                                  "phase_lose": strategy.phase_lose}
                     self.loss_list.insert(0, loss_data)
             
-            else:
+            elif strategy.phase > 1:
                 loss_data = {"datetime": strategy.phase_datetime,
                              "vt_symbol": strategy.vt_symbol,
                              "phase": strategy.phase - 1,
