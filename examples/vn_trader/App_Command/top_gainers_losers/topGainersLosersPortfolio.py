@@ -24,7 +24,7 @@ import shutil
 
 class TopGainersLosersPortfolio(object):
     parameters = ["name",
-                  "portfolio_value"]
+                  "funds"]
 
     syncs = [
         "account_ath",
@@ -37,6 +37,7 @@ class TopGainersLosersPortfolio(object):
     def __init__(self, engine, setting):
         self.cta_engine = engine
         self.name = ""
+        self.funds = 0
         self.portfolio_value = 0
         self.inited = False
         self.started = False
@@ -197,6 +198,9 @@ class TopGainersLosersPortfolio(object):
                     print_(f"余额：{balance:.2f}\t{account_name}")
                 print_(f"ATH：{self.account_ath}\t回撤：{self.account_drawdown}")
                 print("-"*12)
+
+        # 确认组合交易金额
+        self.portfolio_value = self.account_ath - self.funds
 
         # 回撤过大停止交易
         # if abs(self.account_drawdown) < self.portfolio_value * 0.30:
