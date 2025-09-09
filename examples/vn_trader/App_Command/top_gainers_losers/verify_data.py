@@ -85,7 +85,7 @@ class Backtesting(object):
         # 1小时趋势数据
         print(f"加载1H历史趋势数据..")
         self.trending_tokens_1h = {}
-        hour_time = datetime.strptime(f"2025-08-31 00:00:00", f"%Y-%m-%d %H:%M:%S")
+        hour_time = datetime.strptime(f"2025-09-08 00:00:00", f"%Y-%m-%d %H:%M:%S")
         # hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=5)
         while hour_time < datetime.now():
             current_dir = os.path.dirname(os.path.abspath(__file__))

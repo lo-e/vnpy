@@ -87,6 +87,14 @@ class TopGainersLosersPortfolio(object):
                 setattr(self, name, setting[name])
 
     def on_init(self):
+        # ------ fake ------
+        # if not self.loss_list:
+        #     loss_data = {"datetime": "2025-09-07 08:32:49",
+        #                 "vt_symbol": "ALUUSDT.BYBIT",
+        #                 "phase": 1,
+        #                 "phase_lose": -1.24}
+        #     self.loss_list.append(loss_data)
+            
         # if abs(self.account_drawdown) < self.portfolio_value * 0.30:
         #     self.trade_enable = True
 
@@ -235,25 +243,33 @@ class TopGainersLosersPortfolio(object):
         # 亏损记录
         if strategy.real_trade:
             if strategy.real_trade_confirmed:
-                if pnl < 0:
-                    loss_data = {"datetime": strategy.datetime,
-                                 "vt_symbol": strategy.vt_symbol,
-                                 "phase": strategy.phase,
-                                 "phase_lose": phase_pnl}
-                    self.loss_list.append(loss_data)
-
-                elif pnl > 0:
-                    if phase_pnl < 0:
+                if not strategy.manual_close:
+                    if pnl < 0:
                         loss_data = {"datetime": strategy.datetime,
-                                     "vt_symbol": strategy.vt_symbol,
-                                     "phase": strategy.phase,
-                                     "phase_lose": phase_pnl}
+                                    "vt_symbol": strategy.vt_symbol,
+                                    "phase": strategy.phase,
+                                    "phase_lose": phase_pnl}
                         self.loss_list.append(loss_data)
-                    
-                    else:
-                        self.pnl += phase_pnl
 
-                elif pnl == 0 and strategy.phase > 1:
+                    elif pnl > 0:
+                        if phase_pnl < 0:
+                            loss_data = {"datetime": strategy.datetime,
+                                        "vt_symbol": strategy.vt_symbol,
+                                        "phase": strategy.phase,
+                                        "phase_lose": phase_pnl}
+                            self.loss_list.append(loss_data)
+                        
+                        else:
+                            self.pnl += phase_pnl
+
+                    elif pnl == 0 and strategy.phase > 1:
+                        loss_data = {"datetime": strategy.phase_datetime,
+                                    "vt_symbol": strategy.vt_symbol,
+                                    "phase": strategy.phase - 1,
+                                    "phase_lose": strategy.phase_lose}
+                        self.loss_list.insert(0, loss_data)
+                
+                elif strategy.phase > 1:
                     loss_data = {"datetime": strategy.phase_datetime,
                                  "vt_symbol": strategy.vt_symbol,
                                  "phase": strategy.phase - 1,
@@ -730,6 +746,7 @@ class TopGainersLosersPortfolio(object):
                    "phase_lose": phase_lose,
                    "phase_datetime": phase_datetime,
                    "real_trade": real_trade,
+                   "manual_close": False,
                    "datetime": datetime.now().strftime(f"%Y-%m-%d %H:%M:%S")
                    }
        
