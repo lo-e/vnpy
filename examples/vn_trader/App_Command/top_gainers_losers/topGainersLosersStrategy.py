@@ -597,31 +597,35 @@ class TopGainersLosersStrategy(CtaTemplate):
 
         # 手动平仓
         if self.manual_close:
-            self.target_pos = 0
-            self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
-            if not self.stop_open:
-                self.stop_open = True
-                self.stop_open_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+            if self.target_pos:
+                self.target_pos = 0
+                self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
+                if not self.stop_open:
+                    self.stop_open = True
+                    self.stop_open_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
 
-            close_pnl = 0
-            phase_stop_pnl = 0
-            if self.open_tick_price:
-                close_pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
-                if self.direction == Direction.SHORT:
-                    close_pnl *= -1
-                close_pnl -= 0.2
-                close_pnl *= self.leverage
-                phase_stop_pnl = close_pnl * self.phase_leverage + self.phase_lose
-            self.pnl += close_pnl
+                close_pnl = 0
+                phase_stop_pnl = 0
+                if self.open_tick_price:
+                    close_pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
+                    if self.direction == Direction.SHORT:
+                        close_pnl *= -1
+                    close_pnl -= 0.2
+                    close_pnl *= self.leverage
+                    phase_stop_pnl = close_pnl * self.phase_leverage + self.phase_lose
+                self.pnl += close_pnl
 
-            self.on_close(tick)
+                self.on_close(tick)
+                
+                # 平仓日志
+                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} MANUAL_CLOSE {self.pnl:.2f}%({phase_stop_pnl:.2f}%) {tick.last_price}"})
+                self.trade_logs_updated = True
+
+                msg = f"{self.vt_symbol} {self.direction.value}\n阶段 {self.phase}\n手动平仓 {self.pnl:.2f}%({phase_stop_pnl:.2f}%)"
+                self.cta_engine.main_engine.send_ding_talk(msg)
             
-            # 平仓日志
-            self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} MANUAL_CLOSE {self.pnl:.2f}%({phase_stop_pnl:.2f}%) {tick.last_price}"})
-            self.trade_logs_updated = True
-
-            msg = f"{self.vt_symbol} {self.direction.value}\n阶段 {self.phase}\n手动平仓 {self.pnl:.2f}%({phase_stop_pnl:.2f}%)"
-            self.cta_engine.main_engine.send_ding_talk(msg)
+            else:
+                self.on_close(tick)
     
     def add_unit_pos(self, tick_price: float):
         # 计算仓位大小
