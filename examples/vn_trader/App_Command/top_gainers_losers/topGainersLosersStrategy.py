@@ -38,7 +38,8 @@ class TopGainersLosersStrategy(CtaTemplate):
         "exchange_user",
         "direction",
         "volume_24h",
-        "liquidation_1h",
+        "liquidation_long",
+        "liquidation_short",
         "phase",
         "phase_lose",
         "phase_datetime",
@@ -95,7 +96,8 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.exchange_user:str = ""
         self.direction: Direction = Direction.NET
         self.volume_24h = ""
-        self.liquidation_1h = ""
+        self.liquidation_long = ""
+        self.liquidation_short = ""
         self.phase = 0
         self.phase_lose = 0
         self.phase_datetime = ""

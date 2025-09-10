@@ -224,7 +224,8 @@ class TopGainersLosersPortfolio(object):
         data = {"datetime": strategy.datetime,
                 "timestamp": dt.timestamp(),
                 "volume_24h": strategy.volume_24h,
-                "liquidation_1h": strategy.liquidation_1h,
+                "liquidation_long": strategy.liquidation_long,
+                "liquidation_short": strategy.liquidation_short,
                 "vt_symbol": strategy.vt_symbol,
                 "direction": strategy.direction.value,
                 "pnl": f"{pnl:.2f}%",
@@ -452,7 +453,8 @@ class TopGainersLosersPortfolio(object):
                         over_trending = True
 
                     # 1h清算数据
-                    liquidation_1h = self.liquidation_data.get("1h_total", "")
+                    liquidation_long = self.liquidation_data.get("1h_long", "")
+                    liquidation_short = self.liquidation_data.get("1h_short", "")
 
                     # 信号生成
                     if not over_trending:
@@ -468,11 +470,24 @@ class TopGainersLosersPortfolio(object):
                             # 筛选过高代币交易量、过高市场清算额
                             volume_v = float(re.sub(r'[^\d.]', '', volume_24h))
                             volume_u = re.sub(r'[\d.]', '', volume_24h)
-                            liquidation_v = float(re.sub(r'[^\d.]', '', liquidation_1h))
-                            liquidation_u = re.sub(r'[\d.]', '', liquidation_1h)
+                            liquidation_long_v = float(re.sub(r'[^\d.]', '', liquidation_long))
+                            liquidation_long_u = re.sub(r'[\d.]', '', liquidation_long)
+                            if liquidation_long_u == "亿":
+                                liquidation_long_v *= 100000000
+                            
+                            elif liquidation_long_u == "万":
+                                liquidation_long_v *= 10000
+
+                            liquidation_short_v = float(re.sub(r'[^\d.]', '', liquidation_short))
+                            liquidation_short_u = re.sub(r'[\d.]', '', liquidation_short)
+                            if liquidation_short_u == "亿":
+                                liquidation_short_v *= 100000000
+                            
+                            elif liquidation_short_u == "万":
+                                liquidation_short_v *= 10000
 
                             real_trade = True
-                            if volume_u == "亿" or liquidation_u == "亿" or (liquidation_u == "万" and liquidation_v >= 5000):
+                            if volume_u == "亿" or (abs(liquidation_long_v) >= abs(liquidation_short_v) * 3) or (abs(liquidation_short_v) >= abs(liquidation_long_v) * 3):
                                 real_trade = False
 
                             # 确认phase
@@ -549,7 +564,7 @@ class TopGainersLosersPortfolio(object):
                                             if phase_index >= 0:
                                                 self.loss_list.pop(phase_index)
 
-                                            msg = f"{symbol} 上涨过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nliquidation_1h {liquidation_1h}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}\ntrending_top {trending_top_mean_change}\nreverse_top {reverse_top_mean_change}"
+                                            msg = f"{symbol} 上涨过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nliquidation_long {liquidation_long}\nliquidation_short {liquidation_short}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}\ntrending_top {trending_top_mean_change}\nreverse_top {reverse_top_mean_change}"
                                             self.send_ding_talk(msg)
                             
                             elif direction == "SHORT":
@@ -583,7 +598,7 @@ class TopGainersLosersPortfolio(object):
                                             if phase_index >= 0:
                                                 self.loss_list.pop(phase_index)
 
-                                            msg = f"{symbol} 下跌过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nliquidation_1h {liquidation_1h}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}\ntrending_top {trending_top_mean_change}\nreverse_top {reverse_top_mean_change}"
+                                            msg = f"{symbol} 下跌过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nliquidation_long {liquidation_long}\nliquidation_short {liquidation_short}\nrank_24h {rank_24h}\ntrending_top {trending_top_mean_change}\nreverse_top {reverse_top_mean_change}"
                                             self.send_ding_talk(msg)
 
         if new_settings:
@@ -730,7 +745,8 @@ class TopGainersLosersPortfolio(object):
             return {}
         
         # 1h清算数据
-        liquidation_1h = self.liquidation_data.get("1h_total", "")
+        liquidation_long = self.liquidation_data.get("1h_long", "")
+        liquidation_short = self.liquidation_data.get("1h_short", "")
 
         # 启动策略
         dt = datetime.now().strftime(f"%m%d%H%M%S")
@@ -748,7 +764,8 @@ class TopGainersLosersPortfolio(object):
                    "exchange_user": exchange_user,
                    "direction": direction_str,
                    "volume_24h": volume_24h,
-                   "liquidation_1h": liquidation_1h,
+                   "liquidation_long": liquidation_long,
+                   "liquidation_short": liquidation_short,
                    "start": True,
                    "phase": phase,
                    "phase_lose": phase_lose,
