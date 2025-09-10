@@ -29,6 +29,8 @@ class Backtesting(object):
         self.history_rise_symbol_trending_ts = {}
         self.history_fall_symbol_trending_ts = {}
         self.signal_count = 0
+        self.trending_rise_24h = False
+        self.trending_fall_24h = False
 
     def start(self, mode: BacktestingMode):
         self.mode = mode
@@ -42,8 +44,8 @@ class Backtesting(object):
         # 24小时趋势数据
         print(f"加载24H历史趋势数据..")
         self.trending_tokens_24h = {}
-        # hour_time = datetime.strptime(f"2025-06-29 00:00:00", f"%Y-%m-%d %H:%M:%S")
-        hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=3)
+        hour_time = datetime.strptime(f"2025-08-28 00:00:00", f"%Y-%m-%d %H:%M:%S")
+        # hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=3)
         while hour_time < datetime.now():
             current_dir = os.path.dirname(os.path.abspath(__file__))
             date = hour_time.strftime(f"%Y-%m-%d")
@@ -123,11 +125,59 @@ class Backtesting(object):
     def on_trending_data_24h(self, data: tuple):
         rise_trending_list, fall_trending_list = data
         data_time = rise_trending_list[0]["change"]
+        dt_str_24h = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
         mean_rise_change = rise_trending_list[1]["change"]
         mean_fall_change = rise_trending_list[2]["change"]
         rise_trending_list = rise_trending_list[3:]
         fall_trending_list = fall_trending_list[3:]
         
+        if abs(mean_rise_change) >= abs(mean_fall_change) * 3:
+            # 多头趋势
+            if not self.trending_rise_24h:
+                self.trending_rise_24h = True
+                print(f"{dt_str_24h}\t24h LONG START")
+
+            # trending_list_1h = self.load_1h_trending_data(to_ts=data_time, direction="rise")
+            # data_time_1h = trending_list_1h[0]["change"]
+            # trending_list_1h = trending_list_1h[3:]
+            # for i in range(min(len(trending_list_1h), 1)):
+            #     data = trending_list_1h[i]
+            #     symbol = data["symbol"]
+            #     change = data["change"]
+            #     if symbol not in self.trending_tokens_24h:
+            #         self.trending_tokens_24h[symbol] = data
+            #         dt_str_1h = datetime.fromtimestamp(data_time_1h).strftime(f"%Y-%m-%d %H:%M:%S")
+            #         print(f"{dt_str_1h}\t{symbol}")
+
+        elif abs(mean_fall_change) >= abs(mean_rise_change) * 3:
+            # 空头趋势
+            if not self.trending_fall_24h:
+                self.trending_fall_24h = True
+                print(f"{dt_str_24h}\t24h SHORT START")
+
+            # trending_list_1h = self.load_1h_trending_data(to_ts=data_time, direction="fall")
+            # data_time_1h = trending_list_1h[0]["change"]
+            # trending_list_1h = trending_list_1h[3:]
+            # for i in range(min(len(trending_list_1h), 1)):
+            #     data = trending_list_1h[i]
+            #     symbol = data["symbol"]
+            #     change = data["change"]
+            #     if symbol not in self.trending_tokens_24h:
+            #         self.trending_tokens_24h[symbol] = data
+            #         dt_str_1h = datetime.fromtimestamp(data_time_1h).strftime(f"%Y-%m-%d %H:%M:%S")
+            #         print(f"{dt_str_1h}\t{symbol}")
+
+        if self.trending_rise_24h and abs(mean_rise_change) < abs(mean_fall_change) * 3:
+            self.trending_rise_24h = False
+            self.trending_tokens_24h = {}
+            print(f"{dt_str_24h}\t24h LONG END\n")
+
+        if self.trending_fall_24h and abs(mean_fall_change) < abs(mean_rise_change) * 3:
+            self.trending_fall_24h = False
+            self.trending_tokens_24h = {}
+            print(f"{dt_str_24h}\t24h SHORT END\n")
+        
+        """
         trending_tokens = set()
         for i in range(min(len(rise_trending_list), 5)):
             data = rise_trending_list[i]
@@ -233,6 +283,7 @@ class Backtesting(object):
         
         # 排序
         self.trending_tokens_24h = dict(sorted(self.trending_tokens_24h.items()))
+        """
 
     def on_trending_data_24h_quick(self, data: tuple):
         rise_trending_list, fall_trending_list = data
@@ -942,6 +993,6 @@ def statistics_pnl(for_eth: bool = False):
 
 if __name__ == "__main__":
     backtesting = Backtesting()
-    # backtesting.start(BacktestingMode.TRENDING_24H)
+    backtesting.start(BacktestingMode.TRENDING_24H)
     # backtesting.start(BacktestingMode.TRENDING_24H_QUICK)
-    backtesting.start(BacktestingMode.TRENDING_1H)
+    # backtesting.start(BacktestingMode.TRENDING_1H)

@@ -246,17 +246,19 @@ class TopGainersLosersPortfolio(object):
                 if not strategy.manual_close:
                     if pnl < 0:
                         loss_data = {"datetime": strategy.datetime,
-                                    "vt_symbol": strategy.vt_symbol,
-                                    "phase": strategy.phase,
-                                    "phase_lose": phase_pnl}
+                                     "timestamp": datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S").timestamp(),
+                                     "vt_symbol": strategy.vt_symbol,
+                                     "phase": strategy.phase,
+                                     "phase_lose": phase_pnl}
                         self.loss_list.append(loss_data)
 
                     elif pnl > 0:
                         if phase_pnl < 0:
                             loss_data = {"datetime": strategy.datetime,
-                                        "vt_symbol": strategy.vt_symbol,
-                                        "phase": strategy.phase,
-                                        "phase_lose": phase_pnl}
+                                         "timestamp": datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S").timestamp(),
+                                         "vt_symbol": strategy.vt_symbol,
+                                         "phase": strategy.phase,
+                                         "phase_lose": phase_pnl}
                             self.loss_list.append(loss_data)
                         
                         else:
@@ -264,13 +266,15 @@ class TopGainersLosersPortfolio(object):
 
                     elif pnl == 0 and strategy.phase > 1:
                         loss_data = {"datetime": strategy.phase_datetime,
-                                    "vt_symbol": strategy.vt_symbol,
-                                    "phase": strategy.phase - 1,
-                                    "phase_lose": strategy.phase_lose}
+                                     "timestamp": datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S").timestamp(),
+                                     "vt_symbol": strategy.vt_symbol,
+                                     "phase": strategy.phase - 1,
+                                     "phase_lose": strategy.phase_lose}
                         self.loss_list.insert(0, loss_data)
                 
                 elif strategy.phase > 1:
                     loss_data = {"datetime": strategy.phase_datetime,
+                                 "timestamp": datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S").timestamp(),
                                  "vt_symbol": strategy.vt_symbol,
                                  "phase": strategy.phase - 1,
                                  "phase_lose": strategy.phase_lose}
@@ -278,10 +282,14 @@ class TopGainersLosersPortfolio(object):
             
             elif strategy.phase > 1:
                 loss_data = {"datetime": strategy.phase_datetime,
+                             "timestamp": datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S").timestamp(),
                              "vt_symbol": strategy.vt_symbol,
                              "phase": strategy.phase - 1,
                              "phase_lose": strategy.phase_lose}
                 self.loss_list.insert(0, loss_data)
+
+            # 根据时间戳排序
+            self.loss_list.sort(key=lambda x: x["timestamp"])
 
     def resubscribe(self, event: Event):
         return
