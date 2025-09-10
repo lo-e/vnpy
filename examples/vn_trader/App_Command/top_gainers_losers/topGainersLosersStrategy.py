@@ -53,6 +53,7 @@ class TopGainersLosersStrategy(CtaTemplate):
 
     # 同步列表
     syncs = [
+        "datetime",
         "phase",
         "phase_lose",
         "phase_datetime",
