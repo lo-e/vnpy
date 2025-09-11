@@ -10,6 +10,7 @@ import time
 from vnpy.trader.constant import Direction, Offset
 from vnpy.trader.utility import DIR_SYMBOL
 from enum import Enum
+import re
 
 class BacktestingMode(Enum):
     TRENDING_24H = "24H趋势"
@@ -44,7 +45,7 @@ class Backtesting(object):
         # 24小时趋势数据
         print(f"加载24H历史趋势数据..")
         self.trending_tokens_24h = {}
-        hour_time = datetime.strptime(f"2025-08-20 00:00:00", f"%Y-%m-%d %H:%M:%S")
+        hour_time = datetime.strptime(f"2025-08-05 00:00:00", f"%Y-%m-%d %H:%M:%S")
         # hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=3)
         while hour_time < datetime.now():
             current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -87,7 +88,7 @@ class Backtesting(object):
         # 1小时趋势数据
         print(f"加载1H历史趋势数据..")
         self.trending_tokens_1h = {}
-        hour_time = datetime.strptime(f"2025-09-08 00:00:00", f"%Y-%m-%d %H:%M:%S")
+        hour_time = datetime.strptime(f"2025-09-10 00:00:00", f"%Y-%m-%d %H:%M:%S")
         # hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=5)
         while hour_time < datetime.now():
             current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -137,9 +138,11 @@ class Backtesting(object):
             symbol = data["symbol"]
             change = data["change"]
             volume = data["volume"]
-
+            volume_v = float(re.sub(r'[^\d.]', '', volume))
+            volume_u = re.sub(r'[\d.]', '', volume)
+            
             trending_tokens.add(symbol)
-            if abs(change) >= 100.0:
+            if abs(change) >= 100.0 and volume_v >= 10 and volume_u == "亿":
                 if symbol not in self.trending_tokens_24h:
                     trending_data = {"symbol": symbol,
                                      "direction": "LONG",
@@ -450,31 +453,31 @@ class Backtesting(object):
                 onboard_ts = trending_data["onboard_ts"]
                 onboard_time = datetime.fromtimestamp(onboard_ts).strftime(f"%Y-%m-%d %H:%M:%S")
 
-                if abs(change) >= 10 and data_time <= onboard_ts + 600000 * 60:
+                if abs(change) >= 5 and data_time <= onboard_ts + 600000 * 60:
                     # 查询24h排行
                     rank_24h = 0
-                    reverse_direction = ""
-                    if change >= 0:
-                        direction = "rise"
-                        reverse_direction = "fall"
+                    # reverse_direction = ""
+                    # if change >= 0:
+                    #     direction = "rise"
+                    #     reverse_direction = "fall"
                     
-                    else:
-                        direction = "fall"
-                        reverse_direction = "rise"
+                    # else:
+                    #     direction = "fall"
+                    #     reverse_direction = "rise"
                     
                     trending_top_mean_change = 0
-                    trending_list_24h = self.load_24h_trending_data(to_ts=trending_1h_ts, direction=direction)
-                    if trending_list_24h:
-                        trending_top_mean_change = pd.DataFrame(trending_list_24h[3:8])["change"].mean()
+                    # trending_list_24h = self.load_24h_trending_data(to_ts=trending_1h_ts, direction=direction)
+                    # if trending_list_24h:
+                    #     trending_top_mean_change = pd.DataFrame(trending_list_24h[3:8])["change"].mean()
                     
                     reverse_top_mean_change = 0
-                    reverse_list_24h = self.load_24h_trending_data(to_ts=trending_1h_ts, direction=reverse_direction)
-                    if reverse_list_24h:
-                        reverse_top_mean_change = pd.DataFrame(reverse_list_24h[3:8])["change"].mean()
+                    # reverse_list_24h = self.load_24h_trending_data(to_ts=trending_1h_ts, direction=reverse_direction)
+                    # if reverse_list_24h:
+                    #     reverse_top_mean_change = pd.DataFrame(reverse_list_24h[3:8])["change"].mean()
 
                     over_trending = False
-                    if abs(trending_top_mean_change) >= abs(reverse_top_mean_change) * 3:
-                        over_trending = True
+                    # if abs(trending_top_mean_change) >= abs(reverse_top_mean_change) * 3:
+                    #     over_trending = True
 
                     if not over_trending:
                         signal_ts = self.signal_tokens_1h.get(symbol, 0)
@@ -903,6 +906,6 @@ def statistics_pnl(for_eth: bool = False):
 
 if __name__ == "__main__":
     backtesting = Backtesting()
-    backtesting.start(BacktestingMode.TRENDING_24H)
+    # backtesting.start(BacktestingMode.TRENDING_24H)
     # backtesting.start(BacktestingMode.TRENDING_24H_QUICK)
-    # backtesting.start(BacktestingMode.TRENDING_1H)
+    backtesting.start(BacktestingMode.TRENDING_1H)
