@@ -220,11 +220,18 @@ class TopGainersLosersPortfolio(object):
     def on_pnl(self, strategy: TopGainersLosersStrategy, pnl: float):
         # 记录盈亏
         dt = datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S")
+        phase_pnl = strategy.phase_leverage * pnl + strategy.phase_lose
         data = {"datetime": strategy.datetime,
                 "timestamp": dt.timestamp(),
+                "volume_24h": strategy.volume_24h,
+                "liquidation_long": strategy.liquidation_long,
+                "liquidation_short": strategy.liquidation_short,
                 "vt_symbol": strategy.vt_symbol,
                 "direction": strategy.direction.value,
-                "pnl": f"{pnl:.2f}%"}
+                "pnl": f"{pnl:.2f}%",
+                "phase": strategy.phase,
+                "phase_pnl": f"{phase_pnl:.2f}%",
+                "real_trade": strategy.real_trade}
         
         date_str = dt.strftime(f"%Y-%m-%d")
         date_data = self.pnl_data.get(date_str, {})
@@ -233,6 +240,57 @@ class TopGainersLosersPortfolio(object):
         data_list.append(data)
         date_data["data"] = data_list
         self.pnl_data[date_str] = date_data
+
+        # 亏损记录
+        if strategy.real_trade:
+            if strategy.real_trade_confirmed:
+                if not strategy.manual_close:
+                    if pnl < 0:
+                        loss_data = {"datetime": strategy.datetime,
+                                     "timestamp": datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S").timestamp(),
+                                     "vt_symbol": strategy.vt_symbol,
+                                     "phase": strategy.phase,
+                                     "phase_lose": phase_pnl}
+                        self.loss_list.append(loss_data)
+
+                    elif pnl > 0:
+                        if phase_pnl < 0:
+                            loss_data = {"datetime": strategy.datetime,
+                                         "timestamp": datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S").timestamp(),
+                                         "vt_symbol": strategy.vt_symbol,
+                                         "phase": strategy.phase,
+                                         "phase_lose": phase_pnl}
+                            self.loss_list.append(loss_data)
+                        
+                        else:
+                            self.pnl += phase_pnl
+
+                    elif pnl == 0 and strategy.phase > 1:
+                        loss_data = {"datetime": strategy.phase_datetime,
+                                     "timestamp": datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S").timestamp(),
+                                     "vt_symbol": strategy.vt_symbol,
+                                     "phase": strategy.phase - 1,
+                                     "phase_lose": strategy.phase_lose}
+                        self.loss_list.insert(0, loss_data)
+                
+                elif strategy.phase > 1:
+                    loss_data = {"datetime": strategy.phase_datetime,
+                                 "timestamp": datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S").timestamp(),
+                                 "vt_symbol": strategy.vt_symbol,
+                                 "phase": strategy.phase - 1,
+                                 "phase_lose": strategy.phase_lose}
+                    self.loss_list.insert(0, loss_data)
+            
+            elif strategy.phase > 1:
+                loss_data = {"datetime": strategy.phase_datetime,
+                             "timestamp": datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S").timestamp(),
+                             "vt_symbol": strategy.vt_symbol,
+                             "phase": strategy.phase - 1,
+                             "phase_lose": strategy.phase_lose}
+                self.loss_list.insert(0, loss_data)
+
+            # 根据时间戳排序
+            self.loss_list.sort(key=lambda x: x["timestamp"])
 
     def resubscribe(self, event: Event):
         return
@@ -352,6 +410,8 @@ class TopGainersLosersPortfolio(object):
 
         # 信号判断
         new_settings = []
+        long_signal_count = 0
+        short_signal_count = 0
         for symbol, trending_data in self.trending_tokens_1h.copy().items():
             if symbol not in trending_tokens:
                 self.trending_tokens_1h.pop(symbol)
@@ -365,77 +425,181 @@ class TopGainersLosersPortfolio(object):
                 trending_1h_time = trending_data["trending_1h_time"]
                 onboard_ts = trending_data["onboard_ts"]
 
-                if abs(change) >= 5:
-                    # 信号生成
-                    signal_dt_str = self.signal_tokens_1h.get(symbol, "")
-                    signal_ts = datetime.strptime(signal_dt_str, f"%Y-%m-%d %H:%M:%S").timestamp() if signal_dt_str else 0
-                    self.signal_tokens_1h[symbol] = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
-                    for signal_symbol, dt_str in self.signal_tokens_1h.copy().items():
-                        ts = datetime.strptime(dt_str, f"%Y-%m-%d %H:%M:%S").timestamp() if dt_str else 0
-                        if data_time >= ts + 6 * 60 * 60:
-                            self.signal_tokens_1h.pop(signal_symbol)
-
-                    # 过滤正在交易的相同代币
-                    pure_symbol = re.sub(r'[^a-zA-Z]', '', symbol)
-                    if direction == "LONG":
-                        flt = False
-                        for target_token in self.strategy_short_tokens:
-                            pure_target_token = re.sub(r'[^a-zA-Z]', '', target_token)
-                            if pure_symbol == pure_target_token:
-                                flt = True
-                                break
-
-                        if not flt:
-                            setting = self.new_strategy(symbol, Direction.SHORT)
-                            strategy_name = setting.get("strategy_name", "")
-                            pure_strategy_name = "_".join(strategy_name.split("_")[1:])
-                            for name in self.cta_engine.strategies.keys():
-                                pure_name = "_".join(name.split("_")[1:])
-                                if pure_strategy_name == pure_name:
-                                    flt = True
-                                    break
-                            
-                            if setting and not flt:
-                                vt_symbol = setting["vt_symbol"]
-                                instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
-                                on_timestamp = instrument_data["on_timestamp"]
-                                if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60:
-                                    new_settings.append(setting)
-                                    if symbol not in self.strategy_short_tokens:
-                                        self.strategy_short_tokens.append(symbol)
-
-                                    msg = f"{symbol} 上涨过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nrank_1h {trending_1h_rank}"
-                                    self.send_ding_talk(msg)
+                if abs(change) >= 10:
+                    # 24h趋势数据
+                    trending_list_24h = []
+                    reverse_list_24h = []
+                    if change >= 0:
+                        trending_list_24h = self.rise_data_list_24h[3:]
+                        reverse_list_24h = self.fall_data_list_24h[3:]
                     
-                    elif direction == "SHORT":
-                        flt = False
-                        for target_token in self.strategy_long_tokens:
-                            pure_target_token = re.sub(r'[^a-zA-Z]', '', target_token)
-                            if pure_symbol == pure_target_token:
-                                flt = True
-                                break
-                        
-                        if not flt:
-                            setting = self.new_strategy(symbol, Direction.LONG)
-                            strategy_name = setting.get("strategy_name", "")
-                            pure_strategy_name = "_".join(strategy_name.split("_")[1:])
-                            for name in self.cta_engine.strategies.keys():
-                                pure_name = "_".join(name.split("_")[1:])
-                                if pure_strategy_name == pure_name:
-                                    flt = True
-                                    break
-                            
-                            if setting and not flt:
-                                vt_symbol = setting["vt_symbol"]
-                                instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
-                                on_timestamp = instrument_data["on_timestamp"]
-                                if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60:
-                                    new_settings.append(setting)
-                                    if symbol not in self.strategy_long_tokens:
-                                        self.strategy_long_tokens.append(symbol)
+                    else:
+                        trending_list_24h = self.fall_data_list_24h[3:]
+                        reverse_list_24h = self.rise_data_list_24h[3:]
 
-                                    msg = f"{symbol} 下跌过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nrank_1h {trending_1h_rank}"
-                                    self.send_ding_talk(msg)
+                    symbols_24h = []
+                    for data_24h in trending_list_24h:
+                        symbols_24h.append(data_24h["symbol"])
+
+                    rank_24h = 0
+                    if symbol in symbols_24h:
+                        rank_24h = symbols_24h.index(symbol) + 1
+
+                    trending_top_mean_change = pd.DataFrame(trending_list_24h[0:5])["change"].mean()
+                    reverse_top_mean_change = pd.DataFrame(reverse_list_24h[0:5])["change"].mean()
+
+                    over_trending = False
+                    if abs(trending_top_mean_change) >= abs(reverse_top_mean_change) * 3:
+                        over_trending = True
+
+                    # 1h清算数据
+                    liquidation_long = self.liquidation_data.get("1h_long", "")
+                    liquidation_short = self.liquidation_data.get("1h_short", "")
+
+                    # 信号生成
+                    if not over_trending:
+                        signal_dt_str = self.signal_tokens_1h.get(symbol, "")
+                        signal_ts = datetime.strptime(signal_dt_str, f"%Y-%m-%d %H:%M:%S").timestamp() if signal_dt_str else 0
+                        self.signal_tokens_1h[symbol] = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
+                        for signal_symbol, dt_str in self.signal_tokens_1h.copy().items():
+                            ts = datetime.strptime(dt_str, f"%Y-%m-%d %H:%M:%S").timestamp() if dt_str else 0
+                            if data_time >= ts + 6 * 60 * 60:
+                                self.signal_tokens_1h.pop(signal_symbol)
+
+                        if data_time >= signal_ts + 6 * 60 * 60:
+                            # 筛选过高代币交易量、过高市场清算额
+                            volume_v = float(re.sub(r'[^\d.]', '', volume_24h))
+                            volume_u = re.sub(r'[\d.]', '', volume_24h)
+                            liquidation_long_v = float(re.sub(r'[^\d.]', '', liquidation_long))
+                            liquidation_long_u = re.sub(r'[\d.]', '', liquidation_long)
+                            if liquidation_long_u == "亿":
+                                liquidation_long_v *= 100000000
+                            
+                            elif liquidation_long_u == "万":
+                                liquidation_long_v *= 10000
+
+                            liquidation_short_v = float(re.sub(r'[^\d.]', '', liquidation_short))
+                            liquidation_short_u = re.sub(r'[\d.]', '', liquidation_short)
+                            if liquidation_short_u == "亿":
+                                liquidation_short_v *= 100000000
+                            
+                            elif liquidation_short_u == "万":
+                                liquidation_short_v *= 10000
+
+                            real_trade = True
+                            if volume_u == "亿" or (abs(liquidation_long_v) >= abs(liquidation_short_v) * 3) or (abs(liquidation_short_v) >= abs(liquidation_long_v) * 3):
+                                real_trade = False
+
+                            # 确认phase
+                            phase = 1
+                            phase_lose = 0
+                            phase_datetime = ""
+                            phase_index = -1
+                            over_loss_index = -1
+                            for i in range(len(self.loss_list)):
+                                loss_data = self.loss_list[i]
+                                loss_phase = loss_data["phase"]
+                                if loss_phase > 3:
+                                    over_loss_index = i
+                                    break
+
+                            for name in self.cta_engine.strategies.copy().keys():
+                                strategy: TopGainersLosersStrategy = self.cta_engine.strategies[name]
+                                if strategy.phase > 3:
+                                    over_loss_index = 1000
+                                    break
+
+                            for setting in new_settings:
+                                setting_phase = setting["phase"]
+                                if setting_phase > 3:
+                                    over_loss_index = 1000
+                                    break
+
+                            for i in range(len(self.loss_list)):
+                                loss_data = self.loss_list[i]
+                                loss_phase = loss_data["phase"]
+                                # if loss_phase >= 3:
+                                #     if over_loss_index >= 0 and over_loss_index != i:
+                                #         continue
+                                
+                                loss_dt = loss_data["datetime"]
+                                loss_ts = datetime.strptime(loss_dt, f"%Y-%m-%d %H:%M:%S").timestamp()
+                                if data_time >= loss_ts + 1 * 60 * 60 and real_trade:
+                                    phase = loss_data["phase"] + 1
+                                    phase_lose = loss_data["phase_lose"]
+                                    phase_datetime = loss_dt
+                                    phase_index = i
+                                    break
+
+                            # 过滤正在交易的相同代币
+                            pure_symbol = re.sub(r'[^a-zA-Z]', '', symbol)
+                            if direction == "LONG":
+                                flt = False
+                                for target_token in self.strategy_short_tokens:
+                                    pure_target_token = re.sub(r'[^a-zA-Z]', '', target_token)
+                                    if pure_symbol == pure_target_token:
+                                        flt = True
+                                        break
+
+                                if not flt:
+                                    setting = self.new_strategy(symbol, Direction.SHORT, volume_24h, phase=phase, phase_lose=phase_lose, phase_datetime=phase_datetime, real_trade=real_trade)
+                                    strategy_name = setting.get("strategy_name", "")
+                                    pure_strategy_name = "_".join(strategy_name.split("_")[1:])
+                                    for name in self.cta_engine.strategies.keys():
+                                        pure_name = "_".join(name.split("_")[1:])
+                                        if pure_strategy_name == pure_name:
+                                            flt = True
+                                            break
+                                    
+                                    if setting and not flt and short_signal_count < 1:
+                                        vt_symbol = setting["vt_symbol"]
+                                        instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
+                                        on_timestamp = instrument_data["on_timestamp"]
+                                        if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60:
+                                            short_signal_count += 1
+                                            new_settings.append(setting)
+                                            if symbol not in self.strategy_short_tokens:
+                                                self.strategy_short_tokens.append(symbol)
+
+                                            if phase_index >= 0:
+                                                self.loss_list.pop(phase_index)
+
+                                            msg = f"{symbol} 上涨过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nliquidation_long {liquidation_long}\nliquidation_short {liquidation_short}\nrank_1h {trending_1h_rank}\nrank_24h {rank_24h}\ntrending_top {trending_top_mean_change}\nreverse_top {reverse_top_mean_change}"
+                                            self.send_ding_talk(msg)
+                            
+                            elif direction == "SHORT":
+                                flt = False
+                                for target_token in self.strategy_long_tokens:
+                                    pure_target_token = re.sub(r'[^a-zA-Z]', '', target_token)
+                                    if pure_symbol == pure_target_token:
+                                        flt = True
+                                        break
+                                
+                                if not flt:
+                                    setting = self.new_strategy(symbol, Direction.LONG, volume_24h, phase=phase, phase_lose=phase_lose, phase_datetime=phase_datetime, real_trade=real_trade)
+                                    strategy_name = setting.get("strategy_name", "")
+                                    pure_strategy_name = "_".join(strategy_name.split("_")[1:])
+                                    for name in self.cta_engine.strategies.keys():
+                                        pure_name = "_".join(name.split("_")[1:])
+                                        if pure_strategy_name == pure_name:
+                                            flt = True
+                                            break
+                                    
+                                    if setting and not flt and long_signal_count < 1:
+                                        vt_symbol = setting["vt_symbol"]
+                                        instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
+                                        on_timestamp = instrument_data["on_timestamp"]
+                                        if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60:
+                                            long_signal_count += 1
+                                            new_settings.append(setting)
+                                            if symbol not in self.strategy_long_tokens:
+                                                self.strategy_long_tokens.append(symbol)
+
+                                            if phase_index >= 0:
+                                                self.loss_list.pop(phase_index)
+
+                                            msg = f"{symbol} 下跌过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nliquidation_long {liquidation_long}\nliquidation_short {liquidation_short}\nrank_24h {rank_24h}\ntrending_top {trending_top_mean_change}\nreverse_top {reverse_top_mean_change}"
+                                            self.send_ding_talk(msg)
 
         if new_settings:
             # 执行新策略
@@ -545,7 +709,7 @@ class TopGainersLosersPortfolio(object):
     def on_trending_data_5m(self, data: tuple):
         pass
 
-    def new_strategy(self, token:str, direction: Direction):
+    def new_strategy(self, token:str, direction: Direction, volume_24h: str, phase: int, phase_lose: float, phase_datetime: str, real_trade: bool):
         # 确认合约
         vt_symbol = ""
         exchange = ""
@@ -579,6 +743,10 @@ class TopGainersLosersPortfolio(object):
 
         if not vt_symbol:
             return {}
+        
+        # 1h清算数据
+        liquidation_long = self.liquidation_data.get("1h_long", "")
+        liquidation_short = self.liquidation_data.get("1h_short", "")
 
         # 启动策略
         dt = datetime.now().strftime(f"%m%d%H%M%S")
@@ -595,7 +763,14 @@ class TopGainersLosersPortfolio(object):
                    "exchange": exchange,
                    "exchange_user": exchange_user,
                    "direction": direction_str,
+                   "volume_24h": volume_24h,
+                   "liquidation_long": liquidation_long,
+                   "liquidation_short": liquidation_short,
                    "start": True,
+                   "phase": phase,
+                   "phase_lose": phase_lose,
+                   "phase_datetime": phase_datetime,
+                   "real_trade": real_trade,
                    "manual_close": False,
                    "datetime": datetime.now().strftime(f"%Y-%m-%d %H:%M:%S")
                    }
