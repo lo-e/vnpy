@@ -365,77 +365,78 @@ class TopGainersLosersPortfolio(object):
                 trending_1h_time = trending_data["trending_1h_time"]
                 onboard_ts = trending_data["onboard_ts"]
 
-                if abs(change) >= 5:
+                if change >= 5:
                     # 信号生成
                     signal_dt_str = self.signal_tokens_1h.get(symbol, "")
                     signal_ts = datetime.strptime(signal_dt_str, f"%Y-%m-%d %H:%M:%S").timestamp() if signal_dt_str else 0
                     self.signal_tokens_1h[symbol] = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
                     for signal_symbol, dt_str in self.signal_tokens_1h.copy().items():
                         ts = datetime.strptime(dt_str, f"%Y-%m-%d %H:%M:%S").timestamp() if dt_str else 0
-                        if data_time >= ts + 6 * 60 * 60:
+                        if data_time >= ts + 10 * 60:
                             self.signal_tokens_1h.pop(signal_symbol)
 
-                    # 过滤正在交易的相同代币
-                    pure_symbol = re.sub(r'[^a-zA-Z]', '', symbol)
-                    if direction == "LONG":
-                        flt = False
-                        for target_token in self.strategy_short_tokens:
-                            pure_target_token = re.sub(r'[^a-zA-Z]', '', target_token)
-                            if pure_symbol == pure_target_token:
-                                flt = True
-                                break
-
-                        if not flt:
-                            setting = self.new_strategy(symbol, Direction.SHORT)
-                            strategy_name = setting.get("strategy_name", "")
-                            pure_strategy_name = "_".join(strategy_name.split("_")[1:])
-                            for name in self.cta_engine.strategies.keys():
-                                pure_name = "_".join(name.split("_")[1:])
-                                if pure_strategy_name == pure_name:
+                    if data_time >= signal_ts + 10 * 60:
+                        # 过滤正在交易的相同代币
+                        pure_symbol = re.sub(r'[^a-zA-Z]', '', symbol)
+                        if direction == "LONG":
+                            flt = False
+                            for target_token in self.strategy_short_tokens:
+                                pure_target_token = re.sub(r'[^a-zA-Z]', '', target_token)
+                                if pure_symbol == pure_target_token:
                                     flt = True
                                     break
-                            
-                            if setting and not flt:
-                                vt_symbol = setting["vt_symbol"]
-                                instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
-                                on_timestamp = instrument_data["on_timestamp"]
-                                if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60:
-                                    new_settings.append(setting)
-                                    if symbol not in self.strategy_short_tokens:
-                                        self.strategy_short_tokens.append(symbol)
 
-                                    msg = f"{symbol} 上涨过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nrank_1h {trending_1h_rank}"
-                                    self.send_ding_talk(msg)
-                    
-                    elif direction == "SHORT":
-                        flt = False
-                        for target_token in self.strategy_long_tokens:
-                            pure_target_token = re.sub(r'[^a-zA-Z]', '', target_token)
-                            if pure_symbol == pure_target_token:
-                                flt = True
-                                break
+                            if not flt:
+                                setting = self.new_strategy(symbol, Direction.LONG)
+                                strategy_name = setting.get("strategy_name", "")
+                                pure_strategy_name = "_".join(strategy_name.split("_")[1:])
+                                for name in self.cta_engine.strategies.keys():
+                                    pure_name = "_".join(name.split("_")[1:])
+                                    if pure_strategy_name == pure_name:
+                                        flt = True
+                                        break
+                                
+                                if setting and not flt:
+                                    vt_symbol = setting["vt_symbol"]
+                                    instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
+                                    on_timestamp = instrument_data["on_timestamp"]
+                                    if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60:
+                                        new_settings.append(setting)
+                                        if symbol not in self.strategy_short_tokens:
+                                            self.strategy_short_tokens.append(symbol)
+
+                                        msg = f"{symbol} 上涨过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nrank_1h {trending_1h_rank}"
+                                        self.send_ding_talk(msg)
                         
-                        if not flt:
-                            setting = self.new_strategy(symbol, Direction.LONG)
-                            strategy_name = setting.get("strategy_name", "")
-                            pure_strategy_name = "_".join(strategy_name.split("_")[1:])
-                            for name in self.cta_engine.strategies.keys():
-                                pure_name = "_".join(name.split("_")[1:])
-                                if pure_strategy_name == pure_name:
+                        elif direction == "SHORT":
+                            flt = False
+                            for target_token in self.strategy_long_tokens:
+                                pure_target_token = re.sub(r'[^a-zA-Z]', '', target_token)
+                                if pure_symbol == pure_target_token:
                                     flt = True
                                     break
                             
-                            if setting and not flt:
-                                vt_symbol = setting["vt_symbol"]
-                                instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
-                                on_timestamp = instrument_data["on_timestamp"]
-                                if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60:
-                                    new_settings.append(setting)
-                                    if symbol not in self.strategy_long_tokens:
-                                        self.strategy_long_tokens.append(symbol)
+                            if not flt:
+                                setting = self.new_strategy(symbol, Direction.SHORT)
+                                strategy_name = setting.get("strategy_name", "")
+                                pure_strategy_name = "_".join(strategy_name.split("_")[1:])
+                                for name in self.cta_engine.strategies.keys():
+                                    pure_name = "_".join(name.split("_")[1:])
+                                    if pure_strategy_name == pure_name:
+                                        flt = True
+                                        break
+                                
+                                if setting and not flt:
+                                    vt_symbol = setting["vt_symbol"]
+                                    instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
+                                    on_timestamp = instrument_data["on_timestamp"]
+                                    if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60:
+                                        new_settings.append(setting)
+                                        if symbol not in self.strategy_long_tokens:
+                                            self.strategy_long_tokens.append(symbol)
 
-                                    msg = f"{symbol} 下跌过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nrank_1h {trending_1h_rank}"
-                                    self.send_ding_talk(msg)
+                                        msg = f"{symbol} 下跌过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nrank_1h {trending_1h_rank}"
+                                        self.send_ding_talk(msg)
 
         if new_settings:
             # 执行新策略
