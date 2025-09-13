@@ -431,6 +431,7 @@ class TopGainersLosersStrategy(CtaTemplate):
 
     def on_tick(self, tick: TickData):
         self.tick = copy(tick)
+        self.tick_minute_bar_generator.update_tick(tick)
         if not self.trading:
             return
 
@@ -601,9 +602,6 @@ class TopGainersLosersStrategy(CtaTemplate):
             if self.direction == Direction.SHORT:
                 if tick.last_price > self.hour_down + abs(self.hour_up - self.hour_down) * 0.5 or tick.datetime.timestamp() >= self.hour_down_ts + 5 * 60 * 60:
                     self.on_close(tick)
-        
-        # 生成tick_minute_bar
-        self.tick_minute_bar_generator.update_tick(tick)
     
     def add_unit_pos(self, tick_price: float):
         # 计算仓位大小
