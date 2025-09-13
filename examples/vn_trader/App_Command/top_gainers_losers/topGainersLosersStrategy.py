@@ -64,6 +64,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         "leverage",
         "open_count",
         "indicator_inited",
+        "indicator_inited_dt",
         "hour_6_high_cross",
         "hour_6_low_cross",
         "middle_cross",
@@ -144,6 +145,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.open_count = 0
         self.database_loaded = False
         self.indicator_inited = False
+        self.indicator_inited_dt = ""
         self.target_pos_check_ts = 0
         self.target_pos_checking = False
         self.strategy_data = {}                     # 策略数据（包括常量、变量、同步）
@@ -412,14 +414,23 @@ class TopGainersLosersStrategy(CtaTemplate):
         if self.direction == Direction.LONG:
             if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_30_up and self.minute_30_down and self.minute_bar.datetime.timestamp() >= self.hour_up_ts + 30 * 60 and self.minute_15_down >= self.hour_up - abs(self.hour_up - self.hour_down) * 0.25 and self.minute_30_down >= self.hour_up - abs(self.hour_up - self.hour_down) * 0.5:
                 self.indicator_inited = True
+                self.indicator_inited_dt = self.minute_bar_dt
+            
+            elif not self.target_pos:
+                self.indicator_inited = False
+                self.indicator_inited_dt = ""
 
         if self.direction == Direction.SHORT:
             if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_30_up and self.minute_30_down and self.minute_bar.datetime.timestamp() >= self.hour_down_ts + 30 * 60 and self.minute_15_up <= self.hour_down + abs(self.hour_up - self.hour_down) * 0.25 and self.minute_30_up <= self.hour_down + abs(self.hour_up - self.hour_down) * 0.5:
                 self.indicator_inited = True
+                self.indicator_inited_dt = self.minute_bar_dt
+
+            elif not self.target_pos:
+                self.indicator_inited = False
+                self.indicator_inited_dt = ""
 
     def on_tick(self, tick: TickData):
         self.tick = copy(tick)
-        self.tick_minute_bar_generator.update_tick(tick)
         if not self.trading:
             return
 
@@ -458,6 +469,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         # 1h新高新低
         price_cross = False
         if ((self.direction == Direction.LONG and tick.last_price > self.hour_up) or (self.direction == Direction.SHORT and tick.last_price < self.hour_down)):
+            price_cross = True
             self.hour_up = 0
             self.hour_down = 0 
 
@@ -589,6 +601,9 @@ class TopGainersLosersStrategy(CtaTemplate):
             if self.direction == Direction.SHORT:
                 if tick.last_price > self.hour_down + abs(self.hour_up - self.hour_down) * 0.5 or tick.datetime.timestamp() >= self.hour_down_ts + 5 * 60 * 60:
                     self.on_close(tick)
+        
+        # 生成tick_minute_bar
+        self.tick_minute_bar_generator.update_tick(tick)
     
     def add_unit_pos(self, tick_price: float):
         # 计算仓位大小
