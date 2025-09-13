@@ -74,7 +74,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         "hour_up_dt",
         "hour_down",
         "hour_down_ts",
-        "hour_down_dt"
+        "hour_down_dt",
         "hour_6_up",
         "hour_6_down",
         "minute_bar_dt",
