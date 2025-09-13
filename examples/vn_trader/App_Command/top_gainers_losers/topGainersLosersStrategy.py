@@ -350,6 +350,8 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.minute_bar = bar
         self.minute_am.update_bar(bar)
         self.history_minute_am.update_bar(bar)
+        self.minute_15_am.update_bar(bar)
+        self.minute_30_am.update_bar(bar)
         self.calculate_indicator()
 
     def on_minute_5_bar(self, bar: BarData):
@@ -402,7 +404,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                     self.profit_price = self.open_tick_price + abs(self.pos_trending_price - self.open_tick_price) * 0.5
             
             if self.direction == Direction.SHORT:
-                self.pos_trending_price = min(self.pos_trending_price, self.minute_15_down)
+                self.pos_trending_price = min(self.pos_trending_price, self.minute_15_down) if self.pos_trending_price else self.minute_15_down
                 if self.open_tick_price - self.pos_trending_price > abs(self.open_tick_price - self.stop_price) * 3:
                     self.profit_price = self.open_tick_price - abs(self.pos_trending_price - self.open_tick_price) * 0.5
     
