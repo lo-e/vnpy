@@ -584,11 +584,11 @@ class TopGainersLosersStrategy(CtaTemplate):
         if not self.target_pos and self.hour_up and self.hour_down:
             if self.direction == Direction.LONG:
                 if tick.last_price < self.hour_up - abs(self.hour_up - self.hour_down) * 0.5 or tick.datetime.timestamp() >= self.hour_up_ts + 5 * 60 * 60:
-                    self.on_close()
+                    self.on_close(tick)
             
             if self.direction == Direction.SHORT:
                 if tick.last_price > self.hour_down + abs(self.hour_up - self.hour_down) * 0.5 or tick.datetime.timestamp() >= self.hour_down_ts + 5 * 60 * 60:
-                    self.on_close()
+                    self.on_close(tick)
     
     def add_unit_pos(self, tick_price: float):
         # 计算仓位大小
