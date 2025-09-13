@@ -71,8 +71,10 @@ class TopGainersLosersStrategy(CtaTemplate):
         "pos_trending_price",
         "hour_up",
         "hour_up_ts",
+        "hour_up_dt",
         "hour_down",
         "hour_down_ts",
+        "hour_down_dt"
         "hour_6_up",
         "hour_6_down",
         "minute_bar_dt",
@@ -166,8 +168,10 @@ class TopGainersLosersStrategy(CtaTemplate):
 
         self.hour_up: float = 0
         self.hour_up_ts: float = 0
+        self.hour_up_dt: str = ""
         self.hour_down: float = 0
         self.hour_down_ts: float = 0
+        self.hour_down_dt: str = ""
         self.hour_6_up: float = 0
         self.hour_6_down: float = 0
         self.minute_15_up: float = 0
@@ -359,6 +363,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                     self.hour_up = hour_up
                     self.hour_down = hour_down
                     self.hour_up_ts = self.minute_bar.datetime.timestamp()
+                    self.hour_up_dt = datetime.fromtimestamp(self.hour_up_ts).strftime(f"%Y-%m-%d %H:%M:%S")
 
                     if self.history_minute_am.inited:
                         self.hour_6_up, self.hour_6_down = self.history_minute_am.donchian(360)
@@ -371,6 +376,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                     self.hour_down = hour_down
                     self.hour_up = hour_up
                     self.hour_down_ts = self.minute_bar.datetime.timestamp()
+                    self.hour_down_dt = datetime.fromtimestamp(self.hour_down_ts).strftime(f"%Y-%m-%d %H:%M:%S")
 
                     if self.history_minute_am.inited:
                         self.hour_6_up, self.hour_6_down = self.history_minute_am.donchian(360)
@@ -571,11 +577,11 @@ class TopGainersLosersStrategy(CtaTemplate):
         # 无信号退出
         if not self.target_pos and self.hour_up and self.hour_down:
             if self.direction == Direction.LONG:
-                if tick.last_price <= self.hour_down or tick.datetime.timestamp() >= self.hour_up_ts + 5 * 60 * 60:
+                if tick.last_price < self.hour_up - abs(self.hour_up - self.hour_down) * 0.5 or tick.datetime.timestamp() >= self.hour_up_ts + 5 * 60 * 60:
                     self.on_close()
             
             if self.direction == Direction.SHORT:
-                if tick.last_price >= self.hour_up or tick.datetime.timestamp() >= self.hour_down_ts + 5 * 60 * 60:
+                if tick.last_price > self.hour_down + abs(self.hour_up - self.hour_down) * 0.5 or tick.datetime.timestamp() >= self.hour_down_ts + 5 * 60 * 60:
                     self.on_close()
     
     def add_unit_pos(self, tick_price: float):
