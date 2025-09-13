@@ -581,7 +581,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 self.on_close(tick)
 
         # 无信号退出
-        if not self.target_pos and self.hour_up and self.hour_down:
+        if not self.target_pos and self.hour_up and self.hour_down and self.database_loaded:
             if self.direction == Direction.LONG:
                 if tick.last_price < self.hour_up - abs(self.hour_up - self.hour_down) * 0.5 or tick.datetime.timestamp() >= self.hour_up_ts + 5 * 60 * 60:
                     self.on_close(tick)
