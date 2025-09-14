@@ -300,7 +300,7 @@ class TopGainersLosersPortfolio(object):
         
         # 1H趋势
         trending_tokens = set()
-        for i in range(min(len(rise_trending_list), 5)):
+        for i in range(min(len(rise_trending_list), 10)):
             data = rise_trending_list[i]
             symbol = data["symbol"]
             change = data["change"]
@@ -325,7 +325,7 @@ class TopGainersLosersPortfolio(object):
                     
             self.trending_tokens_1h[symbol] = trending_data
 
-        for i in range(min(len(fall_trending_list), 5)):
+        for i in range(min(len(fall_trending_list), 10)):
             data = fall_trending_list[i]
             symbol = data["symbol"]
             change = data["change"]
