@@ -411,23 +411,24 @@ class TopGainersLosersStrategy(CtaTemplate):
                     self.profit_price = self.open_tick_price - abs(self.pos_trending_price - self.open_tick_price) * 0.5
     
     def check_indicator_inited(self):
-        if self.direction == Direction.LONG:
-            if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_30_up and self.minute_30_down and self.minute_bar.datetime.timestamp() >= self.hour_up_ts + 30 * 60 and self.minute_15_down >= self.hour_up - abs(self.hour_up - self.hour_down) * 0.25 and self.minute_30_down >= self.hour_up - abs(self.hour_up - self.hour_down) * 0.5:
-                self.indicator_inited = True
-                self.indicator_inited_dt = self.minute_bar_dt
-            
-            elif not self.target_pos:
-                self.indicator_inited = False
-                self.indicator_inited_dt = ""
+        if not self.target_pos:
+            if self.direction == Direction.LONG:
+                if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_30_up and self.minute_30_down and self.minute_bar.datetime.timestamp() >= self.hour_up_ts + 30 * 60 and self.minute_15_down >= self.hour_up - abs(self.hour_up - self.hour_down) * 0.25 and self.minute_30_down >= self.hour_up - abs(self.hour_up - self.hour_down) * 0.5:
+                    self.indicator_inited = True
+                    self.indicator_inited_dt = self.minute_bar_dt
+                
+                else:
+                    self.indicator_inited = False
+                    self.indicator_inited_dt = ""
 
-        if self.direction == Direction.SHORT:
-            if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_30_up and self.minute_30_down and self.minute_bar.datetime.timestamp() >= self.hour_down_ts + 30 * 60 and self.minute_15_up <= self.hour_down + abs(self.hour_up - self.hour_down) * 0.25 and self.minute_30_up <= self.hour_down + abs(self.hour_up - self.hour_down) * 0.5:
-                self.indicator_inited = True
-                self.indicator_inited_dt = self.minute_bar_dt
+            if self.direction == Direction.SHORT:
+                if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_30_up and self.minute_30_down and self.minute_bar.datetime.timestamp() >= self.hour_down_ts + 30 * 60 and self.minute_15_up <= self.hour_down + abs(self.hour_up - self.hour_down) * 0.25 and self.minute_30_up <= self.hour_down + abs(self.hour_up - self.hour_down) * 0.5:
+                    self.indicator_inited = True
+                    self.indicator_inited_dt = self.minute_bar_dt
 
-            elif not self.target_pos:
-                self.indicator_inited = False
-                self.indicator_inited_dt = ""
+                else:
+                    self.indicator_inited = False
+                    self.indicator_inited_dt = ""
 
     def on_tick(self, tick: TickData):
         self.tick = copy(tick)
