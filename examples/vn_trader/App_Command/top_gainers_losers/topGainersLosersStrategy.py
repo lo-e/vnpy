@@ -84,6 +84,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         "minute_30_down",
         "minute_bar_dt",
         "insufficient_value",
+        "database_history_loaded",
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -144,6 +145,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.leverage = 0
         self.open_count = 0
         self.database_loaded = False
+        self.database_history_loaded = False
         self.indicator_inited = False
         self.indicator_inited_dt = ""
         self.target_pos_check_ts = 0
@@ -172,6 +174,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.minute_15_am: ArrayManager = ArrayManager(15)
         self.minute_30_am: ArrayManager = ArrayManager(30)
 
+        self.hour_up_down_updated = False
         self.hour_up: float = 0
         self.hour_up_ts: float = 0
         self.hour_up_dt: str = ""
@@ -330,6 +333,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                     self.send_ding_talk(msg)
 
                 self.database_loaded = True
+                self.database_history_loaded = True
 
             else:
                 self.on_minute_bar(bar)
@@ -367,7 +371,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         if self.minute_am.inited:
             hour_up, hour_down = self.minute_am.donchian(60)
             if self.direction == Direction.LONG:
-                if (not self.database_loaded and hour_up != self.hour_up) or not self.hour_up:
+                if (not self.database_loaded and not self.database_history_loaded and hour_up != self.hour_up) or self.hour_up_down_updated:
                     self.hour_up = hour_up
                     self.hour_down = hour_down
                     self.hour_up_ts = self.minute_bar.datetime.timestamp()
@@ -380,7 +384,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                     self.middle_cross = False
             
             if self.direction == Direction.SHORT:
-                if (not self.database_loaded and hour_down != self.hour_down) or not self.hour_down:
+                if (not self.database_loaded and not self.database_history_loaded and hour_down != self.hour_down) or self.hour_up_down_updated:
                     self.hour_down = hour_down
                     self.hour_up = hour_up
                     self.hour_down_ts = self.minute_bar.datetime.timestamp()
@@ -472,8 +476,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         price_cross = False
         if self.database_loaded and ((self.direction == Direction.LONG and tick.last_price > self.hour_up) or (self.direction == Direction.SHORT and tick.last_price < self.hour_down)):
             price_cross = True
-            self.hour_up = 0
-            self.hour_down = 0 
+            self.hour_up_down_updated = True 
 
         # 开仓判断
         if not self.target_pos and self.database_loaded and self.indicator_inited and price_cross and not self.stop_open and not self.closed:
