@@ -470,13 +470,13 @@ class TopGainersLosersStrategy(CtaTemplate):
 
         # 1h新高新低
         price_cross = False
-        if ((self.direction == Direction.LONG and tick.last_price > self.hour_up) or (self.direction == Direction.SHORT and tick.last_price < self.hour_down)):
+        if self.database_loaded and ((self.direction == Direction.LONG and tick.last_price > self.hour_up) or (self.direction == Direction.SHORT and tick.last_price < self.hour_down)):
             price_cross = True
             self.hour_up = 0
             self.hour_down = 0 
 
         # 开仓判断
-        if not self.target_pos and self.indicator_inited and price_cross and not self.stop_open and not self.closed:
+        if not self.target_pos and self.database_loaded and self.indicator_inited and price_cross and not self.stop_open and not self.closed:
             self.add_unit_pos(tick.last_price)
 
             # 发送订单
@@ -539,7 +539,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.cta_engine.main_engine.send_ding_talk(msg)
 
         # 平仓判断
-        if self.target_pos and ((self.direction == Direction.LONG and tick.datetime.timestamp() >= self.hour_up_ts + 6 * 60 * 60) or (self.direction == Direction.SHORT and tick.datetime.timestamp() >= self.hour_down_ts + 6 * 60 * 60)):
+        if self.target_pos and self.database_loaded ((self.direction == Direction.LONG and tick.datetime.timestamp() >= self.hour_up_ts + 6 * 60 * 60) or (self.direction == Direction.SHORT and tick.datetime.timestamp() >= self.hour_down_ts + 6 * 60 * 60)):
             self.target_pos = 0
             self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
             if not self.stop_open:
@@ -595,7 +595,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                 self.on_close(tick)
 
         # 无信号退出
-        if not self.target_pos and self.hour_up and self.hour_down and self.database_loaded:
+        if not self.target_pos and self.database_loaded and self.hour_up and self.hour_down:
             if self.direction == Direction.LONG:
                 if tick.last_price < self.hour_up - abs(self.hour_up - self.hour_down) * 0.5 or tick.datetime.timestamp() >= self.hour_up_ts + 6 * 60 * 60:
                     self.on_close(tick)
