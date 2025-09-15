@@ -365,7 +365,7 @@ class TopGainersLosersPortfolio(object):
                 trending_1h_time = trending_data["trending_1h_time"]
                 onboard_ts = trending_data["onboard_ts"]
 
-                if change >= 5:
+                if abs(change) >= 5:
                     # 信号生成
                     signal_dt_str = self.signal_tokens_1h.get(symbol, "")
                     signal_ts = datetime.strptime(signal_dt_str, f"%Y-%m-%d %H:%M:%S").timestamp() if signal_dt_str else 0
