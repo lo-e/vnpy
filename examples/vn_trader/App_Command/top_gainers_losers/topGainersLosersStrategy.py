@@ -37,6 +37,10 @@ class TopGainersLosersStrategy(CtaTemplate):
         "exchange",
         "exchange_user",
         "direction",
+        "trending_mean_1h",
+        "reverse_mean_1h",
+        "trending_mean_24h",
+        "reverse_mean_24h",
         "manual_close",
         "datetime"
     ]
@@ -92,6 +96,10 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.exchange: Exchange = Exchange.NONE
         self.exchange_user:str = ""
         self.direction: Direction = Direction.NET
+        self.trending_mean_1h = 0
+        self.reverse_mean_1h = 0
+        self.trending_mean_24h = 0
+        self.reverse_mean_24h = 0
         self.manual_close = False
         self.datetime = ""
 

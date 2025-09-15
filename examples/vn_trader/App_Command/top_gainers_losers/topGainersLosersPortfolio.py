@@ -224,6 +224,10 @@ class TopGainersLosersPortfolio(object):
                 "timestamp": dt.timestamp(),
                 "vt_symbol": strategy.vt_symbol,
                 "direction": strategy.direction.value,
+                "trending_mean_1h": strategy.trending_mean_1h,
+                "reverse_mean_1h": strategy.reverse_mean_1h,
+                "trending_mean_24h": strategy.trending_mean_24h,
+                "reverse_mean_24h": strategy.reverse_mean_24h,
                 "pnl": f"{pnl:.2f}%"}
         
         date_str = dt.strftime(f"%Y-%m-%d")
@@ -366,6 +370,23 @@ class TopGainersLosersPortfolio(object):
                 onboard_ts = trending_data["onboard_ts"]
 
                 if abs(change) >= 5:
+                    # 24h趋势数据
+                    trending_mean_1h = 0
+                    reverse_mean_1h = 0
+                    trending_mean_24h = 0
+                    reverse_mean_24h = 0
+                    if change >= 0:
+                        trending_mean_1h = self.rise_data_list_1h[1]["change"]
+                        reverse_mean_1h = self.rise_data_list_1h[2]["change"]
+                        trending_mean_24h = self.rise_data_list_24h[1]["change"]
+                        reverse_mean_24h = self.rise_data_list_24h[2]["change"]
+                    
+                    else:
+                        trending_mean_1h = self.rise_data_list_1h[2]["change"]
+                        reverse_mean_1h = self.rise_data_list_1h[1]["change"]
+                        trending_mean_24h = self.rise_data_list_24h[2]["change"]
+                        reverse_mean_24h = self.rise_data_list_24h[1]["change"]
+
                     # 信号生成
                     signal_dt_str = self.signal_tokens_1h.get(symbol, "")
                     signal_ts = datetime.strptime(signal_dt_str, f"%Y-%m-%d %H:%M:%S").timestamp() if signal_dt_str else 0
@@ -387,7 +408,7 @@ class TopGainersLosersPortfolio(object):
                                     break
 
                             if not flt:
-                                setting = self.new_strategy(symbol, Direction.LONG)
+                                setting = self.new_strategy(symbol, Direction.LONG, trending_mean_1h, reverse_mean_1h, trending_mean_24h, reverse_mean_24h)
                                 strategy_name = setting.get("strategy_name", "")
                                 pure_strategy_name = "_".join(strategy_name.split("_")[1:])
                                 for name in self.cta_engine.strategies.keys():
@@ -417,7 +438,7 @@ class TopGainersLosersPortfolio(object):
                                     break
                             
                             if not flt:
-                                setting = self.new_strategy(symbol, Direction.SHORT)
+                                setting = self.new_strategy(symbol, Direction.SHORT, trending_mean_1h, reverse_mean_1h, trending_mean_24h, reverse_mean_24h)
                                 strategy_name = setting.get("strategy_name", "")
                                 pure_strategy_name = "_".join(strategy_name.split("_")[1:])
                                 for name in self.cta_engine.strategies.keys():
@@ -546,7 +567,7 @@ class TopGainersLosersPortfolio(object):
     def on_trending_data_5m(self, data: tuple):
         pass
 
-    def new_strategy(self, token:str, direction: Direction):
+    def new_strategy(self, token:str, direction: Direction, trending_mean_1h: float, reverse_mean_1h: float, trending_mean_24h: float, reverse_mean_24h: float):
         # 确认合约
         vt_symbol = ""
         exchange = ""
@@ -596,6 +617,10 @@ class TopGainersLosersPortfolio(object):
                    "exchange": exchange,
                    "exchange_user": exchange_user,
                    "direction": direction_str,
+                   "trending_mean_1h": trending_mean_1h,
+                   "reverse_mean_1h": reverse_mean_1h,
+                   "trending_mean_24h": trending_mean_24h,
+                   "reverse_mean_24h": reverse_mean_24h,
                    "start": True,
                    "manual_close": False,
                    "datetime": datetime.now().strftime(f"%Y-%m-%d %H:%M:%S")
