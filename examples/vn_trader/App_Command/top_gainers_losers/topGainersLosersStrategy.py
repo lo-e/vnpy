@@ -164,6 +164,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.insufficient_value = False             # 开仓价值不满足最低
         self.loading_database = False               # 正在加载数据
         self.bar_lack = False                       # 数据缺失
+        self.bar_lack_count = 0                     # 数据缺失计数
         self.hour_6_high_cross = False              # 6H最高价
         self.hour_6_low_cross = False               # 6H最低价
         self.middle_cross = False                   # 中线突破
@@ -261,9 +262,25 @@ class TopGainersLosersStrategy(CtaTemplate):
                 self.database_minute_bar_list = bar_list
 
             else:
-                self.on_close()
+                self.bar_lack_count += 1
+                if self.bar_lack_count >= 3:
+                    if not self.target_pos:
+                        self.on_close()
+                    
+                    msg = f"{self.vt_symbol} 初始化数据加载失败，检查代码"
+                    self.send_ding_talk(msg)
 
-                msg = f"\n初始化数据缺失\n\ncount {len(data_list)}\nlack {bar_lack}"
+                else:
+                    # 重新下载数据
+                    if self.direction == Direction.LONG:
+                        direction = "LONG"
+
+                    elif self.direction == Direction.SHORT:
+                        direction = "SHORT"
+
+                    self.portfolio.bar_download_queue.put((self.vt_symbol, direction))
+
+                msg = f"{self.vt_symbol} 初始化数据缺失\n\ncount {len(data_list)}\nlack {bar_lack}"
                 self.send_ding_talk(msg)
 
         except Exception as e:
@@ -335,13 +352,36 @@ class TopGainersLosersStrategy(CtaTemplate):
 
                 self.bar_lack = bar_lack
                 if self.bar_lack:
-                    self.on_close()
+                    self.bar_lack_count += 1
+                    if self.bar_lack_count >= 3:
+                        if not self.target_pos:
+                            self.on_close()
+                        
+                        msg = f"{self.vt_symbol} 初始化数据加载失败，检查代码"
+                        self.send_ding_talk(msg)
+                    
+                    else:
+                        # 重新下载数据
+                        self.database_minute_bar_list = []
+                        self.minute_am: ArrayManager = ArrayManager(60)
+                        self.history_minute_am: ArrayManager = ArrayManager(360)
+                        self.minute_15_am: ArrayManager = ArrayManager(15)
+                        self.minute_30_am: ArrayManager = ArrayManager(30)
+
+                        if self.direction == Direction.LONG:
+                            direction = "LONG"
+
+                        elif self.direction == Direction.SHORT:
+                            direction = "SHORT"
+
+                        self.portfolio.bar_download_queue.put((self.vt_symbol, direction))
                     
                     msg = f"{self.vt_symbol} 初始化数据缺失\n\ndatabase {len(self.database_minute_bar_list)}\ntick {len(self.tick_minute_bar_list)}"
                     self.send_ding_talk(msg)
 
-                self.database_loaded = True
-                self.database_history_loaded = True
+                else:
+                    self.database_loaded = True
+                    self.database_history_loaded = True
 
             else:
                 self.on_minute_bar(bar)
@@ -411,18 +451,6 @@ class TopGainersLosersStrategy(CtaTemplate):
 
         if self.minute_30_am.inited:
             self.minute_30_up, self.minute_30_down = self.minute_30_am.donchian(30)
-
-        # 动态止盈价格
-        if self.target_pos and self.open_tick_price and self.stop_price:
-            if self.direction == Direction.LONG:
-                self.pos_trending_price = max(self.pos_trending_price, self.minute_15_up)
-                if self.pos_trending_price - self.open_tick_price > abs(self.open_tick_price - self.stop_price) * 3:
-                    self.profit_price = self.open_tick_price + abs(self.pos_trending_price - self.open_tick_price) * 0.5
-            
-            if self.direction == Direction.SHORT:
-                self.pos_trending_price = min(self.pos_trending_price, self.minute_15_down) if self.pos_trending_price else self.minute_15_down
-                if self.open_tick_price - self.pos_trending_price > abs(self.open_tick_price - self.stop_price) * 3:
-                    self.profit_price = self.open_tick_price - abs(self.pos_trending_price - self.open_tick_price) * 0.5
     
     def check_indicator_inited(self):
         if not self.target_pos:
@@ -658,6 +686,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         if tick:
             self.close_tick_price = tick.last_price
             self.close_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+
         self.closed = True
         if self.pnl:
             self.portfolio.on_pnl(self, self.pnl)
