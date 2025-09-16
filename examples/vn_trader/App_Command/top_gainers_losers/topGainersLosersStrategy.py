@@ -552,7 +552,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             self.cta_engine.main_engine.send_ding_talk(msg)
 
         # 平仓判断
-        if self.target_pos and self.database_loaded and ((self.direction == Direction.LONG and tick.datetime.timestamp() >= self.hour_up_ts + 6 * 60 * 60) or (self.direction == Direction.SHORT and tick.datetime.timestamp() >= self.hour_down_ts + 6 * 60 * 60)):
+        if self.target_pos and self.database_loaded and ((self.direction == Direction.LONG and tick.last_price < self.hour_down) or (self.direction == Direction.SHORT and tick.last_price > self.hour_up)):
             self.target_pos = 0
             self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
             if not self.stop_open:
