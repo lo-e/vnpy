@@ -409,7 +409,7 @@ class TopGainersLosersPortfolio(object):
                                         break
 
                                 if not flt:
-                                    setting = self.new_strategy(symbol, Direction.LONG, trending_mean_1h, reverse_mean_1h, trending_mean_24h, reverse_mean_24h)
+                                    setting = self.new_strategy(symbol, Direction.LONG, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
                                     strategy_name = setting.get("strategy_name", "")
                                     pure_strategy_name = "_".join(strategy_name.split("_")[1:])
                                     for name in self.cta_engine.strategies.keys():
