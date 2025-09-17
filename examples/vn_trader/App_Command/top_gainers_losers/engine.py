@@ -108,6 +108,27 @@ class TopGainersLosersEngine(BaseEngine):
 
         self.register_event()
         self.write_log(f"趋势涨跌策略引擎初始化成功\t策略数：{len(self.strategies)}")
+        
+        # 启动setting.json更新线程
+        update_setting_thread = Thread(target=self.run_update_setting)
+        update_setting_thread.start()
+
+    def run_update_setting(self):
+        # 处理setting.json更新
+        while True:
+            try:
+                type, data = self.setting_update_queue.get(block=True, timeout=1)
+                if type == "new":
+                    self.new_strategy_setting(data)
+
+                elif type == "remove":
+                    self.remove_strategy_setting(data)
+
+            except Empty:
+                pass
+
+            except Exception as e:
+                pass
 
     def close(self):
         self.stop_all_strategies()
@@ -137,21 +158,6 @@ class TopGainersLosersEngine(BaseEngine):
             
             else:
                 self.gateway_delay = False
-
-        # 处理setting.json更新
-        try:
-            type, data = self.setting_update_queue.get(block=True, timeout=1)
-            if type == "new":
-                self.new_strategy_setting(data)
-
-            elif type == "remove":
-                self.remove_strategy_setting(data)
-
-        except Empty:
-            pass
-
-        except Exception as e:
-            pass
 
     def process_tick_event(self, event: Event):
         tick = event.data

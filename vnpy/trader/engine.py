@@ -650,6 +650,14 @@ class OmsEngine(BaseEngine):
         tick: TickData = event.data
         self.ticks[tick.vt_symbol] = tick
 
+        """ fake """
+        # tick_dt = tick.datetime.replace(tzinfo=None)
+        # delay = time.time() - tick_dt.timestamp()
+        # if delay >= 1:
+        #     dt = datetime.now().replace(microsecond=0)
+        #     msg = f"{dt}\t{tick.vt_symbol}\tTick数据延迟 时长 {delay:.2f}s"
+        #     print(msg)
+
     def process_order_event(self, event: Event) -> None:
         """"""
         order: OrderData = event.data
