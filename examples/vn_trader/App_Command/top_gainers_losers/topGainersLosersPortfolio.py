@@ -369,7 +369,7 @@ class TopGainersLosersPortfolio(object):
                 trending_1h_time = trending_data["trending_1h_time"]
                 onboard_ts = trending_data["onboard_ts"]
 
-                if abs(change) >= 0:
+                if abs(change) >= 1:
                     # 24h趋势数据
                     trending_mean_1h = 0
                     reverse_mean_1h = 0
@@ -427,8 +427,8 @@ class TopGainersLosersPortfolio(object):
                                             if symbol not in self.strategy_long_tokens:
                                                 self.strategy_long_tokens.append(symbol)
 
-                                            msg = f"{symbol} 上涨过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nrank_1h {trending_1h_rank}"
-                                            self.send_ding_talk(msg)
+                                            # msg = f"{symbol} 上涨过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nrank_1h {trending_1h_rank}"
+                                            # self.send_ding_talk(msg)
                             
                             elif direction == "SHORT":
                                 flt = False
@@ -457,8 +457,8 @@ class TopGainersLosersPortfolio(object):
                                             if symbol not in self.strategy_short_tokens:
                                                 self.strategy_short_tokens.append(symbol)
 
-                                            msg = f"{symbol} 下跌过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nrank_1h {trending_1h_rank}"
-                                            self.send_ding_talk(msg)
+                                            # msg = f"{symbol} 下跌过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nrank_1h {trending_1h_rank}"
+                                            # self.send_ding_talk(msg)
 
         if new_settings:
             # 执行新策略
