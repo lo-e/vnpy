@@ -88,6 +88,7 @@ class TopGainersLosersEngine(BaseEngine):
         self.offset_converter = OffsetConverter(self.main_engine)
         self.portfolio: TopGainersLosersPortfolio = None
         self.gateway_delay = False
+        self.setting_update_queue = Queue()
 
     def init_engine(self):
         # 获取setting
@@ -136,6 +137,21 @@ class TopGainersLosersEngine(BaseEngine):
             
             else:
                 self.gateway_delay = False
+
+        # 处理setting.json更新
+        try:
+            type, data = self.setting_update_queue.get(block=True, timeout=1)
+            if type == "new":
+                self.new_strategy_setting(data)
+
+            elif type == "remove":
+                self.remove_strategy_setting(data)
+
+        except Empty:
+            pass
+
+        except Exception as e:
+            pass
 
     def process_tick_event(self, event: Event):
         tick = event.data

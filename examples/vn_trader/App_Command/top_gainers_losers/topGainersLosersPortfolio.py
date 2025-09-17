@@ -471,7 +471,7 @@ class TopGainersLosersPortfolio(object):
                 self.bar_download_queue.put((vt_symbol, direction))
 
             # 添加setting
-            self.cta_engine.new_strategy_setting(new_settings)
+            self.cta_engine.setting_update_queue.put(("new", new_settings))
 
             # 订阅合约
             self.cta_engine.subscribe(list(new_vt_symbols))
@@ -1159,7 +1159,7 @@ class TopGainersLosersPortfolio(object):
                                     self.cta_engine.unsubscribe([strategy.vt_symbol])
 
                                 # 清除setting
-                                self.cta_engine.remove_strategy_setting([strategy.strategy_name])
+                                self.cta_engine.setting_update_queue.put(("remove", [strategy.strategy_name]))
 
                                 # 策略引擎关闭策略
                                 strategy.cta_engine.remove_strategy(strategy.strategy_name)
