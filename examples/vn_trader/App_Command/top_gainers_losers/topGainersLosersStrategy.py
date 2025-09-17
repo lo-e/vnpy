@@ -361,12 +361,6 @@ class TopGainersLosersStrategy(CtaTemplate):
                         self.send_ding_talk(msg)
                     
                     else:
-                        # 重新下载数据
-                        self.database_minute_bar_list = []
-                        self.minute_am: ArrayManager = ArrayManager(60)
-                        self.history_minute_am: ArrayManager = ArrayManager(360)
-                        self.minute_15_am: ArrayManager = ArrayManager(15)
-                        self.minute_30_am: ArrayManager = ArrayManager(30)
 
                         if self.direction == Direction.LONG:
                             direction = "LONG"
@@ -378,6 +372,13 @@ class TopGainersLosersStrategy(CtaTemplate):
                     
                     msg = f"{self.vt_symbol} 初始化数据缺失\n\ndatabase {len(self.database_minute_bar_list)}\ntick {len(self.tick_minute_bar_list)}"
                     self.send_ding_talk(msg)
+
+                    # 重新下载数据
+                    self.database_minute_bar_list = []
+                    self.minute_am: ArrayManager = ArrayManager(60)
+                    self.history_minute_am: ArrayManager = ArrayManager(360)
+                    self.minute_15_am: ArrayManager = ArrayManager(15)
+                    self.minute_30_am: ArrayManager = ArrayManager(30)
 
                 else:
                     self.database_loaded = True
