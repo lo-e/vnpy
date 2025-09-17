@@ -74,6 +74,8 @@ class TopGainersLosersPortfolio(object):
         self.pnl_data = {}
         self.loss_list = []
         self.pnl = 0
+        self.setting_update_needed = False
+        self.setting_update_ts = 0
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -470,8 +472,8 @@ class TopGainersLosersPortfolio(object):
                 self.cta_engine.new_strategy(setting)
                 self.bar_download_queue.put((vt_symbol, direction))
 
-            # 添加setting
-            self.cta_engine.setting_update_queue.put(("new", new_settings))
+            # 更新setting.json
+            self.setting_update_needed = True
 
             # 订阅合约
             self.cta_engine.subscribe(list(new_vt_symbols))
@@ -1158,14 +1160,20 @@ class TopGainersLosersPortfolio(object):
                                 if symbol not in self.strategy_long_tokens and symbol not in self.strategy_short_tokens:
                                     self.cta_engine.unsubscribe([strategy.vt_symbol])
 
-                                # 清除setting
-                                self.cta_engine.setting_update_queue.put(("remove", [strategy.strategy_name]))
-
                                 # 策略引擎关闭策略
                                 strategy.cta_engine.remove_strategy(strategy.strategy_name)
 
+                                # 更新setting.json
+                                self.setting_update_needed = True
+
                         # 同步策略数据
                         strategy.check_save_data()
+
+                # 引擎更新setting.json
+                if self.setting_update_needed and time.time() > self.setting_update_ts + 5:
+                    self.setting_update_needed = False
+                    self.setting_update_ts = time.time()
+                    self.cta_engine.update_setting()
 
             except Exception as e:
                 # msg = f"核查策略目标仓位出错\n\n{e}"

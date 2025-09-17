@@ -88,7 +88,6 @@ class TopGainersLosersEngine(BaseEngine):
         self.offset_converter = OffsetConverter(self.main_engine)
         self.portfolio: TopGainersLosersPortfolio = None
         self.gateway_delay = False
-        self.setting_update_queue = Queue()
 
     def init_engine(self):
         # 获取setting
@@ -108,27 +107,18 @@ class TopGainersLosersEngine(BaseEngine):
 
         self.register_event()
         self.write_log(f"趋势涨跌策略引擎初始化成功\t策略数：{len(self.strategies)}")
-        
-        # 启动setting.json更新线程
-        update_setting_thread = Thread(target=self.run_update_setting)
-        update_setting_thread.start()
 
-    def run_update_setting(self):
-        # 处理setting.json更新
-        while True:
-            try:
-                type, data = self.setting_update_queue.get(block=True, timeout=1)
-                if type == "new":
-                    self.new_strategy_setting(data)
-
-                elif type == "remove":
-                    self.remove_strategy_setting(data)
-
-            except Empty:
-                pass
-
-            except Exception as e:
-                pass
+    def update_setting(self):
+        # 更新setting.json
+        dir_path = Path(os.path.dirname(os.path.realpath(__file__)))
+        file_path = dir_path.joinpath("setting.json")
+        setting = load_json_path(file_path)
+        signal_list = []
+        for name in self.strategies.copy().keys():
+            strategy: TopGainersLosersStrategy = self.strategies[name]
+            signal_list.append(strategy.setting)
+        setting["signal"] = signal_list
+        save_json(file_path, setting)
 
     def close(self):
         self.stop_all_strategies()
