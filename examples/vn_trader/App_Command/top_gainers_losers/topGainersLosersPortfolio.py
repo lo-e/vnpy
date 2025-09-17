@@ -389,7 +389,7 @@ class TopGainersLosersPortfolio(object):
                         trending_mean_24h = self.rise_data_list_24h[2]["change"]
                         reverse_mean_24h = self.rise_data_list_24h[1]["change"]
 
-                    if abs(trending_mean_1h) >= abs(reverse_mean_1h) * 2 or abs(trending_mean_24h) >= abs(reverse_mean_24h) * 2:
+                    if abs(trending_mean_1h) >= abs(reverse_mean_1h) * 2:
                         # 信号生成
                         signal_dt_str = self.signal_tokens_1h.get(symbol, "")
                         signal_ts = datetime.strptime(signal_dt_str, f"%Y-%m-%d %H:%M:%S").timestamp() if signal_dt_str else 0
@@ -1174,6 +1174,8 @@ class TopGainersLosersPortfolio(object):
                     self.setting_update_needed = False
                     self.setting_update_ts = time.time()
                     self.cta_engine.update_setting()
+
+                time.sleep(0.1)
 
             except Exception as e:
                 # msg = f"核查策略目标仓位出错\n\n{e}"
