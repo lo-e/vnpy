@@ -541,7 +541,8 @@ class DownloadThread(object):
 
                 if self.show_progress:
                     print(f"{vt_symbol} 数据库起止时间\t{db_start_dt}\t{db_end_dt}")
-                if db_end_dt:
+
+                if db_end_dt and from_time < db_end_dt:
                     from_time = db_end_dt - timedelta(minutes=10)
 
         to_time = datetime(self.to_date.year, self.to_date.month, self.to_date.day)

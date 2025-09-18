@@ -391,7 +391,7 @@ class TopGainersLosersPortfolio(object):
                         trending_mean_24h = self.rise_data_list_24h[2]["change"]
                         reverse_mean_24h = self.rise_data_list_24h[1]["change"]
 
-                    if abs(trending_mean_1h) >= abs(reverse_mean_1h) * 2:
+                    if (abs(trending_mean_1h) >= abs(reverse_mean_1h) * 2) or (abs(trending_mean_24h) >= abs(reverse_mean_24h) * 2):
                         # 信号生成
                         signal_dt_str = self.signal_tokens_1h.get(symbol, "")
                         signal_ts = datetime.strptime(signal_dt_str, f"%Y-%m-%d %H:%M:%S").timestamp() if signal_dt_str else 0
@@ -857,19 +857,20 @@ class TopGainersLosersPortfolio(object):
                         self.download_engine.delete_history_data(target_dir=self.name)
 
                         # 开始下载
+                        hour_count = 3*24+1
                         if exchange == "OKX":
                             self.download_engine.download_from_okx(
-                                contract_list=[symbol], hours=7, from_data_base=False, save_to=self.name, delete_history_data=False, show_progress=False
+                                contract_list=[symbol], hours=hour_count, from_data_base=True, save_to=self.name, delete_history_data=False, show_progress=False
                             )
                         
                         elif exchange == "BYBIT":
                             self.download_engine.download_from_bybit(
-                                contract_list=[symbol], hours=7, from_data_base=False, save_to=self.name, delete_history_data=False, show_progress=False
+                                contract_list=[symbol], hours=hour_count, from_data_base=True, save_to=self.name, delete_history_data=False, show_progress=False
                             )
                         
                         elif exchange == "BINANCE":
                             self.download_engine.download_from_binance(
-                                contract_list=[symbol], hours=7, from_data_base=False, save_to=self.name, delete_history_data=False, show_progress=False
+                                contract_list=[symbol], hours=hour_count, from_data_base=True, save_to=self.name, delete_history_data=False, show_progress=False
                             )
 
                         success = True

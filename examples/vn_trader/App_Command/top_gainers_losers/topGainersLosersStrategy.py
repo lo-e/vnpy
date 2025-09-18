@@ -179,7 +179,8 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.minute_bar: BarData = None
         self.minute_bar_dt: str = ""
         self.minute_am: ArrayManager = ArrayManager(60)
-        self.history_minute_am: ArrayManager = ArrayManager(360)
+        self.history_hour = 3*24
+        self.history_minute_am: ArrayManager = ArrayManager(self.history_hour*60)
         self.minute_15_am: ArrayManager = ArrayManager(15)
         self.minute_30_am: ArrayManager = ArrayManager(30)
 
@@ -231,7 +232,7 @@ class TopGainersLosersStrategy(CtaTemplate):
             mc = MongoClient()
             db = mc[MINUTE_DB_NAME]
             collection = db[self.vt_symbol]
-            data_from = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(hours=7)
+            data_from = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(hours=self.history_hour+1)
             flt = {"datetime": {"$gte": data_from}}
             cursor = collection.find(flt).sort('datetime')
 
@@ -295,43 +296,44 @@ class TopGainersLosersStrategy(CtaTemplate):
     def process_tick_minute_bar(self, bar: BarData):
         try:
             self.tick_minute_bar_list.append(bar)
-            if not self.database_loaded and len(self.database_minute_bar_list) < 359:
+            if not self.database_loaded and not self.database_minute_bar_list:
                 return
 
             # 回测数据库Bar数据
             if not self.database_loaded:
                 bar_lack = True
-                for i in range(len(self.database_minute_bar_list)):
-                    database_minute_bar: BarData = self.database_minute_bar_list[i]
-                    if i < len(self.database_minute_bar_list) - 1:
-                        self.on_minute_bar(database_minute_bar)
-                    
-                    else:
-                        for j in range(len(self.tick_minute_bar_list)):
-                            tick_minute_bar: BarData = self.tick_minute_bar_list[j]
-                            if tick_minute_bar.datetime < database_minute_bar.datetime:
-                                continue
+                if len(self.database_minute_bar_list) >= self.history_hour*60:
+                    for i in range(len(self.database_minute_bar_list)):
+                        database_minute_bar: BarData = self.database_minute_bar_list[i]
+                        if i < len(self.database_minute_bar_list) - 1:
+                            self.on_minute_bar(database_minute_bar)
+                        
+                        else:
+                            for j in range(len(self.tick_minute_bar_list)):
+                                tick_minute_bar: BarData = self.tick_minute_bar_list[j]
+                                if tick_minute_bar.datetime < database_minute_bar.datetime:
+                                    continue
 
-                            elif tick_minute_bar.datetime == database_minute_bar.datetime:
-                                bar_lack = False
-                                database_minute_bar.high_price = max(database_minute_bar.high_price, tick_minute_bar.high_price)
-                                database_minute_bar.low_price = min(database_minute_bar.low_price, tick_minute_bar.low_price)
-                                self.on_minute_bar(database_minute_bar)
+                                elif tick_minute_bar.datetime == database_minute_bar.datetime:
+                                    bar_lack = False
+                                    database_minute_bar.high_price = max(database_minute_bar.high_price, tick_minute_bar.high_price)
+                                    database_minute_bar.low_price = min(database_minute_bar.low_price, tick_minute_bar.low_price)
+                                    self.on_minute_bar(database_minute_bar)
 
-                            else:
-                                if bar_lack:
-                                    if tick_minute_bar.datetime == database_minute_bar.datetime + timedelta(minutes=1):
-                                        bar_lack = False
-                                        self.on_minute_bar(database_minute_bar)
-                                
-                                if not bar_lack:
-                                    self.on_minute_bar(tick_minute_bar)
-                                
                                 else:
-                                    tick_first_bar_dt = self.tick_minute_bar_list[0].datetime
-                                    msg = f"{self.vt_symbol} Bar数据缺失\ndatabase {database_minute_bar.datetime}\ntick {tick_first_bar_dt}"
-                                    self.send_ding_talk(msg)
-                                    break
+                                    if bar_lack:
+                                        if tick_minute_bar.datetime == database_minute_bar.datetime + timedelta(minutes=1):
+                                            bar_lack = False
+                                            self.on_minute_bar(database_minute_bar)
+                                    
+                                    if not bar_lack:
+                                        self.on_minute_bar(tick_minute_bar)
+                                    
+                                    else:
+                                        tick_first_bar_dt = self.tick_minute_bar_list[0].datetime
+                                        msg = f"{self.vt_symbol} Bar数据缺失\ndatabase {database_minute_bar.datetime}\ntick {tick_first_bar_dt}"
+                                        self.send_ding_talk(msg)
+                                        break
 
                 self.bar_lack = bar_lack
                 if self.bar_lack:
@@ -359,7 +361,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                     # 重新下载数据
                     self.database_minute_bar_list = []
                     self.minute_am: ArrayManager = ArrayManager(60)
-                    self.history_minute_am: ArrayManager = ArrayManager(360)
+                    self.history_minute_am: ArrayManager = ArrayManager(self.history_hour*60)
                     self.minute_15_am: ArrayManager = ArrayManager(15)
                     self.minute_30_am: ArrayManager = ArrayManager(30)
 
@@ -410,7 +412,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                     self.hour_up_dt = datetime.fromtimestamp(self.hour_up_ts).strftime(f"%Y-%m-%d %H:%M:%S")
 
                     if self.history_minute_am.inited:
-                        self.history_up, self.history_down = self.history_minute_am.donchian(360)
+                        self.history_up, self.history_down = self.history_minute_am.donchian(self.history_hour*60)
 
                     if self.hour_up and self.history_up and self.hour_up >= self.history_up * 0.98:
                         self.history_high_cross = True
@@ -429,7 +431,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                     self.hour_down_dt = datetime.fromtimestamp(self.hour_down_ts).strftime(f"%Y-%m-%d %H:%M:%S")
 
                     if self.history_minute_am.inited:
-                        self.history_up, self.history_down = self.history_minute_am.donchian(360)
+                        self.history_up, self.history_down = self.history_minute_am.donchian(self.history_hour*60)
 
                     if self.hour_down and self.history_down and self.hour_down <= self.history_down * 1.02:
                         self.history_low_cross = True
