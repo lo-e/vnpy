@@ -38,6 +38,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         "exchange_user",
         "direction",
         "change",
+        "volume_24h",
         "trending_mean_1h",
         "reverse_mean_1h",
         "trending_mean_24h",
@@ -98,6 +99,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.exchange_user:str = ""
         self.direction: Direction = Direction.NET
         self.change = 0
+        self.volume_24h = ""
         self.trending_mean_1h = 0
         self.reverse_mean_1h = 0
         self.trending_mean_24h = 0
