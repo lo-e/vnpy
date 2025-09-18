@@ -226,6 +226,7 @@ class TopGainersLosersPortfolio(object):
                 "timestamp": dt.timestamp(),
                 "vt_symbol": strategy.vt_symbol,
                 "direction": strategy.direction.value,
+                "change": strategy.change,
                 "trending_mean_1h": strategy.trending_mean_1h,
                 "reverse_mean_1h": strategy.reverse_mean_1h,
                 "trending_mean_24h": strategy.trending_mean_24h,
@@ -411,7 +412,7 @@ class TopGainersLosersPortfolio(object):
                                         break
 
                                 if not flt:
-                                    setting = self.new_strategy(symbol, Direction.LONG, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
+                                    setting = self.new_strategy(symbol, Direction.LONG, round(change, 2), round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
                                     strategy_name = setting.get("strategy_name", "")
                                     pure_strategy_name = "_".join(strategy_name.split("_")[1:])
                                     for name in self.cta_engine.strategies.keys():
@@ -570,7 +571,7 @@ class TopGainersLosersPortfolio(object):
     def on_trending_data_5m(self, data: tuple):
         pass
 
-    def new_strategy(self, token:str, direction: Direction, trending_mean_1h: float, reverse_mean_1h: float, trending_mean_24h: float, reverse_mean_24h: float):
+    def new_strategy(self, token:str, direction: Direction, change: float, trending_mean_1h: float, reverse_mean_1h: float, trending_mean_24h: float, reverse_mean_24h: float):
         # 确认合约
         vt_symbol = ""
         exchange = ""
@@ -620,6 +621,7 @@ class TopGainersLosersPortfolio(object):
                    "exchange": exchange,
                    "exchange_user": exchange_user,
                    "direction": direction_str,
+                   "change": change,
                    "trending_mean_1h": trending_mean_1h,
                    "reverse_mean_1h": reverse_mean_1h,
                    "trending_mean_24h": trending_mean_24h,
