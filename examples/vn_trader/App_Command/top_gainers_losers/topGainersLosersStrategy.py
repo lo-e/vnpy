@@ -438,7 +438,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                         self.history_low_cross = False
 
                     self.hour_up_down_updated = False
-                    self.stop_open = False            
+                    self.stop_open = False
         
         if self.minute_15_am.inited:
             self.minute_15_up, self.minute_15_down = self.minute_15_am.donchian(15)
