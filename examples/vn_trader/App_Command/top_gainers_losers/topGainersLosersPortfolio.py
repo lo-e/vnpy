@@ -109,9 +109,6 @@ class TopGainersLosersPortfolio(object):
         # 导入历史交易PNL
         self.load_history_pnl_data()
 
-        # 导入最近趋势数据
-        # self.load_recent_trending_data()
-
         # 监控行情数据延迟事件
         self.cta_engine.event_engine.register(EVENT_TICK_DELAY, self.resubscribe)
         self.cta_engine.event_engine.register(EVENT_ACCOUNT, self.on_account)
@@ -688,7 +685,9 @@ class TopGainersLosersPortfolio(object):
                     self.send_ding_talk(msg)
 
             except Exception as e:
-                pass
+                msg = f"处理涨跌幅排行数据出错\n\n{e}"
+                self.send_ding_talk(msg)
+                
             time.sleep(3)
 
     def backtesting(self):
@@ -934,79 +933,6 @@ class TopGainersLosersPortfolio(object):
                     data_list.append(dict(row))
                 self.pnl_data[date_str] = {"updated": False,
                                            "data": data_list}
-
-    def load_recent_trending_data(self):
-        # 1小时趋势数据
-        print_(f"加载1H历史趋势数据..")
-        self.trending_tokens_1h = {}
-        hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(hours=3)
-        while hour_time < datetime.now():
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            date = hour_time.strftime(f"%Y-%m-%d")
-            hour = hour_time.hour
-
-            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}1h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
-            if os.path.exists(dir_path):
-                for root, _, files in os.walk(dir_path):
-                    for file in files:
-                        rise_list = []
-                        fall_list = []
-
-                        rise_file_path = f"{root}{DIR_SYMBOL}{file}"
-                        fall_file_path = rise_file_path.replace("rank_rise", "rank_fall")
-                        if os.path.exists(fall_file_path):
-                            df_rise = pd.read_csv(rise_file_path)
-                            for _, row in df_rise.iterrows():
-                                rise_list.append(dict(row))
-
-                            df_fall = pd.read_csv(fall_file_path)
-                            for _, row in df_fall.iterrows():
-                                fall_list.append(dict(row))
-
-                            # 生成信号
-                            if self.rise_data_list_1h != rise_list or self.fall_data_list_1h != fall_list:
-                                self.rise_data_list_1h= rise_list
-                                self.fall_data_list_1h = fall_list
-                                self.on_trending_data_1h((rise_list, fall_list))
-
-            hour_time += timedelta(hours=1)
-
-        # 24小时趋势数据
-        print_(f"加载24H历史趋势数据..")
-        self.trending_tokens_24h = {}
-        hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=3)
-        while hour_time < datetime.now():
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            date = hour_time.strftime(f"%Y-%m-%d")
-            hour = hour_time.hour
-
-            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}24h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
-            if os.path.exists(dir_path):
-                for root, _, files in os.walk(dir_path):
-                    for file in files:
-                        rise_list = []
-                        fall_list = []
-
-                        rise_file_path = f"{root}{DIR_SYMBOL}{file}"
-                        fall_file_path = rise_file_path.replace("rank_rise", "rank_fall")
-                        if os.path.exists(fall_file_path):
-                            df_rise = pd.read_csv(rise_file_path)
-                            for _, row in df_rise.iterrows():
-                                rise_list.append(dict(row))
-
-                            df_fall = pd.read_csv(fall_file_path)
-                            for _, row in df_fall.iterrows():
-                                fall_list.append(dict(row))
-
-                            # 生成信号
-                            if self.rise_data_list_24h != rise_list or self.fall_data_list_24h != fall_list:
-                                self.rise_data_list_24h= rise_list
-                                self.fall_data_list_24h = fall_list
-                                # self.on_trending_data_24h((rise_list, fall_list))
-            
-            hour_time += timedelta(hours=1)
-        
-        print_(f"历史趋势数据加载完成！")
 
     def process_tick(self):
         error_notice_ts = 0
