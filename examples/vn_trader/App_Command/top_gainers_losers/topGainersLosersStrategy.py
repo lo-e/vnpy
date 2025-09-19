@@ -82,10 +82,10 @@ class TopGainersLosersStrategy(CtaTemplate):
         "hour_down_dt",
         "history_up",
         "history_down",
+        "minute_recent_up",
+        "minute_recent_down",
         "minute_15_up",
         "minute_15_down",
-        "minute_30_up",
-        "minute_30_down",
         "minute_bar_dt",
         "insufficient_value",
         "database_history_loaded",
@@ -178,11 +178,8 @@ class TopGainersLosersStrategy(CtaTemplate):
         
         self.minute_bar: BarData = None
         self.minute_bar_dt: str = ""
-        self.minute_am: ArrayManager = ArrayManager(60)
         self.history_hour = 3*24
         self.history_minute_am: ArrayManager = ArrayManager(self.history_hour*60)
-        self.minute_15_am: ArrayManager = ArrayManager(15)
-        self.minute_30_am: ArrayManager = ArrayManager(30)
 
         self.hour_up_down_updated = False
         self.hour_up: float = 0
@@ -193,10 +190,10 @@ class TopGainersLosersStrategy(CtaTemplate):
         self.hour_down_dt: str = ""
         self.history_up: float = 0
         self.history_down: float = 0
+        self.minute_recent_up: float = 0
+        self.minute_recent_down: float = 0
         self.minute_15_up: float = 0
         self.minute_15_down: float = 0
-        self.minute_30_up: float = 0
-        self.minute_30_down: float = 0
 
         self.minute_5_bar: BarData = None
         self.minute_5_bar_dt: str = ""
@@ -360,10 +357,7 @@ class TopGainersLosersStrategy(CtaTemplate):
 
                     # 重新下载数据
                     self.database_minute_bar_list = []
-                    self.minute_am: ArrayManager = ArrayManager(60)
                     self.history_minute_am: ArrayManager = ArrayManager(self.history_hour*60)
-                    self.minute_15_am: ArrayManager = ArrayManager(15)
-                    self.minute_30_am: ArrayManager = ArrayManager(30)
 
                 else:
                     self.database_loaded = True
@@ -388,10 +382,7 @@ class TopGainersLosersStrategy(CtaTemplate):
 
     def on_minute_bar(self, bar: BarData):
         self.minute_bar = bar
-        self.minute_am.update_bar(bar)
         self.history_minute_am.update_bar(bar)
-        self.minute_15_am.update_bar(bar)
-        self.minute_30_am.update_bar(bar)
         self.calculate_indicator()
 
     def on_minute_5_bar(self, bar: BarData):
@@ -402,8 +393,17 @@ class TopGainersLosersStrategy(CtaTemplate):
         if self.minute_bar:
             self.minute_bar_dt = self.minute_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
 
-        if self.minute_am.inited:
-            hour_up, hour_down = self.minute_am.donchian(60)
+        if self.history_minute_am.inited:
+            hour_up, hour_down = self.history_minute_am.donchian(60)
+            history_up, history_down = self.history_minute_am.donchian(self.history_hour*60)
+            self.minute_15_up, self.minute_15_down = self.history_minute_am.donchian(15)
+
+            if self.hour_up_dt and self.minute_bar_dt:
+                recent_seconds = (datetime.strptime(self.minute_bar_dt, f"%Y-%m-%d %H:%M:%S") - datetime.strptime(self.hour_up_dt, f"%Y-%m-%d %H:%M:%S")).seconds
+                recent_minutes = int(recent_seconds / 60)
+                if recent_minutes > 1:
+                    self.minute_recent_up, self.minute_recent_down = self.history_minute_am.donchian(recent_minutes)
+
             if self.direction == Direction.LONG:
                 if (not self.database_loaded and not self.database_history_loaded and hour_up != self.hour_up) or self.hour_up_down_updated:
                     self.hour_up = hour_up
@@ -411,9 +411,8 @@ class TopGainersLosersStrategy(CtaTemplate):
                     self.hour_up_ts = self.minute_bar.datetime.timestamp()
                     self.hour_up_dt = datetime.fromtimestamp(self.hour_up_ts).strftime(f"%Y-%m-%d %H:%M:%S")
 
-                    if self.history_minute_am.inited:
-                        self.history_up, self.history_down = self.history_minute_am.donchian(self.history_hour*60)
-
+                    self.history_up = history_up
+                    self.history_down = history_down
                     if self.hour_up and self.history_up and self.hour_up >= self.history_up * 0.98:
                         self.history_high_cross = True
                     
@@ -430,9 +429,8 @@ class TopGainersLosersStrategy(CtaTemplate):
                     self.hour_down_ts = self.minute_bar.datetime.timestamp()
                     self.hour_down_dt = datetime.fromtimestamp(self.hour_down_ts).strftime(f"%Y-%m-%d %H:%M:%S")
 
-                    if self.history_minute_am.inited:
-                        self.history_up, self.history_down = self.history_minute_am.donchian(self.history_hour*60)
-
+                    self.history_up = history_up
+                    self.history_down = history_down
                     if self.hour_down and self.history_down and self.hour_down <= self.history_down * 1.02:
                         self.history_low_cross = True
                     
@@ -441,17 +439,11 @@ class TopGainersLosersStrategy(CtaTemplate):
 
                     self.hour_up_down_updated = False
                     self.stop_open = False
-        
-        if self.minute_15_am.inited:
-            self.minute_15_up, self.minute_15_down = self.minute_15_am.donchian(15)
-
-        if self.minute_30_am.inited:
-            self.minute_30_up, self.minute_30_down = self.minute_30_am.donchian(30)
     
     def check_indicator_inited(self):
         if not self.target_pos:
             if self.direction == Direction.LONG:
-                if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_30_up and self.minute_30_down and self.minute_bar.datetime.timestamp() >= self.hour_up_ts + 30 * 60 and self.minute_15_down >= self.hour_up - abs(self.hour_up - self.hour_down) * 0.25 and self.minute_30_down >= self.hour_up - abs(self.hour_up - self.hour_down) * 0.5:
+                if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and self.minute_bar.datetime.timestamp() >= self.hour_up_ts + 30 * 60 and self.minute_15_down >= self.hour_up - abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_down >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0:
                     self.indicator_inited = True
                     self.indicator_inited_dt = self.minute_bar_dt
                 
@@ -460,7 +452,7 @@ class TopGainersLosersStrategy(CtaTemplate):
                     self.indicator_inited_dt = ""
 
             if self.direction == Direction.SHORT:
-                if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_30_up and self.minute_30_down and self.minute_bar.datetime.timestamp() >= self.hour_down_ts + 30 * 60 and self.minute_15_up <= self.hour_down + abs(self.hour_up - self.hour_down) * 0.25 and self.minute_30_up <= self.hour_down + abs(self.hour_up - self.hour_down) * 0.5:
+                if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and self.minute_bar.datetime.timestamp() >= self.hour_down_ts + 30 * 60 and self.minute_15_up <= self.hour_down + abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_up <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0:
                     self.indicator_inited = True
                     self.indicator_inited_dt = self.minute_bar_dt
 
@@ -642,11 +634,11 @@ class TopGainersLosersStrategy(CtaTemplate):
         # 无信号退出
         if not self.target_pos and self.database_loaded and self.hour_up and self.hour_down:
             if self.direction == Direction.LONG:
-                if tick.last_price < self.hour_up - abs(self.hour_up - self.hour_down) * 0.5 or tick.datetime.timestamp() >= self.hour_up_ts + 6 * 60 * 60:
+                if tick.last_price < self.hour_up - abs(self.hour_up - self.hour_down) / 3.0 or tick.datetime.timestamp() >= self.hour_up_ts + 6 * 60 * 60:
                     self.on_close(tick)
             
             if self.direction == Direction.SHORT:
-                if tick.last_price > self.hour_down + abs(self.hour_up - self.hour_down) * 0.5 or tick.datetime.timestamp() >= self.hour_down_ts + 6 * 60 * 60:
+                if tick.last_price > self.hour_down + abs(self.hour_up - self.hour_down) / 3.0 or tick.datetime.timestamp() >= self.hour_down_ts + 6 * 60 * 60:
                     self.on_close(tick)
     
     def add_unit_pos(self, tick_price: float):
