@@ -373,7 +373,7 @@ class TopGainersLosersPortfolio(object):
                 trending_1h_time = trending_data["trending_1h_time"]
                 onboard_ts = trending_data["onboard_ts"]
 
-                if abs(change) >= 1:
+                if change >= 1:
                     # 24h趋势数据
                     trending_mean_1h = 0
                     reverse_mean_1h = 0
@@ -443,7 +443,7 @@ class TopGainersLosersPortfolio(object):
                                         break
                                 
                                 if not flt:
-                                    setting = self.new_strategy(symbol, Direction.SHORT, round(trending_mean_1h, 2), volume_24h, round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
+                                    setting = self.new_strategy(symbol, Direction.SHORT, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
                                     strategy_name = setting.get("strategy_name", "")
                                     pure_strategy_name = "_".join(strategy_name.split("_")[1:])
                                     for name in self.cta_engine.strategies.keys():
