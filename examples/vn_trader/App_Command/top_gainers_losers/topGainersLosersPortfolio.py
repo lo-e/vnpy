@@ -370,7 +370,7 @@ class TopGainersLosersPortfolio(object):
                 trending_1h_time = trending_data["trending_1h_time"]
                 onboard_ts = trending_data["onboard_ts"]
 
-                if change >= 1:
+                if abs(change) >= 1:
                     # 24h趋势数据
                     trending_mean_1h = 0
                     reverse_mean_1h = 0
