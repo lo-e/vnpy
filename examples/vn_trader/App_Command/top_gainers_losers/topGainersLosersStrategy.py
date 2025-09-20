@@ -403,8 +403,14 @@ class TopGainersLosersStrategy(CtaTemplate):
             history_up, history_down = self.history_minute_am.donchian(self.history_hour*60)
             self.minute_15_up, self.minute_15_down = self.history_minute_am.donchian(15)
 
-            if self.hour_up_dt and self.minute_bar_dt:
-                recent_seconds = (datetime.strptime(self.minute_bar_dt, f"%Y-%m-%d %H:%M:%S") - datetime.strptime(self.hour_up_dt, f"%Y-%m-%d %H:%M:%S")).seconds
+            if self.minute_bar_dt:
+                recent_seconds = 0
+                if self.direction == Direction.LONG and self.hour_up_dt:
+                    recent_seconds = (datetime.strptime(self.minute_bar_dt, f"%Y-%m-%d %H:%M:%S") - datetime.strptime(self.hour_up_dt, f"%Y-%m-%d %H:%M:%S")).seconds
+
+                if self.direction == Direction.SHORT and self.hour_down_dt:
+                    recent_seconds = (datetime.strptime(self.minute_bar_dt, f"%Y-%m-%d %H:%M:%S") - datetime.strptime(self.hour_down_dt, f"%Y-%m-%d %H:%M:%S")).seconds
+                
                 recent_minutes = int(recent_seconds / 60)
                 if recent_minutes > 1:
                     self.minute_recent_up, self.minute_recent_down = self.history_minute_am.donchian(recent_minutes)
@@ -505,7 +511,7 @@ class TopGainersLosersStrategy(CtaTemplate):
 
         # 1h新高新低
         price_cross = False
-        if self.database_loaded and ((self.direction == Direction.LONG and tick.last_price > self.hour_up) or (self.direction == Direction.SHORT and tick.last_price < self.hour_down)):
+        if self.database_loaded and ((self.direction == Direction.LONG and self.hour_up and tick.last_price > self.hour_up) or (self.direction == Direction.SHORT and self.hour_down and tick.last_price < self.hour_down)):
             price_cross = True
             self.hour_up_down_updated = True 
 
