@@ -515,9 +515,6 @@ class TopGainersLosersStrategy(CtaTemplate):
             if (self.direction == Direction.LONG and self.history_high_cross) or (self.direction == Direction.SHORT and self.history_low_cross):
                 open_allowed = True
 
-            else:
-                self.on_close(tick)
-
             if open_allowed:
                 self.add_unit_pos(tick.last_price)
 
