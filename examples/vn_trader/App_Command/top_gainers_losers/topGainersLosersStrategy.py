@@ -299,6 +299,8 @@ class TopGainersLosersStrategy(CtaTemplate):
             # 回测数据库Bar数据
             if not self.database_loaded:
                 bar_lack = True
+                database_end = ""
+                tick_start = ""
                 if len(self.database_minute_bar_list) >= self.history_hour*60:
                     for i in range(len(self.database_minute_bar_list)):
                         database_minute_bar: BarData = self.database_minute_bar_list[i]
@@ -306,8 +308,11 @@ class TopGainersLosersStrategy(CtaTemplate):
                             self.on_minute_bar(database_minute_bar)
                         
                         else:
+                            database_end = database_minute_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                             for j in range(len(self.tick_minute_bar_list)):
                                 tick_minute_bar: BarData = self.tick_minute_bar_list[j]
+                                if j == 0:
+                                    tick_start = tick_minute_bar.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                                 if tick_minute_bar.datetime < database_minute_bar.datetime:
                                     continue
 
@@ -352,7 +357,7 @@ class TopGainersLosersStrategy(CtaTemplate):
 
                         self.portfolio.bar_download_queue.put((self.vt_symbol, direction))
                     
-                    msg = f"{self.vt_symbol} 初始化数据缺失\n\ndatabase {len(self.database_minute_bar_list)}\ntick {len(self.tick_minute_bar_list)}"
+                    msg = f"{self.vt_symbol} 初始化数据缺失\n\ndatabase {len(self.database_minute_bar_list)}\ndatabase_end {database_end}\ntick {len(self.tick_minute_bar_list)}\ntick_start {tick_start}"
                     self.send_ding_talk(msg)
 
                     # 重新下载数据
