@@ -424,7 +424,7 @@ class TopGainersLosersStrategy(CtaTemplate):
 
                     self.history_up = history_up
                     self.history_down = history_down
-                    if self.hour_up and self.history_up and self.hour_up >= self.history_up * 0.98:
+                    if self.hour_up and self.history_up and self.hour_up >= self.history_up * 0.998:
                         self.history_high_cross = True
                     
                     else:
@@ -442,7 +442,7 @@ class TopGainersLosersStrategy(CtaTemplate):
 
                     self.history_up = history_up
                     self.history_down = history_down
-                    if self.hour_down and self.history_down and self.hour_down <= self.history_down * 1.02:
+                    if self.hour_down and self.history_down and self.hour_down <= self.history_down * 1.002:
                         self.history_low_cross = True
                     
                     else:
