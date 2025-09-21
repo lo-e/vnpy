@@ -1130,6 +1130,9 @@ def print_(msg: str):
     print(f"{dt}\t{msg}")
 
 def get_strategy_pure_name(strategy_name: str):
+    if not strategy_name:
+        return ""
+    
     strategy_name_elements = strategy_name.split("_")[1:4]
     strategy_name_elements[2] = re.sub(r'[^a-zA-Z]', '', strategy_name_elements[2])
     strategy_pure_name = "_".join(strategy_name_elements)
