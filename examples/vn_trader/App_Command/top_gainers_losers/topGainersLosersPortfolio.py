@@ -421,7 +421,7 @@ class TopGainersLosersPortfolio(object):
                                     vt_symbol = setting["vt_symbol"]
                                     instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
                                     on_timestamp = instrument_data["on_timestamp"]
-                                    if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60:
+                                    if on_timestamp and data_time >= on_timestamp + 3 * 24 * 60 * 60:
                                         new_settings.append(setting)
 
                                         # msg = f"{symbol} 上涨过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nrank_1h {trending_1h_rank}"
@@ -450,7 +450,7 @@ class TopGainersLosersPortfolio(object):
                                     vt_symbol = setting["vt_symbol"]
                                     instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
                                     on_timestamp = instrument_data["on_timestamp"]
-                                    if on_timestamp and data_time >= on_timestamp + 5 * 24 * 60 * 60:
+                                    if on_timestamp and data_time >= on_timestamp + 3 * 24 * 60 * 60:
                                         new_settings.append(setting)
 
                                         # msg = f"{symbol} 下跌过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nrank_1h {trending_1h_rank}"
