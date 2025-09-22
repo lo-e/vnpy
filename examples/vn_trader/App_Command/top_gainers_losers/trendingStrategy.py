@@ -26,8 +26,8 @@ import pandas as pd
 import numpy as np
 from vnpy.trader.object import ContractData
 from queue import Empty, Queue
-class TopGainersLosersStrategy(CtaTemplate):
-    className = "TopGainersLosersStrategy"
+class TrendingStrategy(CtaTemplate):
+    className = "TrendingStrategy"
     author = "loe"
 
     # 参数列表
@@ -109,7 +109,7 @@ class TopGainersLosersStrategy(CtaTemplate):
         # self.send_fake_order = False
         
         # 完成setting.json参数的配置
-        super(TopGainersLosersStrategy, self).__init__(
+        super(TrendingStrategy, self).__init__(
             cta_engine=ctaEngine, strategy_name="", vt_symbol="", setting=setting
         )
         

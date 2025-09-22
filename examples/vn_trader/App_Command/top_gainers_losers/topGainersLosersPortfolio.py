@@ -13,7 +13,7 @@ import os
 from vnpy.trader.object import BarData, TickData
 from vnpy.event import Event
 from vnpy.trader.object import SubscribeRequest
-from .topGainersLosersStrategy import TopGainersLosersStrategy
+from .trendingStrategy import TrendingStrategy
 from queue import Empty, Queue
 from vnpy.trader.event import EVENT_TICK_DELAY, EVENT_ACCOUNT
 from vnpy.trader.object import AccountData
@@ -127,7 +127,7 @@ class TopGainersLosersPortfolio(object):
 
         # 下载当前策略Bar数据
         for name in self.cta_engine.strategies.copy().keys():
-            strategy: TopGainersLosersStrategy = self.cta_engine.strategies[name]
+            strategy: TrendingStrategy = self.cta_engine.strategies[name]
             direction = ""
             if strategy.direction == Direction.LONG:
                 direction = "LONG"
@@ -168,7 +168,7 @@ class TopGainersLosersPortfolio(object):
         # 判断是否正在交易
         on_trading = False
         for strategy_name in self.cta_engine.strategies.keys():
-            strategy: TopGainersLosersStrategy = self.cta_engine.strategies[strategy_name]
+            strategy: TrendingStrategy = self.cta_engine.strategies[strategy_name]
             if strategy.pos:
                 on_trading = True
                 break
@@ -214,7 +214,7 @@ class TopGainersLosersPortfolio(object):
         # else:
         #     self.trade_enable = False
 
-    def on_pnl(self, strategy: TopGainersLosersStrategy, pnl: float):
+    def on_pnl(self, strategy: TrendingStrategy, pnl: float):
         # 记录盈亏
         dt = datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S")
         data = {"datetime": strategy.datetime,
@@ -249,7 +249,7 @@ class TopGainersLosersPortfolio(object):
     def subscribe_strategies(self, unsubscribe: bool = False):
         vt_symbols = set()
         for strategy_name in self.cta_engine.strategies.keys():
-            strategy: TopGainersLosersStrategy = self.cta_engine.strategies[strategy_name]
+            strategy: TrendingStrategy = self.cta_engine.strategies[strategy_name]
             vt_symbols.add(strategy.vt_symbol)
         
         if vt_symbols:
@@ -876,7 +876,7 @@ class TopGainersLosersPortfolio(object):
                 if success:
                     symbol_strategies = self.cta_engine.symbol_strategy_map[vt_symbol]
                     for i in range(len(symbol_strategies)):
-                        strategy: TopGainersLosersStrategy = symbol_strategies[i]
+                        strategy: TrendingStrategy = symbol_strategies[i]
                         if (strategy.direction == Direction.LONG and direction == "LONG") or (strategy.direction == Direction.SHORT and direction == "SHORT"):
                             strategy.load_database_bar()
 
@@ -945,7 +945,7 @@ class TopGainersLosersPortfolio(object):
 
                 strategies = self.cta_engine.symbol_strategy_map[tick.vt_symbol]
                 for i in range(len(strategies)):
-                    strategy: TopGainersLosersStrategy = strategies[i]
+                    strategy: TrendingStrategy = strategies[i]
                     if strategy.inited:
                         strategy.on_tick(tick)
 
@@ -1012,7 +1012,7 @@ class TopGainersLosersPortfolio(object):
         while True:
             try:
                 for name in self.cta_engine.strategies.copy().keys():
-                    strategy: TopGainersLosersStrategy = self.cta_engine.strategies[name]
+                    strategy: TrendingStrategy = self.cta_engine.strategies[name]
                     strategy_check_ts = self.strategy_status_check_ts.get(strategy.strategy_name, 0)
                     if time.time() >= strategy_check_ts + 10:
                         self.strategy_status_check_ts[strategy.strategy_name] = time.time()
@@ -1072,7 +1072,7 @@ class TopGainersLosersPortfolio(object):
                                 # 取消订阅
                                 unsubscribe = True
                                 for target_name in self.cta_engine.strategies.copy().keys():
-                                    target_strategy: TopGainersLosersStrategy = self.cta_engine.strategies[target_name]
+                                    target_strategy: TrendingStrategy = self.cta_engine.strategies[target_name]
                                     if strategy.strategy_name != target_strategy.strategy_name and strategy.vt_symbol == target_strategy.vt_symbol:
                                         unsubscribe = False
                                         break
