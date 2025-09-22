@@ -682,3 +682,7 @@ class TrendingStrategy(CtaTemplate):
 
         # 将临时文件替换为目标文件
         shutil.move(temp_file_path, file_path)
+
+def print_(msg: str):
+    dt = datetime.now().replace(microsecond=0)
+    print(f"{dt}\t{msg}")
