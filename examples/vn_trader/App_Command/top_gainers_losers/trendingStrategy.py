@@ -1,11 +1,5 @@
-# encoding: UTF-8
-
-"""
-打新策略
-"""
-
-from vnpy.trader.constant import Direction, Offset, Interval
 from vnpy.app.cta_strategy.template import CtaTemplate
+from vnpy.trader.constant import Direction, Offset, Interval
 from vnpy.trader.utility import ArrayManager
 from vnpy.app.cta_strategy.base import *
 from datetime import datetime, timedelta
@@ -26,9 +20,8 @@ import pandas as pd
 import numpy as np
 from vnpy.trader.object import ContractData
 from queue import Empty, Queue
+
 class TrendingStrategy(CtaTemplate):
-    className = "TrendingStrategy"
-    author = "loe"
 
     # 参数列表
     parameters = [
@@ -450,26 +443,6 @@ class TrendingStrategy(CtaTemplate):
 
                     self.hour_up_down_updated = False
                     self.stop_open = False
-    
-    def check_indicator_inited(self):
-        if not self.target_pos:
-            if self.direction == Direction.LONG:
-                if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and self.minute_bar.datetime.timestamp() >= self.hour_up_ts + 30 * 60 and self.minute_15_down >= self.hour_up - abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_down >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0:
-                    self.indicator_inited = True
-                    self.indicator_inited_dt = self.minute_bar_dt
-                
-                else:
-                    self.indicator_inited = False
-                    self.indicator_inited_dt = ""
-
-            if self.direction == Direction.SHORT:
-                if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and self.minute_bar.datetime.timestamp() >= self.hour_down_ts + 30 * 60 and self.minute_15_up <= self.hour_down + abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_up <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0:
-                    self.indicator_inited = True
-                    self.indicator_inited_dt = self.minute_bar_dt
-
-                else:
-                    self.indicator_inited = False
-                    self.indicator_inited_dt = ""
 
     def on_tick(self, tick: TickData):
         self.tick = copy(tick)
@@ -508,146 +481,6 @@ class TrendingStrategy(CtaTemplate):
 
         return
         """
-
-        # 1h新高新低
-        price_cross = False
-        if self.database_loaded and ((self.direction == Direction.LONG and self.hour_up and tick.last_price > self.hour_up) or (self.direction == Direction.SHORT and self.hour_down and tick.last_price < self.hour_down)):
-            price_cross = True
-            self.hour_up_down_updated = True 
-
-        # 开仓判断
-        if not self.target_pos and self.database_loaded and self.indicator_inited and price_cross and not self.stop_open and not self.closed:
-            open_allowed = False
-            if (self.direction == Direction.LONG and self.history_high_cross) or (self.direction == Direction.SHORT and self.history_low_cross):
-                open_allowed = True
-
-            if open_allowed:
-                self.add_unit_pos(tick.last_price)
-
-                # 发送订单
-                # if not self.pos and self.portfolio.trade_enable and time.time() <= tick.datetime.timestamp() + 3:
-                #     open_volume = abs(self.target_pos)
-                #     if open_volume:
-                #         if self.direction == Direction.LONG:
-                #             trade_price = self.tick.last_price * 1.005
-                #             self.cancel_all()
-                #             if self.exchange == Exchange.BINANCE:
-                #                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True)
-                #                 self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
-
-                #             else:
-                #                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
-                        
-                #         elif self.direction == Direction.SHORT:
-                #             trade_price = self.tick.last_price * 0.995
-                #             self.cancel_all()
-                #             if self.exchange == Exchange.BINANCE:
-                #                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True)
-                #                 self.send_order(Direction.LONG, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
-
-                #             else:
-                #                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
-
-                # 开仓日志
-                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {self.leverage:.2f} {tick.last_price}"})
-                self.trade_logs_updated = True
-
-                msg = f"{self.vt_symbol} {self.direction.value}\n开仓（{self.open_count}）"
-                self.cta_engine.main_engine.send_ding_talk(msg)
-
-        # 止损判断
-        if self.target_pos and ((self.direction == Direction.LONG and tick.last_price <= self.stop_price) or (self.direction == Direction.SHORT and tick.last_price >= self.stop_price)):
-            self.stop_tick_price = tick.last_price
-            self.stop_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
-            self.target_pos = 0
-            self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
-            if not self.stop_open:
-                self.stop_open = True
-                self.stop_open_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
-
-            stop_pnl = 0
-            if self.open_tick_price:
-                stop_pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
-                if self.direction == Direction.SHORT:
-                    stop_pnl *= -1
-                stop_pnl -= 0.2
-                stop_pnl *= self.leverage
-            self.pnl += stop_pnl
-
-            self.on_close(tick)
-
-            # 止损日志
-            self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} STOP {self.pnl:.2f}% {tick.last_price}"})
-            self.trade_logs_updated = True
-
-            msg = f"{self.vt_symbol} {self.direction.value}\n止损 {self.pnl:.2f}%"
-            self.cta_engine.main_engine.send_ding_talk(msg)
-
-        # 平仓判断
-        if self.target_pos and self.database_loaded and ((self.direction == Direction.LONG and tick.last_price < self.hour_down) or (self.direction == Direction.SHORT and tick.last_price > self.hour_up)):
-            self.target_pos = 0
-            self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
-            if not self.stop_open:
-                self.stop_open = True
-                self.stop_open_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
-
-            close_pnl = 0
-            if self.open_tick_price:
-                close_pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
-                if self.direction == Direction.SHORT:
-                    close_pnl *= -1
-                close_pnl -= 0.2
-                close_pnl *= self.leverage
-            self.pnl += close_pnl
-
-            self.on_close(tick)
-            
-            # 平仓日志
-            self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} CLOSE {self.pnl:.2f}% {tick.last_price}"})
-            self.trade_logs_updated = True
-
-            msg = f"{self.vt_symbol} {self.direction.value}\n平仓 {self.pnl:.2f}%"
-            self.cta_engine.main_engine.send_ding_talk(msg)
-
-        # 手动平仓
-        if self.manual_close:
-            if self.target_pos:
-                self.target_pos = 0
-                self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
-                if not self.stop_open:
-                    self.stop_open = True
-                    self.stop_open_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
-
-                close_pnl = 0
-                if self.open_tick_price:
-                    close_pnl = ((tick.last_price / self.open_tick_price) - 1) * 100
-                    if self.direction == Direction.SHORT:
-                        close_pnl *= -1
-                    close_pnl -= 0.2
-                    close_pnl *= self.leverage
-                self.pnl += close_pnl
-
-                self.on_close(tick)
-                
-                # 平仓日志
-                self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} MANUAL_CLOSE {self.pnl:.2f}% {tick.last_price}"})
-                self.trade_logs_updated = True
-
-                msg = f"{self.vt_symbol} {self.direction.value}\n手动平仓 {self.pnl:.2f}%"
-                self.cta_engine.main_engine.send_ding_talk(msg)
-            
-            else:
-                self.on_close(tick)
-
-        # 无信号退出
-        if not self.target_pos and self.database_loaded and self.hour_up and self.hour_down:
-            if self.direction == Direction.LONG:
-                if tick.last_price < self.hour_up - abs(self.hour_up - self.hour_down) / 3.0 or tick.datetime.timestamp() >= self.hour_up_ts + 6 * 60 * 60:
-                    self.on_close(tick)
-            
-            if self.direction == Direction.SHORT:
-                if tick.last_price > self.hour_down + abs(self.hour_up - self.hour_down) / 3.0 or tick.datetime.timestamp() >= self.hour_down_ts + 6 * 60 * 60:
-                    self.on_close(tick)
     
     def add_unit_pos(self, tick_price: float):
         # 计算仓位大小
@@ -849,7 +682,3 @@ class TrendingStrategy(CtaTemplate):
 
         # 将临时文件替换为目标文件
         shutil.move(temp_file_path, file_path)
-
-def print_(msg: str):
-    dt = datetime.now().replace(microsecond=0)
-    print(f"{dt}\t{msg}")

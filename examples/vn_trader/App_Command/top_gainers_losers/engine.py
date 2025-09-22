@@ -63,6 +63,7 @@ from time import sleep
 from decimal import Decimal
 import json
 from .trendingStrategy import TrendingStrategy
+from .trending1Strategy import Trending1Strategy
 from .topGainersLosersPortfolio import TopGainersLosersPortfolio
 from vnpy.app.cta_strategy.base import (
     TICK_DB_NAME,
@@ -632,7 +633,12 @@ class TopGainersLosersEngine(BaseEngine):
             return
 
         # 创建策略实例
-        strategy = TrendingStrategy(self, setting)
+        type = name.split("_")[2]
+        if type == "T1":
+            strategy = Trending1Strategy(self, setting)
+        
+        else:
+            return
 
         # 加载同步数据
         if load_sync:
