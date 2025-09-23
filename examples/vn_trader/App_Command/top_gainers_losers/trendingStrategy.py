@@ -208,7 +208,8 @@ class TrendingStrategy(CtaTemplate):
         
         # 获取历史交易日志
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}trade_logs{DIR_SYMBOL}{self.strategy_name}.csv"
+        strategy_type = get_strategy_type(self.strategy_name)
+        file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}trade_logs{DIR_SYMBOL}{strategy_type}{DIR_SYMBOL}{self.strategy_name}.csv"
         if os.path.exists(file_path):
             df = pd.read_csv(file_path)
             for _, row in df.iterrows():
@@ -542,7 +543,8 @@ class TrendingStrategy(CtaTemplate):
             if self.trade_logs_updated:
                 self.trade_logs_updated = False
                 current_dir = os.path.dirname(os.path.abspath(__file__))
-                file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}trade_logs{DIR_SYMBOL}{self.strategy_name}.csv"
+                strategy_type = get_strategy_type(self.strategy_name)
+                file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}trade_logs{DIR_SYMBOL}{strategy_type}{DIR_SYMBOL}{self.strategy_name}.csv"
                 field_names = list(self.trade_logs[0].keys())
                 self.save_csv_data(field_names, self.trade_logs, file_path, True)
         
@@ -686,3 +688,19 @@ class TrendingStrategy(CtaTemplate):
 def print_(msg: str):
     dt = datetime.now().replace(microsecond=0)
     print(f"{dt}\t{msg}")
+
+def get_strategy_pure_name(strategy_name: str):
+    if not strategy_name:
+        return ""
+    
+    strategy_name_elements = strategy_name.split("_")[1:4]
+    strategy_name_elements[2] = re.sub(r'[^a-zA-Z]', '', strategy_name_elements[2])
+    strategy_pure_name = "_".join(strategy_name_elements)
+    return strategy_pure_name
+
+def get_strategy_type(strategy_name: str):
+    if not strategy_name:
+        return ""
+    
+    type = strategy_name.split("_")[2]
+    return type

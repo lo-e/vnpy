@@ -11,20 +11,20 @@ from vnpy.trader.object import TickData
 from vnpy.trader.constant import Exchange
 import time
 
-class Trending1Strategy(TrendingStrategy):
-    className = "Trending1Strategy"
+class Trending2Strategy(TrendingStrategy):
+    className = "Trending2Strategy"
     author = "loe"
 
     def __init__(self, ctaEngine, setting):
         # 完成setting.json参数的配置
-        super(Trending1Strategy, self).__init__(
+        super(Trending2Strategy, self).__init__(
             ctaEngine=ctaEngine, setting=setting
         )
 
     def check_indicator_inited(self):
         if not self.target_pos:
             if self.direction == Direction.LONG:
-                if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and self.minute_bar.datetime.timestamp() >= self.hour_up_ts + 30 * 60 and self.minute_15_down >= self.hour_up - abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_down >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0:
+                if self.hour_up and self.hour_down and self.minute_recent_up and self.minute_recent_down and self.minute_bar.datetime.timestamp() <= self.hour_up_ts + 60 * 60 and self.minute_recent_down <= self.hour_up - abs(self.hour_up - self.hour_down) * 0.7:
                     self.indicator_inited = True
                     self.indicator_inited_dt = self.minute_bar_dt
                 
@@ -33,7 +33,7 @@ class Trending1Strategy(TrendingStrategy):
                     self.indicator_inited_dt = ""
 
             if self.direction == Direction.SHORT:
-                if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and self.minute_bar.datetime.timestamp() >= self.hour_down_ts + 30 * 60 and self.minute_15_up <= self.hour_down + abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_up <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0:
+                if self.hour_up and self.hour_down and self.minute_recent_up and self.minute_recent_down and self.minute_bar.datetime.timestamp() <= self.hour_down_ts + 60 * 60 and self.minute_recent_up >= self.hour_down + abs(self.hour_up - self.hour_down) * 0.7:
                     self.indicator_inited = True
                     self.indicator_inited_dt = self.minute_bar_dt
 
@@ -179,11 +179,11 @@ class Trending1Strategy(TrendingStrategy):
         # 无信号退出
         if not self.target_pos and self.database_loaded and self.hour_up and self.hour_down:
             if self.direction == Direction.LONG:
-                if tick.last_price < self.hour_up - abs(self.hour_up - self.hour_down) / 3.0 or tick.datetime.timestamp() >= self.hour_up_ts + 6 * 60 * 60:
+                if tick.last_price < self.hour_down or tick.datetime.timestamp() >= self.hour_up_ts + 6 * 60 * 60:
                     self.on_close(tick)
             
             if self.direction == Direction.SHORT:
-                if tick.last_price > self.hour_down + abs(self.hour_up - self.hour_down) / 3.0 or tick.datetime.timestamp() >= self.hour_down_ts + 6 * 60 * 60:
+                if tick.last_price > self.hour_up or tick.datetime.timestamp() >= self.hour_down_ts + 6 * 60 * 60:
                     self.on_close(tick)
 
 def print_(msg: str):

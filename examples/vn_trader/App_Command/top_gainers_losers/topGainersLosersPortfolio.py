@@ -13,7 +13,7 @@ import os
 from vnpy.trader.object import BarData, TickData
 from vnpy.event import Event
 from vnpy.trader.object import SubscribeRequest
-from .trendingStrategy import TrendingStrategy
+from .trendingStrategy import TrendingStrategy, get_strategy_pure_name, get_strategy_type
 from queue import Empty, Queue
 from vnpy.trader.event import EVENT_TICK_DELAY, EVENT_ACCOUNT
 from vnpy.trader.object import AccountData
@@ -229,13 +229,18 @@ class TopGainersLosersPortfolio(object):
                 "reverse_mean_24h": strategy.reverse_mean_24h,
                 "pnl": f"{pnl:.2f}%"}
         
+        strategy_type = get_strategy_type(strategy.strategy_name)
         date_str = dt.strftime(f"%Y-%m-%d")
-        date_data = self.pnl_data.get(date_str, {})
+        type_data = self.pnl_data.get(strategy_type, {})
+        date_data = type_data.get(date_str, {})
+
         date_data["updated"] = True
         data_list = date_data.get("data", [])
         data_list.append(data)
         date_data["data"] = data_list
-        self.pnl_data[date_str] = date_data
+
+        type_data[date_str] = date_data
+        self.pnl_data[strategy_type] = type_data
 
     def resubscribe(self, event: Event):
         return
@@ -920,14 +925,21 @@ class TopGainersLosersPortfolio(object):
         today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         for i in range(7):
             date_str = (today - timedelta(days=i)).strftime(f"%Y-%m-%d")
-            file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}trade_pnls{DIR_SYMBOL}{date_str}.csv"
-            if os.path.exists(file_path):
-                data_list = []
-                df = pd.read_csv(file_path)
-                for _, row in df.iterrows():
-                    data_list.append(dict(row))
-                self.pnl_data[date_str] = {"updated": False,
+            type_list = ["T1", "T2", "T3", "T4", "T5", "T6"]
+            for type in type_list:
+                type_data = self.pnl_data.get(type, {})
+                file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}trade_pnls{DIR_SYMBOL}{type}{DIR_SYMBOL}{date_str}.csv"
+                if os.path.exists(file_path):
+                    data_list = []
+                    df = pd.read_csv(file_path)
+                    for _, row in df.iterrows():
+                        data_list.append(dict(row))
+
+                    type_data[date_str] = {"updated": False,
                                            "data": data_list}
+
+                if type_data:
+                    self.pnl_data[type] = type_data
 
     def process_tick(self):
         error_notice_ts = 0
@@ -974,17 +986,18 @@ class TopGainersLosersPortfolio(object):
                 print_(msg)
 
             # 保存组合盈亏数据
-            for date_str, date_data in self.pnl_data.items():
-                updated = date_data["updated"]
-                if updated:
-                    current_dir = os.path.dirname(os.path.abspath(__file__))
-                    file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}trade_pnls{DIR_SYMBOL}{date_str}.csv"
+            for strategy_type, type_data in self.pnl_data.items():
+                for date_str, date_data in type_data.items():
+                    updated = date_data["updated"]
+                    if updated:
+                        current_dir = os.path.dirname(os.path.abspath(__file__))
+                        file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}trade_pnls{DIR_SYMBOL}{strategy_type}{DIR_SYMBOL}{date_str}.csv"
 
-                    data_list = date_data["data"]
-                    data_list = sorted(data_list, key=lambda x: x['timestamp'])
-                    field_names = list(data_list[0].keys())
-                    self.save_csv_data(field_names, data_list, file_path, True)
-                    date_data["updated"] = False
+                        data_list = date_data["data"]
+                        data_list = sorted(data_list, key=lambda x: x['timestamp'])
+                        field_names = list(data_list[0].keys())
+                        self.save_csv_data(field_names, data_list, file_path, True)
+                        date_data["updated"] = False
         
         except Exception as e:
             msg = f"保存组合数据出错\n\n{e}"
@@ -1128,12 +1141,3 @@ class TopGainersLosersPortfolio(object):
 def print_(msg: str):
     dt = datetime.now().replace(microsecond=0)
     print(f"{dt}\t{msg}")
-
-def get_strategy_pure_name(strategy_name: str):
-    if not strategy_name:
-        return ""
-    
-    strategy_name_elements = strategy_name.split("_")[1:4]
-    strategy_name_elements[2] = re.sub(r'[^a-zA-Z]', '', strategy_name_elements[2])
-    strategy_pure_name = "_".join(strategy_name_elements)
-    return strategy_pure_name

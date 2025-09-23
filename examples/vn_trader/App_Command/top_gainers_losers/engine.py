@@ -62,7 +62,7 @@ from collections import OrderedDict
 from time import sleep
 from decimal import Decimal
 import json
-from .trendingStrategy import TrendingStrategy
+from .trendingStrategy import TrendingStrategy, get_strategy_type
 from .trending1Strategy import Trending1Strategy
 from .topGainersLosersPortfolio import TopGainersLosersPortfolio
 from vnpy.app.cta_strategy.base import (
@@ -633,7 +633,7 @@ class TopGainersLosersEngine(BaseEngine):
             return
 
         # 创建策略实例
-        type = name.split("_")[2]
+        type = get_strategy_type(name)
         if type == "T1":
             strategy = Trending1Strategy(self, setting)
         
