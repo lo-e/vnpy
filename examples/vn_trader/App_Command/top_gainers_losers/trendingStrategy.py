@@ -384,18 +384,6 @@ class TrendingStrategy(CtaTemplate):
             history_up, history_down = self.history_minute_am.donchian(self.history_hour*60)
             self.minute_15_up, self.minute_15_down = self.history_minute_am.donchian(15)
 
-            if self.minute_bar_dt:
-                recent_seconds = 0
-                if self.direction == Direction.LONG and self.hour_up_dt:
-                    recent_seconds = (datetime.strptime(self.minute_bar_dt, f"%Y-%m-%d %H:%M:%S") - datetime.strptime(self.hour_up_dt, f"%Y-%m-%d %H:%M:%S")).seconds
-
-                if self.direction == Direction.SHORT and self.hour_down_dt:
-                    recent_seconds = (datetime.strptime(self.minute_bar_dt, f"%Y-%m-%d %H:%M:%S") - datetime.strptime(self.hour_down_dt, f"%Y-%m-%d %H:%M:%S")).seconds
-                
-                recent_minutes = int(recent_seconds / 60)
-                if recent_minutes > 1:
-                    self.minute_recent_up, self.minute_recent_down = self.history_minute_am.donchian(recent_minutes)
-
             if self.direction == Direction.LONG:
                 if (not self.database_loaded and not self.database_history_loaded and hour_up != self.hour_up) or self.hour_up_down_updated:
                     self.hour_up = hour_up
@@ -431,6 +419,22 @@ class TrendingStrategy(CtaTemplate):
 
                     self.hour_up_down_updated = False
                     self.stop_open = False
+
+            if self.minute_bar_dt:
+                recent_seconds = 0
+                if self.direction == Direction.LONG and self.hour_up_dt:
+                    recent_seconds = (datetime.strptime(self.minute_bar_dt, f"%Y-%m-%d %H:%M:%S") - datetime.strptime(self.hour_up_dt, f"%Y-%m-%d %H:%M:%S")).seconds
+
+                if self.direction == Direction.SHORT and self.hour_down_dt:
+                    recent_seconds = (datetime.strptime(self.minute_bar_dt, f"%Y-%m-%d %H:%M:%S") - datetime.strptime(self.hour_down_dt, f"%Y-%m-%d %H:%M:%S")).seconds
+                
+                recent_minutes = int(recent_seconds / 60)
+                if recent_minutes > 1:
+                    self.minute_recent_up, self.minute_recent_down = self.history_minute_am.donchian(recent_minutes)
+
+                else:
+                    self.minute_recent_up = 0
+                    self.minute_recent_down = 0
 
     def on_tick(self, tick: TickData):
         self.tick = copy(tick)
