@@ -24,7 +24,7 @@ class Trending2Strategy(TrendingStrategy):
     def check_indicator_inited(self):
         if not self.target_pos:
             if self.direction == Direction.LONG:
-                if self.hour_up and self.hour_down and self.minute_recent_up and self.minute_recent_down and self.minute_bar.datetime.timestamp() <= self.hour_up_ts + 60 * 60 and self.minute_recent_down <= self.hour_up - abs(self.hour_up - self.hour_down) * 0.7:
+                if self.hour_up and self.hour_down and self.minute_recent_up and self.minute_recent_down and self.minute_bar.datetime.timestamp() <= self.hour_up_ts + 60 * 60 and self.hour_down <= self.minute_recent_down <= self.hour_up - abs(self.hour_up - self.hour_down) * 0.7:
                     self.indicator_inited = True
                     self.indicator_inited_dt = self.minute_bar_dt
                 
@@ -33,7 +33,7 @@ class Trending2Strategy(TrendingStrategy):
                     self.indicator_inited_dt = ""
 
             if self.direction == Direction.SHORT:
-                if self.hour_up and self.hour_down and self.minute_recent_up and self.minute_recent_down and self.minute_bar.datetime.timestamp() <= self.hour_down_ts + 60 * 60 and self.minute_recent_up >= self.hour_down + abs(self.hour_up - self.hour_down) * 0.7:
+                if self.hour_up and self.hour_down and self.minute_recent_up and self.minute_recent_down and self.minute_bar.datetime.timestamp() <= self.hour_down_ts + 60 * 60 and self.hour_up >= self.minute_recent_up >= self.hour_down + abs(self.hour_up - self.hour_down) * 0.7:
                     self.indicator_inited = True
                     self.indicator_inited_dt = self.minute_bar_dt
 
