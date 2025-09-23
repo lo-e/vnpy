@@ -264,13 +264,7 @@ class TrendingStrategy(CtaTemplate):
 
                 else:
                     # 重新下载数据
-                    if self.direction == Direction.LONG:
-                        direction = "LONG"
-
-                    elif self.direction == Direction.SHORT:
-                        direction = "SHORT"
-
-                    self.portfolio.bar_download_queue.put((self.vt_symbol, direction))
+                    self.portfolio.bar_download_queue.put(self.vt_symbol)
 
                 msg = f"{self.vt_symbol} 初始化数据缺失\n\ncount {len(data_list)}\nlack {bar_lack}"
                 self.send_ding_talk(msg)
@@ -342,19 +336,12 @@ class TrendingStrategy(CtaTemplate):
                         self.send_ding_talk(msg)
                     
                     else:
-
-                        if self.direction == Direction.LONG:
-                            direction = "LONG"
-
-                        elif self.direction == Direction.SHORT:
-                            direction = "SHORT"
-
-                        self.portfolio.bar_download_queue.put((self.vt_symbol, direction))
+                        # 重新下载数据
+                        self.portfolio.bar_download_queue.put(self.vt_symbol)
                     
                     msg = f"{self.vt_symbol} 初始化数据缺失\n\ndatabase {len(self.database_minute_bar_list)}\ndatabase_end {database_end}\ntick {len(self.tick_minute_bar_list)}\ntick_start {tick_start}"
                     self.send_ding_talk(msg)
 
-                    # 重新下载数据
                     self.database_minute_bar_list = []
                     self.history_minute_am: ArrayManager = ArrayManager(self.history_hour*60)
 

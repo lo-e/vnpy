@@ -64,6 +64,7 @@ from decimal import Decimal
 import json
 from .trendingStrategy import TrendingStrategy, get_strategy_type
 from .trending1Strategy import Trending1Strategy
+from .trending2Strategy import Trending2Strategy
 from .topGainersLosersPortfolio import TopGainersLosersPortfolio
 from vnpy.app.cta_strategy.base import (
     TICK_DB_NAME,
@@ -637,6 +638,9 @@ class TopGainersLosersEngine(BaseEngine):
         if type == "T1":
             strategy = Trending1Strategy(self, setting)
         
+        elif type == "T2":
+            strategy = Trending2Strategy(self, setting)
+
         else:
             return
 
