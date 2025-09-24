@@ -397,6 +397,15 @@ class TopGainersLosersPortfolio(object):
                             setting = self.new_strategy(trending_1h_time, "T4", symbol, Direction.SHORT, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
                             self.generate_new_setting(data_time, direction, setting, new_settings)
 
+                    # T5信号生成
+                    if direction == "LONG":
+                        setting = self.new_strategy(trending_1h_time, "T5", symbol, Direction.LONG, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
+                        self.generate_new_setting(data_time, direction, setting, new_settings)
+                    
+                    elif direction == "SHORT":
+                        setting = self.new_strategy(trending_1h_time, "T5", symbol, Direction.SHORT, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
+                        self.generate_new_setting(data_time, direction, setting, new_settings)
+
         if new_settings:
             # 统计当前已订阅的代币
             subscribed_vt_symbols = set()
