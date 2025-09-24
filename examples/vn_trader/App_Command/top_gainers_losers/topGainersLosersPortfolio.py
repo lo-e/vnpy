@@ -322,12 +322,17 @@ class TopGainersLosersPortfolio(object):
             else:
                 direction = trending_data["direction"]
                 change = trending_data["change"]
-                volume_24h = trending_data["volume_24h"]
                 trending_1h_rank = trending_data["trending_1h_rank"]
                 trending_1h_ts = trending_data["trending_1h_ts"]
                 trending_1h_time = trending_data["trending_1h_time"]
+                volume_24h = trending_data["volume_24h"]
+                volume_24h_v = float(re.sub(r'[^\d.]', '', volume_24h))
+                volume_24h_u = re.sub(r'[\d.]', '', volume_24h)
+                volume_cross = True
+                if volume_24h_u == "万" and volume_24h_v < 100:
+                    volume_cross = False
 
-                if abs(change) >= 1:
+                if abs(change) >= 1 and volume_cross:
                     # 24h趋势数据
                     trending_mean_1h = 0
                     reverse_mean_1h = 0
