@@ -66,6 +66,7 @@ from .trendingStrategy import TrendingStrategy, get_strategy_type
 from .trending1Strategy import Trending1Strategy
 from .trending2Strategy import Trending2Strategy
 from .trending3Strategy import Trending3Strategy
+from .trending4Strategy import Trending4Strategy
 from .topGainersLosersPortfolio import TopGainersLosersPortfolio
 from vnpy.app.cta_strategy.base import (
     TICK_DB_NAME,
@@ -645,6 +646,9 @@ class TopGainersLosersEngine(BaseEngine):
         elif type == "T3":
             strategy = Trending3Strategy(self, setting)
 
+        elif type == "T4":
+            strategy = Trending4Strategy(self, setting)
+                                         
         else:
             return
 
