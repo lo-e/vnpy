@@ -16,9 +16,6 @@ class Trending5Strategy(TrendingStrategy):
     author = "loe"
 
     def __init__(self, ctaEngine, setting):
-        self.signal_count = 0
-        self.syncs.append("signal_count")
-
         # 完成setting.json参数的配置
         super(Trending5Strategy, self).__init__(
             ctaEngine=ctaEngine, setting=setting
