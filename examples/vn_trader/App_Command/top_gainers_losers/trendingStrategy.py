@@ -259,15 +259,15 @@ class TrendingStrategy(CtaTemplate):
                     if not self.target_pos:
                         self.on_close()
                     
+                    msg = f"{self.vt_symbol} 初始化数据缺失（{self.bar_lack_count}）\n\ncount {len(data_list)}\nlack {bar_lack}"
+                    self.send_ding_talk(msg)
+
                     msg = f"{self.vt_symbol} 初始化数据加载失败，检查代码"
                     self.send_ding_talk(msg)
 
                 else:
                     # 重新下载数据
                     self.portfolio.bar_download_queue.put(self.vt_symbol)
-
-                msg = f"{self.vt_symbol} 初始化数据缺失（{self.bar_lack_count}）\n\ncount {len(data_list)}\nlack {bar_lack}"
-                self.send_ding_talk(msg)
 
         except Exception as e:
             msg = f"加载Bar数据出错\n\n{e}"
@@ -332,15 +332,15 @@ class TrendingStrategy(CtaTemplate):
                         if not self.target_pos:
                             self.on_close()
                         
+                        msg = f"{self.vt_symbol} 初始化数据缺失（{self.bar_lack_count}）\n\ndatabase {len(self.database_minute_bar_list)}\ndatabase_end {database_end}\ntick {len(self.tick_minute_bar_list)}\ntick_start {tick_start}"
+                        self.send_ding_talk(msg)
+
                         msg = f"{self.vt_symbol} 初始化数据加载失败，检查代码"
                         self.send_ding_talk(msg)
                     
                     else:
                         # 重新下载数据
                         self.portfolio.bar_download_queue.put(self.vt_symbol)
-                    
-                    msg = f"{self.vt_symbol} 初始化数据缺失（{self.bar_lack_count}）\n\ndatabase {len(self.database_minute_bar_list)}\ndatabase_end {database_end}\ntick {len(self.tick_minute_bar_list)}\ntick_start {tick_start}"
-                    self.send_ding_talk(msg)
 
                     self.database_minute_bar_list = []
                     self.history_minute_am: ArrayManager = ArrayManager(self.history_hour*60)
