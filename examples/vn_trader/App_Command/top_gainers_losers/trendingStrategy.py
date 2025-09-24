@@ -278,7 +278,8 @@ class TrendingStrategy(CtaTemplate):
         self.loading_database = False
     
     def on_tick_minute_bar(self, bar: BarData):
-        Thread(target=self.process_tick_minute_bar, args=(bar,)).start()
+        # Thread(target=self.process_tick_minute_bar, args=(bar,)).start()
+        self.process_tick_minute_bar(bar)
 
     def process_tick_minute_bar(self, bar: BarData):
         try:
