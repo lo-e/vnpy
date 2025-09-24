@@ -48,7 +48,7 @@ class Trending4Strategy(TrendingStrategy):
 
         # 1h新高新低
         price_cross = False
-        if self.database_loaded and ((self.direction == Direction.LONG and self.hour_up and tick.last_price > self.hour_up) or (self.direction == Direction.SHORT and self.hour_down and tick.last_price < self.hour_down)):
+        if self.database_loaded and not self.hour_up_down_updated and ((self.direction == Direction.LONG and self.hour_up and tick.last_price > self.hour_up) or (self.direction == Direction.SHORT and self.hour_down and tick.last_price < self.hour_down)):
             price_cross = True
             self.hour_up_down_updated = True
 
