@@ -353,7 +353,7 @@ class TopGainersLosersPortfolio(object):
                     # T1信号生成
                     if (abs(trending_mean_1h) >= abs(reverse_mean_1h) * 2) or (abs(trending_mean_24h) >= abs(reverse_mean_24h) * 2):
                         if direction == "LONG":
-                            setting = self.new_strategy("T1", symbol, Direction.LONG, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
+                            setting = self.new_strategy(trending_1h_time, "T1", symbol, Direction.LONG, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
                             strategy_name = setting.get("strategy_name", "")
                             strategy_pure_name = get_strategy_pure_name(strategy_name)
 
@@ -383,7 +383,7 @@ class TopGainersLosersPortfolio(object):
                                     # self.send_ding_talk(msg)
                         
                         elif direction == "SHORT":
-                            setting = self.new_strategy("T1", symbol, Direction.SHORT, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
+                            setting = self.new_strategy(trending_1h_time, "T1", symbol, Direction.SHORT, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
                             strategy_name = setting.get("strategy_name", "")
                             strategy_pure_name = get_strategy_pure_name(strategy_name)
 
@@ -415,7 +415,7 @@ class TopGainersLosersPortfolio(object):
                     # T2信号生成
                     if (abs(trending_mean_1h) >= abs(reverse_mean_1h) * 2) or (abs(trending_mean_24h) >= abs(reverse_mean_24h) * 2):
                         if direction == "LONG":
-                            setting = self.new_strategy("T2", symbol, Direction.LONG, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
+                            setting = self.new_strategy(trending_1h_time, "T2", symbol, Direction.LONG, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
                             strategy_name = setting.get("strategy_name", "")
                             strategy_pure_name = get_strategy_pure_name(strategy_name)
 
@@ -445,7 +445,7 @@ class TopGainersLosersPortfolio(object):
                                     # self.send_ding_talk(msg)
                         
                         elif direction == "SHORT":
-                            setting = self.new_strategy("T2", symbol, Direction.SHORT, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
+                            setting = self.new_strategy(trending_1h_time, "T2", symbol, Direction.SHORT, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
                             strategy_name = setting.get("strategy_name", "")
                             strategy_pure_name = get_strategy_pure_name(strategy_name)
 
@@ -594,7 +594,7 @@ class TopGainersLosersPortfolio(object):
     def on_trending_data_5m(self, data: tuple):
         pass
 
-    def new_strategy(self, type: str, token: str, direction: Direction, change: float, volume_24h: str, trending_mean_1h: float, reverse_mean_1h: float, trending_mean_24h: float, reverse_mean_24h: float):
+    def new_strategy(self, data_dt: str, type: str, token: str, direction: Direction, change: float, volume_24h: str, trending_mean_1h: float, reverse_mean_1h: float, trending_mean_24h: float, reverse_mean_24h: float):
         # 确认合约
         vt_symbol = ""
         exchange = ""
@@ -652,6 +652,7 @@ class TopGainersLosersPortfolio(object):
                    "reverse_mean_24h": reverse_mean_24h,
                    "start": True,
                    "manual_close": False,
+                   "data_dt": data_dt,
                    "datetime": datetime.now().strftime(f"%Y-%m-%d %H:%M:%S")
                    }
        
