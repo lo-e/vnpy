@@ -124,8 +124,8 @@ class Trending5Strategy(TrendingStrategy):
                 self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {self.leverage:.2f} {tick.last_price}"})
                 self.trade_logs_updated = True
 
-                msg = f"{self.vt_symbol} {self.direction.value} {self.strategy_type}\n开仓（{self.open_count}）"
-                self.cta_engine.main_engine.send_ding_talk(msg)
+                # msg = f"{self.vt_symbol} {self.direction.value} {self.strategy_type}\n开仓（{self.open_count}）"
+                # self.cta_engine.main_engine.send_ding_talk(msg)
 
         # 止损判断
         if self.target_pos and ((self.direction == Direction.LONG and tick.last_price <= self.stop_price) or (self.direction == Direction.SHORT and tick.last_price >= self.stop_price)):
@@ -152,8 +152,8 @@ class Trending5Strategy(TrendingStrategy):
             self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} STOP {self.pnl:.2f}% {tick.last_price}"})
             self.trade_logs_updated = True
 
-            msg = f"{self.vt_symbol} {self.direction.value} {self.strategy_type}\n止损 {self.pnl:.2f}%"
-            self.cta_engine.main_engine.send_ding_talk(msg)
+            # msg = f"{self.vt_symbol} {self.direction.value} {self.strategy_type}\n止损 {self.pnl:.2f}%"
+            # self.cta_engine.main_engine.send_ding_talk(msg)
 
         # 平仓判断
         if self.target_pos and self.database_loaded and tick.datetime > self.open_tick_dt + timedelta(hours=6) and ((self.direction == Direction.LONG and tick.last_price < self.hour_down) or (self.direction == Direction.SHORT and tick.last_price > self.hour_up)):
@@ -178,8 +178,8 @@ class Trending5Strategy(TrendingStrategy):
             self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} CLOSE {self.pnl:.2f}% {tick.last_price}"})
             self.trade_logs_updated = True
 
-            msg = f"{self.vt_symbol} {self.direction.value} {self.strategy_type}\n平仓 {self.pnl:.2f}%"
-            self.cta_engine.main_engine.send_ding_talk(msg)
+            # msg = f"{self.vt_symbol} {self.direction.value} {self.strategy_type}\n平仓 {self.pnl:.2f}%"
+            # self.cta_engine.main_engine.send_ding_talk(msg)
 
         # 手动平仓
         if self.manual_close:
