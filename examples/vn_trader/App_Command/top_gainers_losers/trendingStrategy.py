@@ -131,6 +131,7 @@ class TrendingStrategy(CtaTemplate):
         else:
             raise(f"交易方向配置错误：{self.direction}")
 
+        self.strategy_type = get_strategy_type(self.strategy_name)
         self.tick: TickData = None
         self.target_pos = 0
         self.stop_open = False
@@ -643,7 +644,7 @@ class TrendingStrategy(CtaTemplate):
                 self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} AUTO_STOP {self.pnl:.2f}% {trade.price}"})
                 self.trade_logs_updated = True
 
-                msg = f"{self.vt_symbol} {self.direction.value}\n自动止损 {self.pnl:.2f}%"
+                msg = f"{self.vt_symbol} {self.direction.value} {self.strategy_type}\n自动止损 {self.pnl:.2f}%"
                 self.cta_engine.main_engine.send_ding_talk(msg)
         
         except Exception as e:

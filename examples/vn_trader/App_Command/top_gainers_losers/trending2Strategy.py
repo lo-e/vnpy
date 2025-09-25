@@ -89,7 +89,7 @@ class Trending2Strategy(TrendingStrategy):
                 self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {self.leverage:.2f} {tick.last_price}"})
                 self.trade_logs_updated = True
 
-                msg = f"{self.vt_symbol} {self.direction.value}\n开仓（{self.open_count}）"
+                msg = f"{self.vt_symbol} {self.direction.value} {self.strategy_type}\n开仓（{self.open_count}）"
                 self.cta_engine.main_engine.send_ding_talk(msg)
 
         # 止损判断
@@ -117,7 +117,7 @@ class Trending2Strategy(TrendingStrategy):
             self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} STOP {self.pnl:.2f}% {tick.last_price}"})
             self.trade_logs_updated = True
 
-            msg = f"{self.vt_symbol} {self.direction.value}\n止损 {self.pnl:.2f}%"
+            msg = f"{self.vt_symbol} {self.direction.value} {self.strategy_type}\n止损 {self.pnl:.2f}%"
             self.cta_engine.main_engine.send_ding_talk(msg)
 
         # 平仓判断
@@ -143,7 +143,7 @@ class Trending2Strategy(TrendingStrategy):
             self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} CLOSE {self.pnl:.2f}% {tick.last_price}"})
             self.trade_logs_updated = True
 
-            msg = f"{self.vt_symbol} {self.direction.value}\n平仓 {self.pnl:.2f}%"
+            msg = f"{self.vt_symbol} {self.direction.value} {self.strategy_type}\n平仓 {self.pnl:.2f}%"
             self.cta_engine.main_engine.send_ding_talk(msg)
 
         # 手动平仓
@@ -170,7 +170,7 @@ class Trending2Strategy(TrendingStrategy):
                 self.trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} MANUAL_CLOSE {self.pnl:.2f}% {tick.last_price}"})
                 self.trade_logs_updated = True
 
-                msg = f"{self.vt_symbol} {self.direction.value}\n手动平仓 {self.pnl:.2f}%"
+                msg = f"{self.vt_symbol} {self.direction.value} {self.strategy_type}\n手动平仓 {self.pnl:.2f}%"
                 self.cta_engine.main_engine.send_ding_talk(msg)
             
             else:
