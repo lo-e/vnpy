@@ -63,6 +63,16 @@ class Trending5Strategy(TrendingStrategy):
                     self.indicator_inited = False
                     self.indicator_inited_dt = ""
 
+    def add_unit_pos(self, tick_price: float):
+        super().add_unit_pos(tick_price)
+
+        # 更新止损价格
+        if self.direction == Direction.LONG and self.minute_recent_down:
+            self.stop_price = max(self.minute_15_down, self.minute_recent_down)
+        
+        if self.direction == Direction.SHORT and self.minute_recent_up:
+            self.stop_price = min(self.minute_15_up, self.minute_recent_up)
+
     def on_tick(self, tick: TickData):
         super().on_tick(tick)
         if not self.trading:
