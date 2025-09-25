@@ -10,6 +10,8 @@ from datetime import datetime
 from vnpy.trader.object import TickData
 from vnpy.trader.constant import Exchange
 import time
+from vnpy.trader.object import ContractData
+from vnpy.trader.utility import round_to
 
 class Trending5Strategy(TrendingStrategy):
     className = "Trending5Strategy"
@@ -64,14 +66,33 @@ class Trending5Strategy(TrendingStrategy):
                     self.indicator_inited_dt = ""
 
     def add_unit_pos(self, tick_price: float):
-        super().add_unit_pos(tick_price)
-
-        # 更新止损价格
-        if self.direction == Direction.LONG and self.minute_recent_down:
+        # 计算仓位大小、止损价格
+        order_value = 0
+        if self.direction == Direction.LONG and self.minute_15_down and self.minute_recent_down:
             self.stop_price = max(self.minute_15_down, self.minute_recent_down)
+            self.leverage = 0.01 / abs((self.stop_price / tick_price) - 1)
+            order_value = self.portfolio.portfolio_value * self.leverage
         
-        if self.direction == Direction.SHORT and self.minute_recent_up:
+        if self.direction == Direction.SHORT and self.minute_15_up and self.minute_recent_up:
             self.stop_price = min(self.minute_15_up, self.minute_recent_up)
+            self.leverage = 0.01 / abs((self.stop_price / tick_price) - 1)
+            order_value = self.portfolio.portfolio_value * self.leverage
+
+        self.target_pos = order_value / tick_price
+        if self.direction == Direction.SHORT:
+            self.target_pos *= -1
+
+        # 仓位精度处理
+        contract: ContractData = self.cta_engine.main_engine.get_contract(self.vt_symbol)
+        self.target_pos = round_to(self.target_pos, contract.min_volume)
+
+        # 开仓价值、价格、时间
+        self.open_tick_value = order_value
+        self.open_tick_price = tick_price
+        self.open_tick_dt = self.tick.datetime
+        
+        # 开仓计数
+        self.open_count += 1
 
     def on_tick(self, tick: TickData):
         super().on_tick(tick)
