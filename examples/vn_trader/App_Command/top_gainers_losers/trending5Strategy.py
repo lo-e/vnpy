@@ -105,7 +105,7 @@ class Trending5Strategy(TrendingStrategy):
             price_cross = True
             self.hour_up_down_updated = True
 
-            if self.indicator_inited:
+            if not self.target_pos and self.indicator_inited:
                 self.signal_count += 1
 
         # 开仓判断
