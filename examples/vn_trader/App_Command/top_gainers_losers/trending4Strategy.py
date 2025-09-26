@@ -24,7 +24,20 @@ class Trending4Strategy(TrendingStrategy):
     def check_indicator_inited(self):
         if not self.target_pos:
             if self.direction == Direction.LONG:
-                if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and self.minute_bar.datetime.timestamp() >= self.hour_up_ts + 3 * 60 * 60 and self.minute_recent_down >= self.hour_down:
+                recent_seconds = 0
+                if self.hour_up_dt:
+                    recent_seconds = (datetime.strptime(self.minute_bar_dt, f"%Y-%m-%d %H:%M:%S") - datetime.strptime(self.hour_up_dt, f"%Y-%m-%d %H:%M:%S")).seconds
+                recent_minutes = int(recent_seconds / 60)
+
+                # 预备信号设定
+                if 30 < recent_minutes < 60 or self.minute_recent_down < self.hour_down:
+                    self.pre_signal_dt = ""
+
+                if recent_minutes >= 60 and self.minute_recent_down >= self.hour_down:
+                    self.pre_signal_dt = self.minute_bar_dt
+
+                # 正式信号判断
+                if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and self.pre_signal_dt and 5 <= recent_minutes <= 30 and self.minute_recent_down >= self.hour_down:
                     self.indicator_inited = True
                     self.indicator_inited_dt = self.minute_bar_dt
                 
@@ -33,7 +46,20 @@ class Trending4Strategy(TrendingStrategy):
                     self.indicator_inited_dt = ""
 
             if self.direction == Direction.SHORT:
-                if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and self.minute_bar.datetime.timestamp() >= self.hour_down_ts + 3 * 60 * 60 and self.minute_recent_up <= self.hour_up:
+                recent_seconds = 0
+                if self.hour_down_dt:
+                    recent_seconds = (datetime.strptime(self.minute_bar_dt, f"%Y-%m-%d %H:%M:%S") - datetime.strptime(self.hour_down_dt, f"%Y-%m-%d %H:%M:%S")).seconds
+                recent_minutes = int(recent_seconds / 60)
+
+                # 预备信号设定
+                if 30 < recent_minutes < 60 or self.minute_recent_up > self.hour_up:
+                    self.pre_signal_dt = ""
+
+                if recent_minutes >= 60 and self.minute_recent_up <= self.hour_up:
+                    self.pre_signal_dt = self.minute_bar_dt
+
+                # 正式信号判断
+                if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and self.pre_signal_dt and 5 <= recent_minutes <= 30 and self.minute_recent_up <= self.hour_up:
                     self.indicator_inited = True
                     self.indicator_inited_dt = self.minute_bar_dt
 

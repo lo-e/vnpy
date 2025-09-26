@@ -82,7 +82,8 @@ class TrendingStrategy(CtaTemplate):
         "minute_bar_dt",
         "insufficient_value",
         "database_history_loaded",
-        "signal_dt_list"
+        "signal_dt_list",
+        "pre_signal_dt"
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -166,6 +167,7 @@ class TrendingStrategy(CtaTemplate):
         self.history_low_cross = False              # 长周期最低价
         self.pos_trending_price = 0
         self.signal_dt_list = []
+        self.pre_signal_dt = ""
 
         self.database_minute_bar_list = []
         self.tick_minute_bar_list = []

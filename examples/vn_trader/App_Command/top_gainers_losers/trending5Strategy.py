@@ -33,11 +33,7 @@ class Trending5Strategy(TrendingStrategy):
                 if recent_minutes > 30:
                     self.signal_dt_list = []
 
-                time_allowed = False
-                if 5 <= recent_minutes <= 30:
-                    time_allowed = True
-
-                if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and time_allowed and self.minute_recent_down >= self.hour_down:
+                if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and 5 <= recent_minutes <= 30 and self.minute_recent_down >= self.hour_down:
                     self.indicator_inited = True
                     self.indicator_inited_dt = self.minute_bar_dt
                 
@@ -52,12 +48,8 @@ class Trending5Strategy(TrendingStrategy):
                 recent_minutes = int(recent_seconds / 60)
                 if recent_minutes > 30:
                     self.signal_dt_list = []
-
-                time_allowed = False
-                if 5 <= recent_minutes <= 30:
-                    time_allowed = True
                     
-                if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and time_allowed and self.minute_recent_up <= self.hour_up:
+                if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and 5 <= recent_minutes <= 30 and self.minute_recent_up <= self.hour_up:
                     self.indicator_inited = True
                     self.indicator_inited_dt = self.minute_bar_dt
 
