@@ -31,7 +31,7 @@ class Trending5Strategy(TrendingStrategy):
                     recent_seconds = (datetime.strptime(self.minute_bar_dt, f"%Y-%m-%d %H:%M:%S") - datetime.strptime(self.hour_up_dt, f"%Y-%m-%d %H:%M:%S")).seconds
                 recent_minutes = int(recent_seconds / 60)
                 if recent_minutes > 30:
-                    self.signal_count = 0
+                    self.signal_dt_list = []
 
                 time_allowed = False
                 if 5 <= recent_minutes <= 30:
@@ -51,7 +51,7 @@ class Trending5Strategy(TrendingStrategy):
                     recent_seconds = (datetime.strptime(self.minute_bar_dt, f"%Y-%m-%d %H:%M:%S") - datetime.strptime(self.hour_down_dt, f"%Y-%m-%d %H:%M:%S")).seconds
                 recent_minutes = int(recent_seconds / 60)
                 if recent_minutes > 30:
-                    self.signal_count = 0
+                    self.signal_dt_list = []
 
                 time_allowed = False
                 if 5 <= recent_minutes <= 30:
@@ -106,10 +106,10 @@ class Trending5Strategy(TrendingStrategy):
             self.hour_up_down_updated = True
 
             if not self.target_pos and self.indicator_inited:
-                self.signal_count += 1
+                self.signal_dt_list.append(self.minute_bar_dt)
 
         # 开仓判断
-        if not self.target_pos and self.database_loaded and self.indicator_inited and price_cross and self.signal_count >= 3 and not self.stop_open and not self.closed:
+        if not self.target_pos and self.database_loaded and self.indicator_inited and price_cross and len(self.signal_dt_list) >= 3 and not self.stop_open and not self.closed:
             open_allowed = False
             if (self.direction == Direction.LONG and self.history_high_cross) or (self.direction == Direction.SHORT and self.history_low_cross):
                 open_allowed = True
