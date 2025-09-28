@@ -62,6 +62,7 @@ class TrendingStrategy(CtaTemplate):
         "pnl",
         "leverage",
         "open_count",
+        "open_tags",
         "indicator_inited",
         "indicator_inited_dt",
         "history_high_cross",
@@ -150,6 +151,7 @@ class TrendingStrategy(CtaTemplate):
         self.pnl = 0
         self.leverage = 0
         self.open_count = 0
+        self.open_tags = []
         self.database_loaded = False
         self.database_history_loaded = False
         self.indicator_inited = False
@@ -695,9 +697,30 @@ def get_strategy_pure_name(strategy_name: str):
     strategy_pure_name = "_".join(strategy_name_elements)
     return strategy_pure_name
 
+def get_strategy_symbol(strategy_name: str):
+    if not strategy_name:
+        return ""
+    
+    symbol = strategy_name.split("_")[3]
+    return symbol
+
 def get_strategy_type(strategy_name: str):
     if not strategy_name:
         return ""
     
     type = strategy_name.split("_")[2]
     return type
+
+def get_full_volume(volume: str):
+    if not volume:
+        return 0
+    
+    volume_v = float(re.sub(r'[^\d.]', '', volume))
+    volume_u = re.sub(r'[\d.]', '', volume)
+    if volume_u == "亿":
+        volume_v *= 100000000
+    
+    elif volume_u == "万":
+        volume_v *= 10000
+    
+    return volume_v
