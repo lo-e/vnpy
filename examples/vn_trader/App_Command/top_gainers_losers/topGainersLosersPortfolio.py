@@ -1117,6 +1117,22 @@ class TopGainersLosersPortfolio(object):
                                 # 更新setting.json
                                 self.setting_update_needed = True
 
+                        # 长时间没有行情数据，关闭策略
+                        strategy_data_time = 0
+                        if strategy.tick:
+                            strategy_data_time = time.time() - strategy.tick.datetime.timestamp()
+                        
+                        else:
+                            strategy_data_time = time.time() - datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S").timestamp()
+
+                        if strategy_data_time >= 60 * 60:
+                            if not strategy.target_pos:
+                                strategy.on_close()
+                            
+                            else:
+                                msg = f"{strategy.strategy_name}\n\n长时间没有行情数据，检查代码\ntarget_pos: {strategy.target_pos}\npos: {strategy.pos}"
+                                self.send_ding_talk(msg)
+
                         # 同步策略数据
                         strategy.check_save_data()
 
