@@ -162,7 +162,7 @@ class Trending5Strategy(TrendingStrategy):
                     self.open_tags.append("2")
 
                 # 前小时高低维持超过1小时且连续三个总涨跌幅不超过前1小时1/2
-                if self.pre_signal_dt and ((self.direction == Direction.LONG and self.hour_up - self.pre_signal_hour_up <= (self.pre_signal_hour_up - self.pre_signal_hour_down) * 0.5)) or (self.direction == Direction.SHORT and self.pre_signal_hour_down - self.hour_down <= (self.pre_signal_hour_up - self.pre_signal_hour_down) * 0.5):
+                if self.pre_signal_dt and ((self.direction == Direction.LONG and self.hour_up - self.pre_signal_hour_up <= (self.pre_signal_hour_up - self.pre_signal_hour_down) * 0.5) or (self.direction == Direction.SHORT and self.pre_signal_hour_down - self.hour_down <= (self.pre_signal_hour_up - self.pre_signal_hour_down) * 0.5)):
                     self.open_tags.append("3")
 
                 # 刚突破近期历史高点
