@@ -65,6 +65,8 @@ class TrendingStrategy(CtaTemplate):
         "open_tags",
         "indicator_inited",
         "indicator_inited_dt",
+        "indicator_inited_hour_up",
+        "indicator_inited_hour_down",
         "history_high_cross",
         "history_low_cross",
         "pos_trending_price",
@@ -159,6 +161,8 @@ class TrendingStrategy(CtaTemplate):
         self.database_history_loaded = False
         self.indicator_inited = False
         self.indicator_inited_dt = ""
+        self.indicator_inited_hour_up = 0
+        self.indicator_inited_hour_down = 0
         self.target_pos_check_ts = 0
         self.target_pos_checking = False
         self.strategy_data = {}                     # 策略数据（包括常量、变量、同步）

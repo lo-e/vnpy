@@ -42,10 +42,14 @@ class Trending4Strategy(TrendingStrategy):
                 if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and self.pre_signal_dt and 5 <= recent_minutes <= 30 and self.minute_recent_down >= self.hour_down:
                     self.indicator_inited = True
                     self.indicator_inited_dt = self.minute_bar_dt
+                    self.indicator_inited_hour_up = self.hour_up
+                    self.indicator_inited_hour_down = self.hour_down
                 
                 else:
                     self.indicator_inited = False
                     self.indicator_inited_dt = ""
+                    self.indicator_inited_hour_up = 0
+                    self.indicator_inited_hour_down = 0
 
             if self.direction == Direction.SHORT:
                 recent_seconds = 0
@@ -64,10 +68,14 @@ class Trending4Strategy(TrendingStrategy):
                 if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and self.pre_signal_dt and 5 <= recent_minutes <= 30 and self.minute_recent_up <= self.hour_up:
                     self.indicator_inited = True
                     self.indicator_inited_dt = self.minute_bar_dt
+                    self.indicator_inited_hour_up = self.hour_up
+                    self.indicator_inited_hour_down = self.hour_down
 
                 else:
                     self.indicator_inited = False
                     self.indicator_inited_dt = ""
+                    self.indicator_inited_hour_up = 0
+                    self.indicator_inited_hour_down = 0
 
     def add_unit_pos(self, tick_price: float):
         # 计算仓位大小、止损价格

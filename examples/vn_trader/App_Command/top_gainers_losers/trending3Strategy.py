@@ -27,19 +27,27 @@ class Trending3Strategy(TrendingStrategy):
                 if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and self.minute_bar.datetime.timestamp() >= self.hour_up_ts + 2 * 60 * 60 and self.minute_15_down >= self.hour_up - abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_down >= self.hour_down:
                     self.indicator_inited = True
                     self.indicator_inited_dt = self.minute_bar_dt
+                    self.indicator_inited_hour_up = self.hour_up
+                    self.indicator_inited_hour_down = self.hour_down
                 
                 else:
                     self.indicator_inited = False
                     self.indicator_inited_dt = ""
+                    self.indicator_inited_hour_up = 0
+                    self.indicator_inited_hour_down = 0
 
             if self.direction == Direction.SHORT:
                 if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and self.minute_bar.datetime.timestamp() >= self.hour_down_ts + 2 * 60 * 60 and self.minute_15_up <= self.hour_down + abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_up <= self.hour_up:
                     self.indicator_inited = True
                     self.indicator_inited_dt = self.minute_bar_dt
+                    self.indicator_inited_hour_up = self.hour_up
+                    self.indicator_inited_hour_down = self.hour_down
 
                 else:
                     self.indicator_inited = False
                     self.indicator_inited_dt = ""
+                    self.indicator_inited_hour_up = 0
+                    self.indicator_inited_hour_down = 0
 
     def on_tick(self, tick: TickData):
         super().on_tick(tick)
