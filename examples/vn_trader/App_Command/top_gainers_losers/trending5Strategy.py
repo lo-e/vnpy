@@ -32,6 +32,18 @@ class Trending5Strategy(TrendingStrategy):
                 recent_minutes = int(recent_seconds / 60)
                 if recent_minutes > 30:
                     self.signal_dt_list = []
+                    self.signal_tag_count = 0
+
+                # 预备信号设定
+                if 30 < recent_minutes < 60 or self.minute_recent_down < self.hour_down:
+                    self.pre_signal_dt = ""
+                    self.pre_signal_hour_up = 0
+                    self.pre_signal_hour_down = 0
+
+                if recent_minutes >= 60 and self.minute_recent_down >= self.hour_down:
+                    self.pre_signal_dt = self.minute_bar_dt
+                    self.pre_signal_hour_up = self.hour_up
+                    self.pre_signal_hour_down = self.hour_down
 
                 if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and 5 <= recent_minutes <= 30 and self.minute_recent_down >= self.hour_down:
                     self.indicator_inited = True
@@ -48,6 +60,18 @@ class Trending5Strategy(TrendingStrategy):
                 recent_minutes = int(recent_seconds / 60)
                 if recent_minutes > 30:
                     self.signal_dt_list = []
+                    self.signal_tag_count = 0
+
+                # 预备信号设定
+                if 30 < recent_minutes < 60 or self.minute_recent_up > self.hour_up:
+                    self.pre_signal_dt = ""
+                    self.pre_signal_hour_up = 0
+                    self.pre_signal_hour_down = 0
+
+                if recent_minutes >= 60 and self.minute_recent_up <= self.hour_up:
+                    self.pre_signal_dt = self.minute_bar_dt
+                    self.pre_signal_hour_up = self.hour_up
+                    self.pre_signal_hour_down = self.hour_down
                     
                 if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and 5 <= recent_minutes <= 30 and self.minute_recent_up <= self.hour_up:
                     self.indicator_inited = True
@@ -100,6 +124,12 @@ class Trending5Strategy(TrendingStrategy):
             if not self.target_pos and self.indicator_inited:
                 self.signal_dt_list.append(self.minute_bar_dt)
 
+                if self.direction == Direction.LONG and self.hour_up and self.history_up and self.hour_up <= self.history_up * 0.9998:
+                    self.signal_tag_count += 1
+
+                if self.direction == Direction.SHORT and self.hour_down and self.history_down and self.hour_down >= self.history_down * 1.0002:
+                    self.signal_tag_count += 1
+
         # 开仓判断
         if not self.target_pos and self.database_loaded and self.indicator_inited and price_cross and len(self.signal_dt_list) >= 3 and not self.stop_open and not self.closed:
             open_allowed = False
@@ -130,6 +160,14 @@ class Trending5Strategy(TrendingStrategy):
 
                 if self.direction == Direction.SHORT and (liquidation_long_1h >= liquidation_short_1h * 10 or liquidation_long_4h >= liquidation_short_4h * 5):
                     self.open_tags.append("2")
+
+                # 前小时高低维持超过1小时且连续三个总涨跌幅不超过前1小时1/2
+                if self.pre_signal_dt and ((self.direction == Direction.LONG and self.hour_up - self.pre_signal_hour_up <= (self.pre_signal_hour_up - self.pre_signal_hour_down) * 0.5)) or (self.direction == Direction.SHORT and self.pre_signal_hour_down - self.hour_down <= (self.pre_signal_hour_up - self.pre_signal_hour_down) * 0.5):
+                    self.open_tags.append("3")
+
+                # 刚突破近期历史高点
+                if self.signal_tag_count >= 1:
+                    self.open_tags.append("4")
 
                 self.add_unit_pos(tick.last_price)
 

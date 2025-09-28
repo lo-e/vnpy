@@ -220,7 +220,8 @@ class TopGainersLosersPortfolio(object):
                 "reverse_mean_1h": strategy.reverse_mean_1h,
                 "trending_mean_24h": strategy.trending_mean_24h,
                 "reverse_mean_24h": strategy.reverse_mean_24h,
-                "pnl": f"{pnl:.2f}%"}
+                "pnl": f"{pnl:.2f}%",
+                "open_tags": strategy.open_tags}
         
         strategy_type = get_strategy_type(strategy.strategy_name)
         date_str = dt.strftime(f"%Y-%m-%d")
