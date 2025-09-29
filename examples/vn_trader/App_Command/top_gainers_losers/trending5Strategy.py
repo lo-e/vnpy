@@ -3,7 +3,7 @@
 """
 打新策略
 """
-from .trendingStrategy import TrendingStrategy
+from .trendingStrategy import TrendingStrategy, get_strategy_symbol, get_full_volume
 from vnpy.trader.constant import Direction, Offset
 from vnpy.app.cta_strategy.base import *
 from datetime import datetime
@@ -286,6 +286,30 @@ class Trending5Strategy(TrendingStrategy):
                 if tick.last_price > self.hour_up or tick.datetime.timestamp() >= self.hour_down_ts + 6 * 60 * 60:
                     self.on_close(tick)
 
+    def check_opent_tags(self):
+        # 24小时涨跌幅排名前十
+        pure_symbol = get_strategy_symbol(self.strategy_name)
+        trending_top_24h = []
+        if len(self.portfolio.rise_data_list_24h) >= 8:
+            for i in range(3, 8, 1):
+                trending_top_24h.append(self.portfolio.rise_data_list_24h[i]["symbol"])
+        if pure_symbol in trending_top_24h:
+            self.open_tags.append("1")
+
+        # 多空清算比超限
+        liquidation_long_1h = self.portfolio.liquidation_data.get("1h_long", "")
+        liquidation_long_1h = get_full_volume(liquidation_long_1h)
+        liquidation_short_1h = self.portfolio.liquidation_data.get("1h_short", "")
+        liquidation_short_1h = get_full_volume(liquidation_short_1h)
+        liquidation_long_4h = self.portfolio.liquidation_data.get("4h_long", "")
+        liquidation_long_4h = get_full_volume(liquidation_long_4h)
+        liquidation_short_4h = self.portfolio.liquidation_data.get("4h_short", "")
+        liquidation_short_4h = get_full_volume(liquidation_short_4h)
+        if self.direction == Direction.LONG and (liquidation_short_1h >= liquidation_long_1h * 10 or liquidation_short_4h >= liquidation_long_4h * 5):
+            self.open_tags.append("2")
+
+        if self.direction == Direction.SHORT and (liquidation_long_1h >= liquidation_short_1h * 10 or liquidation_long_4h >= liquidation_short_4h * 5):
+            self.open_tags.append("2")
 def print_(msg: str):
     dt = datetime.now().replace(microsecond=0)
     print(f"{dt}\t{msg}")
