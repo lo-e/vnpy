@@ -466,7 +466,7 @@ class Chrome(object):
                     msg = f"获取小时趋势涨跌数据出错\n周期不支持：{duration}"
                     dingtalk.send_ding_talk(msg)
 
-                current_dt = datetime.now().replace(minute=int(datetime.now().minute / 5) * 5, second=0, microsecond=0)
+                current_dt = datetime.now().replace(minute=int(datetime.now().minute / 1) * 1, second=0, microsecond=0)
                 if duration == "24h":
                     duration_24h_select_dt = current_dt
 
@@ -901,5 +901,5 @@ if __name__ == "__main__":
     dingtalk = DingTalkEngine()
 
     Thread(target=chrome.fetch_rise_fall_minute_trending, args=(chrome.on_rise_fall_trending_data, 5)).start()
-    Thread(target=chrome.fetch_rise_fall_hour_trending, args=(chrome.on_rise_fall_trending_data, 60)).start()
+    Thread(target=chrome.fetch_rise_fall_hour_trending, args=(chrome.on_rise_fall_trending_data, 20)).start()
     Thread(target=chrome.fetch_Liquidation, args=(chrome.on_liquidation_data, 60)).start()

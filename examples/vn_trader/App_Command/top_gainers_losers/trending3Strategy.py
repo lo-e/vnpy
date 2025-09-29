@@ -67,6 +67,10 @@ class Trending3Strategy(TrendingStrategy):
                 open_allowed = True
 
             if open_allowed:
+                # 确认open_tags
+                self.check_opent_tags()
+
+                # 仓位计算
                 self.add_unit_pos(tick.last_price)
 
                 # 发送订单
