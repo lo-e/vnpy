@@ -176,7 +176,7 @@ class Trending5Strategy(TrendingStrategy):
                     self.open_tags.append("3")
 
                 # 刚突破近期历史高点
-                if self.signal_tag_count >= 1:
+                if self.signal_tag_count >= len(self.signal_dt_list) - 1:
                     self.open_tags.append("4")
 
                 self.add_unit_pos(tick.last_price)
