@@ -66,7 +66,7 @@ class MonitorEngine(object):
         else:
             print(f"行情订阅失败，找不到合约{vt_symbol}")
 
-    def subscribe_lots(self, symbols: str, exchange: Exchange):
+    def subscribe_lots(self, symbols: list, exchange: Exchange):
         # 订阅合约
         gateway_symbols_data = {}
         for symbol in symbols:
