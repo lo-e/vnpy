@@ -966,8 +966,7 @@ class TopGainersLosersPortfolio(object):
                     process_count = 0
 
                 strategies = self.cta_engine.symbol_strategy_map[tick.vt_symbol]
-                for i in range(len(strategies)):
-                    strategy: TrendingStrategy = strategies[i]
+                for strategy in strategies.copy():
                     if strategy.inited:
                         strategy.on_tick(tick)
 
