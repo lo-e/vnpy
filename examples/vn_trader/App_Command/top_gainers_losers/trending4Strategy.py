@@ -34,9 +34,13 @@ class Trending4Strategy(TrendingStrategy):
                 # 预备信号设定
                 if 30 < recent_minutes < 60 or self.minute_recent_down < self.hour_down:
                     self.pre_signal_dt = ""
+                    self.pre_signal_hour_up = 0
+                    self.pre_signal_hour_down = 0
 
                 if recent_minutes >= 60 and self.minute_recent_down >= self.hour_down:
                     self.pre_signal_dt = self.minute_bar_dt
+                    self.pre_signal_hour_up = self.hour_up
+                    self.pre_signal_hour_down = self.hour_down
 
                 # 正式信号判断
                 if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and self.pre_signal_dt and 5 <= recent_minutes <= 30 and self.minute_recent_down >= self.hour_down:
@@ -60,9 +64,13 @@ class Trending4Strategy(TrendingStrategy):
                 # 预备信号设定
                 if 30 < recent_minutes < 60 or self.minute_recent_up > self.hour_up:
                     self.pre_signal_dt = ""
+                    self.pre_signal_hour_up = 0
+                    self.pre_signal_hour_down = 0
 
                 if recent_minutes >= 60 and self.minute_recent_up <= self.hour_up:
                     self.pre_signal_dt = self.minute_bar_dt
+                    self.pre_signal_hour_up = self.hour_up
+                    self.pre_signal_hour_down = self.hour_down
 
                 # 正式信号判断
                 if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down and self.pre_signal_dt and 5 <= recent_minutes <= 30 and self.minute_recent_up <= self.hour_up:
