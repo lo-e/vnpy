@@ -339,24 +339,17 @@ class TopGainersLosersPortfolio(object):
                     reverse_mean_1h = 0
                     trending_mean_24h = 0
                     reverse_mean_24h = 0
-                    trending_top_24h = []
                     if change >= 0:
                         trending_mean_1h = self.rise_data_list_1h[1]["change"]
                         reverse_mean_1h = self.rise_data_list_1h[2]["change"]
                         trending_mean_24h = self.rise_data_list_24h[1]["change"]
                         reverse_mean_24h = self.rise_data_list_24h[2]["change"]
-                        if len(self.rise_data_list_24h) >= 6:
-                            for i in range(3, 6, 1):
-                                trending_top_24h.append(self.rise_data_list_24h[i]["symbol"])
                     
                     else:
                         trending_mean_1h = self.rise_data_list_1h[2]["change"]
                         reverse_mean_1h = self.rise_data_list_1h[1]["change"]
                         trending_mean_24h = self.rise_data_list_24h[2]["change"]
                         reverse_mean_24h = self.rise_data_list_24h[1]["change"]
-                        if len(self.fall_data_list_24h) >= 6:
-                            for i in range(3, 6, 1):
-                                trending_top_24h.append(self.fall_data_list_24h[i]["symbol"])
 
                     # T1信号生成
                     if (abs(trending_mean_1h) >= abs(reverse_mean_1h) * 2) or (abs(trending_mean_24h) >= abs(reverse_mean_24h) * 2):
@@ -389,7 +382,6 @@ class TopGainersLosersPortfolio(object):
                             self.generate_new_setting(data_time, direction, setting, new_settings)
 
                     # T4信号生成
-                    # if symbol in trending_top_24h and ((abs(trending_mean_1h) >= abs(reverse_mean_1h) * 2) or (abs(trending_mean_24h) >= abs(reverse_mean_24h) * 2)):
                     if (abs(trending_mean_1h) >= abs(reverse_mean_1h) * 2) or (abs(trending_mean_24h) >= abs(reverse_mean_24h) * 2):
                         if direction == "LONG":
                             setting = self.new_strategy(trending_1h_time, "T4", symbol, Direction.LONG, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
@@ -400,7 +392,6 @@ class TopGainersLosersPortfolio(object):
                             self.generate_new_setting(data_time, direction, setting, new_settings)
 
                     # T5信号生成
-                    # if symbol in trending_top_24h and ((abs(trending_mean_1h) >= abs(reverse_mean_1h) * 2) or (abs(trending_mean_24h) >= abs(reverse_mean_24h) * 2)):
                     if direction == "LONG":
                         setting = self.new_strategy(trending_1h_time, "T5", symbol, Direction.LONG, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
                         self.generate_new_setting(data_time, direction, setting, new_settings)

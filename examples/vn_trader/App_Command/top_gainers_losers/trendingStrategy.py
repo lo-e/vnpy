@@ -698,9 +698,14 @@ class TrendingStrategy(CtaTemplate):
         # 24小时涨跌幅排名前十
         pure_symbol = get_strategy_symbol(self.strategy_name)
         trending_top_24h = []
-        if len(self.portfolio.rise_data_list_24h) >= 13:
+        if self.direction == Direction.LONG and len(self.portfolio.rise_data_list_24h) >= 13:
             for i in range(3, 13, 1):
                 trending_top_24h.append(self.portfolio.rise_data_list_24h[i]["symbol"])
+
+        if self.direction == Direction.SHORT and len(self.portfolio.fall_data_list_24h) >= 13:
+            for i in range(3, 13, 1):
+                trending_top_24h.append(self.portfolio.fall_data_list_24h[i]["symbol"])
+                
         if pure_symbol in trending_top_24h:
             self.open_tags.append("1")
 
