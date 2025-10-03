@@ -675,35 +675,28 @@ class TrendingMultiStrategy(CtaTemplate):
         # 将临时文件替换为目标文件
         shutil.move(temp_file_path, file_path)
 
-    def check_open_tags(self):
-        # 24小时涨跌幅排名前十
+    def check_open_tags(self, signal: SignalData):
+        # 24小时涨跌幅Top
+        top = 10
+        if signal.name == "T5":
+            top = 5
+
         pure_symbol = get_strategy_symbol(self.strategy_name)
         trending_top_24h = []
-        if self.direction == Direction.LONG and len(self.portfolio.rise_data_list_24h) >= 13:
-            for i in range(3, 13, 1):
+        if self.direction == Direction.LONG and len(self.portfolio.rise_data_list_24h) >= top + 3:
+            for i in range(3, top + 3, 1):
                 trending_top_24h.append(self.portfolio.rise_data_list_24h[i]["symbol"])
 
         if self.direction == Direction.SHORT and len(self.portfolio.fall_data_list_24h) >= 13:
-            for i in range(3, 13, 1):
+            for i in range(3, top + 3, 1):
                 trending_top_24h.append(self.portfolio.fall_data_list_24h[i]["symbol"])
                 
         if pure_symbol in trending_top_24h:
-            self.open_tags.append("1")
+            signal.open_tags.append("1")
 
-        # 多空清算比超限
-        liquidation_long_1h = self.portfolio.liquidation_data.get("1h_long", "")
-        liquidation_long_1h = get_full_volume(liquidation_long_1h)
-        liquidation_short_1h = self.portfolio.liquidation_data.get("1h_short", "")
-        liquidation_short_1h = get_full_volume(liquidation_short_1h)
-        liquidation_long_4h = self.portfolio.liquidation_data.get("4h_long", "")
-        liquidation_long_4h = get_full_volume(liquidation_long_4h)
-        liquidation_short_4h = self.portfolio.liquidation_data.get("4h_short", "")
-        liquidation_short_4h = get_full_volume(liquidation_short_4h)
-        if self.direction == Direction.LONG and (liquidation_short_1h >= liquidation_long_1h * 10 or liquidation_short_4h >= liquidation_long_4h * 5):
-            self.open_tags.append("2")
-
-        if self.direction == Direction.SHORT and (liquidation_long_1h >= liquidation_short_1h * 10 or liquidation_long_4h >= liquidation_short_4h * 5):
-            self.open_tags.append("2")
+        # 前小时高低维持超过1小时且距离当前小时高低不超过前1小时高低1/2
+        if signal.pre_signal_dt and ((self.direction == Direction.LONG and self.hour_up - signal.pre_signal_hour_up <= (signal.pre_signal_hour_up - signal.pre_signal_hour_down) * 0.5) or (self.direction == Direction.SHORT and signal.pre_signal_hour_down - self.hour_down <= (signal.pre_signal_hour_up - signal.pre_signal_hour_down) * 0.5)):
+            signal.open_tags.append("3")
 
 def print_(msg: str):
     dt = datetime.now().replace(microsecond=0)
