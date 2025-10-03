@@ -315,6 +315,7 @@ class Trending5Strategy(TrendingStrategy):
 
         if self.direction == Direction.SHORT and (liquidation_long_1h >= liquidation_short_1h * 10 or liquidation_long_4h >= liquidation_short_4h * 5):
             self.open_tags.append("2")
+
 def print_(msg: str):
     dt = datetime.now().replace(microsecond=0)
     print(f"{dt}\t{msg}")
