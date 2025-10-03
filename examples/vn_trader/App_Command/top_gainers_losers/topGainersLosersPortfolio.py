@@ -14,6 +14,7 @@ from vnpy.trader.object import BarData, TickData
 from vnpy.event import Event
 from vnpy.trader.object import SubscribeRequest
 from .trendingStrategy import TrendingStrategy, get_strategy_pure_name, get_strategy_type
+from .trendingMultiStrategy import TrendingMultiStrategy, SignalData, SIGNALS
 from queue import Empty, Queue
 from vnpy.trader.event import EVENT_TICK_DELAY, EVENT_ACCOUNT
 from vnpy.trader.object import AccountData
@@ -207,7 +208,7 @@ class TopGainersLosersPortfolio(object):
         # else:
         #     self.trade_enable = False
 
-    def on_pnl(self, strategy: TrendingStrategy, pnl: float):
+    def on_pnl(self, strategy: TrendingStrategy, signal: SignalData, pnl: float):
         # 记录盈亏
         dt = datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S")
         data = {"datetime": strategy.datetime,
@@ -221,20 +222,19 @@ class TopGainersLosersPortfolio(object):
                 "trending_mean_24h": strategy.trending_mean_24h,
                 "reverse_mean_24h": strategy.reverse_mean_24h,
                 "pnl": f"{pnl:.2f}%",
-                "open_tags": strategy.open_tags}
+                "open_tags": signal.open_tags}
         
-        strategy_type = get_strategy_type(strategy.strategy_name)
         date_str = dt.strftime(f"%Y-%m-%d")
-        type_data = self.pnl_data.get(strategy_type, {})
-        date_data = type_data.get(date_str, {})
+        signal_data = self.pnl_data.get(signal.name, {})
+        date_data = signal_data.get(date_str, {})
 
         date_data["updated"] = True
         data_list = date_data.get("data", [])
         data_list.append(data)
         date_data["data"] = data_list
 
-        type_data[date_str] = date_data
-        self.pnl_data[strategy_type] = type_data
+        signal_data[date_str] = date_data
+        self.pnl_data[signal.name] = signal_data
 
     def resubscribe(self, event: Event):
         return
@@ -935,21 +935,20 @@ class TopGainersLosersPortfolio(object):
         today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         for i in range(7):
             date_str = (today - timedelta(days=i)).strftime(f"%Y-%m-%d")
-            type_list = ["T1", "T2", "T3", "T4", "T5", "T6"]
-            for type in type_list:
-                type_data = self.pnl_data.get(type, {})
-                file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}trade_pnls{DIR_SYMBOL}{type}{DIR_SYMBOL}{date_str}.csv"
+            for signal_name in SIGNALS:
+                signal_data = self.pnl_data.get(signal_name, {})
+                file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}trade_pnls{DIR_SYMBOL}{signal_name}{DIR_SYMBOL}{date_str}.csv"
                 if os.path.exists(file_path):
                     data_list = []
                     df = pd.read_csv(file_path)
                     for _, row in df.iterrows():
                         data_list.append(dict(row))
 
-                    type_data[date_str] = {"updated": False,
-                                           "data": data_list}
+                    signal_data[date_str] = {"updated": False,
+                                             "data": data_list}
 
-                if type_data:
-                    self.pnl_data[type] = type_data
+                if signal_data:
+                    self.pnl_data[signal_name] = signal_data
 
     def process_tick(self):
         error_notice_ts = 0
@@ -995,12 +994,12 @@ class TopGainersLosersPortfolio(object):
                 print_(msg)
 
             # 保存组合盈亏数据
-            for strategy_type, type_data in self.pnl_data.items():
-                for date_str, date_data in type_data.items():
+            for signal_name, signal_data in self.pnl_data.items():
+                for date_str, date_data in signal_data.items():
                     updated = date_data["updated"]
                     if updated:
                         current_dir = os.path.dirname(os.path.abspath(__file__))
-                        file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}trade_pnls{DIR_SYMBOL}{strategy_type}{DIR_SYMBOL}{date_str}.csv"
+                        file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}trade_pnls{DIR_SYMBOL}{signal_name}{DIR_SYMBOL}{date_str}.csv"
 
                         data_list = date_data["data"]
                         data_list = sorted(data_list, key=lambda x: x['timestamp'])
