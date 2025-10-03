@@ -694,7 +694,7 @@ class TrendingStrategy(CtaTemplate):
         # 将临时文件替换为目标文件
         shutil.move(temp_file_path, file_path)
 
-    def check_opent_tags(self):
+    def check_open_tags(self):
         # 24小时涨跌幅排名前十
         pure_symbol = get_strategy_symbol(self.strategy_name)
         trending_top_24h = []

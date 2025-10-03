@@ -637,10 +637,11 @@ class TrendingMultiStrategy(CtaTemplate):
                         self.trade_logs[signal_name] = signal_trade_logs
                         self.trade_logs_updated = True
 
-                        msg = f"{self.vt_symbol} {self.direction.value} {signal_name}\n自动止损 {self.pnl:.2f}%"
+                        msg = f"{self.vt_symbol} {self.direction.value} {signal_name}\n自动止损 {stop_pnl:.2f}%"
                         self.cta_engine.main_engine.send_ding_talk(msg)
 
                 self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
+
         except Exception as e:
             msg = f"成交处理出错\n\n{e}"
             self.send_ding_talk(msg)
@@ -674,7 +675,7 @@ class TrendingMultiStrategy(CtaTemplate):
         # 将临时文件替换为目标文件
         shutil.move(temp_file_path, file_path)
 
-    def check_opent_tags(self):
+    def check_open_tags(self):
         # 24小时涨跌幅排名前十
         pure_symbol = get_strategy_symbol(self.strategy_name)
         trending_top_24h = []

@@ -148,7 +148,7 @@ class Trending5Strategy(TrendingStrategy):
 
             if open_allowed:
                 # 确认open_tags
-                self.check_opent_tags()
+                self.check_open_tags()
 
                 # 前小时高低维持超过1小时且连续三个总涨跌幅不超过前1小时1/2
                 if self.pre_signal_dt and ((self.direction == Direction.LONG and self.hour_up - self.pre_signal_hour_up <= (self.pre_signal_hour_up - self.pre_signal_hour_down) * 0.5) or (self.direction == Direction.SHORT and self.pre_signal_hour_down - self.hour_down <= (self.pre_signal_hour_up - self.pre_signal_hour_down) * 0.5)):
@@ -286,7 +286,7 @@ class Trending5Strategy(TrendingStrategy):
                 if tick.last_price > self.hour_up or tick.datetime.timestamp() >= self.hour_down_ts + 6 * 60 * 60:
                     self.on_close(tick)
 
-    def check_opent_tags(self):
+    def check_open_tags(self):
         # 24小时涨跌幅排名前十
         pure_symbol = get_strategy_symbol(self.strategy_name)
         trending_top_24h = []
