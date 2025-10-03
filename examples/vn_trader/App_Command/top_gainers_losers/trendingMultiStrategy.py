@@ -44,7 +44,6 @@ class SignalData(object):
         self.indicator_inited_hour_up = 0
         self.indicator_inited_hour_down = 0
         self.signal_dt_list = []
-        self.signal_tag_count = 0
         self.pre_signal_dt = ""
         self.pre_signal_hour_up = 0
         self.pre_signal_hour_down = 0
@@ -439,7 +438,6 @@ class TrendingMultiStrategy(CtaTemplate):
                     # 信号计数清零
                     if recent_minutes > 30:
                         signal.signal_dt_list = []
-                        signal.signal_tag_count = 0
 
                     # 预备信号设定
                     if 30 < recent_minutes < 60 or self.minute_recent_down < self.hour_down:
@@ -496,7 +494,6 @@ class TrendingMultiStrategy(CtaTemplate):
                     # 信号计数清零
                     if recent_minutes > 30:
                         signal.signal_dt_list = []
-                        signal.signal_tag_count = 0
 
                     # 预备信号设定
                     if 30 < recent_minutes < 60 or self.minute_recent_up > self.hour_up:
@@ -581,6 +578,168 @@ class TrendingMultiStrategy(CtaTemplate):
 
         return
         """
+
+        # 1h新高新低
+        price_cross = False
+        if self.database_loaded and not self.hour_up_down_updated and ((self.direction == Direction.LONG and self.hour_up and tick.last_price > self.hour_up) or (self.direction == Direction.SHORT and self.hour_down and tick.last_price < self.hour_down)):
+            price_cross = True
+            self.hour_up_down_updated = True
+
+            signal_5: SignalData = self.signal_data["T5"]
+            if not signal_5.target_pos and signal_5.indicator_inited:
+                signal_5.signal_dt_list.append(self.minute_bar_dt)
+        
+        # 信号检查
+        strategy_target_pos = 0
+        strategy_target_pos_updated = False
+        for signal_name in self.signal_data.keys():
+            signal: SignalData = self.signal_data[signal_name]
+
+            # 开仓判断
+            if price_cross and not signal.target_pos and self.database_loaded and signal.indicator_inited and not self.closed:
+                open_allowed = False
+                if (self.direction == Direction.LONG and self.history_high_cross) or (self.direction == Direction.SHORT and self.history_low_cross):
+                    open_allowed = True
+
+                if signal_name == "T5" and len(signal.signal_dt_list) < 3:
+                    open_allowed = False
+
+                if open_allowed:
+                    # 确认open_tags
+                    self.check_open_tags(signal)
+
+                    # 仓位计算
+                    self.add_unit_pos(tick.last_price, signal)
+
+                    # 发送订单
+                    # if not self.pos and self.portfolio.trade_enable and time.time() <= tick.datetime.timestamp() + 3:
+                    #     open_volume = abs(self.target_pos)
+                    #     if open_volume:
+                    #         if self.direction == Direction.LONG:
+                    #             trade_price = self.tick.last_price * 1.005
+                    #             self.cancel_all()
+                    #             if self.exchange == Exchange.BINANCE:
+                    #                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True)
+                    #                 self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
+
+                    #             else:
+                    #                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
+                            
+                    #         elif self.direction == Direction.SHORT:
+                    #             trade_price = self.tick.last_price * 0.995
+                    #             self.cancel_all()
+                    #             if self.exchange == Exchange.BINANCE:
+                    #                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True)
+                    #                 self.send_order(Direction.LONG, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
+
+                    #             else:
+                    #                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
+
+                    # 开仓日志
+                    signal_trade_logs = self.trade_logs.get(signal_name, [])
+                    signal_trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} OPEN {signal.leverage:.2f} {tick.last_price}"})
+                    self.trade_logs[signal_name] = signal_trade_logs
+                    self.trade_logs_updated = True
+
+                    msg = f"{self.vt_symbol} {self.direction.value} {signal_name}\n开仓（{signal.open_count}）"
+                    self.cta_engine.main_engine.send_ding_talk(msg)
+            
+            # 止损判断
+            if signal.target_pos and ((self.direction == Direction.LONG and tick.last_price <= signal.stop_price) or (self.direction == Direction.SHORT and tick.last_price >= signal.stop_price)):
+                signal.stop_tick_price = tick.last_price
+                signal.stop_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+                signal.target_pos = 0
+                strategy_target_pos_updated = True
+
+                stop_pnl = 0
+                if signal.open_tick_price:
+                    stop_pnl = ((tick.last_price / signal.open_tick_price) - 1) * 100
+                    if self.direction == Direction.SHORT:
+                        stop_pnl *= -1
+                    stop_pnl -= 0.2
+                    stop_pnl *= signal.leverage
+                signal.pnl += stop_pnl
+                self.portfolio.on_pnl(self, signal, stop_pnl)
+
+                # 止损日志
+                signal_trade_logs = self.trade_logs.get(signal_name, [])
+                signal_trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {tick.datetime.replace(microsecond=0)} STOP {stop_pnl:.2f}% {tick.last_price}"})
+                self.trade_logs[signal_name] = signal_trade_logs
+                self.trade_logs_updated = True
+
+                msg = f"{self.vt_symbol} {self.direction.value} {signal_name}\n止损 {stop_pnl:.2f}%"
+                self.cta_engine.main_engine.send_ding_talk(msg)
+
+            # 平仓判断
+            if signal.target_pos and self.database_loaded and tick.datetime > signal.open_tick_dt + timedelta(hours=6) and ((self.direction == Direction.LONG and tick.last_price < self.hour_down) or (self.direction == Direction.SHORT and tick.last_price > self.hour_up)):
+                signal.close_tick_price = tick.last_price
+                signal.close_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+                signal.target_pos = 0
+                strategy_target_pos_updated = True
+
+                close_pnl = 0
+                if signal.open_tick_price:
+                    close_pnl = ((tick.last_price / signal.open_tick_price) - 1) * 100
+                    if self.direction == Direction.SHORT:
+                        close_pnl *= -1
+                    close_pnl -= 0.2
+                    close_pnl *= signal.leverage
+                signal.pnl += close_pnl
+                self.portfolio.on_pnl(self, signal, close_pnl)
+                
+                # 平仓日志
+                signal_trade_logs = self.trade_logs.get(signal_name, [])
+                signal_trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} CLOSE {close_pnl:.2f}% {tick.last_price}"})
+                self.trade_logs[signal_name] = signal_trade_logs
+                self.trade_logs_updated = True
+
+                msg = f"{self.vt_symbol} {self.direction.value} {signal_name}\n平仓 {close_pnl:.2f}%"
+                self.cta_engine.main_engine.send_ding_talk(msg)
+
+            # 手动平仓
+            if self.manual_close:
+                if signal.target_pos:
+                    signal.target_pos = 0
+                    strategy_target_pos_updated = True
+
+                    close_pnl = 0
+                    if signal.open_tick_price:
+                        close_pnl = ((tick.last_price / signal.open_tick_price) - 1) * 100
+                        if self.direction == Direction.SHORT:
+                            close_pnl *= -1
+                        close_pnl -= 0.2
+                        close_pnl *= signal.leverage
+                    signal.pnl += close_pnl
+                    self.portfolio.on_pnl(self, signal, close_pnl)
+                    
+                    # 平仓日志
+                    signal_trade_logs = self.trade_logs.get(signal_name, [])
+                    signal_trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} MANUAL_CLOSE {close_pnl:.2f}% {tick.last_price}"})
+                    self.trade_logs[signal_name] = signal_trade_logs
+                    self.trade_logs_updated = True
+
+                    msg = f"{self.vt_symbol} {self.direction.value} {signal_name}\n手动平仓 {close_pnl:.2f}%"
+                    self.cta_engine.main_engine.send_ding_talk(msg)
+
+            strategy_target_pos += signal.target_pos
+
+        # 无信号退出
+        if not strategy_target_pos and self.database_loaded and self.hour_up and self.hour_down:
+            if self.direction == Direction.LONG:
+                if tick.last_price < self.hour_down or tick.datetime.timestamp() >= self.hour_up_ts + 6 * 60 * 60:
+                    self.on_close(tick)
+            
+            if self.direction == Direction.SHORT:
+                if tick.last_price > self.hour_up or tick.datetime.timestamp() >= self.hour_down_ts + 6 * 60 * 60:
+                    self.on_close(tick)
+
+        # 策略仓位更新
+        if strategy_target_pos_updated:
+            self.portfolio.strategy_status_check_ts[self.strategy_name] = 0
+
+        # 手动平仓设置
+        if self.manual_close:
+            self.on_close(tick)
     
     def add_unit_pos(self, tick_price: float, signal: SignalData):
         # 确定止损价格
