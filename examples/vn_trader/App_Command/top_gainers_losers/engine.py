@@ -68,6 +68,7 @@ from .trending2Strategy import Trending2Strategy
 from .trending3Strategy import Trending3Strategy
 from .trending4Strategy import Trending4Strategy
 from .trending5Strategy import Trending5Strategy
+from .trendingMultiStrategy import TrendingMultiStrategy
 from .topGainersLosersPortfolio import TopGainersLosersPortfolio
 from vnpy.app.cta_strategy.base import (
     TICK_DB_NAME,
@@ -653,6 +654,9 @@ class TopGainersLosersEngine(BaseEngine):
         elif type == "T5":
             strategy = Trending5Strategy(self, setting)
 
+        elif type == "MULTI":
+            strategy = TrendingMultiStrategy(self, setting)
+
         else:
             return
 
@@ -788,8 +792,10 @@ class TopGainersLosersEngine(BaseEngine):
         # 保存策略同步数据到文件（数据有变化时才保存）
         flt = {"strategy_name": strategy.strategy_name, "vt_symbol": strategy.vt_symbol}
         sync_data = copy(flt)
-        for key in strategy.syncs:
-            sync_data[key] = strategy.__getattribute__(key)
+        
+        strategy_sync_data = strategy.get_syncs()
+        for key in strategy_sync_data:
+            sync_data[key] = strategy_sync_data[key]
 
         # history_sync_data = self.strategy_sync_data.get(strategy.strategy_name, {})
         # if history_sync_data != sync_data:

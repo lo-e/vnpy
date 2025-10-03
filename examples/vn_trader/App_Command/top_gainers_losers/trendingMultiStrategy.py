@@ -152,7 +152,7 @@ class TrendingMultiStrategy(CtaTemplate):
         self.close_tick_dt = ""
         self.database_loaded = False
         self.database_history_loaded = False
-        self.strategy_data = {}                     # 策略数据（包括常量、变量、同步）
+        self.strategy_sync_data = {}                # 策略同步数据
         self.trade_logs = {}                        # 交易日志
         self.trade_logs_updated = False
         self.insufficient_value = False             # 开仓价值不满足最低
@@ -463,39 +463,33 @@ class TrendingMultiStrategy(CtaTemplate):
         return
         """
     
-    def add_unit_pos(self, tick_price: float):
-        # 计算仓位大小
-        order_value = 0
-        if self.direction == Direction.LONG:
-            self.leverage = 0.01 / abs((self.minute_15_down / tick_price) - 1)
-            order_value = self.portfolio.portfolio_value * self.leverage
+    def add_unit_pos(self, tick_price: float, signal: SignalData):
+        # 确定止损价格
+        if self.direction == Direction.LONG and self.minute_15_down and self.minute_recent_down:
+            signal.stop_price = max(self.minute_15_down, self.minute_recent_down)
         
-        if self.direction == Direction.SHORT:
-            self.leverage = 0.01 / abs((self.minute_15_up / tick_price) - 1)
-            order_value = self.portfolio.portfolio_value * self.leverage
+        if self.direction == Direction.SHORT and self.minute_15_up and self.minute_recent_up:
+            signal.stop_price = min(self.minute_15_up, self.minute_recent_up)
 
-        self.target_pos = order_value / tick_price
+        # 计算仓位大小
+        signal.leverage = 0.01 / abs((signal.stop_price / tick_price) - 1)
+        order_value = self.portfolio.portfolio_value * signal.leverage
+        
+        signal.target_pos = order_value / tick_price
         if self.direction == Direction.SHORT:
             self.target_pos *= -1
 
         # 仓位精度处理
         contract: ContractData = self.cta_engine.main_engine.get_contract(self.vt_symbol)
-        self.target_pos = round_to(self.target_pos, contract.min_volume)
+        signal.target_pos = round_to(signal.target_pos, contract.min_volume)
 
         # 开仓价值、价格、时间
-        self.open_tick_value = order_value
-        self.open_tick_price = tick_price
-        self.open_tick_dt = self.tick.datetime
-
-        # 更新止损价格
-        if self.direction == Direction.LONG:
-            self.stop_price = self.minute_15_down
-        
-        if self.direction == Direction.SHORT:
-            self.stop_price = self.minute_15_up
+        signal.open_tick_value = order_value
+        signal.open_tick_price = tick_price
+        signal.open_tick_dt = self.tick.datetime
         
         # 开仓计数
-        self.open_count += 1
+        signal.open_count += 1
 
     def on_close(self, tick: TickData = None):
         if self.closed:
@@ -507,12 +501,24 @@ class TrendingMultiStrategy(CtaTemplate):
 
         self.closed = True
 
+    def get_syncs(self):
+        strategy_syncs = {}
+        for name in self.syncs:
+            strategy_syncs[name] = getattr(self, name)
+        
+        signal_data = {}
+        for signal_name, signal in self.signal_data.items():
+            signal_data[signal_name] = signal.__dict__
+        
+        strategy_syncs["signal_data"] = signal_data
+        return strategy_syncs
+
     def check_save_data(self):
         try:
             # 保存变量、同步数据
-            strategy_data = self.get_data()
-            if self.strategy_data != strategy_data:
-                self.strategy_data = strategy_data
+            strategy_sync_data = self.get_syncs()
+            if self.strategy_sync_data != strategy_sync_data:
+                self.strategy_sync_data = strategy_sync_data
                 self.put_event()
 
                 print_(f"同步数据 {self.strategy_name}..")

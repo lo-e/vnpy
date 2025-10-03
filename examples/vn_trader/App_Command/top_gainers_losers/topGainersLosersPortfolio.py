@@ -351,6 +351,7 @@ class TopGainersLosersPortfolio(object):
                         trending_mean_24h = self.rise_data_list_24h[2]["change"]
                         reverse_mean_24h = self.rise_data_list_24h[1]["change"]
 
+                    """
                     # T1信号生成
                     if (abs(trending_mean_1h) >= abs(reverse_mean_1h) * 2) or (abs(trending_mean_24h) >= abs(reverse_mean_24h) * 2):
                         if direction == "LONG":
@@ -399,6 +400,10 @@ class TopGainersLosersPortfolio(object):
                     elif direction == "SHORT":
                         setting = self.new_strategy(trending_1h_time, "T5", symbol, Direction.SHORT, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
                         self.generate_new_setting(data_time, direction, setting, new_settings)
+                    """
+
+                    setting = self.new_strategy(trending_1h_time, "MULTI", symbol, direction, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
+                    self.generate_new_setting(data_time, direction, setting, new_settings)
 
         if new_settings:
             # 统计当前已订阅的代币
@@ -521,63 +526,38 @@ class TopGainersLosersPortfolio(object):
         pass
 
     def generate_new_setting(self, data_time: float, direction: str, setting: dict, new_settings: list):
-        if direction == "LONG":
-            strategy_name = setting.get("strategy_name", "")
-            strategy_pure_name = get_strategy_pure_name(strategy_name)
+        strategy_name = setting.get("strategy_name", "")
+        strategy_pure_name = get_strategy_pure_name(strategy_name)
 
-            # 过滤正在交易的相同代币
-            flt = False
-            for target_name in self.cta_engine.strategies.copy().keys():
-                target_pure_name = get_strategy_pure_name(target_name)
-                if strategy_pure_name == target_pure_name:
-                    flt = True
-                    break
+        # 过滤正在交易的相同代币
+        flt = False
+        for target_name in self.cta_engine.strategies.copy().keys():
+            target_pure_name = get_strategy_pure_name(target_name)
+            if strategy_pure_name == target_pure_name:
+                flt = True
+                break
 
-            for target_setting in new_settings:
-                target_name = target_setting.get("strategy_name", "")
-                target_pure_name = get_strategy_pure_name(target_name)
-                if strategy_pure_name == target_pure_name:
-                    flt = True
-                    break
-            
-            if setting and not flt:
-                vt_symbol = setting["vt_symbol"]
-                instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
-                on_timestamp = instrument_data["on_timestamp"]
-                if on_timestamp and data_time >= on_timestamp + 3 * 24 * 60 * 60:
-                    new_settings.append(setting)
-
-                    # msg = f"{symbol} 上涨过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nrank_1h {trending_1h_rank}"
-                    # self.send_ding_talk(msg)
+        for target_setting in new_settings:
+            target_name = target_setting.get("strategy_name", "")
+            target_pure_name = get_strategy_pure_name(target_name)
+            if strategy_pure_name == target_pure_name:
+                flt = True
+                break
         
-        elif direction == "SHORT":
-            strategy_name = setting.get("strategy_name", "")
-            strategy_pure_name = get_strategy_pure_name(strategy_name)
+        if setting and not flt:
+            vt_symbol = setting["vt_symbol"]
+            instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
+            on_timestamp = instrument_data["on_timestamp"]
+            if on_timestamp and data_time >= on_timestamp + 3 * 24 * 60 * 60:
+                new_settings.append(setting)
 
-            # 过滤正在交易的相同代币
-            flt = False
-            for target_name in self.cta_engine.strategies.copy().keys():
-                target_pure_name = get_strategy_pure_name(target_name)
-                if strategy_pure_name == target_pure_name:
-                    flt = True
-                    break
-
-            for target_setting in new_settings:
-                target_name = target_setting.get("strategy_name", "")
-                target_pure_name = get_strategy_pure_name(target_name)
-                if strategy_pure_name == target_pure_name:
-                    flt = True
-                    break
-            
-            if setting and not flt:
-                vt_symbol = setting["vt_symbol"]
-                instrument_data = self.exchange_instruments_data.get(vt_symbol.split(".")[-1], {}).get(vt_symbol.split(".")[0], {})
-                on_timestamp = instrument_data["on_timestamp"]
-                if on_timestamp and data_time >= on_timestamp + 3 * 24 * 60 * 60:
-                    new_settings.append(setting)
-
-                    # msg = f"{symbol} 下跌过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nrank_1h {trending_1h_rank}"
-                    # self.send_ding_talk(msg)
+        # if direction == "LONG":
+        #     msg = f"{symbol} 上涨过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nrank_1h {trending_1h_rank}"
+        #     self.send_ding_talk(msg)
+        
+        # elif direction == "SHORT":
+        #     msg = f"{symbol} 下跌过热\n{vt_symbol} {change}%\ntime {trending_1h_time}\nvolume_24h {volume_24h}\nrank_1h {trending_1h_rank}"
+        #     self.send_ding_talk(msg)
 
     def new_strategy(self, data_dt: str, type: str, token: str, direction: Direction, change: float, volume_24h: str, trending_mean_1h: float, reverse_mean_1h: float, trending_mean_24h: float, reverse_mean_24h: float):
         # 确认合约
@@ -616,19 +596,12 @@ class TopGainersLosersPortfolio(object):
 
         # 启动策略
         dt = datetime.now().strftime(f"%m%d%H%M%S")
-        if direction == Direction.LONG:
-            strategy_name = f"{dt}_LONG_{type}_{token}_{exchange}"
-            direction_str = "LONG"
-        
-        else:
-            strategy_name = f"{dt}_SHORT_{type}_{token}_{exchange}"
-            direction_str = "SHORT"
-
+        strategy_name = f"{dt}_{direction}_{type}_{token}_{exchange}"
         setting = {"strategy_name": strategy_name,
                    "vt_symbol": vt_symbol,
                    "exchange": exchange,
                    "exchange_user": exchange_user,
-                   "direction": direction_str,
+                   "direction": direction,
                    "change": change,
                    "volume_24h": volume_24h,
                    "trending_mean_1h": trending_mean_1h,
