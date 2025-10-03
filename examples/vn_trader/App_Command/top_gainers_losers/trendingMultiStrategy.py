@@ -425,6 +425,125 @@ class TrendingMultiStrategy(CtaTemplate):
                     self.minute_recent_up = 0
                     self.minute_recent_down = 0
 
+    def check_indicator_inited(self):
+        for signal_name in self.signal_data.keys():
+            signal: SignalData = self.signal_data[signal_name]
+
+            if not signal.target_pos:
+                if self.direction == Direction.LONG:
+                    recent_seconds = 0
+                    if self.hour_up_dt:
+                        recent_seconds = (datetime.strptime(self.minute_bar_dt, f"%Y-%m-%d %H:%M:%S") - datetime.strptime(self.hour_up_dt, f"%Y-%m-%d %H:%M:%S")).seconds
+                    recent_minutes = int(recent_seconds / 60)
+
+                    # 信号计数清零
+                    if recent_minutes > 30:
+                        signal.signal_dt_list = []
+                        signal.signal_tag_count = 0
+
+                    # 预备信号设定
+                    if 30 < recent_minutes < 60 or self.minute_recent_down < self.hour_down:
+                        signal.pre_signal_dt = ""
+                        signal.pre_signal_hour_up = 0
+                        signal.pre_signal_hour_down = 0
+
+                    if recent_minutes >= 60 and self.minute_recent_down >= self.hour_down:
+                        signal.pre_signal_dt = self.minute_bar_dt
+                        signal.pre_signal_hour_up = self.hour_up
+                        signal.pre_signal_hour_down = self.hour_down
+
+                    # 正式信号判断
+                    indicator_inited = False
+                    if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down:
+                        if signal_name == "T1":
+                            if recent_minutes >= 30 and self.minute_15_down >= self.hour_up - abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_down >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0:
+                                indicator_inited = True
+
+                        elif signal_name == "T2":
+                            if 5 <= recent_minutes <= 60 and self.hour_down <= self.minute_recent_down <= self.hour_up - abs(self.hour_up - self.hour_down) * 0.7:
+                                indicator_inited = True
+                        
+                        elif signal_name == "T3":
+                            if recent_minutes >= 2 * 60 and self.minute_15_down >= self.hour_up - abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_down >= self.hour_down:
+                                indicator_inited = True
+
+                        elif signal_name == "T4":
+                            if signal.pre_signal_dt and 5 <= recent_minutes <= 30 and self.minute_recent_down >= self.hour_down:
+                                indicator_inited = True
+
+                        elif signal_name == "T5":
+                            if 5 <= recent_minutes <= 30 and self.minute_recent_down >= self.hour_down:
+                                indicator_inited = True
+
+                    if indicator_inited:
+                        signal.indicator_inited = True
+                        signal.indicator_inited_dt = self.minute_bar_dt
+                        signal.indicator_inited_hour_up = self.hour_up
+                        signal.indicator_inited_hour_down = self.hour_down
+                    
+                    else:
+                        signal.indicator_inited = False
+                        signal.indicator_inited_dt = ""
+                        signal.indicator_inited_hour_up = 0
+                        signal.indicator_inited_hour_down = 0
+
+                if self.direction == Direction.SHORT:
+                    recent_seconds = 0
+                    if self.hour_down_dt:
+                        recent_seconds = (datetime.strptime(self.minute_bar_dt, f"%Y-%m-%d %H:%M:%S") - datetime.strptime(self.hour_down_dt, f"%Y-%m-%d %H:%M:%S")).seconds
+                    recent_minutes = int(recent_seconds / 60)
+
+                    # 信号计数清零
+                    if recent_minutes > 30:
+                        signal.signal_dt_list = []
+                        signal.signal_tag_count = 0
+
+                    # 预备信号设定
+                    if 30 < recent_minutes < 60 or self.minute_recent_up > self.hour_up:
+                        signal.pre_signal_dt = ""
+                        signal.pre_signal_hour_up = 0
+                        signal.pre_signal_hour_down = 0
+
+                    if recent_minutes >= 60 and self.minute_recent_up <= self.hour_up:
+                        signal.pre_signal_dt = self.minute_bar_dt
+                        signal.pre_signal_hour_up = self.hour_up
+                        signal.pre_signal_hour_down = self.hour_down
+                    
+                    # 正式信号判断
+                    indicator_inited = False
+                    if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down:
+                        if signal_name == "T1":
+                            if recent_minutes >= 30 and self.minute_15_up <= self.hour_down + abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_up <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0:
+                                indicator_inited = True
+
+                        elif signal_name == "T2":
+                            if 5 <= recent_minutes <= 60 and self.hour_up >= self.minute_recent_up >= self.hour_down + abs(self.hour_up - self.hour_down) * 0.7:
+                                indicator_inited = True
+                        
+                        elif signal_name == "T3":
+                            if recent_minutes >= 2 * 60 and self.minute_15_up <= self.hour_down + abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_up <= self.hour_up:
+                                indicator_inited = True
+
+                        elif signal_name == "T4":
+                            if signal.pre_signal_dt and 5 <= recent_minutes <= 30 and self.minute_recent_up <= self.hour_up:
+                                indicator_inited = True
+
+                        elif signal_name == "T5":
+                            if 5 <= recent_minutes <= 30 and self.minute_recent_up <= self.hour_up:
+                                indicator_inited = True
+
+                    if indicator_inited:
+                        signal.indicator_inited = True
+                        signal.indicator_inited_dt = self.minute_bar_dt
+                        signal.indicator_inited_hour_up = self.hour_up
+                        signal.indicator_inited_hour_down = self.hour_down
+                    
+                    else:
+                        signal.indicator_inited = False
+                        signal.indicator_inited_dt = ""
+                        signal.indicator_inited_hour_up = 0
+                        signal.indicator_inited_hour_down = 0
+
     def on_tick(self, tick: TickData):
         self.tick = copy(tick)
         self.tick_minute_bar_generator.update_tick(tick)
