@@ -251,7 +251,8 @@ class TrendingMultiStrategy(CtaTemplate):
             else:
                 self.bar_lack_count += 1
                 if self.bar_lack_count >= 3:
-                    if not self.target_pos:
+                    strategy_target_pos = self.get_strategy_target_pos()
+                    if not strategy_target_pos:
                         self.on_close()
                     
                     msg = f"{self.vt_symbol} 初始化数据缺失（{self.bar_lack_count}）\n\ncount {len(data_list)}\nlack {bar_lack}"
@@ -325,7 +326,8 @@ class TrendingMultiStrategy(CtaTemplate):
                 if self.bar_lack:
                     self.bar_lack_count += 1
                     if self.bar_lack_count >= 3:
-                        if not self.target_pos:
+                        strategy_target_pos = self.get_strategy_target_pos()
+                        if not strategy_target_pos:
                             self.on_close()
                         
                         msg = f"{self.vt_symbol} 初始化数据缺失（{self.bar_lack_count}）\n\ndatabase {len(self.database_minute_bar_list)}\ndatabase_end {database_end}\ntick {len(self.tick_minute_bar_list)}\ntick_start {tick_start}"
@@ -614,28 +616,28 @@ class TrendingMultiStrategy(CtaTemplate):
                     self.add_unit_pos(tick.last_price, signal)
 
                     # 发送订单
-                    # if not self.pos and self.portfolio.trade_enable and time.time() <= tick.datetime.timestamp() + 3:
-                    #     open_volume = abs(self.target_pos)
+                    # if self.portfolio.trade_enable and time.time() <= tick.datetime.timestamp() + 3:
+                    #     open_volume = abs(signal.target_pos)
                     #     if open_volume:
                     #         if self.direction == Direction.LONG:
                     #             trade_price = self.tick.last_price * 1.005
                     #             self.cancel_all()
                     #             if self.exchange == Exchange.BINANCE:
                     #                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True)
-                    #                 self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
+                    #                 self.send_order(Direction.SHORT, Offset.CLOSE, signal.stop_price, abs(open_volume), stop=True)
 
                     #             else:
-                    #                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
+                    #                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=signal.stop_price)
                             
                     #         elif self.direction == Direction.SHORT:
                     #             trade_price = self.tick.last_price * 0.995
                     #             self.cancel_all()
                     #             if self.exchange == Exchange.BINANCE:
                     #                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True)
-                    #                 self.send_order(Direction.LONG, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
+                    #                 self.send_order(Direction.LONG, Offset.CLOSE, signal.stop_price, abs(open_volume), stop=True)
 
                     #             else:
-                    #                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
+                    #                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=signal.stop_price)
 
                     # 开仓日志
                     signal_trade_logs = self.trade_logs.get(signal_name, [])
@@ -762,7 +764,7 @@ class TrendingMultiStrategy(CtaTemplate):
         
         signal.target_pos = order_value / tick_price
         if self.direction == Direction.SHORT:
-            self.target_pos *= -1
+            signal.target_pos *= -1
 
         # 仓位精度处理
         contract: ContractData = self.cta_engine.main_engine.get_contract(self.vt_symbol)
@@ -1005,6 +1007,14 @@ class TrendingMultiStrategy(CtaTemplate):
         # 前小时高低维持超过1小时且距离当前小时高低不超过前1小时高低1/2
         if signal.pre_signal_dt and ((self.direction == Direction.LONG and self.hour_up - signal.pre_signal_hour_up <= (signal.pre_signal_hour_up - signal.pre_signal_hour_down) * 0.5) or (self.direction == Direction.SHORT and signal.pre_signal_hour_down - self.hour_down <= (signal.pre_signal_hour_up - signal.pre_signal_hour_down) * 0.5)):
             signal.open_tags.append("3")
+
+    def get_strategy_target_pos(self):
+        strategy_target_pos = 0
+        for signal_name in self.signal_data.keys():
+            signal: SignalData = self.signal_data[signal_name]
+            strategy_target_pos += signal.target_pos
+        
+        return strategy_target_pos
 
 def print_(msg: str):
     dt = datetime.now().replace(microsecond=0)
