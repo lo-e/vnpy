@@ -125,7 +125,7 @@ class TopGainersLosersPortfolio(object):
         # 下载当前策略Bar数据
         download_vt_symbols = set()
         for name in self.cta_engine.strategies.copy().keys():
-            strategy: TrendingStrategy = self.cta_engine.strategies[name]
+            strategy: TrendingMultiStrategy = self.cta_engine.strategies[name]
             download_vt_symbols.add(strategy.vt_symbol)
         
         for vt_symbol in download_vt_symbols:
@@ -162,7 +162,7 @@ class TopGainersLosersPortfolio(object):
         # 判断是否正在交易
         on_trading = False
         for strategy_name in self.cta_engine.strategies.keys():
-            strategy: TrendingStrategy = self.cta_engine.strategies[strategy_name]
+            strategy: TrendingMultiStrategy = self.cta_engine.strategies[strategy_name]
             if strategy.pos:
                 on_trading = True
                 break
@@ -208,7 +208,7 @@ class TopGainersLosersPortfolio(object):
         # else:
         #     self.trade_enable = False
 
-    def on_pnl(self, strategy: TrendingStrategy, signal: SignalData, pnl: float):
+    def on_pnl(self, strategy: TrendingMultiStrategy, signal: SignalData, pnl: float):
         # 记录盈亏
         dt = datetime.strptime(strategy.datetime, f"%Y-%m-%d %H:%M:%S")
         data = {"datetime": strategy.datetime,
@@ -248,7 +248,7 @@ class TopGainersLosersPortfolio(object):
     def subscribe_strategies(self, unsubscribe: bool = False):
         vt_symbols = set()
         for strategy_name in self.cta_engine.strategies.keys():
-            strategy: TrendingStrategy = self.cta_engine.strategies[strategy_name]
+            strategy: TrendingMultiStrategy = self.cta_engine.strategies[strategy_name]
             vt_symbols.add(strategy.vt_symbol)
         
         if vt_symbols:
@@ -409,7 +409,7 @@ class TopGainersLosersPortfolio(object):
             # 统计当前已订阅的代币
             subscribed_vt_symbols = set()
             for name in self.cta_engine.strategies.copy().keys():
-                strategy: TrendingStrategy = self.cta_engine.strategies[name]
+                strategy: TrendingMultiStrategy = self.cta_engine.strategies[name]
                 subscribed_vt_symbols.add(strategy.vt_symbol)
 
             # 执行新策略
@@ -865,7 +865,7 @@ class TopGainersLosersPortfolio(object):
                 if success:
                     symbol_strategies = self.cta_engine.symbol_strategy_map[vt_symbol]
                     for i in range(len(symbol_strategies)):
-                        strategy: TrendingStrategy = symbol_strategies[i]
+                        strategy: TrendingMultiStrategy = symbol_strategies[i]
                         strategy.load_database_bar()
 
             except Empty:
@@ -1006,19 +1006,24 @@ class TopGainersLosersPortfolio(object):
         while True:
             try:
                 for name in self.cta_engine.strategies.copy().keys():
-                    strategy: TrendingStrategy = self.cta_engine.strategies[name]
+                    strategy: TrendingMultiStrategy = self.cta_engine.strategies[name]
                     strategy_check_ts = self.strategy_status_check_ts.get(strategy.strategy_name, 0)
                     if time.time() >= strategy_check_ts + 10:
                         self.strategy_status_check_ts[strategy.strategy_name] = time.time()
 
                         # 检查仓位
-                        if strategy.tick and strategy.target_pos != strategy.pos:
+                        strategy_target_pos = 0
+                        for signal_name in strategy.signal_data.keys():
+                            signal: SignalData = strategy.signal_data[signal_name]
+                            strategy_target_pos += signal.target_pos
+                            
+                        if strategy.tick and strategy_target_pos != strategy.pos:
                             if strategy.direction == Direction.LONG:
-                                if strategy.target_pos < 0 or strategy.pos < 0:
-                                    msg = f"仓位异常\n\n合约 {strategy.vt_symbol}\n方向 {strategy.direction.value}\n目标 {strategy.target_pos}\n当前 {strategy.pos}"
+                                if strategy_target_pos < 0 or strategy.pos < 0:
+                                    msg = f"仓位异常\n\n合约 {strategy.vt_symbol}\n方向 {strategy.direction.value}\n目标 {strategy_target_pos}\n当前 {strategy.pos}"
                                     self.send_ding_talk(msg)
 
-                                gap = strategy.target_pos - strategy.pos
+                                gap = strategy_target_pos - strategy.pos
                                 # if gap > 0 and not strategy.insufficient_value:
                                 #     # 多头开仓
                                 #     trade_price = strategy.tick.last_price * 1.005
@@ -1036,11 +1041,11 @@ class TopGainersLosersPortfolio(object):
                                     strategy.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(gap), market=True)
 
                             if strategy.direction == Direction.SHORT:
-                                if strategy.target_pos > 0 or strategy.pos > 0:
-                                    msg = f"仓位异常\n\n合约 {strategy.vt_symbol}\n方向 {strategy.direction.value}\n目标 {strategy.target_pos}\n当前 {strategy.pos}"
+                                if strategy_target_pos > 0 or strategy.pos > 0:
+                                    msg = f"仓位异常\n\n合约 {strategy.vt_symbol}\n方向 {strategy.direction.value}\n目标 {strategy_target_pos}\n当前 {strategy.pos}"
                                     self.send_ding_talk(msg)
 
-                                gap = abs(strategy.target_pos) - abs(strategy.pos)
+                                gap = abs(strategy_target_pos) - abs(strategy.pos)
                                 # if gap > 0 and not strategy.insufficient_value:
                                 #     # 空头开仓
                                 #     trade_price = strategy.tick.last_price * 0.995
@@ -1066,7 +1071,7 @@ class TopGainersLosersPortfolio(object):
                                 # 取消订阅
                                 unsubscribe = True
                                 for target_name in self.cta_engine.strategies.copy().keys():
-                                    target_strategy: TrendingStrategy = self.cta_engine.strategies[target_name]
+                                    target_strategy: TrendingMultiStrategy = self.cta_engine.strategies[target_name]
                                     if strategy.strategy_name != target_strategy.strategy_name and strategy.vt_symbol == target_strategy.vt_symbol:
                                         unsubscribe = False
                                         break

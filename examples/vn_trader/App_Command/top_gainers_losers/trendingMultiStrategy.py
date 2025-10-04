@@ -92,7 +92,8 @@ class TrendingMultiStrategy(CtaTemplate):
         "minute_15_down",
         "minute_bar_dt",
         "insufficient_value",
-        "database_history_loaded"
+        "database_history_loaded",
+        "traded_signals"
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -142,6 +143,7 @@ class TrendingMultiStrategy(CtaTemplate):
             raise(f"交易方向配置错误：{self.direction}")
         
         self.signal_data = {}
+        self.traded_signals = []
         for signal_name in SIGNALS:
             self.signal_data[signal_name] = SignalData(signal_name)
 
@@ -660,6 +662,7 @@ class TrendingMultiStrategy(CtaTemplate):
                     stop_pnl *= signal.leverage
                 signal.pnl += stop_pnl
                 self.portfolio.on_pnl(self, signal, stop_pnl)
+                self.on_signal_close(signal_name)
 
                 # 止损日志
                 signal_trade_logs = self.trade_logs.get(signal_name, [])
@@ -686,6 +689,7 @@ class TrendingMultiStrategy(CtaTemplate):
                     close_pnl *= signal.leverage
                 signal.pnl += close_pnl
                 self.portfolio.on_pnl(self, signal, close_pnl)
+                self.on_signal_close(signal_name)
                 
                 # 平仓日志
                 signal_trade_logs = self.trade_logs.get(signal_name, [])
@@ -699,6 +703,8 @@ class TrendingMultiStrategy(CtaTemplate):
             # 手动平仓
             if self.manual_close:
                 if signal.target_pos:
+                    signal.close_tick_price = tick.last_price
+                    signal.close_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
                     signal.target_pos = 0
                     strategy_target_pos_updated = True
 
@@ -711,6 +717,7 @@ class TrendingMultiStrategy(CtaTemplate):
                         close_pnl *= signal.leverage
                     signal.pnl += close_pnl
                     self.portfolio.on_pnl(self, signal, close_pnl)
+                    self.on_signal_close(signal_name)
                     
                     # 平仓日志
                     signal_trade_logs = self.trade_logs.get(signal_name, [])
@@ -778,6 +785,17 @@ class TrendingMultiStrategy(CtaTemplate):
             self.close_tick_dt = tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
 
         self.closed = True
+
+    def on_signal_close(self, signal_name: str):
+        if not signal_name in self.signal_data:
+            return
+        
+        # 保存信号记录
+        signal: SignalData = self.signal_data[signal_name]
+        self.traded_signals.append(signal.__dict__)
+
+        # 重新初始化信号参数
+        self.signal_data[signal_name] = SignalData(signal_name)
 
     def get_syncs(self):
         strategy_syncs = {}
@@ -904,10 +922,7 @@ class TrendingMultiStrategy(CtaTemplate):
                             stop_pnl *= self.leverage
                         signal.pnl += stop_pnl
                         self.portfolio.on_pnl(self, signal, stop_pnl)
-
-                        if self.tick:
-                            signal.close_tick_price = self.tick.last_price
-                            signal.close_tick_dt = self.tick.datetime.strftime(f"%Y-%m-%d %H:%M:%S")
+                        self.on_signal_close(signal_name)
 
                         # 记录日志
                         signal_trade_logs = self.trade_logs.get(signal_name, [])
