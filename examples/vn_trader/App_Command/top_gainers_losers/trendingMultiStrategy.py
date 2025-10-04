@@ -93,7 +93,8 @@ class TrendingMultiStrategy(CtaTemplate):
         "minute_bar_dt",
         "insufficient_value",
         "database_history_loaded",
-        "traded_signals"
+        "signal_data",
+        "traded_signals",
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -145,7 +146,7 @@ class TrendingMultiStrategy(CtaTemplate):
         self.signal_data = {}
         self.traded_signals = []
         for signal_name in SIGNALS:
-            self.signal_data[signal_name] = SignalData(signal_name)
+            self.signal_data[signal_name] = SignalData(signal_name).__dict__
 
         self.tick: TickData = None
         self.closed = False
@@ -198,7 +199,13 @@ class TrendingMultiStrategy(CtaTemplate):
         if not gateway:
             msg = f"交易所账户未连接\n\n交易所：{exchange}\n账户：{self.exchange_user}"
             self.send_ding_talk(msg)
-        
+
+        # 处理signal_data数据对象
+        for signal_name, data in self.signal_data.items():
+            signal: SignalData = SignalData(signal_name)
+            signal.__dict__ = data
+            self.signal_data[signal_name] = signal
+
         # 获取历史交易日志
         current_dir = os.path.dirname(os.path.abspath(__file__))
         for signal_name in SIGNALS:
@@ -450,7 +457,7 @@ class TrendingMultiStrategy(CtaTemplate):
                         signal.pre_signal_hour_down = 0
 
                     if recent_minutes >= 60 and self.minute_recent_down >= self.hour_down:
-                        signal.pre_signal_dt = self.minute_bar_dt
+                        signal.pre_signal_dt = self.hour_up_dt
                         signal.pre_signal_hour_up = self.hour_up
                         signal.pre_signal_hour_down = self.hour_down
 
@@ -479,7 +486,7 @@ class TrendingMultiStrategy(CtaTemplate):
 
                     if indicator_inited:
                         signal.indicator_inited = True
-                        signal.indicator_inited_dt = self.minute_bar_dt
+                        signal.indicator_inited_dt = self.hour_up_dt
                         signal.indicator_inited_hour_up = self.hour_up
                         signal.indicator_inited_hour_down = self.hour_down
                     
@@ -506,7 +513,7 @@ class TrendingMultiStrategy(CtaTemplate):
                         signal.pre_signal_hour_down = 0
 
                     if recent_minutes >= 60 and self.minute_recent_up <= self.hour_up:
-                        signal.pre_signal_dt = self.minute_bar_dt
+                        signal.pre_signal_dt = self.hour_down_dt
                         signal.pre_signal_hour_up = self.hour_up
                         signal.pre_signal_hour_down = self.hour_down
                     
@@ -535,7 +542,7 @@ class TrendingMultiStrategy(CtaTemplate):
 
                     if indicator_inited:
                         signal.indicator_inited = True
-                        signal.indicator_inited_dt = self.minute_bar_dt
+                        signal.indicator_inited_dt = self.hour_down_dt
                         signal.indicator_inited_hour_up = self.hour_up
                         signal.indicator_inited_hour_down = self.hour_down
                     
@@ -802,6 +809,8 @@ class TrendingMultiStrategy(CtaTemplate):
     def get_syncs(self):
         strategy_syncs = {}
         for name in self.syncs:
+            if name == "signal_data":
+                continue
             strategy_syncs[name] = getattr(self, name)
         
         signal_data = {}

@@ -1041,7 +1041,9 @@ class BybitWebsocketDataApi(WebsocketClient):
             tick.ask_price_1 = float(data["ask1Price"])
             tick.ask_volume_1 = float(data["ask1Size"])
 
-        tick.last_price = last_price
+        if last_price:
+            tick.last_price = last_price
+            
         tick.datetime = dt
         self.gateway.on_tick(copy(tick))
     
