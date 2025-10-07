@@ -47,6 +47,7 @@ class SignalData(object):
         self.pre_signal_dt = ""
         self.pre_signal_hour_up = 0
         self.pre_signal_hour_down = 0
+        self.open_volume_24h = ""
 
 class TrendingMultiStrategy(CtaTemplate):
 
@@ -971,6 +972,8 @@ class TrendingMultiStrategy(CtaTemplate):
         shutil.move(temp_file_path, file_path)
 
     def check_open_allowed(self, signal: SignalData, tick: TickData):
+        pure_symbol = get_strategy_symbol(self.strategy_name)
+
         # 是否近期历史高低价
         open_allowed = True
         if (self.direction == Direction.LONG and not self.history_high_cross) or (self.direction == Direction.SHORT and not self.history_low_cross):
@@ -989,6 +992,29 @@ class TrendingMultiStrategy(CtaTemplate):
         if stop_rate < 0.3 or stop_rate > 3:
             open_allowed = False
 
+        # 代币24h交易额筛选
+        trending_data_list_24h = []
+        if self.direction == Direction.LONG and len(self.portfolio.rise_data_list_24h) > 3:
+            trending_data_list_24h = self.portfolio.rise_data_list_24h[3:]
+
+        if self.direction == Direction.SHORT and len(self.portfolio.fall_data_list_24h) > 3:
+            trending_data_list_24h = self.portfolio.fall_data_list_24h[3:]
+
+        volume_24h = ""
+        for trending_data in trending_data_list_24h:
+            if pure_symbol == trending_data["symbol"]:
+                volume_24h = trending_data["volume"]
+                break
+        
+        if volume_24h:
+            volume_24h_v = float(re.sub(r'[^\d.]', '', volume_24h))
+            volume_24h_u = re.sub(r'[\d.]', '', volume_24h)
+            if volume_24h_u == "万" and volume_24h_v < 1000:
+                open_allowed = False
+            
+        else:
+            open_allowed = False
+
         # T5信号判断
         if signal.name == "T5" and len(signal.signal_dt_list) < 3:
             open_allowed = False
@@ -1000,7 +1026,6 @@ class TrendingMultiStrategy(CtaTemplate):
             if signal.name == "T5":
                 top = 5
 
-            pure_symbol = get_strategy_symbol(self.strategy_name)
             trending_top_24h = []
             if self.direction == Direction.LONG and len(self.portfolio.rise_data_list_24h) >= top + 3:
                 for i in range(3, top + 3, 1):
@@ -1034,6 +1059,9 @@ class TrendingMultiStrategy(CtaTemplate):
         
         if not signal.open_tags:
             open_allowed = False
+
+        if open_allowed:
+            signal.open_volume_24h = volume_24h
 
         return open_allowed
 

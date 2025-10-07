@@ -216,7 +216,7 @@ class TopGainersLosersPortfolio(object):
                 "vt_symbol": strategy.vt_symbol,
                 "direction": strategy.direction.value,
                 "change": strategy.change,
-                "volume_24h": strategy.volume_24h,
+                "volume_24h": signal.open_volume_24h,
                 "trending_mean_1h": strategy.trending_mean_1h,
                 "reverse_mean_1h": strategy.reverse_mean_1h,
                 "trending_mean_24h": strategy.trending_mean_24h,
