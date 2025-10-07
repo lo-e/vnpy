@@ -1089,11 +1089,11 @@ class TopGainersLosersPortfolio(object):
                         if strategy.tick:
                             strategy_data_time = time.time() - strategy.tick.datetime.timestamp()
                             if strategy_data_time >= 60 * 60:
-                                if not strategy.target_pos:
+                                if not strategy_target_pos:
                                     strategy.on_close()
                                 
                                 else:
-                                    msg = f"{strategy.strategy_name}\n\n长时间没有行情数据，检查代码\ntarget_pos: {strategy.target_pos}\npos: {strategy.pos}"
+                                    msg = f"{strategy.strategy_name}\n\n长时间没有行情数据，检查代码\nstrategy_target_pos: {strategy_target_pos}\npos: {strategy.pos}"
                                     self.send_ding_talk(msg)
 
                         # 同步策略数据
