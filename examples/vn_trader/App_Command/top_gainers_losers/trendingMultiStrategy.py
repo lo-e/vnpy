@@ -1038,15 +1038,15 @@ class TrendingMultiStrategy(CtaTemplate):
         if open_allowed:
             # 24小时涨跌幅Top
             top = 10
-            if signal.name == "T5":
-                top = 5
+            # if signal.name == "T5":
+            #     top = 5
 
             trending_top_24h = []
             if self.direction == Direction.LONG and len(self.portfolio.rise_data_list_24h) >= top + 3:
                 for i in range(3, top + 3, 1):
                     trending_top_24h.append(self.portfolio.rise_data_list_24h[i]["symbol"])
 
-            if self.direction == Direction.SHORT and len(self.portfolio.fall_data_list_24h) >= 13:
+            if self.direction == Direction.SHORT and len(self.portfolio.fall_data_list_24h) >= top + 3:
                 for i in range(3, top + 3, 1):
                     trending_top_24h.append(self.portfolio.fall_data_list_24h[i]["symbol"])
                     
