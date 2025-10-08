@@ -989,7 +989,7 @@ class TrendingMultiStrategy(CtaTemplate):
             stop_price = min(self.minute_15_up, self.minute_recent_up)
             stop_rate = abs((stop_price / tick.last_price) - 1) * 100
         
-        if stop_rate < 0.3 or stop_rate > 3:
+        if stop_rate < 0.3:
             open_allowed = False
 
         # 代币24h交易额筛选
