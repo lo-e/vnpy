@@ -441,6 +441,7 @@ class TrendingMultiStrategy(CtaTemplate):
             signal: SignalData = self.signal_data[signal_name]
 
             if not signal.target_pos:
+                stop_price = self.get_stop_price()
                 if self.direction == Direction.LONG:
                     recent_seconds = 0
                     if self.hour_up_dt:
@@ -466,19 +467,19 @@ class TrendingMultiStrategy(CtaTemplate):
                     indicator_inited = False
                     if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down:
                         if signal_name == "T1":
-                            if recent_minutes >= 30 and self.minute_15_down >= self.hour_up - abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_down >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0:
+                            if recent_minutes >= 30 and stop_price and stop_price >= self.hour_up - abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_down >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0:
                                 indicator_inited = True
 
                         elif signal_name == "T2":
-                            if 5 <= recent_minutes <= 60 and self.minute_15_down >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0 and self.hour_down <= self.minute_recent_down <= self.hour_up - abs(self.hour_up - self.hour_down) * 0.9:
+                            if 5 <= recent_minutes <= 60 and stop_price and stop_price >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0 and self.hour_down <= self.minute_recent_down <= self.hour_up - abs(self.hour_up - self.hour_down) * 0.9:
                                 indicator_inited = True
                         
                         elif signal_name == "T3":
-                            if recent_minutes >= 2 * 60 and self.minute_15_down >= self.hour_up - abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_down >= self.hour_down:
+                            if recent_minutes >= 2 * 60 and stop_price and stop_price >= self.hour_up - abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_down >= self.hour_down:
                                 indicator_inited = True
 
                         elif signal_name == "T4":
-                            if signal.pre_signal_dt and 3 <= recent_minutes <= 30 and self.hour_up - signal.pre_signal_hour_up <= (signal.pre_signal_hour_up - signal.pre_signal_hour_down) / 4.0 and self.minute_15_down >= self.hour_up - abs(self.hour_up - signal.pre_signal_hour_down) / 4.0 and self.minute_recent_down >= self.hour_down:
+                            if signal.pre_signal_dt and 3 <= recent_minutes <= 30 and self.hour_up - signal.pre_signal_hour_up <= (signal.pre_signal_hour_up - signal.pre_signal_hour_down) / 4.0 and stop_price and stop_price >= self.hour_up - abs(self.hour_up - signal.pre_signal_hour_down) / 4.0 and self.minute_recent_down >= self.hour_down:
                                 indicator_inited = True
 
                         elif signal_name == "T5":
@@ -522,19 +523,19 @@ class TrendingMultiStrategy(CtaTemplate):
                     indicator_inited = False
                     if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down:
                         if signal_name == "T1":
-                            if recent_minutes >= 30 and self.minute_15_up <= self.hour_down + abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_up <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0:
+                            if recent_minutes >= 30 and stop_price and stop_price <= self.hour_down + abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_up <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0:
                                 indicator_inited = True
 
                         elif signal_name == "T2":
-                            if 5 <= recent_minutes <= 60 and self.minute_15_up <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0 and self.hour_up >= self.minute_recent_up >= self.hour_down + abs(self.hour_up - self.hour_down) * 0.9:
+                            if 5 <= recent_minutes <= 60 and stop_price and stop_price <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0 and self.hour_up >= self.minute_recent_up >= self.hour_down + abs(self.hour_up - self.hour_down) * 0.9:
                                 indicator_inited = True
                         
                         elif signal_name == "T3":
-                            if recent_minutes >= 2 * 60 and self.minute_15_up <= self.hour_down + abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_up <= self.hour_up:
+                            if recent_minutes >= 2 * 60 and stop_price and stop_price <= self.hour_down + abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_up <= self.hour_up:
                                 indicator_inited = True
 
                         elif signal_name == "T4":
-                            if signal.pre_signal_dt and 5 <= recent_minutes <= 30 and signal.pre_signal_hour_down - self.hour_down <= (signal.pre_signal_hour_up - signal.pre_signal_hour_down) / 4.0 and self.minute_15_up <= self.hour_down + abs(signal.pre_signal_hour_up - self.hour_down) / 4.0 and self.minute_recent_up <= self.hour_up:
+                            if signal.pre_signal_dt and 5 <= recent_minutes <= 30 and signal.pre_signal_hour_down - self.hour_down <= (signal.pre_signal_hour_up - signal.pre_signal_hour_down) / 4.0 and stop_price and stop_price <= self.hour_down + abs(signal.pre_signal_hour_up - self.hour_down) / 4.0 and self.minute_recent_up <= self.hour_up:
                                 indicator_inited = True
 
                         elif signal_name == "T5":
@@ -751,11 +752,7 @@ class TrendingMultiStrategy(CtaTemplate):
     
     def add_unit_pos(self, tick_price: float, signal: SignalData):
         # 确定止损价格
-        if self.direction == Direction.LONG and self.minute_15_down and self.minute_recent_down:
-            signal.stop_price = max(self.minute_15_down, self.minute_recent_down)
-        
-        if self.direction == Direction.SHORT and self.minute_15_up and self.minute_recent_up:
-            signal.stop_price = min(self.minute_15_up, self.minute_recent_up)
+        signal.stop_price = self.get_stop_price()
 
         # 计算仓位大小
         signal.leverage = 0.01 / abs((signal.stop_price / tick_price) - 1)
@@ -980,16 +977,13 @@ class TrendingMultiStrategy(CtaTemplate):
             open_allowed = False
 
         # 止损价格百分比
-        stop_rate = 0
-        if self.direction == Direction.LONG and self.minute_15_down and self.minute_recent_down:
-            stop_price = max(self.minute_15_down, self.minute_recent_down)
+        stop_price = self.get_stop_price()
+        if stop_price:
             stop_rate = abs((stop_price / tick.last_price) - 1) * 100
-        
-        if self.direction == Direction.SHORT and self.minute_15_up and self.minute_recent_up:
-            stop_price = min(self.minute_15_up, self.minute_recent_up)
-            stop_rate = abs((stop_price / tick.last_price) - 1) * 100
-        
-        if stop_rate < 0.3:
+            if stop_rate < 0.3:
+                open_allowed = False
+            
+        else:
             open_allowed = False
 
         # 代币24h交易额筛选
@@ -1072,6 +1066,15 @@ class TrendingMultiStrategy(CtaTemplate):
             strategy_target_pos += signal.target_pos
         
         return strategy_target_pos
+    
+    def get_stop_price(self):
+        stop_price = 0
+        if self.direction == Direction.LONG and self.minute_15_down and self.minute_recent_down:
+            stop_price = max(self.minute_15_down, self.minute_recent_down)
+        
+        if self.direction == Direction.SHORT and self.minute_15_up and self.minute_recent_up:
+            stop_price = min(self.minute_15_up, self.minute_recent_up)
+        return stop_price
 
 def print_(msg: str):
     dt = datetime.now().replace(microsecond=0)
