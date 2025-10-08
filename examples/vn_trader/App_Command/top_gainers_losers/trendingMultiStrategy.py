@@ -600,7 +600,7 @@ class TrendingMultiStrategy(CtaTemplate):
 
             signal_5: SignalData = self.signal_data["T5"]
             if not signal_5.target_pos and signal_5.indicator_inited:
-                signal_5.signal_dt_list.append(self.minute_bar_dt)
+                signal_5.signal_dt_list.append([self.minute_bar_dt, self.hour_up, self.hour_down])
         
         # 信号检查
         strategy_target_pos = 0
@@ -1010,8 +1010,29 @@ class TrendingMultiStrategy(CtaTemplate):
             open_allowed = False
 
         # T5信号判断
-        if signal.name == "T5" and len(signal.signal_dt_list) < 3:
-            open_allowed = False
+        if signal.name == "T5":
+            if len(signal.signal_dt_list) >= 3:
+                start_data = signal.signal_dt_list[-3]
+                start_hour_up = start_data[1]
+                start_hour_down = start_data[2]
+
+                end_data = signal.signal_dt_list[-1]
+                end_hour_up = end_data[1]
+                end_hour_down = end_data[2]
+
+                stop_price = self.get_stop_price()
+                requirement_match = False
+                if self.direction == Direction.LONG and end_hour_up - start_hour_up <= abs(end_hour_up - start_hour_down) / 3.0 and stop_price and stop_price >= end_hour_up - abs(end_hour_up - start_hour_down) / 4.0:
+                    requirement_match = True
+                
+                if self.direction == Direction.SHORT and start_hour_down - end_hour_down <= abs(start_hour_up - end_hour_down) / 3.0 and stop_price and stop_price <= end_hour_down + abs(start_hour_up - end_hour_down) / 4.0:
+                    requirement_match = True
+
+                if not requirement_match:
+                    open_allowed = False
+
+            else:
+                open_allowed = False
 
         # open_tags判断
         if open_allowed:
