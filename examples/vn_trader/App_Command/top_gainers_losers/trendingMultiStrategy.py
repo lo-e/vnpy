@@ -21,7 +21,7 @@ import numpy as np
 from vnpy.trader.object import ContractData
 from queue import Empty, Queue
 
-SIGNALS = ["T1", "T2", "T3", "T4", "T5"]
+SIGNALS = ["T1", "T2", "T3", "T4", "T5", "T6"]
 
 class SignalData(object):
     def __init__(self, name: str):
@@ -89,6 +89,8 @@ class TrendingMultiStrategy(CtaTemplate):
         "history_down",
         "minute_recent_up",
         "minute_recent_down",
+        "minute_30_up",
+        "minute_30_down",
         "minute_15_up",
         "minute_15_down",
         "minute_bar_dt",
@@ -176,6 +178,7 @@ class TrendingMultiStrategy(CtaTemplate):
         self.history_minute_am: ArrayManager = ArrayManager(self.history_hour*60)
 
         self.hour_up_down_updated = False
+        self.minute30_up_down_updated = False
         self.hour_up: float = 0
         self.hour_up_ts: float = 0
         self.hour_up_dt: str = ""
@@ -186,6 +189,8 @@ class TrendingMultiStrategy(CtaTemplate):
         self.history_down: float = 0
         self.minute_recent_up: float = 0
         self.minute_recent_down: float = 0
+        self.minute_30_up: float = 0
+        self.minute_30_down: float = 0
         self.minute_15_up: float = 0
         self.minute_15_down: float = 0
 
@@ -384,7 +389,9 @@ class TrendingMultiStrategy(CtaTemplate):
         if self.history_minute_am.inited:
             hour_up, hour_down = self.history_minute_am.donchian(60)
             history_up, history_down = self.history_minute_am.donchian(self.history_hour*60)
+            self.minute_30_up, self.minute_30_down = self.history_minute_am.donchian(30)
             self.minute_15_up, self.minute_15_down = self.history_minute_am.donchian(15)
+            self.minute30_up_down_updated = False
 
             if self.direction == Direction.LONG:
                 if (not self.database_loaded and not self.database_history_loaded and hour_up != self.hour_up) or self.hour_up_down_updated:
@@ -465,7 +472,7 @@ class TrendingMultiStrategy(CtaTemplate):
 
                     # 正式信号判断
                     indicator_inited = False
-                    if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down:
+                    if self.hour_up and self.hour_down and self.minute_30_up and self.minute_30_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down:
                         if signal_name == "T1":
                             if recent_minutes >= 30 and stop_price and stop_price >= self.hour_up - abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_down >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0:
                                 indicator_inited = True
@@ -484,6 +491,10 @@ class TrendingMultiStrategy(CtaTemplate):
 
                         elif signal_name == "T5":
                             if 5 <= recent_minutes <= 30 and self.minute_recent_down >= self.hour_down:
+                                indicator_inited = True
+
+                        elif signal_name == "T6":
+                            if recent_minutes >= 30 and abs(self.minute_30_up - self.minute_30_down) <= abs(self.hour_up - self.hour_down) / 3.0 and self.minute_30_up >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0 and self.minute_recent_down >= self.hour_down:
                                 indicator_inited = True
 
                     if indicator_inited:
@@ -521,7 +532,7 @@ class TrendingMultiStrategy(CtaTemplate):
                     
                     # 正式信号判断
                     indicator_inited = False
-                    if self.hour_up and self.hour_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down:
+                    if self.hour_up and self.hour_down and self.minute_30_up and self.minute_30_down and self.minute_15_up and self.minute_15_down and self.minute_recent_up and self.minute_recent_down:
                         if signal_name == "T1":
                             if recent_minutes >= 30 and stop_price and stop_price <= self.hour_down + abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_up <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0:
                                 indicator_inited = True
@@ -540,6 +551,10 @@ class TrendingMultiStrategy(CtaTemplate):
 
                         elif signal_name == "T5":
                             if 5 <= recent_minutes <= 30 and self.minute_recent_up <= self.hour_up:
+                                indicator_inited = True
+
+                        elif signal_name == "T6":
+                            if recent_minutes >= 30 and abs(self.minute_30_up - self.minute_30_down) <= abs(self.hour_up - self.hour_down) / 3.0 and self.minute_30_down <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0 and self.minute_recent_up <= self.hour_up:
                                 indicator_inited = True
 
                     if indicator_inited:
@@ -601,6 +616,12 @@ class TrendingMultiStrategy(CtaTemplate):
             signal_5: SignalData = self.signal_data["T5"]
             if not signal_5.target_pos and signal_5.indicator_inited:
                 signal_5.signal_dt_list.append([self.minute_bar_dt, self.hour_up, self.hour_down])
+
+        # 30分钟新高
+        minute30_price_cross = True
+        if self.database_loaded and not self.minute30_up_down_updated and ((self.direction == Direction.LONG and self.minute_30_up and tick.last_price > self.minute_30_up) or (self.direction == Direction.SHORT and self.minute_30_down and tick.last_price < self.minute_30_down)):
+            minute30_price_cross = True
+            self.minute30_up_down_updated = True
         
         # 信号检查
         strategy_target_pos = 0
@@ -609,7 +630,7 @@ class TrendingMultiStrategy(CtaTemplate):
             signal: SignalData = self.signal_data[signal_name]
 
             # 开仓判断
-            if price_cross and not signal.target_pos and self.database_loaded and signal.indicator_inited and not self.closed:
+            if (price_cross or (minute30_price_cross and signal_name == "T6")) and not signal.target_pos and self.database_loaded and signal.indicator_inited and not self.closed:
                 open_allowed = self.check_open_allowed(signal, tick)
                 if open_allowed:
                     # 仓位计算
@@ -1038,9 +1059,6 @@ class TrendingMultiStrategy(CtaTemplate):
         if open_allowed:
             # 24小时涨跌幅Top
             top = 10
-            # if signal.name == "T5":
-            #     top = 5
-
             trending_top_24h = []
             if self.direction == Direction.LONG and len(self.portfolio.rise_data_list_24h) >= top + 3:
                 for i in range(3, top + 3, 1):
