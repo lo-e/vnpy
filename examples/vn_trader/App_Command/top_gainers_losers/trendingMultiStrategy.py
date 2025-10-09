@@ -618,7 +618,7 @@ class TrendingMultiStrategy(CtaTemplate):
                 signal_5.signal_dt_list.append([self.minute_bar_dt, self.hour_up, self.hour_down])
 
         # 30分钟新高
-        minute30_price_cross = True
+        minute30_price_cross = False
         if self.database_loaded and not self.minute30_up_down_updated and ((self.direction == Direction.LONG and self.minute_30_up and tick.last_price > self.minute_30_up) or (self.direction == Direction.SHORT and self.minute_30_down and tick.last_price < self.minute_30_down)):
             minute30_price_cross = True
             self.minute30_up_down_updated = True
