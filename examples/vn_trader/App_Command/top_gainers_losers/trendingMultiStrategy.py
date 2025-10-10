@@ -43,6 +43,8 @@ class SignalData(object):
         self.indicator_inited_dt = ""
         self.indicator_inited_hour_up = 0
         self.indicator_inited_hour_down = 0
+        self.indicator_inited_minute30_up = 0
+        self.indicator_inited_minute30_down = 0
         self.signal_dt_list = []
         self.pre_signal_dt = ""
         self.pre_signal_hour_up = 0
@@ -502,12 +504,16 @@ class TrendingMultiStrategy(CtaTemplate):
                         signal.indicator_inited_dt = self.hour_up_dt
                         signal.indicator_inited_hour_up = self.hour_up
                         signal.indicator_inited_hour_down = self.hour_down
+                        signal.indicator_inited_minute30_up = self.minute_30_up
+                        signal.indicator_inited_minute30_down = self.minute_30_down
                     
                     else:
                         signal.indicator_inited = False
                         signal.indicator_inited_dt = ""
                         signal.indicator_inited_hour_up = 0
                         signal.indicator_inited_hour_down = 0
+                        signal.indicator_inited_minute30_up = 0
+                        signal.indicator_inited_minute30_down = 0
 
                 if self.direction == Direction.SHORT:
                     recent_seconds = 0
@@ -562,12 +568,16 @@ class TrendingMultiStrategy(CtaTemplate):
                         signal.indicator_inited_dt = self.hour_down_dt
                         signal.indicator_inited_hour_up = self.hour_up
                         signal.indicator_inited_hour_down = self.hour_down
+                        signal.indicator_inited_minute30_up = self.minute_30_up
+                        signal.indicator_inited_minute30_down = self.minute_30_down
                     
                     else:
                         signal.indicator_inited = False
                         signal.indicator_inited_dt = ""
                         signal.indicator_inited_hour_up = 0
                         signal.indicator_inited_hour_down = 0
+                        signal.indicator_inited_minute30_up = 0
+                        signal.indicator_inited_minute30_down = 0
 
     def on_tick(self, tick: TickData):
         self.tick = copy(tick)
