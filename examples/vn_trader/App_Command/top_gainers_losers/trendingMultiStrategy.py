@@ -492,7 +492,7 @@ class TrendingMultiStrategy(CtaTemplate):
                                 indicator_inited = True
 
                         elif signal_name == "T5":
-                            if 5 <= recent_minutes <= 60 and self.minute_recent_down >= self.hour_down:
+                            if 3 <= recent_minutes <= 60 and self.minute_recent_down >= self.hour_down:
                                 indicator_inited = True
 
                         elif signal_name == "T6":
