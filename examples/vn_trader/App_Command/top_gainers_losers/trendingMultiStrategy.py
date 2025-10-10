@@ -41,6 +41,7 @@ class SignalData(object):
         self.open_tags = []
         self.indicator_inited = False
         self.indicator_inited_dt = ""
+        self.indicator_inited_minutes = 0
         self.indicator_inited_hour_up = 0
         self.indicator_inited_hour_down = 0
         self.indicator_inited_minute30_up = 0
@@ -502,6 +503,7 @@ class TrendingMultiStrategy(CtaTemplate):
                     if indicator_inited:
                         signal.indicator_inited = True
                         signal.indicator_inited_dt = self.hour_up_dt
+                        signal.indicator_inited_minutes = recent_minutes
                         signal.indicator_inited_hour_up = self.hour_up
                         signal.indicator_inited_hour_down = self.hour_down
                         signal.indicator_inited_minute30_up = self.minute_30_up
@@ -510,6 +512,7 @@ class TrendingMultiStrategy(CtaTemplate):
                     else:
                         signal.indicator_inited = False
                         signal.indicator_inited_dt = ""
+                        signal.indicator_inited_minutes = 0
                         signal.indicator_inited_hour_up = 0
                         signal.indicator_inited_hour_down = 0
                         signal.indicator_inited_minute30_up = 0
@@ -566,6 +569,7 @@ class TrendingMultiStrategy(CtaTemplate):
                     if indicator_inited:
                         signal.indicator_inited = True
                         signal.indicator_inited_dt = self.hour_down_dt
+                        signal.indicator_inited_minutes = recent_minutes
                         signal.indicator_inited_hour_up = self.hour_up
                         signal.indicator_inited_hour_down = self.hour_down
                         signal.indicator_inited_minute30_up = self.minute_30_up
@@ -574,6 +578,7 @@ class TrendingMultiStrategy(CtaTemplate):
                     else:
                         signal.indicator_inited = False
                         signal.indicator_inited_dt = ""
+                        signal.indicator_inited_minutes = 0
                         signal.indicator_inited_hour_up = 0
                         signal.indicator_inited_hour_down = 0
                         signal.indicator_inited_minute30_up = 0
