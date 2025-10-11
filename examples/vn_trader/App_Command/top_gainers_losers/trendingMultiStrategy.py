@@ -226,6 +226,14 @@ class TrendingMultiStrategy(CtaTemplate):
                     signal_trade_logs.append(dict(row))
                 self.trade_logs[signal_name] = signal_trade_logs
 
+        """ fake """
+        # strategy_target_pos = self.get_strategy_target_pos()
+        # if not strategy_target_pos:
+        #     self.on_close()
+        
+        # else:
+        #     print_(f"{self.strategy_name} is trading")
+        
     def load_database_bar(self):
         try:
             self.loading_database = True
