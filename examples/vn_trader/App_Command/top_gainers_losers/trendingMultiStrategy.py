@@ -101,6 +101,7 @@ class TrendingMultiStrategy(CtaTemplate):
         "database_history_loaded",
         "signal_data",
         "traded_signals",
+        "stop_price"
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -169,6 +170,7 @@ class TrendingMultiStrategy(CtaTemplate):
         self.bar_lack_count = 0                     # 数据缺失计数
         self.history_high_cross = False             # 长周期最高价
         self.history_low_cross = False              # 长周期最低价
+        self.stop_price = 0
 
         self.database_minute_bar_list = []
         self.tick_minute_bar_list = []
@@ -652,6 +654,7 @@ class TrendingMultiStrategy(CtaTemplate):
         # 信号检查
         strategy_target_pos = 0
         strategy_target_pos_updated = False
+        open_volume = 0
         for signal_name in self.signal_data.keys():
             signal: SignalData = self.signal_data[signal_name]
 
@@ -662,29 +665,14 @@ class TrendingMultiStrategy(CtaTemplate):
                     # 仓位计算
                     self.add_unit_pos(tick.last_price, signal)
 
-                    # 发送订单
-                    # if self.portfolio.trade_enable and time.time() <= tick.datetime.timestamp() + 3:
-                    #     open_volume = abs(signal.target_pos)
-                    #     if open_volume:
-                    #         if self.direction == Direction.LONG:
-                    #             trade_price = self.tick.last_price * 1.005
-                    #             self.cancel_all()
-                    #             if self.exchange == Exchange.BINANCE:
-                    #                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True)
-                    #                 self.send_order(Direction.SHORT, Offset.CLOSE, signal.stop_price, abs(open_volume), stop=True)
+                    # 实盘开仓
+                    if self.portfolio.trade_enable and time.time() <= tick.datetime.timestamp() + 3:
+                        open_volume += abs(signal.target_pos)
+                        if self.direction == Direction.LONG:
+                            self.stop_price = min(self.stop_price, signal.stop_price) if self.stop_price else signal.stop_price
 
-                    #             else:
-                    #                 self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=signal.stop_price)
-                            
-                    #         elif self.direction == Direction.SHORT:
-                    #             trade_price = self.tick.last_price * 0.995
-                    #             self.cancel_all()
-                    #             if self.exchange == Exchange.BINANCE:
-                    #                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True)
-                    #                 self.send_order(Direction.LONG, Offset.CLOSE, signal.stop_price, abs(open_volume), stop=True)
-
-                    #             else:
-                    #                 self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=signal.stop_price)
+                        else:
+                            self.stop_price = max(self.stop_price, signal.stop_price)
 
                     # 开仓日志
                     signal_trade_logs = self.trade_logs.get(signal_name, [])
@@ -796,6 +784,28 @@ class TrendingMultiStrategy(CtaTemplate):
         # 手动平仓设置
         if self.manual_close:
             self.on_close(tick)
+
+        # 发送订单
+        # if open_volume:
+        #     if self.direction == Direction.LONG:
+        #         trade_price = self.tick.last_price * 1.005
+        #         self.cancel_all()
+        #         if self.exchange == Exchange.BINANCE:
+        #             self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True)
+        #             self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
+
+        #         else:
+        #             self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
+            
+        #     elif self.direction == Direction.SHORT:
+        #         trade_price = self.tick.last_price * 0.995
+        #         self.cancel_all()
+        #         if self.exchange == Exchange.BINANCE:
+        #             self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True)
+        #             self.send_order(Direction.LONG, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
+
+        #         else:
+        #             self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
     
     def add_unit_pos(self, tick_price: float, signal: SignalData):
         # 确定止损价格

@@ -1040,6 +1040,10 @@ class TopGainersLosersPortfolio(object):
                                     strategy.cancel_all()
                                     strategy.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(gap), market=True)
 
+                                    # 重新发送自动止损订单
+                                    if strategy_target_pos and self.exchange == Exchange.BINANCE:
+                                        self.send_order(Direction.SHORT, Offset.CLOSE, strategy.stop_price, abs(strategy_target_pos), stop=True)
+
                             if strategy.direction == Direction.SHORT:
                                 if strategy_target_pos > 0 or strategy.pos > 0:
                                     msg = f"仓位异常\n\n合约 {strategy.vt_symbol}\n方向 {strategy.direction.value}\n目标 {strategy_target_pos}\n当前 {strategy.pos}"
@@ -1061,6 +1065,10 @@ class TopGainersLosersPortfolio(object):
                                     trade_price = strategy.tick.last_price * 1.005
                                     strategy.cancel_all()
                                     strategy.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(gap), market=True)
+
+                                    # 重新发送自动止损订单
+                                    if strategy_target_pos and self.exchange == Exchange.BINANCE:
+                                        self.send_order(Direction.LONG, Offset.CLOSE, strategy.stop_price, abs(strategy_target_pos), stop=True)
                         
                         if strategy.closed and not strategy.pos:
                             vt_orderids = self.cta_engine.strategy_orderid_map[strategy.strategy_name]
