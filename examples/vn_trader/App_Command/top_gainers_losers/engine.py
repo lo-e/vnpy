@@ -251,12 +251,13 @@ class TopGainersLosersEngine(BaseEngine):
         vt_orderids = []
         for req in req_list:
             vt_orderid = self.main_engine.send_account_order(req, contract.gateway_name, strategy.exchange_user)
-            vt_orderids.append(vt_orderid)
-            self.offset_converter.update_order_request(req, vt_orderid)
+            if vt_orderid:
+                vt_orderids.append(vt_orderid)
+                self.offset_converter.update_order_request(req, vt_orderid)
 
-            # 保存orderid、strategy映射关系
-            self.orderid_strategy_map[vt_orderid] = strategy
-            self.strategy_orderid_map[strategy.strategy_name].add(vt_orderid)
+                # 保存orderid、strategy映射关系
+                self.orderid_strategy_map[vt_orderid] = strategy
+                self.strategy_orderid_map[strategy.strategy_name].add(vt_orderid)
 
         return vt_orderids
 

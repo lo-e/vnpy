@@ -602,29 +602,32 @@ class TrendingMultiStrategy(CtaTemplate):
         """
         if not self.send_fake_order:
             self.send_fake_order = True
-
-            self.add_unit_pos(tick.last_price)
-            open_volume = abs(self.target_pos)
+            
+            signal: SignalData = self.signal_data.get("T1")
+            self.add_fake_unit_pos(tick.last_price, signal)
+            open_volume = abs(signal.target_pos)
             if open_volume:
-                if self.direction == Direction.SHORT:
+                if self.direction == Direction.LONG:
                     trade_price = self.tick.last_price * 1.005
-                    self.stop_price = tick.last_price * 0.9995
+                    signal.stop_price = self.tick.last_price * 0.995
+                    self.cancel_all()
                     if self.exchange == Exchange.BINANCE:
                         self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True)
-                        self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
+                        self.send_order(Direction.SHORT, Offset.CLOSE, signal.stop_price, abs(open_volume), stop=True)
 
                     else:
-                        self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
+                        self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=signal.stop_price)
                 
-                elif self.direction == Direction.LONG:
+                elif self.direction == Direction.SHORT:
                     trade_price = self.tick.last_price * 0.995
-                    self.stop_price = tick.last_price * 1.0005
+                    signal.stop_price = self.tick.last_price * 1.005
+                    self.cancel_all()
                     if self.exchange == Exchange.BINANCE:
                         self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True)
-                        self.send_order(Direction.LONG, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
+                        self.send_order(Direction.LONG, Offset.CLOSE, signal.stop_price, abs(open_volume), stop=True)
 
                     else:
-                        self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
+                        self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=signal.stop_price)
         
 
         return
@@ -801,6 +804,35 @@ class TrendingMultiStrategy(CtaTemplate):
         # 计算仓位大小
         signal.leverage = 0.01 / abs((signal.stop_price / tick_price) - 1)
         order_value = self.portfolio.portfolio_value * signal.leverage
+        
+        signal.target_pos = order_value / tick_price
+        if self.direction == Direction.SHORT:
+            signal.target_pos *= -1
+
+        # 仓位精度处理
+        contract: ContractData = self.cta_engine.main_engine.get_contract(self.vt_symbol)
+        signal.target_pos = round_to(signal.target_pos, contract.min_volume)
+
+        # 开仓价值、价格、时间
+        signal.open_tick_value = order_value
+        signal.open_tick_price = tick_price
+        signal.open_tick_dt = self.tick.datetime
+        
+        # 开仓计数
+        signal.open_count += 1
+
+    def add_fake_unit_pos(self, tick_price: float, signal: SignalData):
+        # 确定止损价格
+        if self.direction == Direction.LONG:
+            signal.stop_price = tick_price * 0.99
+        
+        else:
+            signal.stop_price = tick_price * 1.01
+
+        # 计算仓位大小
+        portfolio_value = 6
+        signal.leverage = 0.01 / abs((signal.stop_price / tick_price) - 1)
+        order_value = portfolio_value * signal.leverage
         
         signal.target_pos = order_value / tick_price
         if self.direction == Direction.SHORT:
