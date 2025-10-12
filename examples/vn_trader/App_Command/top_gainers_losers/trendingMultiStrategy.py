@@ -1001,18 +1001,18 @@ class TrendingMultiStrategy(CtaTemplate):
 
                         stop_pnl = 0
                         if signal.open_tick_price:
-                            stop_pnl = ((trade.price / self.open_tick_price) - 1) * 100
+                            stop_pnl = ((trade.price / signal.open_tick_price) - 1) * 100
                             if self.direction == Direction.SHORT:
                                 stop_pnl *= -1
                             stop_pnl -= 0.2
-                            stop_pnl *= self.leverage
+                            stop_pnl *= signal.leverage
                         signal.pnl += stop_pnl
                         self.portfolio.on_pnl(self, signal, stop_pnl)
                         self.on_signal_close(signal_name)
 
                         # 记录日志
                         signal_trade_logs = self.trade_logs.get(signal_name, [])
-                        signal_trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} AUTO_STOP {self.pnl:.2f}% {trade.price}"})
+                        signal_trade_logs.append({"LOG": f"{datetime.now().replace(microsecond=0)} {self.tick.datetime.replace(microsecond=0)} AUTO_STOP {stop_pnl:.2f}% {trade.price}"})
                         self.trade_logs[signal_name] = signal_trade_logs
                         self.trade_logs_updated = True
 
