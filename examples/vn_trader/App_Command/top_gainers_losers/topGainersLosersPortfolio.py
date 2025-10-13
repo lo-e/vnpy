@@ -70,7 +70,6 @@ class TopGainersLosersPortfolio(object):
         self.loss_list = []
         self.pnl = 0
         self.setting_update_needed = False
-        self.setting_update_ts = 0
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -1003,8 +1002,11 @@ class TopGainersLosersPortfolio(object):
         shutil.move(temp_file_path, file_path)
 
     def check_strategy_status(self):
+        setting_update_ts = 0
+        trading_signal_ts = 0
         while True:
             try:
+                trading_signals = []
                 for name in self.cta_engine.strategies.copy().keys():
                     strategy: TrendingMultiStrategy = self.cta_engine.strategies[name]
                     strategy_check_ts = self.strategy_status_check_ts.get(strategy.strategy_name, 0)
@@ -1016,6 +1018,8 @@ class TopGainersLosersPortfolio(object):
                         for signal_name in strategy.signal_data.keys():
                             signal: SignalData = strategy.signal_data[signal_name]
                             strategy_target_pos += signal.target_pos
+                            if signal.target_pos:
+                                trading_signals.append(f"{name}_{signal.name}")
                             
                         if strategy.tick and strategy_target_pos != strategy.pos:
                             if strategy.direction == Direction.LONG:
@@ -1108,10 +1112,17 @@ class TopGainersLosersPortfolio(object):
                         strategy.check_save_data()
 
                 # 引擎更新setting.json
-                if self.setting_update_needed and time.time() > self.setting_update_ts + 5:
+                if self.setting_update_needed and time.time() > setting_update_ts + 5:
                     self.setting_update_needed = False
-                    self.setting_update_ts = time.time()
+                    setting_update_ts = time.time()
                     self.cta_engine.update_setting()
+
+                # 显示当前交易信号详情
+                if time.time() > trading_signal_ts + 60:
+                    trading_signal_ts = time.time()
+                    for signal_name in trading_signals:
+                        print_(signal_name)
+                    print_(f"当前交易信号统计：{len(trading_signals)}")
 
                 time.sleep(0.1)
 
