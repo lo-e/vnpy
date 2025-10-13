@@ -507,7 +507,7 @@ class TrendingMultiStrategy(CtaTemplate):
                                 indicator_inited = True
 
                         elif signal_name == "T6":
-                            if recent_minutes >= 30 and abs(self.minute_30_up - self.minute_30_down) <= abs(self.hour_up - self.hour_down) / 3.0 and self.minute_30_up >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0 and self.minute_recent_down >= self.hour_down:
+                            if 30 <= recent_minutes <= 60 and abs(self.minute_30_up - self.minute_30_down) <= abs(self.hour_up - self.hour_down) / 3.0 and self.minute_30_up >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0 and self.minute_recent_down >= self.hour_down:
                                 indicator_inited = True
 
                     if indicator_inited:
