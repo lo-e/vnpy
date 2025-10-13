@@ -1006,7 +1006,6 @@ class TopGainersLosersPortfolio(object):
         trading_signal_ts = 0
         while True:
             try:
-                trading_signals = []
                 for name in self.cta_engine.strategies.copy().keys():
                     strategy: TrendingMultiStrategy = self.cta_engine.strategies[name]
                     strategy_check_ts = self.strategy_status_check_ts.get(strategy.strategy_name, 0)
@@ -1018,8 +1017,6 @@ class TopGainersLosersPortfolio(object):
                         for signal_name in strategy.signal_data.keys():
                             signal: SignalData = strategy.signal_data[signal_name]
                             strategy_target_pos += signal.target_pos
-                            if signal.target_pos:
-                                trading_signals.append(f"{name}_{signal.name}")
                             
                         if strategy.tick and strategy_target_pos != strategy.pos:
                             if strategy.direction == Direction.LONG:
@@ -1120,6 +1117,14 @@ class TopGainersLosersPortfolio(object):
                 # 显示当前交易信号详情
                 if time.time() > trading_signal_ts + 20:
                     trading_signal_ts = time.time()
+                    trading_signals = []
+                    for name in self.cta_engine.strategies.copy().keys():
+                        strategy: TrendingMultiStrategy = self.cta_engine.strategies[name]
+                        for signal_name in strategy.signal_data.keys():
+                            signal: SignalData = strategy.signal_data[signal_name]
+                            if signal.target_pos:
+                                trading_signals.append(f"{name}_{signal.name}")
+
                     print("\n")
                     for signal_name in trading_signals:
                         print_(signal_name)
