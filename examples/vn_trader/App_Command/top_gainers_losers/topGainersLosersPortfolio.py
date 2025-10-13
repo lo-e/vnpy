@@ -1120,9 +1120,10 @@ class TopGainersLosersPortfolio(object):
                 # 显示当前交易信号详情
                 if time.time() > trading_signal_ts + 20:
                     trading_signal_ts = time.time()
+                    print("\n")
                     for signal_name in trading_signals:
                         print_(signal_name)
-                    print_(f"当前交易信号统计：{len(trading_signals)}")
+                    print_(f"当前交易信号统计：{len(trading_signals)}\n")
 
                 time.sleep(0.1)
 
