@@ -557,7 +557,7 @@ class TrendingMultiStrategy(CtaTemplate):
                                 indicator_inited = True
 
                         elif signal_name == "T2":
-                            if 5 <= recent_minutes <= 60 and stop_price and stop_price <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0 and self.hour_up >= self.minute_recent_up >= self.hour_down + abs(self.hour_up - self.hour_down) * 0.9:
+                            if 5 <= recent_minutes <= 60 and stop_price and stop_price <= self.hour_down + abs(self.hour_up - self.hour_down) / 2.0 and self.hour_up >= self.minute_recent_up >= self.hour_down + abs(self.hour_up - self.hour_down) * 0.5:
                                 indicator_inited = True
                         
                         elif signal_name == "T3":
