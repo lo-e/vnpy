@@ -1118,7 +1118,7 @@ class TopGainersLosersPortfolio(object):
                     self.cta_engine.update_setting()
 
                 # 显示当前交易信号详情
-                if time.time() > trading_signal_ts + 60:
+                if time.time() > trading_signal_ts + 20:
                     trading_signal_ts = time.time()
                     for signal_name in trading_signals:
                         print_(signal_name)
