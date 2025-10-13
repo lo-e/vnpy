@@ -1128,7 +1128,7 @@ class TopGainersLosersPortfolio(object):
                     print("\n")
                     for signal_name in trading_signals:
                         print_(signal_name)
-                    print_(f"当前交易信号统计：{len(trading_signals)}\n")
+                    print_(f"当前交易：{len(trading_signals)}\n")
 
                 time.sleep(0.1)
 
