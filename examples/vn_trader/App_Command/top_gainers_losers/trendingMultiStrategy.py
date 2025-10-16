@@ -480,7 +480,7 @@ class TrendingMultiStrategy(CtaTemplate):
                         signal.signal_dt_list = []
 
                     # 预备信号设定
-                    if 30 < recent_minutes < 60 or self.minute_recent_down < self.hour_down:
+                    if 30 < recent_minutes < 60 or (self.minute_recent_down and self.minute_recent_down < self.hour_down):
                         signal.pre_signal_dt = ""
                         signal.pre_signal_hour_up = 0
                         signal.pre_signal_hour_down = 0
