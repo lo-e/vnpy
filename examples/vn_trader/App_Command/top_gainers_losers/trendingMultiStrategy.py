@@ -476,7 +476,7 @@ class TrendingMultiStrategy(CtaTemplate):
                     recent_minutes = int(recent_seconds / 60)
 
                     # 信号计数清零
-                    if recent_minutes > 30:
+                    if recent_minutes > 60:
                         signal.signal_dt_list = []
 
                     # 预备信号设定
@@ -544,7 +544,7 @@ class TrendingMultiStrategy(CtaTemplate):
                     recent_minutes = int(recent_seconds / 60)
 
                     # 信号计数清零
-                    if recent_minutes > 30:
+                    if recent_minutes > 60:
                         signal.signal_dt_list = []
 
                     # 预备信号设定
