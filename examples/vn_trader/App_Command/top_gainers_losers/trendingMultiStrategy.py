@@ -409,8 +409,8 @@ class TrendingMultiStrategy(CtaTemplate):
             self.minute30_up_down_updated = False
 
             # 波动性压缩
-            minute_30_bb_up, minute_30_bb_down = self.history_minute_am.boll(30, 2.0)
-            minute_30_kc_up, minute_30_kc_down = self.history_minute_am.keltner(30, 1.5)
+            minute_30_bb_up, minute_30_bb_down = self.history_minute_am.boll(30, 1.0)
+            minute_30_kc_up, minute_30_kc_down = self.history_minute_am.keltner(30, 0.75)
             self.minute_30_squeeze_on = bool((minute_30_bb_down > minute_30_kc_down) and (minute_30_bb_up < minute_30_kc_up))
 
             if self.direction == Direction.LONG:
