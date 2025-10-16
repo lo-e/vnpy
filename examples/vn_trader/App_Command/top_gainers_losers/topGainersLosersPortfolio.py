@@ -130,6 +130,9 @@ class TopGainersLosersPortfolio(object):
         for vt_symbol in download_vt_symbols:
             self.bar_download_queue.put(vt_symbol)
 
+        # ------ fake ------
+        # self.bar_download_queue.put("PTBUSDT.BINANCE")
+
     def on_timer(self):
         if not self.started:
             return
