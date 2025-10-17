@@ -457,7 +457,7 @@ class TrendingMultiStrategy(CtaTemplate):
                     self.minute_recent_up, self.minute_recent_down = self.history_minute_am.donchian(recent_minutes)
 
                     minute_30_bb_up, minute_30_bb_down = self.history_minute_am.boll(min(recent_minutes, 30), 1.0)
-                    minute_30_kc_up, minute_30_kc_down = self.history_minute_am.keltner(min(recent_minutes, 30), 0.75)
+                    minute_30_kc_up, minute_30_kc_down = self.history_minute_am.keltner(min(recent_minutes, 30), 0.5)
                     self.minute_30_squeeze_on = bool((minute_30_bb_down > minute_30_kc_down) and (minute_30_bb_up < minute_30_kc_up))
 
                     minute_15_bb_up, minute_15_bb_down = self.history_minute_am.boll(min(recent_minutes, 15), 1.0)
@@ -521,7 +521,7 @@ class TrendingMultiStrategy(CtaTemplate):
                                 indicator_inited = True
 
                         elif signal_name == "T6":
-                            if 30 <= recent_minutes <= 60 and self.minute_30_squeeze_on and abs(self.minute_30_up - self.minute_30_down) <= abs(self.hour_up - self.hour_down) / 3.0 and self.minute_30_up >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0 and self.minute_recent_down >= self.hour_down:
+                            if 30 <= recent_minutes <= 2 * 60 and self.minute_30_squeeze_on and abs(self.minute_30_up - self.minute_30_down) <= abs(self.hour_up - self.hour_down) / 3.0 and self.minute_30_up >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0 and self.minute_recent_down >= self.hour_down:
                                 indicator_inited = True
 
                         elif signal_name == "T7":
@@ -595,7 +595,7 @@ class TrendingMultiStrategy(CtaTemplate):
                                 indicator_inited = True
 
                         elif signal_name == "T6":
-                            if 30 <= recent_minutes <= 60 and self.minute_30_squeeze_on and abs(self.minute_30_up - self.minute_30_down) <= abs(self.hour_up - self.hour_down) / 3.0 and self.minute_30_down <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0 and self.minute_recent_up <= self.hour_up:
+                            if 30 <= recent_minutes <= 2 * 60 and self.minute_30_squeeze_on and abs(self.minute_30_up - self.minute_30_down) <= abs(self.hour_up - self.hour_down) / 3.0 and self.minute_30_down <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0 and self.minute_recent_up <= self.hour_up:
                                 indicator_inited = True
 
                         elif signal_name == "T7":
