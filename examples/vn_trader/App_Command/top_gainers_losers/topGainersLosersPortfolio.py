@@ -131,7 +131,7 @@ class TopGainersLosersPortfolio(object):
             self.bar_download_queue.put(vt_symbol)
 
         # ------ fake ------
-        # self.bar_download_queue.put("PTBUSDT.BINANCE")
+        # self.bar_download_queue.put("PORT3USDT.BINANCE")
 
     def on_timer(self):
         if not self.started:
@@ -1120,17 +1120,17 @@ class TopGainersLosersPortfolio(object):
                 # 显示当前交易信号详情
                 if time.time() > trading_signal_ts + 20:
                     trading_signal_ts = time.time()
-                    trading_signals = []
+                    trading_signals = {}
                     for name in self.cta_engine.strategies.copy().keys():
                         strategy: TrendingMultiStrategy = self.cta_engine.strategies[name]
                         for signal_name in strategy.signal_data.keys():
                             signal: SignalData = strategy.signal_data[signal_name]
                             if signal.target_pos:
-                                trading_signals.append(f"{name}_{signal.name}")
+                                trading_signals[f"{name}_{signal.name}"] = signal.open_tick_dt.replace(microsecond=0)
 
                     print("\n")
-                    for signal_name in trading_signals:
-                        print_(signal_name)
+                    for signal_name, open_tick_dt in trading_signals.items():
+                        print_(f"{open_tick_dt}\t{signal_name}")
                     print_(f"当前交易：{len(trading_signals)}\n")
 
                 time.sleep(0.1)
