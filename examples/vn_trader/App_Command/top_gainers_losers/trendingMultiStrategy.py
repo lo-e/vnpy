@@ -21,7 +21,7 @@ import numpy as np
 from vnpy.trader.object import ContractData
 from queue import Empty, Queue
 
-SIGNALS = ["T1", "T2", "T3", "T4", "T5", "T6"]
+SIGNALS = ["T1", "T2", "T3", "T4", "T5", "T6", "T7"]
 
 class SignalData(object):
     def __init__(self, name: str):
@@ -524,6 +524,10 @@ class TrendingMultiStrategy(CtaTemplate):
                             if 30 <= recent_minutes <= 60 and self.minute_30_squeeze_on and abs(self.minute_30_up - self.minute_30_down) <= abs(self.hour_up - self.hour_down) / 3.0 and self.minute_30_up >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0 and self.minute_recent_down >= self.hour_down:
                                 indicator_inited = True
 
+                        elif signal_name == "T7":
+                            if recent_minutes >= 30 and self.minute_15_squeeze_on and stop_price and stop_price >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0 and self.minute_recent_down >= self.hour_down:
+                                indicator_inited = True
+
                     if indicator_inited:
                         signal.indicator_inited = True
                         signal.indicator_inited_dt = self.hour_up_dt
@@ -592,6 +596,10 @@ class TrendingMultiStrategy(CtaTemplate):
 
                         elif signal_name == "T6":
                             if 30 <= recent_minutes <= 60 and self.minute_30_squeeze_on and abs(self.minute_30_up - self.minute_30_down) <= abs(self.hour_up - self.hour_down) / 3.0 and self.minute_30_down <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0 and self.minute_recent_up <= self.hour_up:
+                                indicator_inited = True
+
+                        elif signal_name == "T7":
+                            if recent_minutes >= 30 and self.minute_15_squeeze_on and stop_price and stop_price <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0 and self.minute_recent_up <= self.hour_up:
                                 indicator_inited = True
 
                     if indicator_inited:
