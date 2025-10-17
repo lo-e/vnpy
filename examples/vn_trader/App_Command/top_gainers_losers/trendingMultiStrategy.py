@@ -47,6 +47,7 @@ class SignalData(object):
         self.indicator_inited_minute30_up = 0
         self.indicator_inited_minute30_down = 0
         self.indicator_inited_minute_30_squeeze_on = False
+        self.indicator_inited_minute_15_squeeze_on = False
         self.signal_dt_list = []
         self.pre_signal_dt = ""
         self.pre_signal_hour_up = 0
@@ -200,6 +201,7 @@ class TrendingMultiStrategy(CtaTemplate):
         self.minute_30_squeeze_on = False
         self.minute_15_up: float = 0
         self.minute_15_down: float = 0
+        self.minute_15_squeeze_on = False
 
     def on_init(self):
         # 交易所成功连接判断
@@ -408,11 +410,6 @@ class TrendingMultiStrategy(CtaTemplate):
             self.minute_15_up, self.minute_15_down = self.history_minute_am.donchian(15)
             self.minute30_up_down_updated = False
 
-            # 波动性压缩
-            minute_30_bb_up, minute_30_bb_down = self.history_minute_am.boll(30, 1.0)
-            minute_30_kc_up, minute_30_kc_down = self.history_minute_am.keltner(30, 0.75)
-            self.minute_30_squeeze_on = bool((minute_30_bb_down > minute_30_kc_down) and (minute_30_bb_up < minute_30_kc_up))
-
             if self.direction == Direction.LONG:
                 if (not self.database_loaded and not self.database_history_loaded and hour_up != self.hour_up) or self.hour_up_down_updated:
                     self.hour_up = hour_up
@@ -459,9 +456,19 @@ class TrendingMultiStrategy(CtaTemplate):
                 if recent_minutes > 1:
                     self.minute_recent_up, self.minute_recent_down = self.history_minute_am.donchian(recent_minutes)
 
+                    minute_30_bb_up, minute_30_bb_down = self.history_minute_am.boll(min(recent_minutes, 30), 1.0)
+                    minute_30_kc_up, minute_30_kc_down = self.history_minute_am.keltner(min(recent_minutes, 30), 0.75)
+                    self.minute_30_squeeze_on = bool((minute_30_bb_down > minute_30_kc_down) and (minute_30_bb_up < minute_30_kc_up))
+
+                    minute_15_bb_up, minute_15_bb_down = self.history_minute_am.boll(min(recent_minutes, 15), 1.0)
+                    minute_15_kc_up, minute_15_kc_down = self.history_minute_am.keltner(min(recent_minutes, 15), 0.75)
+                    self.minute_15_squeeze_on = bool((minute_15_bb_down > minute_15_kc_down) and (minute_15_bb_up < minute_15_kc_up))
+
                 else:
                     self.minute_recent_up = 0
                     self.minute_recent_down = 0
+                    self.minute_30_squeeze_on = False
+                    self.minute_15_squeeze_on = False
 
     def check_indicator_inited(self):
         for signal_name in self.signal_data.keys():
@@ -526,6 +533,7 @@ class TrendingMultiStrategy(CtaTemplate):
                         signal.indicator_inited_minute30_up = self.minute_30_up
                         signal.indicator_inited_minute30_down = self.minute_30_down
                         signal.indicator_inited_minute_30_squeeze_on = self.minute_30_squeeze_on
+                        signal.indicator_inited_minute_15_squeeze_on = self.minute_15_squeeze_on
                     
                     else:
                         signal.indicator_inited = False
@@ -536,6 +544,7 @@ class TrendingMultiStrategy(CtaTemplate):
                         signal.indicator_inited_minute30_up = 0
                         signal.indicator_inited_minute30_down = 0
                         signal.indicator_inited_minute_30_squeeze_on = False
+                        signal.indicator_inited_minute_15_squeeze_on = False
 
                 if self.direction == Direction.SHORT:
                     recent_seconds = 0
@@ -594,6 +603,7 @@ class TrendingMultiStrategy(CtaTemplate):
                         signal.indicator_inited_minute30_up = self.minute_30_up
                         signal.indicator_inited_minute30_down = self.minute_30_down
                         signal.indicator_inited_minute_30_squeeze_on = self.minute_30_squeeze_on
+                        signal.indicator_inited_minute_15_squeeze_on = self.minute_15_squeeze_on
                     
                     else:
                         signal.indicator_inited = False
@@ -604,6 +614,7 @@ class TrendingMultiStrategy(CtaTemplate):
                         signal.indicator_inited_minute30_up = 0
                         signal.indicator_inited_minute30_down = 0
                         signal.indicator_inited_minute_30_squeeze_on = False
+                        signal.indicator_inited_minute_15_squeeze_on = False
 
     def on_tick(self, tick: TickData):
         self.tick = copy(tick)
