@@ -201,7 +201,8 @@ class TopGainersLosersPortfolio(object):
                 print("-"*12)
 
         # 确认组合交易金额
-        self.portfolio_value = self.account_ath - self.funds
+        # self.portfolio_value = self.account_ath - self.funds
+        self.portfolio_value = 100
 
         # 回撤过大停止交易
         # if abs(self.account_drawdown) < self.portfolio_value * 0.30:
