@@ -1127,7 +1127,7 @@ class TrendingMultiStrategy(CtaTemplate):
 
         # T5信号判断
         if signal.name == "T5":
-            if len(signal.signal_dt_list) >= 5:
+            if len(signal.signal_dt_list) >= 10:
                 start_data = signal.signal_dt_list[-3]
                 start_hour_up = start_data[1]
                 start_hour_down = start_data[2]
