@@ -461,7 +461,7 @@ class TrendingMultiStrategy(CtaTemplate):
                     self.minute_30_squeeze_on = bool((minute_30_bb_down > minute_30_kc_down) and (minute_30_bb_up < minute_30_kc_up))
 
                     minute_15_bb_up, minute_15_bb_down = self.history_minute_am.boll(min(recent_minutes, 15), 1.0)
-                    minute_15_kc_up, minute_15_kc_down = self.history_minute_am.keltner(min(recent_minutes, 15), 0.75)
+                    minute_15_kc_up, minute_15_kc_down = self.history_minute_am.keltner(min(recent_minutes, 15), 0.5)
                     self.minute_15_squeeze_on = bool((minute_15_bb_down > minute_15_kc_down) and (minute_15_bb_up < minute_15_kc_up))
 
                 else:

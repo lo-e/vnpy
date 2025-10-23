@@ -358,7 +358,7 @@ class DownloadUtility(object):
             exchange = "BINANCE"
             mode = input("选择模式（默认1）【接口获取：1 正向：2 反向：3】")
             if mode == "2":
-                contract_list = ["BTCUSDT", "1000PEPEUSDT"]
+                contract_list = ["XPLUSDT"]
 
             elif mode == "3":
                 contract_list = ["BTCUSD", "ETHUSD"]
@@ -382,13 +382,16 @@ class DownloadUtility(object):
         # sleep(2)
 
         # 起止日期
-        # days = 200
-        # to_date = datetime.now() + timedelta(days=2)
-        days = (datetime.now() - datetime.strptime("2024-01-01", "%Y-%m-%d")).days
-        to_date = datetime.strptime("2024-12-31", "%Y-%m-%d")
+        days = 3
+        to_date = datetime.now() + timedelta(days=2)
+        # days = (datetime.now() - datetime.strptime("2024-01-01", "%Y-%m-%d")).days
+        # to_date = datetime.strptime("2024-12-31", "%Y-%m-%d")
 
         # 是否从数据库最新数据日期开始
         from_data_base = True
+
+        # 保存位置
+        save_to = "DOWNLOAD"
 
         # 开始下载
         dataDownload = TurtleCryptoDataDownloading()
@@ -399,6 +402,7 @@ class DownloadUtility(object):
                 to_date=to_date,
                 from_data_base=from_data_base,
                 api_check=True,
+                save_to=save_to
             )
 
         elif exchange == "OKX":
@@ -408,6 +412,7 @@ class DownloadUtility(object):
                 to_date=to_date,
                 from_data_base=from_data_base,
                 api_check=False,
+                save_to=save_to
             )
 
         elif exchange == "BYBIT":
@@ -417,6 +422,7 @@ class DownloadUtility(object):
                 to_date=to_date,
                 from_data_base=from_data_base,
                 api_check=True,
+                save_to=save_to
             )
             # result, complete_msg, back_msg, lost_msg = dataDownload.generate_for_bybit(contract_list=contract_list, days=days)
             # print('\n\n' + lost_msg + back_msg)
@@ -740,10 +746,10 @@ if __name__ == "__main__":
     # utility.get_new_instruments_list(Exchange.BYBIT)
 
     # 下载交易所所有合约分钟Bar数据（相同代币优先级OKX > BYBIT > BINANCE）
-    utility.download_instruments_bar_data([Exchange.OKX, Exchange.BYBIT, Exchange.BINANCE])
+    # utility.download_instruments_bar_data([Exchange.OKX, Exchange.BYBIT, Exchange.BINANCE])
 
     # 下载数据
-    # utility.download_data()
+    utility.download_data()
     
     # 更新数据并生成市场信号
     # utility.update_data_signal()
