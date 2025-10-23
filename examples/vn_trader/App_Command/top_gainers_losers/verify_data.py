@@ -45,7 +45,7 @@ class Backtesting(object):
         # 24小时趋势数据
         print(f"加载24H历史趋势数据..")
         self.trending_tokens_24h = {}
-        hour_time = datetime.strptime(f"2025-10-15 00:00:00", f"%Y-%m-%d %H:%M:%S")
+        hour_time = datetime.strptime(f"2025-06-01 00:00:00", f"%Y-%m-%d %H:%M:%S")
         # hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=3)
         while hour_time < datetime.now():
             current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -137,12 +137,12 @@ class Backtesting(object):
             data = rise_trending_list[i]
             symbol = data["symbol"]
             change = data["change"]
-            volume = data["volume"]
-            volume_v = float(re.sub(r'[^\d.]', '', volume))
-            volume_u = re.sub(r'[\d.]', '', volume)
+            volume = data.get("volume", "")
+            volume_v = float(re.sub(r'[^\d.]', '', volume)) if volume else 0
+            volume_u = re.sub(r'[\d.]', '', volume) if volume else ""
             
             trending_tokens.add(symbol)
-            if abs(change) >= 100.0:
+            if abs(change) >= 300.0:
                 if symbol not in self.trending_tokens_24h:
                     trending_data = {"symbol": symbol,
                                      "direction": "LONG",
@@ -157,10 +157,12 @@ class Backtesting(object):
             data = fall_trending_list[i]
             symbol = data["symbol"]
             change = data["change"]
-            volume = data["volume"]
+            volume = data.get("volume", "")
+            volume_v = float(re.sub(r'[^\d.]', '', volume)) if volume else 0
+            volume_u = re.sub(r'[\d.]', '', volume) if volume else ""
 
             trending_tokens.add(symbol)
-            if abs(change) >= 100.0:
+            if abs(change) >= 300.0:
                 if symbol not in self.trending_tokens_24h:
                     trending_data = {"symbol": symbol,
                                      "direction": "SHORT",
