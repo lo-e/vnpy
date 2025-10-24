@@ -358,7 +358,7 @@ class DownloadUtility(object):
             exchange = "BINANCE"
             mode = input("选择模式（默认1）【接口获取：1 正向：2 反向：3】")
             if mode == "2":
-                contract_list = ["MYXUSDT"]
+                contract_list = ["CLANKERUSDT"]
 
             elif mode == "3":
                 contract_list = ["BTCUSD", "ETHUSD"]
@@ -382,10 +382,10 @@ class DownloadUtility(object):
         # sleep(2)
 
         # 起止日期
-        # days = 3
-        # to_date = datetime.now() + timedelta(days=2)
-        days = (datetime.now() - datetime.strptime("2025-08-05", "%Y-%m-%d")).days
-        to_date = datetime.strptime("2025-12-31", "%Y-%m-%d")
+        days = 3
+        to_date = datetime.now() + timedelta(days=2)
+        # days = (datetime.now() - datetime.strptime("2025-08-05", "%Y-%m-%d")).days
+        # to_date = datetime.strptime("2025-12-31", "%Y-%m-%d")
 
         # 是否从数据库最新数据日期开始
         from_data_base = True
