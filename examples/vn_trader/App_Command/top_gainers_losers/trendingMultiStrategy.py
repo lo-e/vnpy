@@ -1162,7 +1162,7 @@ class TrendingMultiStrategy(CtaTemplate):
         # open_tags判断
         if open_allowed:
             # 24小时涨跌幅Top
-            top = 10
+            top = 3
             trending_top_24h = []
             if self.direction == Direction.LONG and len(self.portfolio.rise_data_list_24h) >= top + 3:
                 for i in range(3, top + 3, 1):
