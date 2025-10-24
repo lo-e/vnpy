@@ -21,7 +21,13 @@ import numpy as np
 from vnpy.trader.object import ContractData
 from queue import Empty, Queue
 
-SIGNALS = ["T1", "T2", "T3", "T4", "T5", "T6", "T7"]
+SIGNALS = {"T1": {"unit_loss": 0.003},
+           "T2": {"unit_loss": 0.003},
+           "T3": {"unit_loss": 0.003},
+           "T4": {"unit_loss": 0.003},
+           "T5": {"unit_loss": 0.003},
+           "T6": {"unit_loss": 0.003},
+           "T7": {"unit_loss": 0.003}}
 
 class SignalData(object):
     def __init__(self, name: str):
@@ -36,6 +42,7 @@ class SignalData(object):
         self.close_tick_price = 0
         self.close_tick_dt = ""
         self.pnl = 0
+        self.unit_loss = 0
         self.leverage = 0
         self.open_count = 0
         self.open_tags = []
@@ -154,8 +161,10 @@ class TrendingMultiStrategy(CtaTemplate):
         
         self.signal_data = {}
         self.traded_signals = []
-        for signal_name in SIGNALS:
-            self.signal_data[signal_name] = SignalData(signal_name).__dict__
+        for signal_name, signal_setting in SIGNALS.items():
+            signal = SignalData(signal_name)
+            signal.unit_loss = signal_setting["unit_loss"]
+            self.signal_data[signal_name] = signal.__dict__
 
         self.tick: TickData = None
         self.closed = False
@@ -223,7 +232,7 @@ class TrendingMultiStrategy(CtaTemplate):
 
         # 获取历史交易日志
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        for signal_name in SIGNALS:
+        for signal_name in SIGNALS.keys():
             file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}trade_logs{DIR_SYMBOL}{signal_name}{DIR_SYMBOL}{self.strategy_name}.csv"
             if os.path.exists(file_path):
                 df = pd.read_csv(file_path)

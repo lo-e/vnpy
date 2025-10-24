@@ -911,7 +911,7 @@ class TopGainersLosersPortfolio(object):
         today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         for i in range(7):
             date_str = (today - timedelta(days=i)).strftime(f"%Y-%m-%d")
-            for signal_name in SIGNALS:
+            for signal_name in SIGNALS.keys():
                 signal_data = self.pnl_data.get(signal_name, {})
                 file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}trade_pnls{DIR_SYMBOL}{signal_name}{DIR_SYMBOL}{date_str}.csv"
                 if os.path.exists(file_path):
