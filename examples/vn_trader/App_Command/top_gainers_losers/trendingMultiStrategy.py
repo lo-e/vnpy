@@ -27,7 +27,8 @@ SIGNALS = {"T1": {"unit_loss": 0.003},
            "T4": {"unit_loss": 0.003},
            "T5": {"unit_loss": 0.003},
            "T6": {"unit_loss": 0.003},
-           "T7": {"unit_loss": 0.003}}
+           "T7": {"unit_loss": 0.003},
+           "T8": {"unit_loss": 0.003}}
 
 class SignalData(object):
     def __init__(self, name: str):
@@ -537,6 +538,10 @@ class TrendingMultiStrategy(CtaTemplate):
                             if recent_minutes >= 30 and self.minute_15_squeeze_on and stop_price and stop_price >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0 and self.minute_recent_down >= self.hour_down:
                                 indicator_inited = True
 
+                        elif signal_name == "T8":
+                            if recent_minutes >= 60 and abs(self.minute_recent_up - self.minute_recent_down) <= abs(self.hour_up - self.hour_down) / 3.0 and abs(self.minute_30_up - self.minute_30_down) <= abs(self.minute_recent_up - self.minute_recent_down) / 2.0 and self.minute_30_up >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0 and self.minute_recent_down >= self.hour_down:
+                                indicator_inited = True
+
                     if indicator_inited:
                         signal.indicator_inited = True
                         signal.indicator_inited_dt = self.hour_up_dt
@@ -609,6 +614,10 @@ class TrendingMultiStrategy(CtaTemplate):
 
                         elif signal_name == "T7":
                             if recent_minutes >= 30 and self.minute_15_squeeze_on and stop_price and stop_price <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0 and self.minute_recent_up <= self.hour_up:
+                                indicator_inited = True
+
+                        elif signal_name == "T8":
+                            if recent_minutes >= 60 and abs(self.minute_recent_up - self.minute_recent_down) <= abs(self.hour_up - self.hour_down) / 3.0 and abs(self.minute_30_up - self.minute_30_down) <= abs(self.minute_recent_up - self.minute_recent_down) / 2.0 and self.minute_30_down <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0 and self.minute_recent_up <= self.hour_up:
                                 indicator_inited = True
 
                     if indicator_inited:
@@ -698,7 +707,7 @@ class TrendingMultiStrategy(CtaTemplate):
             signal: SignalData = self.signal_data[signal_name]
 
             # 开仓判断
-            if (price_cross or (minute30_price_cross and signal_name == "T6")) and not signal.target_pos and self.database_loaded and signal.indicator_inited and not self.closed:
+            if (price_cross or (minute30_price_cross and (signal_name == "T6" or signal_name == "T8"))) and not signal.target_pos and self.database_loaded and signal.indicator_inited and not self.closed:
                 open_allowed = self.check_open_allowed(signal, tick)
                 if open_allowed:
                     # 仓位计算
