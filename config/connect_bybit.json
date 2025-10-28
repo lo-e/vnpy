@@ -1,8 +1,8 @@
 {
     "loesuperman": {
         "账户名称": "loesuperman",
-        "key": "RR1InedwfFQbn4NpLA",
-        "secret": "CrO6A4gGF42gYMw7oDY2kKvmwpZm5SfPeYek",
+        "key": "u3Jl9XNEHpZvzh1t5d",
+        "secret": "4ORt99ta8JRDwSJ9avZG9ZaHzWvfdOgOlE01",
         "服务器": "REAL",
         "代理地址": "192.168.31.140",
         "代理端口": "10811"
@@ -12,7 +12,7 @@
         "key": "WfBY1RYv0nELv1yL9R",
         "secret": "Q91LqBXRhoDWn6mi0buOSxfhgEDVohrhPznd",
         "服务器": "TESTNET",
-        "代理地址": "192.168.31.143",
+        "代理地址": "192.168.31.140",
         "代理端口": "10811"
     }
 }
