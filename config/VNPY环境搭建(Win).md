@@ -40,7 +40,7 @@ git@github.com:lo-e/vnpy.git
 ```
 移步百度网盘
 或者
-http://www.sublimetext.com/2
+http://www.sublimetext.com
 ```
 
 > **安装Mongodb数据库**（推荐Windows 2008 plus（64bits）支持ssl协议的版本，使用complete默认配置安装）
