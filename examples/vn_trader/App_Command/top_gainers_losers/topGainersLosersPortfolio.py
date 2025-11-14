@@ -794,7 +794,7 @@ class TopGainersLosersPortfolio(object):
                         break
 
                 except Exception as e:
-                    msg = f"HitNewPortfolio 下载合约列表数据出错\n\n{e}"
+                    msg = f"TopGainersLosersPortfolio 下载合约列表数据出错\n\n{e}"
                     self.send_ding_talk(msg)
 
             # 交易所合约上新，更新Gateway合约列表
