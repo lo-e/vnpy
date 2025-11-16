@@ -291,11 +291,17 @@ class Chrome(object):
         duration_24h_fall_list_origin = []
         last_data_ts = 0
         reboot_ts = 0
+        data_ts = 0
         while True:
             try:
                 # 定期重新启动浏览器
                 if time.time() >= reboot_ts + 60 * 60:
                     driver_reboot = True
+
+                # 超时未更新数据，重启浏览器
+                if time.time() >= data_ts + 5 * 60:
+                    driver_reboot = True
+                    data_ts = time.time()
 
                 # 启动浏览器
                 if driver_reboot:
@@ -442,6 +448,7 @@ class Chrome(object):
                     elif duration_1h_rise_list_origin != rise_list or duration_1h_fall_list_origin != fall_list:
                         if callback:
                             callback((rise_list, fall_list), duration)
+                            data_ts = time.time()
                     
                     else:
                         time.sleep(1)
@@ -457,6 +464,7 @@ class Chrome(object):
                     elif duration_24h_rise_list_origin != rise_list or duration_24h_fall_list_origin != fall_list:
                         if callback:
                             callback((rise_list, fall_list), duration)
+                            data_ts = time.time()
                     
                     else:
                         time.sleep(1)
