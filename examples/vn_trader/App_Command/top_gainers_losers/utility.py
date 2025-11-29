@@ -122,6 +122,11 @@ class Chrome(object):
                 if time.time() >= reboot_ts + 60 * 60:
                     driver_reboot = True
 
+                # 超时未更新数据，重启浏览器
+                if time.time() >= last_data_ts + 5 * 60:
+                    driver_reboot = True
+                    last_data_ts = time.time()
+
                 # 启动浏览器
                 if driver_reboot:
                     print(f"Chrome启动")
@@ -264,18 +269,15 @@ class Chrome(object):
                 elif rise_list_origin != rise_list or fall_list_origin != fall_list:
                     if callback:
                         callback((rise_list, fall_list), duration)
+                        last_data_ts = time.time()
                 
                 else:
                     time.sleep(1)
                     continue
                 
-                last_data_ts = time.time()
                 time.sleep(rest)
 
             except Exception as e:
-                if last_data_ts and time.time() - last_data_ts >= 5 * 60:
-                    last_data_ts = 0
-                    driver_reboot = True
                 print(str(e))
 
     def fetch_rise_fall_hour_trending(self, callback = None, rest: int = 60) -> None:
@@ -291,7 +293,6 @@ class Chrome(object):
         duration_24h_fall_list_origin = []
         last_data_ts = 0
         reboot_ts = 0
-        data_ts = 0
         while True:
             try:
                 # 定期重新启动浏览器
@@ -299,9 +300,9 @@ class Chrome(object):
                     driver_reboot = True
 
                 # 超时未更新数据，重启浏览器
-                if time.time() >= data_ts + 5 * 60:
+                if time.time() >= last_data_ts + 5 * 60:
                     driver_reboot = True
-                    data_ts = time.time()
+                    last_data_ts = time.time()
 
                 # 启动浏览器
                 if driver_reboot:
@@ -448,7 +449,7 @@ class Chrome(object):
                     elif duration_1h_rise_list_origin != rise_list or duration_1h_fall_list_origin != fall_list:
                         if callback:
                             callback((rise_list, fall_list), duration)
-                            data_ts = time.time()
+                            last_data_ts = time.time()
                     
                     else:
                         time.sleep(1)
@@ -464,7 +465,7 @@ class Chrome(object):
                     elif duration_24h_rise_list_origin != rise_list or duration_24h_fall_list_origin != fall_list:
                         if callback:
                             callback((rise_list, fall_list), duration)
-                            data_ts = time.time()
+                            last_data_ts = time.time()
                     
                     else:
                         time.sleep(1)
@@ -492,13 +493,9 @@ class Chrome(object):
                     duration_1h_fall_list_origin = []
                     continue
                 
-                last_data_ts = time.time()
                 time.sleep(rest)
 
             except Exception as e:
-                if last_data_ts and time.time() - last_data_ts >= 5 * 60:
-                    last_data_ts = 0
-                    driver_reboot = True
                 print(str(e))
 
     def fetch_Liquidation(self, callback = None, rest: int = 60) -> None:
