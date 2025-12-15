@@ -152,6 +152,10 @@ class Backtesting(object):
                                      "volume": volume}
                             
                     self.trending_tokens_24h[symbol] = trending_data
+                
+                else:
+                    trending_data = self.trending_tokens_24h[symbol]
+                    trending_data["change"] = max(trending_data["change"], change)
 
         for i in range(min(len(fall_trending_list), 5)):
             data = fall_trending_list[i]
@@ -172,6 +176,10 @@ class Backtesting(object):
                                      "volume": volume}
                             
                     self.trending_tokens_24h[symbol] = trending_data
+                
+                else:
+                    trending_data = self.trending_tokens_24h[symbol]
+                    trending_data["change"] = min(trending_data["change"], change)
 
         for symbol in self.trending_tokens_24h.copy().keys():
             if symbol not in trending_tokens:

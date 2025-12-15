@@ -65,7 +65,7 @@ https://robomongo.org/
 
 ```
 下载最新对应Pyhon 3.0以上版本
-https://repo.continuum.io/archive/.winzip/ 
+https://repo.continuum.io/archive/.winzip/
 安装时注意将后面的添加为系统环境变量选项打勾
 ```
 
