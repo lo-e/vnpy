@@ -191,6 +191,7 @@ class Backtesting(object):
                 trending_ts = trending_data["trending_ts"]
                 trending_dt = trending_data["trending_dt"]
                 change = trending_data["change"]
+                change_top = trending_data["change_top"]
                 volume = trending_data["volume"]
                 
                 # 上榜时间
@@ -202,7 +203,7 @@ class Backtesting(object):
                 boarding_hour = int(trending_time / 3600)
                 boarding_minute = int((trending_time - (boarding_hour * 3600)) / 60)
                 boarding_second = int(trending_time - boarding_hour * 3600 - boarding_minute * 60)
-                msg = f"趋势停止 {symbol}\nchange：{change}\nvolume：{volume}\non：{trending_dt}\noff：{off_dt}\ntime：{boarding_hour}h {boarding_minute}m {boarding_second}s\ncount：{self.signal_count}\n"
+                msg = f"趋势停止 {symbol}\nchange：{change}\nchange_top：{change_top}\nvolume：{volume}\non：{trending_dt}\noff：{off_dt}\ntime：{boarding_hour}h {boarding_minute}m {boarding_second}s\ncount：{self.signal_count}\n"
                 print(msg)
 
                 self.trending_tokens_24h.pop(symbol)
