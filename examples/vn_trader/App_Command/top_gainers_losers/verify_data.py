@@ -45,7 +45,7 @@ class Backtesting(object):
         # 24小时趋势数据
         print(f"加载24H历史趋势数据..")
         self.trending_tokens_24h = {}
-        hour_time = datetime.strptime(f"2025-06-01 00:00:00", f"%Y-%m-%d %H:%M:%S")
+        hour_time = datetime.strptime(f"2025-12-15 00:00:00", f"%Y-%m-%d %H:%M:%S")
         # hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=3)
         while hour_time < datetime.now():
             current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -72,9 +72,13 @@ class Backtesting(object):
 
                             # 生成信号
                             if self.mode == BacktestingMode.TRENDING_24H:
+                                if not rise_list or not fall_list:
+                                    pass
                                 self.on_trending_data_24h((rise_list, fall_list))
 
                             elif self.mode == BacktestingMode.TRENDING_24H_QUICK:
+                                if not rise_list or not fall_list:
+                                    pass
                                 self.on_trending_data_24h_quick((rise_list, fall_list))
                         
                         else:
@@ -142,7 +146,7 @@ class Backtesting(object):
             volume_u = re.sub(r'[\d.]', '', volume) if volume else ""
             
             trending_tokens.add(symbol)
-            if abs(change) >= 300.0:
+            if abs(change) >= 100.0:
                 if symbol not in self.trending_tokens_24h:
                     trending_data = {"symbol": symbol,
                                      "direction": "LONG",
@@ -167,7 +171,7 @@ class Backtesting(object):
             volume_u = re.sub(r'[\d.]', '', volume) if volume else ""
 
             trending_tokens.add(symbol)
-            if abs(change) >= 300.0:
+            if abs(change) >= 100.0:
                 if symbol not in self.trending_tokens_24h:
                     trending_data = {"symbol": symbol,
                                      "direction": "SHORT",
