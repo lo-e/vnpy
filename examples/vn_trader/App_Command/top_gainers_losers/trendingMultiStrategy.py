@@ -836,33 +836,33 @@ class TrendingMultiStrategy(CtaTemplate):
             self.on_close(tick)
 
         # 发送订单
-        # if open_volume:
-        #     if self.direction == Direction.LONG:
-        #         trade_price = self.tick.last_price * 1.005
-        #         self.cancel_all()
-        #         if self.exchange == Exchange.BINANCE:
-        #             self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True)
-        #             self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
+        if open_volume:
+            if self.direction == Direction.LONG:
+                trade_price = self.tick.last_price * 1.005
+                self.cancel_all()
+                if self.exchange == Exchange.BINANCE:
+                    self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True)
+                    self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
 
-        #         else:
-        #             self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
+                else:
+                    self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
             
-        #     elif self.direction == Direction.SHORT:
-        #         trade_price = self.tick.last_price * 0.995
-        #         self.cancel_all()
-        #         if self.exchange == Exchange.BINANCE:
-        #             self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True)
-        #             self.send_order(Direction.LONG, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
+            elif self.direction == Direction.SHORT:
+                trade_price = self.tick.last_price * 0.995
+                self.cancel_all()
+                if self.exchange == Exchange.BINANCE:
+                    self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True)
+                    self.send_order(Direction.LONG, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
 
-        #         else:
-        #             self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
+                else:
+                    self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
     
     def add_unit_pos(self, tick_price: float, signal: SignalData):
         # 确定止损价格
         signal.stop_price = self.get_stop_price()
 
         # 计算仓位大小
-        signal.leverage = 0.01 / abs((signal.stop_price / tick_price) - 1)
+        signal.leverage = signal.unit_loss / abs((signal.stop_price / tick_price) - 1)
         order_value = self.portfolio.portfolio_value * signal.leverage
         
         signal.target_pos = order_value / tick_price

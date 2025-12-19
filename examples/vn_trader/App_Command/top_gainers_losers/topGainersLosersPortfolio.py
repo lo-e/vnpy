@@ -23,6 +23,8 @@ import re
 import csv
 import shutil
 
+PORTFOLIO_VALUE_DEFAULT = 100
+
 class TopGainersLosersPortfolio(object):
     parameters = ["name",
                   "funds"]
@@ -38,7 +40,7 @@ class TopGainersLosersPortfolio(object):
         self.cta_engine = engine
         self.name = ""
         self.funds = 0
-        self.portfolio_value = 0
+        self.portfolio_value = PORTFOLIO_VALUE_DEFAULT
         self.inited = False
         self.started = False
         self.exchange_instruments_data = {}
@@ -202,7 +204,6 @@ class TopGainersLosersPortfolio(object):
 
         # 确认组合交易金额
         # self.portfolio_value = self.account_ath - self.funds
-        self.portfolio_value = 100
 
         # 回撤过大停止交易
         # if abs(self.account_drawdown) < self.portfolio_value * 0.30:
