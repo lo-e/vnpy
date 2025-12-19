@@ -1106,7 +1106,7 @@ def csv_saving(file_name:str, data_list:list):
 def get_platform_dir_symbol():
     platform = sys.platform
     result = '\\'
-    if 'LINUX' in platform.upper():
+    if 'LINUX' in platform.upper() or 'DARWIN' in platform.upper():
         result = '/'
     return result
 
