@@ -47,6 +47,8 @@ class Backtesting(object):
         self.trending_tokens_24h = {}
         hour_time = datetime.strptime(f"2025-12-15 00:00:00", f"%Y-%m-%d %H:%M:%S")
         # hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) - timedelta(days=3)
+        start_hour_time = None
+        end_hour_time = None
         while hour_time < datetime.now():
             current_dir = os.path.dirname(os.path.abspath(__file__))
             date = hour_time.strftime(f"%Y-%m-%d")
@@ -54,6 +56,10 @@ class Backtesting(object):
 
             dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}24h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             if os.path.exists(dir_path):
+                if not start_hour_time:
+                    start_hour_time = hour_time
+                end_hour_time = hour_time
+                    
                 for root, _, files in os.walk(dir_path):
                     for file in files:
                         rise_list = []
@@ -85,7 +91,10 @@ class Backtesting(object):
                             raise(f"文件状态异常，检查代码")
             
             hour_time += timedelta(hours=1)
-
+        
+        start_hour_time_str = datetime.strftime(start_hour_time, "%Y-%m-%d %H:%M:%S") if start_hour_time else "none"
+        end_hour_time_str = datetime.strftime(end_hour_time, "%Y-%m-%d %H:%M:%S") if end_hour_time else "none"
+        print(f"{start_hour_time_str} - {end_hour_time_str}")
         print(f"历史趋势数据加载完成！")
 
     def load_recent_1h_trending_data(self):
