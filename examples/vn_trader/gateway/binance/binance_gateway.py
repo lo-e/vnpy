@@ -14,6 +14,7 @@ from threading import Lock
 from typing import Any, Dict, List, Tuple
 from asyncio import run_coroutine_threadsafe
 
+from regex import R
 from requests.exceptions import SSLError
 
 from vnpy.event import Event, EventEngine
@@ -41,7 +42,7 @@ from vnpy.trader.object import (
     SubscribeLotsRequest,
     HistoryRequest,
 )
-from vnpy.trader.event import EVENT_TIMER
+from vnpy.trader.event import EVENT_TIMER, EVENT_GATEWAY_LEVERAGE_FAILED
 from vnpy.trader.utility import round_to
 
 # from vnpy_rest import Request, RestClient, Response
@@ -415,10 +416,22 @@ class BinanceUsdtRestApi(RestClient):
         leverage = request.extra.get("leverage", "")
         print(f"{symbol} leverage {leverage} 失败")
 
+        event_data = {"symbol": request.extra["symbol"],
+                      "leverage": request.extra["leverage"],
+                      "gateway_name": self.gateway_name}
+        event = Event(EVENT_GATEWAY_LEVERAGE_FAILED, event_data)
+        self.gateway.event_engine.put(event)
+
     def on_leverage_error(self, exception_type: type, exception_value: Exception, tb, request: Request) -> None:
         symbol = request.extra.get("symbol", "")
         leverage = request.extra.get("leverage", "")
         print(f"{symbol} leverage {leverage} 失败")
+
+        event_data = {"symbol": request.extra["symbol"],
+                      "leverage": request.extra["leverage"],
+                      "gateway_name": self.gateway_name}
+        event = Event(EVENT_GATEWAY_LEVERAGE_FAILED, event_data)
+        self.gateway.event_engine.put(event)
 
     def query_time(self) -> None:
         """查询时间"""

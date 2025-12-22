@@ -7,7 +7,8 @@ from gateway.okx import OkxGateway
 from vnpy.trader.utility import load_json
 from vnpy.trader.object import SubscribeRequest, SubscribeLotsRequest, TickData, ContractData
 import time
-from vnpy.trader.event import EVENT_TICK, EVENT_TICK_DELAY, EVENT_TIMER
+import sys
+from vnpy.trader.event import EVENT_TICK, EVENT_TICK_DELAY, EVENT_TIMER, EVENT_GATEWAY_LEVERAGE_FAILED
 from threading import Thread
 from datetime import datetime, timedelta
 from copy import copy
@@ -198,92 +199,151 @@ class MonitorEngine(object):
             self.gateway_connected = gateway_all_connected
             print_(f"交易所连接状态：{gateway_all_connected}\n")
 
+class LeverageUtility(object):
+    def __init__(self):
+        self.event_engine = EventEngine()
+        self.main_engine = MainEngine(self.event_engine)
+        self.event_engine.register(EVENT_GATEWAY_LEVERAGE_FAILED, self.process_leverage_failed_event)
+        
+        self.optional_list = []
+        self.failed_list = []
+        self.optional_time = 0
+        self.default_leverage = 20
+        self.optional_leverage = 10
+
+    def set_leverage(self, target_gateway_name:str, leverage: int = 20, optional_leverage: int = 10, target: list = [], specials: dict = {}):
+        self.default_leverage = leverage
+        self.optional_leverage = optional_leverage
+
+        # 连接交易所
+        for gateway_info in GATEWAYS:
+            gateway_class: BaseGateway = gateway_info[0]
+            account_name = gateway_info[1]
+
+            self.main_engine.add_gateway(gateway_class)
+            gateway_setting_filename = f"connect_{gateway_class.gateway_name.lower()}.json"
+            connect_setting = load_json(gateway_setting_filename)
+            connect_setting = connect_setting.get(account_name, None)
+            self.main_engine.connect(connect_setting, gateway_class.gateway_name)
+
+        # 等待交易所连接成功
+        while True:
+            all_connected = True
+            for gateway_info in GATEWAYS:
+                gateway_class: BaseGateway = gateway_info[0]
+                account_name = gateway_info[1]
+                connected = self.main_engine.get_gateway_connect_status(gateway_class.gateway_name, account_name)
+
+                if not connected:
+                    all_connected = False
+                    break
+
+            if all_connected:
+                break
+
+            else:
+                time.sleep(1)
+
+        # 获取交易所合约数据
+        vt_symbols = set()
+        if target:
+            for token in target:
+                if target_gateway_name == "OKX":
+                    vt_symbols.add(f"{token}-USDT-SWAP.OKX")
+
+                elif target_gateway_name == "BINANCE":
+                    vt_symbols.add(f"{token}USDT.BINANCE")
+
+                elif target_gateway_name == "BYBIT":
+                    vt_symbols.add(f"{token}USDT.BYBIT")
+
+        else:
+            contracts = self.main_engine.engines["oms"].contracts
+            for key in contracts.keys():
+                contract: ContractData = contracts[key]
+                if contract.gateway_name == target_gateway_name:
+                    if contract.gateway_name == "BYBIT" and "-" in contract.vt_symbol:
+                        # 过滤BYBIT交割合约
+                        continue
+                    vt_symbols.add(contract.vt_symbol)
+        
+        # 设置杠杆
+        gateway = self.main_engine.get_default_gateway(target_gateway_name)
+        if gateway:
+            count = 0
+            for vt_symbol in vt_symbols:
+                token = ""
+                if target_gateway_name == "OKX":
+                    token = vt_symbol.split("-USDT")[0]
+
+                elif target_gateway_name == "BINANCE":
+                    token = vt_symbol.split("USDT")[0]
+
+                elif target_gateway_name == "BYBIT":
+                    token = vt_symbol.split("USDT")[0]
+
+                if token in specials:
+                    gateway.set_leverage(vt_symbol, specials[token])
+                
+                else:
+                    gateway.set_leverage(vt_symbol, leverage)
+
+                count += 1
+                print(f"{vt_symbol}\t{count}")
+                time.sleep(1)
+        
+        while time.time() < self.optional_time + 2:
+            time.sleep(1)
+
+        print(f"杠杆设置完成！\n合约数：{len(vt_symbols)}")
+        for vt_symbol in self.optional_list.copy():
+            if vt_symbol in self.failed_list:
+                self.optional_list.remove(vt_symbol)
+
+        if self.optional_list:
+            print(f"\n备用合约数：{len(self.optional_list)}")
+            for vt_symbol in self.optional_list:
+                print(vt_symbol)
+
+        if self.failed_list:
+            print(f"\n失败合约数：{len(self.failed_list)}")
+            for vt_symbol in self.failed_list:
+                print(vt_symbol)
+
+        # 停止程序（优雅关闭引擎并退出）
+        try:
+            self.main_engine.close()
+
+        except Exception as e:
+            pass
+        sys.exit(0)
+
+    def process_leverage_failed_event(self, event: Event):
+        data = event.data
+        symbol = data["symbol"]
+        leverage = data["leverage"]
+        gateway_name = data["gateway_name"]
+        vt_symbol = f"{symbol}.{gateway_name}"
+
+        if leverage != self.optional_leverage:
+            # 设置备用杠杆
+            gateway = self.main_engine.get_default_gateway(gateway_name)
+            if gateway:
+                gateway.set_leverage(vt_symbol, self.optional_leverage)
+                self.optional_list.append(vt_symbol)
+                self.optional_time = time.time()
+                print(f"{vt_symbol}\toptional")
+
+        else:
+            self.failed_list.append(vt_symbol)
+
 def print_(msg: str):
     dt = datetime.now().replace(microsecond=0)
     print(f"{dt}\t{msg}")
 
-def set_leverage(target_gateway_name:str, leverage: int = 20, target: list = [], specials: dict = {}):
-    event_engine = EventEngine()
-    main_engine = MainEngine(event_engine)
-
-    # 连接交易所
-    for gateway_info in GATEWAYS:
-        gateway_class: BaseGateway = gateway_info[0]
-        account_name = gateway_info[1]
-
-        main_engine.add_gateway(gateway_class)
-        gateway_setting_filename = f"connect_{gateway_class.gateway_name.lower()}.json"
-        connect_setting = load_json(gateway_setting_filename)
-        connect_setting = connect_setting.get(account_name, None)
-        main_engine.connect(connect_setting, gateway_class.gateway_name)
-
-    # 等待交易所连接成功
-    while True:
-        all_connected = True
-        for gateway_info in GATEWAYS:
-            gateway_class: BaseGateway = gateway_info[0]
-            account_name = gateway_info[1]
-            connected = main_engine.get_gateway_connect_status(gateway_class.gateway_name, account_name)
-
-            if not connected:
-                all_connected = False
-                break
-
-        if all_connected:
-            break
-
-        else:
-            time.sleep(1)
-
-    # 获取交易所合约数据
-    vt_symbols = set()
-    if target:
-        for token in target:
-            if target_gateway_name == "OKX":
-                vt_symbols.add(f"{token}-USDT-SWAP.OKX")
-
-            elif target_gateway_name == "BINANCE":
-                vt_symbols.add(f"{token}USDT.BINANCE")
-
-            elif target_gateway_name == "BYBIT":
-                vt_symbols.add(f"{token}USDT.BYBIT")
-
-    else:
-        contracts = main_engine.engines["oms"].contracts
-        for key in contracts.keys():
-            contract: ContractData = contracts[key]
-            if contract.gateway_name == target_gateway_name:
-                if contract.gateway_name == "BYBIT" and "-" in contract.vt_symbol:
-                    # 过滤BYBIT交割合约
-                    continue
-                vt_symbols.add(contract.vt_symbol)
-    
-    # 设置杠杆
-    gateway = main_engine.get_default_gateway(target_gateway_name)
-    if gateway:
-        count = 0
-        for vt_symbol in vt_symbols:
-            token = ""
-            if target_gateway_name == "OKX":
-                token = vt_symbol.split("-USDT")[0]
-
-            elif target_gateway_name == "BINANCE":
-                token = vt_symbol.split("USDT")[0]
-
-            elif target_gateway_name == "BYBIT":
-                token = vt_symbol.split("USDT")[0]
-
-            if token in specials:
-                gateway.set_leverage(vt_symbol, specials[token])
-            
-            else:
-                gateway.set_leverage(vt_symbol, leverage)
-
-            count += 1
-            print(f"{vt_symbol}\t{count}")
-            time.sleep(1)
-    
-    print(f"杠杆设置完成！\n合约数：{len(vt_symbols)}")
+def set_leverage(target_gateway_name:str, leverage: int = 20, optional_leverage: int = 10, target: list = [], specials: dict = {}):
+    leverage_utility = LeverageUtility()
+    leverage_utility.set_leverage(target_gateway_name, leverage, optional_leverage, target, specials)
 
 def main():
     # 引擎
@@ -339,4 +399,4 @@ def main():
 if __name__ == "__main__":
     main()
     
-    # set_leverage(target_gateway_name="BINANCE", leverage=20, target=[], specials={"BTC": 100, "ETH": 50, "SOL": 50})
+    # set_leverage(target_gateway_name="OKX", leverage=20, optional_leverage=10, target=["DOGE", "ASR"], specials={"BTC": 100, "ETH": 50, "SOL": 50})

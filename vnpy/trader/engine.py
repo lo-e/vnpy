@@ -351,8 +351,9 @@ class MainEngine:
         for engine in self.engines.values():
             engine.close()
 
-        for gateway in self.gateways.values():
-            gateway.close()
+        for gateway_data in self.gateways.values():
+            for gateway in gateway_data.values():
+                gateway.close()
 
     """ modify by loe """
     def dbConnect(self):

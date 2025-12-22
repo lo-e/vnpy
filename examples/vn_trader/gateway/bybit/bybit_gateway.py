@@ -25,7 +25,8 @@ from vnpy.trader.constant import (
     Product,
     Status,
 )
-from vnpy.trader.event import EVENT_TIMER
+from vnpy.event import Event
+from vnpy.trader.event import EVENT_TIMER, EVENT_GATEWAY_LEVERAGE_FAILED
 from vnpy.trader.gateway import BaseGateway, LocalOrderManager
 from vnpy.trader.object import (
     AccountData,
@@ -439,6 +440,12 @@ class BybitRestApi(RestClient):
             symbol = request.extra.get("symbol", "")
             leverage = request.extra.get("buyLeverage", "")
             print(f"{symbol} leverage {leverage} 失败")
+
+            event_data = {"symbol": request.extra["symbol"],
+                          "leverage": int(request.extra["buyLeverage"]),
+                          "gateway_name": self.gateway_name}
+            event = Event(EVENT_GATEWAY_LEVERAGE_FAILED, event_data)
+            self.gateway.event_engine.put(event)
     
     def switch_isolated(self, vt_symbol: str):
         """

@@ -47,6 +47,8 @@ from vnpy.trader.object import (
     TickData,
     TradeData
 )
+from vnpy.event import Event
+from vnpy.trader.event import EVENT_GATEWAY_LEVERAGE_FAILED
 from threading import Thread
 
 from ..rest import Request, RestClient
@@ -499,6 +501,12 @@ class OkxRestApi(RestClient):
             symbol = request.extra.get("instId", "")
             leverage = request.extra.get("lever", "")
             print(f"{symbol} leverage {leverage} 失败")
+
+            event_data = {"symbol": request.extra["instId"],
+                          "leverage": int(request.extra["lever"]),
+                          "gateway_name": self.gateway_name}
+            event = Event(EVENT_GATEWAY_LEVERAGE_FAILED, event_data)
+            self.gateway.event_engine.put(event)
 
     def query_time(self) -> None:
         """查询时间"""
