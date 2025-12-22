@@ -16,7 +16,7 @@ from vnpy.trader.object import SubscribeRequest
 from .trendingStrategy import TrendingStrategy, get_strategy_pure_name, get_strategy_type
 from .trendingMultiStrategy import TrendingMultiStrategy, SignalData, SIGNALS
 from queue import Empty, Queue
-from vnpy.trader.event import EVENT_TICK_DELAY, EVENT_ACCOUNT
+from vnpy.trader.event import EVENT_TICK_DELAY, EVENT_ACCOUNT, EVENT_GATEWAY_LEVERAGE_FAILED
 from vnpy.trader.object import AccountData
 import copy
 import re
@@ -72,6 +72,11 @@ class TopGainersLosersPortfolio(object):
         self.loss_list = []
         self.pnl = 0
         self.setting_update_needed = False
+        self.default_leverage = 20
+        self.optional_leverage = 10
+
+        # 监听事件
+        self.cta_engine.event_engine.register(EVENT_GATEWAY_LEVERAGE_FAILED, self.process_leverage_failed_event)    
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -800,17 +805,33 @@ class TopGainersLosersPortfolio(object):
 
             # 交易所合约上新，更新Gateway合约列表
             update_contract_gateway_names = set()
+            new_vt_symbols = set()
             if okx_new:
                 update_contract_gateway_names.add("OKX")
+                for instrument in okx_new:
+                    symbol = instrument["symbol"]
+                    vt_symbol = f"{symbol}.OKX"
+                    new_vt_symbols.add(vt_symbol)
             
             if binance_new:
                 update_contract_gateway_names.add("BINANCE")
+                for instrument in binance_new:
+                    symbol = instrument["symbol"]
+                    vt_symbol = f"{symbol}.BINANCE"
+                    new_vt_symbols.add(vt_symbol)
 
             if bybit_new:
                 update_contract_gateway_names.add("BYBIT")
+                for instrument in bybit_new:
+                    symbol = instrument["symbol"]
+                    vt_symbol = f"{symbol}.BYBIT"
+                    new_vt_symbols.add(vt_symbol)
 
             if len(update_contract_gateway_names):
                 self.query_gateway_contract(list(update_contract_gateway_names))
+
+            if len(new_vt_symbols):
+                self.set_leverage(list(new_vt_symbols))
 
             # 导入更新交易所合约
             self.load_instruments_data()
@@ -883,7 +904,45 @@ class TopGainersLosersPortfolio(object):
             gateway = self.cta_engine.main_engine.get_default_gateway(gateway_name)
             if gateway:
                 gateway.query_contract()
-                
+
+    def set_leverage(self, vt_symbols: str):
+        try:
+            for vt_symbol in vt_symbols:
+                gateway_name = vt_symbol.split(".")[-1]
+
+                # 设置杠杆
+                gateway = self.cta_engine.main_engine.get_default_gateway(gateway_name)
+                if gateway:
+                    gateway.set_leverage(vt_symbol, self.default_leverage)
+
+                time.sleep(1)
+        
+        except Exception as e:
+            msg = f"设置杠杆出错: {vt_symbols}\n\n{e}"
+            self.send_ding_talk(msg)
+
+    def process_leverage_failed_event(self, event: Event):
+        try:
+            data = event.data
+            symbol = data["symbol"]
+            leverage = data["leverage"]
+            gateway_name = data["gateway_name"]
+            vt_symbol = f"{symbol}.{gateway_name}"
+
+            if leverage != self.optional_leverage:
+                # 设置备用杠杆
+                gateway = self.cta_engine.main_engine.get_default_gateway(gateway_name)
+                if gateway:
+                    gateway.set_leverage(vt_symbol, self.optional_leverage)
+
+            else:
+                msg = f"设置杠杆失败: {vt_symbol}\n杠杆: {leverage}"
+                self.send_ding_talk(msg)
+
+        except Exception as e:
+            msg = f"处理设置杠杆失败事件出错\n\n{e}"
+            self.send_ding_talk(msg)
+
     def load_instruments_data(self):
         # .csv获取交易所USDT合约列表
         try:
