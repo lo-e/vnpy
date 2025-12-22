@@ -399,4 +399,4 @@ def main():
 if __name__ == "__main__":
     main()
     
-    # set_leverage(target_gateway_name="OKX", leverage=20, optional_leverage=10, target=["DOGE", "ASR"], specials={"BTC": 100, "ETH": 50, "SOL": 50})
+    set_leverage(target_gateway_name="BINANCE", leverage=20, optional_leverage=10, target=[], specials={"BTC": 100, "ETH": 50, "SOL": 50})
