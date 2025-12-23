@@ -964,11 +964,11 @@ class TopGainersLosersPortfolio(object):
                 vt_symbol = f"{symbol}.{gateway_name}"
 
                 next_hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
-                if abs(funding_rate) > 0.0005 and next_funding_datetime <= next_hour_time:
+                if abs(funding_rate) > 0.005 and next_funding_datetime <= next_hour_time:
                     targets.append(d)
             
             if targets:
-                # 按 funding_rate 降序排序（正数大到小）
+                # 按 funding_rate 降序排序
                 targets.sort(key=lambda x: abs(x.get("funding_rate", 0)), reverse=True)
                 Thread(target=self.snipe_funding_rate, args=(targets,)).start()
 
@@ -978,8 +978,8 @@ class TopGainersLosersPortfolio(object):
 
     def snipe_funding_rate(self, targets: list):
         try:
-            if len(targets) > 2:
-                targets = targets[0:2]
+            # if len(targets) > 2:
+            #     targets = targets[0:2]
 
             open = False
             close = False
