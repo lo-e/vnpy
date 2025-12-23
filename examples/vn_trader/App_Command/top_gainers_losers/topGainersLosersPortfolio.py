@@ -4,9 +4,9 @@ from datetime import datetime, timedelta
 from copy import copy
 import time
 from threading import Thread
-from vnpy.trader.utility import DIR_SYMBOL
+from vnpy.trader.utility import DIR_SYMBOL, round_to
 from App.Turtle_crypto.dataservice import TurtleCryptoDataDownloading
-from vnpy.trader.constant import Direction, Offset, Exchange
+from vnpy.trader.constant import Direction, Offset, Exchange, OrderType
 from App.Turtle_crypto.dataservice.utility import get_csv_path
 import pandas as pd
 import os
@@ -16,7 +16,7 @@ from vnpy.trader.object import SubscribeRequest
 from .trendingStrategy import TrendingStrategy, get_strategy_pure_name, get_strategy_type
 from .trendingMultiStrategy import TrendingMultiStrategy, SignalData, SIGNALS
 from queue import Empty, Queue
-from vnpy.trader.event import EVENT_TICK_DELAY, EVENT_ACCOUNT, EVENT_GATEWAY_LEVERAGE_FAILED
+from vnpy.trader.event import EVENT_TICK_DELAY, EVENT_ACCOUNT, EVENT_GATEWAY_LEVERAGE_FAILED, EVENT_GATEWAY_FUNDING_RATES
 from vnpy.trader.object import AccountData
 import copy
 import re
@@ -77,10 +77,12 @@ class TopGainersLosersPortfolio(object):
 
         # 监听事件
         self.cta_engine.event_engine.register(EVENT_GATEWAY_LEVERAGE_FAILED, self.process_leverage_failed_event)    
-        
+        self.cta_engine.event_engine.register(EVENT_GATEWAY_FUNDING_RATES, self.process_funding_rates_event)
+
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
         self.download_instruments_time: datetime = None
+        self.query_funding_rate_time: datetime = None
         self.instruments_downloading = False
         self.bar_download_queue = Queue()
 
@@ -150,6 +152,13 @@ class TopGainersLosersPortfolio(object):
         if self.download_instruments_time != current_hour_time:
             self.download_instruments_time = current_hour_time
             self.check_download_instruments()
+
+        # 查询资金费率
+        if self.query_funding_rate_time != current_hour_time and now.minute >= 59:
+            self.query_funding_rate_time = current_hour_time
+            gateway = self.cta_engine.main_engine.get_default_gateway("BINANCE")
+            if gateway:
+                gateway.query_funding_rate()
 
         # 重新订阅
         if self.unsubscribe_time and time.time() - self.unsubscribe_time >= 5:
@@ -941,6 +950,92 @@ class TopGainersLosersPortfolio(object):
 
         except Exception as e:
             msg = f"处理设置杠杆失败事件出错\n\n{e}"
+            self.send_ding_talk(msg)
+
+    def process_funding_rates_event(self, event: Event):
+        try:
+            targets = []
+            data = event.data.get("funding_rates", {})
+            for d in data:
+                symbol = d["symbol"]
+                funding_rate = d["funding_rate"]
+                next_funding_datetime = d["next_funding_datetime"]
+                gateway_name = d["gateway_name"]
+                vt_symbol = f"{symbol}.{gateway_name}"
+
+                next_hour_time = datetime.now().replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+                if abs(funding_rate) > 0.0005 and next_funding_datetime <= next_hour_time:
+                    targets.append(d)
+            
+            if targets:
+                # 按 funding_rate 降序排序（正数大到小）
+                targets.sort(key=lambda x: abs(x.get("funding_rate", 0)), reverse=True)
+                Thread(target=self.snipe_funding_rate, args=(targets,)).start()
+
+        except Exception as e:
+            msg = f"处理资金费率事件出错\n\n{e}"
+            self.send_ding_talk(msg)
+
+    def snipe_funding_rate(self, targets: list):
+        try:
+            if len(targets) > 2:
+                targets = targets[0:2]
+
+            open = False
+            close = False
+            open_data = {}
+            while True:
+                now = datetime.now()
+                if not open and now.minute == 59 and now.second >= 50:
+                # if not open:
+                    open = True
+                    for d in targets:
+                        symbol = d["symbol"]
+                        funding_rate = d["funding_rate"]
+                        mark_price = d["mark_price"]
+                        gateway_name = d["gateway_name"]
+                        vt_symbol = f"{symbol}.{gateway_name}"
+
+                        contract = self.cta_engine.main_engine.get_contract(vt_symbol)
+                        price = round_to(mark_price, contract.pricetick)
+                        volume = 6 / mark_price
+                        volume = round_to(volume, contract.min_volume)
+                        if not price or not volume:
+                            return
+
+                        direction = Direction.LONG if funding_rate < 0 else Direction.SHORT
+                        self.cta_engine.send_simple_order(vt_symbol,
+                                                          direction,
+                                                          Offset.OPEN,
+                                                          price,
+                                                          volume,
+                                                          OrderType.MARKET)
+                        open_data[vt_symbol] = {"price": price,
+                                                "volume": volume,
+                                                "direction": direction}
+                
+                if open and not close and now.minute == 0:
+                    close = True
+                    for vt_symbol, data in open_data.items():
+                        price = data["price"]
+                        volume = data["volume"]
+                        direction = data["direction"]
+                        close_direction = Direction.SHORT if direction == Direction.LONG else Direction.LONG
+                        self.cta_engine.send_simple_order(vt_symbol,
+                                                          close_direction,
+                                                          Offset.CLOSE,
+                                                          price,
+                                                          volume,
+                                                          OrderType.MARKET)
+                
+                if open and close:
+                    break
+                
+                else:
+                    time.sleep(0.1)
+
+        except Exception as e:
+            msg = f"狙击资金费率出错: {vt_symbols}\n\n{e}"
             self.send_ding_talk(msg)
 
     def load_instruments_data(self):

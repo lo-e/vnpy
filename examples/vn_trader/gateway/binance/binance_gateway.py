@@ -42,7 +42,7 @@ from vnpy.trader.object import (
     SubscribeLotsRequest,
     HistoryRequest,
 )
-from vnpy.trader.event import EVENT_TIMER, EVENT_GATEWAY_LEVERAGE_FAILED
+from vnpy.trader.event import EVENT_TIMER, EVENT_GATEWAY_LEVERAGE_FAILED, EVENT_GATEWAY_FUNDING_RATES
 from vnpy.trader.utility import round_to
 
 # from vnpy_rest import Request, RestClient, Response
@@ -196,6 +196,22 @@ class BinanceUsdtGateway(BaseGateway):
     def cancel_order(self, req: CancelRequest) -> None:
         """委托撤单"""
         self.rest_api.cancel_order(req)
+
+    def query_funding_rate(self) -> None:
+        """查询资金费率"""
+        self.rest_api.query_funding_rate()
+
+    def on_query_funding_rates(self, funding_rates: List[dict]) -> None:
+        """推送资金费率"""
+        self.event_engine.put(
+            Event(
+                EVENT_GATEWAY_FUNDING_RATES,
+                {
+                    "funding_rates": funding_rates,
+                    "gateway_name": self.gateway_name,
+                },
+            )
+        )
 
     def query_contract(self) -> None:
         """查询合约列表"""
@@ -440,7 +456,14 @@ class BinanceUsdtRestApi(RestClient):
         path: str = "/fapi/v1/time"
 
         return self.add_request("GET", path, callback=self.on_query_time, data=data)
+    
+    def query_funding_rate(self) -> None:
+        data: dict = {"security": Security.NONE}
 
+        path: str = "/fapi/v1/premiumIndex"
+
+        return self.add_request("GET", path, callback=self.on_query_funding_rate, data=data)
+    
     def query_account(self) -> None:
         """查询资金"""
         data: dict = {"security": Security.SIGNED}
@@ -612,6 +635,33 @@ class BinanceUsdtRestApi(RestClient):
         local_time: int = int(time.time() * 1000)
         server_time: int = int(data["serverTime"])
         self.time_offset: int = local_time - server_time
+
+    def on_query_funding_rate(self, data: dict, request: Request) -> None:
+        """资金费率查询回报"""
+        funding_rates = []
+        for d in data:
+            symbol = d["symbol"]
+            quote = symbol[-4:]
+            if quote != "USDT":
+                continue
+
+            funding_rate = float(d["lastFundingRate"])
+            if not funding_rate:
+                continue
+
+            timestamp = int(d["time"])
+            dt = datetime.fromtimestamp(timestamp / 1000, tz=CHINA_TZ)
+            next_fundingtimestamp = int(d["nextFundingTime"])
+            next_funding_dt = datetime.fromtimestamp(next_fundingtimestamp / 1000)
+            
+            funding_rate_data = {"symbol": symbol,
+                                 "funding_rate": funding_rate,
+                                 "datetime": dt,
+                                 "next_funding_datetime": next_funding_dt,
+                                 "mark_price": float(d["markPrice"]),
+                                 "gateway_name": self.gateway_name}
+            funding_rates.append(funding_rate_data)
+        self.gateway.on_query_funding_rates(funding_rates)
 
     def on_query_account(self, data: dict, request: Request) -> None:
         """资金查询回报"""

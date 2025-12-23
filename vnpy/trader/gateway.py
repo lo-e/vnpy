@@ -295,6 +295,12 @@ class BaseGateway(ABC):
         * send request to server
         """
         pass
+    
+    def query_funding_rate(self) -> None:
+        """
+        Query funding rate.
+        """
+        pass
 
     @abstractmethod
     def query_contract(self) -> None:

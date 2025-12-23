@@ -260,6 +260,43 @@ class TopGainersLosersEngine(BaseEngine):
                 self.strategy_orderid_map[strategy.strategy_name].add(vt_orderid)
 
         return vt_orderids
+    
+    def send_simple_order(
+        self,
+        vt_symbol: str,
+        direction: Direction,
+        offset: Offset,
+        price: float,
+        volume: float,
+        type: OrderType,
+        stop_loss_price: float = 0
+    ):
+        contract = self.main_engine.get_contract(vt_symbol)
+        if not contract:
+            self.write_log(f"委托失败，找不到合约：{vt_symbol}", strategy)
+            return ""
+        
+        # 创建订单
+        original_req = OrderRequest(
+            symbol=contract.symbol,
+            exchange=contract.exchange,
+            direction=direction,
+            offset=offset,
+            type=type,
+            price=price,
+            volume=volume,
+            stop_loss_price=stop_loss_price
+        )
+        req_list = self.offset_converter.convert_order_request(original_req, False)
+
+        # 发送订单
+        vt_orderids = []
+        for req in req_list:
+            vt_orderid = self.main_engine.send_order(req, contract.gateway_name)
+            if vt_orderid:
+                vt_orderids.append(vt_orderid)
+
+        return vt_orderids
 
     def cancel_server_order(self, strategy: CtaTemplate, vt_orderid: str):
         # 取消订单
