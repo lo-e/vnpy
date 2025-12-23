@@ -1014,7 +1014,7 @@ class TopGainersLosersPortfolio(object):
                                                 "volume": volume,
                                                 "direction": direction}
                 
-                if open and not close and now.minute == 0:
+                if open and not close and now.minute == 0 and now.second >= 1:
                     close = True
                     for vt_symbol, data in open_data.items():
                         price = data["price"]
@@ -1030,9 +1030,6 @@ class TopGainersLosersPortfolio(object):
                 
                 if open and close:
                     break
-                
-                else:
-                    time.sleep(0.1)
 
         except Exception as e:
             msg = f"狙击资金费率出错: {vt_symbols}\n\n{e}"
