@@ -986,7 +986,7 @@ class TopGainersLosersPortfolio(object):
             open_data = {}
             while True:
                 now = datetime.now()
-                if not open and now.minute == 59 and now.second >= 50:
+                if not open and now.minute == 59 and now.second >= 59 and now.microsecond >= 500000:
                 # if not open:
                     open = True
                     for d in targets:
@@ -1014,7 +1014,7 @@ class TopGainersLosersPortfolio(object):
                                                 "volume": volume,
                                                 "direction": direction}
                 
-                if open and not close and now.minute == 0 and now.second >= 1:
+                if open and not close and now.minute == 0 and (now.second >= 1 or now.microsecond >= 500000):
                     close = True
                     for vt_symbol, data in open_data.items():
                         price = data["price"]
@@ -1030,6 +1030,9 @@ class TopGainersLosersPortfolio(object):
                 
                 if open and close:
                     break
+                    
+                else:
+                    time.sleep(0.01)
 
         except Exception as e:
             msg = f"狙击资金费率出错: {vt_symbols}\n\n{e}"

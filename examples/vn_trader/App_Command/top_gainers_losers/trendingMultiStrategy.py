@@ -421,7 +421,9 @@ class TrendingMultiStrategy(CtaTemplate):
             self.minute30_up_down_updated = False
 
             if self.direction == Direction.LONG:
-                if (not self.database_loaded and not self.database_history_loaded and hour_up != self.hour_up) or self.hour_up_down_updated:
+                history_hour_up_dt = datetime.strptime(self.hour_up_dt, f"%Y-%m-%d %H:%M:%S") if self.hour_up_dt else None
+                current_bar_dt = datetime.fromtimestamp(self.minute_bar.datetime.timestamp())
+                if (not self.database_loaded and not self.database_history_loaded and hour_up != self.hour_up) or (self.hour_up and hour_up > self.hour_up and current_bar_dt > history_hour_up_dt) or self.hour_up_down_updated:
                     self.hour_up = hour_up
                     self.hour_down = hour_down
                     self.hour_up_ts = self.minute_bar.datetime.timestamp()
@@ -438,7 +440,9 @@ class TrendingMultiStrategy(CtaTemplate):
                     self.hour_up_down_updated = False
             
             if self.direction == Direction.SHORT:
-                if (not self.database_loaded and not self.database_history_loaded and hour_down != self.hour_down) or self.hour_up_down_updated:
+                history_hour_down_dt = datetime.strptime(self.hour_down_dt, f"%Y-%m-%d %H:%M:%S") if self.hour_down_dt else None
+                current_bar_dt = datetime.fromtimestamp(self.minute_bar.datetime.timestamp())
+                if (not self.database_loaded and not self.database_history_loaded and hour_down != self.hour_down) or (self.hour_down and hour_down < self.hour_down and current_bar_dt > history_hour_down_dt) or self.hour_up_down_updated:
                     self.hour_down = hour_down
                     self.hour_up = hour_up
                     self.hour_down_ts = self.minute_bar.datetime.timestamp()
