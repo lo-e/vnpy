@@ -62,7 +62,7 @@ from collections import OrderedDict
 from time import sleep
 from decimal import Decimal
 import json
-from .trendingStrategy import TrendingStrategy, get_strategy_type
+from .trendingStrategy import get_strategy_type
 from .trendingMultiStrategy import TrendingMultiStrategy
 from .topGainersLosersPortfolio import TopGainersLosersPortfolio
 from vnpy.app.cta_strategy.base import (
@@ -116,7 +116,7 @@ class TopGainersLosersEngine(BaseEngine):
         setting = load_json_path(file_path)
         signal_list = []
         for name in self.strategies.copy().keys():
-            strategy: TrendingStrategy = self.strategies[name]
+            strategy: CtaTemplate = self.strategies[name]
             signal_list.append(strategy.setting)
         setting["signal"] = signal_list
         save_json(file_path, setting)
@@ -510,7 +510,7 @@ class TopGainersLosersEngine(BaseEngine):
         # 订阅合约
         vt_symbols = set()
         for strategy_name in self.strategies.keys():
-            strategy: TrendingStrategy = self.strategies[strategy_name]
+            strategy: CtaTemplate = self.strategies[strategy_name]
             vt_symbols.add(strategy.vt_symbol)
         
         if vt_symbols:
