@@ -63,11 +63,6 @@ from time import sleep
 from decimal import Decimal
 import json
 from .trendingStrategy import TrendingStrategy, get_strategy_type
-from .trending1Strategy import Trending1Strategy
-from .trending2Strategy import Trending2Strategy
-from .trending3Strategy import Trending3Strategy
-from .trending4Strategy import Trending4Strategy
-from .trending5Strategy import Trending5Strategy
 from .trendingMultiStrategy import TrendingMultiStrategy
 from .topGainersLosersPortfolio import TopGainersLosersPortfolio
 from vnpy.app.cta_strategy.base import (
@@ -677,22 +672,7 @@ class TopGainersLosersEngine(BaseEngine):
 
         # 创建策略实例
         type = get_strategy_type(name)
-        if type == "T1":
-            strategy = Trending1Strategy(self, setting)
-        
-        elif type == "T2":
-            strategy = Trending2Strategy(self, setting)
-
-        elif type == "T3":
-            strategy = Trending3Strategy(self, setting)
-
-        elif type == "T4":
-            strategy = Trending4Strategy(self, setting)
-
-        elif type == "T5":
-            strategy = Trending5Strategy(self, setting)
-
-        elif type == "MULTI":
+        if type == "MULTI":
             strategy = TrendingMultiStrategy(self, setting)
 
         else:
