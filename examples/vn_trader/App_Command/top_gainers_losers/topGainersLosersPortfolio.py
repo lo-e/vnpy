@@ -981,38 +981,42 @@ class TopGainersLosersPortfolio(object):
             self.send_ding_talk(msg)
 
     def process_trade_event(self, event: Event):
-        trade: TradeData = event.data
-        if trade.offset == Offset.OPEN:
-            for vt_symbol, open_data in self.snipe_open_data.items():
-                if vt_symbol == trade.vt_symbol:
-                    self.snipe_open_data.pop(vt_symbol)
-                    volume = open_data["volume"]
-                    direction = open_data["direction"]
-                    funding_rate = open_data["funding_rate"]
-                    close_direction = Direction.SHORT if direction == Direction.LONG else Direction.LONG
-                    
-                    # 止盈
-                    self.cta_engine.send_simple_order(vt_symbol,
-                                                      close_direction,
-                                                      Offset.CLOSE,
-                                                      trade.price,
-                                                      volume,
-                                                      OrderType.LIMIT)
-                    
-                    # 止损
-                    stop_loss_price = trade.price * (1 - funding_rate*2 if direction == Direction.LONG else 1 + funding_rate*2)
-                    self.cta_engine.send_simple_order(vt_symbol,
-                                                      close_direction,
-                                                      Offset.CLOSE,
-                                                      trade.price,
-                                                      volume,
-                                                      OrderType.MARKET,
-                                                      stop_loss_price=stop_loss_price)
-        
+        try:
+            trade: TradeData = event.data
+            if trade.offset == Offset.OPEN:
+                for vt_symbol, open_data in self.snipe_open_data.items():
+                    if vt_symbol == trade.vt_symbol:
+                        self.snipe_open_data.pop(vt_symbol)
+                        volume = open_data["volume"]
+                        direction = open_data["direction"]
+                        funding_rate = open_data["funding_rate"]
+                        close_direction = Direction.SHORT if direction == Direction.LONG else Direction.LONG
+                        
+                        # 止盈
+                        self.cta_engine.send_simple_order(vt_symbol,
+                                                        close_direction,
+                                                        Offset.CLOSE,
+                                                        trade.price,
+                                                        volume,
+                                                        OrderType.LIMIT)
+                        
+                        # 止损
+                        stop_loss_price = trade.price * (1 - funding_rate*2 if direction == Direction.LONG else 1 + funding_rate*2)
+                        self.cta_engine.send_simple_order(vt_symbol,
+                                                        close_direction,
+                                                        Offset.CLOSE,
+                                                        trade.price,
+                                                        volume,
+                                                        OrderType.STOP,
+                                                        stop_loss_price=stop_loss_price)
+        except Exception as e:
+            msg = f"处理成交事件出错\n\n{e}"
+            self.send_ding_talk(msg)
+
     def snipe_funding_rate(self, targets: list):
         try:
-            # if len(targets) > 2:
-            #     targets = targets[0:2]
+            # if len(targets) > 1:
+            #     targets = targets[0:1]
 
             open = False
             close = False
