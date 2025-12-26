@@ -10,13 +10,13 @@ from vnpy.trader.constant import Direction, Offset, Exchange, OrderType
 from App.Turtle_crypto.dataservice.utility import get_csv_path
 import pandas as pd
 import os
-from vnpy.trader.object import BarData, TickData
+from vnpy.trader.object import BarData, TickData, TradeData
 from vnpy.event import Event
 from vnpy.trader.object import SubscribeRequest
 from .trendingStrategy import TrendingStrategy, get_strategy_pure_name, get_strategy_type
 from .trendingMultiStrategy import TrendingMultiStrategy, SignalData, SIGNALS
 from queue import Empty, Queue
-from vnpy.trader.event import EVENT_TICK_DELAY, EVENT_ACCOUNT, EVENT_GATEWAY_LEVERAGE_FAILED, EVENT_GATEWAY_FUNDING_RATES
+from vnpy.trader.event import EVENT_TICK_DELAY, EVENT_ACCOUNT, EVENT_GATEWAY_LEVERAGE_FAILED, EVENT_GATEWAY_FUNDING_RATES, EVENT_TRADE
 from vnpy.trader.object import AccountData
 import copy
 import re
@@ -75,10 +75,14 @@ class TopGainersLosersPortfolio(object):
         self.default_leverage = 20
         self.optional_leverage = 10
 
+        # fake
+        self.snipe_open_data = {}
+
         # 监听事件
         self.cta_engine.event_engine.register(EVENT_GATEWAY_LEVERAGE_FAILED, self.process_leverage_failed_event)    
         self.cta_engine.event_engine.register(EVENT_GATEWAY_FUNDING_RATES, self.process_funding_rates_event)
-
+        # self.cta_engine.event_engine.register(EVENT_TRADE, self.process_trade_event)
+        
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
         self.download_instruments_time: datetime = None
@@ -976,6 +980,35 @@ class TopGainersLosersPortfolio(object):
             msg = f"处理资金费率事件出错\n\n{e}"
             self.send_ding_talk(msg)
 
+    def process_trade_event(self, event: Event):
+        trade: TradeData = event.data
+        if trade.offset == Offset.OPEN:
+            for vt_symbol, open_data in self.snipe_open_data.items():
+                if vt_symbol == trade.vt_symbol:
+                    self.snipe_open_data.pop(vt_symbol)
+                    volume = open_data["volume"]
+                    direction = open_data["direction"]
+                    funding_rate = open_data["funding_rate"]
+                    close_direction = Direction.SHORT if direction == Direction.LONG else Direction.LONG
+                    
+                    # 止盈
+                    self.cta_engine.send_simple_order(vt_symbol,
+                                                      close_direction,
+                                                      Offset.CLOSE,
+                                                      trade.price,
+                                                      volume,
+                                                      OrderType.LIMIT)
+                    
+                    # 止损
+                    stop_loss_price = trade.price * (1 - funding_rate*2 if direction == Direction.LONG else 1 + funding_rate*2)
+                    self.cta_engine.send_simple_order(vt_symbol,
+                                                      close_direction,
+                                                      Offset.CLOSE,
+                                                      trade.price,
+                                                      volume,
+                                                      OrderType.MARKET,
+                                                      stop_loss_price=stop_loss_price)
+        
     def snipe_funding_rate(self, targets: list):
         try:
             # if len(targets) > 2:
@@ -983,7 +1016,6 @@ class TopGainersLosersPortfolio(object):
 
             open = False
             close = False
-            open_data = {}
             while True:
                 now = datetime.now()
                 if not open and now.minute == 59 and now.second >= 59 and now.microsecond >= 900000:
@@ -1010,13 +1042,14 @@ class TopGainersLosersPortfolio(object):
                                                           price,
                                                           volume,
                                                           OrderType.MARKET)
-                        open_data[vt_symbol] = {"price": price,
-                                                "volume": volume,
-                                                "direction": direction}
+                        self.snipe_open_data[vt_symbol] = {"price": price,
+                                                           "volume": volume,
+                                                           "direction": direction,
+                                                           "funding_rate": funding_rate}
                 
                 if open and not close and now.minute == 0 and (now.second >= 1 or now.microsecond >= 100000):
                     close = True
-                    for vt_symbol, data in open_data.items():
+                    for vt_symbol, data in self.snipe_open_data.items():
                         price = data["price"]
                         volume = data["volume"]
                         direction = data["direction"]

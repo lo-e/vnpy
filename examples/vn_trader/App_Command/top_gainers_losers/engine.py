@@ -271,6 +271,11 @@ class TopGainersLosersEngine(BaseEngine):
             self.write_log(f"委托失败，找不到合约：{vt_symbol}", strategy)
             return ""
         
+        # 精度处理
+        price = round_to(price, contract.pricetick)
+        volume = round_to(volume, contract.min_volume)
+        stop_loss_price = round_to(stop_loss_price, contract.pricetick)
+        
         # 创建订单
         original_req = OrderRequest(
             symbol=contract.symbol,
@@ -323,6 +328,7 @@ class TopGainersLosersEngine(BaseEngine):
         # 精度处理
         price = round_to(price, contract.pricetick)
         volume = round_to(volume, contract.min_volume)
+        stop_loss_price = round_to(stop_loss_price, contract.pricetick)
 
         # 发送订单
         type = OrderType.LIMIT

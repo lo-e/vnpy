@@ -512,6 +512,8 @@ class BinanceUsdtRestApi(RestClient):
 
     def send_order(self, req: OrderRequest) -> str:
         """委托下单"""
+        path: str = "/fapi/v1/order"
+
         # 生成本地委托号
         orderid: str = str(self.connect_time + self._new_order_id())
 
@@ -547,8 +549,10 @@ class BinanceUsdtRestApi(RestClient):
             params["type"] = "MARKET"
 
         elif req.type == OrderType.STOP:
+            path = "/fapi/v1/algoOrder"
+            params["algoType"] = "CONDITIONAL"
             params["type"] = "STOP_MARKET"
-            params["stopPrice"] = float(req.price)
+            params["triggerPrice"] = float(req.stop_loss_price)
             params["closePosition"] = "true"
 
         else:
@@ -557,7 +561,6 @@ class BinanceUsdtRestApi(RestClient):
             params["timeInForce"] = time_condition
             params["price"] = float(req.price)
 
-        path: str = "/fapi/v1/order"
         self.add_request(
             method="POST",
             path=path,
