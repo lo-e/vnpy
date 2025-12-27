@@ -1011,9 +1011,17 @@ class TopGainersLosersPortfolio(object):
 
     def snipe_funding_rate(self, targets: list):
         try:
-            # if len(targets) > 1:
-            #     targets = targets[0:1]
+            # 限制最大总资金费率和总数量
+            total_funding_rate = 0
+            count = 0
+            for d in targets.copy():
+                total_funding_rate += abs(d["funding_rate"])
+                count += 1
+                if total_funding_rate > 0.05 or count > 3:
+                    break
+            targets = targets[:count-1]
 
+            # 准备狙击
             open = False
             close = False
             open_data = {}
