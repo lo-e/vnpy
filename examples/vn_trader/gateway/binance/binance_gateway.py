@@ -552,7 +552,7 @@ class BinanceUsdtRestApi(RestClient):
             path = "/fapi/v1/algoOrder"
             params["algoType"] = "CONDITIONAL"
             params["type"] = "STOP_MARKET"
-            params["triggerPrice"] = float(req.stop_loss_price)
+            params["triggerPrice"] = float(req.price)
             params["closePosition"] = "true"
 
         else:

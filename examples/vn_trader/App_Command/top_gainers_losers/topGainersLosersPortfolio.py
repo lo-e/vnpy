@@ -991,21 +991,20 @@ class TopGainersLosersPortfolio(object):
                         
                         # 止盈
                         self.cta_engine.send_simple_order(vt_symbol,
-                                                        close_direction,
-                                                        Offset.CLOSE,
-                                                        trade.price,
-                                                        volume,
-                                                        OrderType.LIMIT)
+                                                          close_direction,
+                                                          Offset.CLOSE,
+                                                          trade.price,
+                                                          volume,
+                                                          OrderType.LIMIT)
                         
                         # 止损
                         stop_loss_price = trade.price * (1 - funding_rate*2 if direction == Direction.LONG else 1 + funding_rate*2)
                         self.cta_engine.send_simple_order(vt_symbol,
-                                                        close_direction,
-                                                        Offset.CLOSE,
-                                                        trade.price,
-                                                        volume,
-                                                        OrderType.STOP,
-                                                        stop_loss_price=stop_loss_price)
+                                                          close_direction,
+                                                          Offset.CLOSE,
+                                                          stop_loss_price,
+                                                          volume,
+                                                          OrderType.STOP)
         except Exception as e:
             msg = f"处理成交事件出错\n\n{e}"
             self.send_ding_talk(msg)
