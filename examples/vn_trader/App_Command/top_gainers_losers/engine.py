@@ -189,11 +189,11 @@ class TopGainersLosersEngine(BaseEngine):
         strategy = self.orderid_strategy_map.get(trade.vt_orderid, None)
 
         # 止损单触发非本地订单，特殊处理
-        # if not strategy:
-        #     for strategy_ in self.strategies.values():
-        #         if strategy_.vt_symbol == trade.vt_symbol and strategy_.pos != 0:
-        #             strategy = strategy_
-        #             break
+        if not strategy:
+            for strategy_ in self.strategies.values():
+                if strategy_.vt_symbol == trade.vt_symbol and strategy_.pos != 0:
+                    strategy = strategy_
+                    break
 
         if not strategy:
             return
