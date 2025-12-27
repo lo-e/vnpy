@@ -75,9 +75,6 @@ class TopGainersLosersPortfolio(object):
         self.default_leverage = 20
         self.optional_leverage = 10
 
-        # fake
-        self.snipe_open_data = {}
-
         # 监听事件
         self.cta_engine.event_engine.register(EVENT_GATEWAY_LEVERAGE_FAILED, self.process_leverage_failed_event)    
         self.cta_engine.event_engine.register(EVENT_GATEWAY_FUNDING_RATES, self.process_funding_rates_event)
@@ -1020,6 +1017,7 @@ class TopGainersLosersPortfolio(object):
 
             open = False
             close = False
+            open_data = {}
             while True:
                 now = datetime.now()
                 if not open and now.minute == 59 and now.second >= 59 and now.microsecond >= 900000:
@@ -1046,14 +1044,14 @@ class TopGainersLosersPortfolio(object):
                                                           price,
                                                           volume,
                                                           OrderType.MARKET)
-                        self.snipe_open_data[vt_symbol] = {"price": price,
-                                                           "volume": volume,
-                                                           "direction": direction,
-                                                           "funding_rate": funding_rate}
+                        open_data[vt_symbol] = {"price": price,
+                                                "volume": volume,
+                                                "direction": direction,
+                                                "funding_rate": funding_rate}
                 
                 if open and not close and now.minute == 0 and (now.second >= 1 or now.microsecond >= 100000):
                     close = True
-                    for vt_symbol, data in self.snipe_open_data.items():
+                    for vt_symbol, data in open_data.items():
                         price = data["price"]
                         volume = data["volume"]
                         direction = data["direction"]
