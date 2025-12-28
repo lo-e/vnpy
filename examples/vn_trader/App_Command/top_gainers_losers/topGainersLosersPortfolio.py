@@ -10,7 +10,7 @@ from vnpy.trader.constant import Direction, Offset, Exchange, OrderType
 from App.Turtle_crypto.dataservice.utility import get_csv_path
 import pandas as pd
 import os
-from vnpy.trader.object import BarData, TickData, TradeData
+from vnpy.trader.object import BarData, TickData, TradeData, CancelRequest
 from vnpy.event import Event
 from vnpy.trader.object import SubscribeRequest
 from .trendingStrategy import TrendingStrategy, get_strategy_pure_name, get_strategy_type
@@ -75,6 +75,10 @@ class TopGainersLosersPortfolio(object):
         self.default_leverage = 20
         self.optional_leverage = 10
 
+        """ fake """
+        # self.test_order_time = 0
+        # self.test_orderid = ""
+
         # 监听事件
         self.cta_engine.event_engine.register(EVENT_GATEWAY_LEVERAGE_FAILED, self.process_leverage_failed_event)    
         self.cta_engine.event_engine.register(EVENT_GATEWAY_FUNDING_RATES, self.process_funding_rates_event)
@@ -93,20 +97,6 @@ class TopGainersLosersPortfolio(object):
                 setattr(self, name, setting[name])
 
     def on_init(self):
-        # ------ fake ------
-        # if not self.loss_list:
-        #     loss_data = {"datetime": "2025-09-07 08:32:49",
-        #                 "vt_symbol": "ALUUSDT.BYBIT",
-        #                 "phase": 1,
-        #                 "phase_lose": -1.24}
-        #     self.loss_list.append(loss_data)
-            
-        # if abs(self.account_drawdown) < self.portfolio_value * 0.30:
-        #     self.trade_enable = True
-
-        # else:
-        #     self.trade_enable = False
-
         # 导入交易所合约
         self.load_instruments_data()
 
@@ -140,9 +130,6 @@ class TopGainersLosersPortfolio(object):
         for vt_symbol in download_vt_symbols:
             self.bar_download_queue.put(vt_symbol)
 
-        # ------ fake ------
-        # self.bar_download_queue.put("PORT3USDT.BINANCE")
-
     def on_timer(self):
         if not self.started:
             return
@@ -168,6 +155,31 @@ class TopGainersLosersPortfolio(object):
 
         # 保存同步数据
         self.check_save_data()
+
+        """ fake """
+        """
+        symbol = "LIGHTUSDT"
+        exchange = Exchange.BINANCE
+        vt_symbol = f"{symbol}.{exchange.value}"
+        if not self.test_order_time:
+            self.test_order_time = time.time()
+            open_direction = Direction.LONG
+            close_direction = Direction.SHORT
+            vt_orderids = self.cta_engine.send_simple_order(vt_symbol,
+                                                            close_direction,
+                                                            Offset.CLOSE,
+                                                            0.5340,
+                                                            10,
+                                                            OrderType.STOP)
+            self.test_orderid = vt_orderids[0].split(".")[1]
+        
+        # if self.test_order_time and time.time() - self.test_order_time >= 5:
+        #     self.test_order_time = time.time() + 9999999
+        #     req = CancelRequest(orderid=self.test_orderid,
+        #                         symbol=symbol,
+        #                         exchange=exchange)
+        #     self.cta_engine.main_engine.cancel_order(req, "BINANCE")
+        """
 
     def on_account(self, event: Event):
         # 筛选USDT

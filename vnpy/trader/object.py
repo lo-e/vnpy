@@ -8,7 +8,7 @@ from logging import INFO
 
 from .constant import Direction, Exchange, Interval, Offset, Status, Product, OptionType, OrderType, FuturesType
 
-ACTIVE_STATUSES = set([Status.SUBMITTING, Status.NOTTRADED, Status.PARTTRADED])
+ACTIVE_STATUSES = set([Status.SUBMITTING, Status.NOTTRADED, Status.PARTTRADED, Status.TRIGGERED])
 FAILED_STATUSES = set([Status.CANCELLED, Status.REJECTED])
 
 """ modify by loe """

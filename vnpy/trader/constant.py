@@ -35,6 +35,7 @@ class Status(Enum):
     ALLTRADED = "全部成交"
     CANCELLED = "已撤销"
     REJECTED = "拒单"
+    TRIGGERED = "已触发"
 
 
 class Product(Enum):
@@ -62,6 +63,7 @@ class OrderType(Enum):
     LIMIT_MAKER = "限价_MAKER [BYBIT SPOT]"
     MARKET = "市价"
     STOP = "STOP"
+    STOP_MARKET = "STOP_MARKET"
     FAK = "FAK"
     FOK = "FOK"
     RFQ = "询价"

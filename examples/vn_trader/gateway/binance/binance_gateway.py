@@ -80,6 +80,7 @@ STATUS_BINANCES2VT: Dict[str, Status] = {
     "CANCELED": Status.CANCELLED,
     "REJECTED": Status.REJECTED,
     "EXPIRED": Status.CANCELLED,
+    "TRIGGERING": Status.TRIGGERED
 }
 
 # 委托类型映射
@@ -88,7 +89,8 @@ ORDERTYPE_VT2BINANCES: Dict[OrderType, Tuple[str, str]] = {
     OrderType.MARKET: ("MARKET", "GTC"),
     OrderType.FAK: ("LIMIT", "IOC"),
     OrderType.FOK: ("LIMIT", "FOK"),
-    OrderType.STOP: ("STOP_MARKET", "GTC")
+    OrderType.STOP: ("STOP_MARKET", "GTE_GTC"),
+    OrderType.STOP_MARKET: ("STOP_MARKET", "GTC")
 }
 ORDERTYPE_BINANCES2VT: Dict[Tuple[str, str], OrderType] = {
     v: k for k, v in ORDERTYPE_VT2BINANCES.items()
@@ -517,10 +519,6 @@ class BinanceUsdtRestApi(RestClient):
         # 生成本地委托号
         orderid: str = str(self.connect_time + self._new_order_id())
 
-        # 推送提交中事件
-        order: OrderData = req.create_order_data(orderid, self.gateway_name)
-        self.gateway.on_order(order)
-
         data: dict = {"security": Security.SIGNED}
 
         position_side = ""
@@ -548,18 +546,23 @@ class BinanceUsdtRestApi(RestClient):
         if req.type == OrderType.MARKET:
             params["type"] = "MARKET"
 
-        elif req.type == OrderType.STOP:
+        elif req.type == OrderType.STOP or req.type == OrderType.STOP_MARKET:
             path = "/fapi/v1/algoOrder"
             params["algoType"] = "CONDITIONAL"
             params["type"] = "STOP_MARKET"
             params["triggerPrice"] = float(req.price)
             params["closePosition"] = "true"
+            params["clientAlgoId"] = orderid
 
         else:
             order_type, time_condition = ORDERTYPE_VT2BINANCES[req.type]
             params["type"] = order_type
             params["timeInForce"] = time_condition
             params["price"] = float(req.price)
+
+        # 推送提交中事件
+        order: OrderData = req.create_order_data(orderid, self.gateway_name)
+        self.gateway.on_order(order)
 
         self.add_request(
             method="POST",
@@ -583,6 +586,10 @@ class BinanceUsdtRestApi(RestClient):
         path: str = "/fapi/v1/order"
 
         order: OrderData = self.gateway.get_order(req.orderid)
+
+        if order.type == OrderType.STOP or order.type == OrderType.STOP_MARKET:
+            path = "/fapi/v1/algoOrder"
+            params = {"clientalgoid": req.orderid}
 
         self.add_request(
             method="DELETE",
@@ -999,6 +1006,9 @@ class BinanceUsdtTradeWebsocketApi(WebsocketClient):
 
         elif packet["e"] == "ORDER_TRADE_UPDATE":
             self.on_order(packet)
+        
+        elif packet["e"] == "ALGO_UPDATE":
+            self.on_algo_order(packet)
 
         elif packet["e"] == "listenKeyExpired":
             self.on_listen_key_expired()
@@ -1110,6 +1120,36 @@ class BinanceUsdtTradeWebsocketApi(WebsocketClient):
             offset=offset,
         )
         self.gateway.on_trade(trade)
+
+    def on_algo_order(self, packet: dict) -> None:
+        """委托更新推送"""
+        ord_data: dict = packet["o"]
+        key: Tuple[str, str] = (ord_data["o"], ord_data["f"])
+        order_type: OrderType = ORDERTYPE_BINANCES2VT.get(key, None)
+        if not order_type:
+            return
+
+        offset = Offset.NONE
+        if self.gateway.get_order(ord_data["caid"]):
+            offset = self.gateway.get_order(ord_data["caid"]).offset
+
+        if ord_data["R"]:
+            offset = Offset.CLOSE
+
+        order: OrderData = OrderData(
+            symbol=ord_data["s"],
+            exchange=Exchange.BINANCE,
+            orderid=str(ord_data["caid"]),
+            type=order_type,
+            direction=DIRECTION_BINANCES2VT[ord_data["S"]],
+            price=float(ord_data["p"]),
+            volume=float(ord_data["q"]),
+            status=STATUS_BINANCES2VT[ord_data["X"]],
+            datetime=generate_datetime(packet["E"]),
+            gateway_name=self.gateway_name,
+            offset=offset,
+        )
+        self.gateway.on_order(order)
 
     def on_disconnected(self) -> None:
         """连接断开回报"""
