@@ -1063,7 +1063,7 @@ class TopGainersLosersPortfolio(object):
                                                           price,
                                                           volume,
                                                           OrderType.MARKET,
-                                                          account_name="loe1")
+                                                          account_name="loesuperman")
                         
                         open_data[vt_symbol] = {"price": price,
                                                 "volume": volume,
@@ -1083,7 +1083,7 @@ class TopGainersLosersPortfolio(object):
                                                           price,
                                                           volume,
                                                           OrderType.MARKET,
-                                                          account_name="loe1")
+                                                          account_name="loesuperman")
                 
                 if open and close:
                     break
