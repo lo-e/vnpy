@@ -264,7 +264,8 @@ class TopGainersLosersEngine(BaseEngine):
         price: float,
         volume: float,
         type: OrderType,
-        stop_loss_price: float = 0
+        stop_loss_price: float = 0,
+        account_name: str = ""
     ):
         contract = self.main_engine.get_contract(vt_symbol)
         if not contract:
@@ -292,7 +293,12 @@ class TopGainersLosersEngine(BaseEngine):
         # 发送订单
         vt_orderids = []
         for req in req_list:
-            vt_orderid = self.main_engine.send_order(req, contract.gateway_name)
+            if account_name:
+                vt_orderid = self.main_engine.send_account_order(req, contract.gateway_name, account_name)
+            
+            else:
+                vt_orderid = self.main_engine.send_order(req, contract.gateway_name)
+            
             if vt_orderid:
                 vt_orderids.append(vt_orderid)
 

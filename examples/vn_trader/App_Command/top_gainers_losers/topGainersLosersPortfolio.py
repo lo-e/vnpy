@@ -1062,7 +1062,9 @@ class TopGainersLosersPortfolio(object):
                                                           Offset.OPEN,
                                                           price,
                                                           volume,
-                                                          OrderType.MARKET)
+                                                          OrderType.MARKET,
+                                                          account_name="loe1")
+                        
                         open_data[vt_symbol] = {"price": price,
                                                 "volume": volume,
                                                 "direction": direction,
@@ -1080,7 +1082,8 @@ class TopGainersLosersPortfolio(object):
                                                           Offset.CLOSE,
                                                           price,
                                                           volume,
-                                                          OrderType.MARKET)
+                                                          OrderType.MARKET,
+                                                          account_name="loe1")
                 
                 if open and close:
                     break
