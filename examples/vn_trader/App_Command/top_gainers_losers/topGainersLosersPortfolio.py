@@ -1048,6 +1048,8 @@ class TopGainersLosersPortfolio(object):
                         mark_price = d["mark_price"]
                         gateway_name = d["gateway_name"]
                         vt_symbol = f"{symbol}.{gateway_name}"
+                        msg = f"狙击资金费率\n{vt_symbol} : {funding_rate}"
+                        self.send_ding_talk(msg)
 
                         contract = self.cta_engine.main_engine.get_contract(vt_symbol)
                         price = round_to(mark_price, contract.pricetick)
