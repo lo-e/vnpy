@@ -102,7 +102,12 @@ class MainEngine:
         Add gateway.
         """
         self.gateway_classes[gateway_class.gateway_name] = gateway_class
-        self.gateways[gateway_class.gateway_name] = {}
+
+        if gateway_class.gateway_name not in self.gateways:
+            self.gateways[gateway_class.gateway_name] = {}
+
+        if gateway_class.gateway_name not in self.gateway_setting:
+            self.gateway_setting[gateway_class.gateway_name] = {}
 
         # Add gateway supported exchanges into engine
         for exchange in gateway_class.exchanges:
@@ -224,10 +229,12 @@ class MainEngine:
             # 缓存gateway对象
             gateway_dict = self.gateways.get(gateway_name, {})
             gateway_dict[account_name] = gateway
+            self.gateways[gateway_name] = gateway_dict
 
             # 缓存gateway参数
             gateway_setting_dict = self.gateway_setting.get(gateway_name, {})
             gateway_setting_dict[account_name] = setting
+            self.gateway_setting[gateway_name] = gateway_setting_dict
 
     """" modify by loe """
     def reconnect(self, gateway_name:str, account_name:str):

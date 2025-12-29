@@ -19,7 +19,7 @@ from vnpy.trader.constant import Exchange
 
 # GATEWAYS = [[OkxGateway, "lo-e"], [BybitGateway, "loesuperman"], [BinanceUsdtGateway, "lo-e"]]
 # GATEWAYS = [[OkxGateway, "lo-e(test)"], [BybitGateway, "loesuperman(test)"], [BinanceUsdtGateway, "lo-e(test)"]]
-GATEWAYS = [[OkxGateway, "lo-e"], [BinanceUsdtGateway, "lo-e"], [BybitGateway, "loesuperman"]]
+GATEWAYS = [[OkxGateway, "lo-e"], [BinanceUsdtGateway, "lo-e"], [BinanceUsdtGateway, "loe1"], [BybitGateway, "loesuperman"]]
 class DurationBar(object):
     def __init__(self) -> None:
         self.vt_symbol: str = ""
@@ -50,7 +50,6 @@ class MonitorEngine(object):
             gateway_class: BaseGateway = gateway_info[0]
             account_name = gateway_info[1]
             connected = self.main_engine.get_gateway_connect_status(gateway_class.gateway_name, account_name)
-
             if not connected:
                 all_connected = False
                 break
