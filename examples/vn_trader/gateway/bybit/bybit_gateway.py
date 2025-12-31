@@ -1211,6 +1211,7 @@ class BybitWebsocketTradeApi(WebsocketClient):
                 volume=float(trade_data["execQty"]),
                 datetime=trade_datetime,
                 gateway_name=self.gateway_name,
+                account_name=self.gateway.account_name
             )
             order: OrderData = self.gateway.orders.get(orderId, None)
             if order:

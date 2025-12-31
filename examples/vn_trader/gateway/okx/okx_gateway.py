@@ -1157,6 +1157,7 @@ class OkxWebsocketPrivateApi(WebsocketClient):
                 volume=trade_volume,
                 datetime=parse_timestamp(d["uTime"]),
                 gateway_name=self.gateway_name,
+                account_name=self.gateway.account_name
             )
             self.gateway.on_trade(trade)
 

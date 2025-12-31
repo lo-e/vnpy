@@ -1119,6 +1119,7 @@ class BinanceUsdtTradeWebsocketApi(WebsocketClient):
             datetime=generate_datetime(ord_data["T"]),
             gateway_name=self.gateway_name,
             offset=offset,
+            account_name=self.gateway.account_name
         )
         self.gateway.on_trade(trade)
 

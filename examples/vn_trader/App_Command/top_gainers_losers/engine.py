@@ -72,6 +72,8 @@ from vnpy.app.cta_strategy.base import (
 )
 from gateway.binance import BinanceUsdtGateway
 
+from vnpy.examples.vn_trader.App_Command.top_gainers_losers import trendingMultiStrategy
+
 class TopGainersLosersEngine(BaseEngine):
     engine_type = EngineType.LIVE
 
@@ -191,7 +193,7 @@ class TopGainersLosersEngine(BaseEngine):
         # 止损单触发非本地订单，特殊处理
         if not strategy:
             for strategy_ in self.strategies.values():
-                if strategy_.vt_symbol == trade.vt_symbol and strategy_.pos != 0:
+                if strategy.exchange_user == trade.account_name and strategy_.vt_symbol == trade.vt_symbol and strategy_.pos != 0:
                     strategy = strategy_
                     break
 
