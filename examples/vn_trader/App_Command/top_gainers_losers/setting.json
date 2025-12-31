@@ -1314,23 +1314,6 @@
             "datetime": "2025-12-31 14:36:21"
         },
         {
-            "strategy_name": "1231143655_LONG_MULTI_COMP_BINANCE",
-            "vt_symbol": "COMPUSDT.BINANCE",
-            "exchange": "BINANCE",
-            "exchange_user": "lo-e",
-            "direction": "LONG",
-            "change": 1.31,
-            "volume_24h": "1053.04万",
-            "trending_mean_1h": 5.71,
-            "reverse_mean_1h": -10.42,
-            "trending_mean_24h": 27.81,
-            "reverse_mean_24h": -25.35,
-            "start": true,
-            "manual_close": false,
-            "data_dt": "2025-12-31 14:36:54",
-            "datetime": "2025-12-31 14:36:55"
-        },
-        {
             "strategy_name": "1231143722_SHORT_MULTI_BROCCOLI714_BINANCE",
             "vt_symbol": "BROCCOLI714USDT.BINANCE",
             "exchange": "BINANCE",
@@ -3539,6 +3522,23 @@
             "manual_close": false,
             "data_dt": "2025-12-31 18:05:46",
             "datetime": "2025-12-31 18:05:46"
+        },
+        {
+            "strategy_name": "1231181057_SHORT_MULTI_WOO_BINANCE",
+            "vt_symbol": "WOOUSDT.BINANCE",
+            "exchange": "BINANCE",
+            "exchange_user": "lo-e",
+            "direction": "SHORT",
+            "change": -1.07,
+            "volume_24h": "2051.32万",
+            "trending_mean_1h": -3.09,
+            "reverse_mean_1h": 34.0,
+            "trending_mean_24h": -29.03,
+            "reverse_mean_24h": 53.86,
+            "start": true,
+            "manual_close": false,
+            "data_dt": "2025-12-31 18:10:56",
+            "datetime": "2025-12-31 18:10:57"
         }
     ]
 }

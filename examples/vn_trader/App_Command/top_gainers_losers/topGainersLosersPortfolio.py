@@ -1090,7 +1090,7 @@ class TopGainersLosersPortfolio(object):
 
                         contract = self.cta_engine.main_engine.get_contract(vt_symbol)
                         price = round_to(mark_price, contract.pricetick)
-                        volume = 6 / mark_price
+                        volume = 10 * 10 / mark_price
                         volume = round_to(volume, contract.min_volume)
                         if not price or not volume:
                             return
