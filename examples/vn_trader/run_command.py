@@ -19,7 +19,7 @@ from vnpy.trader.constant import Exchange
 
 # GATEWAYS = [[OkxGateway, "lo-e"], [BybitGateway, "loesuperman"], [BinanceUsdtGateway, "lo-e"]]
 # GATEWAYS = [[OkxGateway, "lo-e(test)"], [BybitGateway, "loesuperman(test)"], [BinanceUsdtGateway, "lo-e(test)"]]
-GATEWAYS = [[OkxGateway, "lo-e"], [BinanceUsdtGateway, "lo-e"], [BinanceUsdtGateway, "loesuperman"], [BybitGateway, "loesuperman"]]
+GATEWAYS = [[OkxGateway, "lo-e"], [BinanceUsdtGateway, "lo-e"], [BinanceUsdtGateway, "wawjlc"], [BybitGateway, "loesuperman"]]
 class DurationBar(object):
     def __init__(self) -> None:
         self.vt_symbol: str = ""
@@ -210,7 +210,7 @@ class LeverageUtility(object):
         self.default_leverage = 20
         self.optional_leverage = 10
 
-    def set_leverage(self, target_gateway_name:str, account_name: str, leverage: int = 20, optional_leverage: int = 10, target: list = [], specials: dict = {}):
+    def set_leverage(self, target_gateway_name:str, target_account_name: str, leverage: int = 20, optional_leverage: int = 10, target: list = [], specials: dict = {}):
         self.default_leverage = leverage
         self.optional_leverage = optional_leverage
 
@@ -268,7 +268,7 @@ class LeverageUtility(object):
         
         # 设置杠杆
         # gateway = self.main_engine.get_default_gateway(target_gateway_name)
-        gateway = self.main_engine.get_gateway(target_gateway_name, account_name)
+        gateway = self.main_engine.get_gateway(target_gateway_name, target_account_name)
         if gateway:
             count = 0
             for vt_symbol in vt_symbols:
@@ -323,11 +323,12 @@ class LeverageUtility(object):
         symbol = data["symbol"]
         leverage = data["leverage"]
         gateway_name = data["gateway_name"]
+        account_name = data["account_name"]
         vt_symbol = f"{symbol}.{gateway_name}"
 
         if leverage != self.optional_leverage:
             # 设置备用杠杆
-            gateway = self.main_engine.get_default_gateway(gateway_name)
+            gateway = self.main_engine.get_gateway(gateway_name, account_name)
             if gateway:
                 gateway.set_leverage(vt_symbol, self.optional_leverage)
                 self.optional_list.append(vt_symbol)
@@ -399,4 +400,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-    # set_leverage(target_gateway_name="BINANCE", account_name="loesuperman", leverage=20, optional_leverage=10, target=[], specials={"BTC": 100, "ETH": 50, "SOL": 50})
+    # set_leverage(target_gateway_name="BINANCE", account_name="wawjlc", leverage=20, optional_leverage=10, target=[], specials={"BTC": 100, "ETH": 50, "SOL": 50})

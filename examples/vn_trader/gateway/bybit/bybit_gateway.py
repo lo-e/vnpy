@@ -443,7 +443,8 @@ class BybitRestApi(RestClient):
 
             event_data = {"symbol": request.extra["symbol"],
                           "leverage": int(request.extra["buyLeverage"]),
-                          "gateway_name": self.gateway_name}
+                          "gateway_name": self.gateway_name,
+                          "account_name": self.gateway.account_name}
             event = Event(EVENT_GATEWAY_LEVERAGE_FAILED, event_data)
             self.gateway.event_engine.put(event)
     

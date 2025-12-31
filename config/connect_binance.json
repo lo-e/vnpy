@@ -12,7 +12,23 @@
         "key": "MSt27gL7OiLHkW395ftJsPwjnVXKGyb3vvCYqzyny3QtC9BMevyUMht94X6y6RvF",
         "secret": "db1fAHJUx6F4oDGscKNv5ETpmRMkcMPNB9uzBdeSdIgIU5Y4dGO61BnDY9Ny0n0B",
         "服务器": "REAL",
-        "代理地址": "192.168.31.140",
-        "代理端口": 10811
+        "代理地址": "",
+        "代理端口": 0
+    },
+    "loesuperman": {
+        "账户名称": "loesuperman",
+        "key": "sZQUxHRgxvo0QzQN6cPtJbmuO5C1L4kg1UknV565OYWDtwgRfplj2aro6jt8i3aH",
+        "secret": "88yA6kvo1wCmwIOf2qqAhPTCbrGsWKXYxGwn8XZtg1aHIJ425GJc2AYcPTZrtnpk",
+        "服务器": "REAL",
+        "代理地址": "",
+        "代理端口": 0
+    },
+    "wawjlc": {
+        "账户名称": "wawjlc",
+        "key": "TjvECpqQgt3WTniaLrsWqkEiDvfBw7Ax2mJCfolCiTEB2scuKYZCIU0Ndel5JzM8",
+        "secret": "JLUxJ58j1t8vLGkXudq6LJWYqvHT4lyQKtSQIU8YRIIqgoNBO95MTvDXyACXNdhd",
+        "服务器": "REAL",
+        "代理地址": "",
+        "代理端口": 0
     }
 }
