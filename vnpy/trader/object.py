@@ -216,6 +216,8 @@ class TradeData(BaseData):
     price: float = 0
     volume: float = 0
     datetime: datetime = None
+    gateway_name: str = ""
+    account_name: str = ""
 
     def __post_init__(self):
         """"""
