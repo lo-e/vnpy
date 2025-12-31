@@ -72,8 +72,6 @@ from vnpy.app.cta_strategy.base import (
 )
 from gateway.binance import BinanceUsdtGateway
 
-from vnpy.examples.vn_trader.App_Command.top_gainers_losers import trendingMultiStrategy
-
 class TopGainersLosersEngine(BaseEngine):
     engine_type = EngineType.LIVE
 
