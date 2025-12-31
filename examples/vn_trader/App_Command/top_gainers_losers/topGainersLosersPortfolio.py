@@ -828,12 +828,16 @@ class TopGainersLosersPortfolio(object):
             # 交易所合约上新，更新Gateway合约列表
             update_contract_gateway_names = set()
             new_vt_symbols = set()
+            new_vt_symbols_okx = set()
+            new_vt_symbols_binance = set()
+            new_vt_symbols_bybit = set()
             if okx_new:
                 update_contract_gateway_names.add("OKX")
                 for instrument in okx_new:
                     symbol = instrument["symbol"]
                     vt_symbol = f"{symbol}.OKX"
                     new_vt_symbols.add(vt_symbol)
+                    new_vt_symbols_okx.add(vt_symbol)
             
             if binance_new:
                 update_contract_gateway_names.add("BINANCE")
@@ -841,6 +845,7 @@ class TopGainersLosersPortfolio(object):
                     symbol = instrument["symbol"]
                     vt_symbol = f"{symbol}.BINANCE"
                     new_vt_symbols.add(vt_symbol)
+                    new_vt_symbols_binance.add(vt_symbol)
 
             if bybit_new:
                 update_contract_gateway_names.add("BYBIT")
@@ -848,12 +853,19 @@ class TopGainersLosersPortfolio(object):
                     symbol = instrument["symbol"]
                     vt_symbol = f"{symbol}.BYBIT"
                     new_vt_symbols.add(vt_symbol)
+                    new_vt_symbols_bybit.add(vt_symbol)
 
             if len(update_contract_gateway_names):
                 self.query_gateway_contract(list(update_contract_gateway_names))
 
-            if len(new_vt_symbols):
-                self.set_leverage(list(new_vt_symbols))
+            if len(new_vt_symbols_okx):
+                self.set_leverage(list(new_vt_symbols_okx), 20, 10)
+            
+            if len(new_vt_symbols_binance):
+                self.set_leverage(list(new_vt_symbols_binance), 20, 10)
+
+            if len(new_vt_symbols_bybit):
+                self.set_leverage(list(new_vt_symbols_bybit), 20, 10)
 
             # 导入更新交易所合约
             self.load_instruments_data()
@@ -927,17 +939,22 @@ class TopGainersLosersPortfolio(object):
             if gateway:
                 gateway.query_contract()
 
-    def set_leverage(self, vt_symbols: str):
+    def set_leverage(self, vt_symbols: str, default_leverage: int, optional_leverage: int, account_name: str = ""):
+        self.default_leverage = default_leverage
+        self.optional_leverage = optional_leverage
         try:
             for vt_symbol in vt_symbols:
                 gateway_name = vt_symbol.split(".")[-1]
 
                 # 设置杠杆
-                gateway = self.cta_engine.main_engine.get_default_gateway(gateway_name)
+                if account_name:
+                    gateway = self.cta_engine.main_engine.get_gateway(gateway_name, account_name)
+                
+                else:
+                    gateway = self.cta_engine.main_engine.get_default_gateway(gateway_name)
+
                 if gateway:
                     gateway.set_leverage(vt_symbol, self.default_leverage)
-
-                time.sleep(1)
         
         except Exception as e:
             msg = f"设置杠杆出错: {vt_symbols}\n\n{e}"
@@ -949,13 +966,16 @@ class TopGainersLosersPortfolio(object):
             symbol = data["symbol"]
             leverage = data["leverage"]
             gateway_name = data["gateway_name"]
+            account_name = data["account_name"]
             vt_symbol = f"{symbol}.{gateway_name}"
 
-            if leverage != self.optional_leverage:
+            if leverage > self.optional_leverage:
+                next_leverage = leverage - 10
+
                 # 设置备用杠杆
-                gateway = self.cta_engine.main_engine.get_default_gateway(gateway_name)
+                gateway = self.cta_engine.main_engine.get_gateway(gateway_name, account_name)
                 if gateway:
-                    gateway.set_leverage(vt_symbol, self.optional_leverage)
+                    gateway.set_leverage(vt_symbol, next_leverage)
 
             else:
                 msg = f"设置杠杆失败: {vt_symbol}\n杠杆: {leverage}"
@@ -968,6 +988,7 @@ class TopGainersLosersPortfolio(object):
     def process_funding_rates_event(self, event: Event):
         try:
             targets = []
+            event_gateway = event.data.get("gateway_name", "")
             data = event.data.get("funding_rates", {})
             for d in data:
                 symbol = d["symbol"]
@@ -981,6 +1002,20 @@ class TopGainersLosersPortfolio(object):
                     targets.append(d)
             
             if targets:
+                # 设置杠杆
+                vt_symbols = []
+                for d in targets:
+                    symbol = d["symbol"]
+                    gateway_name = d["gateway_name"]
+                    vt_symbol = f"{symbol}.{gateway_name}"
+                    vt_symbols.append(vt_symbol)
+                
+                if event_gateway == "BINANCE":
+                    self.set_leverage(vt_symbols, 50, 10, "wawjlc")
+                
+                elif event_gateway == "BYBIT":
+                    self.set_leverage(vt_symbols, 50, 10, "loesuperman")
+
                 # 按 funding_rate 降序排序
                 targets.sort(key=lambda x: abs(x.get("funding_rate", 0)), reverse=True)
                 Thread(target=self.snipe_funding_rate, args=(targets,)).start()
@@ -1037,11 +1072,13 @@ class TopGainersLosersPortfolio(object):
             open = False
             close = False
             open_data = {}
+            open_ts = 0
             while True:
                 now = datetime.now()
                 if not open and now.minute == 59 and now.second >= 59 and now.microsecond >= 900000:
                 # if not open:
                     open = True
+                    open_ts = time.time()
                     for d in targets:
                         symbol = d["symbol"]
                         funding_rate = d["funding_rate"]
@@ -1073,6 +1110,7 @@ class TopGainersLosersPortfolio(object):
                                                 "funding_rate": funding_rate}
                 
                 if open and not close and now.minute == 0 and (now.second >= 1 or now.microsecond >= 100000):
+                # if open and not close and time.time() >= open_ts + 1:
                     close = True
                     for vt_symbol, data in open_data.items():
                         price = data["price"]
