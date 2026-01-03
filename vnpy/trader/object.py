@@ -221,8 +221,8 @@ class TradeData(BaseData):
     def __post_init__(self):
         """"""
         self.vt_symbol = f"{self.symbol}.{self.exchange.value}"
-        self.vt_orderid = f"{self.gateway_name}.{self.orderid}"
-        self.vt_tradeid = f"{self.gateway_name}.{self.tradeid}"
+        self.vt_orderid = f"{self.gateway_name}.{self.account_name}.{self.orderid}"
+        self.vt_tradeid = f"{self.gateway_name}.{self.account_name}.{self.tradeid}"
 
 
 @dataclass
