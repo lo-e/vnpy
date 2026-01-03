@@ -195,7 +195,7 @@ class CtaTemplate(ABC):
         """
 
         try:
-            msg = f'====== 成交 ======\n\n{trade.vt_orderid}\n合约：{trade.symbol}\n开平：{trade.offset}\n方向：{trade.direction} \n价格：{trade.price}\n数量：{trade.volume}'
+            msg = f'====== 成交 ======\n\n{trade.vt_orderid}\n\n合约：{trade.symbol}\n开平：{trade.offset}\n方向：{trade.direction} \n价格：{trade.price}\n数量：{trade.volume}'
             # 邮件提醒
             self.send_email(msg)
 

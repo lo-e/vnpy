@@ -472,7 +472,7 @@ class OkxRestApi(RestClient):
             )
 
         # 推送提交中事件
-        order: OrderData = req.create_order_data(orderid, self.gateway_name)
+        order: OrderData = req.create_order_data(orderid, self.gateway_name, self.gateway.account_name)
         self.gateway.on_order(order)
         return order.vt_orderid
 
@@ -666,7 +666,8 @@ class OkxRestApi(RestClient):
         for order_info in packet["data"]:
             order: OrderData = parse_order_data(
                 order_info,
-                self.gateway_name
+                self.gateway_name,
+                self.gateway.account_name
             )
             self.gateway.on_order(order)
 
@@ -1129,7 +1130,7 @@ class OkxWebsocketPrivateApi(WebsocketClient):
         """委托更新推送"""
         data: list = packet["data"]
         for d in data:
-            order: OrderData = parse_order_data(d, self.gateway_name)
+            order: OrderData = parse_order_data(d, self.gateway_name, self.gateway.account_name)
             if self.gateway.get_order(order.orderid):
                 order.offset = self.gateway.get_order(order.orderid).offset
             self.gateway.on_order(order)
@@ -1390,7 +1391,7 @@ class OkxWebsocketPrivateApi(WebsocketClient):
         self.send_packet(okx_req)
 
         # 推送提交中事件
-        order: OrderData = req.create_order_data(orderid, self.gateway_name)
+        order: OrderData = req.create_order_data(orderid, self.gateway_name, self.gateway.account_name)
         self.reqid_order_map[str(self.reqid)] = order
         self.gateway.on_order(order)
         return order.vt_orderid
@@ -1436,7 +1437,7 @@ def get_float_value(data: dict, key: str) -> float:
         return 0.0
     return float(data_str)
 
-def parse_order_data(data: dict, gateway_name: str) -> OrderData:
+def parse_order_data(data: dict, gateway_name: str, account_name: str) -> OrderData:
     """解析委托回报数据"""
     order_id: str = data["clOrdId"]
     if order_id:
@@ -1466,6 +1467,7 @@ def parse_order_data(data: dict, gateway_name: str) -> OrderData:
         datetime=parse_timestamp(data["cTime"]),
         status=STATUS_OKX2VT[data["state"]],
         gateway_name=gateway_name,
+        account_name=account_name
     )
     if data["reduceOnly"] == "true":
         order.offset = Offset.CLOSE

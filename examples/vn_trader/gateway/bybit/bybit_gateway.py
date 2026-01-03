@@ -524,7 +524,7 @@ class BybitRestApi(RestClient):
             data["stopLoss"] = str(req.stop_loss_price)
             data["slTriggerBy"] = "LastPrice"
 
-        order = req.create_order_data(orderid, self.gateway_name)
+        order: OrderData = req.create_order_data(orderid, self.gateway_name, self.gateway.account_name)
         order.datetime = datetime.now()
 
         self.add_request(
@@ -812,6 +812,7 @@ class BybitRestApi(RestClient):
                 status=STATUS_BYBIT2VT[order_data["orderStatus"]],
                 datetime=generate_datetime(int(order_data["createdTime"])),
                 gateway_name=self.gateway_name,
+                account_name=self.gateway.account_name
             )
 
             if order_data["orderStatus"] in ["Untriggered", "Deactivated", "Triggered"]:
@@ -1238,6 +1239,7 @@ class BybitWebsocketTradeApi(WebsocketClient):
                 status=STATUS_BYBIT2VT[order_data["orderStatus"]],
                 datetime=generate_datetime(int(order_data["createdTime"])),
                 gateway_name=self.gateway_name,
+                account_name=self.gateway.account_name
             )
 
             if order_data["orderStatus"] in ["Untriggered", "Deactivated", "Triggered"]:

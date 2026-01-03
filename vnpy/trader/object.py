@@ -167,11 +167,12 @@ class OrderData(BaseData):
     time: str = ""
     datetime: datetime = None
     reference: str = ""
+    account_name: str = ""
 
     def __post_init__(self):
         """"""
         self.vt_symbol = f"{self.symbol}.{self.exchange.value}"
-        self.vt_orderid = f"{self.gateway_name}.{self.orderid}"
+        self.vt_orderid = f"{self.gateway_name}.{self.account_name}.{self.orderid}"
         self.create_time = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
 
     def is_active(self) -> bool:
@@ -414,7 +415,7 @@ class OrderRequest:
         """"""
         self.vt_symbol = f"{self.symbol}.{self.exchange.value}"
 
-    def create_order_data(self, orderid: str, gateway_name: str) -> OrderData:
+    def create_order_data(self, orderid: str, gateway_name: str, account_name: str) -> OrderData:
         """
         Create order data from request.
         """
@@ -429,6 +430,7 @@ class OrderRequest:
             volume=self.volume,
             reference=self.reference,
             gateway_name=gateway_name,
+            account_name=account_name
         )
         return order
 

@@ -147,9 +147,10 @@ class PositionHolding:
 
     def update_order_request(self, req: OrderRequest, vt_orderid: str) -> None:
         """"""
-        gateway_name, orderid = vt_orderid.split(".")
+        gateway_name = vt_orderid.split(".")[0]
+        orderid = vt_orderid.split(".")[-1]
 
-        order = req.create_order_data(orderid, gateway_name)
+        order = req.create_order_data(orderid, gateway_name, "")
         self.update_order(order)
 
     def update_trade(self, trade: TradeData) -> None:
