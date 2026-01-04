@@ -933,7 +933,9 @@ class TrendingMultiStrategy(CtaTemplate):
         self.traded_signals.append(signal.__dict__)
 
         # 重新初始化信号参数
-        self.signal_data[signal_name] = SignalData(signal_name)
+        signal = SignalData(signal_name)
+        signal.unit_loss = SIGNALS.get(signal_name, {}).get("unit_loss", 0)
+        self.signal_data[signal_name] = signal
 
     def get_syncs(self):
         strategy_syncs = {}
