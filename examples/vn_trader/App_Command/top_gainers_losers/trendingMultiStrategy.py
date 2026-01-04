@@ -111,7 +111,8 @@ class TrendingMultiStrategy(CtaTemplate):
         "database_history_loaded",
         "signal_data",
         "traded_signals",
-        "stop_price"
+        "stop_price",
+        "signal_count_dict"
     ]
 
     def __init__(self, ctaEngine, setting):
@@ -127,6 +128,7 @@ class TrendingMultiStrategy(CtaTemplate):
         self.reverse_mean_24h = 0
         self.manual_close = False
         self.datetime = ""
+        self.signal_count_dict = {}
 
         """ fake """
         # self.send_fake_order = False
@@ -884,6 +886,7 @@ class TrendingMultiStrategy(CtaTemplate):
         
         # 开仓计数
         signal.open_count += 1
+        self.signal_count_dict[signal.name] = self.signal_count_dict.get(signal.name, 0) + 1
 
     def add_fake_unit_pos(self, tick_price: float, signal: SignalData):
         # 确定止损价格
@@ -1111,10 +1114,15 @@ class TrendingMultiStrategy(CtaTemplate):
         shutil.move(temp_file_path, file_path)
 
     def check_open_allowed(self, signal: SignalData, tick: TickData):
+        open_allowed = True
         pure_symbol = get_strategy_symbol(self.strategy_name)
 
+        # 最大信号开仓次数限制
+        signal_open_count = self.signal_count_dict.get(signal.name, 0)
+        if signal_open_count >= 3:
+            open_allowed = False
+
         # 是否近期历史高低价
-        open_allowed = True
         if (self.direction == Direction.LONG and not self.history_high_cross) or (self.direction == Direction.SHORT and not self.history_low_cross):
             open_allowed = False
 
