@@ -529,9 +529,8 @@ class TrendingMultiStrategy(CtaTemplate):
                                 indicator_inited = True
 
                         elif signal_name == "T4":
-                            # if signal.pre_signal_dt and 5 <= recent_minutes <= 30 and self.hour_up - signal.pre_signal_hour_up <= abs(self.hour_up - signal.pre_signal_hour_down) / 4.0 and stop_price and stop_price >= self.hour_up - abs(self.hour_up - signal.pre_signal_hour_down) / 4.0 and self.minute_recent_down >= self.hour_down:
-                            #     indicator_inited = True
-                            pass
+                            if recent_minutes >= 30 and self.minute_recent_down >= self.hour_up - abs(self.hour_up - self.hour_down) / 4.0:
+                                indicator_inited = True
 
                         elif signal_name == "T5":
                             if 3 <= recent_minutes <= 60 and self.minute_recent_down >= self.hour_down:
@@ -608,9 +607,8 @@ class TrendingMultiStrategy(CtaTemplate):
                                 indicator_inited = True
 
                         elif signal_name == "T4":
-                            # if signal.pre_signal_dt and 5 <= recent_minutes <= 30 and signal.pre_signal_hour_down - self.hour_down <= abs(signal.pre_signal_hour_up - self.hour_down) / 4.0 and stop_price and stop_price <= self.hour_down + abs(signal.pre_signal_hour_up - self.hour_down) / 4.0 and self.minute_recent_up <= self.hour_up:
-                            #     indicator_inited = True
-                            pass
+                            if recent_minutes >= 30 and self.minute_recent_up <= self.hour_down + abs(self.hour_up - self.hour_down) / 4.0:
+                                indicator_inited = True
 
                         elif signal_name == "T5":
                             if 3 <= recent_minutes <= 60 and self.minute_recent_up <= self.hour_up:
@@ -715,14 +713,14 @@ class TrendingMultiStrategy(CtaTemplate):
             signal: SignalData = self.signal_data[signal_name]
 
             # 开仓判断
-            if (price_cross or (minute30_price_cross and (signal_name == "T6" or signal_name == "T8"))) and not signal.target_pos and self.database_loaded and signal.indicator_inited and not self.closed:
+            if (price_cross or (minute30_price_cross and signal_name in ["T6", "T8"])) and not signal.target_pos and self.database_loaded and signal.indicator_inited and not self.closed:
                 open_allowed = self.check_open_allowed(signal, tick)
                 if open_allowed:
                     # 仓位计算
                     self.add_unit_pos(tick.last_price, signal)
 
                     # 实盘开仓
-                    if self.portfolio.trade_enable and time.time() <= tick.datetime.timestamp() + 3:
+                    if signal_name not in ["T4"] and self.portfolio.trade_enable and time.time() <= tick.datetime.timestamp() + 3:
                         open_volume += abs(signal.target_pos)
                         if self.direction == Direction.LONG:
                             self.stop_price = min(self.stop_price, signal.stop_price) if self.stop_price else signal.stop_price
