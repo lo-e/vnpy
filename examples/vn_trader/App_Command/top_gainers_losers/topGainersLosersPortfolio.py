@@ -1299,7 +1299,7 @@ class TopGainersLosersPortfolio(object):
 
                                     # 重新发送自动止损订单
                                     if strategy_target_pos and self.exchange == Exchange.BINANCE:
-                                        self.send_order(Direction.SHORT, Offset.CLOSE, strategy.stop_price, abs(strategy_target_pos), stop=True)
+                                        strategy.send_order(Direction.SHORT, Offset.CLOSE, strategy.stop_price, abs(strategy_target_pos), stop=True)
 
                             if strategy.direction == Direction.SHORT:
                                 if strategy_target_pos > 0 or strategy.pos > 0:
@@ -1325,7 +1325,7 @@ class TopGainersLosersPortfolio(object):
 
                                     # 重新发送自动止损订单
                                     if strategy_target_pos and self.exchange == Exchange.BINANCE:
-                                        self.send_order(Direction.LONG, Offset.CLOSE, strategy.stop_price, abs(strategy_target_pos), stop=True)
+                                        strategy.send_order(Direction.LONG, Offset.CLOSE, strategy.stop_price, abs(strategy_target_pos), stop=True)
                         
                         if strategy.closed and not strategy.pos:
                             vt_orderids = self.cta_engine.strategy_orderid_map[strategy.strategy_name]
