@@ -10,7 +10,7 @@ from vnpy.trader.constant import Direction, Offset, Exchange, OrderType
 from App.Turtle_crypto.dataservice.utility import get_csv_path
 import pandas as pd
 import os
-from vnpy.trader.object import BarData, TickData, TradeData, CancelRequest
+from vnpy.trader.object import BarData, TickData, TradeData, CancelRequest, ContractData
 from vnpy.event import Event
 from vnpy.trader.object import SubscribeRequest
 from .trendingStrategy import TrendingStrategy, get_strategy_pure_name, get_strategy_type
@@ -88,6 +88,7 @@ class TopGainersLosersPortfolio(object):
         self.download_engine = TurtleCryptoDataDownloading()
         self.download_instruments_time: datetime = None
         self.query_funding_rate_time: datetime = None
+        self.update_leverage_time: datetime = None
         self.instruments_downloading = False
         self.bar_download_queue = Queue()
 
@@ -147,6 +148,11 @@ class TopGainersLosersPortfolio(object):
             gateway = self.cta_engine.main_engine.get_default_gateway("BINANCE")
             if gateway:
                 gateway.query_funding_rate()
+
+        # 定期更新交易所合约杠杆
+        if self.update_leverage_time != current_hour_time and now.hour == 1 and now.minute >= 5:
+            self.update_leverage_time = current_hour_time
+            self.update_leverage()
 
         # 重新订阅
         if self.unsubscribe_time and time.time() - self.unsubscribe_time >= 5:
@@ -857,13 +863,13 @@ class TopGainersLosersPortfolio(object):
                 self.query_gateway_contract(list(update_contract_gateway_names))
 
             if len(new_vt_symbols_okx):
-                self.set_leverage(list(new_vt_symbols_okx), 20, 10)
+                Thread(target=self.set_leverage, args=(list(new_vt_symbols_okx), 20, 5,)).start()
             
             if len(new_vt_symbols_binance):
-                self.set_leverage(list(new_vt_symbols_binance), 20, 10)
+                Thread(target=self.set_leverage, args=(list(new_vt_symbols_binance), 20, 5,)).start()
 
             if len(new_vt_symbols_bybit):
-                self.set_leverage(list(new_vt_symbols_bybit), 20, 10)
+                Thread(target=self.set_leverage, args=(list(new_vt_symbols_bybit), 20, 5,)).start()
 
             # 导入更新交易所合约
             self.load_instruments_data()
@@ -953,10 +959,15 @@ class TopGainersLosersPortfolio(object):
 
                 if gateway:
                     gateway.set_leverage(vt_symbol, self.default_leverage)
+
+                time.sleep(1)
         
         except Exception as e:
             msg = f"设置杠杆出错: {vt_symbols}\n\n{e}"
             self.send_ding_talk(msg)
+        
+        msg = f"交易所合约杠杆已更新\n{gateway_name}({len(vt_symbols)})"
+        self.send_ding_talk(msg)
 
     def process_leverage_failed_event(self, event: Event):
         try:
@@ -1009,10 +1020,10 @@ class TopGainersLosersPortfolio(object):
                     vt_symbols.append(vt_symbol)
                 
                 if event_gateway == "BINANCE":
-                    self.set_leverage(vt_symbols, 50, 10, "wawjlc")
-                
+                    Thread(target=self.set_leverage, args=(list(vt_symbols), 50, 10, "wawjlc",)).start()
+
                 elif event_gateway == "BYBIT":
-                    self.set_leverage(vt_symbols, 50, 10, "loesuperman")
+                    Thread(target=self.set_leverage, args=(list(vt_symbols), 50, 10, "loesuperman",)).start()
 
                 # 按 funding_rate 降序排序
                 targets.sort(key=lambda x: abs(x.get("funding_rate", 0)), reverse=True)
@@ -1132,6 +1143,20 @@ class TopGainersLosersPortfolio(object):
         except Exception as e:
             msg = f"狙击资金费率出错: {vt_symbols}\n\n{e}"
             self.send_ding_talk(msg)
+
+    def update_leverage(self):
+        for gateway_name in ["BINANCE", "BYBIT"]:
+            vt_symbols = set()
+            contracts = self.cta_engine.main_engine.engines["oms"].contracts
+            for key in contracts.keys():
+                contract: ContractData = contracts[key]
+                if contract.gateway_name == gateway_name:
+                    if contract.gateway_name == "BYBIT" and "-" in contract.vt_symbol:
+                        # 过滤BYBIT交割合约
+                        continue
+                    vt_symbols.add(contract.vt_symbol)
+            
+            Thread(target=self.set_leverage, args=(list(vt_symbols), 20, 5,)).start()
 
     def load_instruments_data(self):
         # .csv获取交易所USDT合约列表
