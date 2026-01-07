@@ -1074,8 +1074,9 @@ class TopGainersLosersPortfolio(object):
                 total_funding_rate += abs(d["funding_rate"])
                 count += 1
                 if total_funding_rate > 0.05 or count > 3:
+                    count -= 1
                     break
-            targets = targets[:count-1]
+            targets = targets[:count]
 
             # 准备狙击
             open = False
