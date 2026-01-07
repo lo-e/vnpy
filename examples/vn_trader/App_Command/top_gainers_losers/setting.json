@@ -10288,6 +10288,23 @@
             "manual_close": false,
             "data_dt": "2026-01-07 11:08:39",
             "datetime": "2026-01-07 11:08:40"
+        },
+        {
+            "strategy_name": "0107111510_LONG_MULTI_DODOX_BINANCE",
+            "vt_symbol": "DODOXUSDT.BINANCE",
+            "exchange": "BINANCE",
+            "exchange_user": "lo-e",
+            "direction": "LONG",
+            "change": 2.76,
+            "volume_24h": "165.05万",
+            "trending_mean_1h": 6.07,
+            "reverse_mean_1h": -3.68,
+            "trending_mean_24h": 35.0,
+            "reverse_mean_24h": -16.5,
+            "start": true,
+            "manual_close": false,
+            "data_dt": "2026-01-07 11:15:09",
+            "datetime": "2026-01-07 11:15:10"
         }
     ]
 }

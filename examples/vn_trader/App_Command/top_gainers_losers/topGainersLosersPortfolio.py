@@ -104,7 +104,7 @@ class TopGainersLosersPortfolio(object):
         self.load_history_pnl_data()
 
         # 监控行情数据延迟事件
-        self.cta_engine.event_engine.register(EVENT_TICK_DELAY, self.resubscribe)
+        # self.cta_engine.event_engine.register(EVENT_TICK_DELAY, self.resubscribe)
         self.cta_engine.event_engine.register(EVENT_ACCOUNT, self.on_account)
 
         # Bar下载
@@ -268,8 +268,6 @@ class TopGainersLosersPortfolio(object):
         self.pnl_data[signal.name] = signal_data
 
     def resubscribe(self, event: Event):
-        return
-    
         # 取消订阅
         self.subscribe_strategies(unsubscribe=True)
 
