@@ -970,7 +970,7 @@ class TopGainersLosersPortfolio(object):
             vt_symbol = f"{symbol}.{gateway_name}"
 
             if leverage > self.optional_leverage:
-                next_leverage = leverage - 10
+                next_leverage = leverage - 5
 
                 # 设置备用杠杆
                 gateway = self.cta_engine.main_engine.get_gateway(gateway_name, account_name)

@@ -326,11 +326,13 @@ class LeverageUtility(object):
         account_name = data["account_name"]
         vt_symbol = f"{symbol}.{gateway_name}"
 
-        if leverage != self.optional_leverage:
+        if leverage > self.optional_leverage:
+            next_leverage = leverage - 5
+
             # 设置备用杠杆
             gateway = self.main_engine.get_gateway(gateway_name, account_name)
             if gateway:
-                gateway.set_leverage(vt_symbol, self.optional_leverage)
+                gateway.set_leverage(vt_symbol, next_leverage)
                 self.optional_list.append(vt_symbol)
                 self.optional_time = time.time()
                 print(f"{vt_symbol}\toptional")
@@ -400,4 +402,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-    # set_leverage(target_gateway_name="BINANCE", account_name="wawjlc", leverage=20, optional_leverage=10, target=[], specials={"BTC": 100, "ETH": 50, "SOL": 50})
+    # set_leverage(target_gateway_name="BINANCE", account_name="lo-e", leverage=20, optional_leverage=5, target=[], specials={"BTC": 100, "ETH": 50, "SOL": 50})
