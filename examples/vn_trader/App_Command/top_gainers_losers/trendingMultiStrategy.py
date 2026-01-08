@@ -61,6 +61,7 @@ class SignalData(object):
         self.pre_signal_hour_up = 0
         self.pre_signal_hour_down = 0
         self.open_volume_24h = ""
+        self.tick_delay_wait = False
 
 class TrendingMultiStrategy(CtaTemplate):
 
@@ -724,7 +725,12 @@ class TrendingMultiStrategy(CtaTemplate):
                     self.add_unit_pos(tick.last_price, signal)
 
                     # 实盘开仓
-                    if signal_name not in ["T4", "T2"] and self.portfolio.trade_enable and time.time() <= tick.datetime.timestamp() + 3:
+                    tick_delay = False
+                    if time.time() > tick.datetime.timestamp() + 3:
+                        tick_delay = True
+                        signal.tick_delay_wait = True
+
+                    if signal_name not in ["T4", "T2"] and self.portfolio.trade_enable and not tick_delay:
                         open_volume += abs(signal.target_pos)
                         if self.direction == Direction.LONG:
                             self.stop_price = min(self.stop_price, signal.stop_price) if self.stop_price else signal.stop_price
@@ -740,7 +746,20 @@ class TrendingMultiStrategy(CtaTemplate):
 
                     msg = f"{self.vt_symbol} {self.direction.value} {signal_name}\n开仓（{signal.open_count}）"
                     self.cta_engine.main_engine.send_ding_talk(msg)
-            
+
+            # 数据延迟恢复开仓
+            if signal.target_pos and signal.tick_delay_wait and self.database_loaded and ((self.direction == Direction.LONG and signal.open_tick_price and tick.last_price <= signal.open_tick_price) or (self.direction == Direction.SHORT and signal.open_tick_price and tick.last_price >= signal.open_tick_price)) and time.time() <= tick.datetime.timestamp() + 1:
+                signal.tick_delay_wait = False
+                open_volume += abs(signal.target_pos)
+                if self.direction == Direction.LONG:
+                    self.stop_price = min(self.stop_price, signal.stop_price) if self.stop_price else signal.stop_price
+
+                else:
+                    self.stop_price = max(self.stop_price, signal.stop_price)
+                
+                msg = f"{self.vt_symbol} {self.direction.value} {signal_name}\n数据延迟恢复开仓（{signal.open_count}）"
+                self.cta_engine.main_engine.send_ding_talk(msg)
+
             # 止损判断
             if signal.target_pos and ((self.direction == Direction.LONG and tick.last_price <= signal.stop_price) or (self.direction == Direction.SHORT and tick.last_price >= signal.stop_price)):
                 signal.stop_tick_price = tick.last_price
