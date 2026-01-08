@@ -521,7 +521,8 @@ class TrendingMultiStrategy(CtaTemplate):
                                 indicator_inited = True
 
                         elif signal_name == "T2":
-                            if 5 <= recent_minutes <= 60 and stop_price and stop_price >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0 and self.hour_down <= self.minute_recent_down <= self.hour_up - abs(self.hour_up - self.hour_down) * 0.9:
+                            # stop_price >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0
+                            if 5 <= recent_minutes <= 60 and stop_price and stop_price >= self.hour_up - abs(self.hour_up - self.hour_down) / 1.0 and self.hour_down <= self.minute_recent_down <= self.hour_up - abs(self.hour_up - self.hour_down) * 0.5:
                                 indicator_inited = True
                         
                         elif signal_name == "T3":
@@ -599,7 +600,8 @@ class TrendingMultiStrategy(CtaTemplate):
                                 indicator_inited = True
 
                         elif signal_name == "T2":
-                            if 5 <= recent_minutes <= 60 and stop_price and stop_price <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0 and self.hour_up >= self.minute_recent_up >= self.hour_down + abs(self.hour_up - self.hour_down) * 0.9:
+                            # stop_price <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0
+                            if 5 <= recent_minutes <= 60 and stop_price and stop_price <= self.hour_down + abs(self.hour_up - self.hour_down) / 1.0 and self.hour_up >= self.minute_recent_up >= self.hour_down + abs(self.hour_up - self.hour_down) * 0.5:
                                 indicator_inited = True
                         
                         elif signal_name == "T3":
@@ -720,7 +722,7 @@ class TrendingMultiStrategy(CtaTemplate):
                     self.add_unit_pos(tick.last_price, signal)
 
                     # 实盘开仓
-                    if signal_name not in ["T4"] and self.portfolio.trade_enable and time.time() <= tick.datetime.timestamp() + 3:
+                    if signal_name not in ["T4", "T2"] and self.portfolio.trade_enable and time.time() <= tick.datetime.timestamp() + 3:
                         open_volume += abs(signal.target_pos)
                         if self.direction == Direction.LONG:
                             self.stop_price = min(self.stop_price, signal.stop_price) if self.stop_price else signal.stop_price
