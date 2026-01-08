@@ -190,7 +190,7 @@ class TopGainersLosersEngine(BaseEngine):
 
         # 止损单触发非本地订单，特殊处理
         if not strategy:
-            for strategy_ in self.strategies.values():
+            for strategy_ in self.strategies.copy().values():
                 if strategy_.exchange_user == trade.account_name and strategy_.vt_symbol == trade.vt_symbol and strategy_.pos != 0:
                     strategy = strategy_
                     break
