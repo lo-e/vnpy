@@ -721,18 +721,17 @@ class TrendingMultiStrategy(CtaTemplate):
                     self.add_unit_pos(tick.last_price, signal)
 
                     # 实盘开仓
-                    tick_delay = False
-                    if time.time() > tick.datetime.timestamp() + 3:
-                        tick_delay = True
-                        signal.tick_delay_wait = True
-
-                    if signal_name not in ["T4"] and self.portfolio.trade_enable and not tick_delay:
-                        open_volume += abs(signal.target_pos)
-                        if self.direction == Direction.LONG:
-                            self.stop_price = min(self.stop_price, signal.stop_price) if self.stop_price else signal.stop_price
+                    if signal_name not in ["T4"]:
+                        if time.time() > tick.datetime.timestamp() + 3:
+                            signal.tick_delay_wait = True
 
                         else:
-                            self.stop_price = max(self.stop_price, signal.stop_price)
+                            open_volume += abs(signal.target_pos)
+                            if self.direction == Direction.LONG:
+                                self.stop_price = min(self.stop_price, signal.stop_price) if self.stop_price else signal.stop_price
+
+                            else:
+                                self.stop_price = max(self.stop_price, signal.stop_price)
 
                     # 开仓日志
                     signal_trade_logs = self.trade_logs.get(signal_name, [])
@@ -746,6 +745,7 @@ class TrendingMultiStrategy(CtaTemplate):
             # 数据延迟恢复开仓
             if signal.target_pos and signal.tick_delay_wait and self.database_loaded and ((self.direction == Direction.LONG and signal.open_tick_price and tick.last_price <= signal.open_tick_price) or (self.direction == Direction.SHORT and signal.open_tick_price and tick.last_price >= signal.open_tick_price)) and time.time() <= tick.datetime.timestamp() + 1:
                 signal.tick_delay_wait = False
+
                 open_volume += abs(signal.target_pos)
                 if self.direction == Direction.LONG:
                     self.stop_price = min(self.stop_price, signal.stop_price) if self.stop_price else signal.stop_price
