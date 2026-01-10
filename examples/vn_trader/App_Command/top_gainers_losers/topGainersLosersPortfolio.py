@@ -1025,6 +1025,12 @@ class TopGainersLosersPortfolio(object):
                 elif event_gateway == "BYBIT":
                     Thread(target=self.set_leverage, args=(list(vt_symbols), 50, 10, "loesuperman",)).start()
 
+                # 通知当前钱包余额
+                msg = "钱包余额\n"
+                for account_name, balance in self.account_balance_data.items():
+                    msg += f"\n{account_name} {balance:.2f}"
+                self.send_ding_talk(msg)
+
                 # 按 funding_rate 降序排序
                 targets.sort(key=lambda x: abs(x.get("funding_rate", 0)), reverse=True)
                 Thread(target=self.snipe_funding_rate, args=(targets,)).start()
