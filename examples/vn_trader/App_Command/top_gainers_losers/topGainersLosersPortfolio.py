@@ -1111,6 +1111,12 @@ class TopGainersLosersPortfolio(object):
                         mark_price = d["mark_price"]
                         gateway_name = d["gateway_name"]
                         vt_symbol = f"{symbol}.{gateway_name}"
+                        account_name = ""
+                        if gateway_name == "BINANCE":
+                            account_name = "wawjlc"
+
+                        if gateway_name == "BYBIT":
+                            account_name = "loesuperman"
 
                         contract = self.cta_engine.main_engine.get_contract(vt_symbol)
                         price = round_to(mark_price, contract.pricetick)
@@ -1126,11 +1132,12 @@ class TopGainersLosersPortfolio(object):
                                                           price,
                                                           volume,
                                                           OrderType.MARKET,
-                                                          account_name="wawjlc")
+                                                          account_name=account_name)
                         
                         open_data[vt_symbol] = {"price": price,
                                                 "volume": volume,
                                                 "direction": direction,
+                                                "account_name": account_name,
                                                 "funding_rate": funding_rate}
                 
                 if open and not close and now.minute == 0 and (now.second >= 1 or now.microsecond >= 100000):
@@ -1140,6 +1147,8 @@ class TopGainersLosersPortfolio(object):
                         price = data["price"]
                         volume = data["volume"]
                         direction = data["direction"]
+                        account_name = data["account_name"]
+                        
                         close_direction = Direction.SHORT if direction == Direction.LONG else Direction.LONG
                         self.cta_engine.send_simple_order(vt_symbol,
                                                           close_direction,
@@ -1147,7 +1156,7 @@ class TopGainersLosersPortfolio(object):
                                                           price,
                                                           volume,
                                                           OrderType.MARKET,
-                                                          account_name="wawjlc")
+                                                          account_name=account_name)
                 
                 if open and close:
                     break
