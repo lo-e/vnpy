@@ -1011,6 +1011,9 @@ class TopGainersLosersPortfolio(object):
                     targets.append(d)
             
             if targets:
+                # 按 funding_rate 降序排序
+                targets.sort(key=lambda x: abs(x.get("funding_rate", 0)), reverse=True)
+
                 # 设置杠杆
                 vt_symbols = []
                 for d in targets:
@@ -1031,8 +1034,15 @@ class TopGainersLosersPortfolio(object):
                     msg += f"\n{account_name} {balance:.2f}"
                 self.send_ding_talk(msg)
 
-                # 按 funding_rate 降序排序
-                targets.sort(key=lambda x: abs(x.get("funding_rate", 0)), reverse=True)
+                # 通知资金费率信息
+                msg = f"狙击资金费率（{event_gateway} {len(targets)}）\n"
+                for d in targets:
+                    symbol = d["symbol"]
+                    funding_rate = d["funding_rate"] * 100
+                    msg += f"\n{symbol} {funding_rate:.2f}"
+                self.send_ding_talk(msg)
+
+                # 启动线程狙击资金费率
                 Thread(target=self.snipe_funding_rate, args=(targets,)).start()
 
         except Exception as e:
@@ -1101,8 +1111,6 @@ class TopGainersLosersPortfolio(object):
                         mark_price = d["mark_price"]
                         gateway_name = d["gateway_name"]
                         vt_symbol = f"{symbol}.{gateway_name}"
-                        msg = f"狙击资金费率\n{vt_symbol} : {funding_rate}"
-                        self.send_ding_talk(msg)
 
                         contract = self.cta_engine.main_engine.get_contract(vt_symbol)
                         price = round_to(mark_price, contract.pricetick)
