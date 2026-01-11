@@ -26,7 +26,7 @@ from vnpy.trader.constant import (
     Status,
 )
 from vnpy.event import Event
-from vnpy.trader.event import EVENT_TIMER, EVENT_GATEWAY_LEVERAGE_FAILED
+from vnpy.trader.event import EVENT_TIMER, EVENT_GATEWAY_LEVERAGE_FAILED, EVENT_GATEWAY_FUNDING_RATES
 from vnpy.trader.gateway import BaseGateway, LocalOrderManager
 from vnpy.trader.object import (
     AccountData,
@@ -210,6 +210,10 @@ class BybitGateway(BaseGateway):
         查询合约列表
         """
         self.rest_api.query_contract()
+
+    def query_funding_rate(self) -> None:
+        """查询资金费率"""
+        self.rest_api.query_funding_rate()
    
     def query_account(self) -> None:
         """
@@ -670,6 +674,54 @@ class BybitRestApi(RestClient):
         
         self.contract_info_ready = True
         self.gateway.write_log(f"{category.upper()}合约信息查询成功")
+
+    def query_funding_rate(self):
+        """
+        发送查询资金费率请求
+        """
+        self.add_request(method="GET", path="/v5/market/tickers", callback=self.on_query_funding_rate, params={"category": "linear", "accountType": "UNIFIED"})
+
+    def on_query_funding_rate(self, data: dict, request: Request):
+        """
+        收到资金费率回报
+        """
+        if data["retCode"] != 0:
+            return
+        
+        if not data["result"]:
+            return
+        
+        funding_rates = []
+        for d in data["result"]["list"]:
+            symbol = d["symbol"]
+            if symbol[-4:] != "USDT":
+                continue
+
+            funding_rate = float(d["fundingRate"])
+            if not funding_rate:
+                continue
+
+            next_fundingtimestamp = int(d["nextFundingTime"])
+            next_funding_dt = datetime.fromtimestamp(next_fundingtimestamp / 1000)
+            
+            funding_rate_data = {"symbol": symbol,
+                                 "funding_rate": funding_rate,
+                                 "datetime": datetime.now(),
+                                 "next_funding_datetime": next_funding_dt,
+                                 "mark_price": float(d["markPrice"]),
+                                 "gateway_name": self.gateway_name}
+            funding_rates.append(funding_rate_data)
+
+        if funding_rates:
+            self.gateway.event_engine.put(
+                Event(
+                    EVENT_GATEWAY_FUNDING_RATES,
+                    {
+                        "funding_rates": funding_rates,
+                        "gateway_name": self.gateway_name,
+                    },
+                )
+            )
     
     def query_account(self):
         """

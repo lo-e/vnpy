@@ -145,7 +145,18 @@ class TopGainersLosersPortfolio(object):
         # 查询资金费率
         if self.query_funding_rate_time != current_hour_time and now.minute >= 59:
             self.query_funding_rate_time = current_hour_time
+
+            # 通知当前钱包余额
+            msg = "钱包余额\n"
+            for account_name, balance in self.account_balance_data.items():
+                msg += f"\n{account_name} {balance:.2f}"
+            self.send_ding_talk(msg)
+            
             gateway = self.cta_engine.main_engine.get_default_gateway("BINANCE")
+            if gateway:
+                gateway.query_funding_rate()
+
+            gateway = self.cta_engine.main_engine.get_default_gateway("BYBIT")
             if gateway:
                 gateway.query_funding_rate()
 
@@ -1028,18 +1039,12 @@ class TopGainersLosersPortfolio(object):
                 elif event_gateway == "BYBIT":
                     Thread(target=self.set_leverage, args=(list(vt_symbols), 50, 10, "loesuperman",)).start()
 
-                # 通知当前钱包余额
-                msg = "钱包余额\n"
-                for account_name, balance in self.account_balance_data.items():
-                    msg += f"\n{account_name} {balance:.2f}"
-                self.send_ding_talk(msg)
-
                 # 通知资金费率信息
                 msg = f"狙击资金费率（{event_gateway} {len(targets)}）\n"
                 for d in targets:
                     symbol = d["symbol"]
                     funding_rate = d["funding_rate"] * 100
-                    msg += f"\n{symbol} {funding_rate:.2f}"
+                    msg += f"\n{symbol} {funding_rate:.2f}%"
                 self.send_ding_talk(msg)
 
                 # 启动线程狙击资金费率
