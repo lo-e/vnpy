@@ -88,6 +88,7 @@ class TopGainersLosersPortfolio(object):
         self.download_engine = TurtleCryptoDataDownloading()
         self.download_instruments_time: datetime = None
         self.query_funding_rate_time: datetime = None
+        self.account_dingtalk_ts: float = 0
         self.update_leverage_time: datetime = None
         self.instruments_downloading = False
         self.bar_download_queue = Queue()
@@ -145,12 +146,6 @@ class TopGainersLosersPortfolio(object):
         # 查询资金费率
         if self.query_funding_rate_time != current_hour_time and now.minute >= 59:
             self.query_funding_rate_time = current_hour_time
-
-            # 通知当前钱包余额
-            msg = "钱包余额\n"
-            for account_name, balance in self.account_balance_data.items():
-                msg += f"\n{account_name} {balance:.2f}"
-            self.send_ding_talk(msg)
             
             gateway = self.cta_engine.main_engine.get_default_gateway("BINANCE")
             if gateway:
@@ -1024,6 +1019,15 @@ class TopGainersLosersPortfolio(object):
             if targets:
                 # 按 funding_rate 降序排序
                 targets.sort(key=lambda x: abs(x.get("funding_rate", 0)), reverse=True)
+
+                # 通知当前钱包余额
+                if time.time() > self.account_dingtalk_ts + 60:
+                    self.account_dingtalk_ts = time.time()
+                    
+                    msg = "钱包余额\n"
+                    for account_name, balance in self.account_balance_data.items():
+                        msg += f"\n{account_name} {balance:.2f}"
+                    self.send_ding_talk(msg)
 
                 # 设置杠杆
                 vt_symbols = []
