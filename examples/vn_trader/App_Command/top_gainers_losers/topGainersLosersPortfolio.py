@@ -148,9 +148,9 @@ class TopGainersLosersPortfolio(object):
         if self.query_funding_rate_time != current_hour_time and now.minute >= 59:
             self.query_funding_rate_time = current_hour_time
 
-            gateway = self.cta_engine.main_engine.get_default_gateway("OKX")
-            if gateway:
-                gateway.query_funding_rate()
+            # gateway = self.cta_engine.main_engine.get_default_gateway("OKX")
+            # if gateway:
+            #     gateway.query_funding_rate()
             
             gateway = self.cta_engine.main_engine.get_default_gateway("BINANCE")
             if gateway:
