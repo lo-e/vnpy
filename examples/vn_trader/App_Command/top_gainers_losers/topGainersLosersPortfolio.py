@@ -20,6 +20,7 @@ from vnpy.trader.event import EVENT_TICK_DELAY, EVENT_ACCOUNT, EVENT_GATEWAY_LEV
 from vnpy.trader.object import AccountData
 import copy
 import re
+import requests
 import csv
 import shutil
 
@@ -146,6 +147,10 @@ class TopGainersLosersPortfolio(object):
         # 查询资金费率
         if self.query_funding_rate_time != current_hour_time and now.minute >= 59:
             self.query_funding_rate_time = current_hour_time
+
+            gateway = self.cta_engine.main_engine.get_default_gateway("OKX")
+            if gateway:
+                gateway.query_funding_rate()
             
             gateway = self.cta_engine.main_engine.get_default_gateway("BINANCE")
             if gateway:
@@ -972,8 +977,8 @@ class TopGainersLosersPortfolio(object):
             msg = f"设置杠杆出错: {vt_symbols}\n\n{e}"
             self.send_ding_talk(msg)
         
-        msg = f"交易所合约杠杆已更新\n{gateway_name}({len(vt_symbols)})"
-        self.send_ding_talk(msg)
+        # msg = f"交易所合约杠杆已更新\n{gateway_name}({len(vt_symbols)})"
+        # self.send_ding_talk(msg)
 
     def process_leverage_failed_event(self, event: Event):
         try:
@@ -1023,7 +1028,7 @@ class TopGainersLosersPortfolio(object):
                 # 通知当前钱包余额
                 if time.time() > self.account_dingtalk_ts + 60:
                     self.account_dingtalk_ts = time.time()
-                    
+
                     msg = "钱包余额\n"
                     for account_name, balance in self.account_balance_data.items():
                         msg += f"\n{account_name} {balance:.2f}"
@@ -1037,7 +1042,10 @@ class TopGainersLosersPortfolio(object):
                     vt_symbol = f"{symbol}.{gateway_name}"
                     vt_symbols.append(vt_symbol)
                 
-                if event_gateway == "BINANCE":
+                if event_gateway == "OKX":
+                    Thread(target=self.set_leverage, args=(list(vt_symbols), 50, 10, "lo-e",)).start()
+                
+                elif event_gateway == "BINANCE":
                     Thread(target=self.set_leverage, args=(list(vt_symbols), 50, 10, "wawjlc",)).start()
 
                 elif event_gateway == "BYBIT":
@@ -1092,6 +1100,28 @@ class TopGainersLosersPortfolio(object):
 
     def snipe_funding_rate(self, targets: list):
         try:
+            # 确认并获取mark_price
+            for d in targets.copy():
+                symbol = d["symbol"]
+                mark_price = d["mark_price"]
+                if not mark_price:
+                    gateway_name = d["gateway_name"]
+                    if gateway_name == "OKX":
+                        url = f"https://www.okx.com/api/v5/public/mark-price?instId={symbol}"
+                        try:
+                            resp = requests.get(url, timeout=5)
+                            data = resp.json().get("data", [])[0]
+                            mark_price = float(data.get("markPx", 0))
+
+                        except Exception as e:
+                            pass
+                
+                if mark_price:
+                    d["mark_price"] = mark_price
+                
+                else:
+                    targets.remove(d)
+
             # 限制最大总资金费率和总数量
             total_funding_rate = 0
             count = 0
@@ -1121,10 +1151,13 @@ class TopGainersLosersPortfolio(object):
                         gateway_name = d["gateway_name"]
                         vt_symbol = f"{symbol}.{gateway_name}"
                         account_name = ""
-                        if gateway_name == "BINANCE":
+                        if gateway_name == "OKX":
+                            account_name = "lo-e"
+
+                        elif gateway_name == "BINANCE":
                             account_name = "wawjlc"
 
-                        if gateway_name == "BYBIT":
+                        elif gateway_name == "BYBIT":
                             account_name = "loesuperman"
 
                         contract = self.cta_engine.main_engine.get_contract(vt_symbol)
@@ -1174,7 +1207,7 @@ class TopGainersLosersPortfolio(object):
                     time.sleep(0.01)
 
         except Exception as e:
-            msg = f"狙击资金费率出错: {vt_symbols}\n\n{e}"
+            msg = f"狙击资金费率出错\n\n{e}"
             self.send_ding_talk(msg)
 
     def update_leverage(self):

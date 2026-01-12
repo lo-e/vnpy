@@ -48,7 +48,7 @@ from vnpy.trader.object import (
     TradeData
 )
 from vnpy.event import Event
-from vnpy.trader.event import EVENT_GATEWAY_LEVERAGE_FAILED
+from vnpy.trader.event import EVENT_GATEWAY_LEVERAGE_FAILED, EVENT_GATEWAY_FUNDING_RATES
 from threading import Thread
 
 from ..rest import Request, RestClient
@@ -233,6 +233,10 @@ class OkxGateway(BaseGateway):
     def query_contract(self) -> None:
         """查询合约列表"""
         self.rest_api.query_instrument()
+
+    def query_funding_rate(self) -> None:
+        """查询资金费率"""
+        self.rest_api.query_funding_rate()
 
     def query_account(self) -> None:
         """查询资金"""
@@ -535,6 +539,14 @@ class OkxRestApi(RestClient):
                 params={"instType": inst_type}
             )
 
+    def query_funding_rate(self) -> None:
+        self.add_request(
+            "GET",
+            "/api/v5/public/funding-rate",
+            callback=self.on_query_funding_rate,
+            params={"instId": "ANY"}
+            )
+
     def query_history(self, req: HistoryRequest) -> List[BarData]:
         """
         查询历史数据
@@ -744,6 +756,44 @@ class OkxRestApi(RestClient):
         
         self.contract_info_ready = True
         self.gateway.write_log(f"{d['instType']}合约信息查询成功 总计：{total_count}  USDT正向：{usdt_linear_count}  USDC正向：{usdc_linear_count}  反向：{inverse_count}")
+
+    def on_query_funding_rate(self, packet: dict, request: Request) -> None:
+        """资金费率查询回报"""
+        funding_rates = []
+        for d in packet["data"]:
+            symbol = d["instId"]
+            symbol_elements = symbol.split("-")
+            quote = symbol_elements[1] if len(symbol_elements) > 2 else ""
+            if quote != "USDT":
+                continue
+
+            funding_rate = float(d["fundingRate"])
+            if not funding_rate:
+                continue
+
+            timestamp = int(d["ts"])
+            dt = datetime.fromtimestamp(timestamp / 1000, tz=CHINA_TZ)
+            next_fundingtimestamp = int(d["fundingTime"])
+            next_funding_dt = datetime.fromtimestamp(next_fundingtimestamp / 1000)
+            
+            funding_rate_data = {"symbol": symbol,
+                                 "funding_rate": funding_rate,
+                                 "datetime": dt,
+                                 "next_funding_datetime": next_funding_dt,
+                                 "mark_price": 0,
+                                 "gateway_name": self.gateway_name}
+            funding_rates.append(funding_rate_data)
+
+        if funding_rates:
+            self.gateway.event_engine.put(
+                Event(
+                    EVENT_GATEWAY_FUNDING_RATES,
+                    {
+                        "funding_rates": funding_rates,
+                        "gateway_name": self.gateway_name,
+                    },
+                )
+                )
 
     def on_error(
         self,

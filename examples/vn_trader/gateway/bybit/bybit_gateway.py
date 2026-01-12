@@ -721,7 +721,7 @@ class BybitRestApi(RestClient):
                         "gateway_name": self.gateway_name,
                     },
                 )
-            )
+                )
     
     def query_account(self):
         """
