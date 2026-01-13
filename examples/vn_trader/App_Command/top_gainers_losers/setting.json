@@ -8486,6 +8486,23 @@
             "manual_close": false,
             "data_dt": "2026-01-13 11:22:18",
             "datetime": "2026-01-13 11:22:20"
+        },
+        {
+            "strategy_name": "0113113350_LONG_MULTI_POLYX_BINANCE",
+            "vt_symbol": "POLYXUSDT.BINANCE",
+            "exchange": "BINANCE",
+            "exchange_user": "lo-e",
+            "direction": "LONG",
+            "change": 1.36,
+            "volume_24h": "712.87万",
+            "trending_mean_1h": 5.77,
+            "reverse_mean_1h": -3.39,
+            "trending_mean_24h": 31.22,
+            "reverse_mean_24h": -18.22,
+            "start": true,
+            "manual_close": false,
+            "data_dt": "2026-01-13 11:33:47",
+            "datetime": "2026-01-13 11:33:50"
         }
     ]
 }
