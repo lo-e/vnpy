@@ -29,7 +29,8 @@ SIGNALS = {"T1": {"unit_loss": 0.003},
            "T6": {"unit_loss": 0.003},
            "T7": {"unit_loss": 0.003},
            "T8": {"unit_loss": 0.003},
-           "T9": {"unit_loss": 0.003}}
+           "T9": {"unit_loss": 0.003},
+           "T10": {"unit_loss": 0.003}}
 
 class SignalData(object):
     def __init__(self, name: str):
@@ -558,6 +559,10 @@ class TrendingMultiStrategy(CtaTemplate):
                             if recent_minutes >= 30 and self.minute_15_squeeze_on and abs(self.minute_15_up - self.minute_15_down) <= abs(self.hour_up - self.hour_down) / 5.0 and self.minute_15_up >= self.hour_up - abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_down >= self.hour_down:
                                 indicator_inited = True
 
+                        elif signal_name == "T10":
+                            if recent_minutes >= 30 and self.minute_30_squeeze_on and stop_price and stop_price >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0 and self.minute_recent_down >= self.hour_down:
+                                indicator_inited = True
+
                     if indicator_inited:
                         signal.indicator_inited = True
                         signal.indicator_inited_dt = self.hour_up_dt
@@ -642,6 +647,10 @@ class TrendingMultiStrategy(CtaTemplate):
 
                         elif signal_name == "T9":
                             if recent_minutes >= 30 and self.minute_15_squeeze_on and abs(self.minute_15_up - self.minute_15_down) <= abs(self.hour_up - self.hour_down) / 5.0 and self.minute_15_down <= self.hour_down + abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_up <= self.hour_up:
+                                indicator_inited = True
+
+                        elif signal_name == "T10":
+                            if recent_minutes >= 30 and self.minute_30_squeeze_on and stop_price and stop_price <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0 and self.minute_recent_up <= self.hour_up:
                                 indicator_inited = True
 
                     if indicator_inited:
@@ -748,7 +757,7 @@ class TrendingMultiStrategy(CtaTemplate):
                     self.add_unit_pos(tick.last_price, signal)
 
                     # 实盘开仓
-                    if signal_name not in ["T4", "T9"]:
+                    if signal_name not in ["T4", "T9", "T10"]:
                         if time.time() > tick.datetime.timestamp() + 3:
                             signal.tick_delay_wait = True
 
