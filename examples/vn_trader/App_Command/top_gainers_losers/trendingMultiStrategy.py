@@ -1202,11 +1202,30 @@ class TrendingMultiStrategy(CtaTemplate):
             if pure_symbol == trending_data["symbol"]:
                 volume_24h = trending_data["volume"]
                 break
+
+        if not volume_24h:
+            trending_data_list_24h = []
+            if self.direction == Direction.LONG and len(self.portfolio.rise_data_list_24h_bybit) > 3:
+                trending_data_list_24h = self.portfolio.rise_data_list_24h_bybit[3:]
+
+            if self.direction == Direction.SHORT and len(self.portfolio.fall_data_list_24h_bybit) > 3:
+                trending_data_list_24h = self.portfolio.fall_data_list_24h_bybit[3:]
+
+            for trending_data in trending_data_list_24h:
+                if pure_symbol == trending_data["symbol"]:
+                    volume_24h = trending_data["volume"]
+                    break
         
         if volume_24h:
             volume_24h_v = float(re.sub(r'[^\d.]', '', volume_24h))
-            volume_24h_u = re.sub(r'[\d.]', '', volume_24h)
+            volume_24h_u = re.sub(r'[\d.,]', '', volume_24h)
             if volume_24h_u == "万" and volume_24h_v < 1000:
+                open_allowed = False
+            
+            if volume_24h_u == "M" and volume_24h_v < 10:
+                open_allowed = False
+            
+            if volume_24h_u == "K":
                 open_allowed = False
             
         else:
@@ -1253,6 +1272,20 @@ class TrendingMultiStrategy(CtaTemplate):
             if pure_symbol in trending_top_24h:
                 rank_24h = trending_top_24h.index(pure_symbol) + 1
                 signal.open_tags.append(f"rank_{rank_24h}")
+
+            if not signal.open_tags:
+                trending_top_24h = []
+                if self.direction == Direction.LONG and len(self.portfolio.rise_data_list_24h_bybit) >= top + 3:
+                    for i in range(3, top + 3, 1):
+                        trending_top_24h.append(self.portfolio.rise_data_list_24h_bybit[i]["symbol"])
+
+                if self.direction == Direction.SHORT and len(self.portfolio.fall_data_list_24h_bybit) >= top + 3:
+                    for i in range(3, top + 3, 1):
+                        trending_top_24h.append(self.portfolio.fall_data_list_24h_bybit[i]["symbol"])
+                        
+                if pure_symbol in trending_top_24h:
+                    rank_24h = trending_top_24h.index(pure_symbol) + 1
+                    signal.open_tags.append(f"rank_{rank_24h}")
 
             # 多空清算比超限
             # liquidation_long_1h = self.portfolio.liquidation_data.get("1h_long", "")
@@ -1330,11 +1363,14 @@ def get_full_volume(volume: str):
         return 0
     
     volume_v = float(re.sub(r'[^\d.]', '', volume))
-    volume_u = re.sub(r'[\d.]', '', volume)
+    volume_u = re.sub(r'[\d.,]', '', volume)
     if volume_u == "亿":
         volume_v *= 100000000
     
     elif volume_u == "万":
         volume_v *= 10000
+
+    elif volume_u == "M":
+        volume_v *= 1000000
     
     return volume_v

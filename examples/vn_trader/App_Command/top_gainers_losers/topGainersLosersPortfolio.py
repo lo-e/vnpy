@@ -54,6 +54,8 @@ class TopGainersLosersPortfolio(object):
         self.fall_data_list_1h_coinglass = []
         self.rise_data_list_24h_coinglass = []
         self.fall_data_list_24h_coinglass = []
+        self.rise_data_list_24h_bybit = []
+        self.fall_data_list_24h_bybit = []
         self.liquidation_data = {}
         self.sync_data = {}
         self.unsubscribe_time = 0
@@ -676,7 +678,7 @@ class TopGainersLosersPortfolio(object):
                 if self.liquidation_data != liquidation_data:
                     self.liquidation_data = liquidation_data
 
-                # 获取涨跌幅排行榜数据
+                # 获取coinglass涨跌幅排行榜数据
                 for duration in ["24h", "1h"]:
                     rise_list = []
                     fall_list = []
@@ -685,27 +687,58 @@ class TopGainersLosersPortfolio(object):
                     df = pd.read_csv(rise_latest_file_path)
                     for _, row in df.iterrows():
                         rise_list.append(dict(row))
+                    rise_ts = rise_list[0]["change"] if rise_list else 0
 
                     fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}coinglass{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
                     df = pd.read_csv(fall_latest_file_path)
                     for _, row in df.iterrows():
                         fall_list.append(dict(row))
+                    fall_ts = fall_list[0]["change"] if fall_list else 0
                     
                     # 生成信号
-                    if duration == "24h" and (self.rise_data_list_24h_coinglass != rise_list or self.fall_data_list_24h_coinglass != fall_list):
-                        self.rise_data_list_24h_coinglass= rise_list
+                    rise_data_24h_ts = self.rise_data_list_24h_coinglass[0]["change"] if self.rise_data_list_24h_coinglass else 0
+                    fall_data_24h_ts = self.fall_data_list_24h_coinglass[0]["change"] if self.fall_data_list_24h_coinglass else 0
+                    if duration == "24h" and (rise_data_24h_ts != rise_ts or fall_data_24h_ts != fall_ts):
+                        self.rise_data_list_24h_coinglass = rise_list
                         self.fall_data_list_24h_coinglass = fall_list
                         # self.on_trending_data_24h((rise_list, fall_list))
 
-                    if duration == "1h" and (self.rise_data_list_1h_coinglass != rise_list or self.fall_data_list_1h_coinglass != fall_list):
-                        self.rise_data_list_1h_coinglass= rise_list
+                    rise_data_1h_ts = self.rise_data_list_1h_coinglass[0]["change"] if self.rise_data_list_1h_coinglass else 0
+                    fall_data_1h_ts = self.fall_data_list_1h_coinglass[0]["change"] if self.fall_data_list_1h_coinglass else 0
+                    if duration == "1h" and (rise_data_1h_ts != rise_ts or fall_data_1h_ts != fall_ts):
+                        self.rise_data_list_1h_coinglass = rise_list
                         self.fall_data_list_1h_coinglass = fall_list
                         self.on_trending_data_1h((rise_list, fall_list))
 
-                    if duration == "5m" and (self.rise_data_list_5m_coinglass != rise_list or self.fall_data_list_5m_coinglass != fall_list):
+                    rise_data_5m_ts = self.rise_data_list_5m_coinglass[0]["change"] if self.rise_data_list_5m_coinglass else 0
+                    fall_data_5m_ts = self.fall_data_list_5m_coinglass[0]["change"] if self.fall_data_list_5m_coinglass else 0
+                    if duration == "5m" and (rise_data_5m_ts != rise_ts or fall_data_5m_ts != fall_ts):
                         self.rise_data_list_5m_coinglass = rise_list
                         self.fall_data_list_5m_coinglass = fall_list
                         # self.on_trending_data_5m((rise_list, fall_list))
+
+                # 获取bybit涨跌幅排行榜数据
+                for duration in ["24h"]:
+                    rise_list = []
+                    fall_list = []
+
+                    rise_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}bybit{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
+                    df = pd.read_csv(rise_latest_file_path)
+                    for _, row in df.iterrows():
+                        rise_list.append(dict(row))
+                    rise_ts = rise_list[0]["change"] if rise_list else 0
+
+                    fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}bybit{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
+                    df = pd.read_csv(fall_latest_file_path)
+                    for _, row in df.iterrows():
+                        fall_list.append(dict(row))
+                    fall_ts = fall_list[0]["change"] if fall_list else 0
+
+                    rise_data_24h_ts = self.rise_data_list_24h_bybit[0]["change"] if self.rise_data_list_24h_bybit else 0
+                    fall_data_24h_ts = self.fall_data_list_24h_bybit[0]["change"] if self.fall_data_list_24h_bybit else 0
+                    if duration == "24h" and (rise_data_24h_ts != rise_ts or fall_data_24h_ts != fall_ts):
+                        self.rise_data_list_24h_bybit = rise_list
+                        self.fall_data_list_24h_bybit = fall_list
 
                 # 检查tick行情推送是否异常
                 tick_wait = time.time() - self.tick_ts
