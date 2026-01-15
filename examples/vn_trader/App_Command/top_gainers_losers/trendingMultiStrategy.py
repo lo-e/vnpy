@@ -1191,11 +1191,11 @@ class TrendingMultiStrategy(CtaTemplate):
 
         # 代币24h交易额筛选
         trending_data_list_24h = []
-        if self.direction == Direction.LONG and len(self.portfolio.rise_data_list_24h) > 3:
-            trending_data_list_24h = self.portfolio.rise_data_list_24h[3:]
+        if self.direction == Direction.LONG and len(self.portfolio.rise_data_list_24h_coinglass) > 3:
+            trending_data_list_24h = self.portfolio.rise_data_list_24h_coinglass[3:]
 
-        if self.direction == Direction.SHORT and len(self.portfolio.fall_data_list_24h) > 3:
-            trending_data_list_24h = self.portfolio.fall_data_list_24h[3:]
+        if self.direction == Direction.SHORT and len(self.portfolio.fall_data_list_24h_coinglass) > 3:
+            trending_data_list_24h = self.portfolio.fall_data_list_24h_coinglass[3:]
 
         volume_24h = ""
         for trending_data in trending_data_list_24h:
@@ -1242,13 +1242,13 @@ class TrendingMultiStrategy(CtaTemplate):
             # 24小时涨跌幅Top
             top = 3
             trending_top_24h = []
-            if self.direction == Direction.LONG and len(self.portfolio.rise_data_list_24h) >= top + 3:
+            if self.direction == Direction.LONG and len(self.portfolio.rise_data_list_24h_coinglass) >= top + 3:
                 for i in range(3, top + 3, 1):
-                    trending_top_24h.append(self.portfolio.rise_data_list_24h[i]["symbol"])
+                    trending_top_24h.append(self.portfolio.rise_data_list_24h_coinglass[i]["symbol"])
 
-            if self.direction == Direction.SHORT and len(self.portfolio.fall_data_list_24h) >= top + 3:
+            if self.direction == Direction.SHORT and len(self.portfolio.fall_data_list_24h_coinglass) >= top + 3:
                 for i in range(3, top + 3, 1):
-                    trending_top_24h.append(self.portfolio.fall_data_list_24h[i]["symbol"])
+                    trending_top_24h.append(self.portfolio.fall_data_list_24h_coinglass[i]["symbol"])
                     
             if pure_symbol in trending_top_24h:
                 rank_24h = trending_top_24h.index(pure_symbol) + 1

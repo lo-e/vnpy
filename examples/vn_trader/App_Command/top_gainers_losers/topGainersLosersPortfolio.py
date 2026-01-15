@@ -48,12 +48,12 @@ class TopGainersLosersPortfolio(object):
         self.tick_queue = Queue()
         self.tick_ts = time.time()
         self.strategy_status_check_ts = {}
-        self.rise_data_list_5m = []
-        self.fall_data_list_5m = []
-        self.rise_data_list_1h = []
-        self.fall_data_list_1h = []
-        self.rise_data_list_24h = []
-        self.fall_data_list_24h = []
+        self.rise_data_list_5m_coinglass = []
+        self.fall_data_list_5m_coinglass = []
+        self.rise_data_list_1h_coinglass = []
+        self.fall_data_list_1h_coinglass = []
+        self.rise_data_list_24h_coinglass = []
+        self.fall_data_list_24h_coinglass = []
         self.liquidation_data = {}
         self.sync_data = {}
         self.unsubscribe_time = 0
@@ -386,16 +386,16 @@ class TopGainersLosersPortfolio(object):
                     trending_mean_24h = 0
                     reverse_mean_24h = 0
                     if change >= 0:
-                        trending_mean_1h = self.rise_data_list_1h[1]["change"]
-                        reverse_mean_1h = self.rise_data_list_1h[2]["change"]
-                        trending_mean_24h = self.rise_data_list_24h[1]["change"]
-                        reverse_mean_24h = self.rise_data_list_24h[2]["change"]
+                        trending_mean_1h = self.rise_data_list_1h_coinglass[1]["change"]
+                        reverse_mean_1h = self.rise_data_list_1h_coinglass[2]["change"]
+                        trending_mean_24h = self.rise_data_list_24h_coinglass[1]["change"]
+                        reverse_mean_24h = self.rise_data_list_24h_coinglass[2]["change"]
                     
                     else:
-                        trending_mean_1h = self.rise_data_list_1h[2]["change"]
-                        reverse_mean_1h = self.rise_data_list_1h[1]["change"]
-                        trending_mean_24h = self.rise_data_list_24h[2]["change"]
-                        reverse_mean_24h = self.rise_data_list_24h[1]["change"]
+                        trending_mean_1h = self.rise_data_list_1h_coinglass[2]["change"]
+                        reverse_mean_1h = self.rise_data_list_1h_coinglass[1]["change"]
+                        trending_mean_24h = self.rise_data_list_24h_coinglass[2]["change"]
+                        reverse_mean_24h = self.rise_data_list_24h_coinglass[1]["change"]
 
                     """
                     # T1信号生成
@@ -669,7 +669,7 @@ class TopGainersLosersPortfolio(object):
                 
                 # 获取清算数据
                 liquidation_data = {}
-                liquidation_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}liquidation{DIR_SYMBOL}latest.csv"
+                liquidation_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}coinglass{DIR_SYMBOL}liquidation{DIR_SYMBOL}latest.csv"
                 df = pd.read_csv(liquidation_latest_file_path)
                 for _, row in df.iterrows():
                     liquidation_data = dict(row)
@@ -681,30 +681,30 @@ class TopGainersLosersPortfolio(object):
                     rise_list = []
                     fall_list = []
 
-                    rise_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
+                    rise_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}coinglass{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
                     df = pd.read_csv(rise_latest_file_path)
                     for _, row in df.iterrows():
                         rise_list.append(dict(row))
 
-                    fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
+                    fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}coinglass{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
                     df = pd.read_csv(fall_latest_file_path)
                     for _, row in df.iterrows():
                         fall_list.append(dict(row))
                     
                     # 生成信号
-                    if duration == "24h" and (self.rise_data_list_24h != rise_list or self.fall_data_list_24h != fall_list):
-                        self.rise_data_list_24h= rise_list
-                        self.fall_data_list_24h = fall_list
+                    if duration == "24h" and (self.rise_data_list_24h_coinglass != rise_list or self.fall_data_list_24h_coinglass != fall_list):
+                        self.rise_data_list_24h_coinglass= rise_list
+                        self.fall_data_list_24h_coinglass = fall_list
                         # self.on_trending_data_24h((rise_list, fall_list))
 
-                    if duration == "1h" and (self.rise_data_list_1h != rise_list or self.fall_data_list_1h != fall_list):
-                        self.rise_data_list_1h= rise_list
-                        self.fall_data_list_1h = fall_list
+                    if duration == "1h" and (self.rise_data_list_1h_coinglass != rise_list or self.fall_data_list_1h_coinglass != fall_list):
+                        self.rise_data_list_1h_coinglass= rise_list
+                        self.fall_data_list_1h_coinglass = fall_list
                         self.on_trending_data_1h((rise_list, fall_list))
 
-                    if duration == "5m" and (self.rise_data_list_5m != rise_list or self.fall_data_list_5m != fall_list):
-                        self.rise_data_list_5m = rise_list
-                        self.fall_data_list_5m = fall_list
+                    if duration == "5m" and (self.rise_data_list_5m_coinglass != rise_list or self.fall_data_list_5m_coinglass != fall_list):
+                        self.rise_data_list_5m_coinglass = rise_list
+                        self.fall_data_list_5m_coinglass = fall_list
                         # self.on_trending_data_5m((rise_list, fall_list))
 
                 # 检查tick行情推送是否异常
@@ -731,7 +731,7 @@ class TopGainersLosersPortfolio(object):
             date = hour_time.strftime(f"%Y-%m-%d")
             hour = hour_time.hour
 
-            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}1h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}coinglass{DIR_SYMBOL}rank_rise{DIR_SYMBOL}1h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             if os.path.exists(dir_path):
                 for root, _, files in os.walk(dir_path):
                     for file in files:
@@ -757,7 +757,7 @@ class TopGainersLosersPortfolio(object):
                             while not searching_end_24h:
                                 date_24h = hour_time_24h.strftime(f"%Y-%m-%d")
                                 hour_24h = hour_time_24h.hour
-                                dir_path_24h = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}24h{DIR_SYMBOL}{date_24h}{DIR_SYMBOL}{hour_24h}"
+                                dir_path_24h = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}coinglass{DIR_SYMBOL}rank_rise{DIR_SYMBOL}24h{DIR_SYMBOL}{date_24h}{DIR_SYMBOL}{hour_24h}"
                                 if os.path.exists(dir_path_24h):
                                     for root_24h, _, files_24h in os.walk(dir_path_24h):
                                         for file_24h in files_24h:
@@ -781,8 +781,8 @@ class TopGainersLosersPortfolio(object):
                                                     break
                                                 
                                                 else:
-                                                    self.rise_data_list_24h = rise_list_24h
-                                                    self.fall_data_list_24h = fall_list_24h
+                                                    self.rise_data_list_24h_coinglass = rise_list_24h
+                                                    self.fall_data_list_24h_coinglass = fall_list_24h
 
                                             else:
                                                 raise(f"24h文件状态异常，检查代码")
