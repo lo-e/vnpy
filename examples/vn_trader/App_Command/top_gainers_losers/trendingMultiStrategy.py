@@ -1222,7 +1222,7 @@ class TrendingMultiStrategy(CtaTemplate):
             if volume_24h_u == "万" and volume_24h_v < 1000:
                 open_allowed = False
             
-            if volume_24h_u == "M" and volume_24h_v < 10:
+            if volume_24h_u == "M" and volume_24h_v < 5:
                 open_allowed = False
             
             if volume_24h_u == "K":

@@ -946,7 +946,8 @@ class Chrome(object):
             "div/span/div",
         )[0]
         symbol = symbol_item.text
-        symbol = symbol.split(f"\n")[0]
+        # symbol = symbol.split(f"\n")[0]
+        symbol = symbol.split(f"USDT")[0]
 
         # 价格
         price = elements[1].text

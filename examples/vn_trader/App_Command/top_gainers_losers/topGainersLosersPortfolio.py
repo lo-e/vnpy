@@ -158,9 +158,9 @@ class TopGainersLosersPortfolio(object):
             if gateway:
                 gateway.query_funding_rate()
 
-            gateway = self.cta_engine.main_engine.get_default_gateway("BYBIT")
-            if gateway:
-                gateway.query_funding_rate()
+            # gateway = self.cta_engine.main_engine.get_default_gateway("BYBIT")
+            # if gateway:
+            #     gateway.query_funding_rate()
 
         # 定期更新交易所合约杠杆
         if self.update_leverage_time != current_hour_time and now.hour == 1 and now.minute >= 5:
