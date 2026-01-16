@@ -14,6 +14,8 @@ from datetime import datetime
 from queue import Queue
 import socket
 from dingtalkchatbot.chatbot import DingtalkChatbot
+import re
+
 
 class Chrome(object):
     def __init__(self, cta_engine) -> None:
@@ -22,7 +24,7 @@ class Chrome(object):
         self.long_trending = False
         self.short_trending = False
 
-    def fetch_top_gainers_losers(self, callback = None, rest: int = 60) -> None:
+    def fetch_top_gainers_losers_coingecko(self, callback=None, rest: int = 60) -> None:
         driver = None
         driver_reboot = True
         init_fetch = False
@@ -35,11 +37,13 @@ class Chrome(object):
                     driver = self.load_driver()
 
                 driver_reboot = False
-                url = "https://www.coingecko.com/en/crypto-gainers-losers?time=h1&top=100"
+                url = (
+                    "https://www.coingecko.com/en/crypto-gainers-losers?time=h1&top=100"
+                )
                 if not init_fetch:
                     driver.get(url)
                     init_fetch = True
-                
+
                 else:
                     driver.refresh()
 
@@ -81,32 +85,33 @@ class Chrome(object):
                             By.XPATH,
                             "td/span[@class='gecko-down']",
                         ).text
-                        percent = float(percent.split("%")[0])*-1
+                        percent = float(percent.split("%")[0]) * -1
                         is_gainer = False
-                        
+
                     except Exception as e:
                         pass
 
-                    data = {"token": token,
-                            "percent": percent}
+                    data = {"token": token, "percent": percent}
                     if is_gainer:
                         gainer_list.append(data)
-                    
+
                     else:
                         loser_list.append(data)
-                    
+
                 gainer_list.sort(key=lambda x: x["percent"], reverse=True)
                 loser_list.sort(key=lambda x: x["percent"], reverse=False)
                 result = (gainer_list, loser_list)
                 if callback:
                     callback(result)
-            
+
             except Exception as e:
                 print(str(e))
-            
+
             time.sleep(rest)
 
-    def fetch_rise_fall_minute_trending(self, callback = None, rest: int = 60) -> None:
+    def fetch_rise_fall_coinglass_minute_trending(
+        self, callback=None, rest: int = 60
+    ) -> None:
         driver = None
         driver_reboot = True
         duration = "5m"
@@ -142,12 +147,16 @@ class Chrome(object):
 
                     url = "https://www.coinglass.com/zh/gainers-losers"
                     driver.get(url)
-                
+
                 else:
                     # driver.refresh()
                     pass
-                
-                _ = WebDriverWait(driver, timeout=5).until(EC.presence_of_all_elements_located((By.XPATH, "//button[@role='tab']")))
+
+                _ = WebDriverWait(driver, timeout=5).until(
+                    EC.presence_of_all_elements_located(
+                        (By.XPATH, "//button[@role='tab']")
+                    )
+                )
                 tab_buttons = driver.find_elements(
                     By.XPATH,
                     "//button[@role='tab']",
@@ -156,7 +165,7 @@ class Chrome(object):
                     if "涨跌榜" in button.text:
                         button.click()
                         break
-                
+
                 if exchange_select_need:
                     exchange_select_need = False
 
@@ -165,7 +174,7 @@ class Chrome(object):
                     buttons = driver.find_elements(
                         By.XPATH,
                         "//div[@class='MuiBox-root cg-style-0']",
-                        )
+                    )
                     for button in buttons:
                         if button.text == "交易所":
                             exchange_button = button
@@ -199,7 +208,9 @@ class Chrome(object):
                             try_count = 0
                             while selected != select_need and try_count < 5:
                                 select_show.click()
-                                selected = "checked" in select_show.get_attribute("class")
+                                selected = "checked" in select_show.get_attribute(
+                                    "class"
+                                )
                                 try_count += 1
 
                             if selected != select_need:
@@ -218,7 +229,7 @@ class Chrome(object):
                     duration_tabs = driver.find_elements(
                         By.XPATH,
                         "//div/div/button[@role='tab']",
-                        )
+                    )
 
                     target_tab = None
                     for tab in duration_tabs:
@@ -227,19 +238,23 @@ class Chrome(object):
 
                         if duration == "15m" and tab.text == "15分钟":
                             target_tab = tab
-                        
+
                         if duration == "1h" and tab.text == "1小时":
                             target_tab = tab
-                        
+
                         if duration == "24h" and tab.text == "24小时":
                             target_tab = tab
 
-                    target_tab_selected = "selected" in target_tab.get_attribute("class")
+                    target_tab_selected = "selected" in target_tab.get_attribute(
+                        "class"
+                    )
                     if not target_tab_selected:
                         target_tab.click()
                         time.sleep(10)
-                        target_tab_selected = "selected" in target_tab.get_attribute("class")
-                
+                        target_tab_selected = "selected" in target_tab.get_attribute(
+                            "class"
+                        )
+
                     if not target_tab_selected:
                         driver_reboot = True
                         continue
@@ -250,16 +265,16 @@ class Chrome(object):
                 row_list = driver.find_elements(
                     By.XPATH,
                     "//tr[@class='rc-table-row rc-table-row-level-0']",
-                    )
+                )
                 for row in row_list:
-                    data = self.get_rise_fall_data(row)
+                    data = self.get_rise_fall_data_coinglass(row)
                     change = data["change"]
                     if change > 0:
                         rise_list.append(data)
-                    
+
                     elif change < 0:
                         fall_list.append(data)
-                
+
                 if not rise_list_origin or not fall_list_origin:
                     rise_list_origin = rise_list
                     fall_list_origin = fall_list
@@ -268,19 +283,21 @@ class Chrome(object):
 
                 elif rise_list_origin != rise_list or fall_list_origin != fall_list:
                     if callback:
-                        callback((rise_list, fall_list), duration)
+                        callback("coinglass", (rise_list, fall_list), duration)
                         last_data_ts = time.time()
-                
+
                 else:
                     time.sleep(1)
                     continue
-                
+
                 time.sleep(rest)
 
             except Exception as e:
                 print(str(e))
 
-    def fetch_rise_fall_hour_trending(self, callback = None, rest: int = 60) -> None:
+    def fetch_rise_fall_coinglass_hour_trending(
+        self, callback=None, rest: int = 60
+    ) -> None:
         driver = None
         driver_reboot = True
         duration = "1h"
@@ -321,12 +338,16 @@ class Chrome(object):
 
                     url = "https://www.coinglass.com/zh/gainers-losers"
                     driver.get(url)
-                
+
                 else:
                     # driver.refresh()
                     pass
-                
-                _ = WebDriverWait(driver, timeout=5).until(EC.presence_of_all_elements_located((By.XPATH, "//button[@role='tab']")))
+
+                _ = WebDriverWait(driver, timeout=5).until(
+                    EC.presence_of_all_elements_located(
+                        (By.XPATH, "//button[@role='tab']")
+                    )
+                )
                 tab_buttons = driver.find_elements(
                     By.XPATH,
                     "//button[@role='tab']",
@@ -335,7 +356,7 @@ class Chrome(object):
                     if "涨跌榜" in button.text:
                         button.click()
                         break
-                
+
                 if exchange_select_need:
                     exchange_select_need = False
 
@@ -344,7 +365,7 @@ class Chrome(object):
                     buttons = driver.find_elements(
                         By.XPATH,
                         "//div[@class='MuiBox-root cg-style-0']",
-                        )
+                    )
                     for button in buttons:
                         if button.text == "交易所":
                             exchange_button = button
@@ -378,7 +399,9 @@ class Chrome(object):
                             try_count = 0
                             while selected != select_need and try_count < 5:
                                 select_show.click()
-                                selected = "checked" in select_show.get_attribute("class")
+                                selected = "checked" in select_show.get_attribute(
+                                    "class"
+                                )
                                 try_count += 1
 
                             if selected != select_need:
@@ -392,12 +415,12 @@ class Chrome(object):
 
                 if duration_select_need:
                     duration_select_need = False
-                    
+
                     # 选择周期
                     duration_tabs = driver.find_elements(
                         By.XPATH,
                         "//div/div/button[@role='tab']",
-                        )
+                    )
 
                     target_tab = None
                     for tab in duration_tabs:
@@ -406,19 +429,23 @@ class Chrome(object):
 
                         if duration == "15m" and tab.text == "15分钟":
                             target_tab = tab
-                        
+
                         if duration == "1h" and tab.text == "1小时":
                             target_tab = tab
-                        
+
                         if duration == "24h" and tab.text == "24小时":
                             target_tab = tab
 
-                    target_tab_selected = "selected" in target_tab.get_attribute("class")
+                    target_tab_selected = "selected" in target_tab.get_attribute(
+                        "class"
+                    )
                     if not target_tab_selected:
                         target_tab.click()
                         time.sleep(1)
-                        target_tab_selected = "selected" in target_tab.get_attribute("class")
-                
+                        target_tab_selected = "selected" in target_tab.get_attribute(
+                            "class"
+                        )
+
                     if not target_tab_selected:
                         driver_reboot = True
                         continue
@@ -429,44 +456,56 @@ class Chrome(object):
                 row_list = driver.find_elements(
                     By.XPATH,
                     "//tr[@class='rc-table-row rc-table-row-level-0']",
-                    )
+                )
                 for row in row_list:
-                    data = self.get_rise_fall_data(row)
+                    data = self.get_rise_fall_data_coinglass(row)
                     change = data["change"]
                     if change > 0:
                         rise_list.append(data)
-                    
+
                     elif change < 0:
                         fall_list.append(data)
 
                 if duration == "1h":
-                    if not duration_1h_rise_list_origin or not duration_1h_fall_list_origin:
+                    if (
+                        not duration_1h_rise_list_origin
+                        or not duration_1h_fall_list_origin
+                    ):
                         duration_1h_rise_list_origin = rise_list
                         duration_1h_fall_list_origin = fall_list
                         time.sleep(1)
                         continue
 
-                    elif duration_1h_rise_list_origin != rise_list or duration_1h_fall_list_origin != fall_list:
+                    elif (
+                        duration_1h_rise_list_origin != rise_list
+                        or duration_1h_fall_list_origin != fall_list
+                    ):
                         if callback:
-                            callback((rise_list, fall_list), duration)
+                            callback("coinglass", (rise_list, fall_list), duration)
                             last_data_ts = time.time()
-                    
+
                     else:
                         time.sleep(1)
                         continue
 
                 elif duration == "24h":
-                    if not duration_24h_rise_list_origin or not duration_24h_fall_list_origin:
+                    if (
+                        not duration_24h_rise_list_origin
+                        or not duration_24h_fall_list_origin
+                    ):
                         duration_24h_rise_list_origin = rise_list
                         duration_24h_fall_list_origin = fall_list
                         time.sleep(1)
                         continue
 
-                    elif duration_24h_rise_list_origin != rise_list or duration_24h_fall_list_origin != fall_list:
+                    elif (
+                        duration_24h_rise_list_origin != rise_list
+                        or duration_24h_fall_list_origin != fall_list
+                    ):
                         if callback:
-                            callback((rise_list, fall_list), duration)
+                            callback("coinglass", (rise_list, fall_list), duration)
                             last_data_ts = time.time()
-                    
+
                     else:
                         time.sleep(1)
                         continue
@@ -475,7 +514,9 @@ class Chrome(object):
                     msg = f"获取小时趋势涨跌数据出错\n周期不支持：{duration}"
                     dingtalk.send_ding_talk(msg)
 
-                current_dt = datetime.now().replace(minute=int(datetime.now().minute / 1) * 1, second=0, microsecond=0)
+                current_dt = datetime.now().replace(
+                    minute=int(datetime.now().minute / 1) * 1, second=0, microsecond=0
+                )
                 if duration == "24h":
                     duration_24h_select_dt = current_dt
 
@@ -485,20 +526,253 @@ class Chrome(object):
                     duration_24h_rise_list_origin = []
                     duration_24h_fall_list_origin = []
                     continue
-                
+
                 elif duration != "1h":
                     duration = "1h"
                     duration_select_need = True
                     duration_1h_rise_list_origin = []
                     duration_1h_fall_list_origin = []
                     continue
-                
+
                 time.sleep(rest)
 
             except Exception as e:
                 print(str(e))
 
-    def fetch_Liquidation(self, callback = None, rest: int = 60) -> None:
+    def fetch_rise_fall_bybit_trending(self, callback=None, rest: int = 60) -> None:
+        driver = None
+        driver_reboot = True
+        rise_list = []
+        rise_list_origin = []
+        fall_list = []
+        fall_list_origin = []
+        last_data_ts = 0
+        reboot_ts = 0
+        while True:
+            try:
+                # 定期重新启动浏览器
+                if time.time() >= reboot_ts + 60 * 60:
+                    driver_reboot = True
+
+                # 超时未更新数据，重启浏览器
+                if time.time() >= last_data_ts + 5 * 60:
+                    driver_reboot = True
+                    last_data_ts = time.time()
+
+                # 启动浏览器
+                if driver_reboot:
+                    print(f"Chrome启动")
+                    self.quit_driver(driver)
+                    driver = self.load_driver()
+
+                    driver_reboot = False
+                    reboot_ts = time.time()
+
+                    url = "https://www.bybit.com/zh-MY/markets/overview"
+                    driver.get(url)
+
+                else:
+                    # driver.refresh()
+                    pass
+
+                # 关闭活动页面
+                try:
+                    activity = driver.find_elements(
+                        By.XPATH,
+                        "//div[@class='user-guide-modal']",
+                    )[0]
+                    activity_elements = activity.find_elements(
+                        By.XPATH,
+                        ".//*",
+                    )
+                    for e in activity_elements:
+                        e_class = e.get_attribute("class")
+                        if e.tag_name == "svg" and e_class == "user-guide-close-btn":
+                            e.click()
+                            time.sleep(1)
+                            break
+
+                except Exception as e:
+                    pass
+
+                # 内容区域
+                _ = WebDriverWait(driver, timeout=1).until(
+                    EC.presence_of_all_elements_located(
+                        (By.XPATH, "//div[@class='index_markets-content__XpF9_']")
+                    )
+                )
+                markets_area = driver.find_elements(
+                    By.XPATH,
+                    "//div[@class='index_markets-content__XpF9_']",
+                )[0]
+                areas = markets_area.find_elements(
+                    By.XPATH,
+                    "div",
+                )
+
+                # 选择合约
+                category_tabs = areas[0].find_elements(
+                    By.XPATH,
+                    "div/div",
+                )
+                for tab in category_tabs:
+                    if tab.text == "合约":
+                        tab.click()
+                        break
+
+                # 选择USDT永续
+                category_tabs = areas[2].find_elements(
+                    By.XPATH,
+                    "div/div/div",
+                )
+                for tab in category_tabs:
+                    if tab.text == "USDT永续":
+                        tab.click()
+                        break
+
+                # 等待数据列表
+                try_count = 0
+                while try_count < 10:
+                    try_count += 1
+                    time.sleep(1)
+                    try:
+                        data_list = areas[2].find_elements(
+                            By.XPATH,
+                            "div/div/table/tbody/tr",
+                        )
+                        if len(data_list) >= 5:
+                            break
+
+                    except Exception as e:
+                        pass
+
+                # 确定24h涨跌幅排序按钮
+                sort_buttons = []
+                category_tabs = areas[2].find_elements(
+                    By.XPATH,
+                    "div/div/table/thead/tr/th",
+                )
+                for tab in category_tabs:
+                    if tab.text == "24小时涨跌幅":
+                        elements = tab.find_elements(
+                            By.XPATH,
+                            ".//*",
+                        )
+                        for e in elements:
+                            if e.tag_name == "path":
+                                sort_buttons.append(e)
+                        break
+
+                # 获取排行榜数据
+                if sort_buttons:
+                    rise_list = []
+                    rise_list_origin = []
+                    fall_list = []
+                    fall_list_origin = []
+
+                    # 由高到低排序
+                    sorted = False
+                    try_count = 0
+                    while try_count < 5:
+                        try_count += 1
+                        sorted = sort_buttons[-1].get_attribute("fill") != "#999"
+                        if sorted:
+                            break
+
+                        else:
+                            tab.click()
+                        time.sleep(1)
+                    
+                    # 获取涨幅榜
+                    if sorted:
+                        start_ts = time.time()
+                        while time.time() < start_ts + 60:
+                            rise_list_temp = []
+                            data_list = areas[2].find_elements(
+                                By.XPATH,
+                                "div/div/table/tbody/tr",
+                            )
+                            for row in data_list:
+                                data = self.get_rise_fall_data_bybit(row)
+                                change = data.get("change", 0)
+                                if change > 0:
+                                    rise_list_temp.append(data)
+
+                            if not rise_list_temp:
+                                time.sleep(1)
+                                continue
+
+                            if not rise_list_origin:
+                                rise_list_origin = rise_list_temp
+                                time.sleep(1)
+                                continue
+
+                            elif (rise_list_origin != rise_list_temp):
+                                rise_list = rise_list_temp
+                                break
+
+                            else:
+                                time.sleep(1)
+                                continue
+
+                    # 由低到高排序
+                    sorted = False
+                    try_count = 0
+                    while try_count < 5:
+                        try_count += 1
+                        sorted = sort_buttons[0].get_attribute("fill") != "#999"
+                        if sorted:
+                            break
+
+                        else:
+                            tab.click()
+                        time.sleep(1)
+                    
+                    # 获取跌幅榜
+                    if sorted:
+                        start_ts = time.time()
+                        while time.time() < start_ts + 60:
+                            fall_list_temp = []
+                            data_list = areas[2].find_elements(
+                                By.XPATH,
+                                "div/div/table/tbody/tr",
+                            )
+                            for row in data_list:
+                                data = self.get_rise_fall_data_bybit(row)
+                                change = data.get("change", 0)
+                                if change < 0:
+                                    fall_list_temp.append(data)
+
+                            if not fall_list_temp:
+                                time.sleep(1)
+                                continue
+
+                            if not fall_list_origin:
+                                fall_list_origin = fall_list_temp
+                                time.sleep(1)
+                                continue
+
+                            elif (fall_list_origin != fall_list_temp):
+                                fall_list = fall_list_temp
+                                break
+
+                            else:
+                                time.sleep(1)
+                                continue
+
+                    if rise_list and fall_list and callback:
+                        callback("bybit", (rise_list, fall_list), "24h")
+                        last_data_ts = time.time()
+
+                    time.sleep(rest)
+                
+                else:
+                    time.sleep(1)
+
+            except Exception as e:
+                print(str(e))
+
+    def fetch_liquidation_coinglass(self, callback=None, rest: int = 60) -> None:
         driver = None
         driver_reboot = True
         last_data_ts = 0
@@ -519,13 +793,17 @@ class Chrome(object):
 
                     url = "https://www.coinglass.com/zh/LiquidationData"
                     driver.get(url)
-                
+
                 else:
                     # driver.refresh()
                     pass
-                
+
                 # 找到模块
-                _ = WebDriverWait(driver, timeout=5).until(EC.presence_of_all_elements_located((By.XPATH, "//div[@class='ant-row']")))
+                _ = WebDriverWait(driver, timeout=5).until(
+                    EC.presence_of_all_elements_located(
+                        (By.XPATH, "//div[@class='ant-row']")
+                    )
+                )
                 zone = driver.find_elements(
                     By.XPATH,
                     "//div[@class='ant-row']",
@@ -534,8 +812,8 @@ class Chrome(object):
                 modules = zone.find_elements(
                     By.XPATH,
                     "div",
-                    )
-                
+                )
+
                 # 获取各周期爆仓数据
                 data = {}
                 for module in modules:
@@ -543,7 +821,7 @@ class Chrome(object):
                     duration = ""
                     if text.startswith("1小时爆仓"):
                         duration = "1h"
-                    
+
                     elif text.startswith("4小时爆仓"):
                         duration = "4h"
 
@@ -559,24 +837,24 @@ class Chrome(object):
                     total = module.find_elements(
                         By.XPATH,
                         "div/div/div[@class='Number undefined    ']",
-                        )[0].text
+                    )[0].text
                     data[f"{duration}_total"] = total.split("$")[1]
-                    
+
                     long = module.find_elements(
                         By.XPATH,
                         "div/div/div[@class='Number undefined rise-color   ']",
-                        )[0].text
+                    )[0].text
                     data[f"{duration}_long"] = long.split("$")[1]
-                    
+
                     short = module.find_elements(
                         By.XPATH,
                         "div/div/div[@class='Number undefined  fall-color  ']",
-                        )[0].text
+                    )[0].text
                     data[f"{duration}_short"] = short.split("$")[1]
 
                 if len(data) == 12 and callback:
-                    callback(data)
-                
+                    callback("coinglass", data)
+
                 last_data_ts = time.time()
                 time.sleep(rest)
 
@@ -603,45 +881,43 @@ class Chrome(object):
         symbol = item.find_elements(
             By.XPATH,
             "td/div/a/div/div",
-            )[0].text
+        )[0].text
 
         # 多空比
         rate = item.find_elements(
             By.XPATH,
             "td[@class='ant-table-cell']",
-            )[2].text
+        )[2].text
         rate = float(rate)
-        
+
         # 1小时变化
         change = item.find_elements(
             By.XPATH,
             "td[@class='ant-table-cell ant-table-column-sort']",
-            )[0].text
+        )[0].text
         change = float(change.split("%")[0])
 
-        data = {"symbol": f"{symbol}.{exchange}",
-                "rate": rate,
-                "change": change}
-        
+        data = {"symbol": f"{symbol}.{exchange}", "rate": rate, "change": change}
+
         return data
 
-    def get_rise_fall_data(self, item):
+    def get_rise_fall_data_coinglass(self, item):
         # 合约
         symbol_item = item.find_elements(
             By.XPATH,
             "td/div/a/div/div",
-            )[0]
+        )[0]
         symbol = symbol_item.text
 
         elements = item.find_elements(
             By.XPATH,
             "td[@class='rc-table-cell']",
-            )
-        
+        )
+
         # 价格
         price = elements[1].text
         price = float(price.split("$")[1]) if price else 0
-        
+
         # 涨跌幅
         change = elements[2].text
         change = float(change.split("%")[0]) if change else 0
@@ -650,10 +926,58 @@ class Chrome(object):
         volume = elements[3].text
         volume = volume.split("$")[1] if volume else ""
 
-        data = {"symbol": f"{symbol}",
-                "price": price,
-                "change": change,
-                "volume": volume}
+        data = {
+            "symbol": f"{symbol}",
+            "price": price,
+            "change": change,
+            "volume": volume,
+        }
+        return data
+
+    def get_rise_fall_data_bybit(self, item):
+        elements = item.find_elements(
+            By.XPATH,
+            "td",
+        )
+
+        # 合约
+        symbol_item = elements[0].find_elements(
+            By.XPATH,
+            "div/span/div",
+        )[0]
+        symbol = symbol_item.text
+        # symbol = symbol.split(f"\n")[0]
+        symbol = symbol.split(f"USDT")[0]
+
+        # 价格
+        price = elements[1].text
+        price_elements = []
+        price_elements_temp = price.split(".") if price else []
+        for price_e in price_elements_temp:
+            price_elements.append(re.sub("\D", "", price_e))
+        price = float(".".join(price_elements))
+
+        # 涨跌幅
+        change = elements[2].text
+        direction = 1
+        if "-" in change:
+            direction = -1
+        change_elements = []
+        change_elements_temp = change.split(".") if change else []
+        for change_e in change_elements_temp:
+            change_elements.append(re.sub("\D", "", change_e))
+        change = float(".".join(change_elements)) * direction
+
+        # 24小时成交额
+        volume = elements[5].text
+        volume = volume.split("(USDT)")[0] if volume else ""
+
+        data = {
+            "symbol": f"{symbol}",
+            "price": price,
+            "change": change,
+            "volume": volume,
+        }
         return data
 
     def on_top_gainers_losers(self, data: tuple):
@@ -662,14 +986,14 @@ class Chrome(object):
             if i < len(gainers):
                 is_gainer = True
                 data = gainers[i]
-            
+
             else:
                 is_gainer = False
-                data = losers[i-len(gainers)]
-            
+                data = losers[i - len(gainers)]
+
             if i == 0:
                 print(f"涨幅排行")
-            
+
             if i == len(gainers):
                 print(f"\n跌幅排行")
 
@@ -679,18 +1003,16 @@ class Chrome(object):
 
         # 保存到文件
         mean_gainers_percent = pd.DataFrame(gainers)["percent"].mean()
-        mean_gainers_data = {"token": "mean_gainers",
-                             "percent": mean_gainers_percent}
-        
+        mean_gainers_data = {"token": "mean_gainers", "percent": mean_gainers_percent}
+
         mean_losers_percent = pd.DataFrame(losers)["percent"].mean()
-        mean_losers_data = {"token": "mean_losers",
-                            "percent": mean_losers_percent}
-        
+        mean_losers_data = {"token": "mean_losers", "percent": mean_losers_percent}
+
         gainers.insert(0, mean_losers_data)
         gainers.insert(0, mean_gainers_data)
         losers.insert(0, mean_losers_data)
         losers.insert(0, mean_gainers_data)
-        
+
         current_dir = get_current_dir_path()
         date = datetime.now().strftime(f"%Y-%m-%d")
         hour = datetime.now().hour
@@ -708,7 +1030,7 @@ class Chrome(object):
         df = pd.DataFrame(losers)
         df.to_csv(loser_file_path, index=False)
 
-    def on_rise_fall_trending_data(self, data: tuple, duration: str):
+    def on_rise_fall_trending_data(self, via:str, data: tuple, duration: str):
         rise_list, fall_list = data
         rise_list = sorted(rise_list, key=lambda x: x["change"], reverse=True)
         fall_list = sorted(fall_list, key=lambda x: x["change"], reverse=False)
@@ -716,17 +1038,14 @@ class Chrome(object):
 
         if rise_list and fall_list:
             # 保存涨跌幅数据到文件
-            time_data = {"symbol": "data_time",
-                         "change": int(time.time())}
-            
+            time_data = {"symbol": "data_time", "change": int(time.time())}
+
             mean_rise_change = pd.DataFrame(rise_list[0:5])["change"].mean()
-            mean_rise_data = {"symbol": "mean_rise",
-                              "change": mean_rise_change}
-            
+            mean_rise_data = {"symbol": "mean_rise", "change": mean_rise_change}
+
             mean_fall_change = pd.DataFrame(fall_list[0:5])["change"].mean()
-            mean_fall_data = {"symbol": "mean_fall",
-                              "change": mean_fall_change}
-            
+            mean_fall_data = {"symbol": "mean_fall", "change": mean_fall_change}
+
             # msg = f"mean_rise {mean_rise_change}\nmean_fall {mean_fall_change}"
             # print(msg)
             # return
@@ -743,48 +1062,64 @@ class Chrome(object):
             hour = datetime.now().hour
             full_time = datetime.now().strftime(f"%H_%M_%S")
 
-            rise_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            rise_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}{via}{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             os.makedirs(rise_dir_path, exist_ok=True)
             rise_file_path = f"{rise_dir_path}{DIR_SYMBOL}{full_time}.csv"
             rise_df = pd.DataFrame(rise_list)
             rise_df.to_csv(rise_file_path, index=False)
 
-            rise_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
+            rise_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}{via}{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
             rise_df.to_csv(rise_latest_file_path, index=False)
 
-            fall_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            fall_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}{via}{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             os.makedirs(fall_dir_path, exist_ok=True)
             fall_file_path = f"{fall_dir_path}{DIR_SYMBOL}{full_time}.csv"
             fall_df = pd.DataFrame(fall_list)
             fall_df.to_csv(fall_file_path, index=False)
 
-            fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
+            fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}{via}{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
             fall_df.to_csv(fall_latest_file_path, index=False)
 
             if duration == "15m":
                 msg = ""
-                if abs(mean_rise_change) >= 1.0 and abs(mean_rise_change) >= abs(mean_fall_change) * 2.0 and not self.long_trending and not self.short_trending:
+                if (
+                    abs(mean_rise_change) >= 1.0
+                    and abs(mean_rise_change) >= abs(mean_fall_change) * 2.0
+                    and not self.long_trending
+                    and not self.short_trending
+                ):
                     # 多头趋势
                     self.long_trending = True
                     msg = f"-- 多头趋势 --\nrise {mean_rise_change}\nfall {mean_fall_change}\n"
 
-                if abs(mean_rise_change) <= abs(mean_fall_change) * 1.5 and self.long_trending:
+                if (
+                    abs(mean_rise_change) <= abs(mean_fall_change) * 1.5
+                    and self.long_trending
+                ):
                     self.long_trending = False
                     msg = f"-- 多头停止 --\nrise {mean_rise_change}\nfall {mean_fall_change}\n"
 
-                if abs(mean_fall_change) >= 1.0 and abs(mean_fall_change) >= abs(mean_rise_change) * 2.0 and not self.long_trending and not self.short_trending:
+                if (
+                    abs(mean_fall_change) >= 1.0
+                    and abs(mean_fall_change) >= abs(mean_rise_change) * 2.0
+                    and not self.long_trending
+                    and not self.short_trending
+                ):
                     # 空头趋势
                     self.short_trending = True
                     msg = f"-- 空头趋势 --\nrise {mean_rise_change}\nfall {mean_fall_change}\n"
 
-                if abs(mean_fall_change) <= abs(mean_rise_change) * 1.5 and self.short_trending:
+                if (
+                    abs(mean_fall_change) <= abs(mean_rise_change) * 1.5
+                    and self.short_trending
+                ):
                     self.short_trending = False
                     msg = f"-- 空头停止 --\nrise {mean_rise_change}\nfall {mean_fall_change}\n"
 
                 if msg:
                     dingtalk.send_ding_talk(msg)
 
-    def on_liquidation_data(self, data: dict):
+    def on_liquidation_data(self, via:str, data: dict):
         total_1h = data["1h_total"]
         print_(f"1h爆仓 {total_1h}")
 
@@ -794,12 +1129,15 @@ class Chrome(object):
             date = now.strftime(f"%Y-%m-%d")
             hour = now.hour
             data["datetime"] = now.strftime(f"%Y-%m-%d %H:%M:%S")
-            data = {"datetime": data["datetime"], **{k: v for k, v in data.items() if k != "datetime"}}
+            data = {
+                "datetime": data["datetime"],
+                **{k: v for k, v in data.items() if k != "datetime"},
+            }
 
-            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}liquidation{DIR_SYMBOL}{date}"
+            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}{via}{DIR_SYMBOL}liquidation{DIR_SYMBOL}{date}"
             os.makedirs(dir_path, exist_ok=True)
             file_path = f"{dir_path}{DIR_SYMBOL}{hour}.csv"
-            
+
             # 获取历史数据
             data_list = []
             if os.path.exists(file_path):
@@ -811,7 +1149,7 @@ class Chrome(object):
             df = pd.DataFrame(data_list)
             df.to_csv(file_path, index=False)
 
-            latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}liquidation{DIR_SYMBOL}latest.csv"
+            latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}{via}{DIR_SYMBOL}liquidation{DIR_SYMBOL}latest.csv"
             latest_df = pd.DataFrame([data])
             latest_df.to_csv(latest_file_path, index=False)
 
@@ -819,9 +1157,13 @@ class Chrome(object):
         # 加载浏览器
         # 获取当前文件所在路径
         current_dir = get_current_dir_path()
-        DRIVER_PATH = f"{current_dir}{DIR_SYMBOL}chromedriver{DIR_SYMBOL}chromedriver.exe"
+        DRIVER_PATH = (
+            f"{current_dir}{DIR_SYMBOL}chromedriver{DIR_SYMBOL}chromedriver.exe"
+        )
         if not os.path.exists(DRIVER_PATH):
-            DRIVER_PATH = f"{current_dir}{DIR_SYMBOL}chromedriver{DIR_SYMBOL}chromedriver"
+            DRIVER_PATH = (
+                f"{current_dir}{DIR_SYMBOL}chromedriver{DIR_SYMBOL}chromedriver"
+            )
         options = Options()
         # options.add_argument("--headless")
         # options.add_argument("--disable-web-security")
@@ -841,6 +1183,7 @@ class Chrome(object):
         except:
             pass
 
+
 class DingTalkEngine(object):
     # 发送钉钉机器人消息
     def __init__(self):
@@ -854,7 +1197,7 @@ class DingTalkEngine(object):
     def send_ding_talk(self, content):
         # 内容添加电脑名称、时间
         client = socket.gethostname()
-        full_content = f'{content}\n\n【{client}】\n\n{datetime.now()}'
+        full_content = f"{content}\n\n【{client}】\n\n{datetime.now()}"
 
         # 开启线程
         if not self.active:
@@ -871,7 +1214,7 @@ class DingTalkEngine(object):
                 content = self.queue.get(block=True, timeout=1)
 
                 # 发送消息
-                webhook = 'https://oapi.dingtalk.com/robot/send?access_token=c7829ba703a3e0a28fb43f40a65f68313ec3ab43324e5bad30bd2bb660f791e4'
+                webhook = "https://oapi.dingtalk.com/robot/send?access_token=c7829ba703a3e0a28fb43f40a65f68313ec3ab43324e5bad30bd2bb660f791e4"
                 ding = DingtalkChatbot(webhook)
                 ding.send_text(msg=content, is_at_all=True)
             except:
@@ -891,20 +1234,25 @@ class DingTalkEngine(object):
         self.active = False
         self.thread.join()
 
+
 def get_current_dir_path():
     if "__file__" in globals():
         return os.path.dirname(os.path.abspath(__file__))
     else:
         return os.getcwd()
 
+
 def print_(msg: str):
     dt = datetime.now().replace(microsecond=0)
     print(f"{dt}\t{msg}")
-        
+
+
 if __name__ == "__main__":
     chrome = Chrome(cta_engine=None)
     dingtalk = DingTalkEngine()
 
-    Thread(target=chrome.fetch_rise_fall_minute_trending, args=(chrome.on_rise_fall_trending_data, 5)).start()
-    Thread(target=chrome.fetch_rise_fall_hour_trending, args=(chrome.on_rise_fall_trending_data, 20)).start()
-    Thread(target=chrome.fetch_Liquidation, args=(chrome.on_liquidation_data, 60)).start()
+    # Thread(target=chrome.fetch_rise_fall_coinglass_minute_trending, args=(chrome.on_rise_fall_trending_data, 5)).start()
+    # Thread(target=chrome.fetch_liquidation_coinglass, args=(chrome.on_liquidation_data, 60)).start()
+
+    Thread(target=chrome.fetch_rise_fall_coinglass_hour_trending, args=(chrome.on_rise_fall_trending_data, 20)).start()
+    Thread(target=chrome.fetch_rise_fall_bybit_trending, args=(chrome.on_rise_fall_trending_data, 20)).start()
