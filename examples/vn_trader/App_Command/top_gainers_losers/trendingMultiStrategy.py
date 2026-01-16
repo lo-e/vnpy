@@ -1271,7 +1271,7 @@ class TrendingMultiStrategy(CtaTemplate):
                     
             if pure_symbol in trending_top_24h:
                 rank_24h = trending_top_24h.index(pure_symbol) + 1
-                signal.open_tags.append(f"rank_{rank_24h}")
+                signal.open_tags.append(f"rank_{rank_24h}_coinglass")
 
             if not signal.open_tags:
                 trending_top_24h = []
@@ -1285,7 +1285,7 @@ class TrendingMultiStrategy(CtaTemplate):
                         
                 if pure_symbol in trending_top_24h:
                     rank_24h = trending_top_24h.index(pure_symbol) + 1
-                    signal.open_tags.append(f"rank_{rank_24h}")
+                    signal.open_tags.append(f"rank_{rank_24h}_bybit")
 
             # 多空清算比超限
             # liquidation_long_1h = self.portfolio.liquidation_data.get("1h_long", "")
