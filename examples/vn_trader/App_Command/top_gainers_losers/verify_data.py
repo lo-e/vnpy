@@ -54,7 +54,7 @@ class Backtesting(object):
             date = hour_time.strftime(f"%Y-%m-%d")
             hour = hour_time.hour
 
-            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}24h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}coinglass{DIR_SYMBOL}rank_rise{DIR_SYMBOL}24h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             if os.path.exists(dir_path):
                 if not start_hour_time:
                     start_hour_time = hour_time
@@ -91,6 +91,19 @@ class Backtesting(object):
                             raise(f"文件状态异常，检查代码")
             
             hour_time += timedelta(hours=1)
+
+        print(f"------ 进行中 ------\n")
+        for symbol in self.trending_tokens_24h.copy().keys():
+            trending_data = self.trending_tokens_24h[symbol]
+
+            trending_dt = trending_data["trending_dt"]
+            change = trending_data["change"]
+            change_top = trending_data["change_top"]
+            volume = trending_data["volume"]
+
+            # 进行中趋势信号
+            msg = f"{symbol}\nchange：{change}\nchange_top：{change_top}\nvolume：{volume}\non：{trending_dt}\n"
+            print(msg)
         
         start_hour_time_str = datetime.strftime(start_hour_time, "%Y-%m-%d %H:%M:%S") if start_hour_time else "none"
         end_hour_time_str = datetime.strftime(end_hour_time, "%Y-%m-%d %H:%M:%S") if end_hour_time else "none"
@@ -108,7 +121,7 @@ class Backtesting(object):
             date = hour_time.strftime(f"%Y-%m-%d")
             hour = hour_time.hour
 
-            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}rank_rise{DIR_SYMBOL}1h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}coinglass{DIR_SYMBOL}rank_rise{DIR_SYMBOL}1h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             if os.path.exists(dir_path):
                 for root, _, files in os.walk(dir_path):
                     for file in files:
@@ -527,7 +540,7 @@ class Backtesting(object):
             hour = hour_time.hour
 
             rank_direction = f"rank_{direction}"
-            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}{rank_direction}{DIR_SYMBOL}1h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}coinglass{DIR_SYMBOL}{rank_direction}{DIR_SYMBOL}1h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             if os.path.exists(dir_path):
                 for root, _, files in os.walk(dir_path):
                     for file in files:
@@ -565,7 +578,7 @@ class Backtesting(object):
             hour = hour_time.hour
 
             rank_direction = f"rank_{direction}"
-            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}{rank_direction}{DIR_SYMBOL}1h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}coinglass{DIR_SYMBOL}{rank_direction}{DIR_SYMBOL}1h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             if os.path.exists(dir_path):
                 for root, _, files in os.walk(dir_path):
                     for file in files:
@@ -605,7 +618,7 @@ class Backtesting(object):
             hour = hour_time.hour
 
             rank_direction = f"rank_{direction}"
-            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}{rank_direction}{DIR_SYMBOL}24h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}coinglass{DIR_SYMBOL}{rank_direction}{DIR_SYMBOL}24h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             if os.path.exists(dir_path):
                 for root, _, files in os.walk(dir_path):
                     for file in files:
@@ -648,7 +661,7 @@ class Backtesting(object):
             hour = hour_time.hour
 
             rank_direction = f"rank_{direction}"
-            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}{rank_direction}{DIR_SYMBOL}24h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}coinglass{DIR_SYMBOL}{rank_direction}{DIR_SYMBOL}24h{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
             if os.path.exists(dir_path):
                 for root, _, files in os.walk(dir_path):
                     for file in files:
@@ -684,7 +697,7 @@ class Backtesting(object):
 
 # 统计交易盈亏
 def statistics_pnl(for_eth: bool = False):
-    main_dir_path = f"data{DIR_SYMBOL}trade_logs"
+    main_dir_path = f"data{DIR_SYMBOL}coinglass{DIR_SYMBOL}trade_logs"
     dt_trades_data = {}
     for root, _, files in os.walk(main_dir_path):
         for file in files:
