@@ -1125,3 +1125,12 @@ def get_local_ip():
         return ""
     
 LOCAL_IP = get_local_ip()
+
+# 用于网络请求的本地代理
+def get_local_proxies(port: int):
+    proxy = f"http://{LOCAL_IP}:{port}"
+    proxies = {
+        "http://": proxy,
+        "https://": proxy,
+    }
+    return proxies
