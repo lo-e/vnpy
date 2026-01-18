@@ -13,8 +13,13 @@ from gateway.bybit import BybitGateway
 from App.Turtle_crypto import TurtleCryptoApp
 from App.custom_trading import CustomTradingApp
 from App.support_resistance import SupportResistanceApp
+import asyncio
+import sys
 
 def main():
+    if sys.platform == 'win32':
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
     # 创建引擎
     qapp = create_qapp()
     event_engine = EventEngine()
