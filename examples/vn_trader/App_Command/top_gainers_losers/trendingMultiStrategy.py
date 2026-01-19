@@ -134,6 +134,7 @@ class TrendingMultiStrategy(CtaTemplate):
         self.manual_close = False
         self.datetime = ""
         self.signal_count_dict = {}
+        self.init_dt = datetime.now().strftime(f"%Y-%m-%d %H:%M:%S")
 
         """ fake """
         # self.send_fake_order = False
