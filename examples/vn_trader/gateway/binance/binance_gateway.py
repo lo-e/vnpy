@@ -1368,12 +1368,19 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
 
                 if isinstance(data, list):
                     symbols = data
+                    if len(data) > 100:
+                        symbols = data[:100]
+                        self.subscribe_queue.put(data[100:])
+
                     self.reqid += 1
                     channels = []
                     for symbol in symbols:
                         channels.append(f"{symbol.lower()}@aggTrade")
+
                     req: dict = {"method": "SUBSCRIBE", "params": channels, "id": self.reqid}
                     self.send_packet(req)
+                
+                    time.sleep(10)
 
             except:
                 pass
@@ -1394,12 +1401,19 @@ class BinanceUsdtDataWebsocketApi(WebsocketClient):
 
                 if isinstance(data, list):
                     symbols = data
+                    if len(data) > 100:
+                        symbols = data[:100]
+                        self.unsubscribe_queue.put(data[100:])
+
                     self.reqid += 1
                     channels = []
                     for symbol in symbols:
                         channels.append(f"{symbol.lower()}@aggTrade")
+
                     req: dict = {"method": "UNSUBSCRIBE", "params": channels, "id": self.reqid}
                     self.send_packet(req)
+
+                    time.sleep(10)
 
             except:
                 pass
