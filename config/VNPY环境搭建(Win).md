@@ -78,6 +78,10 @@ Anaconda3-2020.02-Windows-x86_64.zip    463.9M  2020-03-11 11:16:33 (Python 3.7.
 vnpy now_v3.0.0
 Windows Server 2019 Datacenter
 Anaconda3-2021.11-Windows-x86_64.zip	507.5M	2021-11-17 12:10:52 (Python 3.9.7)
+
+vnpy now_v3.0.0
+Windows Server 2019 Datacenter
+Anaconda3-2022.05-Windows-x86_64.zip	590.4M	2022-05-10 13:26:11 (Python 3.9.12)
 ```
 
 > **安装VNPY**
