@@ -17,6 +17,11 @@ import asyncio
 import sys
 
 def main():
+    """
+    强制使用 Selector 事件循环（Windows 专属修复）
+    避免使用本地代理报错
+    aiohttp.client_exceptions.ClientConnectorError: Cannot connect to host fstream.binance.com:443 ssl:False [参数错误。]
+    """
     if sys.platform == 'win32':
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 

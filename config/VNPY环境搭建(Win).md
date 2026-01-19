@@ -78,6 +78,10 @@ Anaconda3-2020.02-Windows-x86_64.zip    463.9M  2020-03-11 11:16:33 (Python 3.7.
 vnpy now_v3.0.0
 Windows Server 2019 Datacenter
 Anaconda3-2021.11-Windows-x86_64.zip	507.5M	2021-11-17 12:10:52 (Python 3.9.7)
+
+vnpy now_v3.0.0
+Windows Server 2019 Datacenter
+Anaconda3-2022.05-Windows-x86_64.zip	590.4M	2022-05-10 13:26:11 (Python 3.9.12)
 ```
 
 > **安装VNPY**
@@ -157,4 +161,14 @@ Successfully installed cachetools-4.2.4 construct-2.10.68 construct-typing-0.5.6
 
 pip install web3
 Successfully installed aiohttp-3.8.6 aiosignal-1.3.1 async-timeout-4.0.3 asynctest-0.13.0 bitarray-3.0.0 charset-normalizer-3.4.0 ckzg-1.0.2 eth-abi-4.2.1 eth-account-0.10.0 eth-hash-0.5.2 eth-keyfile-0.6.1 eth-keys-0.4.0 eth-rlp-0.3.0 eth-typing-3.5.2 eth-utils-2.3.2 frozenlist-1.3.3 hexbytes-0.3.1 importlib-resources-5.12.0 jsonschema-4.17.3 lru-dict-1.2.0 parsimonious-0.9.0 pkgutil-resolve-name-1.3.10 protobuf-4.24.4 pyunormalize-16.0.0 regex-2024.4.16 rlp-3.0.0 web3-6.20.3 zipp-3.15.0
+```
+
+aiohttp.client_exceptions.ClientConnectorError: Cannot connect to host fstream.binance.com:443 ssl:False [参数错误。]
+```
+Windows 系统下 asyncio 事件循环策略 + 代理 + HTTPS/TLS 握手 的经典兼容性问题。
+在代码最开头，加上这一行（必须在任何 asyncio 操作之前）
+强制使用 Selector 事件循环（Windows 专属修复）
+
+if sys.platform == 'win32':
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 ```
