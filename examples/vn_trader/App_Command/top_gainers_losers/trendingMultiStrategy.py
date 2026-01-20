@@ -758,7 +758,7 @@ class TrendingMultiStrategy(CtaTemplate):
                     self.add_unit_pos(tick.last_price, signal)
 
                     # 实盘开仓
-                    if signal_name not in ["T4", "T9", "T10"]:
+                    if signal_name not in ["T9"]:
                         if time.time() > tick.datetime.timestamp() + 3:
                             signal.tick_delay_wait = True
 
