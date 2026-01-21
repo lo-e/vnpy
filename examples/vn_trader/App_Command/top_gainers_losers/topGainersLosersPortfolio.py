@@ -1449,6 +1449,26 @@ class TopGainersLosersPortfolio(object):
                                     if strategy_target_pos and self.exchange == Exchange.BINANCE:
                                         strategy.send_order(Direction.LONG, Offset.CLOSE, strategy.stop_price, abs(strategy_target_pos), stop=True)
                         
+                        # 长时间没有行情数据，关闭策略
+                        if strategy.tick:
+                            strategy_data_time = time.time() - strategy.tick.datetime.timestamp()
+                            if strategy_data_time >= 20 * 60:
+                                if not strategy_target_pos:
+                                    strategy.on_close(strategy.tick)
+
+                                msg = f"{strategy.strategy_name}\n\n长时间没有行情数据，检查代码\ntarget_pos: {strategy_target_pos}\npos: {strategy.pos}"
+                                self.send_ding_talk(msg)
+
+                        # 长时间没有数据初始化
+                        strategy_init_ts = datetime.strptime(strategy.init_dt, f"%Y-%m-%d %H:%M:%S").timestamp()
+                        if not strategy.database_loaded and time.time() >= strategy_init_ts + 20 * 60:
+                            if not strategy_target_pos:
+                                strategy.on_close(strategy.tick)
+
+                            msg = f"{strategy.strategy_name}\n\n长时间没有数据初始化，检查代码\ninit_time: {strategy.init_dt}\ntarget_pos: {strategy_target_pos}\npos: {strategy.pos}"
+                            self.send_ding_talk(msg)
+
+                        # 关闭已完成策略
                         if strategy.closed and not strategy.pos:
                             vt_orderids = self.cta_engine.strategy_orderid_map[strategy.strategy_name]
                             if vt_orderids:
@@ -1471,25 +1491,6 @@ class TopGainersLosersPortfolio(object):
 
                                 # 更新setting.json
                                 self.setting_update_needed = True
-
-                        # 长时间没有行情数据，关闭策略
-                        if strategy.tick:
-                            strategy_data_time = time.time() - strategy.tick.datetime.timestamp()
-                            if strategy_data_time >= 20 * 60:
-                                if not strategy_target_pos:
-                                    strategy.on_close()
-
-                                msg = f"{strategy.strategy_name}\n\n长时间没有行情数据，检查代码\ntarget_pos: {strategy_target_pos}\npos: {strategy.pos}"
-                                self.send_ding_talk(msg)
-
-                        # 长时间没有数据初始化
-                        strategy_init_ts = datetime.strptime(strategy.init_dt, f"%Y-%m-%d %H:%M:%S").timestamp()
-                        if not strategy.database_loaded and time.time() >= strategy_init_ts + 20 * 60:
-                            if not strategy_target_pos:
-                                strategy.on_close()
-
-                            msg = f"{strategy.strategy_name}\n\n长时间没有数据初始化，检查代码\ninit_time: {strategy.init_dt}\ntarget_pos: {strategy_target_pos}\npos: {strategy.pos}"
-                            self.send_ding_talk(msg)
 
                         # 同步策略数据
                         strategy.check_save_data()
