@@ -1420,7 +1420,7 @@ class TopGainersLosersPortfolio(object):
                                     strategy.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(gap), market=True)
 
                                     # 重新发送自动止损订单
-                                    if strategy_target_pos and self.exchange == Exchange.BINANCE:
+                                    if strategy_target_pos and strategy.exchange == Exchange.BINANCE:
                                         strategy.send_order(Direction.SHORT, Offset.CLOSE, strategy.stop_price, abs(strategy_target_pos), stop=True)
 
                             if strategy.direction == Direction.SHORT:
@@ -1446,7 +1446,7 @@ class TopGainersLosersPortfolio(object):
                                     strategy.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(gap), market=True)
 
                                     # 重新发送自动止损订单
-                                    if strategy_target_pos and self.exchange == Exchange.BINANCE:
+                                    if strategy_target_pos and strategy.exchange == Exchange.BINANCE:
                                         strategy.send_order(Direction.LONG, Offset.CLOSE, strategy.stop_price, abs(strategy_target_pos), stop=True)
                         
                         # 长时间没有行情数据，关闭策略
