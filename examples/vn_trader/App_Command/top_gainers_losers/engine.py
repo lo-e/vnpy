@@ -89,6 +89,7 @@ class TopGainersLosersEngine(BaseEngine):
         self.offset_converter = OffsetConverter(self.main_engine)
         self.portfolio: TopGainersLosersPortfolio = None
         self.gateway_delay = False
+        self.unsubscribed_symbols = []
 
     def init_engine(self):
         # 获取setting
@@ -485,6 +486,10 @@ class TopGainersLosersEngine(BaseEngine):
         exchange_symbols_data = {}
         exchange_gateway_data = {}
         for vt_symbol in vt_symbols:
+            self.unsubscribed_symbols.append(vt_symbol)
+            if len(self.unsubscribed_symbols) > 5:
+                self.unsubscribed_symbols.pop(0)
+
             contract: ContractData = self.main_engine.get_contract(vt_symbol)
             if contract:
                 exchange_symbols = exchange_symbols_data.get(contract.exchange, set())

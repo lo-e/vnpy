@@ -1456,7 +1456,7 @@ class TopGainersLosersPortfolio(object):
                                 if not strategy_target_pos:
                                     strategy.on_close(strategy.tick)
 
-                                msg = f"{strategy.strategy_name}\n\n长时间没有行情数据，检查代码\ntarget_pos: {strategy_target_pos}\npos: {strategy.pos}"
+                                msg = f"{strategy.strategy_name}\n\n长时间没有行情数据，检查代码\ntick_time: {strategy.tick.datetime}\ntarget_pos: {strategy_target_pos}\npos: {strategy.pos}\ns_count: {len(self.cta_engine.strategies)}\nu_symbols: {self.cta_engine.unsubscribed_symbols}"
                                 self.send_ding_talk(msg)
 
                         # 长时间没有数据初始化
@@ -1465,7 +1465,7 @@ class TopGainersLosersPortfolio(object):
                             if not strategy_target_pos:
                                 strategy.on_close(strategy.tick)
 
-                            msg = f"{strategy.strategy_name}\n\n长时间没有数据初始化，检查代码\ninit_time: {strategy.init_dt}\ntarget_pos: {strategy_target_pos}\npos: {strategy.pos}"
+                            msg = f"{strategy.strategy_name}\n\n长时间没有数据初始化，检查代码\ninit_time: {strategy.init_dt}\ntarget_pos: {strategy_target_pos}\npos: {strategy.pos}\ns_count: {len(self.cta_engine.strategies)}\nu_symbols: {self.cta_engine.unsubscribed_symbols}"
                             self.send_ding_talk(msg)
 
                         # 关闭已完成策略
@@ -1520,8 +1520,8 @@ class TopGainersLosersPortfolio(object):
                 time.sleep(0.1)
 
             except Exception as e:
-                # msg = f"核查策略目标仓位出错\n\n{e}"
-                # self.send_ding_talk(msg)
+                msg = f"核查策略目标仓位出错\n\n{e}"
+                self.send_ding_talk(msg)
                 # break
                 pass
 
