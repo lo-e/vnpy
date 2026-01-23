@@ -548,6 +548,7 @@ class Chrome(object):
         fall_list_origin = []
         last_data_ts = 0
         reboot_ts = 0
+        scroll_need = False
         while True:
             try:
                 # 定期重新启动浏览器
@@ -567,6 +568,7 @@ class Chrome(object):
 
                     driver_reboot = False
                     reboot_ts = time.time()
+                    scroll_need = True
 
                     url = "https://www.bybit.com/zh-MY/markets/overview"
                     driver.get(url)
@@ -645,6 +647,12 @@ class Chrome(object):
 
                     except Exception as e:
                         pass
+                
+                # 滑动页面
+                if scroll_need:
+                    scroll_need = False
+                    driver.execute_script(f"window.scrollBy(0, {200});")
+                    time.sleep(1.0)
 
                 # 确定24h涨跌幅排序按钮
                 sort_buttons = []
