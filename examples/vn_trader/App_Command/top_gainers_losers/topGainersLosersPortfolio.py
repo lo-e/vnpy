@@ -32,9 +32,7 @@ class TopGainersLosersPortfolio(object):
 
     syncs = [
         "account_ath",
-        "account_drawdown",
-        "loss_list",
-        "pnl"
+        "account_drawdown"
     ]
 
     def __init__(self, engine, setting):
@@ -72,8 +70,6 @@ class TopGainersLosersPortfolio(object):
         self.fall_onboard_symbol_time_dict = {}
         self.trade_enable = True
         self.pnl_data = {}
-        self.loss_list = []
-        self.pnl = 0
         self.setting_update_needed = False
         self.default_leverage = 20
         self.optional_leverage = 10
@@ -1104,7 +1100,7 @@ class TopGainersLosersPortfolio(object):
             trade: TradeData = event.data
             if trade.offset == Offset.OPEN:
                 for vt_symbol, open_data in self.snipe_open_data.items():
-                    if vt_symbol == trade.vt_symbol:
+                    if vt_symbol == trade.vt_symbol and trade.account_name == "wawjlc":
                         self.snipe_open_data.pop(vt_symbol)
                         volume = open_data["volume"]
                         direction = open_data["direction"]
