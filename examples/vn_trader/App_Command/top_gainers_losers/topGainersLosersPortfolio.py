@@ -23,6 +23,7 @@ import re
 import requests
 import csv
 import shutil
+from decimal import Decimal
 
 PORTFOLIO_VALUE_DEFAULT = 100
 
@@ -32,7 +33,8 @@ class TopGainersLosersPortfolio(object):
 
     syncs = [
         "account_ath",
-        "account_drawdown"
+        "account_drawdown",
+        "snipe_pos_dict"
     ]
 
     def __init__(self, engine, setting):
@@ -73,6 +75,7 @@ class TopGainersLosersPortfolio(object):
         self.setting_update_needed = False
         self.default_leverage = 20
         self.optional_leverage = 10
+        self.snipe_pos_dict = {}
 
         """ fake """
         # self.test_order_time = 0
@@ -81,7 +84,7 @@ class TopGainersLosersPortfolio(object):
         # 监听事件
         self.cta_engine.event_engine.register(EVENT_GATEWAY_LEVERAGE_FAILED, self.process_leverage_failed_event)    
         self.cta_engine.event_engine.register(EVENT_GATEWAY_FUNDING_RATES, self.process_funding_rates_event)
-        # self.cta_engine.event_engine.register(EVENT_TRADE, self.process_trade_event)
+        self.cta_engine.event_engine.register(EVENT_TRADE, self.process_trade_event)
         
         # 数据下载相关
         self.download_engine = TurtleCryptoDataDownloading()
@@ -1098,33 +1101,27 @@ class TopGainersLosersPortfolio(object):
     def process_trade_event(self, event: Event):
         try:
             trade: TradeData = event.data
-            if trade.offset == Offset.OPEN:
-                for vt_symbol, open_data in self.snipe_open_data.items():
-                    if vt_symbol == trade.vt_symbol and trade.account_name == "wawjlc":
-                        self.snipe_open_data.pop(vt_symbol)
-                        volume = open_data["volume"]
-                        direction = open_data["direction"]
-                        funding_rate = open_data["funding_rate"]
-                        close_direction = Direction.SHORT if direction == Direction.LONG else Direction.LONG
-                        
-                        # 止盈
-                        self.cta_engine.send_simple_order(vt_symbol,
-                                                          close_direction,
-                                                          Offset.CLOSE,
-                                                          trade.price,
-                                                          volume,
-                                                          OrderType.LIMIT)
-                        
-                        # 止损
-                        stop_loss_price = trade.price * (1 - funding_rate*2 if direction == Direction.LONG else 1 + funding_rate*2)
-                        self.cta_engine.send_simple_order(vt_symbol,
-                                                          close_direction,
-                                                          Offset.CLOSE,
-                                                          stop_loss_price,
-                                                          volume,
-                                                          OrderType.STOP)
+            if trade.account_name == "wawjlc":
+                contract = self.cta_engine.main_engine.get_contract(trade.vt_symbol)
+                if not contract:
+                    return
+        
+                snipe_pos = self.snipe_pos_dict.get(trade.vt_symbol, 0)
+                if trade.direction == Direction.LONG:
+                    snipe_pos = float(Decimal(str(snipe_pos)) + Decimal(str(trade.volume)))
+
+                else:
+                    snipe_pos = float(Decimal(str(snipe_pos)) - Decimal(str(trade.volume)))
+                snipe_pos = round_to(snipe_pos, contract.min_volume)
+
+                if snipe_pos:
+                    self.snipe_pos_dict[trade.vt_symbol] = snipe_pos
+
+                elif trade.vt_symbol in self.snipe_pos_dict:
+                    self.snipe_pos_dict.pop(trade.vt_symbol)
+                
         except Exception as e:
-            msg = f"处理成交事件出错\n\n{e}"
+            msg = f"处理狙击资金费率成交事件出错\n\n{e}"
             self.send_ding_talk(msg)
 
     def snipe_funding_rate(self, targets: list):
@@ -1378,6 +1375,7 @@ class TopGainersLosersPortfolio(object):
     def check_strategy_status(self):
         setting_update_ts = 0
         trading_signal_ts = 0
+        snipe_pos_ts = 0
         while True:
             try:
                 for name in self.cta_engine.strategies.copy().keys():
@@ -1490,6 +1488,22 @@ class TopGainersLosersPortfolio(object):
 
                         # 同步策略数据
                         strategy.check_save_data()
+
+                # 检查狙击仓位
+                now = datetime.now()
+                if time.time() > snipe_pos_ts + 1 and 0 <= now.minute < 59 and now.second >= 1:
+                    snipe_pos_ts = time.time()
+                    for vt_symbol, pos in self.snipe_pos_dict.items():
+                        if pos:
+                            close_direction = Direction.SHORT if pos > 0 else Direction.LONG
+                            self.cta_engine.send_simple_order(vt_symbol,
+                                                              close_direction,
+                                                              Offset.CLOSE,
+                                                              0,
+                                                              abs(pos),
+                                                              OrderType.MARKET,
+                                                              account_name="wawjlc")
+
 
                 # 引擎更新setting.json
                 if self.setting_update_needed and time.time() > setting_update_ts + 5:
