@@ -1450,7 +1450,7 @@ class TopGainersLosersPortfolio(object):
                                 if not strategy_target_pos:
                                     strategy.on_close(strategy.tick)
 
-                                msg = f"{strategy.strategy_name}\n\n长时间没有行情数据，检查代码\ntick_time: {strategy.tick.datetime}\ntarget_pos: {strategy_target_pos}\npos: {strategy.pos}\ns_count: {len(self.cta_engine.strategies)}\nu_symbols: {self.cta_engine.unsubscribed_symbols}"
+                                msg = f"{strategy.strategy_name}\n\n长时间没有行情数据，检查代码\n\ntick_time: {strategy.tick.datetime}\ntarget_pos: {strategy_target_pos}\npos: {strategy.pos}\ns_count: {len(self.cta_engine.strategies)}\nu_symbols: {self.cta_engine.unsubscribed_symbols}"
                                 self.send_ding_talk(msg)
 
                         # 长时间没有数据初始化
@@ -1459,7 +1459,11 @@ class TopGainersLosersPortfolio(object):
                             if not strategy_target_pos:
                                 strategy.on_close(strategy.tick)
 
-                            msg = f"{strategy.strategy_name}\n\n长时间没有数据初始化，检查代码\ninit_time: {strategy.init_dt}\ntarget_pos: {strategy_target_pos}\npos: {strategy.pos}\ns_count: {len(self.cta_engine.strategies)}\nu_symbols: {self.cta_engine.unsubscribed_symbols}"
+                            tick_dt_str = ""
+                            if strategy.tick:
+                                tick_dt_str = f"{strategy.tick.datetime}"
+
+                            msg = f"{strategy.strategy_name}\n\n长时间没有数据初始化，检查代码\n\ninit_time: {strategy.init_dt}\ntick_time: {tick_dt_str}\ntarget_pos: {strategy_target_pos}\npos: {strategy.pos}\ns_count: {len(self.cta_engine.strategies)}\nu_symbols: {self.cta_engine.unsubscribed_symbols}"
                             self.send_ding_talk(msg)
 
                         # 关闭已完成策略
