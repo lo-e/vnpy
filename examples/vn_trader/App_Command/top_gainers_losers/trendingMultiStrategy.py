@@ -30,7 +30,8 @@ SIGNALS = {"T1": {"unit_loss": 0.003},
            "T7": {"unit_loss": 0.003},
            "T8": {"unit_loss": 0.003},
            "T9": {"unit_loss": 0.003},
-           "T10": {"unit_loss": 0.003}}
+           "T10": {"unit_loss": 0.003},
+           "T11": {"unit_loss": 0.003}}
 
 class SignalData(object):
     def __init__(self, name: str):
@@ -135,7 +136,7 @@ class TrendingMultiStrategy(CtaTemplate):
         self.datetime = ""
         self.signal_count_dict = {}
         self.init_dt = datetime.now().strftime(f"%Y-%m-%d %H:%M:%S")
-
+        
         """ fake """
         # self.send_fake_order = False
         
@@ -211,6 +212,7 @@ class TrendingMultiStrategy(CtaTemplate):
         self.hour_down: float = 0
         self.hour_down_ts: float = 0
         self.hour_down_dt: str = ""
+        self.last_hour_data = {}
         self.history_up: float = 0
         self.history_down: float = 0
         self.minute_recent_up: float = 0
@@ -434,6 +436,17 @@ class TrendingMultiStrategy(CtaTemplate):
                 history_hour_up_dt = datetime.strptime(self.hour_up_dt, f"%Y-%m-%d %H:%M:%S") if self.hour_up_dt else None
                 current_bar_dt = datetime.fromtimestamp(self.minute_bar.datetime.timestamp())
                 if (not self.database_loaded and not self.database_history_loaded and hour_up != self.hour_up) or (self.hour_up and hour_up > self.hour_up and current_bar_dt > history_hour_up_dt) or self.hour_up_down_updated:
+                    if self.hour_up_down_updated:
+                        recent_seconds = 0
+                        if self.minute_bar_dt and self.hour_up_dt:
+                            recent_seconds = (datetime.strptime(self.minute_bar_dt, f"%Y-%m-%d %H:%M:%S") - datetime.strptime(self.hour_up_dt, f"%Y-%m-%d %H:%M:%S")).seconds
+                        recent_minutes = int(recent_seconds / 60)
+                        self.last_hour_data = {"hour_up": self.hour_up,
+                                               "hour_down": self.hour_down,
+                                               "minute_recent_up": self.minute_recent_up,
+                                               "minute_recent_down": self.minute_recent_down,
+                                               "recent_minutes": recent_minutes-1}
+
                     self.hour_up = hour_up
                     self.hour_down = hour_down
                     self.hour_up_ts = self.minute_bar.datetime.timestamp()
@@ -453,6 +466,17 @@ class TrendingMultiStrategy(CtaTemplate):
                 history_hour_down_dt = datetime.strptime(self.hour_down_dt, f"%Y-%m-%d %H:%M:%S") if self.hour_down_dt else None
                 current_bar_dt = datetime.fromtimestamp(self.minute_bar.datetime.timestamp())
                 if (not self.database_loaded and not self.database_history_loaded and hour_down != self.hour_down) or (self.hour_down and hour_down < self.hour_down and current_bar_dt > history_hour_down_dt) or self.hour_up_down_updated:
+                    if self.hour_up_down_updated:
+                        recent_seconds = 0
+                        if self.minute_bar_dt and self.hour_down_dt:
+                            recent_seconds = (datetime.strptime(self.minute_bar_dt, f"%Y-%m-%d %H:%M:%S") - datetime.strptime(self.hour_down_dt, f"%Y-%m-%d %H:%M:%S")).seconds
+                        recent_minutes = int(recent_seconds / 60)
+                        self.last_hour_data = {"hour_up": self.hour_up,
+                                               "hour_down": self.hour_down,
+                                               "minute_recent_up": self.minute_recent_up,
+                                               "minute_recent_down": self.minute_recent_down,
+                                               "recent_minutes": recent_minutes-1}
+                        
                     self.hour_down = hour_down
                     self.hour_up = hour_up
                     self.hour_down_ts = self.minute_bar.datetime.timestamp()
@@ -557,12 +581,25 @@ class TrendingMultiStrategy(CtaTemplate):
                                 indicator_inited = True
                             
                         elif signal_name == "T9":
-                            if recent_minutes >= 30 and self.minute_15_squeeze_on and abs(self.minute_15_up - self.minute_15_down) <= abs(self.hour_up - self.hour_down) / 5.0 and self.minute_15_up >= self.hour_up - abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_down >= self.hour_down:
+                            if recent_minutes >= 30 and self.minute_15_squeeze_on and abs(self.minute_15_up - self.minute_15_down) <= abs(self.hour_up - self.hour_down) / 3.0 and self.minute_15_up >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0 and self.hour_down <= self.minute_recent_down <= self.hour_up - abs(self.hour_up - self.hour_down) * 0.9:
                                 indicator_inited = True
 
                         elif signal_name == "T10":
                             if recent_minutes >= 30 and self.minute_30_squeeze_on and stop_price and stop_price >= self.hour_up - abs(self.hour_up - self.hour_down) / 3.0 and self.minute_recent_down >= self.hour_down:
                                 indicator_inited = True
+
+                        elif signal_name == "T11":
+                            last_recent_minutes = self.last_hour_data.get("recent_minutes", 0)
+                            last_hour_up = self.last_hour_data.get("hour_up", 0)
+                            last_hour_down = self.last_hour_data.get("hour_down", 0)
+                            last_minute_recent_down = self.last_hour_data.get("minute_recent_down", 0)
+                            if last_hour_up and last_hour_down and last_minute_recent_down:
+                                last_valid = False
+                                if last_recent_minutes >= 30 and last_hour_down <= last_minute_recent_down <= last_hour_up - abs(last_hour_up - last_hour_down) * 0.7:
+                                    last_valid = True
+
+                                if 3 <= recent_minutes <= 15 and last_valid and self.hour_up - last_hour_up <= abs(self.hour_up - last_hour_down) / 3.0 and stop_price and stop_price >= self.hour_up - abs(self.hour_up - last_hour_down) / 4.0:
+                                    indicator_inited = True
 
                     if indicator_inited:
                         signal.indicator_inited = True
@@ -647,12 +684,25 @@ class TrendingMultiStrategy(CtaTemplate):
                                 indicator_inited = True
 
                         elif signal_name == "T9":
-                            if recent_minutes >= 30 and self.minute_15_squeeze_on and abs(self.minute_15_up - self.minute_15_down) <= abs(self.hour_up - self.hour_down) / 5.0 and self.minute_15_down <= self.hour_down + abs(self.hour_up - self.hour_down) / 4.0 and self.minute_recent_up <= self.hour_up:
+                            if recent_minutes >= 30 and self.minute_15_squeeze_on and abs(self.minute_15_up - self.minute_15_down) <= abs(self.hour_up - self.hour_down) / 3.0 and self.minute_15_down <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0 and self.hour_up >= self.minute_recent_up >= self.hour_down + abs(self.hour_up - self.hour_down) * 0.9:
                                 indicator_inited = True
 
                         elif signal_name == "T10":
                             if recent_minutes >= 30 and self.minute_30_squeeze_on and stop_price and stop_price <= self.hour_down + abs(self.hour_up - self.hour_down) / 3.0 and self.minute_recent_up <= self.hour_up:
                                 indicator_inited = True
+
+                        elif signal_name == "T11":
+                            last_recent_minutes = self.last_hour_data.get("recent_minutes", 0)
+                            last_hour_up = self.last_hour_data.get("hour_up", 0)
+                            last_hour_down = self.last_hour_data.get("hour_down", 0)
+                            last_minute_recent_up = self.last_hour_data.get("minute_recent_up", 0)
+                            if last_hour_up and last_hour_down and last_minute_recent_up:
+                                last_valid = False
+                                if last_recent_minutes >= 30 and last_hour_up >= last_minute_recent_up >= last_hour_down + abs(last_hour_up - last_hour_down) * 0.7:
+                                    last_valid = True
+
+                                if 3 <= recent_minutes <= 15 and last_valid and last_hour_down - self.hour_down <= abs(last_hour_up - self.hour_down) / 3.0 and stop_price and stop_price <= self.hour_down + abs(last_hour_up - self.hour_down) / 4.0:
+                                    indicator_inited = True
 
                     if indicator_inited:
                         signal.indicator_inited = True
@@ -758,7 +808,7 @@ class TrendingMultiStrategy(CtaTemplate):
                     self.add_unit_pos(tick.last_price, signal)
 
                     # 实盘开仓
-                    if signal_name not in ["T9"]:
+                    if signal_name not in ["T9", "T11"]:
                         if time.time() > tick.datetime.timestamp() + 3:
                             signal.tick_delay_wait = True
 
