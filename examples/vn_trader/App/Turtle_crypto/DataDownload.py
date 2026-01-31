@@ -386,7 +386,7 @@ class DownloadUtility(object):
         # 起止日期
         # days = 3
         # to_date = datetime.now() + timedelta(days=2)
-        days = (datetime.now() - datetime.strptime("2026-01-20", "%Y-%m-%d")).days
+        days = (datetime.now() - datetime.strptime("2026-01-27", "%Y-%m-%d")).days
         to_date = datetime.strptime("2026-12-31", "%Y-%m-%d")
         # to_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=days-3)
 
