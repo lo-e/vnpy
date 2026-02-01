@@ -15,6 +15,7 @@ from App.custom_trading import CustomTradingApp
 from App.support_resistance import SupportResistanceApp
 import asyncio
 import sys
+from vnpy.trader.utility import LOCAL_IP
 
 def main():
     """
@@ -22,7 +23,7 @@ def main():
     避免使用本地代理报错
     aiohttp.client_exceptions.ClientConnectorError: Cannot connect to host fstream.binance.com:443 ssl:False [参数错误。]
     """
-    if sys.platform == 'win32':
+    if "192.168" in LOCAL_IP and sys.platform == 'win32':
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
     # 创建引擎

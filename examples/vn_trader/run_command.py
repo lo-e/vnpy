@@ -16,6 +16,8 @@ from App_Command.hit_new.engine import HitNewEngine
 from App_Command.trending_sniper.engine import TrendingSniperEngine
 from App_Command.top_gainers_losers.engine import TopGainersLosersEngine
 from vnpy.trader.constant import Exchange
+import asyncio
+from vnpy.trader.utility import LOCAL_IP
 
 # GATEWAYS = [[OkxGateway, "lo-e"], [BybitGateway, "loesuperman"], [BinanceUsdtGateway, "lo-e"]]
 # GATEWAYS = [[OkxGateway, "lo-e(test)"], [BybitGateway, "loesuperman(test)"], [BinanceUsdtGateway, "lo-e(test)"]]
@@ -349,6 +351,14 @@ def set_leverage(target_gateway_name:str, account_name: str, leverage: int = 20,
     leverage_utility.set_leverage(target_gateway_name, account_name, leverage, optional_leverage, target, specials)
 
 def main():
+    """
+    强制使用 Selector 事件循环（Windows 专属修复）
+    避免使用本地代理报错
+    aiohttp.client_exceptions.ClientConnectorError: Cannot connect to host fstream.binance.com:443 ssl:False [参数错误。]
+    """
+    if "192.168" in LOCAL_IP and sys.platform == 'win32':
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
     # 引擎
     event_engine = EventEngine()
     main_engine = MainEngine(event_engine)
