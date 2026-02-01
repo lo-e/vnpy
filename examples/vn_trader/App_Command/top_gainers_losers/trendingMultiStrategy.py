@@ -21,6 +21,9 @@ import numpy as np
 from vnpy.trader.object import ContractData
 from queue import Empty, Queue
 
+TOKENS_DEFAULT = ["BTC", "ETH", "SOL", "BNB", "XRP"]
+TEST_SIGNALS = ["T9", "T11"]
+
 SIGNALS = {"T1": {"unit_loss": 0.003},
            "T2": {"unit_loss": 0.003},
            "T3": {"unit_loss": 0.003},
@@ -810,7 +813,8 @@ class TrendingMultiStrategy(CtaTemplate):
                     self.add_unit_pos(tick.last_price, signal)
 
                     # 实盘开仓
-                    if signal_name not in ["T9", "T11"]:
+                    pure_symbol = self.vt_symbol.split("USDT")[0]
+                    if signal_name not in TEST_SIGNALS and pure_symbol not in TOKENS_DEFAULT:
                         if time.time() > tick.datetime.timestamp() + 3:
                             signal.tick_delay_wait = True
 

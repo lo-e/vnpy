@@ -14,7 +14,7 @@ from vnpy.trader.object import BarData, TickData, TradeData, CancelRequest, Cont
 from vnpy.event import Event
 from vnpy.trader.object import SubscribeRequest
 from .trendingStrategy import TrendingStrategy, get_strategy_pure_name, get_strategy_type
-from .trendingMultiStrategy import TrendingMultiStrategy, SignalData, SIGNALS
+from .trendingMultiStrategy import TrendingMultiStrategy, SignalData, TOKENS_DEFAULT, TEST_SIGNALS, SIGNALS
 from queue import Empty, Queue
 from vnpy.trader.event import EVENT_TICK_DELAY, EVENT_ACCOUNT, EVENT_GATEWAY_LEVERAGE_FAILED, EVENT_GATEWAY_FUNDING_RATES, EVENT_TRADE
 from vnpy.trader.object import AccountData
@@ -361,6 +361,25 @@ class TopGainersLosersPortfolio(object):
                     
             self.trending_tokens_1h[symbol] = trending_data
 
+        # 添加默认代币
+        for default_token in TOKENS_DEFAULT:
+            for d in ["LONG", "SHORT"]:
+                change = 10
+                if d == "SHORT":
+                    change *= -1
+                trending_time = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
+            
+                trending_data = {
+                    "direction": d,
+                    "change": change,
+                    "volume_24h": "1亿",
+                    "trending_1h_rank": 1,
+                    "trending_1h_ts": data_time,
+                    "trending_1h_time": trending_time,
+                    "trending_1h_start": data_time
+                    }
+                self.trending_tokens_1h[default_token] = trending_data
+
         # 信号判断
         new_settings = []
         for symbol, trending_data in self.trending_tokens_1h.copy().items():
@@ -397,57 +416,6 @@ class TopGainersLosersPortfolio(object):
                         reverse_mean_1h = self.rise_data_list_1h_coinglass[1]["change"]
                         trending_mean_24h = self.rise_data_list_24h_coinglass[2]["change"]
                         reverse_mean_24h = self.rise_data_list_24h_coinglass[1]["change"]
-
-                    """
-                    # T1信号生成
-                    if (abs(trending_mean_1h) >= abs(reverse_mean_1h) * 2) or (abs(trending_mean_24h) >= abs(reverse_mean_24h) * 2):
-                        if direction == "LONG":
-                            setting = self.new_strategy(trending_1h_time, "T1", symbol, Direction.LONG, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
-                            self.generate_new_setting(data_time, direction, setting, new_settings)
-                        
-                        elif direction == "SHORT":
-                            setting = self.new_strategy(trending_1h_time, "T1", symbol, Direction.SHORT, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
-                            self.generate_new_setting(data_time, direction, setting, new_settings)
-
-                    # T2信号生成
-                    if (abs(trending_mean_1h) >= abs(reverse_mean_1h) * 2) or (abs(trending_mean_24h) >= abs(reverse_mean_24h) * 2):
-                        if direction == "LONG":
-                            setting = self.new_strategy(trending_1h_time, "T2", symbol, Direction.LONG, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
-                            self.generate_new_setting(data_time, direction, setting, new_settings)
-                        
-                        elif direction == "SHORT":
-                            setting = self.new_strategy(trending_1h_time, "T2", symbol, Direction.SHORT, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
-                            self.generate_new_setting(data_time, direction, setting, new_settings)
-
-                    # T3信号生成
-                    if (abs(trending_mean_1h) >= abs(reverse_mean_1h) * 2) or (abs(trending_mean_24h) >= abs(reverse_mean_24h) * 2):
-                        if direction == "LONG":
-                            setting = self.new_strategy(trending_1h_time, "T3", symbol, Direction.LONG, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
-                            self.generate_new_setting(data_time, direction, setting, new_settings)
-                        
-                        elif direction == "SHORT":
-                            setting = self.new_strategy(trending_1h_time, "T3", symbol, Direction.SHORT, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
-                            self.generate_new_setting(data_time, direction, setting, new_settings)
-
-                    # T4信号生成
-                    if (abs(trending_mean_1h) >= abs(reverse_mean_1h) * 2) or (abs(trending_mean_24h) >= abs(reverse_mean_24h) * 2):
-                        if direction == "LONG":
-                            setting = self.new_strategy(trending_1h_time, "T4", symbol, Direction.LONG, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
-                            self.generate_new_setting(data_time, direction, setting, new_settings)
-                        
-                        elif direction == "SHORT":
-                            setting = self.new_strategy(trending_1h_time, "T4", symbol, Direction.SHORT, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
-                            self.generate_new_setting(data_time, direction, setting, new_settings)
-
-                    # T5信号生成
-                    if direction == "LONG":
-                        setting = self.new_strategy(trending_1h_time, "T5", symbol, Direction.LONG, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
-                        self.generate_new_setting(data_time, direction, setting, new_settings)
-                    
-                    elif direction == "SHORT":
-                        setting = self.new_strategy(trending_1h_time, "T5", symbol, Direction.SHORT, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
-                        self.generate_new_setting(data_time, direction, setting, new_settings)
-                    """
 
                     setting = self.new_strategy(trending_1h_time, "MULTI", symbol, direction, round(change, 2), volume_24h, round(trending_mean_1h, 2), round(reverse_mean_1h, 2), round(trending_mean_24h, 2), round(reverse_mean_24h, 2))
                     self.generate_new_setting(data_time, direction, setting, new_settings)
@@ -1387,6 +1355,9 @@ class TopGainersLosersPortfolio(object):
                         # 检查仓位
                         strategy_target_pos = 0
                         for signal_name in strategy.signal_data.keys():
+                            if signal_name in TEST_SIGNALS:
+                                continue
+
                             signal: SignalData = strategy.signal_data[signal_name]
                             strategy_target_pos += signal.target_pos
                             
