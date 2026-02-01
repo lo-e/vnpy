@@ -1284,7 +1284,7 @@ class TrendingMultiStrategy(CtaTemplate):
             if volume_24h_u == "K":
                 open_allowed = False
             
-        else:
+        elif pure_symbol not in TOKENS_DEFAULT:
             open_allowed = False
 
         # T5信号判断
@@ -1342,25 +1342,9 @@ class TrendingMultiStrategy(CtaTemplate):
                 if pure_symbol in trending_top_24h:
                     rank_24h = trending_top_24h.index(pure_symbol) + 1
                     signal.open_tags.append(f"rank_{rank_24h}_bybit")
-
-            # 多空清算比超限
-            # liquidation_long_1h = self.portfolio.liquidation_data.get("1h_long", "")
-            # liquidation_long_1h = get_full_volume(liquidation_long_1h)
-            # liquidation_short_1h = self.portfolio.liquidation_data.get("1h_short", "")
-            # liquidation_short_1h = get_full_volume(liquidation_short_1h)
-            # liquidation_long_4h = self.portfolio.liquidation_data.get("4h_long", "")
-            # liquidation_long_4h = get_full_volume(liquidation_long_4h)
-            # liquidation_short_4h = self.portfolio.liquidation_data.get("4h_short", "")
-            # liquidation_short_4h = get_full_volume(liquidation_short_4h)
-            # if self.direction == Direction.LONG and (liquidation_short_1h >= liquidation_long_1h * 10 or liquidation_short_4h >= liquidation_long_4h * 5):
-            #     signal.open_tags.append("2")
-
-            # if self.direction == Direction.SHORT and (liquidation_long_1h >= liquidation_short_1h * 10 or liquidation_long_4h >= liquidation_short_4h * 5):
-            #     signal.open_tags.append("2")
-
-            # 前小时高低维持超过1小时且距离当前小时高低不超过前1小时高低1/2
-            # if signal.pre_signal_dt and ((self.direction == Direction.LONG and self.hour_up - signal.pre_signal_hour_up <= (signal.pre_signal_hour_up - signal.pre_signal_hour_down) * 0.5) or (self.direction == Direction.SHORT and signal.pre_signal_hour_down - self.hour_down <= (signal.pre_signal_hour_up - signal.pre_signal_hour_down) * 0.5)):
-            #     signal.open_tags.append("3")
+            
+            if not signal.open_tags and pure_symbol in TOKENS_DEFAULT:
+                signal.open_tags.append(f"rank_1_default")
         
         if not signal.open_tags:
             open_allowed = False
