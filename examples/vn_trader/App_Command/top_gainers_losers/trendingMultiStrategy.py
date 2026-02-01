@@ -67,6 +67,7 @@ class SignalData(object):
         self.pre_signal_hour_down = 0
         self.open_volume_24h = ""
         self.tick_delay_wait = False
+        self.insufficient_value = False
 
 class TrendingMultiStrategy(CtaTemplate):
 
@@ -113,7 +114,6 @@ class TrendingMultiStrategy(CtaTemplate):
         "minute_15_up",
         "minute_15_down",
         "minute_bar_dt",
-        "insufficient_value",
         "database_history_loaded",
         "signal_data",
         "traded_signals",
@@ -185,7 +185,6 @@ class TrendingMultiStrategy(CtaTemplate):
         self.strategy_sync_data = {}                # 策略同步数据
         self.trade_logs = {}                        # 交易日志
         self.trade_logs_updated = False
-        self.insufficient_value = False             # 开仓价值不满足最低
         self.loading_database = False               # 正在加载数据
         self.bar_lack = False                       # 数据缺失
         self.bar_lack_count = 0                     # 数据缺失计数
@@ -797,6 +796,7 @@ class TrendingMultiStrategy(CtaTemplate):
         strategy_target_pos = 0
         strategy_target_pos_updated = False
         open_volume = 0
+        open_signal_names = []
         for signal_name in self.signal_data.keys():
             signal: SignalData = self.signal_data[signal_name]
 
@@ -814,6 +814,7 @@ class TrendingMultiStrategy(CtaTemplate):
 
                         else:
                             open_volume += abs(signal.target_pos)
+                            open_signal_names.append(signal_name)
                             if self.direction == Direction.LONG:
                                 self.stop_price = min(self.stop_price, signal.stop_price) if self.stop_price else signal.stop_price
 
@@ -834,6 +835,7 @@ class TrendingMultiStrategy(CtaTemplate):
                 signal.tick_delay_wait = False
 
                 open_volume += abs(signal.target_pos)
+                open_signal_names.append(signal_name)
                 if self.direction == Direction.LONG:
                     self.stop_price = min(self.stop_price, signal.stop_price) if self.stop_price else signal.stop_price
 
@@ -951,21 +953,21 @@ class TrendingMultiStrategy(CtaTemplate):
                 trade_price = self.tick.last_price * 1.005
                 self.cancel_all()
                 if self.exchange == Exchange.BINANCE:
-                    self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True)
+                    self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True, open_signals=open_signal_names)
                     self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
 
                 else:
-                    self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
+                    self.send_order(Direction.LONG, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price, open_signals=open_signal_names)
             
             elif self.direction == Direction.SHORT:
                 trade_price = self.tick.last_price * 0.995
                 self.cancel_all()
                 if self.exchange == Exchange.BINANCE:
-                    self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True)
+                    self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True, open_signals=open_signal_names)
                     self.send_order(Direction.LONG, Offset.CLOSE, self.stop_price, abs(open_volume), stop=True)
 
                 else:
-                    self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price)
+                    self.send_order(Direction.SHORT, Offset.OPEN, trade_price, abs(open_volume), market=True, stop_loss_price=self.stop_price, open_signals=open_signal_names)
     
     def add_unit_pos(self, tick_price: float, signal: SignalData):
         # 确定止损价格
@@ -1082,61 +1084,58 @@ class TrendingMultiStrategy(CtaTemplate):
             self.send_ding_talk(msg)
             print_(msg)
 
-    def send_order(self, direction, offset, price, volume, stop: bool = False, market: bool = False, stop_loss_price: float = 0):
+    def send_order(self, direction, offset, price, volume, stop: bool = False, market: bool = False, stop_loss_price: float = 0, open_signals: list = []):
         # 精度处理
         contract = self.cta_engine.main_engine.get_contract(self.vt_symbol)
         price = round_to(price, contract.pricetick)
         volume = round_to(volume, contract.min_volume)
-        if not price or not volume:
-            return
 
         # 币安开仓有最低价值限制，判断是否满足
-        if offset == Offset.OPEN and self.exchange == Exchange.BINANCE:
+        if offset == Offset.OPEN:
             oms_engine = self.cta_engine.main_engine.engines["oms"]
             tick = oms_engine.ticks.get(self.vt_symbol, None)
             if tick:
                 value_cross = True
-                order_value = tick.last_price * volume
-                pure_symbol = self.vt_symbol.split("USDT")[0]
-                if pure_symbol == "BTC" and order_value <= 100:
-                    value_cross = False
+                order_value = 0
+                if self.exchange == Exchange.BINANCE:
+                    order_value = tick.last_price * volume
+                    pure_symbol = self.vt_symbol.split("USDT")[0]
+                    if pure_symbol == "BTC" and order_value <= 100:
+                        value_cross = False
 
-                if pure_symbol == "ETH" and order_value <= 20:
-                    value_cross = False
-                
-                if pure_symbol == "BCH" and order_value <= 20:
-                    value_cross = False
+                    if pure_symbol == "ETH" and order_value <= 20:
+                        value_cross = False
+                    
+                    if pure_symbol == "BCH" and order_value <= 20:
+                        value_cross = False
 
-                if pure_symbol == "ETC" and order_value <= 20:
-                    value_cross = False
+                    if pure_symbol == "ETC" and order_value <= 20:
+                        value_cross = False
 
-                if pure_symbol == "LINK" and order_value <= 20:
-                    value_cross = False
+                    if pure_symbol == "LINK" and order_value <= 20:
+                        value_cross = False
 
-                if pure_symbol == "LTC" and order_value <= 20:
-                    value_cross = False
+                    if pure_symbol == "LTC" and order_value <= 20:
+                        value_cross = False
 
-                if order_value <= 5:
-                    value_cross = False
-                
+                    if order_value <= 5:
+                        value_cross = False
+                        
+                # BYBIT开仓有最低价值限制，判断是否满足
+                if self.exchange == Exchange.BYBIT:
+                    value_cross = True
+                    order_value = tick.last_price * volume
+                    if order_value <= 5:
+                        value_cross = False
+                    
                 if not value_cross:
-                    # self.send_ding_talk(f"开仓订单价值未满足要求\n合约：{self.vt_symbol}\n价格：{tick.last_price}\n数量：{volume}\n价值：{order_value}")
-                    self.insufficient_value = True
-                    return
-                
-        # BYBIT开仓有最低价值限制，判断是否满足
-        if offset == Offset.OPEN and self.exchange == Exchange.BYBIT:
-            oms_engine = self.cta_engine.main_engine.engines["oms"]
-            tick = oms_engine.ticks.get(self.vt_symbol, None)
-            if tick:
-                value_cross = True
-                order_value = tick.last_price * volume
-                if order_value <= 5:
-                    value_cross = False
-                
-                if not value_cross:
-                    # self.send_ding_talk(f"开仓订单价值未满足要求\n合约：{self.vt_symbol}\n价格：{tick.last_price}\n数量：{volume}\n价值：{order_value}")
-                    self.insufficient_value = True
+                    for signal_name in open_signals:
+                        if signal_name in self.signal_data:
+                            signal: SignalData = self.signal_data[signal_name]
+                            signal.insufficient_value = True
+                            self.on_signal_close(signal_name)
+                            
+                    self.send_ding_talk(f"开仓订单价值未满足要求\n合约：{self.vt_symbol}\n价格：{tick.last_price}\n数量：{volume}\n价值：{order_value}\n信号：{open_signals}")
                     return
         
         # 平仓订单数量不超过当前持仓
