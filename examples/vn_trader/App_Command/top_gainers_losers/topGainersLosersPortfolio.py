@@ -153,9 +153,9 @@ class TopGainersLosersPortfolio(object):
             # if gateway:
             #     gateway.query_funding_rate()
             
-            gateway = self.cta_engine.main_engine.get_default_gateway("BINANCE")
-            if gateway:
-                gateway.query_funding_rate()
+            # gateway = self.cta_engine.main_engine.get_default_gateway("BINANCE")
+            # if gateway:
+            #     gateway.query_funding_rate()
 
             # gateway = self.cta_engine.main_engine.get_default_gateway("BYBIT")
             # if gateway:
