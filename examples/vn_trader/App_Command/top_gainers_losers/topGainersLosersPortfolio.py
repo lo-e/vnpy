@@ -363,22 +363,26 @@ class TopGainersLosersPortfolio(object):
 
         # 添加默认代币
         for default_token in TOKENS_DEFAULT:
-            for d in ["LONG", "SHORT"]:
+            if datetime.now().minute % 2:
+                d = "LONG"
                 change = 10
-                if d == "SHORT":
-                    change *= -1
-                trending_time = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
             
-                trending_data = {
-                    "direction": d,
-                    "change": change,
-                    "volume_24h": "1亿",
-                    "trending_1h_rank": 1,
-                    "trending_1h_ts": data_time,
-                    "trending_1h_time": trending_time,
-                    "trending_1h_start": data_time
-                    }
-                self.trending_tokens_1h[default_token] = trending_data
+            else:
+                d = "SHORT"
+                change = -10
+            trending_time = datetime.fromtimestamp(data_time).strftime(f"%Y-%m-%d %H:%M:%S")
+        
+            trending_data = {
+                "direction": d,
+                "change": change,
+                "volume_24h": "1亿",
+                "trending_1h_rank": 1,
+                "trending_1h_ts": data_time,
+                "trending_1h_time": trending_time,
+                "trending_1h_start": data_time
+                }
+            self.trending_tokens_1h[default_token] = trending_data
+            trending_tokens.add(default_token)
 
         # 信号判断
         new_settings = []
