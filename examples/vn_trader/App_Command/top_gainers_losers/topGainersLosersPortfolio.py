@@ -641,13 +641,13 @@ class TopGainersLosersPortfolio(object):
                 current_dir = os.path.dirname(os.path.abspath(__file__))
                 
                 # 获取清算数据
-                liquidation_data = {}
-                liquidation_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}coinglass{DIR_SYMBOL}liquidation{DIR_SYMBOL}latest.csv"
-                df = pd.read_csv(liquidation_latest_file_path)
-                for _, row in df.iterrows():
-                    liquidation_data = dict(row)
-                if self.liquidation_data != liquidation_data:
-                    self.liquidation_data = liquidation_data
+                # liquidation_data = {}
+                # liquidation_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}coinglass{DIR_SYMBOL}liquidation{DIR_SYMBOL}latest.csv"
+                # df = pd.read_csv(liquidation_latest_file_path)
+                # for _, row in df.iterrows():
+                #     liquidation_data = dict(row)
+                # if self.liquidation_data != liquidation_data:
+                #     self.liquidation_data = liquidation_data
 
                 # 获取coinglass涨跌幅排行榜数据
                 for duration in ["24h", "1h"]:
