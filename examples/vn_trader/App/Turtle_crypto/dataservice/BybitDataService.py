@@ -81,7 +81,7 @@ def bybit_get_bar_data(symbol: str, interval: str, from_time: str, limit: int = 
     end_str = end.strftime("%Y-%m-%d-%H%M%S")
     file_path = dir_path + f"{start_str}__{end_str}.csv"
     field_names = list(result_list[0].keys())
-    with open(file_path, "w") as f:
+    with open(file_path, "w", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=field_names)
         writer.writeheader()
         writer.writerows(result_list)
