@@ -198,7 +198,7 @@ class MonitorEngine(object):
                 self.main_engine.send_ding_talk(msg)
             
             self.gateway_connected = gateway_all_connected
-            print_(f"exchange connect status：{gateway_all_connected}\n")
+            print_(f"exchange connect status: {gateway_all_connected}\n")
 
 class LeverageUtility(object):
     def __init__(self):
