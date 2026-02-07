@@ -66,7 +66,7 @@ class CSVsBybitBarLocalEngine(object):
                     self.bar_db = self.client[db_name]
                     # 读取文件
                     filePath = root + DIR_SYMBOL + theFile
-                    with open(filePath, "r") as f:
+                    with open(filePath, "r", encoding="utf-8") as f:
                         reader = csv.DictReader(f)
                         # 开始导入数据
                         for row in reader:
@@ -186,7 +186,7 @@ class CSVsOKXBarLocalEngine(object):
                     self.bar_db = self.client[db_name]
                     # 读取文件
                     filePath = root + DIR_SYMBOL + theFile
-                    with open(filePath, "r") as f:
+                    with open(filePath, "r", encoding="utf-8") as f:
                         reader = csv.DictReader(f)
                         # 开始导入数据
                         for row in reader:
@@ -296,7 +296,7 @@ class CSVsBinanceBarLocalEngine(object):
                     self.bar_db = self.client[db_name]
                     # 读取文件
                     filePath = root + DIR_SYMBOL + theFile
-                    with open(filePath, "r") as f:
+                    with open(filePath, "r", encoding="utf-8") as f:
                         reader = csv.DictReader(f)
                         # 开始导入数据
                         for row in reader:

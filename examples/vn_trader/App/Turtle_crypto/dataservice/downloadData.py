@@ -43,7 +43,8 @@ import pandas as pd
 from vnpy.trader.utility import DIR_SYMBOL
 
 class TurtleCryptoDataDownloading(object):
-    def __init__(self):
+    def __init__(self, engine):
+        self.engine = engine
         self.threads = []
         self.loading_complete = True
         self.bybit_loading_complete = True
@@ -445,179 +446,188 @@ class DownloadThread(object):
         self.active = False
 
     def run(self):
-        if (
-            self.exchange != Exchange.BINANCE
-            and self.exchange != Exchange.OKX
-            and self.exchange != Exchange.BYBIT
-        ):
-            exit(f"交易所类型错误")
+        try:
+            if (
+                self.exchange != Exchange.BINANCE
+                and self.exchange != Exchange.OKX
+                and self.exchange != Exchange.BYBIT
+            ):
+                exit(f"交易所类型错误")
 
-        #"""
-        # 获取bar数据
-        vt_symbol = f"{self.contract}.{self.exchange.value}"
-        if self.hours:
-            from_time = datetime.now() - timedelta(hours=self.hours)
-            from_time = datetime(from_time.year, from_time.month, from_time.day, from_time.hour)
+            #"""
+            # 获取bar数据
+            vt_symbol = f"{self.contract}.{self.exchange.value}"
+            if self.hours:
+                from_time = datetime.now() - timedelta(hours=self.hours)
+                from_time = datetime(from_time.year, from_time.month, from_time.day, from_time.hour)
+            
+            else:
+                from_time = datetime.now() - timedelta(days=self.days)
+                from_time = datetime(from_time.year, from_time.month, from_time.day)
+            if self.show_progress:
+                print(f"{vt_symbol} Bar数据下载中..")
+
+            # 接口获取合约起始时间
+            first_bar_dt = None
+            if self.api_check:
+                request_needed = True
+                while request_needed:
+                    try:
+                        if self.exchange == Exchange.BINANCE:
+                            first_bar_dt = binance_get_first_bar_datetime(
+                                symbol=self.contract,
+                                interval=self.interval,
+                                symbol_type=BinanceType.USDT,
+                                start_time=datetime.strftime(
+                                    from_time, "%Y-%m-%d %H:%M:%S"
+                                ),
+                            )
+
+                        elif self.exchange == Exchange.OKX:
+                            first_bar_dt = okx_get_first_bar_datetime(
+                                symbol=self.contract,
+                                from_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"),
+                            )
+
+                        elif self.exchange == Exchange.BYBIT:
+                            first_bar_dt = bybit_get_first_bar_datetime(
+                                symbol=self.contract,
+                                interval=self.interval,
+                                from_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"),
+                            )
+
+                        request_needed = False
+                    except:
+                        sleep(2)
+
+            if self.from_data_base:
+                client = MongoClient("localhost", 27017)
+                db = client[MINUTE_DB_NAME]
+                collection = db[vt_symbol]
+
+                if first_bar_dt:
+                    flt = {"datetime": {"$gte": from_time}}
+                    cursor = collection.find(flt).sort("datetime", ASCENDING)
+                    dt_list = []
+                    if cursor:
+                        for bar in list(cursor):
+                            dt_list.append(bar["datetime"])
+                    if dt_list:
+                        db_start_dt = dt_list[0]
+                        db_end_dt = dt_list[-1]
+                        print(f"{vt_symbol} 数据库起止时间\t{db_start_dt}\t{db_end_dt}\t")
+
+                        if db_start_dt <= first_bar_dt:
+                            virtual_dt_list = []
+                            i = first_bar_dt
+                            while i <= db_end_dt:
+                                virtual_dt_list.append(i)
+                                i += timedelta(minutes=1)
+                            sub = set(virtual_dt_list).difference(set(dt_list))
+                            if sub:
+                                # 数据库数据缺失
+                                loss_dt = sorted(list(sub))[0]
+                                from_time = loss_dt - timedelta(minutes=10)
+                                print(
+                                    f"!!!!!! {vt_symbol} 数据库数据缺失【from：{loss_dt}】 !!!!!!"
+                                )
+                            else:
+                                # 数据库数据完整
+                                from_time = db_end_dt - timedelta(minutes=10)
+
+                else:
+                    start_data = collection.find_one(sort=[("datetime", ASCENDING)])
+                    db_start_dt = start_data["datetime"] if start_data else None
+                    end_data = collection.find_one(sort=[("datetime", DESCENDING)])
+                    db_end_dt = end_data["datetime"] if end_data else None
+
+                    if self.show_progress:
+                        print(f"{vt_symbol} 数据库起止时间\t{db_start_dt}\t{db_end_dt}")
+
+                    if db_end_dt and from_time < db_end_dt:
+                        from_time = db_end_dt - timedelta(minutes=10)
+
+            to_time = datetime(self.to_date.year, self.to_date.month, self.to_date.day)
         
-        else:
-            from_time = datetime.now() - timedelta(days=self.days)
-            from_time = datetime(from_time.year, from_time.month, from_time.day)
-        if self.show_progress:
-            print(f"{vt_symbol} Bar数据下载中..")
-
-        # 接口获取合约起始时间
-        first_bar_dt = None
-        if self.api_check:
-            request_needed = True
-            while request_needed:
+            while from_time:
+                if from_time >= to_time:
+                    break
+                
+                if self.show_progress:
+                    print(f"{vt_symbol} {from_time}..")
+                download_failed = False
                 try:
                     if self.exchange == Exchange.BINANCE:
-                        first_bar_dt = binance_get_first_bar_datetime(
+                        from_time = binance_get_bar_data(
                             symbol=self.contract,
                             interval=self.interval,
                             symbol_type=BinanceType.USDT,
-                            start_time=datetime.strftime(
-                                from_time, "%Y-%m-%d %H:%M:%S"
-                            ),
+                            start_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"),
+                            end_time=datetime.strftime(to_time, "%Y-%m-%d %H:%M:%S"),
+                            save_to=self.save_to,
                         )
 
                     elif self.exchange == Exchange.OKX:
-                        first_bar_dt = okx_get_first_bar_datetime(
-                            symbol=self.contract,
-                            from_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"),
-                        )
-
-                    elif self.exchange == Exchange.BYBIT:
-                        first_bar_dt = bybit_get_first_bar_datetime(
+                        from_time = okx_get_bar_data(
                             symbol=self.contract,
                             interval=self.interval,
                             from_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"),
+                            save_to=self.save_to,
                         )
 
-                    request_needed = False
-                except:
+                    elif self.exchange == Exchange.BYBIT:
+                        from_time = bybit_get_bar_data(
+                            symbol=self.contract,
+                            interval=self.interval,
+                            from_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"),
+                            save_to=self.save_to,
+                        )
+
+                    else:
+                        print(f"交易所类型错误：{self.exchange.value}")
+                        break
+                    
+                except Exception as e:
+                    download_failed = True
+                    print(f"{vt_symbol} 下载中断")
+
+                if download_failed:
                     sleep(2)
 
-        if self.from_data_base:
-            client = MongoClient("localhost", 27017)
-            db = client[MINUTE_DB_NAME]
-            collection = db[vt_symbol]
+                elif from_time:
+                    from_time = from_time + timedelta(minutes=1)
 
-            if first_bar_dt:
-                flt = {"datetime": {"$gte": from_time}}
-                cursor = collection.find(flt).sort("datetime", ASCENDING)
-                dt_list = []
-                if cursor:
-                    for bar in list(cursor):
-                        dt_list.append(bar["datetime"])
-                if dt_list:
-                    db_start_dt = dt_list[0]
-                    db_end_dt = dt_list[-1]
-                    print(f"{vt_symbol} 数据库起止时间\t{db_start_dt}\t{db_end_dt}\t")
-
-                    if db_start_dt <= first_bar_dt:
-                        virtual_dt_list = []
-                        i = first_bar_dt
-                        while i <= db_end_dt:
-                            virtual_dt_list.append(i)
-                            i += timedelta(minutes=1)
-                        sub = set(virtual_dt_list).difference(set(dt_list))
-                        if sub:
-                            # 数据库数据缺失
-                            loss_dt = sorted(list(sub))[0]
-                            from_time = loss_dt - timedelta(minutes=10)
-                            print(
-                                f"!!!!!! {vt_symbol} 数据库数据缺失【from：{loss_dt}】 !!!!!!"
-                            )
-                        else:
-                            # 数据库数据完整
-                            from_time = db_end_dt - timedelta(minutes=10)
-
-            else:
-                start_data = collection.find_one(sort=[("datetime", ASCENDING)])
-                db_start_dt = start_data["datetime"] if start_data else None
-                end_data = collection.find_one(sort=[("datetime", DESCENDING)])
-                db_end_dt = end_data["datetime"] if end_data else None
-
-                if self.show_progress:
-                    print(f"{vt_symbol} 数据库起止时间\t{db_start_dt}\t{db_end_dt}")
-
-                if db_end_dt and from_time < db_end_dt:
-                    from_time = db_end_dt - timedelta(minutes=10)
-
-        to_time = datetime(self.to_date.year, self.to_date.month, self.to_date.day)
-    
-        while from_time:
-            if from_time >= to_time:
-                break
-            
             if self.show_progress:
-                print(f"{vt_symbol} {from_time}..")
-            download_failed = False
-            try:
-                if self.exchange == Exchange.BINANCE:
-                    from_time = binance_get_bar_data(
-                        symbol=self.contract,
-                        interval=self.interval,
-                        symbol_type=BinanceType.USDT,
-                        start_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"),
-                        end_time=datetime.strftime(to_time, "%Y-%m-%d %H:%M:%S"),
-                        save_to=self.save_to,
-                    )
+                print(f"{vt_symbol} Bar数据下载完成！")
+            #"""
+            
+            #"""
+            # 1m数据入数据库
+            if self.show_progress:
+                print(f"{vt_symbol} Bar数据导入数据库..")
+            if self.exchange == Exchange.BINANCE:
+                engine = CSVsBinanceBarLocalEngine(duration="1m", contract=self.contract, target_dir=self.save_to, show_progress=self.show_progress)
+                engine.startWork()
 
-                elif self.exchange == Exchange.OKX:
-                    from_time = okx_get_bar_data(
-                        symbol=self.contract,
-                        interval=self.interval,
-                        from_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"),
-                        save_to=self.save_to,
-                    )
+            elif self.exchange == Exchange.OKX:
+                engine = CSVsOKXBarLocalEngine(duration="1m", contract=self.contract, target_dir=self.save_to, show_progress=self.show_progress)
+                engine.startWork()
 
-                elif self.exchange == Exchange.BYBIT:
-                    from_time = bybit_get_bar_data(
-                        symbol=self.contract,
-                        interval=self.interval,
-                        from_time=datetime.strftime(from_time, "%Y-%m-%d %H:%M:%S"),
-                        save_to=self.save_to,
-                    )
+            elif self.exchange == Exchange.BYBIT:
+                engine = CSVsBybitBarLocalEngine(duration="1", contract=self.contract, target_dir=self.save_to, show_progress=self.show_progress)
+                engine.startWork()
+            #"""
 
-                else:
-                    print(f"交易所类型错误：{self.exchange.value}")
-                    break
-                
-            except Exception as e:
-                download_failed = True
-                print(f"{vt_symbol} 下载中断")
+            # 终止线程
+            self.close()
 
-            if download_failed:
-                sleep(2)
+        except Exception as e:
+            # 报错通知
+            msg = f"DownloadThread 下载Bar数据出错\n\n{e}"
+            self.engine.engine.send_ding_talk(msg)
 
-            elif from_time:
-                from_time = from_time + timedelta(minutes=1)
-
-        if self.show_progress:
-            print(f"{vt_symbol} Bar数据下载完成！")
-        #"""
-        
-        #"""
-        # 1m数据入数据库
-        if self.show_progress:
-            print(f"{vt_symbol} Bar数据导入数据库..")
-        if self.exchange == Exchange.BINANCE:
-            engine = CSVsBinanceBarLocalEngine(duration="1m", contract=self.contract, target_dir=self.save_to, show_progress=self.show_progress)
-            engine.startWork()
-
-        elif self.exchange == Exchange.OKX:
-            engine = CSVsOKXBarLocalEngine(duration="1m", contract=self.contract, target_dir=self.save_to, show_progress=self.show_progress)
-            engine.startWork()
-
-        elif self.exchange == Exchange.BYBIT:
-            engine = CSVsBybitBarLocalEngine(duration="1", contract=self.contract, target_dir=self.save_to, show_progress=self.show_progress)
-            engine.startWork()
-        #"""
-
-        # 终止线程
-        self.close()
+            # 终止线程
+            self.close()
 
     def start(self) -> None:
         if self.active:

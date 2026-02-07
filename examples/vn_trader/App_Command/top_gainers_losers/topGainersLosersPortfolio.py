@@ -87,7 +87,7 @@ class TopGainersLosersPortfolio(object):
         self.cta_engine.event_engine.register(EVENT_TRADE, self.process_trade_event)
         
         # 数据下载相关
-        self.download_engine = TurtleCryptoDataDownloading()
+        self.download_engine = TurtleCryptoDataDownloading(self)
         self.download_instruments_time: datetime = None
         self.query_funding_rate_time: datetime = None
         self.account_dingtalk_ts: float = 0

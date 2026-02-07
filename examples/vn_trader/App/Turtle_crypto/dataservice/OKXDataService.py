@@ -132,7 +132,7 @@ def okx_get_bar_data(symbol:str, interval:str, from_time:str='', limit:int=100, 
         os.makedirs(dir_path)
     file_path = dir_path + f'{since}__{until}.csv'
     field_names = ['datetime', 'symbol', 'open', 'high', 'low', 'close', 'volume']
-    with open(file_path, "w") as f:
+    with open(file_path, "w", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=field_names)
         writer.writeheader()
         # 写入csv文件
