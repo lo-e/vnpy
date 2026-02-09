@@ -22,7 +22,7 @@ from vnpy.trader.object import ContractData
 from queue import Empty, Queue
 
 TOKENS_DEFAULT = ["BTC", "ETH", "SOL", "BNB", "XRP"]
-TEST_SIGNALS = ["T9", "T11", "T12"]
+TEST_SIGNALS = ["T11", "T12"]
 
 SIGNALS = {"T1": {"unit_loss": 0.003},
            "T2": {"unit_loss": 0.003},
