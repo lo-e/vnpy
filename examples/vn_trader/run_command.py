@@ -125,7 +125,7 @@ class MonitorEngine(object):
 
             self.tick_delay_count += 1
             if time.time() > self.tick_delay_time + 20:
-                msg = f"Tick数据延迟 时长 {delay:.2f}s 数量 {self.tick_delay_count}"
+                msg = f"<tick data delay> seconds: {delay:.2f}s count: {self.tick_delay_count}"
                 self.main_engine.send_ding_talk(msg)
                 print_(msg)
 
@@ -168,7 +168,7 @@ class MonitorEngine(object):
         if now.second == 0:
             gateway: BinanceUsdtGateway = self.main_engine.get_default_gateway("BINANCE")
             if gateway:
-                print_(f"交易所延迟 {gateway.rest_api.time_offset}")
+                print_(f"exchange delay: {gateway.rest_api.time_offset}")
 
         if (now.minute % 1 == 0) and (now.second == 15) and self.tick:
             # 输出Tick信息
@@ -189,7 +189,7 @@ class MonitorEngine(object):
 
             for duration_bar in sorted_duration_bar_list[-10:]:
                 print_(f"{duration_bar.vt_symbol}({duration_bar.tick_count})\t{duration_bar.open}\t{duration_bar.high}\t{duration_bar.low}\t{duration_bar.close}")
-            print_(f"Tick数据合约总数 {len(sorted_duration_bar_list)} 最新 {self.tick.vt_symbol} {self.tick.datetime.replace(microsecond=0)}")
+            print_(f"tick contract count: {len(sorted_duration_bar_list)} newest: {self.tick.vt_symbol} {self.tick.datetime.replace(microsecond=0)}")
 
             # 检查交易所连接
             gateway_all_connected = self.check_gateway_connected()
@@ -198,7 +198,7 @@ class MonitorEngine(object):
                 self.main_engine.send_ding_talk(msg)
             
             self.gateway_connected = gateway_all_connected
-            print_(f"交易所连接状态：{gateway_all_connected}\n")
+            print_(f"exchange connect status: {gateway_all_connected}\n")
 
 class LeverageUtility(object):
     def __init__(self):

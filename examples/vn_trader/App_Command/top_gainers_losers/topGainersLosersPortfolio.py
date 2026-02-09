@@ -243,8 +243,8 @@ class TopGainersLosersPortfolio(object):
 
                 print("-"*12)
                 for account_name, balance in self.account_balance_data.items():
-                    print_(f"余额：{balance:.2f}\t{account_name}")
-                print_(f"ATH：{self.account_ath}\t回撤：{self.account_drawdown}")
+                    print_(f"balance: {balance:.2f}\t{account_name}")
+                print_(f"ATH: {self.account_ath}\tdrawdown: {self.account_drawdown}")
                 print("-"*12)
 
         # 确认组合交易金额
@@ -890,7 +890,7 @@ class TopGainersLosersPortfolio(object):
             self.load_instruments_data()
 
             if download_success:
-                msg = f"合约列表数据已更新！\n"
+                msg = f"instruments list updated!\n"
                 print_(msg)
             
             else:
@@ -1276,7 +1276,7 @@ class TopGainersLosersPortfolio(object):
                 process_count += 1
                 if time.time() >= queue_size_ts + 10:
                     queue_size_ts = time.time()
-                    print_(f"Tick队列数 {self.tick_queue.qsize()} 最近处理 {process_count}")
+                    print_(f"tick queue size {self.tick_queue.qsize()} recent processed {process_count}")
                     process_count = 0
 
                 strategies = self.cta_engine.symbol_strategy_map[tick.vt_symbol]
@@ -1288,7 +1288,7 @@ class TopGainersLosersPortfolio(object):
                 pass
 
             except Exception as e:
-                msg = f"处理Tick数据出错\t{tick.vt_symbol}\t{tick.datetime}\n{e}"
+                msg = f"processing tick error\t{tick.vt_symbol}\t{tick.datetime}\n{e}"
                 print_(msg)
                 if time.time() >= error_notice_ts + 60:
                     error_notice_ts = time.time()
@@ -1305,7 +1305,7 @@ class TopGainersLosersPortfolio(object):
                 self.sync_data = copy.deepcopy(sync_data)
                 self.cta_engine.put_portfolio_event()
 
-                msg = f"同步组合数据.."
+                msg = f"sync portfolio data.."
                 print_(msg)
 
             # 保存组合盈亏数据
@@ -1504,7 +1504,7 @@ class TopGainersLosersPortfolio(object):
                     print("\n")
                     for signal_name, open_tick_dt in trading_signals.items():
                         print_(f"{open_tick_dt}\t{signal_name}")
-                    print_(f"当前交易：{len(trading_signals)}\n")
+                    print_(f"live trading：{len(trading_signals)}\n")
 
                 time.sleep(0.1)
 
