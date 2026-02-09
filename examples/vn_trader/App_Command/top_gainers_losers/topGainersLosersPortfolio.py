@@ -1504,7 +1504,7 @@ class TopGainersLosersPortfolio(object):
                     print("\n")
                     for signal_name, open_tick_dt in trading_signals.items():
                         print_(f"{open_tick_dt}\t{signal_name}")
-                    print_(f"live trading：{len(trading_signals)}\n")
+                    print_(f"live trading: {len(trading_signals)}\n")
 
                 time.sleep(0.1)
 
