@@ -56,6 +56,7 @@ class TopGainersLosersPortfolio(object):
         self.fall_data_list_24h_coinglass = []
         self.rise_data_list_24h_bybit = []
         self.fall_data_list_24h_bybit = []
+        self.rise_fall_error_notice_ts = 0
         self.liquidation_data = {}
         self.sync_data = {}
         self.unsubscribe_time = 0
@@ -669,24 +670,66 @@ class TopGainersLosersPortfolio(object):
                     # 生成信号
                     rise_data_24h_ts = self.rise_data_list_24h_coinglass[0]["change"] if self.rise_data_list_24h_coinglass else 0
                     fall_data_24h_ts = self.fall_data_list_24h_coinglass[0]["change"] if self.fall_data_list_24h_coinglass else 0
-                    if duration == "24h" and (rise_data_24h_ts != rise_ts or fall_data_24h_ts != fall_ts):
-                        self.rise_data_list_24h_coinglass = rise_list
-                        self.fall_data_list_24h_coinglass = fall_list
-                        # self.on_trending_data_24h((rise_list, fall_list))
+                    if duration == "24h":
+                        if rise_data_24h_ts != rise_ts or fall_data_24h_ts != fall_ts:
+                            self.rise_data_list_24h_coinglass = rise_list
+                            self.fall_data_list_24h_coinglass = fall_list
+                            # self.on_trending_data_24h((rise_list, fall_list))
+                        
+                        now_ts = time.time()
+                        if now_ts - rise_ts >= 10 * 60 and now_ts - self.rise_fall_error_notice_ts >= 60:
+                            self.rise_fall_error_notice_ts = now_ts
+                            last_updated = datetime.fromtimestamp(rise_ts)
+                            msg = f"排行榜数据长时间未更新\n\ncoinglass_24h_rise\n{last_updated}"
+                            self.send_ding_talk(msg)
+                        
+                        if now_ts - fall_ts >= 10 * 60 and now_ts - self.rise_fall_error_notice_ts >= 60:
+                            self.rise_fall_error_notice_ts = now_ts
+                            last_updated = datetime.fromtimestamp(fall_ts)
+                            msg = f"排行榜数据长时间未更新\n\ncoinglass_24h_fall\n{last_updated}"
+                            self.send_ding_talk(msg)
 
                     rise_data_1h_ts = self.rise_data_list_1h_coinglass[0]["change"] if self.rise_data_list_1h_coinglass else 0
                     fall_data_1h_ts = self.fall_data_list_1h_coinglass[0]["change"] if self.fall_data_list_1h_coinglass else 0
-                    if duration == "1h" and (rise_data_1h_ts != rise_ts or fall_data_1h_ts != fall_ts):
-                        self.rise_data_list_1h_coinglass = rise_list
-                        self.fall_data_list_1h_coinglass = fall_list
-                        self.on_trending_data_1h((rise_list, fall_list))
+                    if duration == "1h":
+                        if rise_data_1h_ts != rise_ts or fall_data_1h_ts != fall_ts:
+                            self.rise_data_list_1h_coinglass = rise_list
+                            self.fall_data_list_1h_coinglass = fall_list
+                            self.on_trending_data_1h((rise_list, fall_list))
+
+                        now_ts = time.time()
+                        if now_ts - rise_ts >= 10 * 60 and now_ts - self.rise_fall_error_notice_ts >= 60:
+                            self.rise_fall_error_notice_ts = now_ts
+                            last_updated = datetime.fromtimestamp(rise_ts)
+                            msg = f"排行榜数据长时间未更新\n\ncoinglass_1h_rise\n{last_updated}"
+                            self.send_ding_talk(msg)
+                        
+                        if now_ts - fall_ts >= 10 * 60 and now_ts - self.rise_fall_error_notice_ts >= 60:
+                            self.rise_fall_error_notice_ts = now_ts
+                            last_updated = datetime.fromtimestamp(fall_ts)
+                            msg = f"排行榜数据长时间未更新\n\ncoinglass_1h_fall\n{last_updated}"
+                            self.send_ding_talk(msg)
 
                     rise_data_5m_ts = self.rise_data_list_5m_coinglass[0]["change"] if self.rise_data_list_5m_coinglass else 0
                     fall_data_5m_ts = self.fall_data_list_5m_coinglass[0]["change"] if self.fall_data_list_5m_coinglass else 0
-                    if duration == "5m" and (rise_data_5m_ts != rise_ts or fall_data_5m_ts != fall_ts):
-                        self.rise_data_list_5m_coinglass = rise_list
-                        self.fall_data_list_5m_coinglass = fall_list
-                        # self.on_trending_data_5m((rise_list, fall_list))
+                    if duration == "5m":
+                        if rise_data_5m_ts != rise_ts or fall_data_5m_ts != fall_ts:
+                            self.rise_data_list_5m_coinglass = rise_list
+                            self.fall_data_list_5m_coinglass = fall_list
+                            # self.on_trending_data_5m((rise_list, fall_list))
+
+                        now_ts = time.time()
+                        # if now_ts - rise_ts >= 10 * 60 and now_ts - self.rise_fall_error_notice_ts >= 60:
+                        #     self.rise_fall_error_notice_ts = now_ts
+                        #     last_updated = datetime.fromtimestamp(rise_ts)
+                        #     msg = f"排行榜数据长时间未更新\n\ncoinglass_5m_rise\n{last_updated}"
+                        #     self.send_ding_talk(msg)
+                        
+                        # if now_ts - fall_ts >= 10 * 60 and now_ts - self.rise_fall_error_notice_ts >= 60:
+                        #     self.rise_fall_error_notice_ts = now_ts
+                        #     last_updated = datetime.fromtimestamp(fall_ts)
+                        #     msg = f"排行榜数据长时间未更新\n\ncoinglass_5m_fall\n{last_updated}"
+                        #     self.send_ding_talk(msg)
 
                 # 获取bybit涨跌幅排行榜数据
                 for duration in ["24h"]:
@@ -707,9 +750,23 @@ class TopGainersLosersPortfolio(object):
 
                     rise_data_24h_ts = self.rise_data_list_24h_bybit[0]["change"] if self.rise_data_list_24h_bybit else 0
                     fall_data_24h_ts = self.fall_data_list_24h_bybit[0]["change"] if self.fall_data_list_24h_bybit else 0
-                    if duration == "24h" and (rise_data_24h_ts != rise_ts or fall_data_24h_ts != fall_ts):
-                        self.rise_data_list_24h_bybit = rise_list
-                        self.fall_data_list_24h_bybit = fall_list
+                    if duration == "24h":
+                        if rise_data_24h_ts != rise_ts or fall_data_24h_ts != fall_ts:
+                            self.rise_data_list_24h_bybit = rise_list
+                            self.fall_data_list_24h_bybit = fall_list
+
+                        now_ts = time.time()
+                        if now_ts - rise_ts >= 10 * 60 and now_ts - self.rise_fall_error_notice_ts >= 60:
+                            self.rise_fall_error_notice_ts = now_ts
+                            last_updated = datetime.fromtimestamp(rise_ts)
+                            msg = f"排行榜数据长时间未更新\n\nbybit_24h_rise\n{last_updated}"
+                            self.send_ding_talk(msg)
+                        
+                        if now_ts - fall_ts >= 10 * 60 and now_ts - self.rise_fall_error_notice_ts >= 60:
+                            self.rise_fall_error_notice_ts = now_ts
+                            last_updated = datetime.fromtimestamp(fall_ts)
+                            msg = f"排行榜数据长时间未更新\n\nbybit_24h_fall\n{last_updated}"
+                            self.send_ding_talk(msg)
 
                 # 检查tick行情推送是否异常
                 tick_wait = time.time() - self.tick_ts
