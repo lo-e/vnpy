@@ -4,8 +4,8 @@
         "key": "lMMerULzD8S5hTMthK",
         "secret": "D4r73FDIa16IhbJitDdzp52PC5mvr8MnEuID",
         "服务器": "REAL",
-        "代理地址": "192.168.31.140",
-        "代理端口": "10811"
+        "代理地址": "",
+        "代理端口": ""
     },
     "loesuperman(test)": {
         "账户名称": "loesuperman(test)",
