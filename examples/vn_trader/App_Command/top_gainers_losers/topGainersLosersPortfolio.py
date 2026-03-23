@@ -1429,6 +1429,9 @@ class TopGainersLosersPortfolio(object):
                                     self.send_ding_talk(msg)
 
                                 gap = strategy_target_pos - strategy.pos
+                                contract = self.cta_engine.main_engine.get_contract(strategy.vt_symbol)
+                                gap = round_to(gap, contract.min_volume)
+                                
                                 # if gap > 0 and not strategy.insufficient_value:
                                 #     # 多头开仓
                                 #     trade_price = strategy.tick.last_price * 1.005
@@ -1455,6 +1458,9 @@ class TopGainersLosersPortfolio(object):
                                     self.send_ding_talk(msg)
 
                                 gap = abs(strategy_target_pos) - abs(strategy.pos)
+                                contract = self.cta_engine.main_engine.get_contract(strategy.vt_symbol)
+                                gap = round_to(gap, contract.min_volume)
+
                                 # if gap > 0 and not strategy.insufficient_value:
                                 #     # 空头开仓
                                 #     trade_price = strategy.tick.last_price * 0.995
