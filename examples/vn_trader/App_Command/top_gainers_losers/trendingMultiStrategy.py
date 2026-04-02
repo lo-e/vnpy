@@ -524,9 +524,10 @@ class TrendingMultiStrategy(CtaTemplate):
                     self.minute_15_squeeze_on = False
 
     def check_indicator_inited(self):
+        all_trading_signal_ready = True
+        strategy_target_pos = 0
         for signal_name in self.signal_data.keys():
             signal: SignalData = self.signal_data[signal_name]
-
             if not signal.target_pos:
                 stop_price = self.get_stop_price(signal_name)
                 if self.direction == Direction.LONG:
@@ -742,6 +743,26 @@ class TrendingMultiStrategy(CtaTemplate):
                         signal.indicator_inited_minute15_down = 0
                         signal.indicator_inited_minute_30_squeeze_on = False
                         signal.indicator_inited_minute_15_squeeze_on = False
+
+            else:
+                strategy_target_pos += signal.target_pos
+                if self.tick and self.tick.datetime <= signal.open_tick_dt + timedelta(hours=6):
+                    all_trading_signal_ready = False
+
+        # 确认是否更新止盈
+        if not strategy_target_pos:
+            all_trading_signal_ready = False
+            
+        if all_trading_signal_ready and self.database_loaded and self.exchange == Exchange.BINANCE:
+            if self.direction == Direction.LONG and self.hour_down > self.stop_price:
+                self.stop_price = self.hour_down
+                self.cancel_all()
+                self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(strategy_target_pos), stop=True)
+        
+            elif self.direction == Direction.SHORT and self.hour_up < self.stop_price:
+                self.stop_price = self.hour_up
+                self.cancel_all()
+                self.send_order(Direction.LONG, Offset.CLOSE, self.stop_price, abs(strategy_target_pos), stop=True)
 
     def on_tick(self, tick: TickData):
         self.tick = copy(tick)
