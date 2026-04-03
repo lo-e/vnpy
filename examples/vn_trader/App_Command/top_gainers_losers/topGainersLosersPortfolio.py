@@ -1415,12 +1415,20 @@ class TopGainersLosersPortfolio(object):
 
                         # 检查仓位
                         strategy_target_pos = 0
+                        strategy_stop_price = 0
                         for signal_name in strategy.signal_data.keys():
                             if signal_name in TEST_SIGNALS:
                                 continue
 
                             signal: SignalData = strategy.signal_data[signal_name]
                             strategy_target_pos += signal.target_pos
+
+                            if signal.target_pos:
+                                if signal.direction == Direction.LONG:
+                                    strategy_stop_price = min(strategy_stop_price, signal.stop_price) if strategy_stop_price else signal.stop_price
+
+                                else:
+                                    strategy_stop_price = max(strategy_stop_price, signal.stop_price)
                             
                         if strategy.tick and strategy_target_pos != strategy.pos:
                             if strategy.direction == Direction.LONG:
@@ -1447,6 +1455,9 @@ class TopGainersLosersPortfolio(object):
                                     trade_price = strategy.tick.last_price * 0.995
                                     strategy.cancel_all()
                                     strategy.send_order(Direction.SHORT, Offset.CLOSE, trade_price, abs(gap), market=True)
+                                    
+                                    # 更新策略自动止损价格
+                                    strategy.stop_price = strategy_stop_price
 
                                     # 重新发送自动止损订单
                                     if strategy_target_pos and strategy.exchange == Exchange.BINANCE:
@@ -1476,6 +1487,9 @@ class TopGainersLosersPortfolio(object):
                                     trade_price = strategy.tick.last_price * 1.005
                                     strategy.cancel_all()
                                     strategy.send_order(Direction.LONG, Offset.CLOSE, trade_price, abs(gap), market=True)
+                                    
+                                    # 更新策略自动止损价格
+                                    strategy.stop_price = strategy_stop_price
 
                                     # 重新发送自动止损订单
                                     if strategy_target_pos and strategy.exchange == Exchange.BINANCE:

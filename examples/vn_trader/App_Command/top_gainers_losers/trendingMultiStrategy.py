@@ -758,14 +758,14 @@ class TrendingMultiStrategy(CtaTemplate):
                 self.stop_price = self.hour_down
                 self.cancel_all()
                 self.send_order(Direction.SHORT, Offset.CLOSE, self.stop_price, abs(strategy_target_pos), stop=True)
-                msg = f"更新止盈 {self.strategy_name}"
+                msg = f"更新止盈 {self.stop_price}"
                 self.send_ding_talk(msg)
 
             elif self.direction == Direction.SHORT and self.hour_up < self.stop_price:
                 self.stop_price = self.hour_up
                 self.cancel_all()
                 self.send_order(Direction.LONG, Offset.CLOSE, self.stop_price, abs(strategy_target_pos), stop=True)
-                msg = f"更新止盈 {self.strategy_name}"
+                msg = f"更新止盈 {self.stop_price}"
                 self.send_ding_talk(msg)
                 
     def on_tick(self, tick: TickData):
