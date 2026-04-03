@@ -1424,7 +1424,7 @@ class TopGainersLosersPortfolio(object):
                             strategy_target_pos += signal.target_pos
 
                             if signal.target_pos:
-                                if signal.direction == Direction.LONG:
+                                if strategy.direction == Direction.LONG:
                                     strategy_stop_price = min(strategy_stop_price, signal.stop_price) if strategy_stop_price else signal.stop_price
 
                                 else:
