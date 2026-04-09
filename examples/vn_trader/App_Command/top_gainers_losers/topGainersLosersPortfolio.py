@@ -603,13 +603,13 @@ class TopGainersLosersPortfolio(object):
             #         exchange = "OKX"
             #         exchange_user = "lo-e"
 
-            if not vt_symbol:
-                bybit_symbols = list(self.exchange_instruments_data.get("BYBIT", {}).keys())
-                symbol = f"{token}USDT"
-                if symbol in bybit_symbols:
-                    vt_symbol = f"{symbol}.BYBIT"
-                    exchange = "BYBIT"
-                    exchange_user = "loesuperman"
+            # if not vt_symbol:
+            #     bybit_symbols = list(self.exchange_instruments_data.get("BYBIT", {}).keys())
+            #     symbol = f"{token}USDT"
+            #     if symbol in bybit_symbols:
+            #         vt_symbol = f"{symbol}.BYBIT"
+            #         exchange = "BYBIT"
+            #         exchange_user = "loesuperman"
 
         if not vt_symbol:
             return {}
