@@ -62,8 +62,8 @@ CHINA_TZ: timezone = timezone("Asia/Shanghai")
 F_REST_HOST: str = "https://fapi.binance.com"
 
 # 实盘正向合约Websocket API地址
-F_WEBSOCKET_TRADE_HOST: str = "wss://fstream.binance.com/ws/"
-F_WEBSOCKET_DATA_HOST: str = "wss://fstream.binance.com/stream"
+F_WEBSOCKET_TRADE_HOST: str = "wss://fstream.binance.com/market/ws/"
+F_WEBSOCKET_DATA_HOST: str = "wss://fstream.binance.com/market/stream/"
 
 # 模拟盘正向合约REST API地址
 F_TESTNET_REST_HOST: str = "https://testnet.binancefuture.com"
