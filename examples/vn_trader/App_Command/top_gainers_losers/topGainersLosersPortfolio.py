@@ -1414,7 +1414,7 @@ class TopGainersLosersPortfolio(object):
                     tick_wait = time.time() - exchange_tick_update_ts
                     if tick_wait > 60:
                         self.tick_ts_data[strategy_exchange] = time.time()
-                        msg = f"TICK (strategy_exchange) 推送异常，检查线程阻塞"
+                        msg = f"TICK ({strategy_exchange}) 推送异常，检查线程阻塞"
                         self.send_ding_talk(msg)
 
                     strategy_check_ts = self.strategy_status_check_ts.get(strategy.strategy_name, 0)
