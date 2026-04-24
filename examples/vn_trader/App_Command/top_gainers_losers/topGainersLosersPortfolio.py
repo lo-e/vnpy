@@ -46,7 +46,7 @@ class TopGainersLosersPortfolio(object):
         self.started = False
         self.exchange_instruments_data = {}
         self.tick_queue = Queue()
-        self.tick_ts = time.time()
+        self.tick_ts_data = {}
         self.strategy_status_check_ts = {}
         self.rise_data_list_5m_coinglass = []
         self.fall_data_list_5m_coinglass = []
@@ -768,13 +768,6 @@ class TopGainersLosersPortfolio(object):
                             msg = f"排行榜数据长时间未更新\n\nbybit_24h_fall\n{last_updated}"
                             self.send_ding_talk(msg)
 
-                # 检查tick行情推送是否异常
-                tick_wait = time.time() - self.tick_ts
-                if self.cta_engine.strategies and tick_wait > 60:
-                    self.tick_ts = time.time()
-                    msg = f"TICK推送异常，检查线程阻塞"
-                    self.send_ding_talk(msg)
-
             except Exception as e:
                 msg = f"处理涨跌幅排行数据出错\n\n{e}"
                 self.send_ding_talk(msg)
@@ -1329,7 +1322,9 @@ class TopGainersLosersPortfolio(object):
         while True:
             try:
                 tick: TickData = self.tick_queue.get(block=True, timeout=1)
-                self.tick_ts = time.time()
+                tick_exchange = tick.vt_symbol.split(".")[-1]
+                self.tick_ts_data[tick_exchange] = time.time()
+                
                 process_count += 1
                 if time.time() >= queue_size_ts + 10:
                     queue_size_ts = time.time()
@@ -1409,6 +1404,16 @@ class TopGainersLosersPortfolio(object):
             try:
                 for name in self.cta_engine.strategies.copy().keys():
                     strategy: TrendingMultiStrategy = self.cta_engine.strategies[name]
+
+                    # 检查tick行情推送是否异常
+                    strategy_exchange = strategy.vt_symbol.split(".")[-1]
+                    exchange_tick_update_ts = self.tick_ts_data.get(strategy_exchange, time.time())
+                    tick_wait = time.time() - exchange_tick_update_ts
+                    if tick_wait > 60:
+                        self.self.tick_ts_data[strategy_exchange] = time.time()
+                        msg = f"TICK (strategy_exchange) 推送异常，检查线程阻塞"
+                        self.send_ding_talk(msg)
+
                     strategy_check_ts = self.strategy_status_check_ts.get(strategy.strategy_name, 0)
                     if time.time() >= strategy_check_ts + 10:
                         self.strategy_status_check_ts[strategy.strategy_name] = time.time()
