@@ -961,6 +961,7 @@ class TopGainersLosersPortfolio(object):
 
                 success = False
                 try_count = 0
+                print(f"开始下载Bar数据 {vt_symbol}")
                 while not success and try_count < 5:
                     try_count += 1
                     try:
@@ -991,10 +992,15 @@ class TopGainersLosersPortfolio(object):
                         self.send_ding_talk(msg)
 
                 if success:
+                    print(f"下载Bar数据成功 {vt_symbol}")
+
                     symbol_strategies = self.cta_engine.symbol_strategy_map[vt_symbol]
                     for i in range(len(symbol_strategies)):
                         strategy: TrendingMultiStrategy = symbol_strategies[i]
                         strategy.load_database_bar()
+                    
+                else:
+                    print(f"下载Bar数据失败 {vt_symbol}")
 
             except Empty:
                 pass
