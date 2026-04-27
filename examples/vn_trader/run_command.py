@@ -21,7 +21,7 @@ from vnpy.trader.utility import LOCAL_IP
 
 # GATEWAYS = [[OkxGateway, "lo-e"], [BybitGateway, "loesuperman"], [BinanceUsdtGateway, "lo-e"]]
 # GATEWAYS = [[OkxGateway, "lo-e(test)"], [BybitGateway, "loesuperman(test)"], [BinanceUsdtGateway, "lo-e(test)"]]
-GATEWAYS = [[OkxGateway, "lo-e"], [BinanceUsdtGateway, "lo-e"], [BinanceUsdtGateway, "wawjlc"], [BybitGateway, "loesuperman"]]
+GATEWAYS = [[OkxGateway, "lo-e"], [BinanceUsdtGateway, "lo-e"], [BinanceUsdtGateway, "wawjlc"]]
 class DurationBar(object):
     def __init__(self) -> None:
         self.vt_symbol: str = ""
