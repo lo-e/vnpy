@@ -110,7 +110,7 @@ class TurtleCryptoDataDownloading(object):
         self.bybit_loading_complete = True
         if self.okx_loading_complete and self.binance_loading_complete:
             while len(self.threads):
-                print(f"等待Bybit Bar下载线程完成，剩余线程数：{len(self.threads)}")
+                print(f"等待Bybit Bar下载{contract_list}线程完成，剩余线程数：{len(self.threads)}")
                 sleep(1)
 
             self.loading_complete = True
@@ -165,7 +165,7 @@ class TurtleCryptoDataDownloading(object):
         self.okx_loading_complete = True
         if self.bybit_loading_complete and self.binance_loading_complete:
             while len(self.threads):
-                print(f"等待OKX Bar下载线程完成，剩余线程数：{len(self.threads)}")
+                print(f"等待OKX Bar下载{contract_list}线程完成，剩余线程数：{len(self.threads)}")
                 sleep(1)
                 
             self.loading_complete = True
@@ -220,7 +220,7 @@ class TurtleCryptoDataDownloading(object):
         self.binance_loading_complete = True
         if self.okx_loading_complete and self.bybit_loading_complete:
             while len(self.threads):
-                print(f"等待Binance Bar下载线程完成，剩余线程数：{len(self.threads)}")
+                print(f"等待Binance Bar下载{contract_list}线程完成，剩余线程数：{len(self.threads)}")
                 sleep(1)
                 
             self.loading_complete = True
