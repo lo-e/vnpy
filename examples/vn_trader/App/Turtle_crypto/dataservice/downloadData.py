@@ -220,7 +220,11 @@ class TurtleCryptoDataDownloading(object):
         self.binance_loading_complete = True
         if self.okx_loading_complete and self.bybit_loading_complete:
             while len(self.threads):
-                print(f"等待Binance Bar下载{contract_list}线程完成，剩余线程数：{len(self.threads)}")
+                thread_loop_log = ""
+                for thread in self.threads:
+                    thread_loop_log += thread.loop_log
+
+                print(f"等待Binance Bar下载{contract_list}线程完成，剩余线程数：{len(self.threads)} log: {thread_loop_log}")
                 sleep(1)
                 
             self.loading_complete = True
@@ -448,6 +452,8 @@ class DownloadThread(object):
         self.thread = Thread(target=self.run)
         self.active = False
 
+        self.loop_log = ""
+
     def run(self):
         try:
             if (
@@ -552,12 +558,17 @@ class DownloadThread(object):
 
             to_time = datetime(self.to_date.year, self.to_date.month, self.to_date.day)
         
+            loop_count = 0
             while from_time:
                 if from_time >= to_time:
                     break
                 
                 if self.show_progress:
                     print(f"{vt_symbol} {from_time}..")
+
+                loop_count += 1
+                self.loop_log = f"下载循环 {loop_count}，from_time: {from_time}"
+
                 download_failed = False
                 try:
                     if self.exchange == Exchange.BINANCE:
