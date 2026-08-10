@@ -30,7 +30,7 @@ class WebsocketClient:
         self._active: bool = False
         self._host: str = ""
 
-        self._session: ClientSession = ClientSession()
+        self._session: ClientSession = None
         self._ws: ClientWebSocketResponse = None
         self._loop: AbstractEventLoop = None
 
@@ -167,6 +167,9 @@ class WebsocketClient:
         """
         在事件循环中运行的主协程
         """
+        # aiohttp>=3.10 要求 ClientSession 必须在运行的事件循环中创建
+        self._session = ClientSession()
+
         while self._active:
             # 捕捉运行过程中异常
             try:

@@ -115,7 +115,7 @@ class RestClient(object):
         self.url_base: str = ""
         self.proxy: str = ""
 
-        self.session: ClientSession = ClientSession(trust_env=True)
+        self.session: ClientSession = None
         self.loop: AbstractEventLoop = None
 
     def init(
@@ -130,12 +130,20 @@ class RestClient(object):
         if proxy_host and proxy_port:
             self.proxy = f"http://{proxy_host}:{proxy_port}"
 
+    async def _create_session(self) -> None:
+        """在事件循环内创建 aiohttp 会话（新版 aiohttp 要求 running loop）"""
+        self.session = ClientSession(trust_env=True)
+
     def start(self, session_number: int = 3) -> None:
         """启动客户端的事件循环"""
         if not self.loop:
             self.loop = get_event_loop()
 
         start_event_loop(self.loop)
+
+        # aiohttp>=3.10 要求 ClientSession 必须在运行的事件循环中创建
+        if self.session is None or self.session.closed:
+            run_coroutine_threadsafe(self._create_session(), self.loop).result()
 
     def stop(self) -> None:
         """停止客户端的事件循环"""

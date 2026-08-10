@@ -149,7 +149,7 @@ def okx_get_symbol_list(type:OKXType=OKXType.USDT, need_data: bool = False):
 
     # 比如MI-PRO连接系统代理报错，以下手动添加请求代理解决
     client = socket.gethostname()
-    if "MI-PRO" in client:
+    if "MI-" in client:
         resp = requests.get(url, headers={}, params={"instType": "SWAP"}, proxies=proxies)
     
     else:
