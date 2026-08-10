@@ -1198,10 +1198,16 @@ class Chrome(object):
 # 数据源：Binance fapi；24h 用官方 ticker，1h 用 K 线现算（精确到分钟）
 # 结构参考 Chrome 类的 fetch/callback + on_* 保存模式
 # ======================================================================
+# 代理条件：主机名带 "MI-" 才走本地代理（与 OKXDataService 一致），否则直连
+_HOSTNAME = socket.gethostname()
+_USE_PROXY = "MI-" in _HOSTNAME
+_LOCAL_IP = socket.gethostbyname(_HOSTNAME) if _USE_PROXY else ""
 PROXIES = {
-    "http": "http://127.0.0.1:10811",
-    "https": "http://127.0.0.1:10811",
-}
+    "http": f"http://{_LOCAL_IP}:10811",
+    "https": f"http://{_LOCAL_IP}:10811",
+} if _USE_PROXY else None
+# MI- 机器：先代理、失败兜底直连；其他机器：仅直连
+_PROXY_CHAIN = (("proxy", PROXIES), ("direct", None)) if _USE_PROXY else (("direct", None),)
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 TICKER_URL = "https://fapi.binance.com/fapi/v1/ticker/24hr"
 KLINE_URL = "https://fapi.binance.com/fapi/v1/klines"
@@ -1211,7 +1217,7 @@ TIME_URL = "https://fapi.binance.com/fapi/v1/time"
 def fetch_ticker():
     """拉全量 24h ticker，先代理后直连。24h 涨跌幅为币安官方字段。"""
     last_err = None
-    for label, proxies in (("proxy", PROXIES), ("direct", None)):
+    for label, proxies in _PROXY_CHAIN:
         try:
             r = requests.get(TICKER_URL, headers={"User-Agent": UA},
                              proxies=proxies, timeout=30)
@@ -1284,7 +1290,7 @@ def fill_1h(items, target_min):
 
 def fetch_server_time():
     """拉币安服务器时间，避免本地时钟偏差影响 1h 基准对齐（失败回退本地）。"""
-    for label, proxies in (("proxy", PROXIES), ("direct", None)):
+    for label, proxies in _PROXY_CHAIN:
         try:
             r = requests.get(TIME_URL, headers={"User-Agent": UA},
                              proxies=proxies, timeout=15)
