@@ -5,7 +5,7 @@ import time
 import os
 import csv
 from datetime import datetime, timedelta
-from vnpy.trader.utility import DIR_SYMBOL
+from vnpy.trader.utility import DIR_SYMBOL, LOCAL_IP
 import socket
 from enum import Enum
 from vnpy.trader.object import ContractData, Exchange, Product
@@ -18,6 +18,12 @@ from .utility import get_csv_path
 hostname = socket.gethostname()
 main_url = "https://api.bybit.com"
 
+# 代理
+proxy = f"http://{LOCAL_IP}:10811"
+proxies = {
+    "http": proxy,
+    "https": proxy,
+}
 
 class BybitSymbolType(Enum):
     """
@@ -40,7 +46,14 @@ def bybit_get_bar_data(symbol: str, interval: str, from_time: str, limit: int = 
     timeArray = time.strptime(from_time, "%Y-%m-%d %H:%M:%S")
     timestamp = int(time.mktime(timeArray)) * 1000
     url = f"{main_url}/v5/market/kline?symbol={symbol}&interval={interval}&start={timestamp}"
-    resp = requests.get(url, headers={}, params={})
+
+    client = socket.gethostname()
+    if "MI-" in client:
+        resp = requests.get(url, headers={}, params={}, proxies=proxies)
+    
+    else:
+        resp = requests.get(url, headers={}, params={})
+        
     result = resp.json().get("result", {})
     data = result.get("list", [])
 
@@ -95,7 +108,14 @@ def bybit_get_first_bar_datetime(symbol: str, interval: str, from_time: str = "2
     timeArray = time.strptime(from_time, "%Y-%m-%d %H:%M:%S")
     timestamp = int(time.mktime(timeArray)) * 1000
     url = f"{main_url}/v5/market/kline?symbol={symbol}&interval={interval}&start={timestamp}"
-    resp = requests.get(url, headers={}, params={})
+
+    client = socket.gethostname()
+    if "MI-" in client:
+        resp = requests.get(url, headers={}, params={}, proxies=proxies)
+    
+    else:
+        resp = requests.get(url, headers={}, params={})
+
     result = resp.json().get("result", {})
     data = result.get("list", [])
     if data:
@@ -134,7 +154,14 @@ def bybit_get_symbol_list(need_data: bool = False):
         url = f"{main_url}/v5/market/instruments-info"
         params = {"category": "linear",
                   "cursor": cursor}
-        resp = requests.get(url, headers={}, params=params)
+        
+        client = socket.gethostname()
+        if "MI-" in client:
+            resp = requests.get(url, headers={}, params=params, proxies=proxies)
+        
+        else:
+            resp = requests.get(url, headers={}, params=params)
+
         result = resp.json().get("result", {})
         cursor = result.get("nextPageCursor", "")
         data = result.get("list", [])

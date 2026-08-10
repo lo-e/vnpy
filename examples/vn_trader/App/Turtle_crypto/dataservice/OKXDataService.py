@@ -17,7 +17,7 @@ from .utility import get_csv_path
 main_url = 'https://www.okx.com'
 
 # 代理
-proxy = f"{LOCAL_IP}:10811"
+proxy = f"http://{LOCAL_IP}:10811"
 proxies = {
     "http": proxy,
     "https": proxy,
@@ -61,7 +61,7 @@ def okx_get_bar_data(symbol:str, interval:str, from_time:str='', limit:int=100, 
         
         # 比如MI-PRO连接系统代理报错，以下手动添加请求代理解决
         client = socket.gethostname()
-        if "MI-PRO" in client:
+        if "MI-" in client:
             resp = requests.get(url, headers={}, params={}, proxies=proxies)
 
         else:
@@ -190,7 +190,7 @@ def okx_get_first_bar_datetime(symbol:str, from_time:str=''):
     
     # 比如MI-PRO连接系统代理报错，以下手动添加请求代理解决
     client = socket.gethostname()
-    if "MI-PRO" in client:
+    if "MI-" in client:
         resp = requests.get(url, headers={}, params={}, proxies=proxies)
     
     else:

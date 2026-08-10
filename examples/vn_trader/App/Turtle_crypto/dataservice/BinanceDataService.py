@@ -19,7 +19,7 @@ main_url_inverse = "https://dapi.binance.com"
 main_url_usdt = "https://fapi.binance.com"
 
 # 代理
-proxy = f"{LOCAL_IP}:10811"
+proxy = f"http://{LOCAL_IP}:10811"
 proxies = {
     "http": proxy,
     "https": proxy,
@@ -77,7 +77,7 @@ def binance_get_bar_data(
         params["endTime"] = end_time * 1000
 
     client = socket.gethostname()
-    if "MI-PRO" in client:
+    if "MI-" in client:
         resp = requests.get(url, headers={}, params=params, proxies=proxies)
     
     else:
@@ -173,7 +173,7 @@ def binance_get_first_bar_datetime(
         params["startTime"] = start_time * 1000
     
     client = socket.gethostname()
-    if "MI-PRO" in client:
+    if "MI-" in client:
         resp = requests.get(url, headers={}, params=params, proxies=proxies)
     
     else:
@@ -197,7 +197,7 @@ def binance_get_symbol_list(need_data: bool = False):
     # 发起请求
     url = f"{main_url_usdt}/fapi/v1/exchangeInfo"
     client = socket.gethostname()
-    if "MI-PRO" in client:
+    if "MI-" in client:
         resp = requests.get(url, headers={}, params={}, proxies=proxies)
     
     else:
