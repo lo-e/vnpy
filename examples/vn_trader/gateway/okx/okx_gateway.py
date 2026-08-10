@@ -327,7 +327,12 @@ class OkxRestApi(RestClient):
         """生成欧易V5签名"""
         # 签名
         timestamp: str = generate_timestamp()
-        request.data = json.dumps(request.data)
+        # OKX 规范：无请求体（GET/DELETE 等）时 body 必须为空字符串 ""。
+        # 不能把 None 交给 json.dumps（会变成 "null"），否则签名与服务端校验不一致 -> 50113 Invalid Sign
+        if request.data is None or request.data == "":
+            request.data = ""
+        elif not isinstance(request.data, str):
+            request.data = json.dumps(request.data)
 
         if request.params:
             path: str = request.path + "?" + urlencode(request.params)

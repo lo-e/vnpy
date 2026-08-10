@@ -1415,7 +1415,8 @@ class TopGainersLosersPortfolio(object):
                     strategy_exchange = strategy.vt_symbol.split(".")[-1]
                     exchange_tick_update_ts = self.tick_ts_data.get(strategy_exchange, 0)
                     if not exchange_tick_update_ts:
-                        self.tick_ts_data[strategy_exchange] = time.time()
+                        exchange_tick_update_ts = time.time()
+                        self.tick_ts_data[strategy_exchange] = exchange_tick_update_ts
                         
                     tick_wait = time.time() - exchange_tick_update_ts
                     if tick_wait > 60:
