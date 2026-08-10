@@ -570,7 +570,8 @@ class Chrome(object):
                     reboot_ts = time.time()
                     scroll_need = True
 
-                    url = "https://www.bybit.com/zh-MY/markets/overview"
+                    # url = "https://www.bybit.com/zh-MY/markets/overview"
+                    url = "https://www.bybit.com/zh-MY/markets/crypto/perpetual/usdt-hot/"
                     driver.get(url)
 
                 else:
@@ -613,24 +614,24 @@ class Chrome(object):
                 )
 
                 # 选择合约
-                category_tabs = areas[0].find_elements(
-                    By.XPATH,
-                    "div/div",
-                )
-                for tab in category_tabs:
-                    if tab.text == "合约":
-                        tab.click()
-                        break
+                # category_tabs = areas[0].find_elements(
+                #     By.XPATH,
+                #     "div/div",
+                # )
+                # for tab in category_tabs:
+                #     if tab.text == "合约":
+                #         tab.click()
+                #         break
 
                 # 选择USDT永续
-                category_tabs = areas[2].find_elements(
-                    By.XPATH,
-                    "div/div/div",
-                )
-                for tab in category_tabs:
-                    if tab.text == "USDT永续":
-                        tab.click()
-                        break
+                # category_tabs = areas[2].find_elements(
+                #     By.XPATH,
+                #     "div/div/div",
+                # )
+                # for tab in category_tabs:
+                #     if tab.text == "USDT永续":
+                #         tab.click()
+                #         break
 
                 # 等待数据列表
                 try_count = 0
@@ -933,6 +934,7 @@ class Chrome(object):
         # 24小时成交额
         volume = elements[3].text
         volume = volume.split("$")[1] if volume else ""
+        volume = get_full_volume(volume)
 
         data = {
             "symbol": f"{symbol}",
@@ -949,12 +951,7 @@ class Chrome(object):
         )
 
         # 合约
-        symbol_item = elements[0].find_elements(
-            By.XPATH,
-            "div/span/div",
-        )[0]
-        symbol = symbol_item.text
-        # symbol = symbol.split(f"\n")[0]
+        symbol = elements[0].text
         symbol = symbol.split(f"USDT")[0]
 
         # 价格
@@ -979,6 +976,7 @@ class Chrome(object):
         # 24小时成交额
         volume = elements[5].text
         volume = volume.split("(USDT)")[0] if volume else ""
+        volume = get_full_volume(volume)
 
         data = {
             "symbol": f"{symbol}",
@@ -1253,6 +1251,29 @@ def get_current_dir_path():
 def print_(msg: str):
     dt = datetime.now().replace(microsecond=0)
     print(f"{dt}\t{msg}")
+
+def get_full_volume(volume: str):
+    if not volume:
+        return 0
+    
+    volume_v = float(re.sub(r'[^\d.]', '', volume))
+    volume_u = re.sub(r'[\d.,]', '', volume)
+    if volume_u == "亿":
+        volume_v *= 100000000
+    
+    elif volume_u == "万":
+        volume_v *= 10000
+
+    elif volume_u == "B":
+        volume_v *= 1000000000
+
+    elif volume_u == "M":
+        volume_v *= 1000000
+
+    elif volume_u == "K":
+        volume_v *= 1000
+
+    return volume_v
 
 
 if __name__ == "__main__":

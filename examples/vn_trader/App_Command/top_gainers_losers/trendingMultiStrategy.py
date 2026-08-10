@@ -1442,20 +1442,3 @@ def get_strategy_type(strategy_name: str):
     
     type = strategy_name.split("_")[2]
     return type
-
-def get_full_volume(volume: str):
-    if not volume:
-        return 0
-    
-    volume_v = float(re.sub(r'[^\d.]', '', volume))
-    volume_u = re.sub(r'[\d.,]', '', volume)
-    if volume_u == "亿":
-        volume_v *= 100000000
-    
-    elif volume_u == "万":
-        volume_v *= 10000
-
-    elif volume_u == "M":
-        volume_v *= 1000000
-    
-    return volume_v
