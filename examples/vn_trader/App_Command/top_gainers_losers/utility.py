@@ -6,6 +6,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from threading import Thread
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 import os
 from vnpy.trader.utility import DIR_SYMBOL
@@ -15,6 +16,8 @@ from queue import Queue
 import socket
 from dingtalkchatbot.chatbot import DingtalkChatbot
 import re
+import requests
+
 
 
 class Chrome(object):
@@ -1190,6 +1193,207 @@ class Chrome(object):
             pass
 
 
+# ======================================================================
+# 币安涨跌幅排行榜（U 本位合约）
+# 数据源：Binance fapi；24h 用官方 ticker，1h 用 K 线现算（精确到分钟）
+# 结构参考 Chrome 类的 fetch/callback + on_* 保存模式
+# ======================================================================
+PROXIES = {
+    "http": "http://127.0.0.1:10811",
+    "https": "http://127.0.0.1:10811",
+}
+UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+TICKER_URL = "https://fapi.binance.com/fapi/v1/ticker/24hr"
+KLINE_URL = "https://fapi.binance.com/fapi/v1/klines"
+TIME_URL = "https://fapi.binance.com/fapi/v1/time"
+
+
+def fetch_ticker():
+    """拉全量 24h ticker，先代理后直连。24h 涨跌幅为币安官方字段。"""
+    last_err = None
+    for label, proxies in (("proxy", PROXIES), ("direct", None)):
+        try:
+            r = requests.get(TICKER_URL, headers={"User-Agent": UA},
+                             proxies=proxies, timeout=30)
+            r.raise_for_status()
+            data = r.json()
+            # print_(f"通过 {label} 拉取 ticker 成功，共 {len(data)} 个交易对")
+            return data
+        except Exception as e:  # noqa: BLE001
+            last_err = e
+            print_(f"{label} ticker 失败: {e}")
+    # raise RuntimeError(f"ticker 两种连接方式均失败: {last_err}")
+
+
+def parse(rows):
+    """解析 USDT 合约，提取 symbol/price/volume/change_24h。"""
+    out = []
+    for r in rows:
+        sym = r.get("symbol", "")
+        if not sym.endswith("USDT"):
+            continue
+        try:
+            pct24 = float(r.get("priceChangePercent", "0"))
+        except ValueError:
+            pct24 = 0.0
+        out.append({
+            "symbol": sym,
+            "price": r.get("lastPrice", ""),
+            "volume": r.get("quoteVolume", ""),  # USDT 计价成交额
+            "change_24h": pct24,
+            "change_1h": None,
+        })
+    return out
+
+
+def get_1h_base(symbol, target_min):
+    """拉「now-1h 对齐到整分钟」那根 1m K 线的开盘价作基准，精确到分钟。"""
+    try:
+        r = requests.get(KLINE_URL, params={"symbol": symbol, "interval": "1m",
+                                             "startTime": target_min, "limit": 1},
+                         headers={"User-Agent": UA}, proxies=PROXIES, timeout=15)
+        r.raise_for_status()
+        data = r.json()
+        if data and len(data) >= 1:
+            return float(data[0][1])  # 该分钟开盘价 = 精确 1 小时前价格
+    except Exception:  # noqa: BLE001
+        pass
+    return None
+
+
+def fill_1h(items, target_min):
+    """并发补全 1h 涨跌幅（精确到分钟），结果写回 items 的 change_1h。"""
+    done = 0
+    with ThreadPoolExecutor(max_workers=20) as ex:
+        fut = {ex.submit(get_1h_base, it["symbol"], target_min): it for it in items}
+        for f in as_completed(fut):
+            it = fut[f]
+            base = f.result()
+            if base:
+                try:
+                    last = float(it["price"])
+                except (TypeError, ValueError):
+                    last = None
+                if last:
+                    it["change_1h"] = (last - base) / base * 100.0
+            done += 1
+            # if done % 150 == 0:
+            #     print_(f"1h 补全 {done}/{len(items)}")
+    # print_(f"1h 数据补全 {sum(1 for i in items if i['change_1h'] is not None)}/{len(items)}")
+
+
+def fetch_server_time():
+    """拉币安服务器时间，避免本地时钟偏差影响 1h 基准对齐（失败回退本地）。"""
+    for label, proxies in (("proxy", PROXIES), ("direct", None)):
+        try:
+            r = requests.get(TIME_URL, headers={"User-Agent": UA},
+                             proxies=proxies, timeout=15)
+            r.raise_for_status()
+            return int(r.json()["serverTime"])
+        except Exception as e:  # noqa: BLE001
+            print_(f"{label} 取服务器时间失败: {e}")
+    return int(time.time() * 1000)
+
+
+def split_rank(items, key):
+    """按 change 字段分涨/跌榜并排序，输出 [{symbol, change, price, volume}]。"""
+    rise, fall = [], []
+    for it in items:
+        c = it.get(key)
+        if c is None:
+            continue
+        d = {"symbol": it["symbol"], "change": c,
+             "price": it["price"], "volume": it["volume"]}
+        if c > 0:
+            rise.append(d)
+        elif c < 0:
+            fall.append(d)
+    rise.sort(key=lambda x: x["change"], reverse=True)
+    fall.sort(key=lambda x: x["change"])
+    return rise, fall
+
+
+class BinanceRank(object):
+    def __init__(self, cta_engine=None):
+        self.cta_engine = cta_engine
+
+    def fetch_rank(self, callback=None, rest: int = 3600):
+        """拉取币安 U 本位合约 24h / 1h 涨跌幅排行榜。
+        rest 为循环间隔秒（<=0 仅拉一次）。"""
+        while True:
+            try:
+                rows = fetch_ticker()
+                items = parse(rows)
+                if not items:
+                    print_("未解析到任何 USDT 合约数据")
+                else:
+                    rise_24h, fall_24h = split_rank(items, "change_24h")
+                    if callback:
+                        callback("binance", (rise_24h, fall_24h), "24h")
+
+                    now_ms = fetch_server_time()
+                    target_min = (now_ms - 3600 * 1000) // 60000 * 60000
+                    fill_1h(items, target_min)
+                    rise_1h, fall_1h = split_rank(items, "change_1h")
+                    if callback:
+                        callback("binance", (rise_1h, fall_1h), "1h")
+            except Exception as e:  # noqa: BLE001
+                print(str(e))
+
+            if rest <= 0:
+                break
+            time.sleep(rest)
+
+    def on_rank(self, via, data, duration):
+        """参考 Chrome.on_rise_fall_trending_data 的保存结构。"""
+        rise_list, fall_list = data
+        rise_list = sorted(rise_list, key=lambda x: x["change"], reverse=True)
+        fall_list = sorted(fall_list, key=lambda x: x["change"], reverse=False)
+        print_(f"{duration}\t上涨\t{len(rise_list)}\t下跌 {len(fall_list)}")
+
+        if rise_list and fall_list:
+            time_data = {"symbol": "data_time", "change": int(time.time())}
+
+            mean_rise_change = pd.DataFrame(rise_list[0:5])["change"].mean()
+            mean_rise_data = {"symbol": "mean_rise", "change": mean_rise_change}
+
+            mean_fall_change = pd.DataFrame(fall_list[0:5])["change"].mean()
+            mean_fall_data = {"symbol": "mean_fall", "change": mean_fall_change}
+
+            # msg = f"mean_rise {mean_rise_change}\nmean_fall {mean_fall_change}"
+            # return
+
+            rise_list.insert(0, mean_fall_data)
+            rise_list.insert(0, mean_rise_data)
+            rise_list.insert(0, time_data)
+            fall_list.insert(0, mean_fall_data)
+            fall_list.insert(0, mean_rise_data)
+            fall_list.insert(0, time_data)
+
+            current_dir = get_current_dir_path()
+            date = datetime.now().strftime(f"%Y-%m-%d")
+            hour = datetime.now().hour
+            full_time = datetime.now().strftime(f"%H_%M_%S")
+
+            rise_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}{via}{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            os.makedirs(rise_dir_path, exist_ok=True)
+            rise_file_path = f"{rise_dir_path}{DIR_SYMBOL}{full_time}.csv"
+            rise_df = pd.DataFrame(rise_list)
+            rise_df.to_csv(rise_file_path, index=False)
+
+            rise_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}{via}{DIR_SYMBOL}rank_rise{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
+            rise_df.to_csv(rise_latest_file_path, index=False)
+
+            fall_dir_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}{via}{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}{date}{DIR_SYMBOL}{hour}"
+            os.makedirs(fall_dir_path, exist_ok=True)
+            fall_file_path = f"{fall_dir_path}{DIR_SYMBOL}{full_time}.csv"
+            fall_df = pd.DataFrame(fall_list)
+            fall_df.to_csv(fall_file_path, index=False)
+
+            fall_latest_file_path = f"{current_dir}{DIR_SYMBOL}data{DIR_SYMBOL}{via}{DIR_SYMBOL}rank_fall{DIR_SYMBOL}{duration}{DIR_SYMBOL}latest.csv"
+            fall_df.to_csv(fall_latest_file_path, index=False)
+
+
 class DingTalkEngine(object):
     # 发送钉钉机器人消息
     def __init__(self):
@@ -1279,9 +1483,15 @@ def get_full_volume(volume: str):
 if __name__ == "__main__":
     chrome = Chrome(cta_engine=None)
     dingtalk = DingTalkEngine()
+    binance = BinanceRank(cta_engine=None)
 
-    # Thread(target=chrome.fetch_rise_fall_coinglass_minute_trending, args=(chrome.on_rise_fall_trending_data, 5)).start()
-    # Thread(target=chrome.fetch_liquidation_coinglass, args=(chrome.on_liquidation_data, 60)).start()
+    # Thread(target=chrome.fetch_rise_fall_coinglass_hour_trending, args=(chrome.on_rise_fall_trending_data, 20)).start()
+    # Thread(target=chrome.fetch_rise_fall_bybit_trending, args=(chrome.on_rise_fall_trending_data, 20)).start()
+    Thread(target=binance.fetch_rank, args=(binance.on_rank, 20), daemon=True).start()
 
-    Thread(target=chrome.fetch_rise_fall_coinglass_hour_trending, args=(chrome.on_rise_fall_trending_data, 20)).start()
-    Thread(target=chrome.fetch_rise_fall_bybit_trending, args=(chrome.on_rise_fall_trending_data, 20)).start()
+    # 保持主线程存在，作为驱动循环；daemon 后台线程随主线程退出而结束
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\n[main] 收到中断信号，程序退出")
