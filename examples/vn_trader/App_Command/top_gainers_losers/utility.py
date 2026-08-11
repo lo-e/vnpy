@@ -1191,133 +1191,22 @@ class Chrome(object):
             pass
 
 
-# ======================================================================
-# 币安涨跌幅排行榜（U 本位合约）
-# 数据源：Binance fapi；24h 用官方 ticker，1h 用 K 线现算（精确到分钟）
-# 结构参考 Chrome 类的 fetch/callback + on_* 保存模式
-# ======================================================================
-# 代理条件：主机名带 "MI-" 才走本地代理（与 OKXDataService 一致），否则直连
-_HOSTNAME = socket.gethostname()
-_USE_PROXY = "MI-" in _HOSTNAME
-_LOCAL_IP = socket.gethostbyname(_HOSTNAME) if _USE_PROXY else ""
-PROXIES = {
-    "http": f"http://{_LOCAL_IP}:10811",
-    "https": f"http://{_LOCAL_IP}:10811",
-} if _USE_PROXY else None
-# MI- 机器：先代理、失败兜底直连；其他机器：仅直连
-_PROXY_CHAIN = (("proxy", PROXIES), ("direct", None)) if _USE_PROXY else (("direct", None),)
-UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-TICKER_URL = "https://fapi.binance.com/fapi/v1/ticker/24hr"
-KLINE_URL = "https://fapi.binance.com/fapi/v1/klines"
-TIME_URL = "https://fapi.binance.com/fapi/v1/time"
-
-
-def fetch_ticker():
-    """拉全量 24h ticker，先代理后直连。24h 涨跌幅为币安官方字段。"""
-    last_err = None
-    for label, proxies in _PROXY_CHAIN:
-        try:
-            r = requests.get(TICKER_URL, headers={"User-Agent": UA},
-                             proxies=proxies, timeout=30)
-            r.raise_for_status()
-            data = r.json()
-            # print_(f"通过 {label} 拉取 ticker 成功，共 {len(data)} 个交易对")
-            return data
-        except Exception as e:  # noqa: BLE001
-            last_err = e
-            print_(f"{label} ticker 失败: {e}")
-    # raise RuntimeError(f"ticker 两种连接方式均失败: {last_err}")
-
-
-def parse(rows):
-    """解析 USDT 合约，提取 symbol/price/volume/change_24h。"""
-    out = []
-    for r in rows:
-        sym = r.get("symbol", "")
-        if not sym.endswith("USDT"):
-            continue
-        try:
-            pct24 = float(r.get("priceChangePercent", "0"))
-        except ValueError:
-            pct24 = 0.0
-        out.append({
-            "symbol": sym,
-            "price": r.get("lastPrice", ""),
-            "volume": r.get("quoteVolume", ""),  # USDT 计价成交额
-            "change_24h": pct24,
-            "change_1h": None,
-        })
-    return out
-
-
-def get_1h_base(symbol, target_min):
-    """拉「now-1h 对齐到整分钟」那根 1m K 线的开盘价作基准，精确到分钟。"""
-    try:
-        r = requests.get(KLINE_URL, params={"symbol": symbol, "interval": "1m",
-                                             "startTime": target_min, "limit": 1},
-                         headers={"User-Agent": UA}, proxies=PROXIES, timeout=15)
-        r.raise_for_status()
-        data = r.json()
-        if data and len(data) >= 1:
-            return float(data[0][1])  # 该分钟开盘价 = 精确 1 小时前价格
-    except Exception:  # noqa: BLE001
-        pass
-    return None
-
-
-def fill_1h(items, target_min):
-    """并发补全 1h 涨跌幅（精确到分钟），结果写回 items 的 change_1h。"""
-    done = 0
-    with ThreadPoolExecutor(max_workers=20) as ex:
-        fut = {ex.submit(get_1h_base, it["symbol"], target_min): it for it in items}
-        for f in as_completed(fut):
-            it = fut[f]
-            base = f.result()
-            if base:
-                try:
-                    last = float(it["price"])
-                except (TypeError, ValueError):
-                    last = None
-                if last:
-                    it["change_1h"] = (last - base) / base * 100.0
-            done += 1
-            # if done % 150 == 0:
-            #     print_(f"1h 补全 {done}/{len(items)}")
-    # print_(f"1h 数据补全 {sum(1 for i in items if i['change_1h'] is not None)}/{len(items)}")
-
-
-def fetch_server_time():
-    """拉币安服务器时间，避免本地时钟偏差影响 1h 基准对齐（失败回退本地）。"""
-    for label, proxies in _PROXY_CHAIN:
-        try:
-            r = requests.get(TIME_URL, headers={"User-Agent": UA},
-                             proxies=proxies, timeout=15)
-            r.raise_for_status()
-            return int(r.json()["serverTime"])
-        except Exception as e:  # noqa: BLE001
-            print_(f"{label} 取服务器时间失败: {e}")
-    return int(time.time() * 1000)
-
-
-def split_rank(items, key):
-    """按 change 字段分涨/跌榜并排序，输出 [{symbol, change, price, volume}]。"""
-    rise, fall = [], []
-    for it in items:
-        c = it.get(key)
-        if c is None:
-            continue
-        d = {"symbol": it["symbol"], "change": c,
-             "price": it["price"], "volume": it["volume"]}
-        if c > 0:
-            rise.append(d)
-        elif c < 0:
-            fall.append(d)
-    rise.sort(key=lambda x: x["change"], reverse=True)
-    fall.sort(key=lambda x: x["change"])
-    return rise, fall
-
-
 class BinanceRank(object):
+    # 代理条件：主机名带 "MI-" 才走本地代理（与 OKXDataService 一致），否则直连
+    _HOSTNAME = socket.gethostname()
+    _USE_PROXY = "MI-" in _HOSTNAME
+    _LOCAL_IP = socket.gethostbyname(_HOSTNAME) if _USE_PROXY else ""
+    PROXIES = {
+        "http": f"http://{_LOCAL_IP}:10811",
+        "https": f"http://{_LOCAL_IP}:10811",
+    } if _USE_PROXY else None
+    # MI- 机器：先代理、失败兜底直连；其他机器：仅直连
+    _PROXY_CHAIN = (("proxy", PROXIES), ("direct", None)) if _USE_PROXY else (("direct", None),)
+    UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    TICKER_URL = "https://fapi.binance.com/fapi/v1/ticker/24hr"
+    KLINE_URL = "https://fapi.binance.com/fapi/v1/klines"
+    TIME_URL = "https://fapi.binance.com/fapi/v1/time"
+
     def __init__(self, cta_engine=None):
         self.cta_engine = cta_engine
 
@@ -1326,20 +1215,20 @@ class BinanceRank(object):
         rest 为循环间隔秒（<=0 仅拉一次）。"""
         while True:
             try:
-                rows = fetch_ticker()
+                rows = self.fetch_ticker()
                 if rows:
-                    items = parse(rows)
-                    if not items:   
+                    items = self.parse(rows)
+                    if not items:
                         print_("未解析到任何 USDT 合约数据")
                     else:
-                        rise_24h, fall_24h = split_rank(items, "change_24h")
+                        rise_24h, fall_24h = self.split_rank(items, "change_24h")
                         if callback:
                             callback("binance", (rise_24h, fall_24h), "24h")
 
-                        now_ms = fetch_server_time()
+                        now_ms = self.fetch_server_time()
                         target_min = (now_ms - 3600 * 1000) // 60000 * 60000
-                        fill_1h(items, target_min)
-                        rise_1h, fall_1h = split_rank(items, "change_1h")
+                        self.fill_1h(items, target_min)
+                        rise_1h, fall_1h = self.split_rank(items, "change_1h")
                         if callback:
                             callback("binance", (rise_1h, fall_1h), "1h")
             except Exception as e:  # noqa: BLE001
@@ -1348,6 +1237,101 @@ class BinanceRank(object):
             if rest <= 0:
                 break
             time.sleep(rest)
+
+    # ---- 拉取/解析工具方法 ----
+    def fetch_ticker(self):
+        """拉全量 24h ticker，先代理后直连。24h 涨跌幅为币安官方字段。"""
+        last_err = None
+        for label, proxies in self._PROXY_CHAIN:
+            try:
+                r = requests.get(self.TICKER_URL, headers={"User-Agent": self.UA},
+                                 proxies=proxies, timeout=30)
+                r.raise_for_status()
+                data = r.json()
+                return data
+            except Exception as e:  # noqa: BLE001
+                last_err = e
+                print_(f"{label} ticker 失败: {e}")
+
+    def parse(self, rows):
+        """解析 USDT 合约，提取 symbol/price/volume/change_24h。"""
+        out = []
+        for r in rows:
+            sym = r.get("symbol", "")
+            if not sym.endswith("USDT"):
+                continue
+            try:
+                pct24 = float(r.get("priceChangePercent", "0"))
+            except ValueError:
+                pct24 = 0.0
+            out.append({
+                "symbol": sym,
+                "price": r.get("lastPrice", ""),
+                "volume": r.get("quoteVolume", ""),  # USDT 计价成交额
+                "change_24h": pct24,
+                "change_1h": None,
+            })
+        return out
+
+    def get_1h_base(self, symbol, target_min):
+        """拉「now-1h 对齐到整分钟」那根 1m K 线的开盘价作基准，精确到分钟。"""
+        try:
+            r = requests.get(self.KLINE_URL, params={"symbol": symbol, "interval": "1m",
+                                                     "startTime": target_min, "limit": 1},
+                             headers={"User-Agent": self.UA}, proxies=self.PROXIES, timeout=15)
+            r.raise_for_status()
+            data = r.json()
+            if data and len(data) >= 1:
+                return float(data[0][1])  # 该分钟开盘价 = 精确 1 小时前价格
+        except Exception:  # noqa: BLE001
+            pass
+        return None
+
+    def fill_1h(self, items, target_min):
+        """并发补全 1h 涨跌幅（精确到分钟），结果写回 items 的 change_1h。"""
+        done = 0
+        with ThreadPoolExecutor(max_workers=20) as ex:
+            fut = {ex.submit(self.get_1h_base, it["symbol"], target_min): it for it in items}
+            for f in as_completed(fut):
+                it = fut[f]
+                base = f.result()
+                if base:
+                    try:
+                        last = float(it["price"])
+                    except (TypeError, ValueError):
+                        last = None
+                    if last:
+                        it["change_1h"] = (last - base) / base * 100.0
+                done += 1
+
+    def fetch_server_time(self):
+        """拉币安服务器时间，避免本地时钟偏差影响 1h 基准对齐（失败回退本地）。"""
+        for label, proxies in self._PROXY_CHAIN:
+            try:
+                r = requests.get(self.TIME_URL, headers={"User-Agent": self.UA},
+                                 proxies=proxies, timeout=15)
+                r.raise_for_status()
+                return int(r.json()["serverTime"])
+            except Exception as e:  # noqa: BLE001
+                print_(f"{label} 取服务器时间失败: {e}")
+        return int(time.time() * 1000)
+
+    def split_rank(self, items, key):
+        """按 change 字段分涨/跌榜并排序，输出 [{symbol, change, price, volume}]。"""
+        rise, fall = [], []
+        for it in items:
+            c = it.get(key)
+            if c is None:
+                continue
+            d = {"symbol": it["symbol"], "change": c,
+                 "price": it["price"], "volume": it["volume"]}
+            if c > 0:
+                rise.append(d)
+            elif c < 0:
+                fall.append(d)
+        rise.sort(key=lambda x: x["change"], reverse=True)
+        fall.sort(key=lambda x: x["change"])
+        return rise, fall
 
     def on_rank(self, via, data, duration):
         """参考 Chrome.on_rise_fall_trending_data 的保存结构。"""
