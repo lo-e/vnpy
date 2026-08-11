@@ -9,7 +9,6 @@ from threading import Thread
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 import os
-from vnpy.trader.utility import DIR_SYMBOL
 import pandas as pd
 from datetime import datetime
 from queue import Queue
@@ -17,8 +16,7 @@ import socket
 from dingtalkchatbot.chatbot import DingtalkChatbot
 import re
 import requests
-
-
+import sys
 
 class Chrome(object):
     def __init__(self, cta_engine) -> None:
@@ -1329,20 +1327,21 @@ class BinanceRank(object):
         while True:
             try:
                 rows = fetch_ticker()
-                items = parse(rows)
-                if not items:
-                    print_("未解析到任何 USDT 合约数据")
-                else:
-                    rise_24h, fall_24h = split_rank(items, "change_24h")
-                    if callback:
-                        callback("binance", (rise_24h, fall_24h), "24h")
+                if rows:
+                    items = parse(rows)
+                    if not items:   
+                        print_("未解析到任何 USDT 合约数据")
+                    else:
+                        rise_24h, fall_24h = split_rank(items, "change_24h")
+                        if callback:
+                            callback("binance", (rise_24h, fall_24h), "24h")
 
-                    now_ms = fetch_server_time()
-                    target_min = (now_ms - 3600 * 1000) // 60000 * 60000
-                    fill_1h(items, target_min)
-                    rise_1h, fall_1h = split_rank(items, "change_1h")
-                    if callback:
-                        callback("binance", (rise_1h, fall_1h), "1h")
+                        now_ms = fetch_server_time()
+                        target_min = (now_ms - 3600 * 1000) // 60000 * 60000
+                        fill_1h(items, target_min)
+                        rise_1h, fall_1h = split_rank(items, "change_1h")
+                        if callback:
+                            callback("binance", (rise_1h, fall_1h), "1h")
             except Exception as e:  # noqa: BLE001
                 print(str(e))
 
@@ -1485,6 +1484,14 @@ def get_full_volume(volume: str):
 
     return volume_v
 
+def get_platform_dir_symbol():
+    platform = sys.platform
+    result = '\\'
+    if 'LINUX' in platform.upper() or 'DARWIN' in platform.upper():
+        result = '/'
+    return result
+
+DIR_SYMBOL = get_platform_dir_symbol()
 
 if __name__ == "__main__":
     chrome = Chrome(cta_engine=None)
