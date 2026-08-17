@@ -51,6 +51,7 @@ examples/MartingStrategy/trending_continuous/
 examples/PondAI/figSaved/
 examples/vn_trader/App_Command/top_gainers_losers/data/
 examples/vn_trader/App_Command/top_gainers_losers/chromedriver/
+workbuddy/data/
 
 # Misc
 .DS_Store
