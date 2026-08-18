@@ -72,11 +72,22 @@ CIRCUIT_M = int(os.environ.get("CIRCUIT_M", "3"))           # 环境熔断: 连�
 OFF24_LO = float(os.environ.get("OFF24_LO", "0"))           # 距24h高点回落排除下限%(0=关闭)
 OFF24_HI = float(os.environ.get("OFF24_HI", "0"))           # 距24h高点回落排除上限%
 HIGH_AGE_MAX = float(os.environ.get("HIGH_AGE_MAX", "0"))   # 距24h最高点小时数上限: 高点太久的"接刀单"排除(0=关闭)
+MIN_NEW_HIGH_AGE = float(os.environ.get("MIN_NEW_HIGH_AGE", "0"))  # 距24h最高点分钟数下限: 刚创新高(<N分钟)的"初始拉升期"排除(0=关闭)
+STAGNATE_MIN = float(os.environ.get("STAGNATE_MIN", "0"))  # 停滞顶(入场点B): 距24h最高点 ≥N 小时才开(等停滞确认, 0=关闭)
+PULLBACK_MIN = float(os.environ.get("PULLBACK_MIN", "0"))  # 回撤入场(入场点C): 当前价距24h最高点已回撤 ≥X% 才开(0=关闭)
+PERMIT = int(os.environ.get("PERMIT", "0"))  # 架构重构(2026-08-18 用户设计): 信号=开仓允许状态(24h), 期内独立开仓最多3次, 总盈亏=信号最终盈亏, 间接禁仓(0=旧逻辑)
+ENTER_SCHEME = int(os.environ.get("ENTER_SCHEME", "0"))  # permit实际入场点方案: 0=信号后立即开 1=延迟ENTER_DELAY_K根K 2=回撤≥PULLBACK_MIN% 4=funding 5=OI 6=funding+OI
+ENTER_DELAY_K = int(os.environ.get("ENTER_DELAY_K", "0"))  # scheme 1: 信号后延迟 N 根 5m K 再开
+STOP_GAP_LO = float(os.environ.get("STOP_GAP_LO", "0"))  # 止损幅度过滤下限%: (entry_h24-开仓价)/开仓价 ≥ 此值才开(0=关闭)
+STOP_GAP_HI = float(os.environ.get("STOP_GAP_HI", "0"))  # 止损幅度过滤上限%: 同上 ≤ 此值才开(0=关闭)
+MAX_PERMIT_OPENS = int(os.environ.get("MAX_PERMIT_OPENS", "3"))  # 单permit最大开仓数量(=平仓结束阈值, 2026-08-18 参数化)
+ENTRY_H24 = int(os.environ.get("ENTRY_H24", "1"))  # permit开仓24h最高价止损锚(1=启用, 0=取消, 兼容性验证用)
 NH_HOURS = float(os.environ.get("NH_HOURS", "24"))           # 创30天新高确认的冲高窗口小时数(定稿24; 实验1/3/6/12)
 PUMP_ENABLE = int(os.environ.get("PUMP_ENABLE", "0"))       # 滚动24h新高止损: 4h缓冲后突破滚动24h最高(high) → 按前高止损
 PUMP_DELAY_H = float(os.environ.get("PUMP_DELAY_H", "4"))
 TAKE_ENABLE = int(os.environ.get("TAKE_ENABLE", "0"))       # 移动止盈: 峰值浮盈≥TAKE_MIN% 后从峰值回落 TAKE_RETRACE pp → 锁利
 TAKE_PROFIT_PCT = float(os.environ.get("TAKE_PROFIT_PCT", "0"))  # 固定止盈: 空头浮盈达 X%(价格相对开仓价跌 X%) → 落袋(0=关闭)
+SINGLE_K_SURGE_PCT = float(os.environ.get("SINGLE_K_SURGE_PCT", "0"))  # 单K暴涨平仓: 持仓期单根K盘中 high 相对该K open 涨幅≥X% → 立即平仓(防妖币主升浪拉爆)(0=关闭)
 TAKE_MIN = float(os.environ.get("TAKE_MIN", "15"))
 TAKE_RETRACE = float(os.environ.get("TAKE_RETRACE", "15"))
 sig_by_sym = {}   # sym -> [t_ms, ...] 按时间升序(用于模拟平均盈亏回放)
@@ -464,9 +475,105 @@ print(f"K 预拉完成: {len(ok_syms)}/{len(syms_all)} 币, 缺失 {len(missing_
 holdings = {}   # sym -> {open_ms, open_px}
 ban = {}        # sym -> ban_until_ms
 pending = {}    # sym -> signal_ms  (延迟入场候选: 24h 内等 tbr<50%)
+permits = {}    # PERMIT=1: sym -> {sig_ms, end_ms, n_open, total_pnl}  开仓允许状态
 trades = []
 sig_idx = 0
 n_open = n_stop = n_expire = n_cancel = 0
+
+
+def entry_point_ok(sym, t_ms, scheme=ENTER_SCHEME):
+    """permit 实际入场点判断: 满足则返回 True(可开仓)。scheme: 0=立即 1=延迟N根 2=回撤X% 4=funding 5=OI 6=funding+OI"""
+    if scheme == 0:
+        return True
+    if scheme in (4, 5, 6):
+        return ef_entry_ok(sym, t_ms, scheme)
+    cm = close_maps.get(sym, {})
+    px = price_at(cm, t_ms)
+    if px is None:
+        return False
+    _ots, _h = series.get(sym, (None, None))
+    if not _ots:
+        return False
+    _hi = bisect.bisect_right(_ots, t_ms - STEP5) - 1
+    _lo = bisect.bisect_left(_ots, t_ms - DAY_MS)
+    if _hi < _lo:
+        return False
+    _h24 = max(_h[_lo:_hi + 1])
+    if _h24 <= 0:
+        return False
+    if scheme == 2:                     # 回撤入场: 已回撤 ≥ PULLBACK_MIN%
+        pb = (_h24 - px) / _h24 * 100
+        return pb >= PULLBACK_MIN
+    return True                         # scheme 1 延迟由调用方按根数控制
+
+
+EF_DIR = os.path.join("workbuddy", "data", "change_20251201_20260816")
+EF_CACHE = {}
+FUNDING_MIN = float(os.environ.get("FUNDING_MIN", "0.0005"))   # scheme4: funding_rate ≥ 阈值(多头拥挤)才开空
+OI_RETRACE = float(os.environ.get("OI_RETRACE", "0.10"))       # scheme5: OI 较信号以来峰值回落 ≥ 比例才开空
+
+
+def ef_load(sym):
+    if sym in EF_CACHE:
+        return EF_CACHE[sym]
+    p = os.path.join(EF_DIR, f"ef_{sym}.csv")
+    if not os.path.exists(p):
+        EF_CACHE[sym] = None
+        return None
+    rows = []
+    for r in csv.DictReader(open(p, encoding="utf-8-sig")):
+        try:
+            fr = float(r["funding_rate"]) if r["funding_rate"] else None
+            oi = float(r["oi"]) if r["oi"] else None
+            rows.append((int(r["ts_ms"]), fr, oi))
+        except Exception:
+            pass
+    rows.sort()
+    EF_CACHE[sym] = rows if rows else None
+    return EF_CACHE[sym]
+
+
+def ef_at(sym, t_ms, lookback=6 * 3600 * 1000):
+    """t_ms 前 lookback 内的最近 funding/oi, 返回 (fr, oi) 或 None"""
+    rows = ef_load(sym)
+    if not rows:
+        return None
+    i = bisect.bisect_right(rows, (t_ms, 1e18, 1e18)) - 1
+    if i < 0 or t_ms - rows[i][0] > lookback:
+        return None
+    return rows[i][1], rows[i][2]
+
+
+def ef_entry_ok(sym, t_ms, scheme):
+    """E/F 入场: 4=funding拥挤(≥FUNDING_MIN) 5=OI峰值回落(≥OI_RETRACE) 6=两者AND"""
+    ef = ef_at(sym, t_ms)
+    if ef is None:
+        return False
+    fr, oi = ef
+    fr_ok = fr is not None and fr >= FUNDING_MIN
+    if scheme == 4:
+        return fr_ok
+    oi_ok = oi_retraced(sym, t_ms, oi)
+    if scheme == 5:
+        return oi_ok
+    return fr_ok and oi_ok
+
+
+def oi_retraced(sym, t_ms, oi):
+    """OI 较信号以来峰值回落 ≥ OI_RETRACE(默认10%)"""
+    rows = ef_load(sym)
+    p = permits.get(sym)
+    if not rows or p is None or oi is None:
+        return False
+    lo = bisect.bisect_left(rows, (p["sig_ms"], -1, -1))
+    hi = bisect.bisect_right(rows, (t_ms, 1e18, 1e18))
+    ois = [x[2] for x in rows[lo:hi] if x[2] is not None]
+    if not ois:
+        return False
+    peak = max(ois)
+    if peak <= 0:
+        return False
+    return (peak - oi) / peak >= OI_RETRACE
 
 tick = T0_MS
 while tick <= T_END_MS:
@@ -488,6 +595,10 @@ while tick <= T_END_MS:
         if tick >= h["open_ms"] + DAY_MS:
             reason = "expire"
             px = k["close"]
+        elif SINGLE_K_SURGE_PCT and k["high"] >= k["open"] * (1 + SINGLE_K_SURGE_PCT / 100):
+            # 单K暴涨平仓: 盘中 high 相对该K open 涨幅≥X% → 立即按 1+X% 线成交(妖币主升浪, 比止损更早截断)
+            reason = "surge_exit"
+            px = k["open"] * (1 + SINGLE_K_SURGE_PCT / 100)
         elif TAKER_N:
             # tbr 入场模式 → 追踪止损: 止损价 = 开仓以来最高价(初始=入场前24h最高, 保底开仓价×1.01)
             stop_px = h["max_high"]
@@ -500,16 +611,24 @@ while tick <= T_END_MS:
             else:
                 h["max_high"] = max(h["max_high"], k["high"])   # 未触发 → 上移追踪锚
         elif PUMP_ENABLE:
-            # 滚动24h新高止损(high口径): 开仓4h缓冲后, 若 high 突破当前滚动24h最高 → 按前高止损
+            # 并行止损(先到先得, 2026-08-18 修复): pump_stop(8h后前高) / 固定止损(open×SF) / 24h锚(entry_h24) 取最低触发价
             q = h["pq"]
             while q and q[0][0] <= tick - DAY_MS:      # 滑出24h窗口外旧K
                 q.popleft()
             h1_prev = q[0][1] if q else h["open_px"]   # 当前"过去24h"最高high(不含当前K)
-            if tick - h["open_ms"] >= PUMP_DELAY_H * 3600 * 1000 and k["high"] > h1_prev:
-                reason = "pump_stop"
-                px = k["open"] if k["open"] >= h1_prev else h1_prev   # 跳空按开盘, 否则按前高
+            pump_ok = tick - h["open_ms"] >= PUMP_DELAY_H * 3600 * 1000
+            trigger = min(h["open_px"] * STOP_FACTOR,
+                          h.get("entry_h24") or h["open_px"] * STOP_FACTOR)
+            if pump_ok:
+                trigger = min(trigger, h1_prev)
+            if k["open"] >= trigger:                   # 跳空越过 → 按开盘价成交
+                reason = "pump_stop" if (pump_ok and trigger == h1_prev) else "stop_loss"
+                px = k["open"]
+            elif k["high"] >= trigger:                 # 盘中触及最低触发价 → 按该价成交
+                reason = "pump_stop" if (pump_ok and trigger == h1_prev) else "stop_loss"
+                px = trigger
             else:
-                while q and q[-1][1] <= k["high"]:     # 加入当前K(单调递减)
+                while q and q[-1][1] <= k["high"]:     # 未触发 → 加入当前K(单调递减)
                     q.pop()
                 q.append((tick, k["high"]))
                 # 移动止盈: 峰值浮盈≥TAKE_MIN 后从峰值回落 TAKE_RETRACE pp → 锁利平仓
@@ -528,26 +647,8 @@ while tick <= T_END_MS:
                     elif k["low"] <= take_px:     # 盘中触及 → 按止盈价成交
                         reason = "take_profit"
                         px = take_px
-                    else:
-                        # 8h 内兜底止损: 开仓价 × STOP_FACTOR (真·100% 止损; p24 锚已舍弃, 不再用 24h 前价做锚)
-                        stop_px = h["open_px"] * STOP_FACTOR
-                        if k["open"] >= stop_px:      # 跳空越过 → 按开盘价成交
-                            reason = "stop_loss"
-                            px = k["open"]
-                        elif k["high"] >= stop_px:    # 盘中触及 → 按止损价成交
-                            reason = "stop_loss"
-                            px = stop_px
-                else:
-                    # 8h 内兜底止损: 开仓价 × STOP_FACTOR (真·100% 止损; p24 锚已舍弃, 不再用 24h 前价做锚)
-                    stop_px = h["open_px"] * STOP_FACTOR
-                    if k["open"] >= stop_px:      # 跳空越过 → 按开盘价成交
-                        reason = "stop_loss"
-                        px = k["open"]
-                    elif k["high"] >= stop_px:    # 盘中触及 → 按止损价成交
-                        reason = "stop_loss"
-                        px = stop_px
         else:
-            # PUMP_ENABLE=0: 全期兜底止损 = 开仓价 × STOP_FACTOR (100% 止损); 固定止盈优先
+            # PUMP_ENABLE=0: 全期兜底止损(与 entry_h24 锚并行, 先到原则); 固定止盈优先
             if TAKE_PROFIT_PCT:
                 take_px = h["open_px"] * (1 - TAKE_PROFIT_PCT / 100)
                 if k["open"] <= take_px:
@@ -557,7 +658,7 @@ while tick <= T_END_MS:
                     reason = "take_profit"
                     px = take_px
             if reason is None:
-                stop_px = h["open_px"] * STOP_FACTOR
+                stop_px = min(h["open_px"] * STOP_FACTOR, h.get("entry_h24") or h["open_px"] * STOP_FACTOR)
                 if k["open"] >= stop_px:
                     reason = "stop_loss"
                     px = k["open"]
@@ -570,12 +671,25 @@ while tick <= T_END_MS:
             max_adv = ((h.get("hold_max_high") or _op) - _op) / _op * 100
             trades.append([sym, local_str(h["open_ms"]), round(h["open_px"], 6),
                            local_str(tick), round(px, 6), round(pnl, 4), reason,
-                           h.get("sim_type", "live"), h.get("weight", 1.0), round(max_adv, 4)])
+                           h.get("sim_type", "live"), h.get("weight", 1.0), round(max_adv, 4),
+                           local_str(h["permit_sig"]) if h.get("permit_sig") else ""])
             # 禁仓: 盈利平仓 → 免禁仓; 亏损平仓 → 7 天禁仓(与妖币禁仓取截止最大)
-            ban[sym] = 0 if pnl > 0 else max(ban.get(sym, 0), tick + BAN_MS)
+            # PERMIT 模式: 平仓不禁仓, 累计到 permit 总盈亏; 结束规则②累计>0 / ③已平N笔 / ④expire或pump_stop → 立即结算
+            if PERMIT and sym in permits:
+                _pp = permits[sym]
+                _pp["total_pnl"] += pnl * h.get("weight", 1.0)
+                if (_pp["total_pnl"] > 0 or _pp["n_open"] >= MAX_PERMIT_OPENS
+                        or reason in ("expire", "pump_stop")):
+                    if _pp["total_pnl"] < 0:          # 窗口结束: 总亏禁7天, 总盈免禁
+                        ban[sym] = max(ban.get(sym, 0), tick + BAN_MS)
+                    del permits[sym]
+            else:
+                ban[sym] = 0 if pnl > 0 else max(ban.get(sym, 0), tick + BAN_MS)
             del holdings[sym]
             if reason == "stop_loss":
                 n_stop += 1
+                if PERMIT and sym in permits:
+                    permits[sym]["n_stop"] += 1    # 单 permit 止损3次封顶
             else:
                 n_expire += 1
     # 延迟入场: 候选信号 24h 内等 tbr<50% 触发真正入场, 超时取消
@@ -640,6 +754,36 @@ while tick <= T_END_MS:
                     _age = (_ots3[_hi3] - _ots3[_imax]) / 3600000.0
                     if _age > HIGH_AGE_MAX:
                         continue
+        if not PERMIT and MIN_NEW_HIGH_AGE:
+            # 旧架构(MIN30实验)信号过滤: 距24h最高点< N 分钟不开。PERMIT 模式下由 permit 开仓循环判断, 信号只建 permit
+            _cm4 = close_maps.get(sym, {})
+            _ots4, _h4 = series.get(sym, (None, None))
+            if _cm4 and _ots4:
+                _hi4 = bisect.bisect_right(_ots4, t_ms - STEP5) - 1
+                _lo4 = bisect.bisect_left(_ots4, t_ms - DAY_MS)
+                if _hi4 >= _lo4:
+                    _imax4 = max(range(_lo4, _hi4 + 1), key=lambda i: _h4[i])
+                    _age4 = (_ots4[_hi4] - _ots4[_imax4]) / 60000.0
+                    if _age4 < MIN_NEW_HIGH_AGE:
+                        continue
+        if not PERMIT and (STAGNATE_MIN or PULLBACK_MIN):
+            # 旧架构(B/C实验)信号过滤: 停滞顶/回撤入场。PERMIT 模式下由 entry_point_ok(scheme) 处理
+            _cm5 = close_maps.get(sym, {})
+            _ots5, _h5 = series.get(sym, (None, None))
+            if _cm5 and _ots5:
+                _hi5 = bisect.bisect_right(_ots5, t_ms - STEP5) - 1
+                _lo5 = bisect.bisect_left(_ots5, t_ms - DAY_MS)
+                if _hi5 >= _lo5:
+                    _imax5 = max(range(_lo5, _hi5 + 1), key=lambda i: _h5[i])
+                    _h24 = _h5[_imax5]
+                    _age5 = (_ots5[_hi5] - _ots5[_imax5]) / 3600000.0
+                    if STAGNATE_MIN and _age5 < STAGNATE_MIN:
+                        continue
+                    _px5 = price_at(_cm5, t_ms)
+                    if PULLBACK_MIN and _px5 is not None and _h24 > 0:
+                        _pb = (_h24 - _px5) / _h24 * 100
+                        if _pb < PULLBACK_MIN:
+                            continue
         r6 = None
         if RATIO6_MIN or PULSE_W > 1:
             # 涨幅结构: 近6h涨幅/24h涨幅比例 r6
@@ -681,11 +825,67 @@ while tick <= T_END_MS:
             if sym in pending:
                 continue              # 已有候选, 不重复
             pending[sym] = t_ms       # 记为候选, 等 tbr<50% 延迟入场
+        elif PERMIT:
+            # 架构重构: 信号 → 开仓允许状态(24h), 期内独立开仓(止损3次封顶, 不受禁仓限制)
+            if sym in permits and permits[sym]["end_ms"] > tick:
+                continue              # 已有活跃 permit
+            permits[sym] = {"sig_ms": t_ms, "end_ms": t_ms + DAY_MS,
+                            "n_open": 0, "n_stop": 0, "total_pnl": 0.0, "weight": weight}
         else:
             holdings[sym] = {"open_ms": t_ms, "open_px": px, "sim_type": sim_type,
                              "max_high": entry_max_high(sym, t_ms, px), "weight": weight,
                              "pq": build_pq24(sym, t_ms), "pulled": False,
                              "peak_profit": 0.0, "hold_max_high": None}
+            n_open += 1
+    if PERMIT:
+        # permit 状态机(2026-08-18 结束规则): ①24h且无未平仓→立即结束 ②期内累计盈亏>0→立即结束 ③已平仓3笔→立即结束
+        # 结束结算: 总盈亏<0 → 禁仓7天; 总盈亏≥0 → 免禁(亏损禁仓期7天在窗口结束后依据总盈亏判断)
+        for sym in list(permits.keys()):
+            p = permits[sym]
+            if tick >= p["end_ms"]:
+                if sym not in holdings:
+                    # 规则①: 距起始24h 且 无未平仓订单 → 立即结束
+                    if p["total_pnl"] < 0:
+                        ban[sym] = max(ban.get(sym, 0), tick + BAN_MS)
+                    del permits[sym]
+                continue                      # 已到期: 不再开新仓(无论是否仍有持仓, 等持仓平后结算)
+            if p["n_open"] >= MAX_PERMIT_OPENS or sym in holdings or sym in missing_syms:
+                continue                      # 已开满 MAX_PERMIT_OPENS 单(平仓后触发结束规则③) / 已持仓 / 缺失币
+            if MIN_NEW_HIGH_AGE:
+                # 入场条件: 距24h最高点时间 > N 分钟才开(刚创新高等待确认)
+                _ots8, _h8 = series.get(sym, (None, None))
+                if _ots8:
+                    _hi8 = bisect.bisect_right(_ots8, tick - STEP5) - 1
+                    _lo8 = bisect.bisect_left(_ots8, tick - DAY_MS)
+                    if _hi8 >= _lo8:
+                        _imax8 = max(range(_lo8, _hi8 + 1), key=lambda i: _h8[i])
+                        _age8 = (_ots8[_hi8] - _ots8[_imax8]) / 60000.0
+                        if _age8 < MIN_NEW_HIGH_AGE:
+                            continue
+            if ENTER_SCHEME == 1 and tick < p["sig_ms"] + ENTER_DELAY_K * STEP5:
+                continue                      # 延迟入场: 未到延迟根数
+            if not entry_point_ok(sym, tick, ENTER_SCHEME):
+                continue
+            cm = ensure_close_map(sym)
+            if cm is None:
+                continue
+            px = price_at(cm, tick)
+            if px is None:
+                continue
+            # 实际开仓(2026-08-18): ENTRY_H24=1 启用24h最高价止损锚; =0 取消(兼容性验证)
+            if ENTRY_H24:
+                _ots7, _h7 = series.get(sym, (None, None))
+                _hi7 = bisect.bisect_right(_ots7, tick - STEP5) - 1
+                _lo7 = bisect.bisect_left(_ots7, tick - DAY_MS)
+                entry_h24 = max(_h7[_lo7:_hi7 + 1]) if (_ots7 and _hi7 >= _lo7) else px * STOP_FACTOR
+            else:
+                entry_h24 = None
+            holdings[sym] = {"open_ms": tick, "open_px": px, "sim_type": "live",
+                             "max_high": entry_max_high(sym, tick, px),
+                             "weight": p["weight"], "pq": build_pq24(sym, tick),
+                             "pulled": False, "peak_profit": 0.0, "hold_max_high": None,
+                             "entry_h24": entry_h24, "permit_sig": p["sig_ms"]}
+            p["n_open"] += 1
             n_open += 1
     tick += STEP5
 
@@ -699,10 +899,11 @@ for sym in list(holdings.keys()):
     px = cm[ks[-1]]["close"]
     pnl = (h["open_px"] - px) / h["open_px"] * 100
     _op = round(h["open_px"], 6)   # 旧版口径: 分母用 round 后的开仓价(=CSV openPrice)
-    max_adv = (h.get("hold_max_high", _op) - _op) / _op * 100
+    max_adv = ((h.get("hold_max_high") or _op) - _op) / _op * 100
     trades.append([sym, local_str(h["open_ms"]), round(h["open_px"], 6),
                    local_str(ks[-1]), round(px, 6), round(pnl, 4), "expire_forced",
-                   h.get("sim_type", "live"), h.get("weight", 1.0), round(max_adv, 4)])
+                   h.get("sim_type", "live"), h.get("weight", 1.0), round(max_adv, 4),
+                   local_str(h["permit_sig"]) if h.get("permit_sig") else ""])
     del holdings[sym]
     n_expire += 1
 
@@ -716,11 +917,18 @@ if holdings:
 with open(OUT_FILE, "w", newline="", encoding="utf-8-sig") as f:
     w = csv.writer(f)
     w.writerow(["symbol", "openTime", "openPrice", "closeTime", "closePrice",
-                "pnlPct", "reason", "signalType", "weight", "cumPnl", "maxAdvPct"])
+                "pnlPct", "reason", "signalType", "weight", "cumPnl", "maxDD", "maxAdvPct", "permitOpenTime"])
     cum = 0.0
+    peak = 0.0
+    max_dd = 0.0
     for t in sorted(trades, key=lambda r: r[1]):  # 按开仓时间排序
         cum += t[5] * t[8]                         # 加权本金口径: 盈亏 × 权重 累加
-        w.writerow([t[0], t[1], t[2], t[3], t[4], t[5], t[6], t[7], t[8], round(cum, 4), t[9]])
+        if cum > peak:
+            peak = cum
+        dd = peak - cum
+        if dd > max_dd:
+            max_dd = dd
+        w.writerow([t[0], t[1], t[2], t[3], t[4], t[5], t[6], t[7], t[8], round(cum, 4), round(max_dd, 4), t[9], t[10]])
 
 total = len(trades)
 wins = [t for t in trades if t[5] > 0]
