@@ -25,16 +25,17 @@
   4. 用户指出 sirenusdt 翻倍必须止损 → 修复（8h 内加回开仓价×2 兜底）→ +1463.8% = 与旧版逐笔一致。
 - **教训（必须遵守）**：①差异归因先查代码（diff+语义）再谈其他，**绝不预设"数据问题"**；②改代码后必须边界 sanity check（如"翻倍单必须止损"）+ 逐笔对照实际数据；③记忆里不写入未经证实的"数据"结论（曾因 Bash `$` 展开坑误判 openTime 类型并写入记忆，同样错误）。
 - 文件状态：`_bt_pump8h_final.csv`=正式定稿；`_bt_pump8h.csv`=旧版（与 final 逐笔一致，互为印证）；`_exp_base.csv`(+975%,p24锚错误版)/`_nop24_8h*.csv`(+1600%,无止损错误版) 已清理/降级。
-- 入场点实验（_exp_A/B/C）基于 +975%（p24 锚错误逻辑）相对比较，结论需在新基准(+1463.8%)下复核；**EF 数据已定位**：`workbuddy/data/change_20251201_20260816/ef_{SYMBOL}.csv`（528个，脚本 `workbuddy/fetch_ef_data.py`），列=ts_ms/funding_rate/oi。**⚠️实测 oi 列全空**（抽样 0GUSDT/AAVEUSDT 均 0 行有值→openInterestHist 时间对齐失败未落值）→ E方案(funding拥挤,scheme4)数据可用，**F方案(OI背离,scheme5/6)实际无数据仍悬**。
+- 入场点实验（_exp_A/B/C）基于 +975%（p24 锚错误逻辑）相对比较，结论需在新基准(+1463.8%)下复核；**EF 数据已定位**：`workbuddy/data/change_20251201_20260816/ef_{SYMBOL}.csv`（528个，脚本 `workbuddy/fetch_ef_data.py`），列=ts_ms/funding_rate/oi。**⚠️实测 oi 列全空（2026-08-19 更正根因：非时间对齐问题——`openInterestHist` 只保留最近30天，startTime>30天→HTTP400 -1130，fetch_ef_data.py 用2025-11-20起点全被拒）→ E方案(funding拥挤,scheme4)数据可用（funding 给全历史），F方案(OI背离,scheme5/6)在 2025-12~2026-08 窗口不可行（币安无该窗口历史OI，要历史OI需第三方源或从当下开始日积月累）**。
 
 ## 定稿工作流规则（用户 2026-08-16 拍板，必须遵守）
 1. **用户宣布定稿后**：用定稿代码重新回测，生成一份**以 `final` 结尾的 CSV**（如 `_bt_pump8h_final.csv`）作为正式成绩。
 2. **自审代码和结果**（既有行为准则）：① 边界 sanity check（如"翻倍单必须止损"）② 逐笔对照实际数据（与旧版/上一版对比 pnl 差异）③ 用实际数据验证并给详细结论，不靠推断、不甩锅。
 3. **清理舍弃的数据文件**：错误逻辑产物/实验残留/冗余复本一律删除，只保留正确核心（信号源、涨跌幅数据、final 定稿成绩）。**样本外验证数据(_oos_*)与上一版定稿 CSV 定稿后也可删**（用户 08-17 确认）。
-4. **每次定稿必须更新盈亏曲线**（用户 08-17 拍板）：用 `plot_final_curve.py`（CURVE_SRC=final CSV, CURVE_OUT=_curve_pump8h.html）生成新曲线并展示。
-- 当前定稿状态（2026-08-17 22:41，AGE12+TP80+SF18 版，**窗口 2025-12-01~2026-08-16**）：新定稿 `change_20251201_20260816/_bt_pump8h_final.csv` = **399笔/加权478/胜率56.4%/毛+1796.0%**，曲线 `_curve_pump8h.html`（+1796.0%）。自审通过：与实验版 _exp_sf18_v2 逐笔一致；reason=expire255/pump140/stop_loss3(xnyusdt+sirenusdt+evaausdt 均-80%)/**take_profit1(ariausdt +80%)**；weight 全1/2、pnl[-80,80]（止损止盈对称封顶）。上版(399笔/+1731.5%)在 change_20260101_20260816/ 历史保留、353笔版在 change_20260101_20260815/。
+4. **每次定稿必须更新盈亏曲线**（用户 08-17 拍板）：用 `plot_final_curve.py`（CURVE_SRC=final CSV, CURVE_OUT=_curve_xxx_final.html）生成新曲线并展示。**曲线顶部必须显示 maxDD + ddRatio（08-20 拍板，以后都要）**；文件命名 = 策略名 + `_final`（如 `_bt_mp9_final.csv` / `_curve_mp9_final.html`）。
+- 当前定稿状态（**2026-08-20 21:55 定稿，MP=9 版：CVD_W12+OFF_HIGH0.15+ADD_ON_BREAK+broke_flag破前高锁存+均分权重+pump 8h从permit起算+expire从permit起算**，窗口 2025-12-01~2026-08-16）：新定稿 `change_20251201_20260816/_bt_mp9_final.csv` = **1145笔/加权151/胜率55.6%/毛+822.7%/maxDD 55.7/ddRatio 0.068**，曲线 `_curve_mp9_final.html`（+822.65%）。裸跑（默认值）=实验 expirepermit_mp9 逐笔 0 差异 ✅；14 列含 ddRatio。ddRatio 视角：MP=1(+2047/DD194.8/0.095) vs MP=2(0.102最差) vs **MP=9(+822.7/DD55.7/0.068, 最优区9~12)**。上版定稿（MP=2，551笔/+1813.8%）已被 MP9 取代并清理。**最终演变链：399/+1796.0% → CVD_W12+OFF_HIGH0.15(388/+2016.4/DD207.6) → +pump permit起算(388/+2047/DD194.8) → +加仓MP2(551/+1813.8/DD134.6) → +broke_flag重估(MP2最差0.102) → +expire permit基准 → MP=9 定稿(1145/+822.7/DD55.7/0.068)。**
+- ⚠️**加仓alpha口径教训(08-20)**: 跨MP比较单笔质量必须用非加权pnl%(加仓单+5.2%≈首仓6.5倍, 不分层衰减), 加权均盈会被均分权重(W/MP)污染(如MP2 +3.12% vs MP5 +1.39% 纯权重假象)。
 - **固定止盈 TP80 + 止损 80%（2026-08-17 用户拍板定稿）**：`TAKE_PROFIT_PCT=80`（默认80）+ `STOP_FACTOR=1.8`（默认1.8，对称±80%封顶）。止损80%验证：全样本+64.5pp（399→+1796.0%），样本外两段均优（前半+60pp: xnyusdt w2 省40pp+sirenusdt 省20pp；后半+4.5pp: evaausdt 省4.5pp），仅影响3笔=尾部保险性质但两段方向一致非过拟合。**⚠️ 曾误判负优化(-41.5pp/86笔被挡)——实为 21:08 Mongo 不稳致 missing_syms 整币跳过(龙虾usdt等)的数据污染，重跑后正优化。教训：笔数骤减先查数据完整性提示。**
-- **信号文件 SIGNAL_FILE 已参数化**（环境变量覆盖，默认仍指 change_20260101_20260812/）；回测窗口 = 信号文件覆盖范围 + START/END_DT 控制。
+- **信号文件 SIGNAL_FILE 已参数化**（环境变量覆盖；2026-08-18 起默认改指 change_20251201_20260816/，与定稿窗口一致）；回测窗口 = 信号文件覆盖范围 + START/END_DT 控制。**定稿参数已写入 backtest_short_top1.py 默认值（RATIO6_MIN=-1/PULSE_W=2/PUMP_ENABLE=1/PUMP_DELAY_H=8/SKIP_SIM_FILTER默认跳过/T0=2025-12-01/T1=2026-08-16/CVD_DIVERGE_W=12/OFF_HIGH_MAX=0.15/ADD_ON_BREAK=1/MAX_PERMIT_OPENS=9 等），裸跑=定稿配置，无需逐项 env。**
 
 ## 定稿策略概况（2026-08-16 定格，基于完整通读 backtest_short_top1.py 622 行）
 - 一句话：做空「24h 涨幅 Top1」妖币的短线回归策略；信号期 2026-01-01~08-12（每整10分钟点取 Top1），K 线读 MongoDB 5m。
