@@ -28,6 +28,13 @@ def main():
             "ret1h": feat["ret1h"], "range1h": feat["range1h"], "body1h": feat["body1h"],
             "taker_ratio": feat["taker_ratio"], "vol24h_q": feat["vol24h_q"],
             "amihud": feat["amihud"],
+            # 走势因子
+            "ret_4h":  feat["ret_4h"],
+            "ret_8h":  feat["ret_8h"],
+            "ret_12h": feat["ret_12h"],
+            "ret_24h": feat["ret_24h"],
+            "trend_dir": feat["trend_dir"],
+            "trend_run": feat["trend_run"],
         }
         np.savez_compressed(f"{config.DIR_1H}/{s}.npz", **out)
         if (i + 1) % 20 == 0:

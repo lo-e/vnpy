@@ -6,7 +6,8 @@ import json
 import os
 
 SRC = os.environ.get("CURVE_SRC", "data/change_20260101_20260812/_bt_r6pulse.csv")
-OUT = os.environ.get("CURVE_OUT", "data/change_20260101_20260812/_curve_final.html")
+OUT = os.environ.get("CURVE_OUT", "data/change_20260101_20260812/_cur.html")
+TITLE = os.environ.get("CURVE_TITLE", "")   # 2026-08-24 超纠错: 默认由数据首末笔自动生成(YYYY-MM-DD), 不再硬编码
 
 rows = list(csv.DictReader(open(SRC, encoding="utf-8-sig")))
 pts = [{
@@ -15,6 +16,12 @@ pts = [{
     "cum": float(r["cumPnl"]),
 } for r in rows]
 pts.sort(key=lambda p: p["t"])
+
+# 顶部信息框日期: 自动取数据首末笔日期(YYYY-MM-DD), 与数据窗口严格一致; 可 CURVE_TITLE 覆盖
+if not TITLE:
+    _d0 = pts[0]["t"][:10] if pts else "?"
+    _d1 = pts[-1]["t"][:10] if pts else "?"
+    TITLE = f"{_d0} ~ {_d1}"
 
 data_js = json.dumps(pts, ensure_ascii=False)
 total = pts[-1]["cum"] if pts else 0
@@ -38,7 +45,7 @@ html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>全单累计盈亏 · 01-01~08-12 ({n}笔)</title>
+<title>全单累计盈亏 · {TITLE} ({n}笔)</title>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 <style>
   html,body {{ margin:0; padding:0; height:100%; background:#0d1117; }}
@@ -54,6 +61,7 @@ html = f"""<!DOCTYPE html>
 </head>
 <body>
 <div class="hud">
+  {TITLE}<br>
   全单累计 · {n} 笔 / 加权本金 {wtot:.0f} 份<br>
   累计盈亏 <b>{total:+.2f}%</b><br>
   最大回撤 <b style="color:#f85149">{max_dd:.1f}%</b> · 回撤/收益比 <b style="color:#d29922">{dd_ratio:.3f}</b><br>

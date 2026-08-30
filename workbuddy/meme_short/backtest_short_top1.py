@@ -204,15 +204,17 @@ def cvd_diverged(sym, t_ms, W):
 
 
 def fetch_all(sym, start_ms, end_ms):
-    """拉K线; 3次重试失败 → 代理健康检查, 挂了循环等恢复(2026-08-21 超指: 与信号脚本一致)"""
+    """拉K线; 3次重试失败 → 代理健康检查, 挂了循环等恢复(2026-08-21 超指: 与信号脚本一致)。
+    2026-08-24 超纠错: 丢弃未走完K(openTime > 最新完整K), 不拉未来/不存进行中K。"""
+    last_full = (int(time.time() * 1000) // STEP5) * STEP5 - STEP5  # 最新完整K开仓时间
     out = []
     cursor = start_ms
-    while cursor <= end_ms:
+    while cursor <= min(end_ms, last_full):
         kl = None
         for attempt in range(3):
             try:
                 params = {"symbol": sym, "interval": "5m",
-                          "startTime": cursor, "endTime": end_ms, "limit": 1000}
+                          "startTime": cursor, "endTime": min(end_ms, last_full), "limit": 1000}
                 r = requests.get(KLINE_URL, params=params, timeout=30)
                 r.raise_for_status()
                 kl = r.json()
@@ -330,7 +332,10 @@ def ensure_close_map(sym):
     kc = db[f"{sym.upper()}.{EXCHANGE}"]
     kc.create_index("openTime", unique=True)
     raw_start = first_sig[sym] - LOOKBACK_MS - STEP5   # 理论窗口起点(不管上市)
-    end_ms = last_sig[sym] + 2 * DAY_MS - STEP5   # permit尾(2026-08-18): 最后信号+24h permit窗可开仓 + 24h最大持仓 = last_sig+48h
+    # permit尾(2026-08-18): 最后信号+24h permit窗可开仓 + 24h最大持仓 = last_sig+48h
+    # 2026-08-24 超纠错: clamp 到最新完整K(当前时刻取整5min-5min), 不拉未来/未走完K
+    _last_full = (int(time.time() * 1000) // STEP5) * STEP5 - STEP5
+    end_ms = min(last_sig[sym] + 2 * DAY_MS - STEP5, _last_full)
     listing = probe_listing(sym)                       # 1. 上市首根K时间
     need_start = max(raw_start, listing) if listing else raw_start
     cm, ots, db_start, db_end = build_cm(kc, raw_start, end_ms)

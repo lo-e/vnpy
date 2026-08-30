@@ -209,7 +209,7 @@ def binance_get_symbol_list(need_data: bool = False):
         asset = d["quoteAsset"]
         type = d["contractType"]
         status = d["status"]
-        if asset == "USDT" and type == "PERPETUAL" and status == "TRADING":
+        if asset == "USDT" and type in ('PERPETUAL', 'TRADIFI_PERPETUAL') and status == "TRADING":
             symbol_list.add(symbol)
             symbol_data_dict[symbol] = d
 

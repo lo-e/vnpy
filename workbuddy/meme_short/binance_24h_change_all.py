@@ -30,8 +30,9 @@ p_start = datetime.strptime(START_DT, "%Y-%m-%d %H:%M").replace(tzinfo=LOCAL_TZ)
 if END_DT:
     p_end = datetime.strptime(END_DT, "%Y-%m-%d %H:%M").replace(tzinfo=LOCAL_TZ)
 else:
+    # 2026-08-24 超纠错: 动态终点 = 最新"已完整"10分点(当前时刻取整10min 再减10min), 不把未走完点当终点
     now_local = datetime.now(LOCAL_TZ)
-    p_end = now_local - timedelta(minutes=now_local.minute % 10,
+    p_end = now_local - timedelta(minutes=now_local.minute % 10 + 10,
                                   seconds=now_local.second,
                                   microseconds=now_local.microsecond)
 OUT_DIR = os.path.join("data", f"change_{p_start:%Y%m%d}_{p_end:%Y%m%d}")
@@ -50,14 +51,15 @@ with open(SYMBOLS_FILE, encoding="utf-8") as f:
 
 def auto_sync_symbols():
     """启动时自动校验/更新币种清单(只增不减, 2026-08-17 用户要求):
-    exchangeInfo 拉当前 TRADING 的 USDT 永续 → 新币加入 json 并落盘, 下架币保留不删(防历史窗口重跑漏币)。
+    exchangeInfo 拉当前 TRADING 的 USDT 永续 + 美股/商品 TradFi 永续(contractType∈{PERPETUAL,TRADIFI_PERPETUAL})
+    → 新币加入 json 并落盘, 下架币保留不删(防历史窗口重跑漏币)。
     拉取失败 → 打印警告并沿用现有清单, 不阻断任务。"""
     try:
         r = requests.get("https://fapi.binance.com/fapi/v1/exchangeInfo", timeout=30)
         r.raise_for_status()
         info = r.json()
         cur = {s["symbol"] for s in info["symbols"]
-               if s.get("contractType") == "PERPETUAL" and s.get("quoteAsset") == "USDT"
+               if s.get("contractType") in ("PERPETUAL", "TRADIFI_PERPETUAL") and s.get("quoteAsset") == "USDT"
                and s.get("status") == "TRADING"}
     except Exception as e:
         print(f"  [sync-symbols] exchangeInfo 拉取失败: {e}, 沿用现有清单", flush=True)

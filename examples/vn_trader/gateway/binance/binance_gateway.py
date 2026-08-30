@@ -803,7 +803,7 @@ class BinanceUsdtRestApi(RestClient):
             min_volume: int = 1
 
             # 排除未正式交易的合约、交割合约
-            if quote_currency != "USDT" or d["contractType"] != "PERPETUAL" or d["status"] != "TRADING":
+            if quote_currency != "USDT" or d["contractType"] not in ('PERPETUAL', 'TRADIFI_PERPETUAL') or d["status"] != "TRADING":
                 continue
 
             for f in d["filters"]:

@@ -63,6 +63,47 @@ with open(SIGNAL_FILE, encoding="utf-8") as f:
         signals.append((int(t.timestamp() * 1000), r["topSymbol"], float(r["topChangePct"])))
 signals.sort()
 MAX_TOP1_PCT = float(os.environ.get("MAX_TOP1_PCT", "80"))   # 开仓过滤: 24h涨幅≥此值(妖币)跳过; 设0关闭
+# ===== Regime 市场状态过滤(2026-08-23 超定接入) =====
+# 开关: REGIME_FILTER=1 启用; REGIME_ALLOW=允许的regime集合(逗号分隔, 默认"BULL,BEAR"=剔除SIDEWAYS; "BEAR"=只做BEAR)
+# 防前视: 信号在T日任意时刻 → 用 T-1 日(已完全收盘)的 regime 判断, 不偷看当天
+REGIME_FILTER = os.environ.get("REGIME_FILTER", "0") == "1"
+REGIME_ALLOW = {s.strip().upper() for s in os.environ.get("REGIME_ALLOW", "BULL,BEAR").split(",")}
+# 2026-08-24 超想法: SIDEWAYS 前期(资金量能衰竭初期)妖币冲高回落空间大, 做空有利; 仅持续超 N 天才剔除
+# REGIME_SIDE_GRACE = SIDEWAYS 连续持续 ≤N 天时放行(默认0=直接剔, 维持原行为)
+REGIME_SIDE_GRACE = int(os.environ.get("REGIME_SIDE_GRACE", "0"))
+_regime_map = None
+if REGIME_FILTER:
+    import market_regime as _mr
+    _regime_map = _mr.get_regime_map()   # {date_str: BULL/BEAR/SIDEWAYS}
+    print(f"[regime] 过滤启用: 允许 {sorted(REGIME_ALLOW)} | SIDEWAYS宽限 {REGIME_SIDE_GRACE}天 | 加载 {len(_regime_map)} 天", flush=True)
+
+
+def _side_consecutive(d1):
+    """统计到 d1(含)为止连续 SIDEWAYS 天数"""
+    days = 0
+    d = d1
+    while _regime_map.get(d) == "SIDEWAYS":
+        days += 1
+        if days > 90:
+            break
+        d = (datetime.strptime(d, "%Y-%m-%d") - timedelta(days=1)).strftime("%Y-%m-%d")
+    return days
+
+
+def _regime_ok(t_ms):
+    """T日信号 → 用 T-1 日 regime(已收盘, 防前视); 无regime数据(越界) → 放行。
+    SIDEWAYS 宽限: 连续持续 ≤REGIME_SIDE_GRACE 天 → 放行(前期做空有利), 超期 → 剔除"""
+    if not REGIME_FILTER:
+        return True
+    d1 = (datetime.fromtimestamp(t_ms / 1000, tz=LOCAL_TZ) - timedelta(days=1)).strftime("%Y-%m-%d")
+    r = _regime_map.get(d1)
+    if r is None:
+        return True
+    if r in REGIME_ALLOW:
+        return True
+    if r == "SIDEWAYS" and REGIME_SIDE_GRACE > 0 and _side_consecutive(d1) <= REGIME_SIDE_GRACE:
+        return True
+    return False
 TAKER_N = int(os.environ.get("TAKER_N", "0"))                # 顶部转向确认: 近N根K加权主动买占比<50%才开; 0=关闭
 RATIO6_MIN = float(os.environ.get("RATIO6_MIN", "-1"))       # 涨幅结构: <0=排除"近6h涨幅<0"(回落中); >0=只保留近6h/24h涨幅比例>=阈值(纯脉冲); 0=关闭
 PULSE_TH = float(os.environ.get("PULSE_TH", "0.85"))        # 脉冲加仓阈值: 开仓时 ratio6>=此值 → 权重 PULSE_W
@@ -205,15 +246,17 @@ def cvd_diverged(sym, t_ms, W):
 
 
 def fetch_all(sym, start_ms, end_ms):
-    """拉K线; 3次重试失败 → 代理健康检查, 挂了循环等恢复(2026-08-21 超指: 与信号脚本一致)"""
+    """拉K线; 3次重试失败 → 代理健康检查, 挂了循环等恢复(2026-08-21 超指: 与信号脚本一致)。
+    2026-08-24 超纠错: 丢弃未走完K(openTime > 最新完整K), 不拉未来/不存进行中K。"""
+    last_full = (int(time.time() * 1000) // STEP5) * STEP5 - STEP5  # 最新完整K开仓时间
     out = []
     cursor = start_ms
-    while cursor <= end_ms:
+    while cursor <= min(end_ms, last_full):
         kl = None
         for attempt in range(3):
             try:
                 params = {"symbol": sym, "interval": "5m",
-                          "startTime": cursor, "endTime": end_ms, "limit": 1000}
+                          "startTime": cursor, "endTime": min(end_ms, last_full), "limit": 1000}
                 r = requests.get(KLINE_URL, params=params, timeout=30)
                 r.raise_for_status()
                 kl = r.json()
@@ -331,7 +374,10 @@ def ensure_close_map(sym):
     kc = db[f"{sym.upper()}.{EXCHANGE}"]
     kc.create_index("openTime", unique=True)
     raw_start = first_sig[sym] - LOOKBACK_MS - STEP5   # 理论窗口起点(不管上市)
-    end_ms = last_sig[sym] + 2 * DAY_MS - STEP5   # permit尾(2026-08-18): 最后信号+24h permit窗可开仓 + 24h最大持仓 = last_sig+48h
+    # permit尾(2026-08-18): 最后信号+24h permit窗可开仓 + 24h最大持仓 = last_sig+48h
+    # 2026-08-24 超纠错: clamp 到最新完整K(当前时刻取整5min-5min), 不拉未来/未走完K
+    _last_full = (int(time.time() * 1000) // STEP5) * STEP5 - STEP5
+    end_ms = min(last_sig[sym] + 2 * DAY_MS - STEP5, _last_full)
     listing = probe_listing(sym)                       # 1. 上市首根K时间
     need_start = max(raw_start, listing) if listing else raw_start
     cm, ots, db_start, db_end = build_cm(kc, raw_start, end_ms)
@@ -750,6 +796,8 @@ for _si, sym in enumerate(syms_all):
                 continue
             if circuit_on(tick):
                 continue
+            if REGIME_FILTER and not _regime_ok(t_ms):
+                continue            # 市场状态过滤(2026-08-23): T-1日regime不在允许集 → 本信号不开(不禁仓)
             if MAX_TOP1_PCT and chg >= MAX_TOP1_PCT:
                 ban[sym] = max(ban.get(sym, 0), tick + BAN_MS)
                 continue
