@@ -1,54 +1,48 @@
-# 项目长期记忆 (vnpy)
+# 项目长期记忆 (vnpy / meme_short 做空妖币)
 
-## 权限边界（2026-08-18 用户明确，铁律）
-- **只读咨询模式**：洛汐只负责解答本项目（尤其 workbuddy/ 目录）相关疑问，**没有对项目内任何文件进行改动的权限**。
-- 所有读写、执行脚本、删改数据等操作一律先问超，超点头才动手；默认只读、只分析、只出结论。
+## 权限边界
+- 当前会话**已解除 AI 只读约束**：数据任务可自主动手；交易代码仅作只读咨询，跑回测前先与超确认。历史铁律(08-18)仍作默认基线：非确认不动文件。
 
-## 币安涨跌幅数据任务（用户约定）
-- 用户提供**确定的起止时间**跑涨跌幅任务（如 2026-08-09 起），避免动态"到现在"导致跨天重跑时输出目录/时间点不一致（教训：change_20260701_20260811 vs _20260812 目录分裂）。
-- 起止时间语义为**北京时间**（UTC+8）；输出目录 `workbuddy/data/change_{起}_{止}/{symbol_lower}.csv`。
-- 币种列表：`meme_short/data/symbols_usdt_perp.json`（exchangeInfo 筛 contractType∈{PERPETUAL, TRADIFI_PERPETUAL} + quoteAsset=USDT + status=TRADING；2026-08-24 起含美股/商品 TradFi 永续，从 527→696 个；注意 backtest 脚本不读此 json，直接扫 MongoDB 库内币种）。
-- 【坑】Binance 美股/商品代币（TSLA/SNDK/NVDA/SPY/XAU… 170个）的 contractType 是 `TRADIFI_PERPETUAL` 而非 `PERPETUAL`，旧筛法会全漏；同步脚本 `meme_short/binance_24h_change_all.py` 的 `auto_sync_symbols()` 已改宽。
-- K 线落库 `Workbuddy_5Min_Db/{SYMBOL}.BINANCE`（openTime 唯一索引 + upsert 幂等），涨跌幅结果只落 CSV 不进库。
-- 口径：close[T] = openTime=T-5min 的 5m K close；change% = (close[T]-close[T-24h])/close[T-24h]*100；忽略进行中 5m 块。
-- 全量脚本 `workbuddy/binance_24h_change_all.py`（3 并发 + 内存计算 + done.json 断点续传，527 币约 33min）。
-- 网络：requests 必须走系统代理 127.0.0.1:10809（直连不通）；klines 区间 >1000 根必须分页。
-- 【文件组织约定(2026-08-12)】数据类文件统一放 `workbuddy/data/`（合约列表 symbols_usdt_perp.json、断点续传 done.json、涨跌幅 CSV 输出 change_*/、top1 双榜 000000_top1_*.csv 均在其中）；脚本(.py)与日志(.log)保留 workbuddy/ 顶层。全量脚本路径已同步为 workbuddy/data/ 下。
-- 【回测输出按信号窗口分目录(2026-08-17 用户纠错)】回测 CSV 不得塞进主数据目录，按**信号窗口**建自己的目录 `workbuddy/data/change_{起}_{止}/`（如 2-15 起跑的回测 → `change_20260215_20260812/`），与主窗口(change_20260101_20260812)分开。2-15 窗口实验（LB30/45/60、_test_lb45）已归位到 change_20260215_20260812/。
-- 【日志归属细化(2026-08-17 16:57 用户纠错)】**按任务/窗口组织的运行日志**（数据任务日志、回测日志）进对应数据目录 `change_{起}_{止}/`（如 change_20260101_20260815/_change_20260101_20260815.log、_bt_20260101_20260815.log），不散在 workbuddy/ 顶层；workbuddy/ 顶层只留脚本与通用辅助文件。
+## 目录与数据约定
+- 策略全量在 `workbuddy/meme_short/`（运行 `cd meme_short`，数据 `data/change_*`）；reversal_* 留 workbuddy 顶层。
+- 涨跌幅任务：用户给确定起止时间（北京时间UTC+8），输出 `data/change_{起}_{止}/{sym}.csv`；K线落 `Workbuddy_5Min_Db/{SYMBOL}.BINANCE`；close[T]=openTime=T-5min close，change%=(close[T]-close[T-24h])/close[T-24h]*100。
+- 币种 `data/symbols_usdt_perp.json`（PERPETUAL+TRADIFI_PERPETUAL+USDT+TRADING，含TradFi 170个，527→696）。
+- 运行日志按窗口进 `data/change_{起}_{止}/`；顶层只留脚本+通用文件。**日志文件名一律带 `_` 前缀**(超 2026-09-13 拍板)：`_run_expand.log`/`_step1_regime.log`/`_step3_bt_final.log` 等。网络走代理 127.0.0.1:10809；klines>1000分页。
+- 壳环境坑：破壳全局代理 14068 是坏的 + 壳 cwd=工作区根(非 meme_short)。跑脚本用**绝对路径** + `launch_gen.py`/`run_expand.py` 这类启动器在 python 内 `os.environ` 强设 10809 + `os.chdir`。用 anaconda python(有 requests/pymongo)，managed python 没有。
 
-## 回测脚本逻辑演变真相（2026-08-16 最终定论，用户两次纠错后）
-- ⚠️ **"旧版数据残缺/漂移"是错误结论，已彻底清除**：旧版 `_bt_pump8h.csv`(+1464%) 从始至终是**正确逻辑的正确结果，数据完整无残缺**。铁证：修复后的定稿代码跑当前数据 = +1463.8%，与旧版 **pnl 逐笔 0 差异**（开仓点 351/351 重合）——数据若真"残缺"，不可能逐笔完全一致。
-- **正确的因果链（全部是脚本逻辑变动，与数据无关）**：
-  1. 旧版 +1464% = 正确逻辑（8h 内兜底止损=开仓价×2 + 8h 后 pump_stop + 24h expire）的正确结果。
-  2. 脚本被引入 p24 锚止损（`p24×2`，对妖币仅 ~17% 过紧）→ 跑出 +975%（`_exp_base.csv`）= **错误逻辑产物**。此前把 490pp 差异误归因"数据补拉/残缺"——**错**，真实根因是 p24 锚逻辑偏离。
-  3. 用户拍板删 p24 锚 → 删除时把 else 回退（=开仓价×2 兜底）也误删 → 无止损版 +1600.6%（不可实盘：sirenusdt 翻倍未止损=浮亏100%扛到回落，杠杆必爆仓）。
-  4. 用户指出 sirenusdt 翻倍必须止损 → 修复（8h 内加回开仓价×2 兜底）→ +1463.8% = 与旧版逐笔一致。
-- **教训（必须遵守）**：①差异归因先查代码（diff+语义）再谈其他，**绝不预设"数据问题"**；②改代码后必须边界 sanity check（如"翻倍单必须止损"）+ 逐笔对照实际数据；③记忆里不写入未经证实的"数据"结论（曾因 Bash `$` 展开坑误判 openTime 类型并写入记忆，同样错误）。
-- 文件状态：`_bt_pump8h_final.csv`=正式定稿；`_bt_pump8h.csv`=旧版（与 final 逐笔一致，互为印证）；`_exp_base.csv`(+975%,p24锚错误版)/`_nop24_8h*.csv`(+1600%,无止损错误版) 已清理/降级。
-- 入场点实验（_exp_A/B/C）基于 +975%（p24 锚错误逻辑）相对比较，结论需在新基准(+1463.8%)下复核；**EF 数据已定位**：`workbuddy/data/change_20251201_20260816/ef_{SYMBOL}.csv`（528个，脚本 `workbuddy/fetch_ef_data.py`），列=ts_ms/funding_rate/oi。**⚠️实测 oi 列全空（2026-08-19 更正根因：非时间对齐问题——`openInterestHist` 只保留最近30天，startTime>30天→HTTP400 -1130，fetch_ef_data.py 用2025-11-20起点全被拒）→ E方案(funding拥挤,scheme4)数据可用（funding 给全历史），F方案(OI背离,scheme5/6)在 2025-12~2026-08 窗口不可行（币安无该窗口历史OI，要历史OI需第三方源或从当下开始日积月累）**。
+## 定稿策略（做空 24h 涨幅 Top1 妖币均值回归）
+- 信号每整10分钟取Top1，读Mongo 5m；开仓价=openTime=T-5min close。
+- 入场过滤：MAX_TOP1_PCT=80 / RATIO6_MIN=-1 / HIGH_AGE_MAX=12 / 创30天新高 / SKIP_SIM_FILTER=1。
+- 仓位：PULSE_W=2 PULSE_TH=0.85（r6≥0.85→2x）MAX_PERMIT_OPENS=9。
+- 出场先到先得：①expire≥24h ②pump_stop(8h缓冲后high破24h高,PUMP_DELAY_H=8) ③8h内兜底止损=开仓价×STOP_FACTOR。
+- 固定止盈/止损 TAKE_PROFIT_PCT=80 + STOP_FACTOR=1.8（±80%封顶）；p24锚已删。净收益另扣~0.35pp/份。
 
-## 定稿工作流规则（用户 2026-08-16 拍板，必须遵守）
-1. **用户宣布定稿后**：用定稿代码重新回测，生成一份**以 `final` 结尾的 CSV**（如 `_bt_pump8h_final.csv`）作为正式成绩。
-2. **自审代码和结果**（既有行为准则）：① 边界 sanity check（如"翻倍单必须止损"）② 逐笔对照实际数据（与旧版/上一版对比 pnl 差异）③ 用实际数据验证并给详细结论，不靠推断、不甩锅。
-3. **清理舍弃的数据文件**：错误逻辑产物/实验残留/冗余复本一律删除，只保留正确核心（信号源、涨跌幅数据、final 定稿成绩）。**样本外验证数据(_oos_*)与上一版定稿 CSV 定稿后也可删**（用户 08-17 确认）。
-4. **每次定稿必须更新盈亏曲线**（用户 08-17 拍板）：用 `plot_final_curve.py`（CURVE_SRC=final CSV, CURVE_OUT=_curve_xxx_final.html）生成新曲线并展示。**曲线顶部必须显示 maxDD + ddRatio（08-20 拍板，以后都要）**；文件命名 = 策略名 + `_final`（如 `_bt_mp9_final.csv` / `_curve_mp9_final.html`）。
-5. **双版本回测规则（2026-08-24 超指定，以后每次回测默认执行）**：每次回测**同时出两份**——①无 regime 版（`REGIME_FILTER=0`，命名 `_bt_mp9_base.csv`/`_curve_mp9_base.html`）②剔 SIDEWAYS 版（`REGIME_FILTER=1 REGIME_ALLOW=BULL,BEAR`，命名 `_bt_mp9_regime_final.csv`/`_curve_mp9_regime_final.html`）——CSV + HTML 都要，便于对照 regime 层增益。
-- 【路径迁移 2026-08-22】做空暴涨 meme 策略已全量迁至 `workbuddy/meme_short/`（32 脚本 + data/ 子目录）；**运行需 `cd workbuddy/meme_short`，数据相对路径 `data/change_*`**；旧 `workbuddy/data/` 路径已失效。reversal_* 属另一策略线留 workbuddy 顶层。
-- 当前定稿状态（**2026-08-29 更新，窗口扩至 08-28；定稿仍为无 regime 版**）：`meme_short/data/change_20251201_20260828/_bt_mp9_final.csv` = **1263笔/胜率56.2%/加权+945.66%/maxDD 56.6/ddRatio 0.0598**，曲线 `_curve_mp9_final.html`，窗口 2025-12-01~2026-08-28 23:50。对照版（**08-29 regime 修正后，不再等价**）：bear `_bt_mp9_bear.csv`(+865.29, 1198笔/55.6%, 末笔08-20)、nosideways `_bt_mp9_nosideways.csv`(+881.27, 1209笔/55.7%, 末笔08-26)。上窗口(到08-23)：base+905.0/bear+862.5/nosideways+862.5，尾5天(08-24~08-28)贡献 base +40.7pp。2024 窗口(扩展regime后)：base+103/bear+125.4/nosideways+264.9。旧定稿（08-23 窗口 +905.0 / regime_final +862.5 / 到08-16 +822.7）已被取代。
-- ⚠️**regime 尾巴缺失坑(08-29 超抓出)**：`regime_btc.csv` 当时只到 08-23，而 `_regime_ok` 对缺失日期(T-1无map值)返回 **True 放行**（设计为"越界放行"）→ 08-25~28 信号在 bear/nosideways 里全部白放行=等于没过滤，两版成绩失真。08-29 从 Mongo 重算 regime 补到 08-28（尾巴：08-24/25 BULL、08-26~28 SIDEWAYS）后重跑：bear -15.5pp(+880.81→+865.29)、nosideways +0.5pp(+880.81→+881.27)。**教训：①每次回测前必须核对 regime_btc.csv 覆盖 ≥ 回测窗口（缺失=放行=失真）；②尾巴出现 BULL 日后 bear≠nosideways（放BULL vs 剔BULL），"两过滤等价"只在无 BULL 段成立。**
-- **regime 系统（2026-08-23/24 定稿接入）**：`market_regime.py`（BTC 日收盘多周期复合年化斜率分类 BULL/BEAR/SIDEWAYS，阈值 BULL_R200=0.25/BEAR_R200=-0.15）+ 回测开关 `REGIME_FILTER`（默认0=关）`REGIME_ALLOW`（BULL,BEAR=剔SIDEWAYS / BEAR=只BEAR）；**防前视：T日信号用T-1日(已收盘)regime**；**尾部K纠错(08-24)：end_ms clamp 到最新完整K(floor(now/5min)-5min)，不拉/不存未走完K**。2024 验证：剔SIDEWAYS +306.3 vs 基线 +103（×3/质量×7.6）；2026 前段(至08-23)全BEAR中性，8月下旬反弹后 regime 首次真实生效——08-24/25 出现 **BULL** 日、08-26~28 SIDEWAYS（修正前"两过滤等价"结论已作废，见上条）。
-- 定稿演进记录（历史 2026-08-20 21:55 定稿，MP=9 版：CVD_W12+OFF_HIGH0.15+ADD_ON_BREAK+broke_flag破前高锁存+均分权重+pump 8h从permit起算+expire从permit起算，窗口 2025-12-01~2026-08-16）：新定稿 `change_20251201_20260816/_bt_mp9_final.csv` = **1145笔/加权151/胜率55.6%/毛+822.7%/maxDD 55.7/ddRatio 0.068**，曲线 `_curve_mp9_final.html`（+822.65%）。裸跑（默认值）=实验 expirepermit_mp9 逐笔 0 差异 ✅；14 列含 ddRatio。ddRatio 视角：MP=1(+2047/DD194.8/0.095) vs MP=2(0.102最差) vs **MP=9(+822.7/DD55.7/0.068, 最优区9~12)**。上版定稿（MP=2，551笔/+1813.8%）已被 MP9 取代并清理。**最终演变链：399/+1796.0% → CVD_W12+OFF_HIGH0.15(388/+2016.4/DD207.6) → +pump permit起算(388/+2047/DD194.8) → +加仓MP2(551/+1813.8/DD134.6) → +broke_flag重估(MP2最差0.102) → +expire permit基准 → MP=9 定稿(1145/+822.7/DD55.7/0.068)。**
-- ⚠️**加仓alpha口径教训(08-20)**: 跨MP比较单笔质量必须用非加权pnl%(加仓单+5.2%≈首仓6.5倍, 不分层衰减), 加权均盈会被均分权重(W/MP)污染(如MP2 +3.12% vs MP5 +1.39% 纯权重假象)。
-- **固定止盈 TP80 + 止损 80%（2026-08-17 用户拍板定稿）**：`TAKE_PROFIT_PCT=80`（默认80）+ `STOP_FACTOR=1.8`（默认1.8，对称±80%封顶）。止损80%验证：全样本+64.5pp（399→+1796.0%），样本外两段均优（前半+60pp: xnyusdt w2 省40pp+sirenusdt 省20pp；后半+4.5pp: evaausdt 省4.5pp），仅影响3笔=尾部保险性质但两段方向一致非过拟合。**⚠️ 曾误判负优化(-41.5pp/86笔被挡)——实为 21:08 Mongo 不稳致 missing_syms 整币跳过(龙虾usdt等)的数据污染，重跑后正优化。教训：笔数骤减先查数据完整性提示。**
-- **信号文件 SIGNAL_FILE 已参数化**（环境变量覆盖；2026-08-18 起默认改指 change_20251201_20260816/，与定稿窗口一致；08-29 回测用 env 指到 change_20251201_20260828/）；回测窗口 = 信号文件覆盖范围 + START/END_DT 控制。**定稿参数已写入 backtest_short_top1.py 默认值（RATIO6_MIN=-1/PULSE_W=2/PUMP_ENABLE=1/PUMP_DELAY_H=8/SKIP_SIM_FILTER默认跳过/T0=2025-12-01/T1=2026-08-16/CVD_DIVERGE_W=12/OFF_HIGH_MAX=0.15/ADD_ON_BREAK=1/MAX_PERMIT_OPENS=9 等），裸跑=定稿配置，无需逐项 env。**
+## 定稿参数（backtest_short_top1.py 默认值，裸跑=定稿）
+RATIO6_MIN=-1/PULSE_W=2/PULSE_TH=0.85/PUMP_ENABLE=1/PUMP_DELAY_H=8/SKIP_SIM_FILTER=1/T0=2025-12-01/T1=2026-08-16/CVD_DIVERGE_W=12/OFF_HIGH_MAX=0.15/ADD_ON_BREAK=1/MAX_PERMIT_OPENS=9/HIGH_AGE_MAX=12/TAKE_PROFIT_PCT=80/STOP_FACTOR=1.8。SIGNAL_FILE 可env覆盖。（backtest_short_top1.py 裸跑默认值；最新定稿窗口 2025-12-01~2026-09-12 由 run_expand.py 覆盖 T1=2026-09-12 重跑，见上「当前定稿成绩」）
 
-## 定稿策略概况（2026-08-16 定格，基于完整通读 backtest_short_top1.py 622 行）
-- 一句话：做空「24h 涨幅 Top1」妖币的短线回归策略；信号期 2026-01-01~08-12（每整10分钟点取 Top1），K 线读 MongoDB 5m。
-- 入场过滤：① MAX_TOP1_PCT=80（涨幅≥80%妖币不开+禁7天）② RATIO6_MIN=-1（排除 r6=近6h/24h涨幅<0 的回落中）③ **HIGH_AGE_MAX=12（距24h最高点 >12h 的接刀单排除，2026-08-17 新增定稿）** ④ 创30天新高确认（24h max high ≥ 30天 max high）⑤ SKIP_SIM_FILTER=1（跳过模拟盈亏过滤）。
-- 仓位：PULSE_W=2/PULSE_TH=0.85（r6≥0.85 纯脉冲→2x 仓，否则 1x）；开仓价=openTime=T-5min K 的 close。
-- 出场（每 tick 先到先得）：① expire（持仓≥24h 到期）② pump_stop（8h 缓冲后 high 突破滚动24h最高→按前高，PUMP_ENABLE=1/PUMP_DELAY_H=8）③ **8h 内兜底止损 = 开仓价×STOP_FACTOR（真·100% 止损）**。
-- **p24 锚止损最终处理（19:43 定稿）**：用户拍板舍弃 p24 锚（p24×2 贴价止损，对妖币仅~17% 过紧）；但用户随即指出 sirenusdt 价格翻倍必须止损（03:25 high=0.30700 ≥ 开仓价0.15349×2=0.30698）→ 修正为 **8h 内兜底 = 开仓价×STOP_FACTOR**（p24 锚彻底删除，p24 相关代码=0；备份 `backtest_short_top1.bak_with_p24.py`）。
-- 禁仓：亏损平仓→该币禁 7 天；盈利→免禁。
-- 成本：脚本只出毛收益（无成本扣减），cumPnl=Σ(pnlPct×weight) 加权等额；净收益需另扣（中性 ~0.35pp/份）。
-- 成绩（正式定稿 `_bt_pump8h_final.csv`，AGE12 版）：**345笔/加权411/胜率55.7%/毛 +1574.4%**，stop_loss 恰 1 笔=sirenusdt(-100%)。**相对 351 笔版(+1463.8%) 提升 +110.6pp**，样本外两段均优（稳健）。
+## 当前定稿成绩（2026-09-13，窗口 2025-12-01~2026-09-12）
+- **无regime版(定稿)** `_bt_mp9_final.csv`：1322笔/胜率55.52%/加权+943.09%/maxDD56.56/ddRatio0.0589，三版曲线`_curve_3versions.html`（data/change_20251201_20260912/）。
+- 对照：bear(只BEAR)`_bt_mp9_bear.csv`(+865.29/OOS 0笔) / nosideways`_bt_mp9_nosideways.csv`(+865.79/OOS -15.47)。
+- **edge 全在 BEAR**：BULL 桶全窗口 72笔仅+0.50pp；OOS(08-29→09-12, 14天) 66笔 -5.29pp 走平在分布内(14d百分位9.5%)，判定 EDGE HOLD。
+- **OOS 预警**：BTC 08-24 起多次判 BULL(+7.25%)，pump_stop 率 38%→64%；BULL 环境做空妖币结构性偏弱，refresh 重点盯 pump_stop 率。
+- **nosideways 选择效应教训**：final 里 SIDEWAYS 交易占 permit 名额反而挤掉部分 BULL 亏损单，剔 SIDEWAYS 在 2026 OOS 是负贡献（与 2024 相反）——小样本结论会翻脸，禁凭短窗拍板。
+
+## 定稿工作流规则（08-16拍板）
+1. 定稿后用定稿代码重跑生成`final`结尾CSV。2. 自审：边界sanity+逐笔对照实际数据。3. 清理舍弃文件只留核心。4. 更新曲线(plot_final_curve.py，顶部显maxDD+ddRatio)。5. **双版本回测(08-24起默认)**：无regime(_base)+剔SIDEWAYS(_regime_final)，CSV+HTML都要。
+
+## regime 系统（08-23/24定稿）
+- `market_regime.py`：BTC日收盘复合年化斜率分类，BULL_R200=0.25/BEAR_R200=-0.15；REGIME_FILTER(默认0)/REGIME_ALLOW(BULL,BEAR=剔SIDEWAYS/BEAR=只BEAR)；T日信号用T-1日regime；end_ms clamp最新完整K。
+- 2024：剔SIDEWAYS+306.3 vs 基线+103（BEAR甜区+153，SIDEWAYS毒药-147）。⚠️regime_btc.csv须覆盖≥回测窗口，缺失=白放行=失真。
+
+## 关键教训（铁律）
+- 差异归因先查代码再谈数据（曾误归因数据残缺，实为p24锚逻辑）。
+- 笔数骤减先查数据完整性（曾Mongo不稳误判负优化）。
+- 加仓alpha跨MP比较用非加权pnl%，加权均盈被均分权重污染。
+- EF/E方案(funding拥挤)可用；F(OI背离)币安只留30天OI→历史不可行。
+- A/B/C/E/F入场点优化全否决归档，禁动令沿失败路线不重动。
+
+## meme_long 镜像(做多24h跌幅Top1) 负样本归档 (2026-08-30)
+- 镜像 meme_short 反向：信号=跌幅榜Top1，做多均值回归。引擎`workbuddy/meme_long/backtest_long_top1.py`方向镜像正确(PnL=(exit-open)/open, 止损×0.2/止盈×1.8/confirm_new_low/dump_stop)。修复原`ensure_close_map`代理不可达时`while not check_proxy():sleep(60)`无限死等→改本地覆盖即返回+代理等待上限。
+- 窗口2025-12-01~2026-08-28 离线125币：219笔/胜率35.6%/加权−1.312%(累计−42.57%)。结构不对称真实：暴跌币继续跌/阴跌，做多均值回归不成立；暴涨币倾向回落，做空才有效。
+- 83/132币 confirm_new_low 100%不通过(跌幅第一但未创30d新低)→引擎正确拒买，非bug。RISE侧313币100%过confirm_new_high。诊断`diag_filters.py`可复现。
+- 结论：无edge，归档负样本，勿沿此线重动。代理127.0.0.1:4715挂→7币缺数据跳过；全量需代理恢复跑311币complete文件。

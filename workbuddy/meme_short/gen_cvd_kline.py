@@ -23,6 +23,7 @@ CVD_DAYS = int(os.environ.get("CVD_DAYS", "31"))      # 近 N 天(从当前往�
 CVD_W = int(os.environ.get("CVD_W", "12"))            # CVD_DIVERGE_W = 12 (12×5min = 60min)
 CVD_CENTER = os.environ.get("CVD_CENTER", "").strip() # 中心时刻(北京时间), 如 "2026-08-22 10:00:00"; 指定则走"前后"窗口模式
 CVD_HALF_H = float(os.environ.get("CVD_HALF_H", "12"))# 中心前后各 N 小时(默认12, 共24h窗口)
+CVD_MODE = os.environ.get("CVD_MODE", "both").strip().lower()  # both=双状态 | short=只标卖盘背离(value<0, 回测开仓侧)
 BJ = timezone(timedelta(hours=8))
 
 warmup = timedelta(hours=3)  # 头部预热(算value需2W=24根历史)
@@ -90,11 +91,25 @@ if CVD_CENTER:
         MARK = [_mk[0], _mk[4]]   # [openTime_ms, close]
 data = {"klines": klines, "mark": MARK}
 MARK_LEGEND = ' &nbsp;|&nbsp; <span style="color:#ffd54f">⚑ 黄菱形+竖线 标记中心K</span>' if CVD_CENTER else ''
+# CVD_MODE: both=双状态 | short=只标value<0(卖盘增强/买盘衰竭, meme_short做空加仓侧) | long=只标value>0(卖盘衰减/吸筹, meme_long做多加仓侧)
+if CVD_MODE == "short":
+    SHOW_UP, SHOW_DOWN = False, True
+    LEGEND_UP = '<span class="lg-dn">▼ 蓝三角 value&lt;0</span> 卖盘增强/买盘衰竭(DIV, 回测做空加仓侧)'
+    MODE_TAG = "· CVD卖盘背离(short)"
+elif CVD_MODE == "long":
+    SHOW_UP, SHOW_DOWN = True, False
+    LEGEND_UP = '<span class="lg-up">▲ 橙三角 value&gt;0</span> 卖盘衰减/吸筹(DIV, 回测做多加仓侧)'
+    MODE_TAG = "· CVD卖盘衰减(long)"
+else:  # both
+    SHOW_UP, SHOW_DOWN = True, True
+    LEGEND_UP = ('<span class="lg-up">▲ 橙三角 value&gt;0</span> 近1h买盘强于前1h(OK) &nbsp;|&nbsp; '
+                 '<span class="lg-dn">▼ 蓝三角 value&lt;0</span> 买盘衰竭(DIV背离)')
+    MODE_TAG = "· CVD背离双状态"
 if CVD_CENTER:
-    TITLE = f"{SYMBOL} {center_bj.strftime('%Y-%m-%d %H:%M')}前后{CVD_HALF_H:.0f}h · CVD背离双状态"
+    TITLE = f"{SYMBOL} {center_bj.strftime('%Y-%m-%d %H:%M')}前后{CVD_HALF_H:.0f}h {MODE_TAG}"
     WIN = f"{start_bj.strftime('%Y-%m-%d %H:%M')} ~ {end_bj.strftime('%Y-%m-%d %H:%M')} (中心 {center_bj.strftime('%Y-%m-%d %H:%M')})"
 else:
-    TITLE = f"{SYMBOL} 近{CVD_DAYS}天 5m · CVD背离双状态"
+    TITLE = f"{SYMBOL} 近{CVD_DAYS}天 5m {MODE_TAG}"
     WIN = f"{start_bj.strftime('%Y-%m-%d')} ~ {end_bj.strftime('%Y-%m-%d %H:%M')}"
 
 HTML = """<!DOCTYPE html>
@@ -113,7 +128,7 @@ HTML = """<!DOCTYPE html>
 </head>
 <body>
 <div id="top">
- <span class="legend">🟠 {sym} {win} &nbsp;|&nbsp; <span class="lg-up">▲ 橙三角 value&gt;0</span> 近1h买盘强于前1h(OK) &nbsp;|&nbsp; <span class="lg-dn">▼ 蓝三角 value&lt;0</span> 买盘衰竭(DIV背离) &nbsp;|&nbsp; 绿涨红跌 {markleg} &nbsp;|&nbsp; 滚轮缩放 / 滑块平移 / 十字光标悬停</span>
+ <span class="legend">🟠 {sym} {win} &nbsp;|&nbsp; {legend_up} &nbsp;|&nbsp; 绿涨红跌 {markleg} &nbsp;|&nbsp; 滚轮缩放 / 滑块平移 / 十字光标悬停</span>
 </div>
 <div id="chart"></div>
 <script>
@@ -123,9 +138,11 @@ const UP='#26a69a', DOWN='#ef5350';
 function fmtTime(ms){{const d=new Date(ms);const p=n=>String(n).padStart(2,'0');return `${{d.getFullYear()}}-${{p(d.getMonth()+1)}}-${{p(d.getDate())}} ${{p(d.getHours())}}:${{p(d.getMinutes())}}`;}}
 const kl=DATA.klines;
 const MARK=DATA.mark;
+const SHOW_UP={show_up};
+const SHOW_DOWN={show_down};
 const candle=kl.map(r=>[r[0],r[1],r[4],r[3],r[2],r[5],r[6]]);  // ECharts candlestick: [t,open,close,low,high] + value/ratio
-const up=kl.filter(r=>r[5]!==null && r[5]>0).map(r=>[r[0], r[4]*1.004, r[5]]);
-const down=kl.filter(r=>r[5]!==null && r[5]<0).map(r=>[r[0], r[4]*1.004, r[5]]);
+const up=SHOW_UP ? kl.filter(r=>r[5]!==null && r[5]>0).map(r=>[r[0], r[4]*1.004, r[5]]) : [];
+const down=SHOW_DOWN ? kl.filter(r=>r[5]!==null && r[5]<0).map(r=>[r[0], r[4]*1.004, r[5]]) : [];
 const opt={{
   backgroundColor:'#0f1419', animation:false,
   tooltip:{{trigger:'axis', axisPointer:{{type:'cross',label:{{backgroundColor:'#2d3a48'}}}},
@@ -158,10 +175,11 @@ chart.setOption(opt, true);
 window.addEventListener('resize', ()=>chart.resize());
 </script>
 </body>
-</html>""".format(title=TITLE, sym=SYMBOL, win=WIN, W=CVD_W, datajson=json.dumps(data, ensure_ascii=False), markleg=MARK_LEGEND)
+</html>""".format(title=TITLE, sym=SYMBOL, win=WIN, W=CVD_W, datajson=json.dumps(data, ensure_ascii=False), markleg=MARK_LEGEND, legend_up=LEGEND_UP, show_up=str(SHOW_UP).lower(), show_down=str(SHOW_DOWN).lower())
 
 OUT_TAG = center_bj.strftime("%Y%m%d_%H%M") if CVD_CENTER else end_bj.strftime("%Y%m%d_%H%M")
-OUT = "data/cvd_%s_%s.html" % (SYMBOL.lower(), OUT_TAG)
+OUT_SUFFIX = {"short": "_short", "long": "_long"}.get(CVD_MODE, "")
+OUT = "data/cvd_%s_%s%s.html" % (SYMBOL.lower(), OUT_TAG, OUT_SUFFIX)
 with open(OUT, "w", encoding="utf-8") as f:
     f.write(HTML)
 print(f"已写出: {OUT}")
